@@ -1,10 +1,10 @@
-What is GoToSocial?
-===================
+$project
+========
 
-GoToSocial will solve your problem of where to start with documentation,
+$project will solve your problem of where to start with documentation,
 by providing a basic explanation of how to do it easily.
 
-Look how easy it is to use::
+Look how easy it is to use:
 
     import project
     # Get your stuff done
@@ -26,8 +26,8 @@ Install $project by running:
 Contribute
 ----------
 
-- Issue Tracker: github.com/gotosocial/gotosocial/issues
-- Source Code: github.com/gotosocial/gotosocial
+- Issue Tracker: github.com/$project/$project/issues
+- Source Code: github.com/$project/$project
 
 Support
 -------
