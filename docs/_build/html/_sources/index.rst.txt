@@ -11,11 +11,3 @@ Welcome to GoToSocial's documentation!
    :caption: Contents:
 
    pages/what_is_gotosocial
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
