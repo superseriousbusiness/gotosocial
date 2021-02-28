@@ -10,4 +10,5 @@ Welcome to GoToSocial's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   pages/what_is_gotosocial
+   pages/user_facing/user_facing
+   pages/design/design.rst

@@ -23,11 +23,13 @@ Install $project by running:
 
     install project
 
-Contribute
-----------
+Open Source
+-----------
 
-- Issue Tracker: github.com/gotosocial/gotosocial/issues
-- Source Code: github.com/gotosocial/gotosocial
+GoToSocial is a free and open-source project.
+
+- Issue Tracker: https://github.com/gotosocial/gotosocial/issues
+- Source Code: https://github.com/gotosocial/gotosocial
 
 Support
 -------
@@ -37,4 +39,4 @@ If you are having issues, please let us know.
 License
 -------
 
-The project is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE.
+GoToSocial is licensed under the `GNU AFFERO GENERAL PUBLIC LICENSE <https://github.com/gotosocial/gotosocial/blob/main/LICENSE>`_ (AGPLv3).
