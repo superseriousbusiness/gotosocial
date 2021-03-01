@@ -1,8 +1,10 @@
 GoToSocial Design
-=================
+-----------------
 
 These documents describe the design of GoToSocial and provide rationale for design decisions, safety features, etc.
 
 .. toctree::
-    federation.rst
-    safety_features.rst
+    :maxdepth: 1
+
+    federation
+    safety_features

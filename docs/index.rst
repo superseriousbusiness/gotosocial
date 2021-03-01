@@ -8,7 +8,21 @@ Welcome to GoToSocial's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   :caption: About GoToSocial
 
-   pages/user_facing/user_facing
-   pages/design/design.rst
+   pages/about/index
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Design
+
+   pages/design/index
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Developer Docs
+
+   pages/api/index
