@@ -1,2 +1,5 @@
 # exclude the compiled binary
 /server
+
+# exclude built documentation, since readthedocs will build it for us anyway
+/docs/_build

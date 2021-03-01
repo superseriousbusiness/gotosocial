@@ -16,13 +16,37 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package main
+package client
 
-import (
-	"github.com/gotosocial/gotosocial/internal/client"
-)
+import "github.com/gin-gonic/gin"
 
-func main() {
-	router := api.NewRouter()
-	router.Route()
+// Router provides the http routes used by the API
+type Router interface {
+	Route()
+}
+
+// NewRouter returns a new router
+func NewRouter() Router {
+	return &router{}
+}
+
+// router implements the router interface
+type router struct {
+}
+
+func (r *router) Route() {
+	ginRouter := gin.Default()
+	ginRouter.LoadHTMLGlob("web/template/*")
+
+	apiGroup := ginRouter.Group("/api")
+	{
+		v1 := apiGroup.Group("/v1", {
+			statusesGroup := v1.Group("/statuses")
+			{
+				statusesGroup.GET(":id", statusGet)
+			}
+
+		})
+	}
+	ginRouter.Run()
 }

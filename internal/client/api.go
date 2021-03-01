@@ -16,13 +16,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package main
+// Package client AAAAAAAAAAAAAAA
+package client
 
-import (
-	"github.com/gotosocial/gotosocial/internal/client"
-)
+// API is the client API exposed to the outside world for access by front-ends; this is distinct from the federation API
+type API interface {
+}
 
-func main() {
-	router := api.NewRouter()
-	router.Route()
+// api implements Api interface
+type api struct {
 }

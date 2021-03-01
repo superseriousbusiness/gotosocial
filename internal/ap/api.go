@@ -16,13 +16,5 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package main
-
-import (
-	"github.com/gotosocial/gotosocial/internal/client"
-)
-
-func main() {
-	router := api.NewRouter()
-	router.Route()
-}
+// Package ap provides ActivityPub/federation functionality for GoToSocial
+package ap
