@@ -16,33 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package client
+package db
 
-import "github.com/gin-gonic/gin"
+import "regexp"
 
-// Router provides the http routes used by the API
-type Router interface {
-	Route()
-}
+const (
+	// general db defaults
 
-// NewRouter returns a new router
-func NewRouter() Router {
-	return &router{}
-}
+	// default database to use in whatever db implementation we have
+	defaultDatabase string = "gotosocial"
 
-// router implements the router interface
-type router struct {
-}
+	// implementation-specific defaults
 
-func (r *router) Route() {
-	ginRouter := gin.Default()
-	ginRouter.LoadHTMLGlob("web/template/*")
+	// widely-recognised default postgres port
+	postgresDefaultPort int = 5432
+)
 
-	apiGroup := ginRouter.Group("/api")
-
-	v1 := apiGroup.Group("/v1")
-
-	statusesGroup := v1.Group("/statuses")
-	statusesGroup.GET(":id", statusGet)
-	ginRouter.Run()
-}
+var ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
+var hostnameRegex = regexp.MustCompile(`^(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}$`)

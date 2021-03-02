@@ -16,33 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package client
+// Package ap provides ActivityPub/federation functionality for GoToSocial
+package ap
 
-import "github.com/gin-gonic/gin"
+import (
+// "github.com/go-fed/activity/pub"
+)
 
-// Router provides the http routes used by the API
-type Router interface {
-	Route()
+// Service is an activityPub service that uses go-fed to provide federation capabilities
+type Service interface {
 }
 
-// NewRouter returns a new router
-func NewRouter() Router {
-	return &router{}
+type service struct {
 }
 
-// router implements the router interface
-type router struct {
-}
-
-func (r *router) Route() {
-	ginRouter := gin.Default()
-	ginRouter.LoadHTMLGlob("web/template/*")
-
-	apiGroup := ginRouter.Group("/api")
-
-	v1 := apiGroup.Group("/v1")
-
-	statusesGroup := v1.Group("/statuses")
-	statusesGroup.GET(":id", statusGet)
-	ginRouter.Run()
+// NewService returns an activityPub Service
+func NewService() {
 }
