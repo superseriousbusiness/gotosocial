@@ -21,15 +21,23 @@ package db
 import "regexp"
 
 const (
-	// general db defaults
+	/*
+	   general db defaults
+	*/
 
 	// default database to use in whatever db implementation we have
 	defaultDatabase string = "gotosocial"
+	// default address should in most cases be overwritten
+	defaultAddress string = "localhost"
 
-	// implementation-specific defaults
+	/*
+	   implementation-specific defaults
+	*/
 
 	// widely-recognised default postgres port
 	postgresDefaultPort int = 5432
+	// default user should in most cases be overwritten
+	postgresDefaultUser string = "postgres"
 )
 
 var ipv4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)

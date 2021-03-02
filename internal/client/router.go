@@ -22,7 +22,7 @@ import "github.com/gin-gonic/gin"
 
 // Router provides the http routes used by the API
 type Router interface {
-	Route()
+	Route() error
 }
 
 // NewRouter returns a new router
@@ -34,7 +34,7 @@ func NewRouter() Router {
 type router struct {
 }
 
-func (r *router) Route() {
+func (r *router) Route() error {
 	ginRouter := gin.Default()
 	ginRouter.LoadHTMLGlob("web/template/*")
 
@@ -44,5 +44,6 @@ func (r *router) Route() {
 
 	statusesGroup := v1.Group("/statuses")
 	statusesGroup.GET(":id", statusGet)
-	ginRouter.Run()
+	err := ginRouter.Run()
+	return err
 }

@@ -19,10 +19,12 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/sirupsen/logrus"
 )
 
 const dbTypePostgres string = "POSTGRES"
@@ -39,9 +41,7 @@ type Service interface {
 	/*
 		ANY ADDITIONAL DESIRED FUNCTIONS
 	*/
-
-	// Ready indicates whether the database is ready to handle queries and whatnot.
-	Ready() bool
+	Stop(context.Context) error
 }
 
 // Config provides configuration options for the database connection
@@ -57,10 +57,10 @@ type Config struct {
 
 // NewService returns a new database service that satisfies the Service interface and, by extension,
 // the go-fed database interface described here: https://github.com/go-fed/activity/blob/master/pub/database.go
-func NewService(config *Config) (Service, error) {
+func NewService(context context.Context, config *Config, log *logrus.Logger) (Service, error) {
 	switch strings.ToUpper(config.Type) {
 	case dbTypePostgres:
-		return newPostgresService(config)
+		return newPostgresService(context, config, log.WithField("service", "db"))
 	default:
 		return nil, fmt.Errorf("database type %s not supported", config.Type)
 	}

@@ -23,31 +23,69 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-pg/pg"
+	"github.com/sirupsen/logrus"
 )
 
 type postgresService struct {
 	config *Config
 	conn   *pg.DB
-	ready  bool
+	log    *logrus.Entry
+	cancel context.CancelFunc
 }
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
-func newPostgresService(config *Config) (*postgresService, error) {
+func newPostgresService(ctx context.Context, config *Config, log *logrus.Entry) (*postgresService, error) {
 	opts, err := derivePGOptions(config)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
 	}
-	conn := pg.Connect(opts)
-	return &postgresService{
-		config,
-		conn,
-		false,
-	}, nil
 
+	readyChan := make(chan interface{})
+	opts.OnConnect = func(c *pg.Conn) error {
+		close(readyChan)
+		return nil
+	}
+
+	// create a connection
+	pgCtx, cancel := context.WithCancel(ctx)
+	conn := pg.Connect(opts).WithContext(pgCtx)
+
+	// actually *begin* the connection so that we can tell if the db is there
+	// and listening, and also trigger the opts.OnConnect function passed in above
+	tx, err := conn.Begin()
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("db connection error: %s", err)
+	}
+
+	// close the transaction we just started so it doesn't hang around
+	if err := tx.Rollback(); err != nil {
+		cancel()
+		return nil, fmt.Errorf("db connection error: %s", err)
+	}
+
+	// make sure the opts.OnConnect function has been triggered
+	// and closed the ready channel
+	select {
+	case <-readyChan:
+		log.Infof("postgres connection ready")
+	case <-time.After(5 * time.Second):
+		cancel()
+		return nil, errors.New("db connection timeout")
+	}
+
+	// we can confidently return this useable postgres service now
+	return &postgresService{
+		config: config,
+		conn:   conn,
+		log:    log,
+		cancel: cancel,
+	}, nil
 }
 
 /*
@@ -68,22 +106,35 @@ func derivePGOptions(config *Config) (*pg.Options, error) {
 	}
 
 	// validate address
-	address := config.Address
-	if address == "" {
-		return nil, errors.New("address not provided")
+	if config.Address == "" {
+		config.Address = defaultAddress
 	}
-	if !hostnameRegex.MatchString(address) && !ipv4Regex.MatchString(address) {
-		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", address)
+	if !hostnameRegex.MatchString(config.Address) && !ipv4Regex.MatchString(config.Address) && config.Address != "localhost" {
+		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", config.Address)
 	}
 
+	// validate username
+	if config.User == "" {
+		config.User = postgresDefaultUser
+	}
+
+	// validate that there's a password
+	if config.Password == "" {
+		return nil, errors.New("no password set")
+	}
+
+	// validate database
+	if config.Database == "" {
+		config.Database = defaultDatabase
+	}
+
+	// We can rely on the pg library we're using to set
+	// sensible defaults for everything we don't set here.
 	options := &pg.Options{
 		Addr:     fmt.Sprintf("%s:%d", config.Address, config.Port),
 		User:     config.User,
 		Password: config.Password,
 		Database: config.Database,
-		OnConnect: func(c *pg.Conn) error {
-			return nil
-		},
 	}
 
 	return options, nil
@@ -176,6 +227,12 @@ func (ps *postgresService) Liked(c context.Context, actorIRI *url.URL) (follower
 	EXTRA FUNCTIONS
 */
 
-func (ps *postgresService) Ready() bool {
-	return false
+func (ps *postgresService) Stop(ctx context.Context) error {
+	ps.log.Info("closing db connection")
+	if err := ps.conn.Close(); err != nil {
+		// only cancel if there's a problem closing the db
+		ps.cancel()
+		return err
+	}
+	return nil
 }

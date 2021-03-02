@@ -19,10 +19,42 @@
 package main
 
 import (
-	"github.com/gotosocial/gotosocial/internal/client"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	router := client.NewRouter()
-	router.Route()
+	log := logrus.New()
+	ctx := context.Background()
+	dbConfig := &db.Config{
+		Type:            "POSTGRES",
+		Address:         "",
+		Port:            5432,
+		User:            "",
+		Password:        "whatever",
+		Database:        "postgres",
+		ApplicationName: "gotosocial",
+	}
+	dbService, err := db.NewService(ctx, dbConfig, log)
+	if err != nil {
+		panic(err)
+	}
+
+	// catch shutdown signals from the operating system
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	sig := <-sigs
+	log.Infof("received signal %s, shutting down", sig)
+
+	// close down all running services in order
+	if err := dbService.Stop(ctx); err != nil {
+		log.Errorf("error closing dbservice: %s", err)
+	}
+
+	log.Info("done! exiting...")
 }
