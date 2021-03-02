@@ -18,3 +18,11 @@
 
 // Package ap provides ActivityPub/federation functionality for GoToSocial
 package ap
+
+import (
+   "github.com/go-fed/activity/pub"
+)
+
+func main() {
+   pub.NewFederatingActor()
+}

@@ -23,6 +23,6 @@ import (
 )
 
 func main() {
-	router := api.NewRouter()
+	router := client.NewRouter()
 	router.Route()
 }

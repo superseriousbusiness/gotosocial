@@ -39,14 +39,10 @@ func (r *router) Route() {
 	ginRouter.LoadHTMLGlob("web/template/*")
 
 	apiGroup := ginRouter.Group("/api")
-	{
-		v1 := apiGroup.Group("/v1", {
-			statusesGroup := v1.Group("/statuses")
-			{
-				statusesGroup.GET(":id", statusGet)
-			}
-
-		})
-	}
+	
+	v1 := apiGroup.Group("/v1")
+	
+	statusesGroup := v1.Group("/statuses")
+	statusesGroup.GET(":id", statusGet)
 	ginRouter.Run()
 }
