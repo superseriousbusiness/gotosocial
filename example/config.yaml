@@ -1,0 +1,37 @@
+# String. Log level to use throughout the application. Must be lower-case.
+# Options: ["debug","info","warn","error","fatal"]
+# Default: "info"
+logLevel: "info"
+
+# String. Application name to use internally.
+# Examples: ["My Application","gotosocial"]
+# Default: "gotosocial"
+applicationName: "gotosocial"
+
+# Config pertaining to the Gotosocial database connection 
+db:
+  # String. Database type.
+  # Options: ["postgres"]
+  # Default: "postgres"
+  type: "postgres"
+
+  # String. Database address. Can be either an ipv4 address or a hostname.
+  # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110"]
+  # Default: "localhost"
+  address: "127.0.0.1"
+
+  # Int. Port for database connection.
+  # Examples: [5432, 1234, 6969]
+  # Default: 5432 
+  port: 5432
+
+  # String. Username for the database connection.
+  # Examples: ["mydbuser","postgres","gotosocial"]
+  # Default: "postgres"
+  user: "postgres"
+
+  # REQUIRED
+  # String. Password to use for the database connection
+  # Examples: ["password123","verysafepassword","postgres"]
+  # Default: ""
+  password: ""

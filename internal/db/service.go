@@ -46,14 +46,13 @@ type Service interface {
 
 // Config provides configuration options for the database connection
 type Config struct {
-	Type            string `json:"type,omitempty"`
-	Address         string `json:"address,omitempty"`
-	Port            int    `json:"port,omitempty"`
-	User            string `json:"user,omitempty"`
-	Password        string `json:"password,omitempty"`
-	PasswordFile    string `json:"passwordFile,omitempty"`
-	Database        string `json:"database,omitempty"`
-	ApplicationName string `json:"applicationName,omitempty"`
+	Type            string `yaml:"type,omitempty"`
+	Address         string `yaml:"address,omitempty"`
+	Port            int    `yaml:"port,omitempty"`
+	User            string `yaml:"user,omitempty"`
+	Password        string `yaml:"password,omitempty"`
+	Database        string `yaml:"database,omitempty"`
+	ApplicationName string `yaml:"applicationName,omitempty"`
 }
 
 // NewService returns a new database service that satisfies the Service interface and, by extension,
