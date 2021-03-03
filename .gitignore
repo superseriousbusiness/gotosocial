@@ -1,5 +1,5 @@
 # exclude the compiled binary
-/server
+/gotosocial
 
 # exclude built documentation, since readthedocs will build it for us anyway
 /docs/_build

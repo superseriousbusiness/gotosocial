@@ -16,20 +16,39 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package main
+package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli/v2"
 )
 
-func main() {
+// getLog will try to set the logrus log level to the
+// desired level specified by the user with the --log-level flag
+func getLog(c *cli.Context) (*logrus.Logger, error) {
 	log := logrus.New()
+	logLevel, err := logrus.ParseLevel(c.String("log-level"))
+	if err != nil {
+		return nil, err
+	}
+	log.SetLevel(logLevel)
+	return log, nil
+}
+
+// Run starts the gotosocial server
+func Run(c *cli.Context) error {
+	log, err := getLog(c)
+	if err != nil {
+		return fmt.Errorf("error creating logger: %s", err)
+	}
+
 	ctx := context.Background()
 	dbConfig := &db.Config{
 		Type:            "POSTGRES",
@@ -42,7 +61,7 @@ func main() {
 	}
 	dbService, err := db.NewService(ctx, dbConfig, log)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// catch shutdown signals from the operating system
@@ -53,8 +72,9 @@ func main() {
 
 	// close down all running services in order
 	if err := dbService.Stop(ctx); err != nil {
-		log.Errorf("error closing dbservice: %s", err)
+		return fmt.Errorf("error closing dbservice: %s", err)
 	}
 
 	log.Info("done! exiting...")
+	return nil
 }
