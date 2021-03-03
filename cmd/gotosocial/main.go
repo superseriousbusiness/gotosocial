@@ -22,23 +22,69 @@ import (
 	"os"
 
 	"github.com/gotosocial/gotosocial/cmd/server"
+	"github.com/gotosocial/gotosocial/internal/consts"
 	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
+	flagNames := consts.GetFlagNames()
+	envNames := consts.GetEnvNames()
 	app := &cli.App{
 		Flags: []cli.Flag{
+			// GENERAL FLAGS
 			&cli.StringFlag{
-				Name:        "config",
-				Aliases:     []string{"c"},
-				Usage:       "Load configuration from `FILE`",
+				Name:    flagNames.LogLevel,
+				Usage:   "Log level to run at: debug, info, warn, fatal",
+				Value:   "info",
+				EnvVars: []string{"GTS_LOG_LEVEL"},
 			},
 			&cli.StringFlag{
-				Name:        "log-level",
-				Usage:       "Log level to run at: debug, info, warn, fatal",
-				Value:       "info",
+				Name:    flagNames.ApplicationName,
+				Usage:   "Name of the application, used in various places internally",
+				Value:   "gotosocial",
+				EnvVars: []string{envNames.ApplicationName},
+				Hidden:  true,
+			},
+
+			// DATABASE FLAGS
+			&cli.StringFlag{
+				Name:    flagNames.DbType,
+				Usage:   "Database type: eg., postgres",
+				Value:   "postgres",
+				EnvVars: []string{envNames.DbType},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.DbAddress,
+				Usage:   "Database ipv4 address or hostname",
+				Value:   "localhost",
+				EnvVars: []string{envNames.DbAddress},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.DbPort,
+				Usage:   "Database port",
+				Value:   5432,
+				EnvVars: []string{envNames.DbPort},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.DbUser,
+				Usage:   "Database username",
+				Value:   "postgres",
+				EnvVars: []string{envNames.DbUser},
+			},
+			&cli.StringFlag{
+				Name:     flagNames.DbPassword,
+				Usage:    "Database password",
+				Value:    "postgres",
+				EnvVars:  []string{envNames.DbPassword},
+				FilePath: "./dbpass",
+			},
+			&cli.StringFlag{
+				Name:    flagNames.DbDatabase,
+				Usage:   "Database name",
+				Value:   "postgres",
+				EnvVars: []string{envNames.DbDatabase},
 			},
 		},
 		Commands: []*cli.Command{

@@ -9,6 +9,7 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/namsral/flag v1.7.4-pre // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
 	github.com/sirupsen/logrus v1.8.0

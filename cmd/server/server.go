@@ -25,43 +25,28 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/sirupsen/logrus"
+	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/urfave/cli/v2"
 )
 
-// getLog will try to set the logrus log level to the
-// desired level specified by the user with the --log-level flag
-func getLog(c *cli.Context) (*logrus.Logger, error) {
-	log := logrus.New()
-	logLevel, err := logrus.ParseLevel(c.String("log-level"))
-	if err != nil {
-		return nil, err
-	}
-	log.SetLevel(logLevel)
-	return log, nil
-}
-
 // Run starts the gotosocial server
 func Run(c *cli.Context) error {
-	log, err := getLog(c)
+	log, err := log.New(c.String("log-level"))
 	if err != nil {
 		return fmt.Errorf("error creating logger: %s", err)
 	}
 
-	ctx := context.Background()
-	dbConfig := &db.Config{
-		Type:            "POSTGRES",
-		Address:         "",
-		Port:            5432,
-		User:            "",
-		Password:        "whatever",
-		Database:        "postgres",
-		ApplicationName: "gotosocial",
+	var gtsConfig *config.Config
+	if gtsConfig, err = config.New(c.String("config")); err != nil {
+		return fmt.Errorf("error creating config: %s", err)
 	}
-	dbService, err := db.NewService(ctx, dbConfig, log)
+
+	ctx := context.Background()
+	dbService, err := db.NewService(ctx, gtsConfig.DBConfig, log)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
 	// catch shutdown signals from the operating system

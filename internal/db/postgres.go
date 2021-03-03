@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-fed/activity/streams/vocab"
@@ -95,7 +96,7 @@ func newPostgresService(ctx context.Context, config *Config, log *logrus.Entry) 
 // derivePGOptions takes an application config and returns either a ready-to-use *pg.Options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func derivePGOptions(config *Config) (*pg.Options, error) {
-	if config.Type != dbTypePostgres {
+	if strings.ToUpper(config.Type) != dbTypePostgres {
 		return nil, fmt.Errorf("expected db type of %s but got %s", dbTypePostgres, config.Type)
 	}
 
