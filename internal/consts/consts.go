@@ -22,11 +22,12 @@ package consts
 
 import "regexp"
 
-// FlagNames is used for storing the names of the various flags used for
+// Flags is used for storing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
-type FlagNames struct {
+type Flags struct {
 	LogLevel        string
 	ApplicationName string
+	ConfigPath      string
 	DbType          string
 	DbAddress       string
 	DbPort          string
@@ -37,38 +38,27 @@ type FlagNames struct {
 
 // GetFlagNames returns a struct containing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
-func GetFlagNames() FlagNames {
-	return FlagNames{
+func GetFlagNames() Flags {
+	return Flags{
 		LogLevel:        "log-level",
 		ApplicationName: "application-name",
+		ConfigPath:      "config-path",
 		DbType:          "db-type",
 		DbAddress:       "db-address",
 		DbPort:          "db-port",
-		DbUser:          "db-users",
+		DbUser:          "db-user",
 		DbPassword:      "db-password",
 		DbDatabase:      "db-database",
 	}
 }
 
-// EnvNames is used for storing the environment variable keys used for
-// initializing and storing urfavecli flag variables.
-type EnvNames struct {
-	LogLevel        string
-	ApplicationName string
-	DbType          string
-	DbAddress       string
-	DbPort          string
-	DbUser          string
-	DbPassword      string
-	DbDatabase      string
-}
-
 // GetEnvNames returns a struct containing the names of the environment variable keys used for
 // initializing and storing urfavecli flag variables.
-func GetEnvNames() FlagNames {
-	return FlagNames{
+func GetEnvNames() Flags {
+	return Flags{
 		LogLevel:        "GTS_LOG_LEVEL",
 		ApplicationName: "GTS_APPLICATION_NAME",
+		ConfigPath:      "GTS_CONFIG_PATH",
 		DbType:          "GTS_DB_TYPE",
 		DbAddress:       "GTS_DB_ADDRESS",
 		DbPort:          "GTS_DB_PORT",

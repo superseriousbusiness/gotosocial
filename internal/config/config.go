@@ -19,22 +19,24 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/gotosocial/gotosocial/internal/db"
+	"gopkg.in/yaml.v2"
 )
 
 // Config contains all the configuration needed to run gotosocial
 type Config struct {
-	DBConfig *db.Config `json:"db,omitempty"`
+	LogLevel        string     `yaml:"logLevel"`
+	ApplicationName string     `yaml:"applicationName,omitempty"`
+	DBConfig        *db.Config `yaml:"db,omitempty"`
 }
 
 // New returns a new config, or an error if something goes amiss.
 // The path parameter is optional, for loading a configuration json from the given path.
 func New(path string) (*Config, error) {
-	var config *Config
+	config := &Config{}
 	if path != "" {
 		var err error
 		if config, err = loadFromFile(path); err != nil {
@@ -45,7 +47,7 @@ func New(path string) (*Config, error) {
 	return config, nil
 }
 
-// loadFromFile takes a path to a .json file and attempts to load a Config object from it
+// loadFromFile takes a path to a yaml file and attempts to load a Config object from it
 func loadFromFile(path string) (*Config, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
@@ -53,16 +55,16 @@ func loadFromFile(path string) (*Config, error) {
 	}
 
 	config := &Config{}
-	if err := json.Unmarshal(bytes, config); err != nil {
+	if err := yaml.Unmarshal(bytes, config); err != nil {
 		return nil, fmt.Errorf("could not unmarshal file at path %s: %s", path, err)
 	}
 
 	return config, nil
 }
 
-// WithFlags returns a copy of this config object with flags set using the provided flags object
-func (c *Config) WithFlags(f Flags) *Config {
-	return c
+// ParseFlags sets flags on the config using the provided Flags object
+func (c *Config) ParseFlags(f Flags) {
+
 }
 
 // Flags is a wrapper for any type that can store keyed flags and give them back

@@ -21,7 +21,7 @@ package main
 import (
 	"os"
 
-	"github.com/gotosocial/gotosocial/cmd/server"
+	"github.com/gotosocial/gotosocial/internal/server"
 	"github.com/gotosocial/gotosocial/internal/consts"
 	"github.com/sirupsen/logrus"
 
@@ -32,6 +32,7 @@ func main() {
 	flagNames := consts.GetFlagNames()
 	envNames := consts.GetEnvNames()
 	app := &cli.App{
+		Usage: "a fediverse social media server",
 		Flags: []cli.Flag{
 			// GENERAL FLAGS
 			&cli.StringFlag{
@@ -46,6 +47,12 @@ func main() {
 				Value:   "gotosocial",
 				EnvVars: []string{envNames.ApplicationName},
 				Hidden:  true,
+			},
+			&cli.StringFlag{
+				Name:    flagNames.ConfigPath,
+				Usage:   "Path to a yaml file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
+				Value:   "",
+				EnvVars: []string{envNames.ConfigPath},
 			},
 
 			// DATABASE FLAGS
@@ -76,9 +83,7 @@ func main() {
 			&cli.StringFlag{
 				Name:     flagNames.DbPassword,
 				Usage:    "Database password",
-				Value:    "postgres",
 				EnvVars:  []string{envNames.DbPassword},
-				FilePath: "./dbpass",
 			},
 			&cli.StringFlag{
 				Name:    flagNames.DbDatabase,

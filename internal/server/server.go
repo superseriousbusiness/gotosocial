@@ -26,6 +26,7 @@ import (
 	"syscall"
 
 	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/consts"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/urfave/cli/v2"
@@ -38,8 +39,8 @@ func Run(c *cli.Context) error {
 		return fmt.Errorf("error creating logger: %s", err)
 	}
 
-	var gtsConfig *config.Config
-	if gtsConfig, err = config.New(c.String("config")); err != nil {
+	gtsConfig, err := config.New(c.String(consts.GetFlagNames().ConfigPath))
+	if err != nil {
 		return fmt.Errorf("error creating config: %s", err)
 	}
 
