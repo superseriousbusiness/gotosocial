@@ -28,6 +28,7 @@ import (
 
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-pg/pg"
+	"github.com/gotosocial/gotosocial/internal/consts"
 	"github.com/sirupsen/logrus"
 )
 
@@ -100,23 +101,22 @@ func derivePGOptions(config *Config) (*pg.Options, error) {
 		return nil, fmt.Errorf("expected db type of %s but got %s", dbTypePostgres, config.Type)
 	}
 
-	// use sensible default port
-	var port int = config.Port
-	if port == 0 {
-		port = postgresDefaultPort
+	// validate port
+	if config.Port == 0 {
+		return nil, errors.New("no port set")
 	}
 
 	// validate address
 	if config.Address == "" {
-		config.Address = defaultAddress
+		return nil, errors.New("no address set")
 	}
-	if !hostnameRegex.MatchString(config.Address) && !ipv4Regex.MatchString(config.Address) && config.Address != "localhost" {
+	if !consts.HostnameRegex.MatchString(config.Address) && !consts.IPV4Regex.MatchString(config.Address) && config.Address != "localhost" {
 		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", config.Address)
 	}
 
 	// validate username
 	if config.User == "" {
-		config.User = postgresDefaultUser
+		return nil, errors.New("no user set")
 	}
 
 	// validate that there's a password
@@ -126,7 +126,7 @@ func derivePGOptions(config *Config) (*pg.Options, error) {
 
 	// validate database
 	if config.Database == "" {
-		config.Database = defaultDatabase
+		return nil, errors.New("no database set")
 	}
 
 	// We can rely on the pg library we're using to set

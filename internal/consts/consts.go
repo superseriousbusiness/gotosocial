@@ -20,6 +20,8 @@
 // Don't judge me.
 package consts
 
+import "regexp"
+
 // FlagNames is used for storing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
 type FlagNames struct {
@@ -75,3 +77,6 @@ func GetEnvNames() FlagNames {
 		DbDatabase:      "GTS_DB_DATABASE",
 	}
 }
+
+var IPV4Regex = regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
+var HostnameRegex = regexp.MustCompile(`^(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}$`)
