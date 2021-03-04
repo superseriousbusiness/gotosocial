@@ -26,11 +26,30 @@ import (
 )
 
 // New returns a new logrus logger with the specified level,
-// or an error if that level can't be parsed
+// or an error if that level can't be parsed. It also sets
+// the output to log.outputSplitter, so you get error logs
+// on stderr and normal logs on stdout.
 func New(level string) (*logrus.Logger, error) {
 	log := logrus.New()
+
 	log.SetOutput(&outputSplitter{})
-	return setLogLevel(level, log)
+
+	logLevel, err := logrus.ParseLevel(level)
+	if err != nil {
+		return nil, err
+	}
+	log.SetLevel(logLevel)
+
+	if logLevel == logrus.TraceLevel {
+		log.SetReportCaller(true)
+	}
+
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+
+	return log, nil
 }
 
 // outputSplitter implements the io.Writer interface for use with Logrus, and simply
@@ -43,16 +62,4 @@ func (splitter *outputSplitter) Write(p []byte) (n int, err error) {
 		return os.Stderr.Write(p)
 	}
 	return os.Stdout.Write(p)
-}
-
-// setLogLevel will try to set the logrus log level to the
-// desired level specified by the user with the --log-level flag
-func setLogLevel(level string, logger *logrus.Logger) (*logrus.Logger, error) {
-	log := logrus.New()
-	logLevel, err := logrus.ParseLevel(level)
-	if err != nil {
-		return nil, err
-	}
-	log.SetLevel(logLevel)
-	return log, nil
 }

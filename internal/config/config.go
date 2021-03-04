@@ -22,21 +22,22 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gotosocial/gotosocial/internal/db"
 	"gopkg.in/yaml.v2"
 )
 
-// Config contains all the configuration needed to run gotosocial
+// Config pulls together all the configuration needed to run gotosocial
 type Config struct {
-	LogLevel        string     `yaml:"logLevel"`
-	ApplicationName string     `yaml:"applicationName,omitempty"`
-	DBConfig        *db.Config `yaml:"db,omitempty"`
+	LogLevel        string    `yaml:"logLevel"`
+	ApplicationName string    `yaml:"applicationName"`
+	DBConfig        *DBConfig `yaml:"db"`
 }
 
 // New returns a new config, or an error if something goes amiss.
 // The path parameter is optional, for loading a configuration json from the given path.
 func New(path string) (*Config, error) {
-	config := &Config{}
+	config := &Config{
+		DBConfig: &DBConfig{},
+	}
 	if path != "" {
 		var err error
 		if config, err = loadFromFile(path); err != nil {
@@ -63,12 +64,102 @@ func loadFromFile(path string) (*Config, error) {
 }
 
 // ParseFlags sets flags on the config using the provided Flags object
-func (c *Config) ParseFlags(f Flags) {
+func (c *Config) ParseFlags(f KeyedFlags) {
+	fn := GetFlagNames()
 
+	// For all of these flags, we only want to set them on the config if:
+	//
+	// a) They haven't been set at all in the config file we already parsed,
+	// 	  and so we take the default from the flags object.
+	//
+	// b) They may have been set in the config, but they've *also* been set explicitly
+	//    as a command-line argument or an env variable, which takes priority.
+
+	// general flags
+	if c.LogLevel == "" || f.IsSet(fn.LogLevel) {
+		c.LogLevel = f.String(fn.LogLevel)
+	}
+
+	if c.ApplicationName == "" || f.IsSet(fn.ApplicationName) {
+		c.ApplicationName = f.String(fn.ApplicationName)
+	}
+
+	// db flags
+	if c.DBConfig.Type == "" || f.IsSet(fn.DbType) {
+		c.DBConfig.Type = f.String(fn.DbType)
+	}
+
+	if c.DBConfig.Address == "" || f.IsSet(fn.DbAddress) {
+		c.DBConfig.Address = f.String(fn.DbAddress)
+	}
+
+	if c.DBConfig.Port == 0 || f.IsSet(fn.DbPort) {
+		c.DBConfig.Port = f.Int(fn.DbPort)
+	}
+
+	if c.DBConfig.User == "" || f.IsSet(fn.DbUser) {
+		c.DBConfig.User = f.String(fn.DbUser)
+	}
+
+	if c.DBConfig.Password == "" || f.IsSet(fn.DbPassword) {
+		c.DBConfig.Password = f.String(fn.DbPassword)
+	}
+
+	if c.DBConfig.Database == "" || f.IsSet(fn.DbDatabase) {
+		c.DBConfig.Database = f.String(fn.DbDatabase)
+	}
 }
 
-// Flags is a wrapper for any type that can store keyed flags and give them back
-type Flags interface {
+// KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
+// HINT: This works with a urfave cli context struct ;)
+type KeyedFlags interface {
 	String(k string) string
 	Int(k string) int
+	IsSet(k string) bool
+}
+
+// Flags is used for storing the names of the various flags used for
+// initializing and storing urfavecli flag variables.
+type Flags struct {
+	LogLevel        string
+	ApplicationName string
+	ConfigPath      string
+	DbType          string
+	DbAddress       string
+	DbPort          string
+	DbUser          string
+	DbPassword      string
+	DbDatabase      string
+}
+
+// GetFlagNames returns a struct containing the names of the various flags used for
+// initializing and storing urfavecli flag variables.
+func GetFlagNames() Flags {
+	return Flags{
+		LogLevel:        "log-level",
+		ApplicationName: "application-name",
+		ConfigPath:      "config-path",
+		DbType:          "db-type",
+		DbAddress:       "db-address",
+		DbPort:          "db-port",
+		DbUser:          "db-user",
+		DbPassword:      "db-password",
+		DbDatabase:      "db-database",
+	}
+}
+
+// GetEnvNames returns a struct containing the names of the environment variable keys used for
+// initializing and storing urfavecli flag variables.
+func GetEnvNames() Flags {
+	return Flags{
+		LogLevel:        "GTS_LOG_LEVEL",
+		ApplicationName: "GTS_APPLICATION_NAME",
+		ConfigPath:      "GTS_CONFIG_PATH",
+		DbType:          "GTS_DB_TYPE",
+		DbAddress:       "GTS_DB_ADDRESS",
+		DbPort:          "GTS_DB_PORT",
+		DbUser:          "GTS_DB_USER",
+		DbPassword:      "GTS_DB_PASSWORD",
+		DbDatabase:      "GTS_DB_DATABASE",
+	}
 }

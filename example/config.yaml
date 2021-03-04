@@ -8,7 +8,7 @@ logLevel: "info"
 # Default: "gotosocial"
 applicationName: "gotosocial"
 
-# Config pertaining to the Gotosocial database connection 
+# Config pertaining to the Gotosocial database connection
 db:
   # String. Database type.
   # Options: ["postgres"]
@@ -22,7 +22,7 @@ db:
 
   # Int. Port for database connection.
   # Examples: [5432, 1234, 6969]
-  # Default: 5432 
+  # Default: 5432
   port: 5432
 
   # String. Username for the database connection.
@@ -35,3 +35,8 @@ db:
   # Examples: ["password123","verysafepassword","postgres"]
   # Default: ""
   password: ""
+
+  # String. Name of the database to use within the provided database type.
+  # Examples: ["mydb","postgres","gotosocial"]
+  # Default: "postgres"
+  database: "postgres"

@@ -19,18 +19,22 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/gotosocial/gotosocial/internal/action"
+	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/gotosocial/gotosocial/internal/server"
-	"github.com/gotosocial/gotosocial/internal/consts"
 	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	flagNames := consts.GetFlagNames()
-	envNames := consts.GetEnvNames()
+	flagNames := config.GetFlagNames()
+	envNames := config.GetEnvNames()
 	app := &cli.App{
 		Usage: "a fediverse social media server",
 		Flags: []cli.Flag{
@@ -81,9 +85,9 @@ func main() {
 				EnvVars: []string{envNames.DbUser},
 			},
 			&cli.StringFlag{
-				Name:     flagNames.DbPassword,
-				Usage:    "Database password",
-				EnvVars:  []string{envNames.DbPassword},
+				Name:    flagNames.DbPassword,
+				Usage:   "Database password",
+				EnvVars: []string{envNames.DbPassword},
 			},
 			&cli.StringFlag{
 				Name:    flagNames.DbDatabase,
@@ -98,9 +102,24 @@ func main() {
 				Usage: "gotosocial server-related tasks",
 				Subcommands: []*cli.Command{
 					{
-						Name:   "start",
-						Usage:  "start the gotosocial server",
-						Action: server.Run,
+						Name:  "start",
+						Usage: "start the gotosocial server",
+						Action: func(c *cli.Context) error {
+							return runAction(c, server.Run)
+						},
+					},
+				},
+			},
+			{
+				Name:  "db",
+				Usage: "database-related tasks and utils",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "init",
+						Usage: "initialize a database with the required schema for gotosocial; has no effect & is safe to run on an already-initialized db",
+						Action: func(c *cli.Context) error {
+							return runAction(c, db.Initialize)
+						},
 					},
 				},
 			},
@@ -111,4 +130,25 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
+}
+
+// runAction builds up the config and logger necessary for any
+// gotosocial action, and then executes the action.
+func runAction(c *cli.Context, a action.GTSAction) error {
+
+	// create a new *config.Config based on the config path provided...
+	conf, err := config.New(c.String(config.GetFlagNames().ConfigPath))
+	if err != nil {
+		return fmt.Errorf("error creating config: %s", err)
+	}
+	// ... and the flags set on the *cli.Context by urfave
+	conf.ParseFlags(c)
+
+	// create a logger with the log level, formatting, and output splitter already set
+	log, err := log.New(conf.LogLevel)
+	if err != nil {
+		return fmt.Errorf("error creating logger: %s", err)
+	}
+
+	return a(c.Context, conf, log)
 }

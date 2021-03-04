@@ -23,17 +23,18 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-pg/pg"
-	"github.com/gotosocial/gotosocial/internal/consts"
+	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 
 type postgresService struct {
-	config *Config
+	config *config.DBConfig
 	conn   *pg.DB
 	log    *logrus.Entry
 	cancel context.CancelFunc
@@ -41,8 +42,8 @@ type postgresService struct {
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
-func newPostgresService(ctx context.Context, config *Config, log *logrus.Entry) (*postgresService, error) {
-	opts, err := derivePGOptions(config)
+func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry) (*postgresService, error) {
+	opts, err := derivePGOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
 	}
@@ -83,7 +84,7 @@ func newPostgresService(ctx context.Context, config *Config, log *logrus.Entry) 
 
 	// we can confidently return this useable postgres service now
 	return &postgresService{
-		config: config,
+		config: c.DBConfig,
 		conn:   conn,
 		log:    log,
 		cancel: cancel,
@@ -96,46 +97,50 @@ func newPostgresService(ctx context.Context, config *Config, log *logrus.Entry) 
 
 // derivePGOptions takes an application config and returns either a ready-to-use *pg.Options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
-func derivePGOptions(config *Config) (*pg.Options, error) {
-	if strings.ToUpper(config.Type) != dbTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", dbTypePostgres, config.Type)
+func derivePGOptions(c *config.Config) (*pg.Options, error) {
+	if strings.ToUpper(c.DBConfig.Type) != dbTypePostgres {
+		return nil, fmt.Errorf("expected db type of %s but got %s", dbTypePostgres, c.DBConfig.Type)
 	}
 
 	// validate port
-	if config.Port == 0 {
+	if c.DBConfig.Port == 0 {
 		return nil, errors.New("no port set")
 	}
 
 	// validate address
-	if config.Address == "" {
+	if c.DBConfig.Address == "" {
 		return nil, errors.New("no address set")
 	}
-	if !consts.HostnameRegex.MatchString(config.Address) && !consts.IPV4Regex.MatchString(config.Address) && config.Address != "localhost" {
-		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", config.Address)
+
+	ipv4Regex := regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
+	hostnameRegex := regexp.MustCompile(`^(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}$`)
+	if !hostnameRegex.MatchString(c.DBConfig.Address) && !ipv4Regex.MatchString(c.DBConfig.Address) && c.DBConfig.Address != "localhost" {
+		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", c.DBConfig.Address)
 	}
 
 	// validate username
-	if config.User == "" {
+	if c.DBConfig.User == "" {
 		return nil, errors.New("no user set")
 	}
 
 	// validate that there's a password
-	if config.Password == "" {
+	if c.DBConfig.Password == "" {
 		return nil, errors.New("no password set")
 	}
 
 	// validate database
-	if config.Database == "" {
+	if c.DBConfig.Database == "" {
 		return nil, errors.New("no database set")
 	}
 
 	// We can rely on the pg library we're using to set
 	// sensible defaults for everything we don't set here.
 	options := &pg.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Address, config.Port),
-		User:     config.User,
-		Password: config.Password,
-		Database: config.Database,
+		Addr:            fmt.Sprintf("%s:%d", c.DBConfig.Address, c.DBConfig.Port),
+		User:            c.DBConfig.User,
+		Password:        c.DBConfig.Password,
+		Database:        c.DBConfig.Database,
+		ApplicationName: c.ApplicationName,
 	}
 
 	return options, nil
@@ -144,83 +149,83 @@ func derivePGOptions(config *Config) (*pg.Options, error) {
 /*
    GO-FED DB INTERFACE-IMPLEMENTING FUNCTIONS
 */
-func (ps *postgresService) Lock(c context.Context, id *url.URL) error {
+func (ps *postgresService) Lock(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (ps *postgresService) Unlock(c context.Context, id *url.URL) error {
+func (ps *postgresService) Unlock(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (ps *postgresService) InboxContains(c context.Context, inbox *url.URL, id *url.URL) (bool, error) {
+func (ps *postgresService) InboxContains(ctx context.Context, inbox *url.URL, id *url.URL) (bool, error) {
 	return false, nil
 }
 
-func (ps *postgresService) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+func (ps *postgresService) GetInbox(ctx context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
+func (ps *postgresService) SetInbox(ctx context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
-func (ps *postgresService) Owns(c context.Context, id *url.URL) (owns bool, err error) {
+func (ps *postgresService) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
 	return false, nil
 }
 
-func (ps *postgresService) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (ps *postgresService) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (ps *postgresService) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+func (ps *postgresService) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) Exists(c context.Context, id *url.URL) (exists bool, err error) {
+func (ps *postgresService) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
 	return false, nil
 }
 
-func (ps *postgresService) Get(c context.Context, id *url.URL) (value vocab.Type, err error) {
+func (ps *postgresService) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) Create(c context.Context, asType vocab.Type) error {
+func (ps *postgresService) Create(ctx context.Context, asType vocab.Type) error {
 	return nil
 }
 
-func (ps *postgresService) Update(c context.Context, asType vocab.Type) error {
+func (ps *postgresService) Update(ctx context.Context, asType vocab.Type) error {
 	return nil
 }
 
-func (ps *postgresService) Delete(c context.Context, id *url.URL) error {
+func (ps *postgresService) Delete(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (ps *postgresService) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+func (ps *postgresService) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+func (ps *postgresService) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
-func (ps *postgresService) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
+func (ps *postgresService) NewID(ctx context.Context, t vocab.Type) (id *url.URL, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (ps *postgresService) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) Following(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (ps *postgresService) Following(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }
 
-func (ps *postgresService) Liked(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (ps *postgresService) Liked(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }
 

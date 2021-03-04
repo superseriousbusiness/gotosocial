@@ -16,4 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package server
+package db
+
+import (
+	"context"
+
+	"github.com/gotosocial/gotosocial/internal/action"
+	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/sirupsen/logrus"
+)
+
+// Initialize will initialize the database given in the config for use with GoToSocial
+var Initialize action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
+	_, err := New(ctx, c, log)
+   if err != nil {
+      return err
+   }
+	return nil
+}

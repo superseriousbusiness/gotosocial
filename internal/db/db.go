@@ -24,15 +24,16 @@ import (
 	"strings"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 
 const dbTypePostgres string = "POSTGRES"
 
-// Service provides methods for interacting with an underlying database (for now, just postgres).
-// The function mapping lines up with the Database interface described in go-fed.
+// DB provides methods for interacting with an underlying database (for now, just postgres).
+// The function mapping lines up with the DB interface described in go-fed.
 // See here: https://github.com/go-fed/activity/blob/master/pub/database.go
-type Service interface {
+type DB interface {
 	/*
 		GO-FED DATABASE FUNCTIONS
 	*/
@@ -44,24 +45,13 @@ type Service interface {
 	Stop(context.Context) error
 }
 
-// Config provides configuration options for the database connection
-type Config struct {
-	Type            string `yaml:"type,omitempty"`
-	Address         string `yaml:"address,omitempty"`
-	Port            int    `yaml:"port,omitempty"`
-	User            string `yaml:"user,omitempty"`
-	Password        string `yaml:"password,omitempty"`
-	Database        string `yaml:"database,omitempty"`
-	ApplicationName string `yaml:"applicationName,omitempty"`
-}
-
-// NewService returns a new database service that satisfies the Service interface and, by extension,
+// New returns a new database service that satisfies the Service interface and, by extension,
 // the go-fed database interface described here: https://github.com/go-fed/activity/blob/master/pub/database.go
-func NewService(context context.Context, config *Config, log *logrus.Logger) (Service, error) {
-	switch strings.ToUpper(config.Type) {
+func New(ctx context.Context, c *config.Config, log *logrus.Logger) (DB, error) {
+	switch strings.ToUpper(c.DBConfig.Type) {
 	case dbTypePostgres:
-		return newPostgresService(context, config, log.WithField("service", "db"))
+		return newPostgresService(ctx, c, log.WithField("service", "db"))
 	default:
-		return nil, fmt.Errorf("database type %s not supported", config.Type)
+		return nil, fmt.Errorf("database type %s not supported", c.DBConfig.Type)
 	}
 }
