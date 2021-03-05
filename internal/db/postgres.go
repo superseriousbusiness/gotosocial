@@ -28,8 +28,11 @@ import (
 	"time"
 
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/extra/pgdebug"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/model"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,9 +50,10 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
 	}
+	log.Debugf("using pg options: %+v", opts)
 
 	readyChan := make(chan interface{})
-	opts.OnConnect = func(c *pg.Conn) error {
+	opts.OnConnect = func(ctx context.Context, c *pg.Conn) error {
 		close(readyChan)
 		return nil
 	}
@@ -58,19 +62,30 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	pgCtx, cancel := context.WithCancel(ctx)
 	conn := pg.Connect(opts).WithContext(pgCtx)
 
+	// this will break the logfmt format we normally log in,
+	// since we can't choose where pg outputs to and it defaults to
+	// stdout. So use this option with care!
+	if log.Logger.GetLevel() >= logrus.TraceLevel {
+		conn.AddQueryHook(pgdebug.DebugHook{
+			// Print all queries.
+			Verbose: true,
+		})
+	}
+
 	// actually *begin* the connection so that we can tell if the db is there
 	// and listening, and also trigger the opts.OnConnect function passed in above
-	tx, err := conn.Begin()
-	if err != nil {
+	if err := conn.Ping(ctx); err != nil {
 		cancel()
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
 
-	// close the transaction we just started so it doesn't hang around
-	if err := tx.Rollback(); err != nil {
+	// print out discovered postgres version
+	var version string
+	if _, err = conn.QueryOneContext(ctx, pg.Scan(&version), "SELECT version()"); err != nil {
 		cancel()
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
+	log.Infof("connected to postgres version: %s", version)
 
 	// make sure the opts.OnConnect function has been triggered
 	// and closed the ready channel
@@ -80,6 +95,12 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	case <-time.After(5 * time.Second):
 		cancel()
 		return nil, errors.New("db connection timeout")
+	}
+
+	acc := model.StubAccount()
+	if _, err := conn.Model(acc).Returning("id").Insert(); err != nil {
+		cancel()
+		return nil, errors.New("db insert error")
 	}
 
 	// we can confidently return this useable postgres service now
@@ -241,4 +262,27 @@ func (ps *postgresService) Stop(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (ps *postgresService) CreateSchema(ctx context.Context) error {
+	models := []interface{}{
+		(*model.Account)(nil),
+	}
+	ps.log.Info("creating db schema")
+
+	for _, model := range models {
+		err := ps.conn.Model(model).CreateTable(&orm.CreateTableOptions{
+			IfNotExists: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	ps.log.Info("db schema created")
+	return nil
+}
+
+func (ps *postgresService) IsHealthy(ctx context.Context) error {
+	return ps.conn.Ping(ctx)
 }

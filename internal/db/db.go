@@ -42,7 +42,15 @@ type DB interface {
 	/*
 		ANY ADDITIONAL DESIRED FUNCTIONS
 	*/
+
+	// CreateSchema should populate the database with the required tables
+	CreateSchema(context.Context) error
+
+	// Stop should stop and close the database connection cleanly, returning an error if this is not possible
 	Stop(context.Context) error
+
+	// IsHealthy should return nil if the database connection is healthy, or an error if not
+	IsHealthy(context.Context) error
 }
 
 // New returns a new database service that satisfies the Service interface and, by extension,

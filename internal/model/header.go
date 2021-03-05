@@ -16,21 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package model
 
 import (
-	"context"
-
-	"github.com/gotosocial/gotosocial/internal/action"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/sirupsen/logrus"
+	"net/url"
+	"time"
 )
 
-// Initialize will initialize the database given in the config for use with GoToSocial
-var Initialize action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	db, err := New(ctx, c, log)
-   if err != nil {
-      return err
-   }
-   return db.CreateSchema(ctx)
+type Header struct {
+	HeaderFileName             string
+	HeaderContentType          string
+	HeaderFileSize             int
+	HeaderUpdatedAt            *time.Time `pg:"type:timestamp"`
+	HeaderRemoteURL            *url.URL   `pg:"type:text"`
+	HeaderStorageSchemaVersion int
 }

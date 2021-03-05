@@ -38,6 +38,10 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	if err := dbService.CreateSchema(ctx); err != nil {
+		return fmt.Errorf("error creating dbschema: %s", err)
+	}
+
 	// catch shutdown signals from the operating system
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
