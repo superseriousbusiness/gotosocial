@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
@@ -239,6 +240,14 @@ func (ps *postgresService) Get(ctx context.Context, id *url.URL) (value vocab.Ty
 }
 
 func (ps *postgresService) Create(ctx context.Context, asType vocab.Type) error {
+	t, err := streams.NewTypeResolver()
+	if err != nil {
+		return err
+	}
+	if err := t.Resolve(ctx, asType); err != nil {
+		return err
+	}
+	asType.GetTypeName()
 	return nil
 }
 
