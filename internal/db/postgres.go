@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-fed/activity/streams/vocab"
@@ -41,6 +42,7 @@ type postgresService struct {
 	conn   *pg.DB
 	log    *logrus.Entry
 	cancel context.CancelFunc
+	locks  *sync.Map
 }
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -109,6 +111,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		conn:   conn,
 		log:    log,
 		cancel: cancel,
+		locks:  &sync.Map{},
 	}, nil
 }
 
@@ -171,10 +174,31 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
    GO-FED DB INTERFACE-IMPLEMENTING FUNCTIONS
 */
 func (ps *postgresService) Lock(ctx context.Context, id *url.URL) error {
+	// Before any other Database methods are called, the relevant `id`
+	// entries are locked to allow for fine-grained concurrency.
+
+	// Strategy: create a new lock, if stored, continue. Otherwise, lock the
+	// existing mutex.
+	mu := &sync.Mutex{}
+	mu.Lock() // Optimistically lock if we do store it.
+	i, loaded := ps.locks.LoadOrStore(id.String(), mu)
+	if loaded {
+		mu = i.(*sync.Mutex)
+		mu.Lock()
+	}
 	return nil
 }
 
 func (ps *postgresService) Unlock(ctx context.Context, id *url.URL) error {
+	// Once Go-Fed is done calling Database methods, the relevant `id`
+	// entries are unlocked.
+
+	i, ok := ps.locks.Load(id.String())
+	if !ok {
+		return errors.New("missing an id in unlock")
+	}
+	mu := i.(*sync.Mutex)
+	mu.Unlock()
 	return nil
 }
 

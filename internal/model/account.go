@@ -66,6 +66,24 @@ type Account struct {
 	SuspensionOrigin      int
 }
 
+type Avatar struct {
+	AvatarFileName             string
+	AvatarContentType          string
+	AvatarFileSize             int
+	AvatarUpdatedAt            *time.Time `pg:"type:timestamp"`
+	AvatarRemoteURL            *url.URL   `pg:"type:text"`
+	AvatarStorageSchemaVersion int
+}
+
+type Header struct {
+	HeaderFileName             string
+	HeaderContentType          string
+	HeaderFileSize             int
+	HeaderUpdatedAt            *time.Time `pg:"type:timestamp"`
+	HeaderRemoteURL            *url.URL   `pg:"type:text"`
+	HeaderStorageSchemaVersion int
+}
+
 func StubAccount() *Account {
 
 	remoteURL, _ := url.Parse("https://example.org/@someuser")

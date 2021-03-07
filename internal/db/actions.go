@@ -29,8 +29,8 @@ import (
 // Initialize will initialize the database given in the config for use with GoToSocial
 var Initialize action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
 	db, err := New(ctx, c, log)
-   if err != nil {
-      return err
-   }
-   return db.CreateSchema(ctx)
+	if err != nil {
+		return err
+	}
+	return db.CreateSchema(ctx)
 }
