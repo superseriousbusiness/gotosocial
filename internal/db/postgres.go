@@ -103,8 +103,22 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	acc := model.StubAccount()
 	if _, err := conn.Model(acc).Returning("id").Insert(); err != nil {
 		cancel()
-		return nil, errors.New("db insert error")
+		return nil, fmt.Errorf("db insert error: %s", err)
 	}
+	log.Infof("created account with id %s", acc.ID)
+
+	note := &model.Note{
+		Visibility: &model.Visibility{
+			Local: true,
+		},
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	if _, err := conn.Model(note).Returning("id").Insert(); err != nil {
+		cancel()
+		return nil, fmt.Errorf("db insert error: %s", err)
+	}
+	log.Infof("created note with id %s", note.ID)
 
 	// we can confidently return this useable postgres service now
 	return &postgresService{
@@ -300,6 +314,7 @@ func (ps *postgresService) Stop(ctx context.Context) error {
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
 		(*model.Account)(nil),
+		(*model.Note)(nil),
 	}
 	ps.log.Info("creating db schema")
 

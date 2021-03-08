@@ -27,32 +27,30 @@ import (
 type Account struct {
 	Avatar
 	Header
-	ID                    int `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	URI                   string
+	URL                   string
+	ID                    string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
 	Username              string
 	Domain                string
 	Secret                string
 	PrivateKey            string
 	PublicKey             string
-	RemoteURL             *url.URL  `pg:"type:text"`
-	SalmonURL             *url.URL  `pg:"type:text"`
-	HubURL                *url.URL  `pg:"type:text"`
+	RemoteURL             string
 	CreatedAt             time.Time `pg:"type:timestamp,notnull"`
 	UpdatedAt             time.Time `pg:"type:timestamp,notnull"`
 	Note                  string
 	DisplayName           string
-	URI                   *url.URL  `pg:"type:text"`
-	URL                   *url.URL  `pg:"type:text"`
 	SubscriptionExpiresAt time.Time `pg:"type:timestamp"`
 	Locked                bool
 	LastWebfingeredAt     time.Time `pg:"type:timestamp"`
-	InboxURL              *url.URL  `pg:"type:text"`
-	OutboxURL             *url.URL  `pg:"type:text"`
-	SharedInboxURL        *url.URL  `pg:"type:text"`
-	FollowersURL          *url.URL  `pg:"type:text"`
+	InboxURL              string
+	OutboxURL             string
+	SharedInboxURL        string
+	FollowersURL          string
 	Protocol              int
 	Memorial              bool
 	MovedToAccountID      int
-	FeaturedCollectionURL *url.URL `pg:"type:text"`
+	FeaturedCollectionURL string
 	Fields                map[string]string
 	ActorType             string
 	Discoverable          bool
@@ -61,7 +59,6 @@ type Account struct {
 	SuspendedAt           time.Time `pg:"type:timestamp"`
 	TrustLevel            int
 	HideCollections       bool
-	DevicesURL            *url.URL  `pg:"type:text"`
 	SensitizedAt          time.Time `pg:"type:timestamp"`
 	SuspensionOrigin      int
 }
@@ -85,13 +82,10 @@ type Header struct {
 }
 
 func StubAccount() *Account {
-
-	remoteURL, _ := url.Parse("https://example.org/@someuser")
-
 	return &Account{
 		Username:  "some_user",
 		Domain:    "example.org",
-		RemoteURL: remoteURL,
+		RemoteURL: "https://example.org/@someuser",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
