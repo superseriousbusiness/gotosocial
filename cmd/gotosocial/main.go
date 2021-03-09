@@ -25,8 +25,8 @@ import (
 	"github.com/gotosocial/gotosocial/internal/action"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/gotosocial/gotosocial/internal/gotosocial"
+	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli/v2"
