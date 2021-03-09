@@ -26,7 +26,7 @@ import (
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/log"
-	"github.com/gotosocial/gotosocial/internal/server"
+	"github.com/gotosocial/gotosocial/internal/gotosocial"
 	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli/v2"
@@ -105,7 +105,7 @@ func main() {
 						Name:  "start",
 						Usage: "start the gotosocial server",
 						Action: func(c *cli.Context) error {
-							return runAction(c, server.Run)
+							return runAction(c, gotosocial.Run)
 						},
 					},
 				},

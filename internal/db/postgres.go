@@ -114,7 +114,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if _, err := conn.Model(note).Returning("id").Insert(); err != nil {
+	if _, err := conn.WithContext(ctx).Model(note).Returning("id").Insert(); err != nil {
 		cancel()
 		return nil, fmt.Errorf("db insert error: %s", err)
 	}

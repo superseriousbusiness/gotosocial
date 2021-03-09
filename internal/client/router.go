@@ -16,12 +16,4 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package api
-
-// API is the client API exposed to the outside world for access by front-ends; this is distinct from the federation API
-type API interface {
-}
-
-// api implements Api interface
-type api struct {
-}
+package client

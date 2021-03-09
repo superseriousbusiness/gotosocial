@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package server
+package gotosocial
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Run starts the gotosocial server
+// Run creates and starts a gotosocial server
 var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
 	dbService, err := db.New(ctx, c, log)
 	if err != nil {

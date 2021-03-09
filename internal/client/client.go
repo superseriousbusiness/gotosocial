@@ -16,34 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package api
+package client
 
-import "github.com/gin-gonic/gin"
-
-// Router provides the http routes used by the API
-type Router interface {
-	Route() error
+// API is the client API exposed to the outside world for access by front-ends; this is distinct from the federation API
+type API interface {
 }
 
-// NewRouter returns a new router
-func NewRouter() Router {
-	return &router{}
-}
-
-// router implements the router interface
-type router struct {
-}
-
-func (r *router) Route() error {
-	ginRouter := gin.Default()
-	ginRouter.LoadHTMLGlob("web/template/*")
-
-	apiGroup := ginRouter.Group("/api")
-
-	v1 := apiGroup.Group("/v1")
-
-	statusesGroup := v1.Group("/statuses")
-	statusesGroup.GET(":id", statusGet)
-	err := ginRouter.Run()
-	return err
+// api implements ClientAPI interface
+type api struct {
 }

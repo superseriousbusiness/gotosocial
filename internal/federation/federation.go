@@ -31,82 +31,82 @@ import (
 )
 
 func New(db db.DB) pub.FederatingActor {
-	fs := &FederationService{}
-	return pub.NewFederatingActor(fs, fs, db, fs)
+	fa := &API{}
+	return pub.NewFederatingActor(fa, fa, db, fa)
 }
 
-type FederationService struct {
+type API struct {
 }
 
 // AuthenticateGetInbox determines whether the request is for a GET call to the Actor's Inbox.
-func (fs *FederationService) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (fa *API) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
 // AuthenticateGetOutbox determines whether the request is for a GET call to the Actor's Outbox.
-func (fs *FederationService) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (fa *API) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
 // GetOutbox returns a proper paginated view of the Outbox for serving in a response.
-func (fs *FederationService) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (fa *API) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }
 
 // NewTransport returns a new pub.Transport for federating with peer software.
-func (fs *FederationService) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
+func (fa *API) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fs *FederationService) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
+func (fa *API) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fs *FederationService) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (fa *API) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
-func (fs *FederationService) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
+func (fa *API) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
 	// TODO
 	return false, nil
 }
 
-func (fs *FederationService) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
+func (fa *API) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
 	// TODO
 	return pub.FederatingWrappedCallbacks{}, nil, nil
 }
 
-func (fs *FederationService) DefaultCallback(ctx context.Context, activity pub.Activity) error {
+func (fa *API) DefaultCallback(ctx context.Context, activity pub.Activity) error {
 	// TODO
 	return nil
 }
 
-func (fs *FederationService) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
+func (fa *API) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
 
-func (fs *FederationService) MaxDeliveryRecursionDepth(ctx context.Context) int {
+func (fa *API) MaxDeliveryRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
 
-func (fs *FederationService) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
+func (fa *API) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fs *FederationService) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (fa *API) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fs *FederationService) Now() time.Time {
+func (fa *API) Now() time.Time {
 	return time.Now()
 }

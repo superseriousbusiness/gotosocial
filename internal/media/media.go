@@ -16,4 +16,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package server
+package media
+
+// API provides an interface for parsing, storing, and retrieving media objects like photos and videos
+type API interface {
+	
+}
