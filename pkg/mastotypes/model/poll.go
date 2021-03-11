@@ -18,11 +18,40 @@
 
 package mastotypes
 
+// Poll represents the mastodon-api poll type, as described here: https://docs.joinmastodon.org/entities/poll/
 type Poll struct {
+	// The ID of the poll in the database.
+	ID string `json:"id"`
+	// When the poll ends. (ISO 8601 Datetime), or null if the poll does not end
+	ExpiresAt string `json:"expires_at"`
+	// Is the poll currently expired?
+	Expired bool `json:"expired"`
+	// Does the poll allow multiple-choice answers?
+	Multiple bool `json:"multiple"`
+	// How many votes have been received.
+	VotesCount  int           `json:"votes_count"`
+   // How many unique accounts have voted on a multiple-choice poll. Null if multiple is false.
+	VotersCount int           `json:"voters_count,omitempty"`
+   // When called with a user token, has the authorized user voted?
+	Voted       bool          `json:"voted,omitempty"`
+   // When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
+	OwnVotes    []int         `json:"own_votes,omitempty"`
+   // Possible answers for the poll.
+	Options     []PollOptions `json:"options"`
+   // Custom emoji to be used for rendering poll options.
+	Emojis      []Emoji       `json:"emojis"`
+}
+
+// PollOptions represents the current vote counts for different poll options
+type PollOptions struct {
+   // The text value of the poll option. String.
+	Title      string `json:"title"`
+   // The number of received votes for this option. Number, or null if results are not published yet.
+	VotesCount int    `json:"votes_count,omitempty"`
 }
 
 // PollRequest represents a mastodon-api poll attached to a status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
-// It should be used at the path https://mastodon.example/api/v1/statuses
+// It should be used at the path https://example.org/api/v1/statuses
 type PollRequest struct {
 	// Array of possible answers. If provided, media_ids cannot be used, and poll[expires_in] must be provided.
 	Options []string `form:"options"`

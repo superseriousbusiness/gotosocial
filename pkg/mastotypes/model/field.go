@@ -18,7 +18,17 @@
 
 package mastotypes
 
-// Card represents a rich preview card that is generated using OpenGraph tags from a URL. See here: https://docs.joinmastodon.org/entities/card/
-type Card struct {
-	
+// Field represents a profile field as a name-value pair with optional verification. See https://docs.joinmastodon.org/entities/field/
+type Field struct {
+	// REQUIRED
+
+	// The key of a given field's key-value pair.
+	Name string `json:"name"`
+	// The value associated with the name key.
+	Value string `json:"value"`
+
+	// OPTIONAL
+
+	// Timestamp of when the server verified a URL value for a rel="me” link. String (ISO 8601 Datetime) if value is a verified URL
+	VerifiedAt string `json:"verified_at,omitempty"`
 }

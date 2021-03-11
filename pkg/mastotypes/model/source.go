@@ -18,7 +18,5 @@
 
 package mastotypes
 
-// Card represents a rich preview card that is generated using OpenGraph tags from a URL. See here: https://docs.joinmastodon.org/entities/card/
-type Card struct {
-	
+type Source struct {
 }

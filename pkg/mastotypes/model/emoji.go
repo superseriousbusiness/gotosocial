@@ -19,4 +19,19 @@
 package mastotypes
 
 type Emoji struct {
+	// REQUIRED
+
+	// The name of the custom emoji.
+	Shortcode string `json:"shortcode"`
+	// A link to the custom emoji.
+	URL string `json:"url"`
+	// A link to a static copy of the custom emoji.
+	StaticURL string `json:"static_url"`
+	// Whether this Emoji should be visible in the picker or unlisted.
+	VisibleInPicker bool `json:"visible_in_picker"`
+
+	// OPTIONAL
+
+	// Used for sorting custom emoji in the picker.
+	Category string `json:"category,omitempty"`
 }
