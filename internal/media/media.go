@@ -20,5 +20,4 @@ package media
 
 // API provides an interface for parsing, storing, and retrieving media objects like photos and videos
 type API interface {
-	
 }

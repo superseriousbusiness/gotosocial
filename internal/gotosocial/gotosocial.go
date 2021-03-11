@@ -35,20 +35,20 @@ type Gotosocial interface {
 
 func New(db db.DB, cache cache.Cache, clientAPI client.API, federationAPI pub.FederatingActor, config *config.Config) (Gotosocial, error) {
 	return &gotosocial{
-		db: db,
-      cache: cache,
-      clientAPI: clientAPI,
-      federationAPI: federationAPI,
-      config: config,
+		db:            db,
+		cache:         cache,
+		clientAPI:     clientAPI,
+		federationAPI: federationAPI,
+		config:        config,
 	}, nil
 }
 
 type gotosocial struct {
-	db    db.DB
-	cache cache.Cache
-   clientAPI client.API
-   federationAPI pub.FederatingActor
-   config *config.Config
+	db            db.DB
+	cache         cache.Cache
+	clientAPI     client.API
+	federationAPI pub.FederatingActor
+	config        *config.Config
 }
 
 func (gts *gotosocial) Start(ctx context.Context) error {

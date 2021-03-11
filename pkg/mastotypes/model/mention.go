@@ -16,10 +16,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package mastotypes
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
+// Mention represents the mastodon-api mention type, as documented here: https://docs.joinmastodon.org/entities/mention/
+type Mention struct {
+	// The account id of the mentioned user.
+	ID string `json:"id"`
+	// The username of the mentioned user.
+	Username string `json:"username"`
+	// The location of the mentioned user's profile.
+	URL string `json:"url"`
+	// The webfinger acct: URI of the mentioned user. Equivalent to username for local users, or username@domain for remote users.
+	Acct string `json:"acct"`
 }

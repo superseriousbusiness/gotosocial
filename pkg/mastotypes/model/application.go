@@ -16,10 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package mastotypes
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
+// Application represents a mastodon-api Application, as defined here: https://docs.joinmastodon.org/entities/application/
+type Application struct {
+	// The name of your application.
+	Name string `json:"name"`
+	// The website associated with your application (url)
+	Website string `json:"website"`
+	// Used for Push Streaming API. Returned with POST /api/v1/apps. Equivalent to https://docs.joinmastodon.org/entities/pushsubscription/#server_key
+	VapidKey string `json:"vapid_key"`
 }

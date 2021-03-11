@@ -16,10 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package mastotypes
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
+type Poll struct {
+}
+
+// PollRequest represents a mastodon-api poll attached to a status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
+// It should be used at the path https://mastodon.example/api/v1/statuses
+type PollRequest struct {
+	// Array of possible answers. If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+	Options []string `form:"options"`
+	// Duration the poll should be open, in seconds. If provided, media_ids cannot be used, and poll[options] must be provided.
+	ExpiresIn int `form:"expires_in"`
+	// Allow multiple choices?
+	Multiple bool `form:"multiple"`
+	// Hide vote counts until the poll ends?
+	HideTotals bool `form:"hide_totals"`
 }

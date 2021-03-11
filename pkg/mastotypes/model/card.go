@@ -16,10 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package cache
+package mastotypes
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
+type Card struct {
 }
