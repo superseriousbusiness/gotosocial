@@ -18,9 +18,14 @@
 
 package mastotypes
 
-// Card represents a rich preview card that is generated using OpenGraph tags from a URL. See here: https://docs.joinmastodon.org/entities/card/
-type Card struct {
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+// Activity represents the mastodon-api Activity type. See here: https://docs.joinmastodon.org/entities/activity/
+type Activity struct {
+	// Midnight at the first day of the week. (UNIX Timestamp as string)
+	Week string `json:"week"`
+	// Statuses created since the week began. Integer cast to string.
+	Statuses string `json:"statuses"`
+	// User logins since the week began. Integer cast as string.
+	Logins string `json:"logins"`
+	// User registrations since the week began. Integer cast as string.
+	Registrations string `json:"registrations"`
 }

@@ -18,9 +18,16 @@
 
 package mastotypes
 
-// Card represents a rich preview card that is generated using OpenGraph tags from a URL. See here: https://docs.joinmastodon.org/entities/card/
-type Card struct {
-	URL         string `json:"url"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
+type AnnouncementReaction struct {
+	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
+	Name      string `json:"name"`
+	// The total number of users who have added this reaction.
+	Count     int    `json:"count"`
+	// Whether the authorized user has added this reaction to the announcement.
+	Me        bool   `json:"me"`
+	// A link to the custom emoji.
+	URL       string `json:"url,omitempty"`
+	// A link to a non-animated version of the custom emoji.
+	StaticURL string `json:"static_url,omitempty"`
 }
