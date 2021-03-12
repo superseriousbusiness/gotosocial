@@ -26,4 +26,4 @@ Among other things:
 
 ## Contact
 
-For questions and comments, you can reach out to Tobi on the Fediverse at `@dumpsterqueer@ondergrond.org` or mail admin@gotosocial.org.
+For questions and comments, you can reach out to Tobi on the Fediverse <a rel="me" href="https://ondergrond.org/@dumpsterqueer">here</a> or mail admin@gotosocial.org.
