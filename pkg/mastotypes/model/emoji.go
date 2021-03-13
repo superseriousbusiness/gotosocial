@@ -18,6 +18,7 @@
 
 package mastotypes
 
+// Emoji represents a custom emoji. See https://docs.joinmastodon.org/entities/emoji/
 type Emoji struct {
 	// REQUIRED
 
