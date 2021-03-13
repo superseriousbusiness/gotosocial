@@ -18,16 +18,19 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// Conversation represents a conversation with "direct message" visibility. See https://docs.joinmastodon.org/entities/conversation/
+type Conversation struct {
+	// REQUIRED
+
+	// Local database ID of the conversation.
+	ID string `json:"id"`
+	// Participants in the conversation.
+	Accounts []Account `json:"accounts"`
+	// Is the conversation currently marked as unread?
+	Unread bool `json:"unread"`
+
+	// OPTIONAL
+
+	// The last status in the conversation, to be used for optional display.
+	LastStatus *Status `json:"last_status"`
 }

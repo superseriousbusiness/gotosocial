@@ -18,16 +18,12 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// History represents daily usage history of a hashtag. See https://docs.joinmastodon.org/entities/history/
+type History struct {
+	// UNIX timestamp on midnight of the given day (string cast from integer).
+	Day string `json:"day"`
+	// The counted usage of the tag within that day (string cast from integer).
+	Uses string `json:"uses"`
+	// The total of accounts using the tag within that day (string cast from integer).
+	Accounts string `json:"accounts"`
 }

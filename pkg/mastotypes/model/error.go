@@ -18,16 +18,15 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// Error represents an error message returned from the API. See https://docs.joinmastodon.org/entities/error/
+type Error struct {
+	// REQUIRED
+
+	// The error message.
+	Error string `json:"error"`
+
+	// OPTIONAL
+
+	// A longer description of the error, mainly provided with the OAuth API.
+	ErrorDescription string `json:"error_description"`
 }

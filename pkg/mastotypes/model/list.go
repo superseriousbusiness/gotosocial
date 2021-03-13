@@ -18,16 +18,14 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// List represents a list of some users that the authenticated user follows. See https://docs.joinmastodon.org/entities/list/
+type List struct {
+	// The internal database ID of the list.
+	ID string `json:"id"`
+	// The user-defined title of the list.
+	Title string `json:"title"`
+	// followed = Show replies to any followed user
+	//	list = Show replies to members of the list
+	//	none = Show replies to no one
+	RepliesPolicy string `json:"replies_policy"`
 }

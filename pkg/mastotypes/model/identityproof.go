@@ -18,16 +18,16 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// IdentityProof represents a proof from an external identity provider. See https://docs.joinmastodon.org/entities/identityproof/
+type IdentityProof struct {
+	// The name of the identity provider.
+	Provider string `json:"provider"`
+	// The account owner's username on the identity provider's service.
+	ProviderUsername string `json:"provider_username"`
+	// The account owner's profile URL on the identity provider.
+	ProfileURL string `json:"profile_url"`
+	// A link to a statement of identity proof, hosted by the identity provider.
+	ProofURL string `json:"proof_url"`
+	// When the identity proof was last updated.
+	UpdatedAt string `json:"updated_at"`
 }

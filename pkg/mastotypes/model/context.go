@@ -18,16 +18,10 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+// Context represents the tree around a given status. Used for reconstructing threads of statuses. See: https://docs.joinmastodon.org/entities/context/
+type Context struct {
+	// Parents in the thread.
+	Ancestors []Status `json:"ancestors"`
+	// Children in the thread.
+	Descendants []Status `json:"descendants"`
 }

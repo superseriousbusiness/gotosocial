@@ -29,25 +29,25 @@ type Poll struct {
 	// Does the poll allow multiple-choice answers?
 	Multiple bool `json:"multiple"`
 	// How many votes have been received.
-	VotesCount  int           `json:"votes_count"`
-   // How many unique accounts have voted on a multiple-choice poll. Null if multiple is false.
-	VotersCount int           `json:"voters_count,omitempty"`
-   // When called with a user token, has the authorized user voted?
-	Voted       bool          `json:"voted,omitempty"`
-   // When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
-	OwnVotes    []int         `json:"own_votes,omitempty"`
-   // Possible answers for the poll.
-	Options     []PollOptions `json:"options"`
-   // Custom emoji to be used for rendering poll options.
-	Emojis      []Emoji       `json:"emojis"`
+	VotesCount int `json:"votes_count"`
+	// How many unique accounts have voted on a multiple-choice poll. Null if multiple is false.
+	VotersCount int `json:"voters_count,omitempty"`
+	// When called with a user token, has the authorized user voted?
+	Voted bool `json:"voted,omitempty"`
+	// When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
+	OwnVotes []int `json:"own_votes,omitempty"`
+	// Possible answers for the poll.
+	Options []PollOptions `json:"options"`
+	// Custom emoji to be used for rendering poll options.
+	Emojis []Emoji `json:"emojis"`
 }
 
 // PollOptions represents the current vote counts for different poll options
 type PollOptions struct {
-   // The text value of the poll option. String.
-	Title      string `json:"title"`
-   // The number of received votes for this option. Number, or null if results are not published yet.
-	VotesCount int    `json:"votes_count,omitempty"`
+	// The text value of the poll option. String.
+	Title string `json:"title"`
+	// The number of received votes for this option. Number, or null if results are not published yet.
+	VotesCount int `json:"votes_count,omitempty"`
 }
 
 // PollRequest represents a mastodon-api poll attached to a status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/

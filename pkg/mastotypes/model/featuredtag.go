@@ -18,16 +18,16 @@
 
 package mastotypes
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
-type AnnouncementReaction struct {
-	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
+// FeaturedTag represents a hashtag that is featured on a profile. See https://docs.joinmastodon.org/entities/featuredtag/
+type FeaturedTag struct {
+	// The internal ID of the featured tag in the database.
+	ID string `json:"id"`
+	// The name of the hashtag being featured.
 	Name string `json:"name"`
-	// The total number of users who have added this reaction.
-	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
-	Me bool `json:"me"`
-	// A link to the custom emoji.
-	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
-	StaticURL string `json:"static_url,omitempty"`
+	// A link to all statuses by a user that contain this hashtag.
+	URL string `json:"url"`
+	// The number of authored statuses containing this hashtag.
+	StatusesCount int `json:"statuses_count"`
+	// The timestamp of the last authored status containing this hashtag. (ISO 8601 Datetime)
+	LastStatusAt string `json:"last_status_at"`
 }
