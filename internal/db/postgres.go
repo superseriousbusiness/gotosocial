@@ -30,20 +30,23 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/model"
+	"github.com/gotosocial/gotosocial/internal/oauth"
 	"github.com/sirupsen/logrus"
 )
 
 type postgresService struct {
-	config *config.DBConfig
-	conn   *pg.DB
-	log    *logrus.Entry
-	cancel context.CancelFunc
-	locks  *sync.Map
+	config     *config.DBConfig
+	conn       *pg.DB
+	log        *logrus.Entry
+	cancel     context.CancelFunc
+	locks      *sync.Map
+	tokenStore *oauth.PGTokenStore
 }
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -100,25 +103,25 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		return nil, errors.New("db connection timeout")
 	}
 
-	acc := model.StubAccount()
-	if _, err := conn.Model(acc).Returning("id").Insert(); err != nil {
-		cancel()
-		return nil, fmt.Errorf("db insert error: %s", err)
-	}
-	log.Infof("created account with id %s", acc.ID)
+	// acc := model.StubAccount()
+	// if _, err := conn.Model(acc).Returning("id").Insert(); err != nil {
+	// 	cancel()
+	// 	return nil, fmt.Errorf("db insert error: %s", err)
+	// }
+	// log.Infof("created account with id %s", acc.ID)
 
-	note := &model.Note{
-		Visibility: &model.Visibility{
-			Local: true,
-		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	if _, err := conn.WithContext(ctx).Model(note).Returning("id").Insert(); err != nil {
-		cancel()
-		return nil, fmt.Errorf("db insert error: %s", err)
-	}
-	log.Infof("created note with id %s", note.ID)
+	// note := &model.Note{
+	// 	Visibility: &model.Visibility{
+	// 		Local: true,
+	// 	},
+	// 	CreatedAt: time.Now(),
+	// 	UpdatedAt: time.Now(),
+	// }
+	// if _, err := conn.WithContext(ctx).Model(note).Returning("id").Insert(); err != nil {
+	// 	cancel()
+	// 	return nil, fmt.Errorf("db insert error: %s", err)
+	// }
+	// log.Infof("created note with id %s", note.ID)
 
 	// we can confidently return this useable postgres service now
 	return &postgresService{
@@ -333,4 +336,8 @@ func (ps *postgresService) CreateSchema(ctx context.Context) error {
 
 func (ps *postgresService) IsHealthy(ctx context.Context) error {
 	return ps.conn.Ping(ctx)
+}
+
+func (ps *postgresService) TokenStore() oauth2.TokenStore {
+	return ps.tokenStore
 }
