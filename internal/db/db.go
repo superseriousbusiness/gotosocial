@@ -25,7 +25,6 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,11 +38,6 @@ type DB interface {
 		GO-FED DATABASE FUNCTIONS
 	*/
 	pub.Database
-
-	/*
-		OAUTH2 DATABASE FUNCTIONS
-	*/
-	TokenStore() oauth2.TokenStore
 
 	/*
 		ANY ADDITIONAL DESIRED FUNCTIONS

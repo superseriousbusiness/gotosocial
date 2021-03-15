@@ -315,8 +315,9 @@ func (ps *postgresService) Stop(ctx context.Context) error {
 
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
-		(*gtsmodel.GTSAccount)(nil),
-		(*gtsmodel.GTSStatus)(nil),
+		(*gtsmodel.Account)(nil),
+		(*gtsmodel.Status)(nil),
+		(*gtsmodel.User)(nil),
 	}
 	ps.log.Info("creating db schema")
 

@@ -35,6 +35,10 @@ type Server interface {
 	Stop()
 }
 
+type AddsRoutes interface {
+	AddRoutes(s Server) error
+}
+
 type server struct {
 	APIGroup *gin.RouterGroup
 	logger   *logrus.Logger

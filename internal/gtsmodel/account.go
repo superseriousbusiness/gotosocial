@@ -26,10 +26,10 @@ import (
 	"time"
 )
 
-// GTSAccount represents a GoToSocial user account
-type GTSAccount struct {
-	GTSAvatar
-	GTSHeader
+// Account represents a GoToSocial user account
+type Account struct {
+	Avatar
+	Header
 	URI                   string
 	URL                   string
 	ID                    string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
@@ -66,7 +66,7 @@ type GTSAccount struct {
 	SuspensionOrigin      int
 }
 
-type GTSAvatar struct {
+type Avatar struct {
 	AvatarFileName             string
 	AvatarContentType          string
 	AvatarFileSize             int
@@ -75,7 +75,7 @@ type GTSAvatar struct {
 	AvatarStorageSchemaVersion int
 }
 
-type GTSHeader struct {
+type Header struct {
 	HeaderFileName             string
 	HeaderContentType          string
 	HeaderFileSize             int

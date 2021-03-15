@@ -16,29 +16,5 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
-
-import "time"
-
-type Status struct {
-	ID             string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	URI            string
-	URL            string
-	Content        string
-	CreatedAt      time.Time `pg:"type:timestamp,notnull"`
-	UpdatedAt      time.Time `pg:"type:timestamp,notnull"`
-	Local          bool
-	AccountID      string
-	InReplyToID    string
-	BoostOfID      string
-	ContentWarning string
-	Visibility     *Visibility
-}
-
-type Visibility struct {
-	Direct    bool
-	Followers bool
-	Local     bool
-	Unlisted  bool
-	Public    bool
-}
+// package email provides a service for interacting with an SMTP server
+package email

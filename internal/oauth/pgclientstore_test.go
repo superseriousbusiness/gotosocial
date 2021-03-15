@@ -13,10 +13,10 @@ import (
 
 type PgClientStoreTestSuite struct {
 	suite.Suite
-	conn           *pg.DB
-	testClientID      string
-	testClientSecret  string
-	testClientDomain  string
+	conn             *pg.DB
+	testClientID     string
+	testClientSecret string
+	testClientDomain string
 	testClientUserID string
 }
 

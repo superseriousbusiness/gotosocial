@@ -37,9 +37,9 @@ func NewPGClientStore(conn *pg.DB) oauth2.ClientStore {
 	return pts
 }
 
-func (pcs *pgClientStore) GetByID(ctx context.Context, id string) (oauth2.ClientInfo, error) {
+func (pcs *pgClientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
 	poc := &oauthClient{
-		ID: id,
+		ID: clientID,
 	}
 	if err := pcs.conn.WithContext(ctx).Model(poc).Where("id = ?", poc.ID).Select(); err != nil {
 		return nil, err
