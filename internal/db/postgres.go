@@ -35,7 +35,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/model"
+	"github.com/gotosocial/gotosocial/internal/gtsmodel"
 	"github.com/gotosocial/gotosocial/internal/oauth"
 	"github.com/sirupsen/logrus"
 )
@@ -316,8 +316,8 @@ func (ps *postgresService) Stop(ctx context.Context) error {
 
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
-		(*model.Account)(nil),
-		(*model.Note)(nil),
+		(*gtsmodel.GTSAccount)(nil),
+		(*gtsmodel.GTSStatus)(nil),
 	}
 	ps.log.Info("creating db schema")
 

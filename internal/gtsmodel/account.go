@@ -16,17 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+// package gtsmodel contains types used *internally* by GoToSocial and added/removed/selected from the database.
+// These types should never be serialized and/or sent out via public APIs, as they contain sensitive information.
+// The annotation used on these structs is for handling them via the go-pg ORM. See here: https://pg.uptrace.dev/models/
+package gtsmodel
 
 import (
 	"net/url"
 	"time"
 )
 
-// Account represents a user account
-type Account struct {
-	Avatar
-	Header
+// GTSAccount represents a GoToSocial user account
+type GTSAccount struct {
+	GTSAvatar
+	GTSHeader
 	URI                   string
 	URL                   string
 	ID                    string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
@@ -63,7 +66,7 @@ type Account struct {
 	SuspensionOrigin      int
 }
 
-type Avatar struct {
+type GTSAvatar struct {
 	AvatarFileName             string
 	AvatarContentType          string
 	AvatarFileSize             int
@@ -72,21 +75,11 @@ type Avatar struct {
 	AvatarStorageSchemaVersion int
 }
 
-type Header struct {
+type GTSHeader struct {
 	HeaderFileName             string
 	HeaderContentType          string
 	HeaderFileSize             int
 	HeaderUpdatedAt            *time.Time `pg:"type:timestamp"`
 	HeaderRemoteURL            *url.URL   `pg:"type:text"`
 	HeaderStorageSchemaVersion int
-}
-
-func StubAccount() *Account {
-	return &Account{
-		Username:  "some_user",
-		Domain:    "example.org",
-		RemoteURL: "https://example.org/@someuser",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
 }
