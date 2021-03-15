@@ -24,8 +24,8 @@ import (
 	"strings"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/go-oauth2/oauth2/v4"
 	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 

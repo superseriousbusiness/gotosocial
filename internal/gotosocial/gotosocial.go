@@ -22,8 +22,8 @@ import (
 	"context"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/gotosocial/gotosocial/internal/cache"
 	"github.com/gotosocial/gotosocial/internal/api"
+	"github.com/gotosocial/gotosocial/internal/cache"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
 )

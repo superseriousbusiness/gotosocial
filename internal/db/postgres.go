@@ -30,13 +30,12 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/go-oauth2/oauth2/v4"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
-	"github.com/gotosocial/gotosocial/internal/oauth"
+	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,7 +45,7 @@ type postgresService struct {
 	log        *logrus.Entry
 	cancel     context.CancelFunc
 	locks      *sync.Map
-	tokenStore *oauth.PGTokenStore
+	tokenStore oauth2.TokenStore
 }
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.

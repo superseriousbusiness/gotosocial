@@ -28,9 +28,9 @@ import (
 
 type Server interface {
 	AttachHTTPHandler(method string, path string, handler http.HandlerFunc)
-   AttachGinHandler(method string, path string, handler gin.HandlerFunc)
-   // AttachMiddleware(handler gin.HandlerFunc)
-   GetAPIGroup() *gin.RouterGroup
+	AttachGinHandler(method string, path string, handler gin.HandlerFunc)
+	// AttachMiddleware(handler gin.HandlerFunc)
+	GetAPIGroup() *gin.RouterGroup
 	Start()
 	Stop()
 }
@@ -46,20 +46,22 @@ func (s *server) GetAPIGroup() *gin.RouterGroup {
 }
 
 func (s *server) Start() {
-   // todo: start gracefully
-	s.engine.Run()
+	// todo: start gracefully
+	if err := s.engine.Run(); err != nil {
+		s.logger.Panicf("server error: %s", err)
+	}
 }
 
 func (s *server) Stop() {
-   // todo: shut down gracefully
+	// todo: shut down gracefully
 }
 
 func (s *server) AttachHTTPHandler(method string, path string, handler http.HandlerFunc) {
-   s.engine.Handle(method, path, gin.WrapH(handler))
+	s.engine.Handle(method, path, gin.WrapH(handler))
 }
 
 func (s *server) AttachGinHandler(method string, path string, handler gin.HandlerFunc) {
-   s.engine.Handle(method, path, handler)
+	s.engine.Handle(method, path, handler)
 }
 
 func New(config *config.Config, logger *logrus.Logger) Server {
