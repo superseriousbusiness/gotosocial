@@ -30,10 +30,6 @@ Among other things:
 
 For questions and comments, you can reach out to Tobi on the Fediverse <a rel="me" href="https://ondergrond.org/@dumpsterqueer">here</a> or mail admin@gotosocial.org.
 
-## Attribution
-
-Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
-
 ## Sponsorship
 
 Currently, this project is funded using Liberapay, to put bread on the table while Tobi works on it. If you want to sponsor this project and get your name on this repo, you can do so [here](https://liberapay.com/dumpsterqueer/)! `<3`
@@ -41,3 +37,7 @@ Currently, this project is funded using Liberapay, to put bread on the table whi
 ### Sponsors
 
 None yet! [Go For It](https://liberapay.com/dumpsterqueer/)
+
+### Image Attribution
+
+Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
