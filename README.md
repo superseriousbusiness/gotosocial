@@ -1,5 +1,7 @@
 # GoToSocial
 
+![Sloth logo made by Freepik from www.flaticon.com](./assets/sloth.png)
+
 GoToSocial is a Fediverse server project, written in Golang. It provides an alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
 
 One of the key differences between GoToSocial and those other projects is that GoToSocial doesn't include an integrated front-end (ie., a webapp). Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation and a well-documented API. On this API, developers are free to build any front-end implementation or mobile application that they wish.
@@ -27,3 +29,7 @@ Among other things:
 ## Contact
 
 For questions and comments, you can reach out to Tobi on the Fediverse <a rel="me" href="https://ondergrond.org/@dumpsterqueer">here</a> or mail admin@gotosocial.org.
+
+## Attribution
+
+Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
