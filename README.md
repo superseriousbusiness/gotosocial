@@ -36,8 +36,8 @@ Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://
 
 ## Sponsorship
 
-Currently, this project is funded using Liberapay, to put bread on the table while Tobi works on it. If you want to sponsor this project and get your name on this repo, you can do so [here](liberapay.com/dumpsterqueer/)! `<3`
+Currently, this project is funded using Liberapay, to put bread on the table while Tobi works on it. If you want to sponsor this project and get your name on this repo, you can do so [here](https://liberapay.com/dumpsterqueer/)! `<3`
 
 ### Sponsors
 
-None yet! [Go For It](liberapay.com/dumpsterqueer/)
+None yet! [Go For It](https://liberapay.com/dumpsterqueer/)
