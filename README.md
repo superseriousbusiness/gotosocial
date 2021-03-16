@@ -33,3 +33,11 @@ For questions and comments, you can reach out to Tobi on the Fediverse <a rel="m
 ## Attribution
 
 Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+
+## Sponsorship
+
+Currently, this project is funded using Liberapay, to put bread on the table while Tobi works on it. If you want to sponsor this project and get your name on this repo, you can do so [here](liberapay.com/dumpsterqueer/)! `<3`
+
+### Sponsors
+
+None yet! [Go For It](liberapay.com/dumpsterqueer/)
