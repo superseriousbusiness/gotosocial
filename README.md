@@ -1,6 +1,6 @@
 # GoToSocial
 
-![Sloth logo made by Freepik from www.flaticon.com](./assets/sloth.png)
+<div style="text-align:center"><img src="./assets/sloth.png" /></div>
 
 GoToSocial is a Fediverse server project, written in Golang. It provides an alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
 
@@ -32,4 +32,4 @@ For questions and comments, you can reach out to Tobi on the Fediverse <a rel="m
 
 ## Attribution
 
-Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
