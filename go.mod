@@ -3,12 +3,12 @@ module github.com/gotosocial/gotosocial
 go 1.16
 
 require (
-	github.com/gin-contrib/sessions v0.0.3 // indirect
+	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-fed/activity v1.0.0
 	github.com/go-pg/pg/extra/pgdebug v0.2.0
 	github.com/go-pg/pg/v10 v10.8.0
-	github.com/go-session/session v3.1.2+incompatible // indirect
+	github.com/go-session/session v3.1.2+incompatible
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gotosocial/oauth2/v4 v4.2.1-0.20210316171520-7b12112bbb88

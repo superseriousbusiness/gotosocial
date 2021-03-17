@@ -21,6 +21,7 @@ package oauth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/go-pg/pg/v10"
@@ -98,32 +99,44 @@ func (pts *pgTokenStore) Create(ctx context.Context, info oauth2.TokenInfo) erro
 		return errors.New("info param was not a models.Token")
 	}
 	_, err := pts.conn.WithContext(ctx).Model(oauthTokenToPGToken(t)).Insert()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in tokenstore create: %s", err)
+	}
+	return nil
 }
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (pts *pgTokenStore) RemoveByCode(ctx context.Context, code string) error {
 	_, err := pts.conn.Model(&oauthToken{}).Where("code = ?", code).Delete()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in tokenstore removebycode: %s", err)
+	}
+	return nil
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (pts *pgTokenStore) RemoveByAccess(ctx context.Context, access string) error {
 	_, err := pts.conn.Model(&oauthToken{}).Where("access = ?", access).Delete()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in tokenstore removebyaccess: %s", err)
+	}
+	return nil
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (pts *pgTokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
 	_, err := pts.conn.Model(&oauthToken{}).Where("refresh = ?", refresh).Delete()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in tokenstore removebyrefresh: %s", err)
+	}
+	return nil
 }
 
 // GetByCode selects a token from the DB based on the Code field
 func (pts *pgTokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
 	pgt := &oauthToken{}
 	if err := pts.conn.Model(pgt).Where("code = ?", code).Select(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error in tokenstore getbycode: %s", err)
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
@@ -132,7 +145,7 @@ func (pts *pgTokenStore) GetByCode(ctx context.Context, code string) (oauth2.Tok
 func (pts *pgTokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
 	pgt := &oauthToken{}
 	if err := pts.conn.Model(pgt).Where("access = ?", access).Select(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error in tokenstore getbyaccess: %s", err)
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
@@ -141,7 +154,7 @@ func (pts *pgTokenStore) GetByAccess(ctx context.Context, access string) (oauth2
 func (pts *pgTokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
 	pgt := &oauthToken{}
 	if err := pts.conn.Model(pgt).Where("refresh = ?", refresh).Select(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error in tokenstore getbyrefresh: %s", err)
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
@@ -165,15 +178,15 @@ type oauthToken struct {
 	UserID              string
 	RedirectURI         string
 	Scope               string
-	Code                string `pg:",pk"`
+	Code                string `pg:"default:'',pk"`
 	CodeChallenge       string
 	CodeChallengeMethod string
 	CodeCreateAt        time.Time `pg:"type:timestamp"`
 	CodeExpiresAt       time.Time `pg:"type:timestamp"`
-	Access              string    `pg:",pk"`
+	Access              string    `pg:"default:'',pk"`
 	AccessCreateAt      time.Time `pg:"type:timestamp"`
 	AccessExpiresAt     time.Time `pg:"type:timestamp"`
-	Refresh             string    `pg:",pk"`
+	Refresh             string    `pg:"default:'',pk"`
 	RefreshCreateAt     time.Time `pg:"type:timestamp"`
 	RefreshExpiresAt    time.Time `pg:"type:timestamp"`
 }

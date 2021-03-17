@@ -69,8 +69,8 @@ func (s *server) AttachHandler(method string, path string, handler gin.HandlerFu
 
 func New(config *config.Config, logger *logrus.Logger) Server {
 	engine := gin.New()
-	store := memstore.NewStore([]byte("authentication-key"), []byte("encryption-key"))
-	engine.Use(sessions.Sessions("mysession", store))
+	store := memstore.NewStore([]byte("authentication-key"), []byte("encryption-keyencryption-key----"))
+	engine.Use(sessions.Sessions("gotosocial-session", store))
 	return &server{
 		APIGroup: engine.Group("/api").Group("/v1"),
 		logger:   logger,

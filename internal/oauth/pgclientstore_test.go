@@ -96,7 +96,6 @@ func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
 	deletedClient, err := cs.GetByID(context.Background(), suite.testClientID)
 	suite.Assert().Nil(deletedClient)
 	suite.Assert().NotNil(err)
-	suite.EqualValues("pg: no rows in result set", err.Error())
 }
 
 func TestPgClientStoreTestSuite(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
+	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
@@ -18,35 +19,37 @@ import (
 
 type OauthTestSuite struct {
 	suite.Suite
-	tokenStore       oauth2.TokenStore
-	clientStore      oauth2.ClientStore
-	conn             *pg.DB
-	testClientID     string
-	testClientSecret string
-	testClientDomain string
-	testClientUserID string
-	testUser         *gtsmodel.User
-	config           *config.Config
+	tokenStore  oauth2.TokenStore
+	clientStore oauth2.ClientStore
+	conn        *pg.DB
+	testUser    *gtsmodel.User
+	testClient  *oauthClient
+	config      *config.Config
 }
 
 const ()
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *OauthTestSuite) SetupSuite() {
-	suite.testClientID = "test-client-id"
-	suite.testClientSecret = "test-client-secret"
-	suite.testClientDomain = "https://example.org"
-	suite.testClientUserID = "test-client-user-id"
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte("test-password"), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.Panicf("error encrypting user pass: %s", err)
 	}
+
+	userID := uuid.NewString()
 	suite.testUser = &gtsmodel.User{
+		ID:                userID,
 		EncryptedPassword: string(encryptedPassword),
-		Email:             "user@example.org",
+		Email:             "user@localhost",
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
-		AccountID:         "whatever",
+		AccountID:         "some-account-id-it-doesn't-matter-really",
+	}
+	suite.testClient = &oauthClient{
+		ID:     "a-known-client-id",
+		Secret: "some-secret",
+		Domain: "localhost",
+		UserID: userID,
 	}
 }
 
@@ -78,6 +81,10 @@ func (suite *OauthTestSuite) SetupTest() {
 		logrus.Panicf("could not insert test user into db: %s", err)
 	}
 
+	if _, err := suite.conn.Model(suite.testClient).Insert(); err != nil {
+		logrus.Panicf("could not insert test client into db: %s", err)
+	}
+
 }
 
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
@@ -107,7 +114,7 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 	api.AddRoutes(r)
 	go r.Start()
 	time.Sleep(30 * time.Second)
-	// http://localhost:8080/oauth/authorize?client_id=whatever
+	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code
 }
 
 func TestOauthTestSuite(t *testing.T) {
