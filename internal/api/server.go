@@ -19,6 +19,8 @@
 package api
 
 import (
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
@@ -67,6 +69,8 @@ func (s *server) AttachHandler(method string, path string, handler gin.HandlerFu
 
 func New(config *config.Config, logger *logrus.Logger) Server {
 	engine := gin.New()
+	store := memstore.NewStore([]byte("authentication-key"), []byte("encryption-key"))
+	engine.Use(sessions.Sessions("mysession", store))
 	return &server{
 		APIGroup: engine.Group("/api").Group("/v1"),
 		logger:   logger,

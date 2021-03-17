@@ -3,6 +3,7 @@ module github.com/gotosocial/gotosocial
 go 1.16
 
 require (
+	github.com/gin-contrib/sessions v0.0.3 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-fed/activity v1.0.0
 	github.com/go-pg/pg/extra/pgdebug v0.2.0

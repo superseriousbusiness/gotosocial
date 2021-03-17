@@ -20,10 +20,12 @@ package oauth
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-session/session"
@@ -75,7 +77,7 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 }
 
 func (a *API) AddRoutes(s api.Server) error {
-	s.AttachHandler(methodAny, "/auth/sign_in", gin.WrapF(a.SignInHandler))
+	s.AttachHandler(methodAny, "/auth/sign_in", a.SignInHandler)
 	s.AttachHandler(methodAny, "/oauth/token", gin.WrapF(a.TokenHandler))
 	s.AttachHandler(methodAny, "/oauth/authorize", gin.WrapF(a.AuthorizeHandler))
 	s.AttachHandler(methodAny, "/auth", gin.WrapF(a.AuthHandler))
@@ -93,13 +95,8 @@ func incorrectPassword() (string, error) {
 // SignInHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
-func (a *API) SignInHandler(w http.ResponseWriter, r *http.Request) {
-	store, err := session.Start(r.Context(), w, r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+func (a *API) SignInHandler(c *gin.Context) {
+	s := sessions.Default(c)
 	if r.Method == "POST" {
 		if r.Form == nil {
 			if err := r.ParseForm(); err != nil {
@@ -107,8 +104,8 @@ func (a *API) SignInHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		store.Set("username", r.Form.Get("username"))
-		store.Save()
+		s.Set("username", r.Form.Get("username"))
+		s.Save()
 
 		w.Header().Set("Location", "/auth")
 		w.WriteHeader(http.StatusFound)
@@ -171,7 +168,7 @@ func (a *API) AuthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-	SUB-HANDLERS -- don't serve these directly
+	SUB-HANDLERS -- don't serve these directly, they should be attached to the oauth2 server
 */
 
 // PasswordAuthorizationHandler takes a username (in this case, we use an email address)
