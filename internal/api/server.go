@@ -19,16 +19,13 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 
 type Server interface {
-	AttachHTTPHandler(method string, path string, handler http.HandlerFunc)
-	AttachGinHandler(method string, path string, handler gin.HandlerFunc)
+	AttachHandler(method string, path string, handler gin.HandlerFunc)
 	// AttachMiddleware(handler gin.HandlerFunc)
 	GetAPIGroup() *gin.RouterGroup
 	Start()
@@ -60,12 +57,12 @@ func (s *server) Stop() {
 	// todo: shut down gracefully
 }
 
-func (s *server) AttachHTTPHandler(method string, path string, handler http.HandlerFunc) {
-	s.engine.Handle(method, path, gin.WrapH(handler))
-}
-
-func (s *server) AttachGinHandler(method string, path string, handler gin.HandlerFunc) {
-	s.engine.Handle(method, path, handler)
+func (s *server) AttachHandler(method string, path string, handler gin.HandlerFunc) {
+	if method == "ANY" {
+		s.engine.Any(path, handler)
+	} else {
+		s.engine.Handle(method, path, handler)
+	}
 }
 
 func New(config *config.Config, logger *logrus.Logger) Server {
