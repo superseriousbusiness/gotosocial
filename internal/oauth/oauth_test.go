@@ -48,7 +48,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 	suite.testClient = &oauthClient{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
-		Domain: "localhost",
+		Domain: "http://localhost:8080",
 		UserID: userID,
 	}
 }
@@ -107,14 +107,14 @@ func (suite *OauthTestSuite) TearDownTest() {
 
 func (suite *OauthTestSuite) TestAPIInitialize() {
 	log := logrus.New()
-	log.SetLevel(logrus.DebugLevel)
+	log.SetLevel(logrus.TraceLevel)
 
 	r := api.New(suite.config, log)
 	api := New(suite.tokenStore, suite.clientStore, suite.conn, log)
 	api.AddRoutes(r)
 	go r.Start()
 	time.Sleep(30 * time.Second)
-	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code
+	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&redirect_uri=''&response_type=code
 }
 
 func TestOauthTestSuite(t *testing.T) {

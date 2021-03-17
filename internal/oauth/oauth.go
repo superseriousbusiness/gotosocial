@@ -45,7 +45,7 @@ type API struct {
 }
 
 type login struct {
-	Username string `form:"username"`
+	Email string `form:"username"`
 	Password string `form:"password"`
 }
 
@@ -61,8 +61,27 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 	manager := manage.NewDefaultManager()
 	manager.MapTokenStorage(ts)
 	manager.MapClientStorage(cs)
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	sc := &server.Config{
+		TokenType: "Bearer",
+		// Must follow the spec.
+		AllowGetAccessRequest: false,
+		// Support only the non-implicit flow.
+		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
+		// Allow:
+		// - Authorization Code (for first & third parties)
+		// - Refreshing Tokens
+		//
+		// Deny:
+		// - Resource owner secrets (password grant)
+		// - Client secrets
+		AllowedGrantTypes: []oauth2.GrantType{
+			oauth2.AuthorizationCode,
+			oauth2.Refreshing,
+		},
+	}
 
-	srv := server.NewDefaultServer(manager)
+	srv := server.NewServer(sc, manager)
 	srv.SetInternalErrorHandler(func(err error) *errors.Response {
 		log.Errorf("internal oauth error: %s", err)
 		return nil
@@ -79,7 +98,6 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 		log:     log,
 	}
 
-	api.server.SetPasswordAuthorizationHandler(api.PasswordAuthorizationHandler)
 	api.server.SetUserAuthorizationHandler(api.UserAuthorizationHandler)
 	api.server.SetClientInfoHandler(server.ClientFormHandler)
 	return api
@@ -88,8 +106,8 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 func (a *API) AddRoutes(s api.Server) error {
 	s.AttachHandler(http.MethodGet, "/auth/sign_in", a.SignInGETHandler)
 	s.AttachHandler(http.MethodPost, "/auth/sign_in", a.SignInPOSTHandler)
-	s.AttachHandler(methodAny, "/oauth/token", a.TokenHandler)
-	s.AttachHandler(http.MethodGet, "/oauth/authorize", a.AuthorizeHandler)
+	s.AttachHandler(http.MethodPost, "/oauth/token", a.TokenHandler)
+	s.AttachHandler(http.MethodGet, "/oauth/authorize", a.AuthorizeGETHandler)
 	s.AttachHandler(methodAny, "/auth", a.AuthHandler)
 	return nil
 }
@@ -106,6 +124,7 @@ func incorrectPassword() (string, error) {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
 func (a *API) SignInGETHandler(c *gin.Context) {
+	a.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(signInHTML))
 }
 
@@ -113,17 +132,26 @@ func (a *API) SignInGETHandler(c *gin.Context) {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
 func (a *API) SignInPOSTHandler(c *gin.Context) {
+	l := a.log.WithField("func", "SignInPOSTHandler")
 	s := sessions.Default(c)
 	form := &login{}
-	if err := c.ShouldBind(form); err != nil || form.Username == "" || form.Password == "" {
+	if err := c.ShouldBind(form); err != nil || form.Email == "" || form.Password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	s.Set("username", form.Username)
+	l.Tracef("parsed form: %+v", form)
+
+	userid, err := a.ValidatePassword(form.Email, form.Password);
+	if err != nil {
+		c.String(http.StatusForbidden, err.Error())
+	}
+
+	s.Set("username", userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	l.Trace("redirecting to auth page")
 	c.Redirect(http.StatusFound, "/auth")
 }
 
@@ -131,6 +159,8 @@ func (a *API) SignInPOSTHandler(c *gin.Context) {
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 // See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
 func (a *API) TokenHandler(c *gin.Context) {
+	l := a.log.WithField("func", "TokenHandler")
+	l.Trace("entered token handler, will now go to server.HandleTokenRequest")
 	if err := a.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -139,7 +169,8 @@ func (a *API) TokenHandler(c *gin.Context) {
 // AuthorizeHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (a *API) AuthorizeHandler(c *gin.Context) {
+func (a *API) AuthorizeGETHandler(c *gin.Context) {
+	l := a.log.WithField("func", "AuthorizeHandler")
 	s := sessions.Default(c)
 	form := &authorize{}
 
@@ -147,6 +178,7 @@ func (a *API) AuthorizeHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	l.Tracef("parsed form: %+v", form)
 
 	if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one of: response_type, client_id or redirect_uri"})
@@ -164,15 +196,18 @@ func (a *API) AuthorizeHandler(c *gin.Context) {
 
 	v := s.Get("username")
 	if username, ok := v.(string); !ok || username == "" {
+		l.Trace("username was empty, redirecting to sign in page")
 		c.Redirect(http.StatusFound, "/auth/sign_in")
 		return
 	}
 
+	l.Trace("serving authorize html")
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(authorizeHTML))
 }
 
 // AuthHandler should be served at https://example.org/auth
 func (a *API) AuthHandler(c *gin.Context) {
+	l := a.log.WithField("func", "AuthHandler")
 	s := sessions.Default(c)
 
 	values := url.Values{}
@@ -220,9 +255,10 @@ func (a *API) AuthHandler(c *gin.Context) {
 	}
 
 	c.Request.Form = values
+	l.Tracef("values on request set to %+v", c.Request.Form)
 
 	if err := s.Save(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -239,42 +275,45 @@ func (a *API) AuthHandler(c *gin.Context) {
 // and a password. The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a uuid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (a *API) PasswordAuthorizationHandler(email string, password string) (userid string, err error) {
-	a.log.Debugf("entering password authorization handler with email: %s and password: %s", email, password)
-
+func (a *API) ValidatePassword(email string, password string) (userid string, err error) {
+	l := a.log.WithField("func", "PasswordAuthorizationHandler")
+	l.Tracef("email %s password %s", email, password)
 	// first we select the user from the database based on email address, bail if no user found for that email
 	gtsUser := &gtsmodel.User{}
 	if err := a.conn.Model(gtsUser).Where("email = ?", email).Select(); err != nil {
-		a.log.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)
+		l.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)
 		return incorrectPassword()
 	}
 
 	// make sure a password is actually set and bail if not
 	if gtsUser.EncryptedPassword == "" {
-		a.log.Warnf("encrypted password for user %s was empty for some reason", gtsUser.Email)
+		l.Warnf("encrypted password for user %s was empty for some reason", gtsUser.Email)
 		return incorrectPassword()
 	}
 
 	// compare the provided password with the encrypted one from the db, bail if they don't match
 	if err := bcrypt.CompareHashAndPassword([]byte(gtsUser.EncryptedPassword), []byte(password)); err != nil {
-		a.log.Debugf("password hash didn't match for user %s during login attempt: %s", gtsUser.Email, err)
+		l.Debugf("password hash didn't match for user %s during login attempt: %s", gtsUser.Email, err)
 		return incorrectPassword()
 	}
 
 	// If we've made it this far the email/password is correct so we need the oauth client-id of the user
 	// This is, conveniently, the same as the user ID, so we can just return it.
 	userid = gtsUser.ID
+	l.Tracef("returning (%s, %s)", userid, err)
 	return
 }
 
 // UserAuthorizationHandler gets the user's email address from the form key 'username'
 // or redirects to the /auth/sign_in page, if this key is not present.
-func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (string, error) {
-
-	username := r.FormValue("username")
+func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (username string, err error) {
+	l := a.log.WithField("func", "UserAuthorizationHandler")
+	username = r.FormValue("username")
 	if username == "" {
+		l.Trace("username was empty, redirecting to sign in page")
 		http.Redirect(w, r, "/auth/sign_in", http.StatusFound)
 		return "", nil
 	}
-	return username, nil
+	l.Tracef("returning (%s, %s)", username, err)
+	return username, err
 }
