@@ -19,6 +19,10 @@
 package api
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
@@ -71,6 +75,10 @@ func New(config *config.Config, logger *logrus.Logger) Server {
 	engine := gin.New()
 	store := memstore.NewStore([]byte("authentication-key"), []byte("encryption-keyencryption-key----"))
 	engine.Use(sessions.Sessions("gotosocial-session", store))
+	cwd, _ := os.Getwd()
+	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", config.TemplateConfig.BaseDir))
+	logger.Debugf("loading templates from %s", tmPath)
+	engine.LoadHTMLGlob(tmPath)
 	return &server{
 		APIGroup: engine.Group("/api").Group("/v1"),
 		logger:   logger,

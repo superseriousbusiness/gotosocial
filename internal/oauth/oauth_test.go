@@ -40,17 +40,24 @@ func (suite *OauthTestSuite) SetupSuite() {
 	suite.testUser = &gtsmodel.User{
 		ID:                userID,
 		EncryptedPassword: string(encryptedPassword),
-		Email:             "user@localhost",
+		Email:             "user@example.org",
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
-		AccountID:         "some-account-id-it-doesn't-matter-really",
+		AccountID:         "some-account-id-it-doesn't-matter-really-since-this-user-doesn't-actually-have-an-account!",
 	}
 	suite.testClient = &oauthClient{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
-		Domain: "http://localhost:8080",
+		Domain: "https://example.org",
 		UserID: userID,
 	}
+
+	// because go tests are run within the test package directory, we need to fiddle with the templateconfig
+	// basedir in a way that we wouldn't normally have to do when running the binary, in order to make
+	// the templates actually load
+	c := config.Empty()
+	c.TemplateConfig.BaseDir = "../../web/template/"
+	suite.config = c
 }
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
@@ -114,7 +121,7 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 	api.AddRoutes(r)
 	go r.Start()
 	time.Sleep(30 * time.Second)
-	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&redirect_uri=''&response_type=code
+	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=https://example.org
 }
 
 func TestOauthTestSuite(t *testing.T) {

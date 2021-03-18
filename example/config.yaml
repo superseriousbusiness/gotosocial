@@ -60,3 +60,10 @@ db:
   # Examples: ["mydb","postgres","gotosocial"]
   # Default: "postgres"
   database: "postgres"
+
+# Config pertaining to templating of web pages/email notifications and the like
+template:
+  # String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
+  # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
+  # Default: "./web/template/"
+  baseDir: "./web/template/"

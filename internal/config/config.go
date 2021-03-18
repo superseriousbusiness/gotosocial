@@ -27,25 +27,38 @@ import (
 
 // Config pulls together all the configuration needed to run gotosocial
 type Config struct {
-	LogLevel        string    `yaml:"logLevel"`
-	ApplicationName string    `yaml:"applicationName"`
-	DBConfig        *DBConfig `yaml:"db"`
+	LogLevel        string          `yaml:"logLevel"`
+	ApplicationName string          `yaml:"applicationName"`
+	DBConfig        *DBConfig       `yaml:"db"`
+	TemplateConfig  *TemplateConfig `yaml:"template"`
 }
 
-// New returns a new config, or an error if something goes amiss.
-// The path parameter is optional, for loading a configuration json from the given path.
-func New(path string) (*Config, error) {
-	config := &Config{
-		DBConfig: &DBConfig{},
+// FromFile returns a new config from a file, or an error if something goes amiss.
+func FromFile(path string) (*Config, error) {
+	c, err := loadFromFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error creating config: %s", err)
 	}
-	if path != "" {
-		var err error
-		if config, err = loadFromFile(path); err != nil {
-			return nil, fmt.Errorf("error creating config: %s", err)
-		}
-	}
+	return c, nil
+}
 
-	return config, nil
+// Default returns a new config with default values.
+// Not yet implemented.
+func Default() *Config {
+	// TODO: find a way of doing this without code repetition, because having to
+	// repeat all values here and elsewhere is annoying and gonna be prone to mistakes.
+	return &Config{
+		DBConfig: &DBConfig{},
+		TemplateConfig: &TemplateConfig{},
+	}
+}
+
+// Empty just returns an empty config
+func Empty() *Config {
+	return &Config{
+		DBConfig: &DBConfig{},
+		TemplateConfig: &TemplateConfig{},
+	}
 }
 
 // loadFromFile takes a path to a yaml file and attempts to load a Config object from it
@@ -63,8 +76,8 @@ func loadFromFile(path string) (*Config, error) {
 	return config, nil
 }
 
-// ParseFlags sets flags on the config using the provided Flags object
-func (c *Config) ParseFlags(f KeyedFlags) {
+// ParseCLIFlags sets flags on the config using the provided Flags object
+func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	fn := GetFlagNames()
 
 	// For all of these flags, we only want to set them on the config if:
@@ -108,6 +121,11 @@ func (c *Config) ParseFlags(f KeyedFlags) {
 	if c.DBConfig.Database == "" || f.IsSet(fn.DbDatabase) {
 		c.DBConfig.Database = f.String(fn.DbDatabase)
 	}
+
+	// template flags
+	if c.TemplateConfig.BaseDir == "" || f.IsSet(fn.TemplateBaseDir) {
+		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
@@ -130,6 +148,7 @@ type Flags struct {
 	DbUser          string
 	DbPassword      string
 	DbDatabase      string
+	TemplateBaseDir string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -145,6 +164,7 @@ func GetFlagNames() Flags {
 		DbUser:          "db-user",
 		DbPassword:      "db-password",
 		DbDatabase:      "db-database",
+		TemplateBaseDir: "template-basedir",
 	}
 }
 
@@ -161,5 +181,6 @@ func GetEnvNames() Flags {
 		DbUser:          "GTS_DB_USER",
 		DbPassword:      "GTS_DB_PASSWORD",
 		DbDatabase:      "GTS_DB_DATABASE",
+		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
 	}
 }

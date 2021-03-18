@@ -11,7 +11,7 @@ require (
 	github.com/go-session/session v3.1.2+incompatible
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/google/uuid v1.2.0 // indirect
-	github.com/gotosocial/oauth2/v4 v4.2.1-0.20210316171520-7b12112bbb88
+	github.com/gotosocial/oauth2/v4 v4.2.1-0.20210318133800-45d321d259b3
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
 	github.com/sirupsen/logrus v1.8.0
