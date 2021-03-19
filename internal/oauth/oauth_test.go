@@ -40,7 +40,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 	suite.testUser = &gtsmodel.User{
 		ID:                userID,
 		EncryptedPassword: string(encryptedPassword),
-		Email:             "user@example.org",
+		Email:             "user@localhost",
 		CreatedAt:         time.Now(),
 		UpdatedAt:         time.Now(),
 		AccountID:         "some-account-id-it-doesn't-matter-really-since-this-user-doesn't-actually-have-an-account!",
@@ -48,7 +48,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 	suite.testClient = &oauthClient{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
-		Domain: "https://example.org",
+		Domain: "http://localhost:8080",
 		UserID: userID,
 	}
 
@@ -122,6 +122,7 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 	go r.Start()
 	time.Sleep(30 * time.Second)
 	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=https://example.org
+	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=urn:ietf:wg:oauth:2.0:oob
 }
 
 func TestOauthTestSuite(t *testing.T) {
