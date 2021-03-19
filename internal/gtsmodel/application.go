@@ -20,15 +20,10 @@ package gtsmodel
 
 type Application struct {
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Name string `json:"name"`
-	// The website associated with your application (url)
-	Website string `json:"website,omitempty"`
-	// Where the user should be redirected after authorization.
+	Name string
+	Website string
 	RedirectURI string `json:"redirect_uri"`
-	// ClientID to use when obtaining an oauth token for this application (ie., in client_id parameter of https://docs.joinmastodon.org/methods/apps/)
 	ClientID string `json:"client_id"`
-	// Client secret to use when obtaining an auth token for this application (ie., in client_secret parameter of https://docs.joinmastodon.org/methods/apps/)
 	ClientSecret string `json:"client_secret"`
-	// Used for Push Streaming API. Returned with POST /api/v1/apps. Equivalent to https://docs.joinmastodon.org/entities/pushsubscription/#server_key
 	VapidKey string `json:"vapid_key"`
 }
