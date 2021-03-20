@@ -32,7 +32,7 @@ import (
 
 type Server interface {
 	AttachHandler(method string, path string, handler gin.HandlerFunc)
-	// AttachMiddleware(handler gin.HandlerFunc)
+	AttachMiddleware(handler gin.HandlerFunc)
 	GetAPIGroup() *gin.RouterGroup
 	Start()
 	Stop()
@@ -69,6 +69,10 @@ func (s *server) AttachHandler(method string, path string, handler gin.HandlerFu
 	} else {
 		s.engine.Handle(method, path, handler)
 	}
+}
+
+func (s *server) AttachMiddleware(middleware gin.HandlerFunc) {
+	s.engine.Use(middleware)
 }
 
 func New(config *config.Config, logger *logrus.Logger) Server {
