@@ -122,6 +122,89 @@ func incorrectPassword() (string, error) {
 	MAIN HANDLERS -- serve these through a server/router
 */
 
+// AppsPOSTHandler should be served at https://example.org/api/v1/apps
+// It is equivalent to: https://docs.joinmastodon.org/methods/apps/
+func (a *API) AppsPOSTHandler(c *gin.Context) {
+	l := a.log.WithField("func", "AppsPOSTHandler")
+	l.Trace("entering AppsPOSTHandler")
+
+	form := &mastotypes.ApplicationPOSTRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	// permitted length for most fields
+	permittedLength := 64
+	// redirect can be a bit bigger because we probably need to encode data in the redirect uri
+	permittedRedirect := 256
+
+	// check lengths of fields before proceeding so the user can't spam huge entries into the database
+	if len(form.ClientName) > permittedLength {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("client_name must be less than %d bytes", permittedLength)})
+		return
+	}
+	if len(form.Website) > permittedLength {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("website must be less than %d bytes", permittedLength)})
+		return
+	}
+	if len(form.RedirectURIs) > permittedRedirect {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("redirect_uris must be less than %d bytes", permittedRedirect)})
+		return
+	}
+	if len(form.Scopes) > permittedLength {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("scopes must be less than %d bytes", permittedLength)})
+		return
+	}
+
+	// set default 'read' for scopes if it's not set
+	var scopes string
+	if form.Scopes == "" {
+		scopes = "read"
+	} else {
+		scopes = form.Scopes
+	}
+
+	// generate new IDs for this application and its associated client
+	clientID := uuid.NewString()
+	clientSecret := uuid.NewString()
+	vapidKey := uuid.NewString()
+
+	// generate the application to put in the database
+	app := &gtsmodel.Application{
+		Name:         form.ClientName,
+		Website:      form.Website,
+		RedirectURI:  form.RedirectURIs,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       scopes,
+		VapidKey:     vapidKey,
+	}
+
+	// chuck it in the db
+	if _, err := a.conn.Model(app).Insert(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// now we need to model an oauth client from the application that the oauth library can use
+	oc := &oauthClient{
+		ID:     clientID,
+		Secret: clientSecret,
+		Domain: form.RedirectURIs,
+		UserID: "", // This client isn't yet associated with a specific user,  it's just an app client right now
+	}
+
+	// chuck it in the db
+	if _, err := a.conn.Model(oc).Insert(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
+	c.JSON(http.StatusOK, app)
+}
+
 // SignInGETHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
