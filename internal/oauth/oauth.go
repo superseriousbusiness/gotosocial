@@ -38,6 +38,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	outOfBandRedirect  = "urn:ietf:wg:oauth:2.0:oob"
+	appsPath           = "/api/v1/apps"
+	authSignInPath     = "/auth/sign_in"
+	oauthTokenPath     = "/oauth/token"
+	oauthAuthorizePath = "/oauth/authorize"
+)
+
 type API struct {
 	manager *manage.Manager
 	server  *server.Server
@@ -104,15 +112,15 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 }
 
 func (a *API) AddRoutes(s api.Server) error {
-	s.AttachHandler(http.MethodPost, "/api/v1/apps", a.AppsPOSTHandler)
+	s.AttachHandler(http.MethodPost, appsPath, a.AppsPOSTHandler)
 
-	s.AttachHandler(http.MethodGet, "/auth/sign_in", a.SignInGETHandler)
-	s.AttachHandler(http.MethodPost, "/auth/sign_in", a.SignInPOSTHandler)
+	s.AttachHandler(http.MethodGet, authSignInPath, a.SignInGETHandler)
+	s.AttachHandler(http.MethodPost, authSignInPath, a.SignInPOSTHandler)
 
-	s.AttachHandler(http.MethodPost, "/oauth/token", a.TokenPOSTHandler)
+	s.AttachHandler(http.MethodPost, oauthTokenPath, a.TokenPOSTHandler)
 
-	s.AttachHandler(http.MethodGet, "/oauth/authorize", a.AuthorizeGETHandler)
-	s.AttachHandler(http.MethodPost, "/oauth/authorize", a.AuthorizePOSTHandler)
+	s.AttachHandler(http.MethodGet, oauthAuthorizePath, a.AuthorizeGETHandler)
+	s.AttachHandler(http.MethodPost, oauthAuthorizePath, a.AuthorizePOSTHandler)
 
 	return nil
 }
@@ -242,15 +250,28 @@ func (a *API) SignInPOSTHandler(c *gin.Context) {
 	}
 
 	l.Trace("redirecting to auth page")
-	c.Redirect(http.StatusFound, "/oauth/authorize")
+	c.Redirect(http.StatusFound, oauthAuthorizePath)
 }
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 // See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
 func (a *API) TokenPOSTHandler(c *gin.Context) {
-	l := a.log.WithField("func", "TokenHandler")
-	l.Trace("entered token handler, will now go to server.HandleTokenRequest")
+	l := a.log.WithField("func", "TokenPOSTHandler")
+	l.Trace("entered TokenPOSTHandler")
+
+	// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
+
+	// // make sure redirect_uri is actually set first (we don't accept empty)
+	// if v, ok := c.GetPostForm("redirect_uri"); !ok || v == "" {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
+	// 	return
+	// } else if v == outOfBandRedirect {
+	// 	// If redirect_uri is set to out of band, redirect to this endpoint, where we can display the code later
+	// 	// This is a bit of a workaround because the oauth library doesn't recognise oob redirect URIs
+	// 	c.Request.Form.Set("redirect_uri", fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthTokenPath))
+	// }
+
 	if err := a.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -295,7 +316,7 @@ func (a *API) AuthorizeGETHandler(c *gin.Context) {
 		}
 
 		// send them to the sign in page so we can tell who they are
-		c.Redirect(http.StatusFound, "/auth/sign_in")
+		c.Redirect(http.StatusFound, authSignInPath)
 		return
 	}
 
@@ -355,10 +376,17 @@ func (a *API) AuthorizePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
 		return
 	} else {
-		// todo: explain this little hack
-		if v == "urn:ietf:wg:oauth:2.0:oob" {
-			v = "http://localhost:8080/oauth/authorize"
-		}
+		// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
+
+		// if the client requests this particular redirect URI, it means they want to be able to authenticate out of band,
+		// ie., just have their access_code shown to them so they can do what they want with it later.
+		//
+		// But we can't just show the code yet; there's still an authorization flow to go through.
+		// What we can do is set the redirect uri to the /oauth/authorize page, do the auth
+		// flow as normal, and then handle showing the code there. See AuthorizeGETHandler.
+		// if v == outOfBandRedirect {
+		// 	v = fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthAuthorizePath)
+		// }
 		values.Add("redirect_uri", v)
 	}
 
@@ -438,7 +466,7 @@ func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (
 	userID = r.FormValue("username")
 	if userID == "" {
 		l.Trace("username was empty, redirecting to sign in page")
-		http.Redirect(w, r, "/auth/sign_in", http.StatusFound)
+		http.Redirect(w, r, authSignInPath, http.StatusFound)
 		return "", nil
 	}
 	l.Tracef("returning (%s, %s)", userID, err)
