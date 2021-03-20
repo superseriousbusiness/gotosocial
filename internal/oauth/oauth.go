@@ -75,18 +75,10 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
 		// Allow:
 		// - Authorization Code (for first & third parties)
-		// - Refreshing Tokens
-		//
-		// Deny:
-		// - Resource owner secrets (password grant)
-		// - Client secrets
 		AllowedGrantTypes: []oauth2.GrantType{
 			oauth2.AuthorizationCode,
-			oauth2.Refreshing,
 		},
-		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
-			oauth2.CodeChallengePlain,
-		},
+		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{oauth2.CodeChallengePlain},
 	}
 
 	srv := server.NewServer(sc, manager)
@@ -106,36 +98,34 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 		log:     log,
 	}
 
-	api.server.SetUserAuthorizationHandler(api.UserAuthorizationHandler)
+	api.server.SetUserAuthorizationHandler(api.userAuthorizationHandler)
 	api.server.SetClientInfoHandler(server.ClientFormHandler)
 	return api
 }
 
-func (a *API) AddRoutes(s api.Server) error {
-	s.AttachHandler(http.MethodPost, appsPath, a.AppsPOSTHandler)
+func (a *API) Route(s api.Server) error {
+	s.AttachHandler(http.MethodPost, appsPath, a.appsPOSTHandler)
 
-	s.AttachHandler(http.MethodGet, authSignInPath, a.SignInGETHandler)
-	s.AttachHandler(http.MethodPost, authSignInPath, a.SignInPOSTHandler)
+	s.AttachHandler(http.MethodGet, authSignInPath, a.signInGETHandler)
+	s.AttachHandler(http.MethodPost, authSignInPath, a.signInPOSTHandler)
 
-	s.AttachHandler(http.MethodPost, oauthTokenPath, a.TokenPOSTHandler)
+	s.AttachHandler(http.MethodPost, oauthTokenPath, a.tokenPOSTHandler)
 
-	s.AttachHandler(http.MethodGet, oauthAuthorizePath, a.AuthorizeGETHandler)
-	s.AttachHandler(http.MethodPost, oauthAuthorizePath, a.AuthorizePOSTHandler)
+	s.AttachHandler(http.MethodGet, oauthAuthorizePath, a.authorizeGETHandler)
+	s.AttachHandler(http.MethodPost, oauthAuthorizePath, a.authorizePOSTHandler)
+
+	s.AttachMiddleware(a.oauthTokenMiddleware)
 
 	return nil
-}
-
-func incorrectPassword() (string, error) {
-	return "", errors.New("password/email combination was incorrect")
 }
 
 /*
 	MAIN HANDLERS -- serve these through a server/router
 */
 
-// AppsPOSTHandler should be served at https://example.org/api/v1/apps
+// appsPOSTHandler should be served at https://example.org/api/v1/apps
 // It is equivalent to: https://docs.joinmastodon.org/methods/apps/
-func (a *API) AppsPOSTHandler(c *gin.Context) {
+func (a *API) appsPOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AppsPOSTHandler")
 	l.Trace("entering AppsPOSTHandler")
 
@@ -216,18 +206,18 @@ func (a *API) AppsPOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, app)
 }
 
-// SignInGETHandler should be served at https://example.org/auth/sign_in.
+// signInGETHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
-func (a *API) SignInGETHandler(c *gin.Context) {
+func (a *API) signInGETHandler(c *gin.Context) {
 	a.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
 }
 
-// SignInPOSTHandler should be served at https://example.org/auth/sign_in.
+// signInPOSTHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
-func (a *API) SignInPOSTHandler(c *gin.Context) {
+func (a *API) signInPOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "SignInPOSTHandler")
 	s := sessions.Default(c)
 	form := &login{}
@@ -237,7 +227,7 @@ func (a *API) SignInPOSTHandler(c *gin.Context) {
 	}
 	l.Tracef("parsed form: %+v", form)
 
-	userid, err := a.ValidatePassword(form.Email, form.Password)
+	userid, err := a.validatePassword(form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
 		return
@@ -253,10 +243,10 @@ func (a *API) SignInPOSTHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, oauthAuthorizePath)
 }
 
-// TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
+// tokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 // See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
-func (a *API) TokenPOSTHandler(c *gin.Context) {
+func (a *API) tokenPOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
 
@@ -277,10 +267,10 @@ func (a *API) TokenPOSTHandler(c *gin.Context) {
 	}
 }
 
-// AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
+// authorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (a *API) AuthorizeGETHandler(c *gin.Context) {
+func (a *API) authorizeGETHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
@@ -337,72 +327,66 @@ func (a *API) AuthorizeGETHandler(c *gin.Context) {
 	})
 }
 
-// AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
+// authorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (a *API) AuthorizePOSTHandler(c *gin.Context) {
+func (a *API) authorizePOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
-	v := s.Get("username")
-	if username, ok := v.(string); !ok || username == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "you are not signed in"})
-	}
-
 	values := url.Values{}
-
-	if v, ok := s.Get("force_login").(string); !ok {
+	forceLogin, ok := s.Get("force_login").(string)
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing force_login"})
 		return
-	} else {
-		values.Add("force_login", v)
 	}
+	values.Set("force_login", forceLogin)
 
-	if v, ok := s.Get("response_type").(string); !ok {
+	responseType, ok := s.Get("response_type").(string)
+	if !ok || responseType == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing response_type"})
 		return
-	} else {
-		values.Add("response_type", v)
 	}
+	values.Set("response_type", responseType)
 
-	if v, ok := s.Get("client_id").(string); !ok {
+	clientID, ok := s.Get("client_id").(string)
+	if !ok || clientID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing client_id"})
 		return
-	} else {
-		values.Add("client_id", v)
 	}
+	values.Set("client_id", clientID)
 
-	if v, ok := s.Get("redirect_uri").(string); !ok {
+	redirectURI, ok := s.Get("redirect_uri").(string)
+	if !ok || redirectURI == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
 		return
-	} else {
-		// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
-
-		// if the client requests this particular redirect URI, it means they want to be able to authenticate out of band,
-		// ie., just have their access_code shown to them so they can do what they want with it later.
-		//
-		// But we can't just show the code yet; there's still an authorization flow to go through.
-		// What we can do is set the redirect uri to the /oauth/authorize page, do the auth
-		// flow as normal, and then handle showing the code there. See AuthorizeGETHandler.
-		// if v == outOfBandRedirect {
-		// 	v = fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthAuthorizePath)
-		// }
-		values.Add("redirect_uri", v)
 	}
+	// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
+	//
+	// if the client requests this particular redirect URI, it means they want to be able to authenticate out of band,
+	// ie., just have their access_code shown to them so they can do what they want with it later.
+	//
+	// But we can't just show the code yet; there's still an authorization flow to go through.
+	// What we can do is set the redirect uri to the /oauth/authorize page, do the auth
+	// flow as normal, and then handle showing the code there. See AuthorizeGETHandler.
+	// if redirectURI == outOfBandRedirect {
+	// 	redirectURI = fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthAuthorizePath)
+	// }
+	values.Set("redirect_uri", redirectURI)
 
-	if v, ok := s.Get("scope").(string); !ok {
+	scope, ok := s.Get("scope").(string)
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing scope"})
 		return
-	} else {
-		values.Add("scope", v)
 	}
+	values.Set("scope", scope)
 
-	if v, ok := s.Get("username").(string); !ok {
+	username, ok := s.Get("username").(string)
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing username"})
 		return
-	} else {
-		values.Add("username", v)
 	}
+	values.Set("username", username)
 
 	c.Request.Form = values
 	l.Tracef("values on request set to %+v", c.Request.Form)
@@ -418,15 +402,31 @@ func (a *API) AuthorizePOSTHandler(c *gin.Context) {
 }
 
 /*
+	MIDDLEWARE
+*/
+
+// oauthTokenMiddleware
+func (a *API) oauthTokenMiddleware(c *gin.Context) {
+	l := a.log.WithField("func", "ValidatePassword")
+	l.Trace("entering OauthTokenMiddleware")
+	if ti, err := a.server.ValidationBearerToken(c.Request); err == nil {
+		l.Tracef("authenticated user %s with bearer token", ti.GetUserID())
+		c.Set("authenticated_user", ti.GetUserID())
+	} else {
+		l.Trace("continuing with unauthenticated request")
+	}
+}
+
+/*
 	SUB-HANDLERS -- don't serve these directly, they should be attached to the oauth2 server
 */
 
-// PasswordAuthorizationHandler takes a username (in this case, we use an email address)
+// validatePassword takes a username (in this case, we use an email address)
 // and a password. The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a uuid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (a *API) ValidatePassword(email string, password string) (userid string, err error) {
-	l := a.log.WithField("func", "PasswordAuthorizationHandler")
+func (a *API) validatePassword(email string, password string) (userid string, err error) {
+	l := a.log.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not
 	if email == "" || password == "" {
@@ -459,9 +459,14 @@ func (a *API) ValidatePassword(email string, password string) (userid string, er
 	return
 }
 
-// UserAuthorizationHandler gets the user's ID from the 'username' field of the request form,
+// incorrectPassword is just a little helper function to use in the ValidatePassword function
+func incorrectPassword() (string, error) {
+	return "", errors.New("password/email combination was incorrect")
+}
+
+// userAuthorizationHandler gets the user's ID from the 'username' field of the request form,
 // or redirects to the /auth/sign_in page, if this key is not present.
-func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+func (a *API) userAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 	l := a.log.WithField("func", "UserAuthorizationHandler")
 	userID = r.FormValue("username")
 	if userID == "" {

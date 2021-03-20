@@ -28,8 +28,6 @@ type OauthTestSuite struct {
 	config      *config.Config
 }
 
-const ()
-
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *OauthTestSuite) SetupSuite() {
 	c := config.Empty()
@@ -123,13 +121,14 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 
 	r := api.New(suite.config, log)
 	api := New(suite.tokenStore, suite.clientStore, suite.conn, log)
-	if err := api.AddRoutes(r); err != nil {
+	if err := api.Route(r); err != nil {
 		suite.FailNow(fmt.Sprintf("error initializing api: %s", err))
 	}
 	go r.Start()
 	time.Sleep(60 * time.Second)
 	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=http://localhost:8080
 	// curl -v -F client_id=a-known-client-id -F client_secret=some-secret -F redirect_uri=http://localhost:8080 -F code=[ INSERT CODE HERE ] -F grant_type=authorization_code localhost:8080/oauth/token
+	// curl -v -H "Authorization: bearer [INSERT TOKEN HERE]" http://localhost:8080
 }
 
 func TestOauthTestSuite(t *testing.T) {
