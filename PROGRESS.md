@@ -6,7 +6,7 @@
     * [ ] /api/v1/apps/verify_credentials GET               (Verify an application works)
     * [x] /oauth/authorize GET                              (Show authorize page to user)
     * [x] /oauth/authorize POST                             (Get an oauth access code for an app/user)
-    * [ ] /oauth/token POST                                 (Obtain a user-level access token)
+    * [x] /oauth/token POST                                 (Obtain a user-level access token)
     * [ ] /oauth/revoke POST                                (Revoke a user-level access token)
     * [x] /auth/sign_in GET                                 (Show form for user signin)
     * [x] /auth/sign_in POST                                (Validate username and password and sign user in)
