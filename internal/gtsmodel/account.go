@@ -121,7 +121,7 @@ type Account struct {
 	// When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	SuspendedAt time.Time `pg:"type:timestamp"`
 	// How much do we trust this account 🤔
-	TrustLevel  int
+	TrustLevel int
 	// Should we hide this account's collections?
 	HideCollections bool
 	// id of the user that suspended this account through an admin action

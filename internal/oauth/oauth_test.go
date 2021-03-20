@@ -36,9 +36,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 		logrus.Panicf("error encrypting user pass: %s", err)
 	}
 
-	suite.testAccount = &gtsmodel.Account{
-
-	}
+	suite.testAccount = &gtsmodel.Account{}
 	suite.testUser = &gtsmodel.User{
 		EncryptedPassword: string(encryptedPassword),
 		Email:             "user@localhost",

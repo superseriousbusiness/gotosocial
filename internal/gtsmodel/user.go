@@ -112,9 +112,9 @@ type User struct {
 	EncryptedOTPSecretSalt string
 	OTPRequiredForLogin    bool
 	OTPBackupCodes         []string
-	ConsumedTimestamp int
-	RememberToken string
-	SignInToken       string
-	SignInTokenSentAt time.Time `pg:"type:timestamp"`
-	WebauthnID        string
+	ConsumedTimestamp      int
+	RememberToken          string
+	SignInToken            string
+	SignInTokenSentAt      time.Time `pg:"type:timestamp"`
+	WebauthnID             string
 }
