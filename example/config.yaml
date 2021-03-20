@@ -28,6 +28,17 @@ logLevel: "info"
 # Default: "gotosocial"
 applicationName: "gotosocial"
 
+# String. Hostname/domain to use for the server. Defaults to localhost for local testing,
+# but you should *definitely* change this when running for real, or your server won't work at all.
+# Examples: ["example.org","some.server.com"]
+# Default: "localhost"
+host: "localhost"
+
+# String. Protocol to use for the server. Only change to http for local testing!
+# Options: ["http","https"]
+# Default: "https"
+protocol: "https"
+
 # Config pertaining to the Gotosocial database connection
 db:
   # String. Database type.
