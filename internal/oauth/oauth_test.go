@@ -40,7 +40,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 	// the templates actually load
 	c.TemplateConfig.BaseDir = "../../web/template/"
 	suite.config = c
-	
+
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.Panicf("error encrypting user pass: %s", err)
