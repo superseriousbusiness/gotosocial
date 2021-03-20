@@ -20,6 +20,7 @@ package oauth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/gotosocial/oauth2/v4"
@@ -42,7 +43,7 @@ func (pcs *pgClientStore) GetByID(ctx context.Context, clientID string) (oauth2.
 		ID: clientID,
 	}
 	if err := pcs.conn.WithContext(ctx).Model(poc).Where("id = ?", poc.ID).Select(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error in clientstore getbyid searching for client %s: %s", clientID, err)
 	}
 	return models.New(poc.ID, poc.Secret, poc.Domain, poc.UserID), nil
 }
@@ -55,7 +56,10 @@ func (pcs *pgClientStore) Set(ctx context.Context, id string, cli oauth2.ClientI
 		UserID: cli.GetUserID(),
 	}
 	_, err := pcs.conn.WithContext(ctx).Model(poc).OnConflict("(id) DO UPDATE").Insert()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in clientstore set: %s", err)
+	}
+	return nil
 }
 
 func (pcs *pgClientStore) Delete(ctx context.Context, id string) error {
@@ -63,7 +67,10 @@ func (pcs *pgClientStore) Delete(ctx context.Context, id string) error {
 		ID: id,
 	}
 	_, err := pcs.conn.WithContext(ctx).Model(poc).Where("id = ?", poc.ID).Delete()
-	return err
+	if err != nil {
+		return fmt.Errorf("error in clientstore delete: %s", err)
+	}
+	return nil
 }
 
 type oauthClient struct {

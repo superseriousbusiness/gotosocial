@@ -18,27 +18,13 @@
 
 package gtsmodel
 
-import "time"
-
-type Status struct {
-	ID             string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	URI            string `pg:",unique"`
-	URL            string `pg:",unique"`
-	Content        string
-	CreatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Local          bool
-	AccountID      string
-	InReplyToID    string
-	BoostOfID      string
-	ContentWarning string
-	Visibility     *Visibility
-}
-
-type Visibility struct {
-	Direct    bool
-	Followers bool
-	Local     bool
-	Unlisted  bool
-	Public    bool
+type Application struct {
+	ID           string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	Name         string
+	Website      string
+	RedirectURI  string `json:"redirect_uri"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Scopes       string `json:"scopes"`
+	VapidKey     string `json:"vapid_key"`
 }

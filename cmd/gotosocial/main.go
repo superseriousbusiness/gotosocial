@@ -95,6 +95,14 @@ func main() {
 				Value:   "postgres",
 				EnvVars: []string{envNames.DbDatabase},
 			},
+
+			// TEMPLATE FLAGS
+			&cli.StringFlag{
+				Name:    flagNames.TemplateBaseDir,
+				Usage:   "Basedir for html templating files for rendering pages and composing emails",
+				Value:   "./web/template/",
+				EnvVars: []string{envNames.TemplateBaseDir},
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -137,12 +145,12 @@ func main() {
 func runAction(c *cli.Context, a action.GTSAction) error {
 
 	// create a new *config.Config based on the config path provided...
-	conf, err := config.New(c.String(config.GetFlagNames().ConfigPath))
+	conf, err := config.FromFile(c.String(config.GetFlagNames().ConfigPath))
 	if err != nil {
 		return fmt.Errorf("error creating config: %s", err)
 	}
 	// ... and the flags set on the *cli.Context by urfave
-	conf.ParseFlags(c)
+	conf.ParseCLIFlags(c)
 
 	// create a logger with the log level, formatting, and output splitter already set
 	log, err := log.New(conf.LogLevel)

@@ -16,29 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package config
 
-import "time"
-
-type Status struct {
-	ID             string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	URI            string `pg:",unique"`
-	URL            string `pg:",unique"`
-	Content        string
-	CreatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Local          bool
-	AccountID      string
-	InReplyToID    string
-	BoostOfID      string
-	ContentWarning string
-	Visibility     *Visibility
-}
-
-type Visibility struct {
-	Direct    bool
-	Followers bool
-	Local     bool
-	Unlisted  bool
-	Public    bool
+// TemplateConfig pertains to templating of web pages/email notifications and the like
+type TemplateConfig struct {
+	// Directory from which gotosocial will attempt to load html templates (.tmpl files).
+	BaseDir string `yaml:"baseDir"`
 }

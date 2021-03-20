@@ -1,6 +1,6 @@
 # GoToSocial
 
-<img src="https://img.shields.io/liberapay/patrons/dumpsterqueer.svg?logo=liberapay"> <img src="https://img.shields.io/liberapay/receives/dumpsterqueer.svg?logo=liberapay">
+![patrons](https://img.shields.io/liberapay/patrons/dumpsterqueer.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/dumpsterqueer.svg?logo=liberapay)
 
 Federated social media software.
 
@@ -30,9 +30,13 @@ Among other things:
 * Easily-configurable character limit.
 * Groups and group posting.
 
+## Implementation Status
+
+For an up-to-date view on progress made towards a v1.0.0 release, see [here](./PROGRESS.md).
+
 ## Contact
 
-For questions and comments, you can reach out to Tobi on the Fediverse <a rel="me" href="https://ondergrond.org/@dumpsterqueer">here</a> or mail admin@gotosocial.org.
+For questions and comments, you can reach out to Tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer) or mail admin@gotosocial.org.
 
 ## Sponsorship
 
