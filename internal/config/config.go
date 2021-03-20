@@ -48,7 +48,7 @@ func Default() *Config {
 	// TODO: find a way of doing this without code repetition, because having to
 	// repeat all values here and elsewhere is annoying and gonna be prone to mistakes.
 	return &Config{
-		DBConfig: &DBConfig{},
+		DBConfig:       &DBConfig{},
 		TemplateConfig: &TemplateConfig{},
 	}
 }
@@ -56,7 +56,7 @@ func Default() *Config {
 // Empty just returns an empty config
 func Empty() *Config {
 	return &Config{
-		DBConfig: &DBConfig{},
+		DBConfig:       &DBConfig{},
 		TemplateConfig: &TemplateConfig{},
 	}
 }

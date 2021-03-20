@@ -22,11 +22,11 @@ import "time"
 
 type Status struct {
 	ID             string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	URI            string
-	URL            string
+	URI            string `pg:",unique"`
+	URL            string `pg:",unique"`
 	Content        string
-	CreatedAt      time.Time `pg:"type:timestamp,notnull"`
-	UpdatedAt      time.Time `pg:"type:timestamp,notnull"`
+	CreatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
 	Local          bool
 	AccountID      string
 	InReplyToID    string

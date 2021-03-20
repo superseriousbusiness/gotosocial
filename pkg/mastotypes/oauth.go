@@ -22,16 +22,16 @@ package mastotypes
 // See here: https://docs.joinmastodon.org/methods/apps/oauth/
 type OAuthAuthorize struct {
 	// Forces the user to re-login, which is necessary for authorizing with multiple accounts from the same instance.
-	ForceLogin   string `form:"force_login,omitempty"`
+	ForceLogin string `form:"force_login,omitempty"`
 	// Should be set equal to `code`.
 	ResponseType string `form:"response_type"`
 	// Client ID, obtained during app registration.
-	ClientID     string `form:"client_id"`
+	ClientID string `form:"client_id"`
 	// Set a URI to redirect the user to.
 	// If this parameter is set to urn:ietf:wg:oauth:2.0:oob then the authorization code will be shown instead.
 	// Must match one of the redirect URIs declared during app registration.
-	RedirectURI  string `form:"redirect_uri"`
+	RedirectURI string `form:"redirect_uri"`
 	// List of requested OAuth scopes, separated by spaces (or by pluses, if using query parameters).
 	// Must be a subset of scopes declared during app registration. If not provided, defaults to read.
-	Scope        string `form:"scope,omitempty"`
+	Scope string `form:"scope,omitempty"`
 }
