@@ -19,12 +19,14 @@
 package oauth
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
@@ -102,6 +104,8 @@ func New(ts oauth2.TokenStore, cs oauth2.ClientStore, conn *pg.DB, log *logrus.L
 }
 
 func (a *API) AddRoutes(s api.Server) error {
+	s.AttachHandler(http.MethodPost, "/api/v1/apps", a.AppsPOSTHandler)
+
 	s.AttachHandler(http.MethodGet, "/auth/sign_in", a.SignInGETHandler)
 	s.AttachHandler(http.MethodPost, "/auth/sign_in", a.SignInPOSTHandler)
 
@@ -110,7 +114,6 @@ func (a *API) AddRoutes(s api.Server) error {
 	s.AttachHandler(http.MethodGet, "/oauth/authorize", a.AuthorizeGETHandler)
 	s.AttachHandler(http.MethodPost, "/oauth/authorize", a.AuthorizePOSTHandler)
 
-	// s.AttachHandler(http.MethodGet, "/auth", a.AuthGETHandler)
 	return nil
 }
 
@@ -260,18 +263,21 @@ func (a *API) AuthorizeGETHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
+	// Username will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
+	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
 	v := s.Get("username")
 	if username, ok := v.(string); !ok || username == "" {
 		l.Trace("username was empty, parsing form then redirecting to sign in page")
 
+		// first make sure they've filled out the authorize form with the required values
 		form := &mastotypes.OAuthAuthorize{}
-
 		if err := c.ShouldBind(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		l.Tracef("parsed form: %+v", form)
 
+		// these fields are *required* so check 'em
 		if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "missing one of: response_type, client_id or redirect_uri"})
 			return
@@ -288,18 +294,26 @@ func (a *API) AuthorizeGETHandler(c *gin.Context) {
 			return
 		}
 
+		// send them to the sign in page so we can tell who they are
 		c.Redirect(http.StatusFound, "/auth/sign_in")
 		return
 	}
 
+	// Check if we have a code already. If we do, it means the user used urn:ietf:wg:oauth:2.0:oob as their redirect URI
+	// and were sent here, which means they just want the code displayed so they can use it out of band.
 	code := &code{}
-	if err := c.Bind(code); err != nil || code.Code == "" {
-		// no code yet, serve auth html and let the user confirm
-		l.Trace("serving authorize html")
-		c.HTML(http.StatusOK, "authorize.tmpl", gin.H{})
+	if err := c.Bind(code); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.String(http.StatusOK, code.Code)
+
+	// the authorize template will either:
+	// 1. Display the code to the user if they're already authorized and were redirected here because they selected urn:ietf:wg:oauth:2.0:oob.
+	// 2. Display a form where they can get some information about the app that's trying to authorize, and approve it, which will then go to AuthorizePOSTHandler
+	l.Trace("serving authorize html")
+	c.HTML(http.StatusOK, "authorize.tmpl", gin.H{
+		"code": code.Code,
+	})
 }
 
 // AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
@@ -417,16 +431,16 @@ func (a *API) ValidatePassword(email string, password string) (userid string, er
 	return
 }
 
-// UserAuthorizationHandler gets the user's email address from the form key 'username'
+// UserAuthorizationHandler gets the user's ID from the 'username' field of the request form,
 // or redirects to the /auth/sign_in page, if this key is not present.
-func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (username string, err error) {
+func (a *API) UserAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 	l := a.log.WithField("func", "UserAuthorizationHandler")
-	username = r.FormValue("username")
-	if username == "" {
+	userID = r.FormValue("username")
+	if userID == "" {
 		l.Trace("username was empty, redirecting to sign in page")
 		http.Redirect(w, r, "/auth/sign_in", http.StatusFound)
 		return "", nil
 	}
-	l.Tracef("returning (%s, %s)", username, err)
-	return username, err
+	l.Tracef("returning (%s, %s)", userID, err)
+	return userID, err
 }

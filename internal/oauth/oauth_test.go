@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
-	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
@@ -22,6 +21,7 @@ type OauthTestSuite struct {
 	tokenStore  oauth2.TokenStore
 	clientStore oauth2.ClientStore
 	conn        *pg.DB
+	testAccount *gtsmodel.Account
 	testUser    *gtsmodel.User
 	testClient  *oauthClient
 	config      *config.Config
@@ -36,20 +36,18 @@ func (suite *OauthTestSuite) SetupSuite() {
 		logrus.Panicf("error encrypting user pass: %s", err)
 	}
 
-	userID := uuid.NewString()
+	suite.testAccount = &gtsmodel.Account{
+
+	}
 	suite.testUser = &gtsmodel.User{
-		ID:                userID,
 		EncryptedPassword: string(encryptedPassword),
 		Email:             "user@localhost",
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
 		AccountID:         "some-account-id-it-doesn't-matter-really-since-this-user-doesn't-actually-have-an-account!",
 	}
 	suite.testClient = &oauthClient{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
 		Domain: "http://localhost:8080",
-		UserID: userID,
 	}
 
 	// because go tests are run within the test package directory, we need to fiddle with the templateconfig
@@ -71,6 +69,8 @@ func (suite *OauthTestSuite) SetupTest() {
 		&oauthClient{},
 		&oauthToken{},
 		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 
 	for _, m := range models {
@@ -100,6 +100,8 @@ func (suite *OauthTestSuite) TearDownTest() {
 		&oauthClient{},
 		&oauthToken{},
 		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 	for _, m := range models {
 		if err := suite.conn.Model(m).DropTable(&orm.DropTableOptions{}); err != nil {

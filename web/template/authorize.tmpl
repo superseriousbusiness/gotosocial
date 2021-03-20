@@ -11,6 +11,7 @@
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
   </head>
 
+{{if len .code | eq 0 }}
   <body>
     <div class="container">
       <div class="jumbotron">
@@ -30,4 +31,14 @@
       </div>
     </div>
   </body>
+{{else}}
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        {{.code}}
+      </div>
+    </div>
+  </body>
+{{end}}
+
 </html>
