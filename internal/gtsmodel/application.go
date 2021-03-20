@@ -19,11 +19,12 @@
 package gtsmodel
 
 type Application struct {
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Name string
-	Website string
-	RedirectURI string `json:"redirect_uri"`
-	ClientID string `json:"client_id"`
+	ID           string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	Name         string
+	Website      string
+	RedirectURI  string `json:"redirect_uri"`
+	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
-	VapidKey string `json:"vapid_key"`
+	Scopes       string `json:"scopes"`
+	VapidKey     string `json:"vapid_key"`
 }
