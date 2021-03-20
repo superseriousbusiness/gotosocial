@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -118,7 +119,9 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 
 	r := api.New(suite.config, log)
 	api := New(suite.tokenStore, suite.clientStore, suite.conn, log)
-	api.AddRoutes(r)
+	if err := api.AddRoutes(r); err != nil {
+		suite.FailNow(fmt.Sprintf("error initializing api: %s", err))
+	}
 	go r.Start()
 	time.Sleep(30 * time.Second)
 	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=https://example.org
