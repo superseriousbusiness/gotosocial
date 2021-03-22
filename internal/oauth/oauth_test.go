@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
+	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
@@ -19,13 +20,14 @@ import (
 
 type OauthTestSuite struct {
 	suite.Suite
-	tokenStore  oauth2.TokenStore
-	clientStore oauth2.ClientStore
-	conn        *pg.DB
-	testAccount *gtsmodel.Account
-	testUser    *gtsmodel.User
-	testClient  *oauthClient
-	config      *config.Config
+	tokenStore      oauth2.TokenStore
+	clientStore     oauth2.ClientStore
+	conn            *pg.DB
+	testAccount     *gtsmodel.Account
+	testApplication *gtsmodel.Application
+	testUser        *gtsmodel.User
+	testClient      *oauthClient
+	config          *config.Config
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
@@ -46,16 +48,30 @@ func (suite *OauthTestSuite) SetupSuite() {
 		logrus.Panicf("error encrypting user pass: %s", err)
 	}
 
-	suite.testAccount = &gtsmodel.Account{}
+	acctID := uuid.NewString()
+
+	suite.testAccount = &gtsmodel.Account{
+		ID:       acctID,
+		Username: "test_user",
+	}
 	suite.testUser = &gtsmodel.User{
 		EncryptedPassword: string(encryptedPassword),
 		Email:             "user@example.org",
-		AccountID:         "some-account-id-it-doesn't-matter-really-since-this-user-doesn't-actually-have-an-account!",
+		AccountID:         acctID,
 	}
 	suite.testClient = &oauthClient{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
 		Domain: fmt.Sprintf("%s://%s", c.Protocol, c.Host),
+	}
+	suite.testApplication = &gtsmodel.Application{
+		Name:         "a test application",
+		Website:      "https://some-application-website.com",
+		RedirectURI:  "http://localhost:8080",
+		ClientID:     "a-known-client-id",
+		ClientSecret: "some-secret",
+		Scopes:       "read",
+		VapidKey:     uuid.NewString(),
 	}
 }
 
@@ -85,12 +101,20 @@ func (suite *OauthTestSuite) SetupTest() {
 	suite.tokenStore = NewPGTokenStore(context.Background(), suite.conn, logrus.New())
 	suite.clientStore = NewPGClientStore(suite.conn)
 
+	if _, err := suite.conn.Model(suite.testAccount).Insert(); err != nil {
+		logrus.Panicf("could not insert test account into db: %s", err)
+	}
+
 	if _, err := suite.conn.Model(suite.testUser).Insert(); err != nil {
 		logrus.Panicf("could not insert test user into db: %s", err)
 	}
 
 	if _, err := suite.conn.Model(suite.testClient).Insert(); err != nil {
 		logrus.Panicf("could not insert test client into db: %s", err)
+	}
+
+	if _, err := suite.conn.Model(suite.testApplication).Insert(); err != nil {
+		logrus.Panicf("could not insert test application into db: %s", err)
 	}
 
 }
@@ -126,9 +150,9 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 	}
 	go r.Start()
 	time.Sleep(60 * time.Second)
-	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=http://localhost:8080
+	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=http://localhost:8080&scope=read
 	// curl -v -F client_id=a-known-client-id -F client_secret=some-secret -F redirect_uri=http://localhost:8080 -F code=[ INSERT CODE HERE ] -F grant_type=authorization_code localhost:8080/oauth/token
-	// curl -v -H "Authorization: bearer [INSERT TOKEN HERE]" http://localhost:8080
+	// curl -v -H "Authorization: Bearer [INSERT TOKEN HERE]" http://localhost:8080
 }
 
 func TestOauthTestSuite(t *testing.T) {
