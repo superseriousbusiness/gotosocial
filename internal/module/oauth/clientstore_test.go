@@ -1,4 +1,3 @@
-
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org

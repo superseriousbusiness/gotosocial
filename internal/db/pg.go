@@ -32,7 +32,6 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
-	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -42,7 +41,6 @@ type postgresService struct {
 	conn         *pg.DB
 	log          *logrus.Entry
 	cancel       context.CancelFunc
-	tokenStore   oauth2.TokenStore
 	federationDB pub.Database
 }
 
