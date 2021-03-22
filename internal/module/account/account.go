@@ -16,22 +16,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package account
 
 import (
-	"context"
-
-	"github.com/gotosocial/gotosocial/internal/action"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/sirupsen/logrus"
+	"github.com/gotosocial/gotosocial/internal/module"
+	"github.com/gotosocial/gotosocial/internal/router"
 )
 
-// Initialize will initialize the database given in the config for use with GoToSocial
-var Initialize action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	// db, err := New(ctx, c, log)
-	// if err != nil {
-	// 	return err
-	// }
+type accountModule struct {
+}
+
+// New returns a new account module
+func New() module.ClientAPIModule {
+	return &accountModule{}
+}
+
+// Route attaches all routes from this module to the given router
+func (m *accountModule) Route(r router.Router) error {
 	return nil
-	// return db.CreateSchema(ctx)
 }

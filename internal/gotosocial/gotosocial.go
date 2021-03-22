@@ -22,10 +22,10 @@ import (
 	"context"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/cache"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/gotosocial/gotosocial/internal/router"
 )
 
 type Gotosocial interface {
@@ -33,11 +33,11 @@ type Gotosocial interface {
 	Stop(context.Context) error
 }
 
-func New(db db.DB, cache cache.Cache, clientAPI api.Server, federationAPI pub.FederatingActor, config *config.Config) (Gotosocial, error) {
+func New(db db.DB, cache cache.Cache, apiRouter router.Router, federationAPI pub.FederatingActor, config *config.Config) (Gotosocial, error) {
 	return &gotosocial{
 		db:            db,
 		cache:         cache,
-		clientAPI:     clientAPI,
+		apiRouter:     apiRouter,
 		federationAPI: federationAPI,
 		config:        config,
 	}, nil
@@ -46,7 +46,7 @@ func New(db db.DB, cache cache.Cache, clientAPI api.Server, federationAPI pub.Fe
 type gotosocial struct {
 	db            db.DB
 	cache         cache.Cache
-	clientAPI     api.Server
+	apiRouter     router.Router
 	federationAPI pub.FederatingActor
 	config        *config.Config
 }

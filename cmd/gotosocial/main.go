@@ -58,6 +58,18 @@ func main() {
 				Value:   "",
 				EnvVars: []string{envNames.ConfigPath},
 			},
+			&cli.StringFlag{
+				Name:    flagNames.Host,
+				Usage:   "Hostname to use for the server (eg., example.org, gotosocial.whatever.com)",
+				Value:   "localhost",
+				EnvVars: []string{envNames.Host},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.Protocol,
+				Usage:   "Protocol to use for the REST api of the server (only use http for debugging and tests!)",
+				Value:   "https",
+				EnvVars: []string{envNames.Protocol},
+			},
 
 			// DATABASE FLAGS
 			&cli.StringFlag{

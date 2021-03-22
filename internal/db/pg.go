@@ -22,30 +22,26 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/go-fed/activity/streams"
-	"github.com/go-fed/activity/streams/vocab"
+	"github.com/go-fed/activity/pub"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
-	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 
+// postgresService satisfies the DB interface
 type postgresService struct {
-	config     *config.DBConfig
-	conn       *pg.DB
-	log        *logrus.Entry
-	cancel     context.CancelFunc
-	locks      *sync.Map
-	tokenStore oauth2.TokenStore
+	config       *config.DBConfig
+	conn         *pg.DB
+	log          *logrus.Entry
+	cancel       context.CancelFunc
+	federationDB pub.Database
 }
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -102,34 +98,18 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		return nil, errors.New("db connection timeout")
 	}
 
-	// acc := model.StubAccount()
-	// if _, err := conn.Model(acc).Returning("id").Insert(); err != nil {
-	// 	cancel()
-	// 	return nil, fmt.Errorf("db insert error: %s", err)
-	// }
-	// log.Infof("created account with id %s", acc.ID)
-
-	// note := &model.Note{
-	// 	Visibility: &model.Visibility{
-	// 		Local: true,
-	// 	},
-	// 	CreatedAt: time.Now(),
-	// 	UpdatedAt: time.Now(),
-	// }
-	// if _, err := conn.WithContext(ctx).Model(note).Returning("id").Insert(); err != nil {
-	// 	cancel()
-	// 	return nil, fmt.Errorf("db insert error: %s", err)
-	// }
-	// log.Infof("created note with id %s", note.ID)
-
 	// we can confidently return this useable postgres service now
 	return &postgresService{
-		config: c.DBConfig,
-		conn:   conn,
-		log:    log,
-		cancel: cancel,
-		locks:  &sync.Map{},
+		config:       c.DBConfig,
+		conn:         conn,
+		log:          log,
+		cancel:       cancel,
+		federationDB: newPostgresFederation(conn),
 	}, nil
+}
+
+func (ps *postgresService) Federation() pub.Database {
+	return ps.federationDB
 }
 
 /*
@@ -188,118 +168,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 }
 
 /*
-   GO-FED DB INTERFACE-IMPLEMENTING FUNCTIONS
-*/
-func (ps *postgresService) Lock(ctx context.Context, id *url.URL) error {
-	// Before any other Database methods are called, the relevant `id`
-	// entries are locked to allow for fine-grained concurrency.
-
-	// Strategy: create a new lock, if stored, continue. Otherwise, lock the
-	// existing mutex.
-	mu := &sync.Mutex{}
-	mu.Lock() // Optimistically lock if we do store it.
-	i, loaded := ps.locks.LoadOrStore(id.String(), mu)
-	if loaded {
-		mu = i.(*sync.Mutex)
-		mu.Lock()
-	}
-	return nil
-}
-
-func (ps *postgresService) Unlock(ctx context.Context, id *url.URL) error {
-	// Once Go-Fed is done calling Database methods, the relevant `id`
-	// entries are unlocked.
-
-	i, ok := ps.locks.Load(id.String())
-	if !ok {
-		return errors.New("missing an id in unlock")
-	}
-	mu := i.(*sync.Mutex)
-	mu.Unlock()
-	return nil
-}
-
-func (ps *postgresService) InboxContains(ctx context.Context, inbox *url.URL, id *url.URL) (bool, error) {
-	return false, nil
-}
-
-func (ps *postgresService) GetInbox(ctx context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) SetInbox(ctx context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
-	return nil
-}
-
-func (ps *postgresService) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
-	return false, nil
-}
-
-func (ps *postgresService) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
-	return false, nil
-}
-
-func (ps *postgresService) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) Create(ctx context.Context, asType vocab.Type) error {
-	t, err := streams.NewTypeResolver()
-	if err != nil {
-		return err
-	}
-	if err := t.Resolve(ctx, asType); err != nil {
-		return err
-	}
-	asType.GetTypeName()
-	return nil
-}
-
-func (ps *postgresService) Update(ctx context.Context, asType vocab.Type) error {
-	return nil
-}
-
-func (ps *postgresService) Delete(ctx context.Context, id *url.URL) error {
-	return nil
-}
-
-func (ps *postgresService) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
-	return nil
-}
-
-func (ps *postgresService) NewID(ctx context.Context, t vocab.Type) (id *url.URL, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) Following(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
-}
-
-func (ps *postgresService) Liked(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
-}
-
-/*
 	EXTRA FUNCTIONS
 */
 
@@ -338,6 +206,46 @@ func (ps *postgresService) IsHealthy(ctx context.Context) error {
 	return ps.conn.Ping(ctx)
 }
 
-func (ps *postgresService) TokenStore() oauth2.TokenStore {
-	return ps.tokenStore
+func (ps *postgresService) CreateTable(i interface{}) error {
+	return ps.conn.Model(i).CreateTable(&orm.CreateTableOptions{
+		IfNotExists: true,
+	})
+}
+
+func (ps *postgresService) DropTable(i interface{}) error {
+	return ps.conn.Model(i).DropTable(&orm.DropTableOptions{
+		IfExists: true,
+	})
+}
+
+func (ps *postgresService) GetByID(id string, i interface{}) error {
+	return ps.conn.Model(i).Where("id = ?", id).Select()
+}
+
+func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
+	return ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Select()
+}
+
+func (ps *postgresService) GetAll(i interface{}) error {
+	return ps.conn.Model(i).Select()
+}
+
+func (ps *postgresService) Put(i interface{}) error {
+	_, err := ps.conn.Model(i).Insert(i)
+	return err
+}
+
+func (ps *postgresService) UpdateByID(id string, i interface{}) error {
+	_, err := ps.conn.Model(i).OnConflict("(id) DO UPDATE").Insert()
+	return err
+}
+
+func (ps *postgresService) DeleteByID(id string, i interface{}) error {
+	_, err := ps.conn.Model(i).Where("id = ?", id).Delete()
+	return err
+}
+
+func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
+	_, err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Delete()
+	return err
 }

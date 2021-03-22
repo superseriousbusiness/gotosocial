@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// package gtsmodel contains types used *internally* by GoToSocial and added/removed/selected from the database.
+// Package gtsmodel contains types used *internally* by GoToSocial and added/removed/selected from the database.
 // These types should never be serialized and/or sent out via public APIs, as they contain sensitive information.
 // The annotation used on these structs is for handling them via the go-pg ORM. See here: https://pg.uptrace.dev/models/
 package gtsmodel

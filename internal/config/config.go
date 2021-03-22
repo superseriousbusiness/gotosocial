@@ -29,6 +29,8 @@ import (
 type Config struct {
 	LogLevel        string          `yaml:"logLevel"`
 	ApplicationName string          `yaml:"applicationName"`
+	Host            string          `yaml:"host"`
+	Protocol        string          `yaml:"protocol"`
 	DBConfig        *DBConfig       `yaml:"db"`
 	TemplateConfig  *TemplateConfig `yaml:"template"`
 }
@@ -97,6 +99,14 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 		c.ApplicationName = f.String(fn.ApplicationName)
 	}
 
+	if c.Host == "" || f.IsSet(fn.Host) {
+		c.Host = f.String(fn.Host)
+	}
+
+	if c.Protocol == "" || f.IsSet(fn.Protocol) {
+		c.Protocol = f.String(fn.Protocol)
+	}
+
 	// db flags
 	if c.DBConfig.Type == "" || f.IsSet(fn.DbType) {
 		c.DBConfig.Type = f.String(fn.DbType)
@@ -142,6 +152,8 @@ type Flags struct {
 	LogLevel        string
 	ApplicationName string
 	ConfigPath      string
+	Host            string
+	Protocol        string
 	DbType          string
 	DbAddress       string
 	DbPort          string
@@ -158,6 +170,8 @@ func GetFlagNames() Flags {
 		LogLevel:        "log-level",
 		ApplicationName: "application-name",
 		ConfigPath:      "config-path",
+		Host:            "host",
+		Protocol:        "protocol",
 		DbType:          "db-type",
 		DbAddress:       "db-address",
 		DbPort:          "db-port",
@@ -175,6 +189,8 @@ func GetEnvNames() Flags {
 		LogLevel:        "GTS_LOG_LEVEL",
 		ApplicationName: "GTS_APPLICATION_NAME",
 		ConfigPath:      "GTS_CONFIG_PATH",
+		Host:            "GTS_HOST",
+		Protocol:        "GTS_PROTOCOL",
 		DbType:          "GTS_DB_TYPE",
 		DbAddress:       "GTS_DB_ADDRESS",
 		DbPort:          "GTS_DB_PORT",

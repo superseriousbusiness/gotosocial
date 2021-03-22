@@ -30,11 +30,13 @@ import (
 	"github.com/gotosocial/gotosocial/internal/db"
 )
 
+// New returns a go-fed compatible federating actor
 func New(db db.DB) pub.FederatingActor {
 	fa := &API{}
-	return pub.NewFederatingActor(fa, fa, db, fa)
+	return pub.NewFederatingActor(fa, fa, db.Federation(), fa)
 }
 
+// API implements several go-fed interfaces in one convenient location
 type API struct {
 }
 

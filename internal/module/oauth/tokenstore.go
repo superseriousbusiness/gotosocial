@@ -24,31 +24,31 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/oauth2/v4"
 	"github.com/gotosocial/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 )
 
-// pgTokenStore is an implementation of oauth2.TokenStore, which uses Postgres as a storage backend.
-type pgTokenStore struct {
+// tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.
+type tokenStore struct {
 	oauth2.TokenStore
-	conn *pg.DB
-	log  *logrus.Logger
+	db  db.DB
+	log *logrus.Logger
 }
 
-// NewPGTokenStore returns a token store, using postgres, that satisfies the oauth2.TokenStore interface.
+// newTokenStore returns a token store that satisfies the oauth2.TokenStore interface.
 //
-// In order to allow tokens to 'expire' (not really a thing in Postgres world), it will also set off a
-// goroutine that iterates through the tokens in the DB once per minute and deletes any that have expired.
-func NewPGTokenStore(ctx context.Context, conn *pg.DB, log *logrus.Logger) oauth2.TokenStore {
-	pts := &pgTokenStore{
-		conn: conn,
-		log:  log,
+// In order to allow tokens to 'expire', it will also set off a goroutine that iterates through
+// the tokens in the DB once per minute and deletes any that have expired.
+func newTokenStore(ctx context.Context, db db.DB, log *logrus.Logger) oauth2.TokenStore {
+	pts := &tokenStore{
+		db:  db,
+		log: log,
 	}
 
 	// set the token store to clean out expired tokens once per minute, or return if we're done
-	go func(ctx context.Context, pts *pgTokenStore, log *logrus.Logger) {
+	go func(ctx context.Context, pts *tokenStore, log *logrus.Logger) {
 	cleanloop:
 		for {
 			select {
@@ -67,22 +67,22 @@ func NewPGTokenStore(ctx context.Context, conn *pg.DB, log *logrus.Logger) oauth
 }
 
 // sweep clears out old tokens that have expired; it should be run on a loop about once per minute or so.
-func (pts *pgTokenStore) sweep() error {
+func (pts *tokenStore) sweep() error {
 	// select *all* tokens from the db
 	// todo: if this becomes expensive (ie., there are fucking LOADS of tokens) then figure out a better way.
-	var tokens []oauthToken
-	if err := pts.conn.Model(&tokens).Select(); err != nil {
+	tokens := new([]*oauthToken)
+	if err := pts.db.GetAll(tokens); err != nil {
 		return err
 	}
 
 	// iterate through and remove expired tokens
 	now := time.Now()
-	for _, pgt := range tokens {
+	for _, pgt := range *tokens {
 		// The zero value of a time.Time is 00:00 january 1 1970, which will always be before now. So:
 		// we only want to check if a token expired before now if the expiry time is *not zero*;
 		// ie., if it's been explicity set.
 		if !pgt.CodeExpiresAt.IsZero() && pgt.CodeExpiresAt.Before(now) || !pgt.RefreshExpiresAt.IsZero() && pgt.RefreshExpiresAt.Before(now) || !pgt.AccessExpiresAt.IsZero() && pgt.AccessExpiresAt.Before(now) {
-			if _, err := pts.conn.Model(&pgt).Delete(); err != nil {
+			if err := pts.db.DeleteByID(pgt.ID, &pgt); err != nil {
 				return err
 			}
 		}
@@ -93,68 +93,61 @@ func (pts *pgTokenStore) sweep() error {
 
 // Create creates and store the new token information.
 // For the original implementation, see https://github.com/gotosocial/oauth2/blob/master/store/token.go#L34
-func (pts *pgTokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
+func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	t, ok := info.(*models.Token)
 	if !ok {
 		return errors.New("info param was not a models.Token")
 	}
-	_, err := pts.conn.WithContext(ctx).Model(oauthTokenToPGToken(t)).Insert()
-	if err != nil {
+	if err := pts.db.Put(oauthTokenToPGToken(t)); err != nil {
 		return fmt.Errorf("error in tokenstore create: %s", err)
 	}
 	return nil
 }
 
 // RemoveByCode deletes a token from the DB based on the Code field
-func (pts *pgTokenStore) RemoveByCode(ctx context.Context, code string) error {
-	_, err := pts.conn.Model(&oauthToken{}).Where("code = ?", code).Delete()
-	if err != nil {
-		return fmt.Errorf("error in tokenstore removebycode: %s", err)
-	}
-	return nil
+func (pts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
+	return pts.db.DeleteWhere("code", code, &oauthToken{})
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
-func (pts *pgTokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	_, err := pts.conn.Model(&oauthToken{}).Where("access = ?", access).Delete()
-	if err != nil {
-		return fmt.Errorf("error in tokenstore removebyaccess: %s", err)
-	}
-	return nil
+func (pts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
+	return pts.db.DeleteWhere("access", access, &oauthToken{})
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
-func (pts *pgTokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	_, err := pts.conn.Model(&oauthToken{}).Where("refresh = ?", refresh).Delete()
-	if err != nil {
-		return fmt.Errorf("error in tokenstore removebyrefresh: %s", err)
-	}
-	return nil
+func (pts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
+	return pts.db.DeleteWhere("refresh", refresh, &oauthToken{})
 }
 
 // GetByCode selects a token from the DB based on the Code field
-func (pts *pgTokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{}
-	if err := pts.conn.Model(pgt).Where("code = ?", code).Select(); err != nil {
-		return nil, fmt.Errorf("error in tokenstore getbycode: %s", err)
+func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
+	pgt := &oauthToken{
+		Code: code,
+	}
+	if err := pts.db.GetWhere("code", code, pgt); err != nil {
+		return nil, err
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
 
 // GetByAccess selects a token from the DB based on the Access field
-func (pts *pgTokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{}
-	if err := pts.conn.Model(pgt).Where("access = ?", access).Select(); err != nil {
-		return nil, fmt.Errorf("error in tokenstore getbyaccess: %s", err)
+func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
+	pgt := &oauthToken{
+		Access: access,
+	}
+	if err := pts.db.GetWhere("access", access, pgt); err != nil {
+		return nil, err
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
 
 // GetByRefresh selects a token from the DB based on the Refresh field
-func (pts *pgTokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{}
-	if err := pts.conn.Model(pgt).Where("refresh = ?", refresh).Select(); err != nil {
-		return nil, fmt.Errorf("error in tokenstore getbyrefresh: %s", err)
+func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
+	pgt := &oauthToken{
+		Refresh: refresh,
+	}
+	if err := pts.db.GetWhere("refresh", refresh, pgt); err != nil {
+		return nil, err
 	}
 	return pgTokenToOauthToken(pgt), nil
 }
@@ -174,6 +167,7 @@ func (pts *pgTokenStore) GetByRefresh(ctx context.Context, refresh string) (oaut
 // As such, manual translation is always required between oauthToken and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
 // and pgTokenToOauthToken can be used for that.
 type oauthToken struct {
+	ID                  string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
 	ClientID            string
 	UserID              string
 	RedirectURI         string
