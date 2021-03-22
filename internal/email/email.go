@@ -16,5 +16,5 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// package email provides a service for interacting with an SMTP server
+// Package email provides a service for interacting with an SMTP server
 package email

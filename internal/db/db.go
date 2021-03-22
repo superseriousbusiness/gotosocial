@@ -30,30 +30,47 @@ import (
 
 const dbTypePostgres string = "POSTGRES"
 
-// DB provides methods for interacting with an underlying database (for now, just postgres).
-// The function mapping lines up with the DB interface described in go-fed.
-// See here: https://github.com/go-fed/activity/blob/master/pub/database.go
+// DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
 type DB interface {
-	/*
-		GO-FED DATABASE FUNCTIONS
-	*/
-	pub.Database
+	// Federation returns an interface that's compatible with go-fed, for performing federation storage/retrieval functions.
+	// See: https://pkg.go.dev/github.com/go-fed/activity@v1.0.0/pub?utm_source=gopls#Database
+	Federation() pub.Database
 
-	/*
-		ANY ADDITIONAL DESIRED FUNCTIONS
-	*/
+	// CreateTable creates a table for the given interface
+	CreateTable(i interface{}) error
 
-	// CreateSchema should populate the database with the required tables
-	CreateSchema(context.Context) error
+	// DropTable drops the table for the given interface
+	DropTable(i interface{}) error
 
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible
-	Stop(context.Context) error
+	Stop(ctx context.Context) error
 
 	// IsHealthy should return nil if the database connection is healthy, or an error if not
-	IsHealthy(context.Context) error
+	IsHealthy(ctx context.Context) error
+
+	// GetByID gets one entry by its id.
+	GetByID(id string, i interface{}) error
+
+	// GetWhere gets one entry where key = value
+	GetWhere(key string, value interface{}, i interface{}) error
+
+	// GetAll gets all entries of interface type i
+	GetAll(i interface{}) error
+
+	// Put stores i
+	Put(i interface{}) error
+
+	// Update by id updates i with id id
+	UpdateByID(id string, i interface{}) error
+
+	// Delete by id removes i with id id
+	DeleteByID(id string, i interface{}) error
+
+	// Delete where deletes i where key = value
+	DeleteWhere(key string, value interface{}, i interface{}) error
 }
 
-// New returns a new database service that satisfies the Service interface and, by extension,
+// New returns a new database service that satisfies the DB interface and, by extension,
 // the go-fed database interface described here: https://github.com/go-fed/activity/blob/master/pub/database.go
 func New(ctx context.Context, c *config.Config, log *logrus.Logger) (DB, error) {
 	switch strings.ToUpper(c.DBConfig.Type) {

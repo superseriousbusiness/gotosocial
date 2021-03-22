@@ -35,10 +35,10 @@ type Application struct {
 	ClientID string
 	// secret of the associated oauth client entity in the db
 	ClientSecret string
-   // scopes requested when this app was created
-	Scopes       string
-   // a vapid key generated for this app when it was created
-	VapidKey     string
+	// scopes requested when this app was created
+	Scopes string
+	// a vapid key generated for this app when it was created
+	VapidKey string
 }
 
 // ToMastotype returns this application as a mastodon api type, ready for serialization

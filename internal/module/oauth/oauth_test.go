@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package oauth
 
 import (
@@ -6,12 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/google/uuid"
-	"github.com/gotosocial/gotosocial/internal/api"
 	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/gtsmodel"
+	"github.com/gotosocial/gotosocial/internal/router"
 	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -22,7 +39,7 @@ type OauthTestSuite struct {
 	suite.Suite
 	tokenStore      oauth2.TokenStore
 	clientStore     oauth2.ClientStore
-	conn            *pg.DB
+	db              db.DB
 	testAccount     *gtsmodel.Account
 	testApplication *gtsmodel.Application
 	testUser        *gtsmodel.User
@@ -40,7 +57,16 @@ func (suite *OauthTestSuite) SetupSuite() {
 	// because go tests are run within the test package directory, we need to fiddle with the templateconfig
 	// basedir in a way that we wouldn't normally have to do when running the binary, in order to make
 	// the templates actually load
-	c.TemplateConfig.BaseDir = "../../web/template/"
+	c.TemplateConfig.BaseDir = "../../../web/template/"
+	c.DBConfig = &config.DBConfig{
+		Type:            "postgres",
+		Address:         "localhost",
+		Port:            5432,
+		User:            "postgres",
+		Password:        "postgres",
+		Database:        "postgres",
+		ApplicationName: "gotosocial",
+	}
 	suite.config = c
 
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -77,10 +103,15 @@ func (suite *OauthTestSuite) SetupSuite() {
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
 func (suite *OauthTestSuite) SetupTest() {
-	suite.conn = pg.Connect(&pg.Options{})
-	if err := suite.conn.Ping(context.Background()); err != nil {
-		logrus.Panicf("db connection error: %s", err)
+
+	log := logrus.New()
+	log.SetLevel(logrus.TraceLevel)
+	db, err := db.New(context.Background(), suite.config, log)
+	if err != nil {
+		logrus.Panicf("error creating database connection: %s", err)
 	}
+
+	suite.db = db
 
 	models := []interface{}{
 		&oauthClient{},
@@ -91,29 +122,24 @@ func (suite *OauthTestSuite) SetupTest() {
 	}
 
 	for _, m := range models {
-		if err := suite.conn.Model(m).CreateTable(&orm.CreateTableOptions{
-			IfNotExists: true,
-		}); err != nil {
+		if err := suite.db.CreateTable(m); err != nil {
 			logrus.Panicf("db connection error: %s", err)
 		}
 	}
 
-	suite.tokenStore = NewPGTokenStore(context.Background(), suite.conn, logrus.New())
-	suite.clientStore = NewPGClientStore(suite.conn)
+	suite.tokenStore = newTokenStore(context.Background(), suite.db, logrus.New())
+	suite.clientStore = newClientStore(suite.db)
 
-	if _, err := suite.conn.Model(suite.testAccount).Insert(); err != nil {
+	if err := suite.db.Put(suite.testAccount); err != nil {
 		logrus.Panicf("could not insert test account into db: %s", err)
 	}
-
-	if _, err := suite.conn.Model(suite.testUser).Insert(); err != nil {
+	if err := suite.db.Put(suite.testUser); err != nil {
 		logrus.Panicf("could not insert test user into db: %s", err)
 	}
-
-	if _, err := suite.conn.Model(suite.testClient).Insert(); err != nil {
+	if err := suite.db.Put(suite.testClient); err != nil {
 		logrus.Panicf("could not insert test client into db: %s", err)
 	}
-
-	if _, err := suite.conn.Model(suite.testApplication).Insert(); err != nil {
+	if err := suite.db.Put(suite.testApplication); err != nil {
 		logrus.Panicf("could not insert test application into db: %s", err)
 	}
 
@@ -129,25 +155,30 @@ func (suite *OauthTestSuite) TearDownTest() {
 		&gtsmodel.Application{},
 	}
 	for _, m := range models {
-		if err := suite.conn.Model(m).DropTable(&orm.DropTableOptions{}); err != nil {
-			logrus.Panicf("drop table error: %s", err)
+		if err := suite.db.DropTable(m); err != nil {
+			logrus.Panicf("error dropping table: %s", err)
 		}
 	}
-	if err := suite.conn.Close(); err != nil {
+	if err := suite.db.Stop(context.Background()); err != nil {
 		logrus.Panicf("error closing db connection: %s", err)
 	}
-	suite.conn = nil
+	suite.db = nil
 }
 
 func (suite *OauthTestSuite) TestAPIInitialize() {
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
 
-	r := api.New(suite.config, log)
-	api := New(suite.tokenStore, suite.clientStore, suite.conn, log)
-	if err := api.Route(r); err != nil {
-		suite.FailNow(fmt.Sprintf("error initializing api: %s", err))
+	r, err := router.New(suite.config, log)
+	if err != nil {
+		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
 	}
+
+	api := New(suite.tokenStore, suite.clientStore, suite.db, log)
+	if err := api.Route(r); err != nil {
+		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
+	}
+
 	go r.Start()
 	time.Sleep(60 * time.Second)
 	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=http://localhost:8080&scope=read

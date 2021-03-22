@@ -22,55 +22,47 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/oauth2/v4"
 	"github.com/gotosocial/oauth2/v4/models"
 )
 
-type pgClientStore struct {
-	conn *pg.DB
+type clientStore struct {
+	db db.DB
 }
 
-func NewPGClientStore(conn *pg.DB) oauth2.ClientStore {
-	pts := &pgClientStore{
-		conn: conn,
+func newClientStore(db db.DB) oauth2.ClientStore {
+	pts := &clientStore{
+		db: db,
 	}
 	return pts
 }
 
-func (pcs *pgClientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
+func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
 	poc := &oauthClient{
 		ID: clientID,
 	}
-	if err := pcs.conn.WithContext(ctx).Model(poc).Where("id = ?", poc.ID).Select(); err != nil {
-		return nil, fmt.Errorf("error in clientstore getbyid searching for client %s: %s", clientID, err)
+	if err := cs.db.GetByID(clientID, poc); err != nil {
+		return nil, fmt.Errorf("database error: %s", err)
 	}
 	return models.New(poc.ID, poc.Secret, poc.Domain, poc.UserID), nil
 }
 
-func (pcs *pgClientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
+func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
 	poc := &oauthClient{
 		ID:     cli.GetID(),
 		Secret: cli.GetSecret(),
 		Domain: cli.GetDomain(),
 		UserID: cli.GetUserID(),
 	}
-	_, err := pcs.conn.WithContext(ctx).Model(poc).OnConflict("(id) DO UPDATE").Insert()
-	if err != nil {
-		return fmt.Errorf("error in clientstore set: %s", err)
-	}
-	return nil
+	return cs.db.UpdateByID(id, poc)
 }
 
-func (pcs *pgClientStore) Delete(ctx context.Context, id string) error {
+func (cs *clientStore) Delete(ctx context.Context, id string) error {
 	poc := &oauthClient{
 		ID: id,
 	}
-	_, err := pcs.conn.WithContext(ctx).Model(poc).Where("id = ?", poc.ID).Delete()
-	if err != nil {
-		return fmt.Errorf("error in clientstore delete: %s", err)
-	}
-	return nil
+	return cs.db.DeleteByID(id, poc)
 }
 
 type oauthClient struct {

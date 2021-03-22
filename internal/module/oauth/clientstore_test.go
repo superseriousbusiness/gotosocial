@@ -1,11 +1,29 @@
+
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package oauth
 
 import (
 	"context"
 	"testing"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
+	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -13,7 +31,7 @@ import (
 
 type PgClientStoreTestSuite struct {
 	suite.Suite
-	conn             *pg.DB
+	db               db.DB
 	testClientID     string
 	testClientSecret string
 	testClientDomain string
@@ -32,31 +50,55 @@ func (suite *PgClientStoreTestSuite) SetupSuite() {
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
 func (suite *PgClientStoreTestSuite) SetupTest() {
-	suite.conn = pg.Connect(&pg.Options{})
-	if err := suite.conn.Ping(context.Background()); err != nil {
-		logrus.Panicf("db connection error: %s", err)
+	log := logrus.New()
+	log.SetLevel(logrus.TraceLevel)
+	c := config.Empty()
+	c.DBConfig = &config.DBConfig{
+		Type:            "postgres",
+		Address:         "localhost",
+		Port:            5432,
+		User:            "postgres",
+		Password:        "postgres",
+		Database:        "postgres",
+		ApplicationName: "gotosocial",
 	}
-	if err := suite.conn.Model(&oauthClient{}).CreateTable(&orm.CreateTableOptions{
-		IfNotExists: true,
-	}); err != nil {
-		logrus.Panicf("db connection error: %s", err)
+	db, err := db.New(context.Background(), c, log)
+	if err != nil {
+		logrus.Panicf("error creating database connection: %s", err)
+	}
+
+	suite.db = db
+
+	models := []interface{}{
+		&oauthClient{},
+	}
+
+	for _, m := range models {
+		if err := suite.db.CreateTable(m); err != nil {
+			logrus.Panicf("db connection error: %s", err)
+		}
 	}
 }
 
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
 func (suite *PgClientStoreTestSuite) TearDownTest() {
-	if err := suite.conn.Model(&oauthClient{}).DropTable(&orm.DropTableOptions{}); err != nil {
-		logrus.Panicf("drop table error: %s", err)
+	models := []interface{}{
+		&oauthClient{},
 	}
-	if err := suite.conn.Close(); err != nil {
+	for _, m := range models {
+		if err := suite.db.DropTable(m); err != nil {
+			logrus.Panicf("error dropping table: %s", err)
+		}
+	}
+	if err := suite.db.Stop(context.Background()); err != nil {
 		logrus.Panicf("error closing db connection: %s", err)
 	}
-	suite.conn = nil
+	suite.db = nil
 }
 
 func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 	// set a new client in the store
-	cs := NewPGClientStore(suite.conn)
+	cs := newClientStore(suite.db)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -74,7 +116,7 @@ func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 
 func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
 	// set a new client in the store
-	cs := NewPGClientStore(suite.conn)
+	cs := newClientStore(suite.db)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -23,41 +23,41 @@ import "time"
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	// id of the status in the database
-	ID             string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
 	// uri at which this status is reachable
-	URI            string `pg:",unique"`
+	URI string `pg:",unique"`
 	// web url for viewing this status
-	URL            string `pg:",unique"`
+	URL string `pg:",unique"`
 	// the html-formatted content of this status
-	Content        string
+	Content string
 	// when was this status created?
-	CreatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
-	UpdatedAt      time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// is this status from a local account?
-	Local          bool
+	Local bool
 	// which account posted this status?
-	AccountID      string
+	AccountID string
 	// id of the status this status is a reply to
-	InReplyToID    string
+	InReplyToID string
 	// id of the status this status is a boost of
-	BoostOfID      string
+	BoostOfID string
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
-	Visibility     *Visibility
+	Visibility *Visibility
 }
 
 // Visibility represents the visibility granularity of a status. It is a combination of flags.
 type Visibility struct {
 	// Is this status viewable as a direct message?
-	Direct    bool
+	Direct bool
 	// Is this status viewable to followers?
 	Followers bool
 	// Is this status viewable on the local timeline?
-	Local     bool
+	Local bool
 	// Is this status boostable but not shown on public timelines?
-	Unlisted  bool
+	Unlisted bool
 	// Is this status shown on public and federated timelines?
-	Public    bool
+	Public bool
 }
