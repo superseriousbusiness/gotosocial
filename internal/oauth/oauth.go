@@ -158,7 +158,7 @@ func (a *API) appsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// set default 'read' for scopes if it's not set
+	// set default 'read' for scopes if it's not set, this follows the default of the mastodon api https://docs.joinmastodon.org/methods/apps/
 	var scopes string
 	if form.Scopes == "" {
 		scopes = "read"
@@ -203,7 +203,7 @@ func (a *API) appsPOSTHandler(c *gin.Context) {
 	}
 
 	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, app)
+	c.JSON(http.StatusOK, app.ToMastotype())
 }
 
 // signInGETHandler should be served at https://example.org/auth/sign_in.
@@ -233,7 +233,7 @@ func (a *API) signInPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	s.Set("username", userid)
+	s.Set("userid", userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -249,19 +249,6 @@ func (a *API) signInPOSTHandler(c *gin.Context) {
 func (a *API) tokenPOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
-
-	// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
-
-	// // make sure redirect_uri is actually set first (we don't accept empty)
-	// if v, ok := c.GetPostForm("redirect_uri"); !ok || v == "" {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
-	// 	return
-	// } else if v == outOfBandRedirect {
-	// 	// If redirect_uri is set to out of band, redirect to this endpoint, where we can display the code later
-	// 	// This is a bit of a workaround because the oauth library doesn't recognise oob redirect URIs
-	// 	c.Request.Form.Set("redirect_uri", fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthTokenPath))
-	// }
-
 	if err := a.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
@@ -274,128 +261,134 @@ func (a *API) authorizeGETHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
-	// Username will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
+	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
-	v := s.Get("username")
-	if username, ok := v.(string); !ok || username == "" {
-		l.Trace("username was empty, parsing form then redirecting to sign in page")
-
-		// first make sure they've filled out the authorize form with the required values
-		form := &mastotypes.OAuthAuthorize{}
-		if err := c.ShouldBind(form); err != nil {
+	userID, ok := s.Get("userid").(string)
+	if !ok || userID == "" {
+		l.Trace("userid was empty, parsing form then redirecting to sign in page")
+		if err := parseAuthForm(c, l); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
+		} else {
+			c.Redirect(http.StatusFound, authSignInPath)
 		}
-		l.Tracef("parsed form: %+v", form)
-
-		// these fields are *required* so check 'em
-		if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "missing one of: response_type, client_id or redirect_uri"})
-			return
-		}
-
-		// save these values from the form so we can use them elsewhere in the session
-		s.Set("force_login", form.ForceLogin)
-		s.Set("response_type", form.ResponseType)
-		s.Set("client_id", form.ClientID)
-		s.Set("redirect_uri", form.RedirectURI)
-		s.Set("scope", form.Scope)
-		if err := s.Save(); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		// send them to the sign in page so we can tell who they are
-		c.Redirect(http.StatusFound, authSignInPath)
 		return
 	}
 
-	// Check if we have a code already. If we do, it means the user used urn:ietf:wg:oauth:2.0:oob as their redirect URI
-	// and were sent here, which means they just want the code displayed so they can use it out of band.
-	code := &code{}
-	if err := c.Bind(code); err != nil {
+	// We can use the client_id on the session to retrieve info about the app associated with the client_id
+	clientID, ok := s.Get("client_id").(string)
+	if !ok || clientID == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session"})
+		return
+	}
+	app := &gtsmodel.Application{
+		ClientID: clientID,
+	}
+	if err := a.conn.Model(app).Where("client_id = ?", app.ClientID).Select(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
+		return
+	}
+
+	// we can also use the userid of the user to fetch their username from the db to greet them nicely <3
+	user := &gtsmodel.User{
+		ID: userID,
+	}
+	if err := a.conn.Model(user).Where("id = ?", user.ID).Select(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// the authorize template will either:
-	// 1. Display the code to the user if they're already authorized and were redirected here because they selected urn:ietf:wg:oauth:2.0:oob.
-	// 2. Display a form where they can get some information about the app that's trying to authorize, and approve it, which will then go to AuthorizePOSTHandler
+	acct := &gtsmodel.Account{
+		ID: user.AccountID,
+	}
+	if err := a.conn.Model(acct).Where("id = ?", acct.ID).Select(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Finally we should also get the redirect and scope of this particular request, as stored in the session.
+	redirect, ok := s.Get("redirect_uri").(string)
+	if !ok || redirect == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no redirect_uri found in session"})
+		return
+	}
+	scope, ok := s.Get("scope").(string)
+	if !ok || scope == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no scope found in session"})
+		return
+	}
+
+	// the authorize template will display a form to the user where they can get some information
+	// about the app that's trying to authorize, and the scope of the request.
+	// They can then approve it if it looks OK to them, which will POST to the AuthorizePOSTHandler
 	l.Trace("serving authorize html")
 	c.HTML(http.StatusOK, "authorize.tmpl", gin.H{
-		"code": code.Code,
+		"appname":    app.Name,
+		"appwebsite": app.Website,
+		"redirect":   redirect,
+		"scope":      scope,
+		"user":       acct.Username,
 	})
 }
 
 // authorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
-// The idea here is to present an oauth authorize page to the user, with a button
-// that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
+// At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
+// so we should proceed with the authentication flow and generate an oauth token for them if we can.
+// See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
 func (a *API) authorizePOSTHandler(c *gin.Context) {
 	l := a.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
-	values := url.Values{}
+	// At this point we know the user has said 'yes' to allowing the application and oauth client
+	// work for them, so we can set the
+
+	// We need to retrieve the original form submitted to the authorizeGEThandler, and
+	// recreate it on the request so that it can be used further by the oauth2 library.
+	// So first fetch all the values from the session.
 	forceLogin, ok := s.Get("force_login").(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing force_login"})
 		return
 	}
-	values.Set("force_login", forceLogin)
-
 	responseType, ok := s.Get("response_type").(string)
 	if !ok || responseType == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing response_type"})
 		return
 	}
-	values.Set("response_type", responseType)
-
 	clientID, ok := s.Get("client_id").(string)
 	if !ok || clientID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing client_id"})
 		return
 	}
-	values.Set("client_id", clientID)
-
 	redirectURI, ok := s.Get("redirect_uri").(string)
 	if !ok || redirectURI == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
 		return
 	}
-	// The commented-out code below doesn't work yet because the oauth2 library can't handle OOB properly!
-	//
-	// if the client requests this particular redirect URI, it means they want to be able to authenticate out of band,
-	// ie., just have their access_code shown to them so they can do what they want with it later.
-	//
-	// But we can't just show the code yet; there's still an authorization flow to go through.
-	// What we can do is set the redirect uri to the /oauth/authorize page, do the auth
-	// flow as normal, and then handle showing the code there. See AuthorizeGETHandler.
-	// if redirectURI == outOfBandRedirect {
-	// 	redirectURI = fmt.Sprintf("%s://%s%s", a.config.Protocol, a.config.Host, oauthAuthorizePath)
-	// }
-	values.Set("redirect_uri", redirectURI)
-
 	scope, ok := s.Get("scope").(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing scope"})
 		return
 	}
-	values.Set("scope", scope)
-
-	username, ok := s.Get("username").(string)
+	userID, ok := s.Get("userid").(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing username"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing userid"})
 		return
 	}
-	values.Set("username", username)
+	// we're done with the session so we can clear it now
+	s.Clear()
 
+	// now set the values on the request
+	values := url.Values{}
+	values.Set("force_login", forceLogin)
+	values.Set("response_type", responseType)
+	values.Set("client_id", clientID)
+	values.Set("redirect_uri", redirectURI)
+	values.Set("scope", scope)
+	values.Set("userid", userID)
 	c.Request.Form = values
 	l.Tracef("values on request set to %+v", c.Request.Form)
 
-	if err := s.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
+	// and proceed with authorization using the oauth2 library
 	if err := a.server.HandleAuthorizeRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
@@ -410,19 +403,20 @@ func (a *API) oauthTokenMiddleware(c *gin.Context) {
 	l := a.log.WithField("func", "ValidatePassword")
 	l.Trace("entering OauthTokenMiddleware")
 	if ti, err := a.server.ValidationBearerToken(c.Request); err == nil {
-		l.Tracef("authenticated user %s with bearer token", ti.GetUserID())
+		l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
 		c.Set("authenticated_user", ti.GetUserID())
+
 	} else {
 		l.Trace("continuing with unauthenticated request")
 	}
 }
 
 /*
-	SUB-HANDLERS -- don't serve these directly, they should be attached to the oauth2 server
+	SUB-HANDLERS -- don't serve these directly, they should be attached to the oauth2 server or used inside handler funcs
 */
 
-// validatePassword takes a username (in this case, we use an email address)
-// and a password. The goal is to authenticate the password against the one for that email
+// validatePassword takes an email address and a password.
+// The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a uuid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
 func (a *API) validatePassword(email string, password string) (userid string, err error) {
@@ -464,16 +458,45 @@ func incorrectPassword() (string, error) {
 	return "", errors.New("password/email combination was incorrect")
 }
 
-// userAuthorizationHandler gets the user's ID from the 'username' field of the request form,
+// userAuthorizationHandler gets the user's ID from the 'userid' field of the request form,
 // or redirects to the /auth/sign_in page, if this key is not present.
 func (a *API) userAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
 	l := a.log.WithField("func", "UserAuthorizationHandler")
-	userID = r.FormValue("username")
+	userID = r.FormValue("userid")
 	if userID == "" {
-		l.Trace("username was empty, redirecting to sign in page")
-		http.Redirect(w, r, authSignInPath, http.StatusFound)
-		return "", nil
+		return "", errors.New("userid was empty, redirecting to sign in page")
 	}
-	l.Tracef("returning (%s, %s)", userID, err)
+	l.Tracef("returning userID %s", userID)
 	return userID, err
+}
+
+// parseAuthForm parses the OAuthAuthorize form in the gin context, and stores
+// the values in the form into the session.
+func parseAuthForm(c *gin.Context, l *logrus.Entry) error {
+	s := sessions.Default(c)
+
+	// first make sure they've filled out the authorize form with the required values
+	form := &mastotypes.OAuthAuthorize{}
+	if err := c.ShouldBind(form); err != nil {
+		return err
+	}
+	l.Tracef("parsed form: %+v", form)
+
+	// these fields are *required* so check 'em
+	if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
+		return errors.New("missing one of: response_type, client_id or redirect_uri")
+	}
+
+	// set default scope to read
+	if form.Scope == "" {
+		form.Scope = "read"
+	}
+
+	// save these values from the form so we can use them elsewhere in the session
+	s.Set("force_login", form.ForceLogin)
+	s.Set("response_type", form.ResponseType)
+	s.Set("client_id", form.ClientID)
+	s.Set("redirect_uri", form.RedirectURI)
+	s.Set("scope", form.Scope)
+	return s.Save()
 }
