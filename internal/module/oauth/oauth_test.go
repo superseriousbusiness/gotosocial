@@ -22,12 +22,11 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/gtsmodel"
+	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/internal/router"
 	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
@@ -40,9 +39,9 @@ type OauthTestSuite struct {
 	tokenStore      oauth2.TokenStore
 	clientStore     oauth2.ClientStore
 	db              db.DB
-	testAccount     *gtsmodel.Account
-	testApplication *gtsmodel.Application
-	testUser        *gtsmodel.User
+	testAccount     *model.Account
+	testApplication *model.Application
+	testUser        *model.User
 	testClient      *oauthClient
 	config          *config.Config
 }
@@ -76,11 +75,11 @@ func (suite *OauthTestSuite) SetupSuite() {
 
 	acctID := uuid.NewString()
 
-	suite.testAccount = &gtsmodel.Account{
+	suite.testAccount = &model.Account{
 		ID:       acctID,
 		Username: "test_user",
 	}
-	suite.testUser = &gtsmodel.User{
+	suite.testUser = &model.User{
 		EncryptedPassword: string(encryptedPassword),
 		Email:             "user@example.org",
 		AccountID:         acctID,
@@ -90,7 +89,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 		Secret: "some-secret",
 		Domain: fmt.Sprintf("%s://%s", c.Protocol, c.Host),
 	}
-	suite.testApplication = &gtsmodel.Application{
+	suite.testApplication = &model.Application{
 		Name:         "a test application",
 		Website:      "https://some-application-website.com",
 		RedirectURI:  "http://localhost:8080",
@@ -116,9 +115,9 @@ func (suite *OauthTestSuite) SetupTest() {
 	models := []interface{}{
 		&oauthClient{},
 		&oauthToken{},
-		&gtsmodel.User{},
-		&gtsmodel.Account{},
-		&gtsmodel.Application{},
+		&model.User{},
+		&model.Account{},
+		&model.Application{},
 	}
 
 	for _, m := range models {
@@ -150,9 +149,9 @@ func (suite *OauthTestSuite) TearDownTest() {
 	models := []interface{}{
 		&oauthClient{},
 		&oauthToken{},
-		&gtsmodel.User{},
-		&gtsmodel.Account{},
-		&gtsmodel.Application{},
+		&model.User{},
+		&model.Account{},
+		&model.Application{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -179,11 +178,10 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
 	}
 
-	go r.Start()
-	time.Sleep(60 * time.Second)
-	// http://localhost:8080/oauth/authorize?client_id=a-known-client-id&response_type=code&redirect_uri=http://localhost:8080&scope=read
-	// curl -v -F client_id=a-known-client-id -F client_secret=some-secret -F redirect_uri=http://localhost:8080 -F code=[ INSERT CODE HERE ] -F grant_type=authorization_code localhost:8080/oauth/token
-	// curl -v -H "Authorization: Bearer [INSERT TOKEN HERE]" http://localhost:8080
+	r.Start()
+	if err := r.Stop(context.Background()); err != nil {
+		suite.FailNow(fmt.Sprintf("error stopping router: %s", err))
+	}
 }
 
 func TestOauthTestSuite(t *testing.T) {

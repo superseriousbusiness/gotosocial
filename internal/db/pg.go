@@ -31,7 +31,8 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/gtsmodel"
+	"github.com/gotosocial/gotosocial/internal/db/model"
+	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,7 +47,7 @@ type postgresService struct {
 
 // newPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
-func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry) (*postgresService, error) {
+func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry) (DB, error) {
 	opts, err := derivePGOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
@@ -108,10 +109,6 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	}, nil
 }
 
-func (ps *postgresService) Federation() pub.Database {
-	return ps.federationDB
-}
-
 /*
 	HANDY STUFF
 */
@@ -168,8 +165,28 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 }
 
 /*
-	EXTRA FUNCTIONS
+	FEDERATION FUNCTIONALITY
 */
+
+func (ps *postgresService) Federation() pub.Database {
+	return ps.federationDB
+}
+
+/*
+	BASIC DB FUNCTIONALITY
+*/
+
+func (ps *postgresService) CreateTable(i interface{}) error {
+	return ps.conn.Model(i).CreateTable(&orm.CreateTableOptions{
+		IfNotExists: true,
+	})
+}
+
+func (ps *postgresService) DropTable(i interface{}) error {
+	return ps.conn.Model(i).DropTable(&orm.DropTableOptions{
+		IfExists: true,
+	})
+}
 
 func (ps *postgresService) Stop(ctx context.Context) error {
 	ps.log.Info("closing db connection")
@@ -181,11 +198,15 @@ func (ps *postgresService) Stop(ctx context.Context) error {
 	return nil
 }
 
+func (ps *postgresService) IsHealthy(ctx context.Context) error {
+	return ps.conn.Ping(ctx)
+}
+
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
-		(*gtsmodel.Account)(nil),
-		(*gtsmodel.Status)(nil),
-		(*gtsmodel.User)(nil),
+		(*model.Account)(nil),
+		(*model.Status)(nil),
+		(*model.User)(nil),
 	}
 	ps.log.Info("creating db schema")
 
@@ -202,32 +223,35 @@ func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	return nil
 }
 
-func (ps *postgresService) IsHealthy(ctx context.Context) error {
-	return ps.conn.Ping(ctx)
-}
-
-func (ps *postgresService) CreateTable(i interface{}) error {
-	return ps.conn.Model(i).CreateTable(&orm.CreateTableOptions{
-		IfNotExists: true,
-	})
-}
-
-func (ps *postgresService) DropTable(i interface{}) error {
-	return ps.conn.Model(i).DropTable(&orm.DropTableOptions{
-		IfExists: true,
-	})
-}
-
 func (ps *postgresService) GetByID(id string, i interface{}) error {
-	return ps.conn.Model(i).Where("id = ?", id).Select()
+	if err := ps.conn.Model(i).Where("id = ?", id).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+
+	}
+	return nil
 }
 
 func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
-	return ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Select()
+	if err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
 func (ps *postgresService) GetAll(i interface{}) error {
-	return ps.conn.Model(i).Select()
+	if err := ps.conn.Model(i).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
 func (ps *postgresService) Put(i interface{}) error {
@@ -236,34 +260,207 @@ func (ps *postgresService) Put(i interface{}) error {
 }
 
 func (ps *postgresService) UpdateByID(id string, i interface{}) error {
-	_, err := ps.conn.Model(i).OnConflict("(id) DO UPDATE").Insert()
-	return err
+	if _, err := ps.conn.Model(i).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
 func (ps *postgresService) DeleteByID(id string, i interface{}) error {
-	_, err := ps.conn.Model(i).Where("id = ?", id).Delete()
-	return err
+	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
 func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
-	_, err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Delete()
-	return err
+	if _, err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Delete(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
-func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
-	user := &gtsmodel.User{
+/*
+	HANDY SHORTCUTS
+*/
+
+func (ps *postgresService) GetAccountByUserID(userID string, account *model.Account) error {
+	user := &model.User{
 		ID: userID,
 	}
 	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
 		return err
 	}
-	return ps.conn.Model(account).Where("id = ?", user.AccountID).Select()
+	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
-func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
-	return ps.conn.Model(following).Where("account_id = ?", accountID).Select()
+func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]model.Follow) error {
+	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
 }
 
-func (ps *postgresService) GetFollowersByAccountID(accountID string, following *[]gtsmodel.Follow) error {
-	return ps.conn.Model(following).Where("target_account_id = ?", accountID).Select()
+func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]model.Follow) error {
+	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]model.Status) error {
+	if err := ps.conn.Model(statuses).Where("account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]model.Status, limit int) error {
+	q := ps.conn.Model(statuses).Order("created_at DESC")
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+	if accountID != "" {
+		q = q.Where("account_id = ?", accountID)
+	}
+	if err := q.Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *model.Status) error {
+	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+
+}
+
+/*
+	CONVERSION FUNCTIONS
+*/
+
+// AccountToMastoSensitive takes an internal account model and transforms it into an account ready to be served through the API.
+// The resulting account fits the specifications for the path /api/v1/accounts/verify_credentials, as described here:
+// https://docs.joinmastodon.org/methods/accounts/. Note that it's *sensitive* because it's only meant to be exposed to the user
+// that the account actually belongs to.
+func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotypes.Account, error) {
+
+	fields := []mastotypes.Field{}
+	for _, f := range a.Fields {
+		mField := mastotypes.Field{
+			Name:       f.Name,
+			Value:      f.Value,
+		}
+		if !f.VerifiedAt.IsZero() {
+			mField.VerifiedAt =  f.VerifiedAt.Format(time.RFC3339)
+		}
+		fields = append(fields, mField)
+	}
+	fmt.Printf("fields: %+v", fields)
+
+	// count followers
+	var followers []model.Follow
+	if err := ps.GetFollowersByAccountID(a.ID, &followers); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting followers: %s", err)
+		}
+	}
+	var followersCount int
+	if followers != nil {
+		followersCount = len(followers)
+	}
+
+	// count following
+	var following []model.Follow
+	if err := ps.GetFollowingByAccountID(a.ID, &following); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting following: %s", err)
+		}
+	}
+	var followingCount int
+	if following != nil {
+		followingCount = len(following)
+	}
+
+	// count statuses
+	var statuses []model.Status
+	if err := ps.GetStatusesByAccountID(a.ID, &statuses); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting last statuses: %s", err)
+		}
+	}
+	var statusesCount int
+	if statuses != nil {
+		statusesCount = len(statuses)
+	}
+
+	// check when the last status was
+	var lastStatus *model.Status
+	if err := ps.GetLastStatusForAccountID(a.ID, lastStatus); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting last status: %s", err)
+		}
+	}
+	var lastStatusAt string
+	if lastStatus != nil {
+		lastStatusAt = lastStatus.CreatedAt.Format(time.RFC3339)
+	}
+
+	return &mastotypes.Account{
+		ID:             a.ID,
+		Username:       a.Username,
+		Acct:           a.Username, // equivalent to username for local users only, which sensitive always is
+		DisplayName:    a.DisplayName,
+		Locked:         a.Locked,
+		Bot:            a.Bot,
+		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
+		Note:           a.Note,
+		URL:            a.URL,
+		Avatar:         a.AvatarRemoteURL.String(),
+		AvatarStatic:   a.AvatarRemoteURL.String(),
+		Header:         a.HeaderRemoteURL.String(),
+		HeaderStatic:   a.HeaderRemoteURL.String(),
+		FollowersCount: followersCount,
+		FollowingCount: followingCount,
+		StatusesCount:  statusesCount,
+		LastStatusAt:   lastStatusAt,
+		Source:         nil,
+		Emojis:         nil,
+		Fields:         fields,
+	}, nil
 }

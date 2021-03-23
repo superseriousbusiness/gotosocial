@@ -34,7 +34,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/gtsmodel"
+	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/internal/module"
 	"github.com/gotosocial/gotosocial/internal/router"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
@@ -47,10 +47,10 @@ import (
 )
 
 const (
-	appsPath           = "/api/v1/apps"
-	authSignInPath     = "/auth/sign_in"
-	oauthTokenPath     = "/oauth/token"
-	oauthAuthorizePath = "/oauth/authorize"
+	appsPath              = "/api/v1/apps"
+	authSignInPath        = "/auth/sign_in"
+	oauthTokenPath        = "/oauth/token"
+	oauthAuthorizePath    = "/oauth/authorize"
 	SessionAuthorizedUser = "authorized_user"
 )
 
@@ -179,7 +179,7 @@ func (m *oauthModule) appsPOSTHandler(c *gin.Context) {
 	vapidKey := uuid.NewString()
 
 	// generate the application to put in the database
-	app := &gtsmodel.Application{
+	app := &model.Application{
 		Name:         form.ClientName,
 		Website:      form.Website,
 		RedirectURI:  form.RedirectURIs,
@@ -287,7 +287,7 @@ func (m *oauthModule) authorizeGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session"})
 		return
 	}
-	app := &gtsmodel.Application{
+	app := &model.Application{
 		ClientID: clientID,
 	}
 	if err := m.db.GetWhere("client_id", app.ClientID, app); err != nil {
@@ -296,7 +296,7 @@ func (m *oauthModule) authorizeGETHandler(c *gin.Context) {
 	}
 
 	// we can also use the userid of the user to fetch their username from the db to greet them nicely <3
-	user := &gtsmodel.User{
+	user := &model.User{
 		ID: userID,
 	}
 	if err := m.db.GetByID(user.ID, user); err != nil {
@@ -304,7 +304,7 @@ func (m *oauthModule) authorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	acct := &gtsmodel.Account{
+	acct := &model.Account{
 		ID: user.AccountID,
 	}
 
@@ -413,7 +413,6 @@ func (m *oauthModule) oauthTokenMiddleware(c *gin.Context) {
 	if ti, err := m.oauthServer.ValidationBearerToken(c.Request); err == nil {
 		l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
 		c.Set(SessionAuthorizedUser, ti.GetUserID())
-
 	} else {
 		l.Trace("continuing with unauthenticated request")
 	}
@@ -437,7 +436,7 @@ func (m *oauthModule) validatePassword(email string, password string) (userid st
 	}
 
 	// first we select the user from the database based on email address, bail if no user found for that email
-	gtsUser := &gtsmodel.User{}
+	gtsUser := &model.User{}
 
 	if err := m.db.GetWhere("email", email, gtsUser); err != nil {
 		l.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)

@@ -20,7 +20,6 @@ package oauth
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/oauth2/v4"
@@ -43,7 +42,7 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 		ID: clientID,
 	}
 	if err := cs.db.GetByID(clientID, poc); err != nil {
-		return nil, fmt.Errorf("database error: %s", err)
+		return nil, err
 	}
 	return models.New(poc.ID, poc.Secret, poc.Domain, poc.UserID), nil
 }

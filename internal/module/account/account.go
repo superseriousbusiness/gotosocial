@@ -19,13 +19,13 @@
 package account
 
 import (
+	"fmt"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/gtsmodel"
+	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/internal/module"
 	"github.com/gotosocial/gotosocial/internal/module/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
@@ -56,19 +56,33 @@ func (m *accountModule) Route(r router.Router) error {
 	return nil
 }
 
+// AccountVerifyGETHandler serves a user's account details to them IF they reached this
+// handler while in possession of a valid token, according to the oauth middleware.
 func (m *accountModule) AccountVerifyGETHandler(c *gin.Context) {
-	s := sessions.Default(c)
-	userID, ok := s.Get(oauth.SessionAuthorizedUser).(string)
+	i, ok := c.Get(oauth.SessionAuthorizedUser)
+	fmt.Println(i)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
+		return
+	}
+
+	userID, ok := (i).(string)
 	if !ok || userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
 		return
 	}
 
-	acct := &gtsmodel.Account{}
+	acct := &model.Account{}
 	if err := m.db.GetAccountByUserID(userID, acct); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
-      return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-   c.JSON(http.StatusOK, acct.ToMastoSensitive())
+	acctSensitive, err := m.db.AccountToMastoSensitive(acct)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, acctSensitive)
 }

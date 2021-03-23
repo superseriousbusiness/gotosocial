@@ -28,7 +28,6 @@ type Field struct {
 	Value string `json:"value"`
 
 	// OPTIONAL
-
 	// Timestamp of when the server verified a URL value for a rel="me” link. String (ISO 8601 Datetime) if value is a verified URL
 	VerifiedAt string `json:"verified_at,omitempty"`
 }

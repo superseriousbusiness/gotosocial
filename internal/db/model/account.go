@@ -16,16 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package gtsmodel contains types used *internally* by GoToSocial and added/removed/selected from the database.
+// Package model contains types used *internally* by GoToSocial and added/removed/selected from the database.
 // These types should never be serialized and/or sent out via public APIs, as they contain sensitive information.
-// The annotation used on these structs is for handling them via the go-pg ORM. See here: https://pg.uptrace.dev/models/
-package gtsmodel
+// The annotation used on these structs is for handling them via the go-pg ORM (hence why they're in this db subdir).
+// See here for more info on go-pg model annotations: https://pg.uptrace.dev/models/
+package model
 
 import (
 	"net/url"
 	"time"
-
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc)
@@ -39,20 +38,36 @@ type Account struct {
 	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
 	Username string `pg:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
 	// Domain of the account, will be empty if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
-	Domain string `pg:",unique:userdomain"` // username and domain
+	Domain string `pg:",unique:userdomain"` // username and domain should be unique *with* each other
 
 	/*
 		ACCOUNT METADATA
 	*/
 
-	// Avatar image for this account
-	Avatar
-	// Header image for this account
-	Header
+	// File name of the avatar on local storage
+	AvatarFileName string
+	// Gif? png? jpeg?
+	AvatarContentType string
+	// Size of the avatar in bytes
+	AvatarFileSize int
+	// When was the avatar last updated?
+	AvatarUpdatedAt time.Time `pg:"type:timestamp"`
+	// Where can the avatar be retrieved?
+	AvatarRemoteURL *url.URL `pg:"type:text"`
+	// File name of the header on local storage
+	HeaderFileName string
+	// Gif? png? jpeg?
+	HeaderContentType string
+	// Size of the header in bytes
+	HeaderFileSize int
+	// When was the header last updated?
+	HeaderUpdatedAt time.Time `pg:"type:timestamp"`
+	// Where can the header be retrieved?
+	HeaderRemoteURL *url.URL `pg:"type:text"`
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
 	DisplayName string
 	// a key/value map of fields that this account has added to their profile
-	Fields map[string]string
+	Fields []Field
 	// A note that this account has on their profile (ie., the account's bio/description of themselves)
 	Note string
 	// Is this a memorial account, ie., has the user passed away?
@@ -85,8 +100,6 @@ type Account struct {
 	URI string `pg:",unique"`
 	// At which URL can we see the user account in a web browser?
 	URL string `pg:",unique"`
-	// RemoteURL where this account is located. Will be empty if this is a local account.
-	RemoteURL string `pg:",unique"`
 	// Last time this account was located using the webfinger API.
 	LastWebfingeredAt time.Time `pg:"type:timestamp"`
 	// Address of this account's activitypub inbox, for sending activity to
@@ -132,47 +145,8 @@ type Account struct {
 	SuspensionOrigin int
 }
 
-// Avatar represents the avatar for the account for display purposes
-type Avatar struct {
-	// File name of the avatar on local storage
-	AvatarFileName string
-	// Gif? png? jpeg?
-	AvatarContentType string
-	AvatarFileSize    int
-	AvatarUpdatedAt   *time.Time `pg:"type:timestamp"`
-	// Where can we retrieve the avatar?
-	AvatarRemoteURL            *url.URL `pg:"type:text"`
-	AvatarStorageSchemaVersion int
-}
-
-// Header represents the header of the account for display purposes
-type Header struct {
-	// File name of the header on local storage
-	HeaderFileName string
-	// Gif? png? jpeg?
-	HeaderContentType string
-	HeaderFileSize    int
-	HeaderUpdatedAt   *time.Time `pg:"type:timestamp"`
-	// Where can we retrieve the header?
-	HeaderRemoteURL            *url.URL `pg:"type:text"`
-	HeaderStorageSchemaVersion int
-}
-
-// ToMastoSensitive returns this account as a mastodon api type, ready for serialization
-func (a *Account) ToMastoSensitive() *mastotypes.Account {
-	return &mastotypes.Account{
-		ID:           a.ID,
-		Username:     a.Username,
-		Acct:         a.Username, // equivalent to username for local users only, which sensitive always is
-		DisplayName:  a.DisplayName,
-		Locked:       a.Locked,
-		Bot:          a.Bot,
-		CreatedAt:    a.CreatedAt.Format(time.RFC3339),
-		Note:         a.Note,
-		URL:          a.URL,
-		Avatar:       a.Avatar.AvatarRemoteURL.String(),
-		AvatarStatic: a.AvatarRemoteURL.String(),
-		Header:       a.Header.HeaderRemoteURL.String(),
-		HeaderStatic: a.Header.HeaderRemoteURL.String(),
-	}
+type Field struct {
+	Name       string
+	Value      string
+	VerifiedAt time.Time `pg:"type:timestamp"`
 }

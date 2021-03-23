@@ -31,7 +31,7 @@ type Account struct {
 	// Whether the account manually approves follow requests.
 	Locked bool `json:"locked"`
 	// Whether the account has opted into discovery features such as the profile directory.
-	Discoverable bool `json:"discoverable"`
+	Discoverable bool `json:"discoverable,omitempty"`
 	// A presentational flag. Indicates that the account may perform automated actions, may not be monitored, or identifies as a robot.
 	Bot bool `json:"bot"`
 	// When the account was created. (ISO 8601 Datetime)
@@ -61,9 +61,9 @@ type Account struct {
 	// Additional metadata attached to a profile as name-value pairs.
 	Fields []Field `json:"fields"`
 	// An extra entity returned when an account is suspended.
-	Suspended bool `json:"suspended"`
+	Suspended bool `json:"suspended,omitempty"`
 	// When a timed mute will expire, if applicable. (ISO 8601 Datetime)
-	MuteExpiresAt string `json:"mute_expires_at"`
+	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// An extra entity to be used with API methods to verify credentials and update credentials.
 	Source *Source `json:"source"`
 }

@@ -19,8 +19,10 @@
 package router
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -40,26 +42,28 @@ type Router interface {
 	// Start the router
 	Start()
 	// Stop the router
-	Stop()
+	Stop(ctx context.Context) error
 }
 
 // router fulfils the Router interface using gin and logrus
 type router struct {
 	logger *logrus.Logger
 	engine *gin.Engine
+	srv    *http.Server
 }
 
 // Start starts the router nicely
-func (s *router) Start() {
-	// todo: start gracefully
-	if err := s.engine.Run(); err != nil {
-		s.logger.Panicf("server error: %s", err)
-	}
+func (r *router) Start() {
+	go func() {
+		if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			r.logger.Fatalf("listen: %s", err)
+		}
+	}()
 }
 
 // Stop shuts down the router nicely
-func (s *router) Stop() {
-	// todo: shut down gracefully
+func (s *router) Stop(ctx context.Context) error {
+	return s.srv.Shutdown(ctx)
 }
 
 // AttachHandler attaches the given gin.HandlerFunc to the router with the specified method and path.
@@ -100,6 +104,10 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	return &router{
 		logger: logger,
 		engine: engine,
+		srv: &http.Server{
+			Addr:    ":8080",
+			Handler: engine,
+		},
 	}, nil
 }
 

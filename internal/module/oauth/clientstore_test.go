@@ -136,7 +136,7 @@ func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
 	// try to get the deleted client; we should get an error
 	deletedClient, err := cs.GetByID(context.Background(), suite.testClientID)
 	suite.Assert().Nil(deletedClient)
-	suite.Assert().NotNil(err)
+	suite.Assert().EqualValues(db.ErrNoEntries{}, err)
 }
 
 func TestPgClientStoreTestSuite(t *testing.T) {
