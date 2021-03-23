@@ -24,6 +24,8 @@ package gtsmodel
 import (
 	"net/url"
 	"time"
+
+	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 )
 
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc)
@@ -63,6 +65,8 @@ type Account struct {
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When should this account function until
 	SubscriptionExpiresAt time.Time `pg:"type:timestamp"`
+	// Does this account identify itself as a bot?
+	Bot bool
 
 	/*
 		PRIVACY SETTINGS
@@ -152,4 +156,23 @@ type Header struct {
 	// Where can we retrieve the header?
 	HeaderRemoteURL            *url.URL `pg:"type:text"`
 	HeaderStorageSchemaVersion int
+}
+
+// ToMastoSensitive returns this account as a mastodon api type, ready for serialization
+func (a *Account) ToMastoSensitive() *mastotypes.Account {
+	return &mastotypes.Account{
+		ID:           a.ID,
+		Username:     a.Username,
+		Acct:         a.Username, // equivalent to username for local users only, which sensitive always is
+		DisplayName:  a.DisplayName,
+		Locked:       a.Locked,
+		Bot:          a.Bot,
+		CreatedAt:    a.CreatedAt.Format(time.RFC3339),
+		Note:         a.Note,
+		URL:          a.URL,
+		Avatar:       a.Avatar.AvatarRemoteURL.String(),
+		AvatarStatic: a.AvatarRemoteURL.String(),
+		Header:       a.Header.HeaderRemoteURL.String(),
+		HeaderStatic: a.Header.HeaderRemoteURL.String(),
+	}
 }

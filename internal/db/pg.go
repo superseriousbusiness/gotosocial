@@ -249,3 +249,21 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	_, err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Delete()
 	return err
 }
+
+func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
+	user := &gtsmodel.User{
+		ID: userID,
+	}
+	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
+		return err
+	}
+	return ps.conn.Model(account).Where("id = ?", user.AccountID).Select()
+}
+
+func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
+	return ps.conn.Model(following).Where("account_id = ?", accountID).Select()
+}
+
+func (ps *postgresService) GetFollowersByAccountID(accountID string, following *[]gtsmodel.Follow) error {
+	return ps.conn.Model(following).Where("target_account_id = ?", accountID).Select()
+}

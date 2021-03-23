@@ -19,19 +19,56 @@
 package account
 
 import (
+	"net/http"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/gotosocial/gotosocial/internal/gtsmodel"
 	"github.com/gotosocial/gotosocial/internal/module"
+	"github.com/gotosocial/gotosocial/internal/module/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
 )
 
+const (
+	basePath       = "/api/v1/accounts"
+	basePathWithID = basePath + "/:id"
+	verifyPath     = basePath + "/verify_credentials"
+)
+
 type accountModule struct {
+	config *config.Config
+	db     db.DB
 }
 
 // New returns a new account module
-func New() module.ClientAPIModule {
-	return &accountModule{}
+func New(config *config.Config, db db.DB) module.ClientAPIModule {
+	return &accountModule{
+		config: config,
+		db:     db,
+	}
 }
 
 // Route attaches all routes from this module to the given router
 func (m *accountModule) Route(r router.Router) error {
+	r.AttachHandler(http.MethodGet, verifyPath, m.AccountVerifyGETHandler)
 	return nil
+}
+
+func (m *accountModule) AccountVerifyGETHandler(c *gin.Context) {
+	s := sessions.Default(c)
+	userID, ok := s.Get(oauth.SessionAuthorizedUser).(string)
+	if !ok || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
+		return
+	}
+
+	acct := &gtsmodel.Account{}
+	if err := m.db.GetAccountByUserID(userID, acct); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+      return
+	}
+
+   c.JSON(http.StatusOK, acct.ToMastoSensitive())
 }

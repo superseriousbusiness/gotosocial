@@ -25,6 +25,7 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/gotosocial/gotosocial/internal/gtsmodel"
 	"github.com/sirupsen/logrus"
 )
 
@@ -68,6 +69,15 @@ type DB interface {
 
 	// Delete where deletes i where key = value
 	DeleteWhere(key string, value interface{}, i interface{}) error
+
+	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID
+	GetAccountByUserID(userID string, account *gtsmodel.Account) error
+
+	// GetFollowingByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is following
+	GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error
+
+	// GetFollowersByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is followed by
+	GetFollowersByAccountID(accountID string, following *[]gtsmodel.Follow) error
 }
 
 // New returns a new database service that satisfies the DB interface and, by extension,

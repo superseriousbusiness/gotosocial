@@ -41,8 +41,8 @@ type Application struct {
 	VapidKey string
 }
 
-// ToMastotype returns this application as a mastodon api type, ready for serialization
-func (a *Application) ToMastotype() *mastotypes.Application {
+// ToMasto returns this application as a mastodon api type, ready for serialization
+func (a *Application) ToMasto() *mastotypes.Application {
 	return &mastotypes.Application{
 		ID:           a.ID,
 		Name:         a.Name,

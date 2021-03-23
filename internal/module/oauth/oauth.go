@@ -51,6 +51,7 @@ const (
 	authSignInPath     = "/auth/sign_in"
 	oauthTokenPath     = "/oauth/token"
 	oauthAuthorizePath = "/oauth/authorize"
+	SessionAuthorizedUser = "authorized_user"
 )
 
 // oauthModule is an oauth2 oauthModule that satisfies the ClientAPIModule interface
@@ -209,7 +210,7 @@ func (m *oauthModule) appsPOSTHandler(c *gin.Context) {
 	}
 
 	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, app.ToMastotype())
+	c.JSON(http.StatusOK, app.ToMasto())
 }
 
 // signInGETHandler should be served at https://example.org/auth/sign_in.
@@ -411,7 +412,7 @@ func (m *oauthModule) oauthTokenMiddleware(c *gin.Context) {
 	l.Trace("entering OauthTokenMiddleware")
 	if ti, err := m.oauthServer.ValidationBearerToken(c.Request); err == nil {
 		l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
-		c.Set("authenticated_user", ti.GetUserID())
+		c.Set(SessionAuthorizedUser, ti.GetUserID())
 
 	} else {
 		l.Trace("continuing with unauthenticated request")
