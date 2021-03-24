@@ -216,10 +216,19 @@ func (suite *AccountTestSuite) TestAPIInitialize() {
 	}
 
 	r.AttachMiddleware(func(c *gin.Context) {
+		account := &model.Account{}
+		if err := suite.db.GetAccountByUserID(suite.testUser.ID, account); err != nil || account == nil {
+			suite.T().Log(err)
+			suite.FailNowf("no account found for user %s, continuing with unauthenticated request: %+v", "", suite.testUser.ID, account)
+			fmt.Println(account)
+			return
+		}
+	
+		c.Set(oauth.SessionAuthorizedAccount, account)
 		c.Set(oauth.SessionAuthorizedUser, suite.testUser.ID)
 	})
 
-	acct := New(suite.config, suite.db)
+	acct := New(suite.config, suite.db, log)
 	acct.Route(r)
 
 	r.Start()

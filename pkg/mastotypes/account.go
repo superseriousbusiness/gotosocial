@@ -67,3 +67,21 @@ type Account struct {
 	// An extra entity to be used with API methods to verify credentials and update credentials.
 	Source *Source `json:"source"`
 }
+
+// AccountCreateRequest represents the form submitted during a POST request to /api/v1/accounts.
+// See https://docs.joinmastodon.org/methods/accounts/
+type AccountCreateRequest struct {
+	// Text that will be reviewed by moderators if registrations require manual approval.
+	Reason string `form:"reason"`
+	// The desired username for the account
+	Username string `form:"username"`
+	// The email address to be used for login
+	Email string `form:"email"`
+	// The password to be used for login
+	Password string `form:"password"`
+	// Whether the user agrees to the local rules, terms, and policies.
+	// These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
+	Agreement bool `form:"agreement"`
+	// The language of the confirmation email that will be sent
+	Locale string `form:"locale"`
+}

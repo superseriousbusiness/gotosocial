@@ -47,11 +47,12 @@ import (
 )
 
 const (
-	appsPath              = "/api/v1/apps"
-	authSignInPath        = "/auth/sign_in"
-	oauthTokenPath        = "/oauth/token"
-	oauthAuthorizePath    = "/oauth/authorize"
-	SessionAuthorizedUser = "authorized_user"
+	appsPath                 = "/api/v1/apps"
+	authSignInPath           = "/auth/sign_in"
+	oauthTokenPath           = "/oauth/token"
+	oauthAuthorizePath       = "/oauth/authorize"
+	SessionAuthorizedUser    = "authorized_user"
+	SessionAuthorizedAccount = "authorized_account"
 )
 
 // oauthModule is an oauth2 oauthModule that satisfies the ClientAPIModule interface
@@ -406,16 +407,30 @@ func (m *oauthModule) authorizePOSTHandler(c *gin.Context) {
 	MIDDLEWARE
 */
 
-// oauthTokenMiddleware
+// oauthTokenMiddleware checks if the client has presented a valid oauth Bearer token.
+// If so, it will check the User that the token belongs to, and set that in the context of
+// the request. Then, it will look up the account for that user, and set that in the request too.
+// If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
+// public requests that don't have a Bearer token set (eg., for public instance information and so on).
 func (m *oauthModule) oauthTokenMiddleware(c *gin.Context) {
 	l := m.log.WithField("func", "ValidatePassword")
 	l.Trace("entering OauthTokenMiddleware")
-	if ti, err := m.oauthServer.ValidationBearerToken(c.Request); err == nil {
-		l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
-		c.Set(SessionAuthorizedUser, ti.GetUserID())
-	} else {
-		l.Trace("continuing with unauthenticated request")
+
+	ti, err := m.oauthServer.ValidationBearerToken(c.Request)
+	if err != nil {
+		l.Trace("no valid token presented: continuing with unauthenticated request")
+		return
 	}
+	l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
+
+	acct := &model.Account{}
+	if err := m.db.GetAccountByUserID(ti.GetUserID(), acct); err != nil || acct == nil {
+		l.Tracef("no account found for user %s, continuing with unauthenticated request", ti.GetUserID())
+		return
+	}
+
+	c.Set(SessionAuthorizedAccount, acct)
+	c.Set(SessionAuthorizedUser, ti.GetUserID())
 }
 
 /*

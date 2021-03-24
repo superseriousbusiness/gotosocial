@@ -304,6 +304,7 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *model.Acco
 		return err
 	}
 	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
+		fmt.Println(account)
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -394,7 +395,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	fmt.Printf("fields: %+v", fields)
 
 	// count followers
-	var followers []model.Follow
+	followers := []model.Follow{}
 	if err := ps.GetFollowersByAccountID(a.ID, &followers); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting followers: %s", err)
@@ -406,7 +407,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	}
 
 	// count following
-	var following []model.Follow
+	following := []model.Follow{}
 	if err := ps.GetFollowingByAccountID(a.ID, &following); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting following: %s", err)
@@ -418,7 +419,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	}
 
 	// count statuses
-	var statuses []model.Status
+	statuses := []model.Status{}
 	if err := ps.GetStatusesByAccountID(a.ID, &statuses); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last statuses: %s", err)
@@ -430,7 +431,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	}
 
 	// check when the last status was
-	var lastStatus *model.Status
+	lastStatus := &model.Status{}
 	if err := ps.GetLastStatusForAccountID(a.ID, lastStatus); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last status: %s", err)

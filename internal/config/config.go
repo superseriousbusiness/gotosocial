@@ -33,6 +33,7 @@ type Config struct {
 	Protocol        string          `yaml:"protocol"`
 	DBConfig        *DBConfig       `yaml:"db"`
 	TemplateConfig  *TemplateConfig `yaml:"template"`
+	AccountsConfig  *AccountsConfig `yaml:"accounts"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -136,11 +137,17 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.TemplateConfig.BaseDir == "" || f.IsSet(fn.TemplateBaseDir) {
 		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
 	}
+
+	// accounts flags
+	if f.IsSet(fn.AccountsOpenRegistration) {
+		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
 // HINT: This works with a urfave cli context struct ;)
 type KeyedFlags interface {
+	Bool(k string) bool
 	String(k string) string
 	Int(k string) int
 	IsSet(k string) bool
@@ -149,36 +156,38 @@ type KeyedFlags interface {
 // Flags is used for storing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
 type Flags struct {
-	LogLevel        string
-	ApplicationName string
-	ConfigPath      string
-	Host            string
-	Protocol        string
-	DbType          string
-	DbAddress       string
-	DbPort          string
-	DbUser          string
-	DbPassword      string
-	DbDatabase      string
-	TemplateBaseDir string
+	LogLevel                 string
+	ApplicationName          string
+	ConfigPath               string
+	Host                     string
+	Protocol                 string
+	DbType                   string
+	DbAddress                string
+	DbPort                   string
+	DbUser                   string
+	DbPassword               string
+	DbDatabase               string
+	TemplateBaseDir          string
+	AccountsOpenRegistration string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
 func GetFlagNames() Flags {
 	return Flags{
-		LogLevel:        "log-level",
-		ApplicationName: "application-name",
-		ConfigPath:      "config-path",
-		Host:            "host",
-		Protocol:        "protocol",
-		DbType:          "db-type",
-		DbAddress:       "db-address",
-		DbPort:          "db-port",
-		DbUser:          "db-user",
-		DbPassword:      "db-password",
-		DbDatabase:      "db-database",
-		TemplateBaseDir: "template-basedir",
+		LogLevel:                 "log-level",
+		ApplicationName:          "application-name",
+		ConfigPath:               "config-path",
+		Host:                     "host",
+		Protocol:                 "protocol",
+		DbType:                   "db-type",
+		DbAddress:                "db-address",
+		DbPort:                   "db-port",
+		DbUser:                   "db-user",
+		DbPassword:               "db-password",
+		DbDatabase:               "db-database",
+		TemplateBaseDir:          "template-basedir",
+		AccountsOpenRegistration: "accounts-open-registration",
 	}
 }
 
@@ -186,17 +195,18 @@ func GetFlagNames() Flags {
 // initializing and storing urfavecli flag variables.
 func GetEnvNames() Flags {
 	return Flags{
-		LogLevel:        "GTS_LOG_LEVEL",
-		ApplicationName: "GTS_APPLICATION_NAME",
-		ConfigPath:      "GTS_CONFIG_PATH",
-		Host:            "GTS_HOST",
-		Protocol:        "GTS_PROTOCOL",
-		DbType:          "GTS_DB_TYPE",
-		DbAddress:       "GTS_DB_ADDRESS",
-		DbPort:          "GTS_DB_PORT",
-		DbUser:          "GTS_DB_USER",
-		DbPassword:      "GTS_DB_PASSWORD",
-		DbDatabase:      "GTS_DB_DATABASE",
-		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
+		LogLevel:                 "GTS_LOG_LEVEL",
+		ApplicationName:          "GTS_APPLICATION_NAME",
+		ConfigPath:               "GTS_CONFIG_PATH",
+		Host:                     "GTS_HOST",
+		Protocol:                 "GTS_PROTOCOL",
+		DbType:                   "GTS_DB_TYPE",
+		DbAddress:                "GTS_DB_ADDRESS",
+		DbPort:                   "GTS_DB_PORT",
+		DbUser:                   "GTS_DB_USER",
+		DbPassword:               "GTS_DB_PASSWORD",
+		DbDatabase:               "GTS_DB_DATABASE",
+		TemplateBaseDir:          "GTS_TEMPLATE_BASEDIR",
+		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
 	}
 }

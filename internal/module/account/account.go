@@ -19,7 +19,6 @@
 package account
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,6 +28,7 @@ import (
 	"github.com/gotosocial/gotosocial/internal/module"
 	"github.com/gotosocial/gotosocial/internal/module/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -40,49 +40,62 @@ const (
 type accountModule struct {
 	config *config.Config
 	db     db.DB
+	log    *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB) module.ClientAPIModule {
+func New(config *config.Config, db db.DB, log *logrus.Logger) module.ClientAPIModule {
 	return &accountModule{
 		config: config,
 		db:     db,
+		log: log,
 	}
 }
 
 // Route attaches all routes from this module to the given router
 func (m *accountModule) Route(r router.Router) error {
+	r.AttachHandler(http.MethodPost, basePath, m.AccountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, verifyPath, m.AccountVerifyGETHandler)
 	return nil
+}
+
+func (m *accountModule) AccountCreatePOSTHandler(c *gin.Context) {
+	l := m.log.WithField("func", "AccountCreatePOSTHandler")
+	l.Trace("checking if registration is open")
+	if !m.config.AccountsConfig.OpenRegistration {
+		l.Trace("account registration is closed, returning error to client")
+	}
 }
 
 // AccountVerifyGETHandler serves a user's account details to them IF they reached this
 // handler while in possession of a valid token, according to the oauth middleware.
 func (m *accountModule) AccountVerifyGETHandler(c *gin.Context) {
-	i, ok := c.Get(oauth.SessionAuthorizedUser)
-	fmt.Println(i)
+	l := m.log.WithField("func", "AccountVerifyGETHandler")
+	
+	l.Trace("getting account details from session")
+	i, ok := c.Get(oauth.SessionAuthorizedAccount)
 	if !ok {
+		l.Trace("no account in session, returning error to client")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
 		return
 	}
 
-	userID, ok := (i).(string)
-	if !ok || userID == "" {
+	l.Trace("attempting to convert account interface into account struct...")
+	acct, ok := i.(*model.Account)
+	if !ok {
+		l.Tracef("could not convert %+v into account struct, returning error to client", i)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
 		return
 	}
 
-	acct := &model.Account{}
-	if err := m.db.GetAccountByUserID(userID, acct); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
+	l.Tracef("retrieved account %+v, converting to mastosensitive...", acct)
 	acctSensitive, err := m.db.AccountToMastoSensitive(acct)
 	if err != nil {
+		l.Tracef("could not convert account into mastosensitive account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	l.Tracef("conversion successful, returning OK and mastosensitive account %+v", acctSensitive)
 	c.JSON(http.StatusOK, acctSensitive)
 }

@@ -111,9 +111,17 @@ func main() {
 			// TEMPLATE FLAGS
 			&cli.StringFlag{
 				Name:    flagNames.TemplateBaseDir,
-				Usage:   "Basedir for html templating files for rendering pages and composing emails",
+				Usage:   "Basedir for html templating files for rendering pages and composing emails.",
 				Value:   "./web/template/",
 				EnvVars: []string{envNames.TemplateBaseDir},
+			},
+
+			// ACCOUNTS FLAGS
+			&cli.BoolFlag{
+				Name:    flagNames.AccountsOpenRegistration,
+				Usage:   "Allow anyone to submit an account signup request. If false, server will be invite-only.",
+				Value:   false,
+				EnvVars: []string{envNames.AccountsOpenRegistration},
 			},
 		},
 		Commands: []*cli.Command{
