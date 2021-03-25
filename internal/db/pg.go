@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"regexp"
 	"strings"
 	"time"
@@ -378,19 +379,35 @@ func (ps *postgresService) IsUsernameAvailable(username string) error {
 	if err := ps.conn.Model(&model.Account{}).Where("username = ?").Where("domain = ?", nil).Select(); err == nil {
 		return fmt.Errorf("username %s already in use", username)
 	} else if err != pg.ErrNoRows {
-		return err
+		return fmt.Errorf("db error: %s", err)
 	}
 	return nil
 }
 
 func (ps *postgresService) IsEmailAvailable(email string) error {
-	// if no error we fail because it means we found something
-	// if error but it's not db.ErrorNoEntries then we fail
-	// if err is ErrNoEntries we're good, we found nothing so continue
+	// parse the domain from the email
+	m, err := mail.ParseAddress(email)
+	if err != nil {
+		return fmt.Errorf("error parsing email address %s: %s", email, err)
+	}
+	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
+
+	// check if the email domain is blocked
+	if err := ps.conn.Model(&model.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
+		// fail because we found something
+		return fmt.Errorf("email domain %s is blocked", domain)
+	} else if err != pg.ErrNoRows {
+		// fail because we got an unexpected error
+		return fmt.Errorf("db error: %s", err)
+	}
+	
+	// check if this email is associated with an account already
 	if err := ps.conn.Model(&model.Account{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+		// fail because we found something
 		return fmt.Errorf("email %s already in use", email)
 	} else if err != pg.ErrNoRows {
-		return err
+		// fail because we got an unexpected error
+		return fmt.Errorf("db error: %s", err)
 	}
 	return nil
 }

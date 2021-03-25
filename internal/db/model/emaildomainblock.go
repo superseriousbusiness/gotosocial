@@ -20,13 +20,11 @@ package model
 
 import "time"
 
-// SignUpDomainBlock represents a domain that the server should automatically reject sign-up requests from.
-type SignUpDomainBlock struct {
+// EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
+type EmailDomainBlock struct {
 	// ID of this block in the database
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// Domain to block. If ANY PART of the candidate domain contains this string, it will be blocked.
-	// For example: 'example.org' also blocks 'gts.example.org'. '.com' blocks *any* '.com' domains.
-	// TODO: implement wildcards here
+	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
 	Domain string `pg:",notnull"`
 	// When was this block created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`

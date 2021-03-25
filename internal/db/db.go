@@ -138,8 +138,11 @@ type DB interface {
 	// Returns an error if the username is already taken, or something went wrong in the db.
 	IsUsernameAvailable(username string) error
 
-	// IsEmailAvailable checks whether a given email address for a user is available on our domain.
-	// Returns an error if the email is already associated with an account, or something went wrong in the db.
+	// IsEmailAvailable checks whether a given email address for a new account is available to be used on our domain.
+	// Return an error if:
+	// A) the email is already associated with an account
+	// B) we block signups from this email domain
+	// C) something went wrong in the db
 	IsEmailAvailable(email string) error
 
 	/*
