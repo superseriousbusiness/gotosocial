@@ -32,6 +32,7 @@ import (
 
 const dbTypePostgres string = "POSTGRES"
 
+// ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
 
 func (e ErrNoEntries) Error() string {
