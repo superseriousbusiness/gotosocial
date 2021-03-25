@@ -32,83 +32,83 @@ import (
 
 // New returns a go-fed compatible federating actor
 func New(db db.DB) pub.FederatingActor {
-	fa := &API{}
-	return pub.NewFederatingActor(fa, fa, db.Federation(), fa)
+	f := &Federator{}
+	return pub.NewFederatingActor(f, f, db.Federation(), f)
 }
 
-// API implements several go-fed interfaces in one convenient location
-type API struct {
+// Federator implements several go-fed interfaces in one convenient location
+type Federator struct {
 }
 
 // AuthenticateGetInbox determines whether the request is for a GET call to the Actor's Inbox.
-func (fa *API) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
 // AuthenticateGetOutbox determines whether the request is for a GET call to the Actor's Outbox.
-func (fa *API) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
 // GetOutbox returns a proper paginated view of the Outbox for serving in a response.
-func (fa *API) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (f *Federator) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }
 
 // NewTransport returns a new pub.Transport for federating with peer software.
-func (fa *API) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
+func (f *Federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fa *API) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
+func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fa *API) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
 
-func (fa *API) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
+func (f *Federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
 	// TODO
 	return false, nil
 }
 
-func (fa *API) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
+func (f *Federator) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
 	// TODO
 	return pub.FederatingWrappedCallbacks{}, nil, nil
 }
 
-func (fa *API) DefaultCallback(ctx context.Context, activity pub.Activity) error {
+func (f *Federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
 	// TODO
 	return nil
 }
 
-func (fa *API) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
+func (f *Federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
 
-func (fa *API) MaxDeliveryRecursionDepth(ctx context.Context) int {
+func (f *Federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
 
-func (fa *API) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
+func (f *Federator) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fa *API) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (f *Federator) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }
 
-func (fa *API) Now() time.Time {
+func (f *Federator) Now() time.Time {
 	return time.Now()
 }
