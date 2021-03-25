@@ -384,11 +384,11 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	fields := []mastotypes.Field{}
 	for _, f := range a.Fields {
 		mField := mastotypes.Field{
-			Name:       f.Name,
-			Value:      f.Value,
+			Name:  f.Name,
+			Value: f.Value,
 		}
 		if !f.VerifiedAt.IsZero() {
-			mField.VerifiedAt =  f.VerifiedAt.Format(time.RFC3339)
+			mField.VerifiedAt = f.VerifiedAt.Format(time.RFC3339)
 		}
 		fields = append(fields, mField)
 	}
