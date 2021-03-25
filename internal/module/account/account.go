@@ -28,6 +28,7 @@ import (
 	"github.com/gotosocial/gotosocial/internal/module"
 	"github.com/gotosocial/gotosocial/internal/module/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
+	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
 )
 
@@ -48,30 +49,50 @@ func New(config *config.Config, db db.DB, log *logrus.Logger) module.ClientAPIMo
 	return &accountModule{
 		config: config,
 		db:     db,
-		log: log,
+		log:    log,
 	}
 }
 
 // Route attaches all routes from this module to the given router
 func (m *accountModule) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, basePath, m.AccountCreatePOSTHandler)
-	r.AttachHandler(http.MethodGet, verifyPath, m.AccountVerifyGETHandler)
+	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
+	r.AttachHandler(http.MethodGet, verifyPath, m.accountVerifyGETHandler)
 	return nil
 }
 
-func (m *accountModule) AccountCreatePOSTHandler(c *gin.Context) {
+func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AccountCreatePOSTHandler")
+	// TODO: check whether a valid app token has been presented!!
+	// See: https://docs.joinmastodon.org/methods/accounts/
+
 	l.Trace("checking if registration is open")
 	if !m.config.AccountsConfig.OpenRegistration {
-		l.Trace("account registration is closed, returning error to client")
+		l.Debug("account registration is closed, returning error to client")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "account registration is closed"})
+		return
+	}
+
+	l.Trace("parsing request form")
+	form := &mastotypes.AccountCreateRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		l.Debugf("could not parse form from request: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	l.Tracef("validating form %+v", form)
+	if err := validateCreateAccount(form, m.config.AccountsConfig.ReasonRequired, m.db); err != nil {
+		l.Debugf("error validating form: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 }
 
-// AccountVerifyGETHandler serves a user's account details to them IF they reached this
+// accountVerifyGETHandler serves a user's account details to them IF they reached this
 // handler while in possession of a valid token, according to the oauth middleware.
-func (m *accountModule) AccountVerifyGETHandler(c *gin.Context) {
+func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AccountVerifyGETHandler")
-	
+
 	l.Trace("getting account details from session")
 	i, ok := c.Get(oauth.SessionAuthorizedAccount)
 	if !ok {
