@@ -18,7 +18,12 @@
 
 package config
 
+// AccountsConfig contains configuration to do with creating accounts, new registrations, and defaults.
 type AccountsConfig struct {
 	// Do we want people to be able to just submit sign up requests, or do we want invite only?
-	OpenRegistration bool
+	OpenRegistration bool `yaml:"openRegistration"`
+	// Do sign up requests require approval from an admin/moderator?
+	RequireApproval bool `yaml:"requireApproval"`
+	// Do we require a reason for a sign up or is an empty string OK?
+	ReasonRequired bool `yaml:"reasonRequired"`
 }

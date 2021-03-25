@@ -120,8 +120,14 @@ func main() {
 			&cli.BoolFlag{
 				Name:    flagNames.AccountsOpenRegistration,
 				Usage:   "Allow anyone to submit an account signup request. If false, server will be invite-only.",
-				Value:   false,
+				Value:   true,
 				EnvVars: []string{envNames.AccountsOpenRegistration},
+			},
+			&cli.BoolFlag{
+				Name:    flagNames.AccountsRequireApproval,
+				Usage:   "Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved.",
+				Value:   true,
+				EnvVars: []string{envNames.AccountsRequireApproval},
 			},
 		},
 		Commands: []*cli.Command{

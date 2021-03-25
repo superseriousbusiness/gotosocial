@@ -142,6 +142,10 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if f.IsSet(fn.AccountsOpenRegistration) {
 		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
 	}
+
+	if f.IsSet(fn.AccountsRequireApproval) {
+		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsRequireApproval)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
@@ -169,6 +173,7 @@ type Flags struct {
 	DbDatabase               string
 	TemplateBaseDir          string
 	AccountsOpenRegistration string
+	AccountsRequireApproval  string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -188,6 +193,7 @@ func GetFlagNames() Flags {
 		DbDatabase:               "db-database",
 		TemplateBaseDir:          "template-basedir",
 		AccountsOpenRegistration: "accounts-open-registration",
+		AccountsRequireApproval:  "accounts-require-approval",
 	}
 }
 
@@ -208,5 +214,6 @@ func GetEnvNames() Flags {
 		DbDatabase:               "GTS_DB_DATABASE",
 		TemplateBaseDir:          "GTS_TEMPLATE_BASEDIR",
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
+		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
 	}
 }

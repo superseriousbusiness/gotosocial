@@ -14,10 +14,9 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-###################
-##### CONFIG ######
-###################
-
+###########################
+##### GENERAL CONFIG ######
+###########################
 # String. Log level to use throughout the application. Must be lower-case.
 # Options: ["debug","info","warn","error","fatal"]
 # Default: "info"
@@ -39,6 +38,9 @@ host: "localhost"
 # Default: "https"
 protocol: "https"
 
+############################
+##### DATABASE CONFIG ######
+############################
 # Config pertaining to the Gotosocial database connection
 db:
   # String. Database type.
@@ -72,9 +74,26 @@ db:
   # Default: "postgres"
   database: "postgres"
 
+###############################
+##### WEB TEMPLATE CONFIG #####
+###############################
 # Config pertaining to templating of web pages/email notifications and the like
 template:
   # String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
   # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
   # Default: "./web/template/"
   baseDir: "./web/template/"
+
+###########################
+##### ACCOUNTS CONFIG #####
+###########################
+# Config pertaining to creation and maintenance of accounts on the server, as well as defaults for new accounts.
+accounts:
+  # Bool. Do we want people to be able to just submit sign up requests, or do we want invite only?
+  # Options: [true, false]
+  # Default: true
+  openRegistration: true
+  # Bool. Do sign up requests require approval from an admin/moderator before an account can sign in/use the server?
+  # Options: [true, false]
+  # Default: true
+  requireApproval: true
