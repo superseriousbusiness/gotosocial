@@ -62,23 +62,23 @@ func (r *router) Start() {
 }
 
 // Stop shuts down the router nicely
-func (s *router) Stop(ctx context.Context) error {
-	return s.srv.Shutdown(ctx)
+func (r *router) Stop(ctx context.Context) error {
+	return r.srv.Shutdown(ctx)
 }
 
 // AttachHandler attaches the given gin.HandlerFunc to the router with the specified method and path.
 // If the path is set to ANY, then the handlerfunc will be used for ALL methods at its given path.
-func (s *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
+func (r *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
 	if method == "ANY" {
-		s.engine.Any(path, handler)
+		r.engine.Any(path, handler)
 	} else {
-		s.engine.Handle(method, path, handler)
+		r.engine.Handle(method, path, handler)
 	}
 }
 
 // AttachMiddleware attaches a gin middleware to the router that will be used globally
-func (s *router) AttachMiddleware(middleware gin.HandlerFunc) {
-	s.engine.Use(middleware)
+func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
+	r.engine.Use(middleware)
 }
 
 // New returns a new Router with the specified configuration, using the given logrus logger.
