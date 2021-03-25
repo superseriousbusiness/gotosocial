@@ -18,5 +18,6 @@
 
 package mastotypes
 
+// Tag represents a hashtag used within the content of a status. See https://docs.joinmastodon.org/entities/tag/
 type Tag struct {
 }
