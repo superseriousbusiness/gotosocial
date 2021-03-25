@@ -371,6 +371,30 @@ func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *m
 
 }
 
+func (ps *postgresService) IsUsernameAvailable(username string) error {
+	// if no error we fail because it means we found something
+	// if error but it's not pg.ErrNoRows then we fail
+	// if err is pg.ErrNoRows we're good, we found nothing so continue
+	if err := ps.conn.Model(&model.Account{}).Where("username = ?").Where("domain = ?", nil).Select(); err == nil {
+		return fmt.Errorf("username %s already in use", username)
+	} else if err != pg.ErrNoRows {
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) IsEmailAvailable(email string) error {
+	// if no error we fail because it means we found something
+	// if error but it's not db.ErrorNoEntries then we fail
+	// if err is ErrNoEntries we're good, we found nothing so continue
+	if err := ps.conn.Model(&model.Account{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+		return fmt.Errorf("email %s already in use", email)
+	} else if err != pg.ErrNoRows {
+		return err
+	}
+	return nil
+}
+
 /*
 	CONVERSION FUNCTIONS
 */
