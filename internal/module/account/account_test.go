@@ -212,7 +212,7 @@ func (suite *AccountTestSuite) TestAPIInitialize() {
 
 	r, err := router.New(suite.config, log)
 	if err != nil {
-		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
+		suite.FailNow(fmt.Sprintf("error creating router: %s", err))
 	}
 
 	r.AttachMiddleware(func(c *gin.Context) {
@@ -223,16 +223,22 @@ func (suite *AccountTestSuite) TestAPIInitialize() {
 			fmt.Println(account)
 			return
 		}
-	
+
 		c.Set(oauth.SessionAuthorizedAccount, account)
 		c.Set(oauth.SessionAuthorizedUser, suite.testUser.ID)
 	})
 
 	acct := New(suite.config, suite.db, log)
-	acct.Route(r)
+	if err := acct.Route(r); err != nil {
+		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
+	}
 
 	r.Start()
-	defer r.Stop(context.Background())
+	defer func() {
+		if err := r.Stop(context.Background()); err != nil {
+			panic(fmt.Errorf("error stopping router: %s", err))
+		}
+	}()
 	time.Sleep(10 * time.Second)
 
 }
