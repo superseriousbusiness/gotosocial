@@ -26,7 +26,7 @@ import (
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 )
 
-func validateCreateAccount(form *mastotypes.AccountCreateRequest, reasonRequired bool, db db.DB) error {
+func validateCreateAccount(form *mastotypes.AccountCreateRequest, reasonRequired bool, database db.DB) error {
 	if err := util.ValidateSignUpUsername(form.Username); err != nil {
 		return err
 	}
@@ -51,7 +51,13 @@ func validateCreateAccount(form *mastotypes.AccountCreateRequest, reasonRequired
 		return err
 	}
 
-	//TODO: validate new email address and new username
+	if err := database.IsEmailAvailable(form.Email); err != nil {
+		return err
+	}
+
+	if err := database.IsUsernameAvailable(form.Username); err != nil {
+		return err
+	}
 
 	return nil
 }
