@@ -47,11 +47,17 @@ import (
 )
 
 const (
-	appsPath                 = "/api/v1/apps"
-	authSignInPath           = "/auth/sign_in"
-	oauthTokenPath           = "/oauth/token"
-	oauthAuthorizePath       = "/oauth/authorize"
-	SessionAuthorizedUser    = "authorized_user"
+	appsPath           = "/api/v1/apps"
+	authSignInPath     = "/auth/sign_in"
+	oauthTokenPath     = "/oauth/token"
+	oauthAuthorizePath = "/oauth/authorize"
+	// SessionAuthorizedUser is the key set in the gin context for the id of
+	// a User who has successfully passed Bearer token authorization.
+	// The interface returned from grabbing this key should be parsed as a string.
+	SessionAuthorizedUser = "authorized_user"
+	// SessionAuthorizedAccount is the key set in the gin context for the Account
+	// of a User who has successfully passed Bearer token authorization.
+	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Account
 	SessionAuthorizedAccount = "authorized_account"
 )
 
