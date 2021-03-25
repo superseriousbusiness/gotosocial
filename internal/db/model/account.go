@@ -145,6 +145,9 @@ type Account struct {
 	SuspensionOrigin int
 }
 
+// Field represents a key value field on an account, for things like pronouns, website, etc.
+// VerifiedAt is optional, to be used only if Value is a URL to a webpage that contains the
+// username of the user.
 type Field struct {
 	Name       string
 	Value      string

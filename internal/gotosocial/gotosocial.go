@@ -28,11 +28,15 @@ import (
 	"github.com/gotosocial/gotosocial/internal/router"
 )
 
+// Gotosocial is the 'main' function of the gotosocial server, and the place where everything hangs together.
+// The logic of stopping and starting the entire server is contained here.
 type Gotosocial interface {
 	Start(context.Context) error
-	Stop(context.Context) error
 }
 
+// New returns a new gotosocial server, initialized with the given configuration.
+// An error will be returned the caller if something goes wrong during initialization
+// eg., no db or storage connection, port for router already in use, etc.
 func New(db db.DB, cache cache.Cache, apiRouter router.Router, federationAPI pub.FederatingActor, config *config.Config) (Gotosocial, error) {
 	return &gotosocial{
 		db:            db,
@@ -43,6 +47,7 @@ func New(db db.DB, cache cache.Cache, apiRouter router.Router, federationAPI pub
 	}, nil
 }
 
+// gotosocial fulfils the gotosocial interface.
 type gotosocial struct {
 	db            db.DB
 	cache         cache.Cache
@@ -51,10 +56,10 @@ type gotosocial struct {
 	config        *config.Config
 }
 
+// Start starts up the gotosocial server. It is a blocking call, so only call it when
+// you're absolutely sure you want to start up the server. If something goes wrong
+// while starting the server, then an error will be returned. You can treat this function a
+// lot like you would treat http.ListenAndServe()
 func (gts *gotosocial) Start(ctx context.Context) error {
-	return nil
-}
-
-func (gts *gotosocial) Stop(ctx context.Context) error {
 	return nil
 }

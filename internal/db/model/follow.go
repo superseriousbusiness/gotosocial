@@ -20,6 +20,7 @@ package model
 
 import "time"
 
+// Follow represents one account following another, and the metadata around that follow.
 type Follow struct {
 	// id of this follow in the database
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
