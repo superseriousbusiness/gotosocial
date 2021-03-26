@@ -20,13 +20,19 @@ package account
 
 import (
 	"context"
+	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/db/model"
+	"github.com/gotosocial/gotosocial/internal/oauth"
+	"github.com/gotosocial/oauth2/v4"
+	oauthmodels "github.com/gotosocial/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,6 +43,8 @@ type AccountTestSuite struct {
 	testAccountLocal  *model.Account
 	testAccountRemote *model.Account
 	testUser          *model.User
+	testApplication   *model.Application
+	testToken         oauth2.TokenInfo
 	db                db.DB
 	accountModule     *accountModule
 }
@@ -57,6 +65,11 @@ func (suite *AccountTestSuite) SetupSuite() {
 		Database:        "postgres",
 		ApplicationName: "gotosocial",
 	}
+	c.AccountsConfig = &config.AccountsConfig{
+		OpenRegistration: true,
+		RequireApproval:  true,
+		ReasonRequired:   true,
+	}
 
 	database, err := db.New(context.Background(), c, log)
 	if err != nil {
@@ -68,6 +81,26 @@ func (suite *AccountTestSuite) SetupSuite() {
 		config: c,
 		db:     database,
 		log:    log,
+	}
+
+	suite.testApplication = &model.Application{
+		ID:           "weeweeeeeeeeeeeeee",
+		Name:         "a test application",
+		Website:      "https://some-application-website.com",
+		RedirectURI:  "http://localhost:8080",
+		ClientID:     "a-known-client-id",
+		ClientSecret: "some-secret",
+		Scopes:       "read",
+		VapidKey:     "aaaaaa-aaaaaaaa-aaaaaaaaaaa",
+	}
+
+	suite.testToken = &oauthmodels.Token{
+		ClientID:      "a-known-client-id",
+		RedirectURI:   "http://localhost:8080",
+		Scope:         "read",
+		Code:          "123456789",
+		CodeCreateAt:  time.Now(),
+		CodeExpiresIn: time.Duration(10 * time.Minute),
 	}
 
 	// encryptedPassword, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -177,6 +210,7 @@ func (suite *AccountTestSuite) SetupTest() {
 		&model.Follow{},
 		&model.Status{},
 		&model.Application{},
+		&model.EmailDomainBlock{},
 	}
 
 	for _, m := range models {
@@ -194,6 +228,7 @@ func (suite *AccountTestSuite) TearDownTest() {
 		&model.Follow{},
 		&model.Status{},
 		&model.Application{},
+		&model.EmailDomainBlock{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -206,8 +241,19 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandler() {
 	// TODO: figure out how to test this properly
 	recorder := httptest.NewRecorder()
 	recorder.Header().Set("X-Forwarded-For", "127.0.0.1")
+	recorder.Header().Set("Content-Type", "application/json")
 	ctx, _ := gin.CreateTestContext(recorder)
-	// ctx.Set()
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
+	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
+	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/accounts", nil)
+	ctx.Request.Form = url.Values{
+		"reason":    []string{"a very good reason that's at least 40 characters i swear"},
+		"username":  []string{"test_user"},
+		"email":     []string{"user@example.org"},
+		"password":  []string{"very-strong-password"},
+		"agreement": []string{"true"},
+		"locale":    []string{"en"},
+	}
 	suite.accountModule.accountCreatePOSTHandler(ctx)
 }
 

@@ -20,6 +20,7 @@ package oauth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -127,6 +128,27 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 	return a, nil
 }
 
+// MustAuthed is like GetAuthed, but will fail if one of the requirements is not met.
+func MustAuthed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Authed, error) {
+	a, err := GetAuthed(c)
+	if err != nil {
+		return nil, err
+	}
+	if requireToken && a.Token == nil {
+		return nil, errors.New("token not supplied")
+	}
+	if requireApp && a.Application == nil {
+		return nil, errors.New("application not supplied")
+	}
+	if requireUser && a.User == nil {
+		return nil, errors.New("user not supplied")
+	}
+	if requireAccount && a.Account == nil {
+		return nil, errors.New("account not supplied")
+	}
+	return a, nil
+}
+
 // HandleTokenRequest wraps the oauth2 library's HandleTokenRequest function
 func (s *s) HandleTokenRequest(w http.ResponseWriter, r *http.Request) error {
 	return s.server.HandleTokenRequest(w, r)
@@ -149,16 +171,16 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
 func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error) {
-
+	fmt.Printf("GENERATE USER ACCESS TOKEN %+v\n", ti)
 	tgr := &oauth2.TokenGenerateRequest{
-		ClientID:            ti.GetClientID(),
-		ClientSecret:        clientSecret,
-		UserID:              userID,
-		RedirectURI:         ti.GetRedirectURI(),
-		Scope:               ti.GetScope(),
-		Code:                ti.GetCode(),
-		CodeChallenge:       ti.GetCodeChallenge(),
-		CodeChallengeMethod: ti.GetCodeChallengeMethod(),
+		ClientID:     ti.GetClientID(),
+		ClientSecret: clientSecret,
+		UserID:       userID,
+		RedirectURI:  ti.GetRedirectURI(),
+		Scope:        ti.GetScope(),
+		Code:         ti.GetCode(),
+		// CodeChallenge:       ti.GetCodeChallenge(),
+		// CodeChallengeMethod: ti.GetCodeChallengeMethod(),
 	}
 
 	return s.server.Manager.GenerateAccessToken(context.Background(), oauth2.AuthorizationCode, tgr)

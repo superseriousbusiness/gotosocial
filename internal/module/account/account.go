@@ -69,7 +69,7 @@ func (m *accountModule) Route(r router.Router) error {
 // It should be served as a POST at /api/v1/accounts
 func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountCreatePOSTHandler")
-	authed, err := oauth.GetAuthed(c)
+	authed, err := oauth.MustAuthed(c, true, true, false, false)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -167,6 +167,7 @@ func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, sig
 	}
 
 	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, app.ID)
+	fmt.Printf("ACCOUNT CREATE\n\n%+v\n\n%+v\n\n%+v\n", token, app, user)
 	ti, err := m.oauthServer.GenerateUserAccessToken(token, app.ClientSecret, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)

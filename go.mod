@@ -3,6 +3,7 @@ module github.com/gotosocial/gotosocial
 go 1.16
 
 require (
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-fed/activity v1.0.0
@@ -11,6 +12,8 @@ require (
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gotosocial/oauth2/v4 v4.2.1-0.20210316171520-7b12112bbb88
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
 	github.com/sirupsen/logrus v1.8.0
