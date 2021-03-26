@@ -69,7 +69,7 @@ func (suite *PgClientStoreTestSuite) SetupTest() {
 	suite.db = db
 
 	models := []interface{}{
-		&oauthClient{},
+		&Client{},
 	}
 
 	for _, m := range models {
@@ -82,7 +82,7 @@ func (suite *PgClientStoreTestSuite) SetupTest() {
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
 func (suite *PgClientStoreTestSuite) TearDownTest() {
 	models := []interface{}{
-		&oauthClient{},
+		&Client{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {

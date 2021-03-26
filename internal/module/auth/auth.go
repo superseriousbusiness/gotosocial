@@ -16,57 +16,42 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package oauth is a module that provides oauth functionality to a router.
+// Package auth is a module that provides oauth functionality to a router.
 // It adds the following paths:
-//    /api/v1/apps
 //    /auth/sign_in
 //    /oauth/token
 //    /oauth/authorize
 // It also includes the oauthTokenMiddleware, which can be attached to a router to authenticate every request by Bearer token.
-package oauth
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/internal/module"
+	"github.com/gotosocial/gotosocial/internal/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
-	"github.com/gotosocial/oauth2/v4"
-	"github.com/gotosocial/oauth2/v4/errors"
-	"github.com/gotosocial/oauth2/v4/manage"
-	"github.com/gotosocial/oauth2/v4/server"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	appsPath           = "/api/v1/apps"
 	authSignInPath     = "/auth/sign_in"
 	oauthTokenPath     = "/oauth/token"
 	oauthAuthorizePath = "/oauth/authorize"
-	// SessionAuthorizedUser is the key set in the gin context for the id of
-	// a User who has successfully passed Bearer token authorization.
-	// The interface returned from grabbing this key should be parsed as a string.
-	SessionAuthorizedUser = "authorized_user"
-	// SessionAuthorizedAccount is the key set in the gin context for the Account
-	// of a User who has successfully passed Bearer token authorization.
-	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Account
-	SessionAuthorizedAccount = "authorized_account"
 )
 
-// oauthModule is an oauth2 oauthModule that satisfies the ClientAPIModule interface
-type oauthModule struct {
-	oauthManager *manage.Manager
-	oauthServer  *server.Server
-	db           db.DB
-	log          *logrus.Logger
+type authModule struct {
+	server oauth.Server
+	db     db.DB
+	log    *logrus.Logger
 }
 
 type login struct {
@@ -74,52 +59,17 @@ type login struct {
 	Password string `form:"password"`
 }
 
-// New returns a new oauth module
-func New(ts oauth2.TokenStore, cs oauth2.ClientStore, db db.DB, log *logrus.Logger) module.ClientAPIModule {
-	manager := manage.NewDefaultManager()
-	manager.MapTokenStorage(ts)
-	manager.MapClientStorage(cs)
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-	sc := &server.Config{
-		TokenType: "Bearer",
-		// Must follow the spec.
-		AllowGetAccessRequest: false,
-		// Support only the non-implicit flow.
-		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
-		// Allow:
-		// - Authorization Code (for first & third parties)
-		AllowedGrantTypes: []oauth2.GrantType{
-			oauth2.AuthorizationCode,
-		},
-		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{oauth2.CodeChallengePlain},
+// New returns a new auth module
+func New(srv oauth.Server, db db.DB, log *logrus.Logger) module.ClientAPIModule {
+	return &authModule{
+		server: srv,
+		db:     db,
+		log:    log,
 	}
-
-	srv := server.NewServer(sc, manager)
-	srv.SetInternalErrorHandler(func(err error) *errors.Response {
-		log.Errorf("internal oauth error: %s", err)
-		return nil
-	})
-
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Errorf("internal response error: %s", re.Error)
-	})
-
-	m := &oauthModule{
-		oauthManager: manager,
-		oauthServer:  srv,
-		db:           db,
-		log:          log,
-	}
-
-	m.oauthServer.SetUserAuthorizationHandler(m.userAuthorizationHandler)
-	m.oauthServer.SetClientInfoHandler(server.ClientFormHandler)
-	return m
 }
 
 // Route satisfies the RESTAPIModule interface
-func (m *oauthModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
-
+func (m *authModule) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, authSignInPath, m.signInGETHandler)
 	s.AttachHandler(http.MethodPost, authSignInPath, m.signInPOSTHandler)
 
@@ -129,7 +79,6 @@ func (m *oauthModule) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, oauthAuthorizePath, m.authorizePOSTHandler)
 
 	s.AttachMiddleware(m.oauthTokenMiddleware)
-
 	return nil
 }
 
@@ -137,93 +86,10 @@ func (m *oauthModule) Route(s router.Router) error {
 	MAIN HANDLERS -- serve these through a server/router
 */
 
-// appsPOSTHandler should be served at https://example.org/api/v1/apps
-// It is equivalent to: https://docs.joinmastodon.org/methods/apps/
-func (m *oauthModule) appsPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AppsPOSTHandler")
-	l.Trace("entering AppsPOSTHandler")
-
-	form := &mastotypes.ApplicationPOSTRequest{}
-	if err := c.ShouldBind(form); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
-		return
-	}
-
-	// permitted length for most fields
-	permittedLength := 64
-	// redirect can be a bit bigger because we probably need to encode data in the redirect uri
-	permittedRedirect := 256
-
-	// check lengths of fields before proceeding so the user can't spam huge entries into the database
-	if len(form.ClientName) > permittedLength {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("client_name must be less than %d bytes", permittedLength)})
-		return
-	}
-	if len(form.Website) > permittedLength {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("website must be less than %d bytes", permittedLength)})
-		return
-	}
-	if len(form.RedirectURIs) > permittedRedirect {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("redirect_uris must be less than %d bytes", permittedRedirect)})
-		return
-	}
-	if len(form.Scopes) > permittedLength {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("scopes must be less than %d bytes", permittedLength)})
-		return
-	}
-
-	// set default 'read' for scopes if it's not set, this follows the default of the mastodon api https://docs.joinmastodon.org/methods/apps/
-	var scopes string
-	if form.Scopes == "" {
-		scopes = "read"
-	} else {
-		scopes = form.Scopes
-	}
-
-	// generate new IDs for this application and its associated client
-	clientID := uuid.NewString()
-	clientSecret := uuid.NewString()
-	vapidKey := uuid.NewString()
-
-	// generate the application to put in the database
-	app := &model.Application{
-		Name:         form.ClientName,
-		Website:      form.Website,
-		RedirectURI:  form.RedirectURIs,
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		Scopes:       scopes,
-		VapidKey:     vapidKey,
-	}
-
-	// chuck it in the db
-	if err := m.db.Put(app); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// now we need to model an oauth client from the application that the oauth library can use
-	oc := &oauthClient{
-		ID:     clientID,
-		Secret: clientSecret,
-		Domain: form.RedirectURIs,
-		UserID: "", // This client isn't yet associated with a specific user,  it's just an app client right now
-	}
-
-	// chuck it in the db
-	if err := m.db.Put(oc); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, app.ToMasto())
-}
-
 // signInGETHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
-func (m *oauthModule) signInGETHandler(c *gin.Context) {
+func (m *authModule) signInGETHandler(c *gin.Context) {
 	m.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
 }
@@ -231,7 +97,7 @@ func (m *oauthModule) signInGETHandler(c *gin.Context) {
 // signInPOSTHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
-func (m *oauthModule) signInPOSTHandler(c *gin.Context) {
+func (m *authModule) signInPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "SignInPOSTHandler")
 	s := sessions.Default(c)
 	form := &login{}
@@ -260,10 +126,10 @@ func (m *oauthModule) signInPOSTHandler(c *gin.Context) {
 // tokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 // See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
-func (m *oauthModule) tokenPOSTHandler(c *gin.Context) {
+func (m *authModule) tokenPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
-	if err := m.oauthServer.HandleTokenRequest(c.Writer, c.Request); err != nil {
+	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 }
@@ -271,7 +137,7 @@ func (m *oauthModule) tokenPOSTHandler(c *gin.Context) {
 // authorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (m *oauthModule) authorizeGETHandler(c *gin.Context) {
+func (m *authModule) authorizeGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
@@ -349,7 +215,7 @@ func (m *oauthModule) authorizeGETHandler(c *gin.Context) {
 // At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
 // so we should proceed with the authentication flow and generate an oauth token for them if we can.
 // See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (m *oauthModule) authorizePOSTHandler(c *gin.Context) {
+func (m *authModule) authorizePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
@@ -404,7 +270,7 @@ func (m *oauthModule) authorizePOSTHandler(c *gin.Context) {
 	l.Tracef("values on request set to %+v", c.Request.Form)
 
 	// and proceed with authorization using the oauth2 library
-	if err := m.oauthServer.HandleAuthorizeRequest(c.Writer, c.Request); err != nil {
+	if err := m.server.HandleAuthorizeRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 }
@@ -418,25 +284,50 @@ func (m *oauthModule) authorizePOSTHandler(c *gin.Context) {
 // the request. Then, it will look up the account for that user, and set that in the request too.
 // If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
 // public requests that don't have a Bearer token set (eg., for public instance information and so on).
-func (m *oauthModule) oauthTokenMiddleware(c *gin.Context) {
+func (m *authModule) oauthTokenMiddleware(c *gin.Context) {
 	l := m.log.WithField("func", "ValidatePassword")
 	l.Trace("entering OauthTokenMiddleware")
 
-	ti, err := m.oauthServer.ValidationBearerToken(c.Request)
+	ti, err := m.server.ValidationBearerToken(c.Request)
 	if err != nil {
 		l.Trace("no valid token presented: continuing with unauthenticated request")
 		return
 	}
-	l.Tracef("authenticated user %s with bearer token, scope is %s", ti.GetUserID(), ti.GetScope())
+	c.Set(oauth.SessionAuthorizedToken, ti)
+	l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedToken, ti)
 
-	acct := &model.Account{}
-	if err := m.db.GetAccountByUserID(ti.GetUserID(), acct); err != nil || acct == nil {
-		l.Tracef("no account found for user %s, continuing with unauthenticated request", ti.GetUserID())
-		return
+	// check for user-level token
+	if uid := ti.GetUserID(); uid != "" {
+		l.Tracef("authenticated user %s with bearer token, scope is %s", uid, ti.GetScope())
+
+		// fetch user's and account for this user id
+		user := &model.User{}
+		if err := m.db.GetByID(uid, user); err != nil || user == nil {
+			l.Warnf("no user found for validated uid %s", uid)
+			return
+		}
+		c.Set(oauth.SessionAuthorizedUser, user)
+		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedUser, user)
+
+		acct := &model.Account{}
+		if err := m.db.GetByID(user.AccountID, acct); err != nil || acct == nil {
+			l.Warnf("no account found for validated user %s", uid)
+			return
+		}
+		c.Set(oauth.SessionAuthorizedAccount, acct)
+		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedAccount, acct)
 	}
 
-	c.Set(SessionAuthorizedAccount, acct)
-	c.Set(SessionAuthorizedUser, ti.GetUserID())
+	// check for application token
+	if cid := ti.GetClientID(); cid != "" {
+		l.Tracef("authenticated client %s with bearer token, scope is %s", cid, ti.GetScope())
+		app := &model.Application{}
+		if err := m.db.GetWhere("client_id", cid, app); err != nil {
+			l.Tracef("no app found for client %s", cid)
+		}
+		c.Set(oauth.SessionAuthorizedApplication, app)
+		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedApplication, app)
+	}
 }
 
 /*
@@ -447,7 +338,7 @@ func (m *oauthModule) oauthTokenMiddleware(c *gin.Context) {
 // The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a uuid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (m *oauthModule) validatePassword(email string, password string) (userid string, err error) {
+func (m *authModule) validatePassword(email string, password string) (userid string, err error) {
 	l := m.log.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not
@@ -485,18 +376,6 @@ func (m *oauthModule) validatePassword(email string, password string) (userid st
 // incorrectPassword is just a little helper function to use in the ValidatePassword function
 func incorrectPassword() (string, error) {
 	return "", errors.New("password/email combination was incorrect")
-}
-
-// userAuthorizationHandler gets the user's ID from the 'userid' field of the request form,
-// or redirects to the /auth/sign_in page, if this key is not present.
-func (m *oauthModule) userAuthorizationHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
-	l := m.log.WithField("func", "UserAuthorizationHandler")
-	userID = r.FormValue("userid")
-	if userID == "" {
-		return "", errors.New("userid was empty, redirecting to sign in page")
-	}
-	l.Tracef("returning userID %s", userID)
-	return userID, err
 }
 
 // parseAuthForm parses the OAuthAuthorize form in the gin context, and stores

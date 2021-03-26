@@ -21,6 +21,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/go-fed/activity/pub"
@@ -144,6 +145,10 @@ type DB interface {
 	// B) we block signups from this email domain
 	// C) something went wrong in the db
 	IsEmailAvailable(email string) error
+
+	// NewSignup creates a new user in the database with the given parameters, with an *unconfirmed* email address.
+	// By the time this function is called, it should be assumed that all the parameters have passed validation!
+	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string) (*model.User, error)
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

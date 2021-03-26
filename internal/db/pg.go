@@ -20,8 +20,11 @@ package db
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"errors"
 	"fmt"
+	"net"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -35,6 +38,7 @@ import (
 	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // postgresService satisfies the DB interface
@@ -305,7 +309,6 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *model.Acco
 		return err
 	}
 	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
-		fmt.Println(account)
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -400,7 +403,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 		// fail because we got an unexpected error
 		return fmt.Errorf("db error: %s", err)
 	}
-	
+
 	// check if this email is associated with an account already
 	if err := ps.conn.Model(&model.Account{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
 		// fail because we found something
@@ -410,6 +413,43 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 		return fmt.Errorf("db error: %s", err)
 	}
 	return nil
+}
+
+func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string) (*model.User, error) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		ps.log.Errorf("error creating new rsa key: %s", err)
+		return nil, err
+	}
+
+	a := &model.Account{
+		Username:    username,
+		DisplayName: username,
+		Reason:      reason,
+		PrivateKey:  key,
+		PublicKey:   &key.PublicKey,
+		ActorType:   "Person",
+	}
+	if _, err = ps.conn.Model(a).Insert(); err != nil {
+		return nil, err
+	}
+
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("error hashing password: %s", err)
+	}
+	u := &model.User{
+		AccountID:         a.ID,
+		EncryptedPassword: string(pw),
+		SignUpIP:          signUpIP,
+		Locale:            locale,
+		UnconfirmedEmail:  email,
+	}
+	if _, err = ps.conn.Model(u).Insert(); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 /*
@@ -433,7 +473,6 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		}
 		fields = append(fields, mField)
 	}
-	fmt.Printf("fields: %+v", fields)
 
 	// count followers
 	followers := []model.Follow{}

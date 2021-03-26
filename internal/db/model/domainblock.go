@@ -35,13 +35,13 @@ type DomainBlock struct {
 	// Account ID of the creator of this block
 	CreatedByAccountID string `pg:",notnull"`
 	// TODO: define this
-	Severity           int
+	Severity int
 	// Reject media from this domain?
-	RejectMedia        bool
+	RejectMedia bool
 	// Reject reports from this domain?
-	RejectReports      bool
+	RejectReports bool
 	// Private comment on this block, viewable to admins
-	PrivateComment     string
+	PrivateComment string
 	// Public comment on this block, viewable (optionally) by everyone
-	PublicComment      string
+	PublicComment string
 }

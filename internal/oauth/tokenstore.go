@@ -70,7 +70,7 @@ func newTokenStore(ctx context.Context, db db.DB, log *logrus.Logger) oauth2.Tok
 func (pts *tokenStore) sweep() error {
 	// select *all* tokens from the db
 	// todo: if this becomes expensive (ie., there are fucking LOADS of tokens) then figure out a better way.
-	tokens := new([]*oauthToken)
+	tokens := new([]*Token)
 	if err := pts.db.GetAll(tokens); err != nil {
 		return err
 	}
@@ -106,22 +106,22 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (pts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
-	return pts.db.DeleteWhere("code", code, &oauthToken{})
+	return pts.db.DeleteWhere("code", code, &Token{})
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (pts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return pts.db.DeleteWhere("access", access, &oauthToken{})
+	return pts.db.DeleteWhere("access", access, &Token{})
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (pts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return pts.db.DeleteWhere("refresh", refresh, &oauthToken{})
+	return pts.db.DeleteWhere("refresh", refresh, &Token{})
 }
 
 // GetByCode selects a token from the DB based on the Code field
 func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{
+	pgt := &Token{
 		Code: code,
 	}
 	if err := pts.db.GetWhere("code", code, pgt); err != nil {
@@ -132,7 +132,7 @@ func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.Token
 
 // GetByAccess selects a token from the DB based on the Access field
 func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{
+	pgt := &Token{
 		Access: access,
 	}
 	if err := pts.db.GetWhere("access", access, pgt); err != nil {
@@ -143,7 +143,7 @@ func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.T
 
 // GetByRefresh selects a token from the DB based on the Refresh field
 func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
-	pgt := &oauthToken{
+	pgt := &Token{
 		Refresh: refresh,
 	}
 	if err := pts.db.GetWhere("refresh", refresh, pgt); err != nil {
@@ -156,7 +156,7 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 	The following models are basically helpers for the postgres token store implementation, they should only be used internally.
 */
 
-// oauthToken is a translation of the gotosocial token with the ExpiresIn fields replaced with ExpiresAt.
+// Token is a translation of the gotosocial token with the ExpiresIn fields replaced with ExpiresAt.
 //
 // Explanation for this: gotosocial assumes an in-memory or file database of some kind, where a time-to-live parameter (TTL) can be defined,
 // and tokens with expired TTLs are automatically removed. Since Postgres doesn't have that feature, it's easier to set an expiry time and
@@ -164,9 +164,9 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 //
 // Note that this struct does *not* satisfy the token interface shown here: https://github.com/gotosocial/oauth2/blob/master/model.go#L22
 // and implemented here: https://github.com/gotosocial/oauth2/blob/master/models/token.go.
-// As such, manual translation is always required between oauthToken and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
+// As such, manual translation is always required between Token and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
 // and pgTokenToOauthToken can be used for that.
-type oauthToken struct {
+type Token struct {
 	ID                  string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
 	ClientID            string
 	UserID              string
@@ -186,7 +186,7 @@ type oauthToken struct {
 }
 
 // oauthTokenToPGToken is a lil util function that takes a gotosocial token and gives back a token for inserting into postgres
-func oauthTokenToPGToken(tkn *models.Token) *oauthToken {
+func oauthTokenToPGToken(tkn *models.Token) *Token {
 	now := time.Now()
 
 	// For the following, we want to make sure we're not adding a time.Now() to an *empty* ExpiresIn, otherwise that's
@@ -208,7 +208,7 @@ func oauthTokenToPGToken(tkn *models.Token) *oauthToken {
 		rea = now.Add(tkn.RefreshExpiresIn)
 	}
 
-	return &oauthToken{
+	return &Token{
 		ClientID:            tkn.ClientID,
 		UserID:              tkn.UserID,
 		RedirectURI:         tkn.RedirectURI,
@@ -228,7 +228,7 @@ func oauthTokenToPGToken(tkn *models.Token) *oauthToken {
 }
 
 // pgTokenToOauthToken is a lil util function that takes a postgres token and gives back a gotosocial token
-func pgTokenToOauthToken(pgt *oauthToken) *models.Token {
+func pgTokenToOauthToken(pgt *Token) *models.Token {
 	now := time.Now()
 
 	return &models.Token{

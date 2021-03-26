@@ -19,6 +19,8 @@
 package account
 
 import (
+	"fmt"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,9 +28,10 @@ import (
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/db/model"
 	"github.com/gotosocial/gotosocial/internal/module"
-	"github.com/gotosocial/gotosocial/internal/module/oauth"
+	"github.com/gotosocial/gotosocial/internal/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
+	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,9 +42,10 @@ const (
 )
 
 type accountModule struct {
-	config *config.Config
-	db     db.DB
-	log    *logrus.Logger
+	config      *config.Config
+	db          db.DB
+	oauthServer oauth.Server
+	log         *logrus.Logger
 }
 
 // New returns a new account module
@@ -60,15 +64,15 @@ func (m *accountModule) Route(r router.Router) error {
 	return nil
 }
 
+// accountCreatePOSTHandler handles create account requests, validates them,
+// and puts them in the database if they're valid.
+// It should be served as a POST at /api/v1/accounts
 func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AccountCreatePOSTHandler")
-	// TODO: check whether a valid app token has been presented!!
-	// See: https://docs.joinmastodon.org/methods/accounts/
-
-	l.Trace("checking if registration is open")
-	if !m.config.AccountsConfig.OpenRegistration {
-		l.Debug("account registration is closed, returning error to client")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "account registration is closed"})
+	l := m.log.WithField("func", "accountCreatePOSTHandler")
+	authed, err := oauth.GetAuthed(c)
+	if err != nil {
+		l.Debugf("couldn't auth: %s", err)
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -81,15 +85,34 @@ func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 	}
 
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateAccount(form, m.config.AccountsConfig.ReasonRequired, m.db); err != nil {
+	if err := validateCreateAccount(form, m.config.AccountsConfig, m.db); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	clientIP := c.ClientIP()
+	l.Tracef("attempting to parse client ip address %s", clientIP)
+	signUpIP := net.ParseIP(clientIP)
+	if signUpIP == nil {
+		l.Debugf("error validating sign up ip address %s", clientIP)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ip address could not be parsed from request"})
+		return
+	}
+
+	ti, err := m.accountCreate(form, signUpIP, authed.Token, authed.Application)
+	if err != nil {
+		l.Errorf("internal server error while creating new account: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, ti)
 }
 
 // accountVerifyGETHandler serves a user's account details to them IF they reached this
 // handler while in possession of a valid token, according to the oauth middleware.
+// It should be served as a GET at /api/v1/accounts/verify_credentials
 func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AccountVerifyGETHandler")
 
@@ -119,4 +142,40 @@ func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
 
 	l.Tracef("conversion successful, returning OK and mastosensitive account %+v", acctSensitive)
 	c.JSON(http.StatusOK, acctSensitive)
+}
+
+/*
+	HELPER FUNCTIONS
+*/
+
+// accountCreate does the dirty work of making an account and user in the database.
+// It then returns a token to the caller, for use with the new account, as per the
+// spec here: https://docs.joinmastodon.org/methods/accounts/
+func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, signUpIP net.IP, token oauth2.TokenInfo, app *model.Application) (*mastotypes.Token, error) {
+	l := m.log.WithField("func", "accountCreate")
+
+	// don't store a reason if we don't require one
+	reason := form.Reason
+	if !m.config.AccountsConfig.ReasonRequired {
+		reason = ""
+	}
+
+	l.Trace("creating new username and account")
+	user, err := m.db.NewSignup(form.Username, reason, m.config.AccountsConfig.RequireApproval, form.Email, form.Password, signUpIP, form.Locale)
+	if err != nil {
+		return nil, fmt.Errorf("error creating new signup in the database: %s", err)
+	}
+
+	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, app.ID)
+	ti, err := m.oauthServer.GenerateUserAccessToken(token, app.ClientSecret, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)
+	}
+
+	return &mastotypes.Token{
+		AccessToken: ti.GetCode(),
+		TokenType:   "Bearer",
+		Scope:       ti.GetScope(),
+		CreatedAt:   ti.GetCodeCreateAt().Unix(),
+	}, nil
 }

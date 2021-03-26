@@ -23,6 +23,7 @@
 package model
 
 import (
+	"crypto/rsa"
 	"net/url"
 	"time"
 )
@@ -82,6 +83,8 @@ type Account struct {
 	SubscriptionExpiresAt time.Time `pg:"type:timestamp"`
 	// Does this account identify itself as a bot?
 	Bot bool
+	// What reason was given for signing up when this account was created?
+	Reason string
 
 	/*
 		PRIVACY SETTINGS
@@ -123,9 +126,9 @@ type Account struct {
 
 	Secret string
 	// Privatekey for validating activitypub requests, will obviously only be defined for local accounts
-	PrivateKey string
+	PrivateKey *rsa.PrivateKey
 	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
-	PublicKey string
+	PublicKey *rsa.PublicKey
 
 	/*
 		ADMIN FIELDS

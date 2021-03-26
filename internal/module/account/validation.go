@@ -21,12 +21,17 @@ package account
 import (
 	"errors"
 
+	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/util"
 	"github.com/gotosocial/gotosocial/pkg/mastotypes"
 )
 
-func validateCreateAccount(form *mastotypes.AccountCreateRequest, reasonRequired bool, database db.DB) error {
+func validateCreateAccount(form *mastotypes.AccountCreateRequest, c *config.AccountsConfig, database db.DB) error {
+	if !c.OpenRegistration {
+		return errors.New("registration is not open for this server")
+	}
+
 	if err := util.ValidateSignUpUsername(form.Username); err != nil {
 		return err
 	}
@@ -47,7 +52,7 @@ func validateCreateAccount(form *mastotypes.AccountCreateRequest, reasonRequired
 		return err
 	}
 
-	if err := util.ValidateSignUpReason(form.Reason, reasonRequired); err != nil {
+	if err := util.ValidateSignUpReason(form.Reason, c.ReasonRequired); err != nil {
 		return err
 	}
 

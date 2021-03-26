@@ -16,38 +16,38 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package oauth
+package auth
 
 import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/gotosocial/gotosocial/internal/db"
 	"github.com/gotosocial/gotosocial/internal/db/model"
+	"github.com/gotosocial/gotosocial/internal/oauth"
 	"github.com/gotosocial/gotosocial/internal/router"
-	"github.com/gotosocial/oauth2/v4"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type OauthTestSuite struct {
+type AuthTestSuite struct {
 	suite.Suite
-	tokenStore      oauth2.TokenStore
-	clientStore     oauth2.ClientStore
+	oauthServer     oauth.Server
 	db              db.DB
 	testAccount     *model.Account
 	testApplication *model.Application
 	testUser        *model.User
-	testClient      *oauthClient
+	testClient      *oauth.Client
 	config          *config.Config
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *OauthTestSuite) SetupSuite() {
+func (suite *AuthTestSuite) SetupSuite() {
 	c := config.Empty()
 	// we're running on localhost without https so set the protocol to http
 	c.Protocol = "http"
@@ -84,7 +84,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 		Email:             "user@example.org",
 		AccountID:         acctID,
 	}
-	suite.testClient = &oauthClient{
+	suite.testClient = &oauth.Client{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
 		Domain: fmt.Sprintf("%s://%s", c.Protocol, c.Host),
@@ -101,7 +101,7 @@ func (suite *OauthTestSuite) SetupSuite() {
 }
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
-func (suite *OauthTestSuite) SetupTest() {
+func (suite *AuthTestSuite) SetupTest() {
 
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
@@ -113,8 +113,8 @@ func (suite *OauthTestSuite) SetupTest() {
 	suite.db = db
 
 	models := []interface{}{
-		&oauthClient{},
-		&oauthToken{},
+		&oauth.Client{},
+		&oauth.Token{},
 		&model.User{},
 		&model.Account{},
 		&model.Application{},
@@ -126,8 +126,7 @@ func (suite *OauthTestSuite) SetupTest() {
 		}
 	}
 
-	suite.tokenStore = newTokenStore(context.Background(), suite.db, logrus.New())
-	suite.clientStore = newClientStore(suite.db)
+	suite.oauthServer = oauth.New(suite.db, log)
 
 	if err := suite.db.Put(suite.testAccount); err != nil {
 		logrus.Panicf("could not insert test account into db: %s", err)
@@ -145,10 +144,10 @@ func (suite *OauthTestSuite) SetupTest() {
 }
 
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
-func (suite *OauthTestSuite) TearDownTest() {
+func (suite *AuthTestSuite) TearDownTest() {
 	models := []interface{}{
-		&oauthClient{},
-		&oauthToken{},
+		&oauth.Client{},
+		&oauth.Token{},
 		&model.User{},
 		&model.Account{},
 		&model.Application{},
@@ -164,7 +163,7 @@ func (suite *OauthTestSuite) TearDownTest() {
 	suite.db = nil
 }
 
-func (suite *OauthTestSuite) TestAPIInitialize() {
+func (suite *AuthTestSuite) TestAPIInitialize() {
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
 
@@ -173,17 +172,18 @@ func (suite *OauthTestSuite) TestAPIInitialize() {
 		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
 	}
 
-	api := New(suite.tokenStore, suite.clientStore, suite.db, log)
+	api := New(suite.oauthServer, suite.db, log)
 	if err := api.Route(r); err != nil {
 		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
 	}
 
 	r.Start()
+	time.Sleep(60 * time.Second)
 	if err := r.Stop(context.Background()); err != nil {
 		suite.FailNow(fmt.Sprintf("error stopping router: %s", err))
 	}
 }
 
-func TestOauthTestSuite(t *testing.T) {
-	suite.Run(t, new(OauthTestSuite))
+func TestAuthTestSuite(t *testing.T) {
+	suite.Run(t, new(AuthTestSuite))
 }

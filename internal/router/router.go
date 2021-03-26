@@ -36,7 +36,7 @@ import (
 // Router provides the REST interface for gotosocial, using gin.
 type Router interface {
 	// Attach a gin handler to the router with the given method and path
-	AttachHandler(method string, path string, handler gin.HandlerFunc)
+	AttachHandler(method string, path string, f gin.HandlerFunc)
 	// Attach a gin middleware to the router that will be used globally
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Start the router
@@ -59,6 +59,8 @@ func (r *router) Start() {
 			r.logger.Fatalf("listen: %s", err)
 		}
 	}()
+	// c := &gin.Context{}
+	// c.Get()
 }
 
 // Stop shuts down the router nicely

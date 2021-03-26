@@ -38,7 +38,7 @@ func newClientStore(db db.DB) oauth2.ClientStore {
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	poc := &oauthClient{
+	poc := &Client{
 		ID: clientID,
 	}
 	if err := cs.db.GetByID(clientID, poc); err != nil {
@@ -48,7 +48,7 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 }
 
 func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
-	poc := &oauthClient{
+	poc := &Client{
 		ID:     cli.GetID(),
 		Secret: cli.GetSecret(),
 		Domain: cli.GetDomain(),
@@ -58,13 +58,13 @@ func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {
-	poc := &oauthClient{
+	poc := &Client{
 		ID: id,
 	}
 	return cs.db.DeleteByID(id, poc)
 }
 
-type oauthClient struct {
+type Client struct {
 	ID     string
 	Secret string
 	Domain string
