@@ -127,8 +127,8 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 	return a, nil
 }
 
-// MustAuthed is like GetAuthed, but will fail if one of the requirements is not met.
-func MustAuthed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Authed, error) {
+// MustAuth is like GetAuthed, but will fail if one of the requirements is not met.
+func MustAuth(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Authed, error) {
 	a, err := GetAuthed(c)
 	if err != nil {
 		return nil, err
