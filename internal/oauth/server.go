@@ -20,17 +20,16 @@ package oauth
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
 	"github.com/superseriousbusiness/oauth2/v4/server"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -171,7 +170,6 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
 func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error) {
-	fmt.Printf("GENERATE USER ACCESS TOKEN %+v\n", ti)
 	tgr := &oauth2.TokenGenerateRequest{
 		ClientID:     ti.GetClientID(),
 		ClientSecret: clientSecret,
