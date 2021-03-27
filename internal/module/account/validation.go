@@ -21,10 +21,10 @@ package account
 import (
 	"errors"
 
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/util"
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
 
 func validateCreateAccount(form *mastotypes.AccountCreateRequest, c *config.AccountsConfig, database db.DB) error {

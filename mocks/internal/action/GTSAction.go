@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	config "github.com/gotosocial/gotosocial/internal/config"
+	config "github.com/superseriousbusiness/gotosocial/internal/config"
 
 	logrus "github.com/sirupsen/logrus"
 

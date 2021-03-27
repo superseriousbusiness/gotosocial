@@ -18,7 +18,7 @@
 
 package model
 
-import "github.com/gotosocial/gotosocial/pkg/mastotypes"
+import "github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 
 // Application represents an application that can perform actions on behalf of a user.
 // It is used to authorize tokens etc, and is associated with an oauth client id in the database.

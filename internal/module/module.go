@@ -19,7 +19,7 @@
 // Package module is basically a wrapper for a lot of modules (in subdirectories) that satisfy the ClientAPIModule interface.
 package module
 
-import "github.com/gotosocial/gotosocial/internal/router"
+import "github.com/superseriousbusiness/gotosocial/internal/router"
 
 // ClientAPIModule represents a chunk of code (usually contained in a single package) that adds a set
 // of functionalities and side effects to a router, by mapping routes and handlers onto it--in other words, a REST API ;)

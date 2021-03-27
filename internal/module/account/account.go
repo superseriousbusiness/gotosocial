@@ -24,14 +24,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/gotosocial/internal/module"
-	"github.com/gotosocial/gotosocial/internal/oauth"
-	"github.com/gotosocial/gotosocial/internal/router"
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
-	"github.com/gotosocial/oauth2/v4"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/module"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/sirupsen/logrus"
 )
 

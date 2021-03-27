@@ -27,12 +27,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/gotosocial/internal/oauth"
-	"github.com/gotosocial/oauth2/v4"
-	oauthmodels "github.com/gotosocial/oauth2/v4/models"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/oauth2/v4"
+	oauthmodels "github.com/superseriousbusiness/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )

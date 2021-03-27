@@ -34,9 +34,9 @@ import (
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )

@@ -27,7 +27,7 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // New returns a go-fed compatible federating actor

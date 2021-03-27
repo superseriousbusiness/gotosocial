@@ -32,12 +32,12 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/gotosocial/internal/module"
-	"github.com/gotosocial/gotosocial/internal/oauth"
-	"github.com/gotosocial/gotosocial/internal/router"
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/module"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )

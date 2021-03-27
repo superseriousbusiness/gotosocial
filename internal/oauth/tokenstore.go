@@ -24,9 +24,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/oauth2/v4"
-	"github.com/gotosocial/oauth2/v4/models"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/oauth2/v4"
+	"github.com/superseriousbusiness/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -92,7 +92,7 @@ func (pts *tokenStore) sweep() error {
 }
 
 // Create creates and store the new token information.
-// For the original implementation, see https://github.com/gotosocial/oauth2/blob/master/store/token.go#L34
+// For the original implementation, see https://github.com/superseriousbusiness/oauth2/blob/master/store/token.go#L34
 func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	t, ok := info.(*models.Token)
 	if !ok {
@@ -162,8 +162,8 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 // and tokens with expired TTLs are automatically removed. Since Postgres doesn't have that feature, it's easier to set an expiry time and
 // then periodically sweep out tokens when that time has passed.
 //
-// Note that this struct does *not* satisfy the token interface shown here: https://github.com/gotosocial/oauth2/blob/master/model.go#L22
-// and implemented here: https://github.com/gotosocial/oauth2/blob/master/models/token.go.
+// Note that this struct does *not* satisfy the token interface shown here: https://github.com/superseriousbusiness/oauth2/blob/master/model.go#L22
+// and implemented here: https://github.com/superseriousbusiness/oauth2/blob/master/models/token.go.
 // As such, manual translation is always required between Token and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
 // and pgTokenToOauthToken can be used for that.
 type Token struct {

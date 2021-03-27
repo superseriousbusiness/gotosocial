@@ -5,11 +5,11 @@ package mocks
 import (
 	context "context"
 
-	mastotypes "github.com/gotosocial/gotosocial/pkg/mastotypes"
+	mastotypes "github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 
 	mock "github.com/stretchr/testify/mock"
 
-	model "github.com/gotosocial/gotosocial/internal/db/model"
+	model "github.com/superseriousbusiness/gotosocial/internal/db/model"
 
 	net "net"
 

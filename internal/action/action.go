@@ -21,7 +21,7 @@ package action
 import (
 	"context"
 
-	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 

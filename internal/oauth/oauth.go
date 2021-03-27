@@ -24,12 +24,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/oauth2/v4"
-	"github.com/gotosocial/oauth2/v4/errors"
-	"github.com/gotosocial/oauth2/v4/manage"
-	"github.com/gotosocial/oauth2/v4/server"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/oauth2/v4"
+	"github.com/superseriousbusiness/oauth2/v4/errors"
+	"github.com/superseriousbusiness/oauth2/v4/manage"
+	"github.com/superseriousbusiness/oauth2/v4/server"
 	"github.com/sirupsen/logrus"
 )
 

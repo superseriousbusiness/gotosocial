@@ -22,10 +22,10 @@ import (
 	"context"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/gotosocial/gotosocial/internal/cache"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 // Gotosocial is the 'main' function of the gotosocial server, and the place where everything hangs together.

@@ -29,7 +29,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 

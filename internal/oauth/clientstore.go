@@ -21,9 +21,9 @@ package oauth
 import (
 	"context"
 
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/oauth2/v4"
-	"github.com/gotosocial/oauth2/v4/models"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/oauth2/v4"
+	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
 type clientStore struct {

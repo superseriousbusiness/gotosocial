@@ -21,8 +21,8 @@ package db
 import (
 	"context"
 
-	"github.com/gotosocial/gotosocial/internal/action"
-	"github.com/gotosocial/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/action"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
 )
 

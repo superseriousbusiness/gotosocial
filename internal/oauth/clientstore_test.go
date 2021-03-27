@@ -21,9 +21,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/oauth2/v4/models"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/oauth2/v4/models"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )

@@ -25,9 +25,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gotosocial/gotosocial/internal/action"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/action"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/sirupsen/logrus"
 )
 

@@ -25,9 +25,9 @@ import (
 	"strings"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db/model"
-	"github.com/gotosocial/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/sirupsen/logrus"
 )
 
