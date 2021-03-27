@@ -19,6 +19,7 @@
 package account
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -31,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/module"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
@@ -70,7 +72,7 @@ func (m *accountModule) Route(r router.Router) error {
 // It should be served as a POST at /api/v1/accounts
 func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountCreatePOSTHandler")
-	authed, err := oauth.MustAuthed(c, true, true, false, false)
+	authed, err := oauth.MustAuth(c, true, true, false, false)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
@@ -79,9 +81,9 @@ func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 
 	l.Trace("parsing request form")
 	form := &mastotypes.AccountCreateRequest{}
-	if err := c.ShouldBind(form); err != nil {
+	if err := c.ShouldBind(form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
 		return
 	}
 
@@ -116,25 +118,10 @@ func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 // It should be served as a GET at /api/v1/accounts/verify_credentials
 func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AccountVerifyGETHandler")
+	authed, err := oauth.MustAuth(c, true, false, false, true)
 
-	l.Trace("getting account details from session")
-	i, ok := c.Get(oauth.SessionAuthorizedAccount)
-	if !ok {
-		l.Trace("no account in session, returning error to client")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
-		return
-	}
-
-	l.Trace("attempting to convert account interface into account struct...")
-	acct, ok := i.(*model.Account)
-	if !ok {
-		l.Tracef("could not convert %+v into account struct, returning error to client", i)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "The access token is invalid"})
-		return
-	}
-
-	l.Tracef("retrieved account %+v, converting to mastosensitive...", acct)
-	acctSensitive, err := m.db.AccountToMastoSensitive(acct)
+	l.Tracef("retrieved account %+v, converting to mastosensitive...", authed.Account)
+	acctSensitive, err := m.db.AccountToMastoSensitive(authed.Account)
 	if err != nil {
 		l.Tracef("could not convert account into mastosensitive account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -179,4 +166,46 @@ func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, sig
 		Scope:       ti.GetScope(),
 		CreatedAt:   ti.GetCodeCreateAt().Unix(),
 	}, nil
+}
+
+// validateCreateAccount checks through all the necessary prerequisites for creating a new account,
+// according to the provided account create request. If the account isn't eligible, an error will be returned.
+func validateCreateAccount(form *mastotypes.AccountCreateRequest, c *config.AccountsConfig, database db.DB) error {
+	if !c.OpenRegistration {
+		return errors.New("registration is not open for this server")
+	}
+
+	if err := util.ValidateSignUpUsername(form.Username); err != nil {
+		return err
+	}
+
+	if err := util.ValidateEmail(form.Email); err != nil {
+		return err
+	}
+
+	if err := util.ValidateSignUpPassword(form.Password); err != nil {
+		return err
+	}
+
+	if !form.Agreement {
+		return errors.New("agreement to terms and conditions not given")
+	}
+
+	if err := util.ValidateLanguage(form.Locale); err != nil {
+		return err
+	}
+
+	if err := util.ValidateSignUpReason(form.Reason, c.ReasonRequired); err != nil {
+		return err
+	}
+
+	if err := database.IsEmailAvailable(form.Email); err != nil {
+		return err
+	}
+
+	if err := database.IsUsernameAvailable(form.Username); err != nil {
+		return err
+	}
+
+	return nil
 }
