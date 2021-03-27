@@ -415,7 +415,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	return nil
 }
 
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string) (*model.User, error) {
+func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		ps.log.Errorf("error creating new rsa key: %s", err)
@@ -444,6 +444,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		SignUpIP:          signUpIP,
 		Locale:            locale,
 		UnconfirmedEmail:  email,
+		CreatedByApplicationID: appID,
 	}
 	if _, err = ps.conn.Model(u).Insert(); err != nil {
 		return nil, err
