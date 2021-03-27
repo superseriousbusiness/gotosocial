@@ -49,10 +49,11 @@ type accountModule struct {
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, log *logrus.Logger) module.ClientAPIModule {
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, log *logrus.Logger) module.ClientAPIModule {
 	return &accountModule{
 		config: config,
 		db:     db,
+		oauthServer: oauthServer,
 		log:    log,
 	}
 }
@@ -161,13 +162,12 @@ func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, sig
 	}
 
 	l.Trace("creating new username and account")
-	user, err := m.db.NewSignup(form.Username, reason, m.config.AccountsConfig.RequireApproval, form.Email, form.Password, signUpIP, form.Locale)
+	user, err := m.db.NewSignup(form.Username, reason, m.config.AccountsConfig.RequireApproval, form.Email, form.Password, signUpIP, form.Locale, app.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new signup in the database: %s", err)
 	}
 
 	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, app.ID)
-	fmt.Printf("ACCOUNT CREATE\n\n%+v\n\n%+v\n\n%+v\n", token, app, user)
 	ti, err := m.oauthServer.GenerateUserAccessToken(token, app.ClientSecret, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)
