@@ -21,11 +21,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/oauth2/v4/models"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/suite"
 )
 
 type PgClientStoreTestSuite struct {

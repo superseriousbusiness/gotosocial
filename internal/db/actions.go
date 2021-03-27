@@ -21,9 +21,9 @@ package db
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/sirupsen/logrus"
 )
 
 // Initialize will initialize the database given in the config for use with GoToSocial

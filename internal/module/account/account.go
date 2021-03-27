@@ -24,6 +24,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
@@ -32,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -51,10 +51,10 @@ type accountModule struct {
 // New returns a new account module
 func New(config *config.Config, db db.DB, oauthServer oauth.Server, log *logrus.Logger) module.ClientAPIModule {
 	return &accountModule{
-		config: config,
-		db:     db,
+		config:      config,
+		db:          db,
 		oauthServer: oauthServer,
-		log:    log,
+		log:         log,
 	}
 }
 

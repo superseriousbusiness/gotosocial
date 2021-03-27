@@ -34,10 +34,10 @@ import (
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -439,11 +439,11 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		return nil, fmt.Errorf("error hashing password: %s", err)
 	}
 	u := &model.User{
-		AccountID:         a.ID,
-		EncryptedPassword: string(pw),
-		SignUpIP:          signUpIP,
-		Locale:            locale,
-		UnconfirmedEmail:  email,
+		AccountID:              a.ID,
+		EncryptedPassword:      string(pw),
+		SignUpIP:               signUpIP,
+		Locale:                 locale,
+		UnconfirmedEmail:       email,
 		CreatedByApplicationID: appID,
 	}
 	if _, err = ps.conn.Model(u).Insert(); err != nil {

@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/sirupsen/logrus"
 
 	"github.com/urfave/cli/v2"
 )

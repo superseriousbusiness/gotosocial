@@ -24,10 +24,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
-	"github.com/sirupsen/logrus"
 )
 
 // tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.

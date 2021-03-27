@@ -25,10 +25,10 @@ import (
 	"strings"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
-	"github.com/sirupsen/logrus"
 )
 
 const dbTypePostgres string = "POSTGRES"
