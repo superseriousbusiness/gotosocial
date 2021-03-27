@@ -74,14 +74,14 @@ type AccountCreateRequest struct {
 	// Text that will be reviewed by moderators if registrations require manual approval.
 	Reason string `form:"reason"`
 	// The desired username for the account
-	Username string `form:"username"`
+	Username string `form:"username" binding:"required"`
 	// The email address to be used for login
-	Email string `form:"email"`
+	Email string `form:"email" binding:"required"`
 	// The password to be used for login
-	Password string `form:"password"`
+	Password string `form:"password" binding:"required"`
 	// Whether the user agrees to the local rules, terms, and policies.
 	// These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
-	Agreement bool `form:"agreement"`
+	Agreement bool `form:"agreement" binding:"required"`
 	// The language of the confirmation email that will be sent
-	Locale string `form:"locale"`
+	Locale string `form:"locale" binding:"required"`
 }
