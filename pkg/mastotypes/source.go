@@ -22,4 +22,20 @@ package mastotypes
 // Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
 // See https://docs.joinmastodon.org/entities/source/
 type Source struct {
+	// The default post privacy to be used for new statuses.
+	//    public = Public post
+	//    unlisted = Unlisted post
+	//    private = Followers-only post
+	//    direct = Direct post
+	Privacy string `json:"privacy,omitempty"`
+	// Whether new statuses should be marked sensitive by default.
+	Sensitive bool `json:"sensitive,omitempty"`
+	// The default posting language for new statuses.
+	Language string `json:"language,omitempty"`
+	// Profile bio.
+	Note string `json:"note"`
+	// Metadata about the account.
+	Fields []Field `json:"fields"`
+	// The number of pending follow requests.
+	FollowRequestsCount int `json:"follow_requests_count,omitempty"`
 }
