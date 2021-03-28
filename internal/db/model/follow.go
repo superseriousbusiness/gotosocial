@@ -36,4 +36,6 @@ type Follow struct {
 	ShowReblogs bool `pg:"default:true"`
 	// What is the activitypub URI of this follow?
 	URI string `pg:",unique"`
+	// does the following account want to be notified when the followed account posts?
+	Notify bool
 }
