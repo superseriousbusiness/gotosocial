@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
@@ -56,6 +57,7 @@ type AccountTestSuite struct {
 	testApplication      *model.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
+	mockMediaHandler     *media.MockMediaHandler
 	db                   db.DB
 	accountModule        *accountModule
 	newUserFormHappyPath url.Values
@@ -128,8 +130,11 @@ func (suite *AccountTestSuite) SetupSuite() {
 		Code: "we're authorized now!",
 	}, nil)
 
+	// mock the media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
+	suite.mockMediaHandler = &media.MockMediaHandler{}
+
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.log).(*accountModule)
+	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mockMediaHandler, suite.log).(*accountModule)
 }
 
 func (suite *AccountTestSuite) TearDownSuite() {
