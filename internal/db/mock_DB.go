@@ -157,6 +157,20 @@ func (_m *MockDB) GetByID(id string, i interface{}) error {
 	return r0
 }
 
+// GetFollowRequestsForAccountID provides a mock function with given fields: accountID, followRequests
+func (_m *MockDB) GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error {
+	ret := _m.Called(accountID, followRequests)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, *[]model.FollowRequest) error); ok {
+		r0 = rf(accountID, followRequests)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetFollowersByAccountID provides a mock function with given fields: accountID, followers
 func (_m *MockDB) GetFollowersByAccountID(accountID string, followers *[]model.Follow) error {
 	ret := _m.Called(accountID, followers)
@@ -283,13 +297,13 @@ func (_m *MockDB) IsUsernameAvailable(username string) error {
 	return r0
 }
 
-// NewSignup provides a mock function with given fields: username, reason, requireApproval, email, password, signUpIP, locale
-func (_m *MockDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string) (*model.User, error) {
-	ret := _m.Called(username, reason, requireApproval, email, password, signUpIP, locale)
+// NewSignup provides a mock function with given fields: username, reason, requireApproval, email, password, signUpIP, locale, appID
+func (_m *MockDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error) {
+	ret := _m.Called(username, reason, requireApproval, email, password, signUpIP, locale, appID)
 
 	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string, string, bool, string, string, net.IP, string) *model.User); ok {
-		r0 = rf(username, reason, requireApproval, email, password, signUpIP, locale)
+	if rf, ok := ret.Get(0).(func(string, string, bool, string, string, net.IP, string, string) *model.User); ok {
+		r0 = rf(username, reason, requireApproval, email, password, signUpIP, locale, appID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*model.User)
@@ -297,8 +311,8 @@ func (_m *MockDB) NewSignup(username string, reason string, requireApproval bool
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, bool, string, string, net.IP, string) error); ok {
-		r1 = rf(username, reason, requireApproval, email, password, signUpIP, locale)
+	if rf, ok := ret.Get(1).(func(string, string, bool, string, string, net.IP, string, string) error); ok {
+		r1 = rf(username, reason, requireApproval, email, password, signUpIP, locale, appID)
 	} else {
 		r1 = ret.Error(1)
 	}

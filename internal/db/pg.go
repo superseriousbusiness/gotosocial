@@ -317,6 +317,16 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *model.Acco
 	return nil
 }
 
+func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error {
+	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
 func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]model.Follow) error {
 	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -523,6 +533,26 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		lastStatusAt = lastStatus.CreatedAt.Format(time.RFC3339)
 	}
 
+	fr := []model.FollowRequest{}
+	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting follow requests: %s", err)
+		}
+	}
+	var frc int
+	if fr != nil {
+		frc = len(fr)
+	}
+
+	source := &mastotypes.Source{
+		Privacy:             a.Privacy,
+		Sensitive:           a.Sensitive,
+		Language:            a.Language,
+		Note:                a.Note,
+		Fields:              fields,
+		FollowRequestsCount: frc,
+	}
+
 	return &mastotypes.Account{
 		ID:             a.ID,
 		Username:       a.Username,
@@ -541,7 +571,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
-		Source:         nil,
+		Source:         source,
 		Emojis:         nil,
 		Fields:         fields,
 	}, nil

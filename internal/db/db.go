@@ -109,6 +109,11 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetAccountByUserID(userID string, account *model.Account) error
 
+	// GetFollowRequestsForAccountID is a shortcut for the common action of fetching a list of follow requests targeting the given account ID.
+	// The given slice 'followRequests' will be set to the result of the query, whatever it is.
+	// In case of no entries, a 'no entries' error will be returned
+	GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error
+
 	// GetFollowingByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is following.
 	// The given slice 'following' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
