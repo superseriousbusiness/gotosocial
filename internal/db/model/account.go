@@ -87,13 +87,19 @@ type Account struct {
 	Reason string
 
 	/*
-		PRIVACY SETTINGS
+		USER AND PRIVACY PREFERENCES
 	*/
 
 	// Does this account need an approval for new followers?
 	Locked bool
 	// Should this account be shown in the instance's profile directory?
 	Discoverable bool
+	// Default post privacy for this account
+	Privacy string
+	// Set posts from this account to sensitive by default?
+	Sensitive bool
+	// What language does this account post in?
+	Language string
 
 	/*
 		ACTIVITYPUB THINGS
