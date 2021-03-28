@@ -11,10 +11,12 @@ require (
 	github.com/go-pg/pg/v10 v10.8.0
 	github.com/golang/mock v1.4.4 // indirect
 	github.com/google/uuid v1.2.0
+	github.com/h2non/filetype v1.1.1
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
+	github.com/scottleedavis/go-exif-remove v0.0.0-20190908021517-58bdbaac8636
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
 	github.com/superseriousbusiness/oauth2/v4 v4.2.1-0.20210327102222-902aba1ef45f
