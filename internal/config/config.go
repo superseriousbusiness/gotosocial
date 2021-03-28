@@ -34,6 +34,7 @@ type Config struct {
 	DBConfig        *DBConfig       `yaml:"db"`
 	TemplateConfig  *TemplateConfig `yaml:"template"`
 	AccountsConfig  *AccountsConfig `yaml:"accounts"`
+	MediaConfig     *MediaConfig    `yaml:"media"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
