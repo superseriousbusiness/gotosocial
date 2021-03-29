@@ -14,6 +14,7 @@ require (
 	github.com/h2non/filetype v1.1.1
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
 	github.com/scottleedavis/go-exif-remove v0.0.0-20190908021517-58bdbaac8636

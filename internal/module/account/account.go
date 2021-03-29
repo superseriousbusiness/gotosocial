@@ -177,7 +177,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not read provided header: %s", err)})
 			return
 		}
-		headerInfo, err := m.mediaHandler.SetHeaderForAccountID(f, authed.Account.ID)
+		headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(f, authed.Account.ID, "header")
 		if err != nil {
 			l.Debugf("error processing header: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
