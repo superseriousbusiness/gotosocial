@@ -28,9 +28,10 @@ import (
 	"image/png"
 	"io"
 
+	"github.com/buckket/go-blurhash"
 	"github.com/h2non/filetype"
 	"github.com/nfnt/resize"
-	exifremove "github.com/scottleedavis/go-exif-remove"
+	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
 )
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
@@ -73,7 +74,18 @@ func supportedImageType(mimeType string) bool {
 // purgeExif is a little wrapper for the action of removing exif data from an image.
 // Only pass pngs or jpegs to this function.
 func purgeExif(b []byte) ([]byte, error) {
-	return exifremove.Remove(b)
+	if b == nil || len(b) == 0 {
+		return nil, errors.New("passed image was not valid")
+	}
+
+	clean, err := exifremove.Remove(b)
+	if err != nil {
+		return nil, fmt.Errorf("could not purge exif from image: %s", err)
+	}
+	if clean == nil || len(clean) == 0 {
+		return nil, errors.New("purged image was not valid")
+	}
+	return clean, nil
 }
 
 func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
@@ -104,21 +116,26 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 	height := i.Bounds().Size().Y
 	size := width * height
 	aspect := float64(width) / float64(height)
+	bh, err := blurhash.Encode(4, 3, i)
+	if err != nil {
+		return nil, fmt.Errorf("error generating blurhash: %s", err)
+	}
 
 	out := &bytes.Buffer{}
 	if err := jpeg.Encode(out, i, nil); err != nil {
 		return nil, err
 	}
 	return &imageAndMeta{
-		image:  out.Bytes(),
-		width:  width,
-		height: height,
-		size:   size,
-		aspect: aspect,
+		image:    out.Bytes(),
+		width:    width,
+		height:   height,
+		size:     size,
+		aspect:   aspect,
+		blurhash: bh,
 	}, nil
 }
 
-// deriveThumbnailFromImage returns a byte slice of an 80-pixel-width thumbnail
+// deriveThumbnailFromImage returns a byte slice and metadata for a 256-pixel-width thumbnail
 // of a given jpeg, png, or gif, or an error if something goes wrong.
 //
 // Note that the aspect ratio of the image will be retained,
@@ -147,7 +164,7 @@ func deriveThumbnail(b []byte, extension string) (*imageAndMeta, error) {
 		return nil, fmt.Errorf("extension %s not recognised", extension)
 	}
 
-	thumb := resize.Thumbnail(80, 0, i, resize.NearestNeighbor)
+	thumb := resize.Thumbnail(256, 256, i, resize.NearestNeighbor)
 	width := thumb.Bounds().Size().X
 	height := thumb.Bounds().Size().Y
 	size := width * height
@@ -167,9 +184,10 @@ func deriveThumbnail(b []byte, extension string) (*imageAndMeta, error) {
 }
 
 type imageAndMeta struct {
-	image  []byte
-	width  int
-	height int
-	size   int
-	aspect float64
+	image    []byte
+	width    int
+	height   int
+	size     int
+	aspect   float64
+	blurhash string
 }

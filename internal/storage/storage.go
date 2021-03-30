@@ -26,8 +26,8 @@ type Storage interface {
 }
 
 type FileInfo struct {
-   Data []byte
-   StorePath string
-   CreatedAt time.Time
-   UpdatedAt time.Time
+	Data      []byte
+	StorePath string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }

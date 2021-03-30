@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.16
 
 require (
+	github.com/buckket/go-blurhash v1.1.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
@@ -17,9 +18,9 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/onsi/ginkgo v1.15.0 // indirect
 	github.com/onsi/gomega v1.10.5 // indirect
-	github.com/scottleedavis/go-exif-remove v0.0.0-20190908021517-58bdbaac8636
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
+	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.2.1-0.20210327102222-902aba1ef45f
 	github.com/tidwall/btree v0.4.2 // indirect
 	github.com/tidwall/buntdb v1.2.0 // indirect

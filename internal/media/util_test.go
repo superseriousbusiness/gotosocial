@@ -19,10 +19,12 @@
 package media
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -61,13 +63,76 @@ func (suite *MediaUtilTestSuite) TearDownTest() {
 	ACTUAL TESTS
 */
 
-func (suite *MediaUtilTestSuite) TestParseContentType() {
+func (suite *MediaUtilTestSuite) TestParseContentTypeOK() {
 	f, err := os.Open("./test/test-jpeg.jpg")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	assert.Nil(suite.T(), err)
 	ct, err := parseContentType(f)
-	suite.log.Debug(ct)
+	assert.Nil(suite.T(), err)
+	assert.Equal(suite.T(), "image/jpeg", ct)
+}
+
+func (suite *MediaUtilTestSuite) TestParseContentTypeNotOK() {
+	f, err := os.Open("./test/test-corrupted.jpg")
+	assert.Nil(suite.T(), err)
+	ct, err := parseContentType(f)
+	assert.NotNil(suite.T(), err)
+	assert.Equal(suite.T(), "", ct)
+	assert.Equal(suite.T(), "filetype unknown", err.Error())
+}
+
+func (suite *MediaUtilTestSuite) TestRemoveEXIF() {
+	// load and validate image
+	b, err := ioutil.ReadFile("./test/test-with-exif.jpg")
+	assert.Nil(suite.T(), err)
+
+	// clean it up and validate the clean version
+	clean, err := purgeExif(b)
+	assert.Nil(suite.T(), err)
+
+	// compare it to our stored sample
+	sampleBytes, err := ioutil.ReadFile("./test/test-without-exif.jpg")
+	assert.Nil(suite.T(), err)
+	assert.EqualValues(suite.T(), sampleBytes, clean)
+}
+
+func (suite *MediaUtilTestSuite) TestDeriveImageFromJPEG() {
+	// load image
+	b, err := ioutil.ReadFile("./test/test-jpeg.jpg")
+	assert.Nil(suite.T(), err)
+
+	// clean it up and validate the clean version
+	imageAndMeta, err := deriveImage(b, "image/jpeg")
+	assert.Nil(suite.T(), err)
+
+	assert.Equal(suite.T(), 1920, imageAndMeta.width)
+	assert.Equal(suite.T(), 1080, imageAndMeta.height)
+	assert.Equal(suite.T(), 1.7777777777777777, imageAndMeta.aspect)
+	assert.Equal(suite.T(), 2073600, imageAndMeta.size)
+	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", imageAndMeta.blurhash)
+
+	// assert that the final image is what we would expect
+	sampleBytes, err := ioutil.ReadFile("./test/test-jpeg-processed.jpg")
+	assert.Nil(suite.T(), err)
+	assert.EqualValues(suite.T(), sampleBytes, imageAndMeta.image)
+}
+
+func (suite *MediaUtilTestSuite) TestDeriveThumbnailFromJPEG() {
+	// load image
+	b, err := ioutil.ReadFile("./test/test-jpeg.jpg")
+	assert.Nil(suite.T(), err)
+
+	// clean it up and validate the clean version
+	imageAndMeta, err := deriveThumbnail(b, "image/jpeg")
+	assert.Nil(suite.T(), err)
+
+	assert.Equal(suite.T(), 256, imageAndMeta.width)
+	assert.Equal(suite.T(), 144, imageAndMeta.height)
+	assert.Equal(suite.T(), 1.7777777777777777, imageAndMeta.aspect)
+	assert.Equal(suite.T(), 36864, imageAndMeta.size)
+
+	sampleBytes, err := ioutil.ReadFile("./test/test-jpeg-thumbnail.jpg")
+	assert.Nil(suite.T(), err)
+	assert.EqualValues(suite.T(), sampleBytes, imageAndMeta.image)
 }
 
 func TestMediaUtilTestSuite(t *testing.T) {

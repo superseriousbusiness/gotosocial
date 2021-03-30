@@ -66,6 +66,7 @@ type HeaderInfo struct {
 /*
 	INTERFACE FUNCTIONS
 */
+
 func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(f io.Reader, accountID string, headerOrAvi string) (*model.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
@@ -104,7 +105,15 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(f io.Reader, accountID str
 */
 
 func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, headerOrAvi string, accountID string) (*model.MediaAttachment, error) {
-	if headerOrAvi != "header" && headerOrAvi != "avatar" {
+	var isHeader bool
+	var isAvatar bool
+
+	switch headerOrAvi {
+	case "header":
+		isHeader = true
+	case "avatar":
+		isAvatar = true
+	default:
 		return nil, errors.New("header or avatar not selected")
 	}
 
@@ -149,7 +158,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		ID:        newMediaID,
 		StatusID:  "",
 		RemoteURL: "",
-		Type:      "",
+		Type:      model.FileTypeImage,
 		FileMeta: model.ImageFileMeta{
 			Original: model.ImageOriginal{
 				Width:  original.width,
@@ -167,7 +176,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		AccountID:         accountID,
 		Description:       "",
 		ScheduledStatusID: "",
-		Blurhash:          "",
+		Blurhash:          original.blurhash,
 		Processing:        2,
 		File: model.File{
 			Path:        originalPath,
@@ -180,6 +189,8 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 			FileSize:    len(small.image),
 			RemoteURL:   "",
 		},
+		Avatar: isAvatar,
+		Header: isHeader,
 	}
 
 	return ma, nil
