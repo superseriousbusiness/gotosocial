@@ -92,6 +92,9 @@ type DB interface {
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	UpdateByID(id string, i interface{}) error
 
+	// UpdateOneByID updates interface i with database the given database id. It will update one field of key key and value value.
+	UpdateOneByID(id string, key string, value interface{}, i interface{}) error
+
 	// DeleteByID removes i with id id.
 	// If i didn't exist anyway, then no error should be returned.
 	DeleteByID(id string, i interface{}) error
@@ -156,7 +159,15 @@ type DB interface {
 	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error)
 
 	// SetHeaderOrAvatarForAccountID sets the header or avatar for the given accountID to the given media attachment.
-	SetHeaderOrAvatarForAccountID(mediaAttachmen *model.MediaAttachment, accountID string) error
+	SetHeaderOrAvatarForAccountID(mediaAttachment *model.MediaAttachment, accountID string) error
+
+	// GetHeaderAvatarForAccountID gets the current avatar for the given account ID.
+	// The passed mediaAttachment pointer will be populated with the value of the avatar, if it exists.
+	GetAvatarForAccountID(avatar *model.MediaAttachment, accountID string) error
+
+	// GetHeaderForAccountID gets the current header for the given account ID.
+	// The passed mediaAttachment pointer will be populated with the value of the header, if it exists.
+	GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

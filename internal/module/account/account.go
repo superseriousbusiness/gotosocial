@@ -19,8 +19,11 @@
 package account
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 
@@ -39,8 +42,9 @@ import (
 )
 
 const (
+	idKey                 = "id"
 	basePath              = "/api/v1/accounts"
-	basePathWithID        = basePath + "/:id"
+	basePathWithID        = basePath + "/:" + idKey
 	verifyPath            = basePath + "/verify_credentials"
 	updateCredentialsPath = basePath + "/update_credentials"
 )
@@ -144,6 +148,10 @@ func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
 
 // accountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
 // It should be served as a PATCH at /api/v1/accounts/update_credentials
+//
+// TODO: this can be optimized massively by building up a picture of what we want the new account
+// details to be, and then inserting it all in the database at once. As it is, we do queries one-by-one
+// which is not gonna make the database very happy when lots of requests are going through.
 func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountUpdateCredentialsPATCHHandler")
 	authed, err := oauth.MustAuth(c, true, false, false, true)
@@ -152,62 +160,179 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 		return
 	}
+	l.Tracef("retrieved account %+v", authed.Account.ID)
 
 	l.Trace("parsing request form")
 	form := &mastotypes.UpdateCredentialsRequest{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: proper form validation
-
-	// TODO: tidy this code into subfunctions
-	if form.Header != nil && form.Header.Size != 0 {
-		if form.Header.Size > m.config.MediaConfig.MaxImageSize {
-			err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", form.Header.Size, m.config.MediaConfig.MaxImageSize)
-			l.Debugf("error processing header: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		f, err := form.Header.Open()
-		if err != nil {
-			l.Debugf("error processing header: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not read provided header: %s", err)})
-			return
-		}
-
-		// extract the bytes
-		imageBytes := []byte{}
-		size, err := f.Read(imageBytes)
-		defer func(){
-			if err := f.Close(); err != nil {
-				m.log.Errorf("error closing multipart file: %s", err)
-			}
-		}()
-		if err != nil || size == 0 {
-			l.Debugf("error processing header: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not read provided header: %s", err)})
-			return
-		}
-
-		// do the setting
-		headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(imageBytes, authed.Account.ID, "header")
-		if err != nil {
-			l.Debugf("error processing header: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		l.Tracef("new header info for account %s is %+v", headerInfo)
+	// if everything on the form is nil, then nothing has been set and we shouldn't continue
+	if form.Discoverable == nil && form.Bot == nil && form.DisplayName == nil && form.Note == nil && form.Avatar == nil && form.Header == nil && form.Locked == nil && form.Source == nil && form.FieldsAttributes == nil {
+		l.Debugf("could not parse form from request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "empty form submitted"})
+		return
 	}
 
-	l.Tracef("retrieved account %+v", authed.Account.ID)
+	if form.Discoverable != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "discoverable", *form.Discoverable, &model.Account{}); err != nil {
+			l.Debugf("error updating discoverable: %s", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if form.Bot != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "bot", *form.Bot, &model.Account{}); err != nil {
+			l.Debugf("error updating bot: %s", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if form.DisplayName != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "display_name", *form.DisplayName, &model.Account{}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if form.Note != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "note", *form.Note, &model.Account{}); err != nil {
+			l.Debugf("error updating note: %s", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	if form.Avatar != nil && form.Avatar.Size != 0 {
+		avatarInfo, err := m.UpdateAccountAvatar(form.Avatar, authed.Account.ID)
+		if err != nil {
+			l.Debugf("could not update avatar for account %s: %s", authed.Account.ID, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		l.Tracef("new avatar info for account %s is %+v", authed.Account.ID, avatarInfo)
+	}
+
+	if form.Header != nil && form.Header.Size != 0 {
+		headerInfo, err := m.UpdateAccountHeader(form.Header, authed.Account.ID)
+		if err != nil {
+			l.Debugf("could not update header for account %s: %s", authed.Account.ID, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		l.Tracef("new header info for account %s is %+v", authed.Account.ID, headerInfo)
+	}
+
+	if form.Locked != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &model.Account{}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"": err.Error()})
+			return
+		}
+	}
+
+	if form.Source != nil {
+
+	}
+
+	if form.FieldsAttributes != nil {
+
+	}
+
+	// fetch the account with all updated values set
+	updatedAccount := &model.Account{}
+	if err := m.db.GetByID(authed.Account.ID, updatedAccount); err != nil {
+		l.Debugf("could not fetch updated account %s: %s", authed.Account.ID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	acctSensitive, err := m.db.AccountToMastoSensitive(updatedAccount)
+	if err != nil {
+		l.Tracef("could not convert account into mastosensitive account: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	l.Tracef("conversion successful, returning OK and mastosensitive account %+v", acctSensitive)
+	c.JSON(http.StatusOK, acctSensitive)
 }
 
 /*
 	HELPER FUNCTIONS
 */
+
+// TODO: try to combine the below two functions because this is a lot of code repetition.
+
+// UpdateAccountAvatar does the dirty work of checking the avatar part of an account update form,
+// parsing and checking the image, and doing the necessary updates in the database for this to become
+// the account's new avatar image.
+func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accountID string) (*model.MediaAttachment, error) {
+	var err error
+	if avatar.Size > m.config.MediaConfig.MaxImageSize {
+		err = fmt.Errorf("avatar with size %d exceeded max image size of %d bytes", avatar.Size, m.config.MediaConfig.MaxImageSize)
+		return nil, err
+	}
+	f, err := avatar.Open()
+	if err != nil {
+		return nil, fmt.Errorf("could not read provided avatar: %s", err)
+	}
+
+	// extract the bytes
+	buf := new(bytes.Buffer)
+	size, err := io.Copy(buf, f)
+	if err != nil {
+		return nil, fmt.Errorf("could not read provided avatar: %s", err)
+	}
+	if size == 0 {
+		return nil, errors.New("could not read provided avatar: size 0 bytes")
+	}
+
+	// do the setting
+	avatarInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "avatar")
+	if err != nil {
+		return nil, fmt.Errorf("error processing avatar: %s", err)
+	}
+
+	return avatarInfo, f.Close()
+}
+
+// UpdateAccountHeader does the dirty work of checking the header part of an account update form,
+// parsing and checking the image, and doing the necessary updates in the database for this to become
+// the account's new header image.
+func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accountID string) (*model.MediaAttachment, error) {
+	var err error
+	if header.Size > m.config.MediaConfig.MaxImageSize {
+		err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", header.Size, m.config.MediaConfig.MaxImageSize)
+		return nil, err
+	}
+	f, err := header.Open()
+	if err != nil {
+		return nil, fmt.Errorf("could not read provided header: %s", err)
+	}
+
+	// extract the bytes
+	buf := new(bytes.Buffer)
+	size, err := io.Copy(buf, f)
+	if err != nil {
+		return nil, fmt.Errorf("could not read provided header: %s", err)
+	}
+	if size == 0 {
+		return nil, errors.New("could not read provided header: size 0 bytes")
+	}
+
+	// do the setting
+	headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "header")
+	if err != nil {
+		return nil, fmt.Errorf("error processing header: %s", err)
+	}
+
+	return headerInfo, f.Close()
+}
 
 // accountCreate does the dirty work of making an account and user in the database.
 // It then returns a token to the caller, for use with the new account, as per the

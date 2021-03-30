@@ -19,13 +19,17 @@
 package account
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 
@@ -40,6 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
@@ -57,7 +62,8 @@ type AccountTestSuite struct {
 	testApplication      *model.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
-	mockMediaHandler     *media.MockMediaHandler
+	mockStorage          *storage.MockStorage
+	mediaHandler         media.MediaHandler
 	db                   db.DB
 	accountModule        *accountModule
 	newUserFormHappyPath url.Values
@@ -73,6 +79,11 @@ func (suite *AccountTestSuite) SetupSuite() {
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
 	suite.log = log
+
+	suite.testAccountLocal = &model.Account{
+		ID:       uuid.NewString(),
+		Username: "test_user",
+	}
 
 	// can use this test application throughout
 	suite.testApplication = &model.Application{
@@ -107,6 +118,9 @@ func (suite *AccountTestSuite) SetupSuite() {
 		Database:        "postgres",
 		ApplicationName: "gotosocial",
 	}
+	c.MediaConfig = &config.MediaConfig{
+		MaxImageSize: 2 << 20,
+	}
 	suite.config = c
 
 	// use an actual database for this, because it's just easier than mocking one out
@@ -130,11 +144,15 @@ func (suite *AccountTestSuite) SetupSuite() {
 		Code: "we're authorized now!",
 	}, nil)
 
-	// mock the media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
-	suite.mockMediaHandler = &media.MockMediaHandler{}
+	suite.mockStorage = &storage.MockStorage{}
+	// We don't need storage to do anything for these tests, so just simulate a success and do nothing -- we won't need to return anything from storage
+	suite.mockStorage.On("StoreFileAt", mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8")).Return(nil)
+
+	// set a media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
+	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
 
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mockMediaHandler, suite.log).(*accountModule)
+	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.log).(*accountModule)
 }
 
 func (suite *AccountTestSuite) TearDownSuite() {
@@ -150,9 +168,11 @@ func (suite *AccountTestSuite) SetupTest() {
 		&model.User{},
 		&model.Account{},
 		&model.Follow{},
+		&model.FollowRequest{},
 		&model.Status{},
 		&model.Application{},
 		&model.EmailDomainBlock{},
+		&model.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.CreateTable(m); err != nil {
@@ -186,9 +206,11 @@ func (suite *AccountTestSuite) TearDownTest() {
 		&model.User{},
 		&model.Account{},
 		&model.Follow{},
+		&model.FollowRequest{},
 		&model.Status{},
 		&model.Application{},
 		&model.EmailDomainBlock{},
+		&model.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -199,6 +221,10 @@ func (suite *AccountTestSuite) TearDownTest() {
 
 /*
 	ACTUAL TESTS
+*/
+
+/*
+	TESTING: AccountCreatePOSTHandler
 */
 
 // TestAccountCreatePOSTHandlerSuccessful checks the happy path for an account creation request: all the fields provided are valid,
@@ -453,6 +479,58 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerInsufficientReason() 
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), `{"error":"reason should be at least 40 chars but 'just cuz' was 8"}`, string(b))
+}
+
+/*
+	TESTING: AccountUpdateCredentialsPATCHHandler
+*/
+
+func (suite *AccountTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
+
+	// put test local account in db
+	err := suite.db.Put(suite.testAccountLocal)
+	assert.NoError(suite.T(), err)
+
+	// attach avatar to request
+	aviFile, err := os.Open("../../media/test/test-jpeg.jpg")
+	assert.NoError(suite.T(), err)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreateFormFile("avatar", "test-jpeg.jpg")
+	assert.NoError(suite.T(), err)
+
+	_, err = io.Copy(part, aviFile)
+	assert.NoError(suite.T(), err)
+
+	err = aviFile.Close()
+	assert.NoError(suite.T(), err)
+
+	err = writer.Close()
+	assert.NoError(suite.T(), err)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccountLocal)
+	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
+	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", updateCredentialsPath), body) // the endpoint we're hitting
+	ctx.Request.Header.Set("Content-Type", writer.FormDataContentType())
+	suite.accountModule.accountUpdateCredentialsPATCHHandler(ctx)
+
+	// check response
+
+	// 1. we should have OK because our request was valid
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	// 2. we should have an error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+	// TODO: implement proper checks here
+	//
+	// b, err := ioutil.ReadAll(result.Body)
+	// assert.NoError(suite.T(), err)
+	// assert.Equal(suite.T(), `{"error":"not authorized"}`, string(b))
 }
 
 func TestAccountTestSuite(t *testing.T) {

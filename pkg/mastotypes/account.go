@@ -92,40 +92,40 @@ type AccountCreateRequest struct {
 // See https://docs.joinmastodon.org/methods/accounts/
 type UpdateCredentialsRequest struct {
 	// Whether the account should be shown in the profile directory.
-	Discoverable string `form:"discoverable"`
+	Discoverable *bool `form:"discoverable"`
 	// Whether the account has a bot flag.
-	Bot bool `form:"bot"`
+	Bot *bool `form:"bot"`
 	// The display name to use for the profile.
-	DisplayName string `form:"display_name"`
+	DisplayName *string `form:"display_name"`
 	// The account bio.
-	Note string `form:"note"`
+	Note *string `form:"note"`
 	// Avatar image encoded using multipart/form-data
 	Avatar *multipart.FileHeader `form:"avatar"`
 	// Header image encoded using multipart/form-data
 	Header *multipart.FileHeader `form:"header"`
 	// Whether manual approval of follow requests is required.
-	Locked bool `form:"locked"`
+	Locked *bool `form:"locked"`
 	// New Source values for this account
 	Source *UpdateSource `form:"source"`
 	// Profile metadata name and value
-	FieldsAttributes []UpdateField `form:"fields_attributes"`
+	FieldsAttributes *[]UpdateField `form:"fields_attributes"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
 type UpdateSource struct {
 	// Default post privacy for authored statuses.
-	Privacy string `form:"privacy"`
+	Privacy *string `form:"privacy"`
 	// Whether to mark authored statuses as sensitive by default.
-	Sensitive bool `form:"sensitive"`
+	Sensitive *bool `form:"sensitive"`
 	// Default language to use for authored statuses. (ISO 6391)
-	Language string `form:"language"`
+	Language *string `form:"language"`
 }
 
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.
 // By default, max 4 fields and 255 characters per property/value.
 type UpdateField struct {
 	// Name of the field
-	Name string `form:"name"`
+	Name *string `form:"name"`
 	// Value of the field
-	Value string `form:"value"`
+	Value *string `form:"value"`
 }

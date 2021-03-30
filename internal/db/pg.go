@@ -274,6 +274,11 @@ func (ps *postgresService) UpdateByID(id string, i interface{}) error {
 	return nil
 }
 
+func (ps *postgresService) UpdateOneByID(id string, key string, value interface{}, i interface{}) error {
+	_, err := ps.conn.Model(i).Set("? = ?", key, value).Where("id = ?", id).Update()
+	return err
+}
+
 func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
 		if err == pg.ErrNoRows {
@@ -468,6 +473,26 @@ func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *model.
 	return err
 }
 
+func (ps *postgresService) GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error {
+	if err := ps.conn.Model(header).Where("account_id = ?", accountID).Where("header = ?", true).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, accountID string) error {
+	if err := ps.conn.Model(avatar).Where("account_id = ?", accountID).Where("avatar = ?", true).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
 /*
 	CONVERSION FUNCTIONS
 */
@@ -477,18 +502,6 @@ func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *model.
 // https://docs.joinmastodon.org/methods/accounts/. Note that it's *sensitive* because it's only meant to be exposed to the user
 // that the account actually belongs to.
 func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotypes.Account, error) {
-
-	fields := []mastotypes.Field{}
-	for _, f := range a.Fields {
-		mField := mastotypes.Field{
-			Name:  f.Name,
-			Value: f.Value,
-		}
-		if !f.VerifiedAt.IsZero() {
-			mField.VerifiedAt = f.VerifiedAt.Format(time.RFC3339)
-		}
-		fields = append(fields, mField)
-	}
 
 	// count followers
 	followers := []model.Follow{}
@@ -538,6 +551,39 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		lastStatusAt = lastStatus.CreatedAt.Format(time.RFC3339)
 	}
 
+	// build the avatar and header URLs
+	avi := &model.MediaAttachment{}
+	if err := ps.GetAvatarForAccountID(avi, a.ID); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting avatar: %s", err)
+		}
+	}
+	aviURL := avi.File.Path
+	aviURLStatic := avi.Thumbnail.Path
+
+	header := &model.MediaAttachment{}
+	if err := ps.GetHeaderForAccountID(avi, a.ID); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting header: %s", err)
+		}
+	}
+	headerURL := header.File.Path
+	headerURLStatic := header.Thumbnail.Path
+
+	// get the fields set on this account
+	fields := []mastotypes.Field{}
+	for _, f := range a.Fields {
+		mField := mastotypes.Field{
+			Name:  f.Name,
+			Value: f.Value,
+		}
+		if !f.VerifiedAt.IsZero() {
+			mField.VerifiedAt = f.VerifiedAt.Format(time.RFC3339)
+		}
+		fields = append(fields, mField)
+	}
+
+	// check pending follow requests aimed at this account
 	fr := []model.FollowRequest{}
 	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
@@ -549,6 +595,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		frc = len(fr)
 	}
 
+	// derive source from fields and other info
 	source := &mastotypes.Source{
 		Privacy:             a.Privacy,
 		Sensitive:           a.Sensitive,
@@ -567,17 +614,17 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		Bot:            a.Bot,
 		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
 		Note:           a.Note,
-		URL:            a.URL,
-		Avatar:         a.AvatarRemoteURL.String(),
-		AvatarStatic:   a.AvatarRemoteURL.String(),
-		Header:         a.HeaderRemoteURL.String(),
-		HeaderStatic:   a.HeaderRemoteURL.String(),
+		URL:            a.URL, // TODO: set this during account creation
+		Avatar:         aviURL, // TODO: build this url properly using host and protocol from config
+		AvatarStatic:   aviURLStatic, // TODO: build this url properly using host and protocol from config
+		Header:         headerURL, // TODO: build this url properly using host and protocol from config
+		HeaderStatic:   headerURLStatic, // TODO: build this url properly using host and protocol from config
 		FollowersCount: followersCount,
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
 		Source:         source,
-		Emojis:         nil,
+		Emojis:         nil, // TODO: implement this
 		Fields:         fields,
 	}, nil
 }
