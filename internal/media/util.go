@@ -26,7 +26,6 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/h2non/filetype"
@@ -36,9 +35,9 @@ import (
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.
-func parseContentType(f io.Reader) (string, error) {
+func parseContentType(content []byte) (string, error) {
 	head := make([]byte, 261)
-	_, err := f.Read(head)
+	_, err := bytes.NewReader(content).Read(head)
 	if err != nil {
 		return "", fmt.Errorf("could not read first magic bytes of file: %s", err)
 	}

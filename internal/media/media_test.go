@@ -20,9 +20,12 @@ package media
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
 
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -36,7 +39,7 @@ type MediaTestSuite struct {
 	log          *logrus.Logger
 	db           db.DB
 	mediaHandler *mediaHandler
-	mockStorage  storage.Storage
+	mockStorage  *storage.MockStorage
 }
 
 /*
@@ -61,9 +64,10 @@ func (suite *MediaTestSuite) SetupSuite() {
 		Database:        "postgres",
 		ApplicationName: "gotosocial",
 	}
+	c.MediaConfig = &config.MediaConfig{
+		MaxImageSize: 2 << 20,
+	}
 	suite.config = c
-	suite.config.MediaConfig.MaxImageSize = 2 << 20 // 2 megabits
-
 	// use an actual database for this, because it's just easier than mocking one out
 	database, err := db.New(context.Background(), c, log)
 	if err != nil {
@@ -72,12 +76,14 @@ func (suite *MediaTestSuite) SetupSuite() {
 	suite.db = database
 
 	suite.mockStorage = &storage.MockStorage{}
+	// We don't need storage to do anything for these tests, so just simulate a success and do nothing
+	suite.mockStorage.On("StoreFileAt", mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8")).Return(nil)
 
 	// and finally here's the thing we're actually testing!
 	suite.mediaHandler = &mediaHandler{
 		config:  suite.config,
 		db:      suite.db,
-		storage: &storage.MockStorage{},
+		storage: suite.mockStorage,
 		log:     log,
 	}
 
@@ -121,6 +127,23 @@ func (suite *MediaTestSuite) TearDownTest() {
 /*
 	ACTUAL TESTS
 */
+
+func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
+	// load test image
+	f, err := ioutil.ReadFile("./test/test-jpeg.jpg")
+	assert.Nil(suite.T(), err)
+
+	ma, err := suite.mediaHandler.SetHeaderOrAvatarForAccountID(f, "weeeeeee", "header")
+	assert.Nil(suite.T(), err)
+	suite.log.Debugf("%+v", ma)
+
+	// attachment should have....
+	assert.Equal(suite.T(), "weeeeeee", ma.AccountID)
+	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", ma.Blurhash)
+	//TODO: add more checks here, cba right now!
+}
+
+// TODO: add tests for sad path, gif, png....
 
 func TestMediaTestSuite(t *testing.T) {
 	suite.Run(t, new(MediaTestSuite))

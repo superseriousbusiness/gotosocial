@@ -155,6 +155,9 @@ type DB interface {
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
 	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error)
 
+	// SetHeaderOrAvatarForAccountID sets the header or avatar for the given accountID to the given media attachment.
+	SetHeaderOrAvatarForAccountID(mediaAttachmen *model.MediaAttachment, accountID string) error
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/

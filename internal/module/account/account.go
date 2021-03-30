@@ -161,7 +161,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	// TODO: form validation
+	// TODO: proper form validation
 
 	// TODO: tidy this code into subfunctions
 	if form.Header != nil && form.Header.Size != 0 {
@@ -177,7 +177,23 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not read provided header: %s", err)})
 			return
 		}
-		headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(f, authed.Account.ID, "header")
+
+		// extract the bytes
+		imageBytes := []byte{}
+		size, err := f.Read(imageBytes)
+		defer func(){
+			if err := f.Close(); err != nil {
+				m.log.Errorf("error closing multipart file: %s", err)
+			}
+		}()
+		if err != nil || size == 0 {
+			l.Debugf("error processing header: %s", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not read provided header: %s", err)})
+			return
+		}
+
+		// do the setting
+		headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(imageBytes, authed.Account.ID, "header")
 		if err != nil {
 			l.Debugf("error processing header: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

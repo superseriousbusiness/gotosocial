@@ -50,9 +50,9 @@ type MediaAttachment struct {
 	// What is the processing status of this attachment
 	Processing ProcessingStatus
 	// metadata for the whole file
-	File
+	File File
 	// small image thumbnail derived from a larger image, video, or audio file.
-	Thumbnail
+	Thumbnail Thumbnail
 	// Is this attachment being used as an avatar?
 	Avatar bool
 	// Is this attachment being used as a header?
@@ -68,7 +68,7 @@ type File struct {
 	// What is the size of the file in bytes.
 	FileSize int
 	// When was the file last updated.
-	UpdatedAt time.Time `pg:"type:timestamp,default:now()"`
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
@@ -80,7 +80,7 @@ type Thumbnail struct {
 	// What is the size of the file in bytes
 	FileSize int
 	// When was the file last updated
-	UpdatedAt time.Time `pg:"type:timestamp,default:now()"`
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// What is the remote URL of the thumbnail
 	RemoteURL string
 }
@@ -113,49 +113,11 @@ const (
 	FileTypeVideo FileType = "video"
 )
 
-/*
-	FILEMETA INTERFACES
-*/
-
 // FileMeta describes metadata about the actual contents of the file.
-type FileMeta interface {
-	GetOriginal() OriginalMeta
-	GetSmall() SmallMeta
+type FileMeta struct {
+	Original Original
+	Small Small
 }
-
-// OriginalMeta contains info about the originally submitted media
-type OriginalMeta interface {
-	// GetWidth gets the width of a video or image or gif in pixels.
-	GetWidth() int
-	// GetHeight gets the height of a video or image or gif in pixels.
-	GetHeight() int
-	// GetSize gets the total area of a video or image or gif in pixels (width * height).
-	GetSize() int
-	// GetAspect gets the aspect ratio of a video or image or gif in pixels (width / height).
-	GetAspect() float64
-	// GetFrameRate gets the FPS of a video or gif.
-	GetFrameRate() float64
-	// GetDuration gets the length in seconds of a video or gif or audio file.
-	GetDuration() float64
-	// GetBitrate gets the bits per second of a video, gif, or audio file.
-	GetBitrate() float64
-}
-
-// SmallMeta contains info about the derived thumbnail for the submitted media
-type SmallMeta interface {
-	// GetWidth gets the width of a video or image or gif in pixels.
-	GetWidth() int
-	// GetHeight gets the height of a video or image or gif in pixels.
-	GetHeight() int
-	// GetSize gets the total area of a video or image or gif in pixels (width * height).
-	GetSize() int
-	// GetAspect gets the aspect ratio of a video or image or gif in pixels (width / height).
-	GetAspect() float64
-}
-
-/*
-	FILE META IMPLEMENTATIONS
-*/
 
 // Small implements SmallMeta and can be used for a thumbnail of any media type
 type Small struct {
@@ -165,70 +127,10 @@ type Small struct {
 	Aspect float64
 }
 
-func (s Small) GetWidth() int {
-	return s.Width
-}
-
-func (s Small) GetHeight() int {
-	return s.Height
-}
-
-func (s Small) GetSize() int {
-	return s.Height * s.Width
-}
-
-func (s Small) GetAspect() float64 {
-	return float64(s.Width) / float64(s.Height)
-}
-
-// STILL IMAGES
-
-// ImageFileMeta implements FileMeta for still images.
-type ImageFileMeta struct {
-	Original ImageOriginal
-	Small    Small
-}
-
-func (m ImageFileMeta) GetOriginal() OriginalMeta {
-	return m.Original
-}
-
-func (m ImageFileMeta) GetSmall() SmallMeta {
-	return m.Small
-}
-
 // ImageOriginal implements OriginalMeta for still images
-type ImageOriginal struct {
+type Original struct {
 	Width  int
 	Height int
 	Size   int
 	Aspect float64
-}
-
-func (o ImageOriginal) GetWidth() int {
-	return o.Width
-}
-
-func (o ImageOriginal) GetHeight() int {
-	return o.Height
-}
-
-func (o ImageOriginal) GetSize() int {
-	return o.Height * o.Width
-}
-
-func (o ImageOriginal) GetAspect() float64 {
-	return float64(o.Width) / float64(o.Height)
-}
-
-func (o ImageOriginal) GetFrameRate() float64 {
-	return 0
-}
-
-func (o ImageOriginal) GetDuration() float64 {
-	return 0
-}
-
-func (o ImageOriginal) GetBitrate() float64 {
-	return 0
 }

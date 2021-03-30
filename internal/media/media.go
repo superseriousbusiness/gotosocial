@@ -21,7 +21,8 @@ package media
 import (
 	"errors"
 	"fmt"
-	"io"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -36,7 +37,7 @@ type MediaHandler interface {
 	// SetHeaderOrAvatarForAccountID takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	SetHeaderOrAvatarForAccountID(f io.Reader, accountID string, headerOrAvi string) (*model.MediaAttachment, error)
+	SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*model.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -67,7 +68,7 @@ type HeaderInfo struct {
 	INTERFACE FUNCTIONS
 */
 
-func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(f io.Reader, accountID string, headerOrAvi string) (*model.MediaAttachment, error) {
+func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*model.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if headerOrAvi != "header" && headerOrAvi != "avatar" {
@@ -75,7 +76,7 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(f io.Reader, accountID str
 	}
 
 	// make sure we have an image we can handle
-	contentType, err := parseContentType(f)
+	contentType, err := parseContentType(img)
 	if err != nil {
 		return nil, err
 	}
@@ -83,21 +84,23 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(f io.Reader, accountID str
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
-	// extract the bytes
-	imageBytes := []byte{}
-	size, err := f.Read(imageBytes)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file bytes: %s", err)
+	if len(img) == 0 {
+		return nil, fmt.Errorf("passed reader was of size 0")
 	}
-	l.Tracef("read %d bytes of file", size)
-
-	// // close the open file--we don't need it anymore now we have the bytes
-	// if err := f.Close(); err != nil {
-	// 	return nil, fmt.Errorf("error closing file: %s", err)
-	// }
+	l.Tracef("read %d bytes of file", len(img))
 
 	// process it
-	return mh.processHeaderOrAvi(imageBytes, contentType, headerOrAvi, accountID)
+	ma, err := mh.processHeaderOrAvi(img, contentType, headerOrAvi, accountID)
+	if err != nil {
+		return nil, fmt.Errorf("error processing %s: %s", headerOrAvi, err)
+	}
+
+	// set it in the database
+	if err := mh.db.SetHeaderOrAvatarForAccountID(ma, accountID); err != nil {
+		return nil, fmt.Errorf("error putting %s in database: %s", headerOrAvi, err)
+	}
+
+	return ma, nil
 }
 
 /*
@@ -131,6 +134,8 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		}
 	case "image/gif":
 		clean = imageBytes
+	default:
+		return nil, errors.New("media type unrecognized")
 	}
 
 	original, err := deriveImage(clean, contentType)
@@ -144,12 +149,15 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	}
 
 	// now put it in storage, take a new uuid for the name of the file so we don't store any unnecessary info about it
+	extension := strings.Split(contentType, "/")[1]
 	newMediaID := uuid.NewString()
-	originalPath := fmt.Sprintf("/%s/media/%s/original/%s.%s", accountID, headerOrAvi, newMediaID, contentType)
+	// we store the original...
+	originalPath := fmt.Sprintf("%s/media/%s/original/%s.%s", accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
-	smallPath := fmt.Sprintf("/%s/media/%s/small/%s.%s", accountID, headerOrAvi, newMediaID, contentType)
+	// and a thumbnail...
+	smallPath := fmt.Sprintf("%s/media/%s/small/%s.%s", accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
@@ -158,9 +166,11 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		ID:        newMediaID,
 		StatusID:  "",
 		RemoteURL: "",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 		Type:      model.FileTypeImage,
-		FileMeta: model.ImageFileMeta{
-			Original: model.ImageOriginal{
+		FileMeta: model.FileMeta{
+			Original: model.Original{
 				Width:  original.width,
 				Height: original.height,
 				Size:   original.size,
@@ -182,11 +192,13 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 			Path:        originalPath,
 			ContentType: contentType,
 			FileSize:    len(original.image),
+			UpdatedAt:   time.Now(),
 		},
 		Thumbnail: model.Thumbnail{
 			Path:        smallPath,
 			ContentType: contentType,
 			FileSize:    len(small.image),
+			UpdatedAt:   time.Now(),
 			RemoteURL:   "",
 		},
 		Avatar: isAvatar,

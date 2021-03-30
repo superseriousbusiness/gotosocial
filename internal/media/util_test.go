@@ -20,7 +20,6 @@ package media
 
 import (
 	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -64,7 +63,7 @@ func (suite *MediaUtilTestSuite) TearDownTest() {
 */
 
 func (suite *MediaUtilTestSuite) TestParseContentTypeOK() {
-	f, err := os.Open("./test/test-jpeg.jpg")
+	f, err := ioutil.ReadFile("./test/test-jpeg.jpg")
 	assert.Nil(suite.T(), err)
 	ct, err := parseContentType(f)
 	assert.Nil(suite.T(), err)
@@ -72,7 +71,7 @@ func (suite *MediaUtilTestSuite) TestParseContentTypeOK() {
 }
 
 func (suite *MediaUtilTestSuite) TestParseContentTypeNotOK() {
-	f, err := os.Open("./test/test-corrupted.jpg")
+	f, err := ioutil.ReadFile("./test/test-corrupted.jpg")
 	assert.Nil(suite.T(), err)
 	ct, err := parseContentType(f)
 	assert.NotNil(suite.T(), err)
@@ -133,6 +132,14 @@ func (suite *MediaUtilTestSuite) TestDeriveThumbnailFromJPEG() {
 	sampleBytes, err := ioutil.ReadFile("./test/test-jpeg-thumbnail.jpg")
 	assert.Nil(suite.T(), err)
 	assert.EqualValues(suite.T(), sampleBytes, imageAndMeta.image)
+}
+
+func (suite *MediaUtilTestSuite) TestSupportedImageTypes() {
+	ok := supportedImageType("image/jpeg")
+	assert.True(suite.T(), ok)
+
+	ok = supportedImageType("image/bmp")
+	assert.False(suite.T(), ok)
 }
 
 func TestMediaUtilTestSuite(t *testing.T) {

@@ -463,6 +463,11 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	return u, nil
 }
 
+func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *model.MediaAttachment, accountID string) error {
+	_, err := ps.conn.Model(mediaAttachment).Insert()
+	return err
+}
+
 /*
 	CONVERSION FUNCTIONS
 */
