@@ -59,8 +59,6 @@ func (r *router) Start() {
 			r.logger.Fatalf("listen: %s", err)
 		}
 	}()
-	// c := &gin.Context{}
-	// c.Get()
 }
 
 // Stop shuts down the router nicely

@@ -127,13 +127,42 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 
 	if form.Locked != nil {
 		if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &model.Account{}); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
 	if form.Source != nil {
-		// TODO: parse source nicely and update
+		if form.Source.Language != nil {
+			if err := util.ValidateLanguage(*form.Source.Language); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			} else {
+				if err := m.db.UpdateOneByID(authed.Account.ID, "language", *form.Source.Language, &model.Account{}); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+			}
+		}
+
+		if form.Source.Sensitive != nil {
+			if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &model.Account{}); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
+		if form.Source.Privacy != nil {
+			if err := util.ValidatePrivacy(*form.Source.Privacy); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			} else {
+				if err := m.db.UpdateOneByID(authed.Account.ID, "privacy", *form.Source.Privacy, &model.Account{}); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					return
+				}
+			}
+		}
 	}
 
 	if form.FieldsAttributes != nil {

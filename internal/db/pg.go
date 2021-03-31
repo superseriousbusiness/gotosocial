@@ -507,7 +507,39 @@ func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, 
 // https://docs.joinmastodon.org/methods/accounts/. Note that it's *sensitive* because it's only meant to be exposed to the user
 // that the account actually belongs to.
 func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotypes.Account, error) {
+	// we can build this sensitive account easily by first getting the public account....
+	mastoAccount, err := ps.AccountToMastoPublic(a)
+	if err != nil {
+		return nil, err
+	}
 
+	// then adding the Source object to it...
+
+	// check pending follow requests aimed at this account
+	fr := []model.FollowRequest{}
+	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
+		if _, ok := err.(ErrNoEntries); !ok {
+			return nil, fmt.Errorf("error getting follow requests: %s", err)
+		}
+	}
+	var frc int
+	if fr != nil {
+		frc = len(fr)
+	}
+
+	mastoAccount.Source = &mastotypes.Source{
+		Privacy:             a.Privacy,
+		Sensitive:           a.Sensitive,
+		Language:            a.Language,
+		Note:                a.Note,
+		Fields:              mastoAccount.Fields,
+		FollowRequestsCount: frc,
+	}
+
+	return mastoAccount, nil
+}
+
+func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.Account, error) {
 	// count followers
 	followers := []model.Follow{}
 	if err := ps.GetFollowersByAccountID(a.ID, &followers); err != nil {
@@ -588,52 +620,34 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		fields = append(fields, mField)
 	}
 
-	// check pending follow requests aimed at this account
-	fr := []model.FollowRequest{}
-	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting follow requests: %s", err)
-		}
-	}
-	var frc int
-	if fr != nil {
-		frc = len(fr)
-	}
-
-	// derive source from fields and other info
-	source := &mastotypes.Source{
-		Privacy:             a.Privacy,
-		Sensitive:           a.Sensitive,
-		Language:            a.Language,
-		Note:                a.Note,
-		Fields:              fields,
-		FollowRequestsCount: frc,
+	var acct string
+	if a.Domain != "" {
+		// this is a remote user
+		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
+	} else {
+		// this is a local user
+		acct = a.Username
 	}
 
 	return &mastotypes.Account{
 		ID:             a.ID,
 		Username:       a.Username,
-		Acct:           a.Username, // equivalent to username for local users only, which sensitive always is
+		Acct:           acct,
 		DisplayName:    a.DisplayName,
 		Locked:         a.Locked,
 		Bot:            a.Bot,
 		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
 		Note:           a.Note,
 		URL:            a.URL,
-		Avatar:         aviURL,          // TODO: build this url properly using host and protocol from config
-		AvatarStatic:   aviURLStatic,    // TODO: build this url properly using host and protocol from config
-		Header:         headerURL,       // TODO: build this url properly using host and protocol from config
-		HeaderStatic:   headerURLStatic, // TODO: build this url properly using host and protocol from config
+		Avatar:         aviURL,
+		AvatarStatic:   aviURLStatic,
+		Header:         headerURL,
+		HeaderStatic:   headerURLStatic,
 		FollowersCount: followersCount,
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
-		Source:         source,
 		Emojis:         nil, // TODO: implement this
 		Fields:         fields,
 	}, nil
-}
-
-func (ps *postgresService) AccountToMastoPublic(account *model.Account) (*mastotypes.Account, error) {
-	return nil, nil
 }

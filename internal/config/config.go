@@ -40,22 +40,14 @@ type Config struct {
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
 func FromFile(path string) (*Config, error) {
-	c, err := loadFromFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("error creating config: %s", err)
+	if path != "" {
+		c, err := loadFromFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("error creating config: %s", err)
+		}
+		return c, nil
 	}
-	return c, nil
-}
-
-// Default returns a new config with default values.
-// Not yet implemented.
-func Default() *Config {
-	// TODO: find a way of doing this without code repetition, because having to
-	// repeat all values here and elsewhere is annoying and gonna be prone to mistakes.
-	return &Config{
-		DBConfig:       &DBConfig{},
-		TemplateConfig: &TemplateConfig{},
-	}
+	return Empty(), nil
 }
 
 // Empty just returns an empty config

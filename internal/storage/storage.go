@@ -18,16 +18,7 @@
 
 package storage
 
-import "time"
-
 type Storage interface {
 	StoreFileAt(path string, data []byte) error
 	RetrieveFileFrom(path string) ([]byte, error)
-}
-
-type FileInfo struct {
-	Data      []byte
-	StorePath string
-	CreatedAt time.Time
-	UpdatedAt time.Time
 }

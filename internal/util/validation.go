@@ -137,3 +137,8 @@ func ValidateNote(note string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
+
+func ValidatePrivacy(privacy string) error {
+	// TODO: add some validation logic here -- length, characters, etc
+	return nil
+}

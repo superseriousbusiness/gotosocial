@@ -20,7 +20,9 @@ package account
 
 import (
 	"net/http"
+	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -60,8 +62,17 @@ func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler
 // Route attaches all routes from this module to the given router
 func (m *accountModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
-	r.AttachHandler(http.MethodGet, verifyPath, m.accountVerifyGETHandler)
-	r.AttachHandler(http.MethodPatch, updateCredentialsPath, m.accountUpdateCredentialsPATCHHandler)
-	r.AttachHandler(http.MethodGet, basePathWithID, m.accountGETHandler)
+	r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
 	return nil
+}
+
+func (m *accountModule) muxHandler(c *gin.Context) {
+	ru := c.Request.RequestURI
+	if strings.HasPrefix(ru, verifyPath) {
+		m.accountVerifyGETHandler(c)
+	} else if strings.HasPrefix(ru, updateCredentialsPath) {
+		m.accountUpdateCredentialsPATCHHandler(c)
+	} else {
+		m.accountGETHandler(c)
+	}
 }

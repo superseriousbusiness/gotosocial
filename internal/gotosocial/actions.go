@@ -27,8 +27,18 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // Run creates and starts a gotosocial server
@@ -38,9 +48,45 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	// if err := dbService.CreateSchema(ctx); err != nil {
-	// 	return fmt.Errorf("error creating dbschema: %s", err)
-	// }
+	router, err := router.New(c, log)
+	if err != nil {
+		return fmt.Errorf("error creating router: %s", err)
+	}
+
+	storageBackend, err := storage.NewInMem(c, log)
+	if err != nil {
+		return fmt.Errorf("error creating storage backend: %s", err)
+	}
+
+	// build backend handlers
+	mediaHandler := media.New(c, dbService, storageBackend, log)
+	oauthServer := oauth.New(dbService, log)
+
+	// build client api modules
+	authModule := auth.New(oauthServer, dbService, log)
+	accountModule := account.New(c, dbService, oauthServer, mediaHandler, log)
+	appsModule := app.New(oauthServer, dbService, log)
+
+	apiModules := []apimodule.ClientAPIModule{
+		authModule, // this one has to go first so the other modules use its middleware
+		accountModule,
+		appsModule,
+	}
+
+	for _, m := range apiModules {
+		if err := m.Route(router); err != nil {
+			return fmt.Errorf("routing error: %s", err)
+		}
+	}
+
+	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService), c)
+	if err != nil {
+		return fmt.Errorf("error creating gotosocial service: %s", err)
+	}
+
+	if err := gts.Start(ctx); err != nil {
+		return fmt.Errorf("error starting gotosocial service: %s", err)
+	}
 
 	// catch shutdown signals from the operating system
 	sigs := make(chan os.Signal, 1)
@@ -49,8 +95,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	log.Infof("received signal %s, shutting down", sig)
 
 	// close down all running services in order
-	if err := dbService.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing dbservice: %s", err)
+	if err := gts.Stop(ctx); err != nil {
+		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
 	log.Info("done! exiting...")
