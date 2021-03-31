@@ -16,14 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package module is basically a wrapper for a lot of modules (in subdirectories) that satisfy the ClientAPIModule interface.
-package module
+package auth
 
-import "github.com/superseriousbusiness/gotosocial/internal/router"
+import (
+	"net/http"
 
-// ClientAPIModule represents a chunk of code (usually contained in a single package) that adds a set
-// of functionalities and side effects to a router, by mapping routes and handlers onto it--in other words, a REST API ;)
-// A ClientAPIMpdule corresponds roughly to one main path of the gotosocial REST api, for example /api/v1/accounts/ or /oauth/
-type ClientAPIModule interface {
-	Route(s router.Router) error
+	"github.com/gin-gonic/gin"
+)
+
+// tokenPOSTHandler should be served as a POST at https://example.org/oauth/token
+// The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
+// See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
+func (m *authModule) tokenPOSTHandler(c *gin.Context) {
+	l := m.log.WithField("func", "TokenPOSTHandler")
+	l.Trace("entered TokenPOSTHandler")
+	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
 }

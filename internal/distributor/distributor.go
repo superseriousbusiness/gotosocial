@@ -23,7 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Distributor should be passed to api modules (see internal/module/...). It is used for
+// Distributor should be passed to api modules (see internal/apimodule/...). It is used for
 // passing messages back and forth from the client API and the federating interface, via channels.
 // It also contains logic for filtering which messages should end up where.
 // It is designed to be used asynchronously: the client API and the federating API should just be able to

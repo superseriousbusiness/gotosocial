@@ -24,37 +24,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
-	"github.com/superseriousbusiness/gotosocial/internal/module"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
-
-const appsPath = "/api/v1/apps"
-
-type appModule struct {
-	server oauth.Server
-	db     db.DB
-	log    *logrus.Logger
-}
-
-// New returns a new auth module
-func New(srv oauth.Server, db db.DB, log *logrus.Logger) module.ClientAPIModule {
-	return &appModule{
-		server: srv,
-		db:     db,
-		log:    log,
-	}
-}
-
-// Route satisfies the RESTAPIModule interface
-func (m *appModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
-	return nil
-}
 
 // appsPOSTHandler should be served at https://example.org/api/v1/apps
 // It is equivalent to: https://docs.joinmastodon.org/methods/apps/
