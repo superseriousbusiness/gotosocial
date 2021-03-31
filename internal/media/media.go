@@ -151,13 +151,16 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	// now put it in storage, take a new uuid for the name of the file so we don't store any unnecessary info about it
 	extension := strings.Split(contentType, "/")[1]
 	newMediaID := uuid.NewString()
+
+	base := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath, )
+
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/media/%s/original/%s.%s", accountID, headerOrAvi, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/original/%s.%s", base, accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/media/%s/small/%s.%s", accountID, headerOrAvi, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/small/%s.%s", base, accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}

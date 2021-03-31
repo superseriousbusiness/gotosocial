@@ -55,6 +55,8 @@ func (suite *MediaTestSuite) SetupSuite() {
 
 	// Direct config to local postgres instance
 	c := config.Empty()
+	c.Protocol = "http"
+	c.Host = "localhost"
 	c.DBConfig = &config.DBConfig{
 		Type:            "postgres",
 		Address:         "localhost",
@@ -66,6 +68,13 @@ func (suite *MediaTestSuite) SetupSuite() {
 	}
 	c.MediaConfig = &config.MediaConfig{
 		MaxImageSize: 2 << 20,
+	}
+	c.StorageConfig = &config.StorageConfig{
+		Backend: "local",
+		BasePath: "/tmp",
+		ServeProtocol: "http",
+		ServeHost: "localhost",
+		ServeBasePath: "/fileserver/media",
 	}
 	suite.config = c
 	// use an actual database for this, because it's just easier than mocking one out

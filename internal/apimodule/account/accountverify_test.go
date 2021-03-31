@@ -16,12 +16,4 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package config
-
-// MediaConfig contains configuration for receiving and parsing media files and attachments
-type MediaConfig struct {
-	// Max size of uploaded images in bytes
-	MaxImageSize int `yaml:"maxImageSize"`
-	// Max size of uploaded video in bytes
-	MaxVideoSize int `yaml:"maxVideoSize"`
-}
+package account

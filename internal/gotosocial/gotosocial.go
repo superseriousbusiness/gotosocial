@@ -32,6 +32,7 @@ import (
 // The logic of stopping and starting the entire server is contained here.
 type Gotosocial interface {
 	Start(context.Context) error
+	Stop(context.Context) error
 }
 
 // New returns a new gotosocial server, initialized with the given configuration.
@@ -56,10 +57,19 @@ type gotosocial struct {
 	config        *config.Config
 }
 
-// Start starts up the gotosocial server. It is a blocking call, so only call it when
-// you're absolutely sure you want to start up the server. If something goes wrong
-// while starting the server, then an error will be returned. You can treat this function a
-// lot like you would treat http.ListenAndServe()
+// Start starts up the gotosocial server. If something goes wrong
+// while starting the server, then an error will be returned.
 func (gts *gotosocial) Start(ctx context.Context) error {
+	gts.apiRouter.Start()
+	return nil
+}
+
+func (gts *gotosocial) Stop(ctx context.Context) error {
+	if err := gts.apiRouter.Stop(ctx); err != nil {
+		return err
+	}
+	if err := gts.db.Stop(ctx); err != nil {
+		return err
+	}
 	return nil
 }
