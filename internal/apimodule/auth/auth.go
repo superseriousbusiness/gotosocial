@@ -25,11 +25,13 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -66,5 +68,22 @@ func (m *authModule) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, oauthAuthorizePath, m.authorizePOSTHandler)
 
 	s.AttachMiddleware(m.oauthTokenMiddleware)
+	return nil
+}
+
+func (m *authModule) CreateTables(db db.DB) error {
+	models := []interface{}{
+		&oauth.Client{},
+		&oauth.Token{},
+		&model.User{},
+		&model.Account{},
+		&model.Application{},
+	}
+
+	for _, m := range models {
+		if err := db.CreateTable(m); err != nil {
+			return fmt.Errorf("error creating table: %s", err)
+		}
+	}
 	return nil
 }

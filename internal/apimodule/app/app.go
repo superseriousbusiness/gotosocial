@@ -19,11 +19,13 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -48,5 +50,22 @@ func New(srv oauth.Server, db db.DB, log *logrus.Logger) apimodule.ClientAPIModu
 // Route satisfies the RESTAPIModule interface
 func (m *appModule) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
+	return nil
+}
+
+func (m *appModule) CreateTables(db db.DB) error {
+	models := []interface{}{
+		&oauth.Client{},
+		&oauth.Token{},
+		&model.User{},
+		&model.Account{},
+		&model.Application{},
+	}
+
+	for _, m := range models {
+		if err := db.CreateTable(m); err != nil {
+			return fmt.Errorf("error creating table: %s", err)
+		}
+	}
 	return nil
 }

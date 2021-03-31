@@ -19,11 +19,15 @@
 // Package apimodule is basically a wrapper for a lot of modules (in subdirectories) that satisfy the ClientAPIModule interface.
 package apimodule
 
-import "github.com/superseriousbusiness/gotosocial/internal/router"
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
 
 // ClientAPIModule represents a chunk of code (usually contained in a single package) that adds a set
 // of functionalities and side effects to a router, by mapping routes and handlers onto it--in other words, a REST API ;)
 // A ClientAPIMpdule corresponds roughly to one main path of the gotosocial REST api, for example /api/v1/accounts/ or /oauth/
 type ClientAPIModule interface {
 	Route(s router.Router) error
+	CreateTables(db db.DB) error
 }

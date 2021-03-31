@@ -19,13 +19,15 @@
 package account
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -62,5 +64,25 @@ func (m *accountModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, verifyPath, m.accountVerifyGETHandler)
 	r.AttachHandler(http.MethodPatch, updateCredentialsPath, m.accountUpdateCredentialsPATCHHandler)
+	return nil
+}
+
+func (m *accountModule) CreateTables(db db.DB) error {
+	models := []interface{}{
+		&model.User{},
+		&model.Account{},
+		&model.Follow{},
+		&model.FollowRequest{},
+		&model.Status{},
+		&model.Application{},
+		&model.EmailDomainBlock{},
+		&model.MediaAttachment{},
+	}
+
+	for _, m := range models {
+		if err := db.CreateTable(m); err != nil {
+			return fmt.Errorf("error creating table: %s", err)
+		}
+	}
 	return nil
 }
