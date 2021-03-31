@@ -180,7 +180,7 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 		Scope:        ti.GetScope(),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error generating first auth token: %s", err)
+		return nil, fmt.Errorf("error generating auth token: %s", err)
 	}
 	if authToken == nil {
 		return nil, errors.New("generated auth token was empty")
@@ -190,19 +190,18 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 	accessToken, err := s.server.Manager.GenerateAccessToken(context.Background(), oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
 		ClientID:     authToken.GetClientID(),
 		ClientSecret: clientSecret,
-		// UserID:       userID,
 		RedirectURI:  authToken.GetRedirectURI(),
 		Scope:        authToken.GetScope(),
 		Code:         authToken.GetCode(),
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error generating first auth token: %s", err)
+		return nil, fmt.Errorf("error generating user-level access token: %s", err)
 	}
 	if accessToken == nil {
-		return nil, errors.New("generated access token was empty")
+		return nil, errors.New("generated user-level access token was empty")
 	}
-	s.log.Tracef("obtained access token: %+v", accessToken)
+	s.log.Tracef("obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
 }
 
