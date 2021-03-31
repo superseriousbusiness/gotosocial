@@ -121,6 +121,9 @@ func (pts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) erro
 
 // GetByCode selects a token from the DB based on the Code field
 func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
+	if code == "" {
+		return nil, nil
+	}
 	pgt := &Token{
 		Code: code,
 	}
@@ -132,6 +135,9 @@ func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.Token
 
 // GetByAccess selects a token from the DB based on the Access field
 func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
+	if access == "" {
+		return nil, nil
+	}
 	pgt := &Token{
 		Access: access,
 	}
@@ -143,6 +149,9 @@ func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.T
 
 // GetByRefresh selects a token from the DB based on the Refresh field
 func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
+	if refresh == "" {
+		return nil, nil
+	}
 	pgt := &Token{
 		Refresh: refresh,
 	}

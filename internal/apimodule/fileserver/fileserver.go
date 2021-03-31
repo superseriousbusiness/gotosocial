@@ -7,6 +7,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -38,5 +39,25 @@ func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.L
 // Route satisfies the RESTAPIModule interface
 func (m *fileServer) Route(s router.Router) error {
 	// s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
+	return nil
+}
+
+func (m *fileServer) CreateTables(db db.DB) error {
+	models := []interface{}{
+		&model.User{},
+		&model.Account{},
+		&model.Follow{},
+		&model.FollowRequest{},
+		&model.Status{},
+		&model.Application{},
+		&model.EmailDomainBlock{},
+		&model.MediaAttachment{},
+	}
+
+	for _, m := range models {
+		if err := db.CreateTable(m); err != nil {
+			return fmt.Errorf("error creating table: %s", err)
+		}
+	}
 	return nil
 }

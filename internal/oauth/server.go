@@ -20,6 +20,7 @@ package oauth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -169,19 +170,40 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 //
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
-func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error) {
-	tgr := &oauth2.TokenGenerateRequest{
+func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (oauth2.TokenInfo, error) {
+
+	authToken, err := s.server.Manager.GenerateAuthToken(context.Background(), oauth2.Code, &oauth2.TokenGenerateRequest{
 		ClientID:     ti.GetClientID(),
 		ClientSecret: clientSecret,
 		UserID:       userID,
 		RedirectURI:  ti.GetRedirectURI(),
 		Scope:        ti.GetScope(),
-		Code:         ti.GetCode(),
-		// CodeChallenge:       ti.GetCodeChallenge(),
-		// CodeChallengeMethod: ti.GetCodeChallengeMethod(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error generating first auth token: %s", err)
 	}
+	if authToken == nil {
+		return nil, errors.New("generated auth token was empty")
+	}
+	s.log.Tracef("obtained auth token: %+v", authToken)
 
-	return s.server.Manager.GenerateAccessToken(context.Background(), oauth2.AuthorizationCode, tgr)
+	accessToken, err := s.server.Manager.GenerateAccessToken(context.Background(), oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
+		ClientID:     authToken.GetClientID(),
+		ClientSecret: clientSecret,
+		// UserID:       userID,
+		RedirectURI:  authToken.GetRedirectURI(),
+		Scope:        authToken.GetScope(),
+		Code:         authToken.GetCode(),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error generating first auth token: %s", err)
+	}
+	if accessToken == nil {
+		return nil, errors.New("generated access token was empty")
+	}
+	s.log.Tracef("obtained access token: %+v", accessToken)
+	return accessToken, nil
 }
 
 func New(database db.DB, log *logrus.Logger) Server {
@@ -228,5 +250,6 @@ func New(database db.DB, log *logrus.Logger) Server {
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 	return &s{
 		server: srv,
+		log: log,
 	}
 }

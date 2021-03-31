@@ -77,6 +77,9 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
 		}
+		if err := m.CreateTables(dbService); err != nil {
+			return fmt.Errorf("table creation error: %s", err)
+		}
 	}
 
 	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService), c)

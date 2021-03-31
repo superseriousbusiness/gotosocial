@@ -99,16 +99,16 @@ func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, sig
 	}
 
 	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, app.ID)
-	ti, err := m.oauthServer.GenerateUserAccessToken(token, app.ClientSecret, user.ID)
+	accessToken, err := m.oauthServer.GenerateUserAccessToken(token, app.ClientSecret, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)
 	}
 
 	return &mastotypes.Token{
-		AccessToken: ti.GetCode(),
+		AccessToken: accessToken.GetAccess(),
 		TokenType:   "Bearer",
-		Scope:       ti.GetScope(),
-		CreatedAt:   ti.GetCodeCreateAt().Unix(),
+		Scope:       accessToken.GetScope(),
+		CreatedAt:   accessToken.GetAccessCreateAt().Unix(),
 	}, nil
 }
 
