@@ -42,42 +42,42 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 	strongPassword := "3dX5@Zc%mV*W2MBNEy$@"
 	var err error
 
-	err = ValidateSignUpPassword(empty)
+	err = ValidateNewPassword(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no password provided"), err)
 	}
 
-	err = ValidateSignUpPassword(terriblePassword)
+	err = ValidateNewPassword(terriblePassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
 	}
 
-	err = ValidateSignUpPassword(weakPassword)
+	err = ValidateNewPassword(weakPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters, using numbers or using a longer password"), err)
 	}
 
-	err = ValidateSignUpPassword(shortPassword)
+	err = ValidateNewPassword(shortPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters or using a longer password"), err)
 	}
 
-	err = ValidateSignUpPassword(specialPassword)
+	err = ValidateNewPassword(specialPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters or using a longer password"), err)
 	}
 
-	err = ValidateSignUpPassword(longPassword)
+	err = ValidateNewPassword(longPassword)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = ValidateSignUpPassword(tooLong)
+	err = ValidateNewPassword(tooLong)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("password should be no more than 64 chars"), err)
 	}
 
-	err = ValidateSignUpPassword(strongPassword)
+	err = ValidateNewPassword(strongPassword)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
@@ -94,42 +94,42 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	goodUsername := "this_is_a_good_username"
 	var err error
 
-	err = ValidateSignUpUsername(empty)
+	err = ValidateUsername(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no username provided"), err)
 	}
 
-	err = ValidateSignUpUsername(tooLong)
+	err = ValidateUsername(tooLong)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("username should be no more than 64 chars but '%s' was 66", tooLong), err)
 	}
 
-	err = ValidateSignUpUsername(withSpaces)
+	err = ValidateUsername(withSpaces)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", withSpaces), err)
 	}
 
-	err = ValidateSignUpUsername(weirdChars)
+	err = ValidateUsername(weirdChars)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", weirdChars), err)
 	}
 
-	err = ValidateSignUpUsername(leadingSpace)
+	err = ValidateUsername(leadingSpace)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", leadingSpace), err)
 	}
 
-	err = ValidateSignUpUsername(trailingSpace)
+	err = ValidateUsername(trailingSpace)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", trailingSpace), err)
 	}
 
-	err = ValidateSignUpUsername(newlines)
+	err = ValidateUsername(newlines)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", newlines), err)
 	}
 
-	err = ValidateSignUpUsername(goodUsername)
+	err = ValidateUsername(goodUsername)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}

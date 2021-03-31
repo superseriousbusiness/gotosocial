@@ -43,7 +43,7 @@ import (
 
 // postgresService satisfies the DB interface
 type postgresService struct {
-	config       *config.DBConfig
+	config       *config.Config
 	conn         *pg.DB
 	log          *logrus.Entry
 	cancel       context.CancelFunc
@@ -106,7 +106,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 
 	// we can confidently return this useable postgres service now
 	return &postgresService{
-		config:       c.DBConfig,
+		config:       c,
 		conn:         conn,
 		log:          log,
 		cancel:       cancel,
@@ -240,7 +240,7 @@ func (ps *postgresService) GetByID(id string, i interface{}) error {
 }
 
 func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
-	if err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Select(); err != nil {
+	if err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -275,7 +275,7 @@ func (ps *postgresService) UpdateByID(id string, i interface{}) error {
 }
 
 func (ps *postgresService) UpdateOneByID(id string, key string, value interface{}, i interface{}) error {
-	_, err := ps.conn.Model(i).Set("? = ?", key, value).Where("id = ?", id).Update()
+	_, err := ps.conn.Model(i).Set("? = ?", pg.Safe(key), value).Where("id = ?", id).Update()
 	return err
 }
 
@@ -290,7 +290,7 @@ func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 }
 
 func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
-	if _, err := ps.conn.Model(i).Where(fmt.Sprintf("%s = ?", key), value).Delete(); err != nil {
+	if _, err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Delete(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -437,10 +437,14 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		return nil, err
 	}
 
+	// should be something like https://example.org/@some_username
+	url := fmt.Sprintf("%s://%s/@%s", ps.config.Protocol, ps.config.Host, username)
+
 	a := &model.Account{
 		Username:    username,
 		DisplayName: username,
 		Reason:      reason,
+		URL:         url,
 		PrivateKey:  key,
 		PublicKey:   &key.PublicKey,
 		ActorType:   "Person",
@@ -460,6 +464,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		Locale:                 locale,
 		UnconfirmedEmail:       email,
 		CreatedByApplicationID: appID,
+		Approved:               !requireApproval, // if we don't require moderator approval, just pre-approve the user
 	}
 	if _, err = ps.conn.Model(u).Insert(); err != nil {
 		return nil, err
@@ -614,10 +619,10 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		Bot:            a.Bot,
 		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
 		Note:           a.Note,
-		URL:            a.URL, // TODO: set this during account creation
-		Avatar:         aviURL, // TODO: build this url properly using host and protocol from config
-		AvatarStatic:   aviURLStatic, // TODO: build this url properly using host and protocol from config
-		Header:         headerURL, // TODO: build this url properly using host and protocol from config
+		URL:            a.URL,
+		Avatar:         aviURL,          // TODO: build this url properly using host and protocol from config
+		AvatarStatic:   aviURLStatic,    // TODO: build this url properly using host and protocol from config
+		Header:         headerURL,       // TODO: build this url properly using host and protocol from config
 		HeaderStatic:   headerURLStatic, // TODO: build this url properly using host and protocol from config
 		FollowersCount: followersCount,
 		FollowingCount: followingCount,
@@ -627,4 +632,8 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 		Emojis:         nil, // TODO: implement this
 		Fields:         fields,
 	}, nil
+}
+
+func (ps *postgresService) AccountToMastoPublic(account *model.Account) (*mastotypes.Account, error) {
+	return nil, nil
 }

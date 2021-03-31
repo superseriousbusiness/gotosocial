@@ -52,7 +52,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AccountTestSuite struct {
+type AccountCreateTestSuite struct {
 	suite.Suite
 	config               *config.Config
 	log                  *logrus.Logger
@@ -74,7 +74,7 @@ type AccountTestSuite struct {
 */
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *AccountTestSuite) SetupSuite() {
+func (suite *AccountCreateTestSuite) SetupSuite() {
 	// some of our subsequent entities need a log so create this here
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
@@ -109,6 +109,8 @@ func (suite *AccountTestSuite) SetupSuite() {
 
 	// Direct config to local postgres instance
 	c := config.Empty()
+	c.Protocol = "http"
+	c.Host = "localhost"
 	c.DBConfig = &config.DBConfig{
 		Type:            "postgres",
 		Address:         "localhost",
@@ -120,6 +122,13 @@ func (suite *AccountTestSuite) SetupSuite() {
 	}
 	c.MediaConfig = &config.MediaConfig{
 		MaxImageSize: 2 << 20,
+	}
+	c.StorageConfig = &config.StorageConfig{
+		Backend: "local",
+		BasePath: "/tmp",
+		ServeProtocol: "http",
+		ServeHost: "localhost",
+		ServeBasePath: "/fileserver/media",
 	}
 	suite.config = c
 
@@ -155,14 +164,14 @@ func (suite *AccountTestSuite) SetupSuite() {
 	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.log).(*accountModule)
 }
 
-func (suite *AccountTestSuite) TearDownSuite() {
+func (suite *AccountCreateTestSuite) TearDownSuite() {
 	if err := suite.db.Stop(context.Background()); err != nil {
 		logrus.Panicf("error closing db connection: %s", err)
 	}
 }
 
 // SetupTest creates a db connection and creates necessary tables before each test
-func (suite *AccountTestSuite) SetupTest() {
+func (suite *AccountCreateTestSuite) SetupTest() {
 	// create all the tables we might need in thie suite
 	models := []interface{}{
 		&model.User{},
@@ -199,7 +208,7 @@ func (suite *AccountTestSuite) SetupTest() {
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
-func (suite *AccountTestSuite) TearDownTest() {
+func (suite *AccountCreateTestSuite) TearDownTest() {
 
 	// remove all the tables we might have used so it's clear for the next test
 	models := []interface{}{
@@ -231,7 +240,7 @@ func (suite *AccountTestSuite) TearDownTest() {
 // and at the end of it a new user and account should be added into the database.
 //
 // This is the handler served at /api/v1/accounts as POST
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -307,7 +316,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 
 // TestAccountCreatePOSTHandlerNoAuth makes sure that the handler fails when no authorization is provided:
 // only registered applications can create accounts, and we don't provide one here.
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerNoAuth() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerNoAuth() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -330,7 +339,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerNoAuth() {
 }
 
 // TestAccountCreatePOSTHandlerNoAuth makes sure that the handler fails when no form is provided at all.
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerNoForm() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerNoForm() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -352,7 +361,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerNoForm() {
 }
 
 // TestAccountCreatePOSTHandlerWeakPassword makes sure that the handler fails when a weak password is provided
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerWeakPassword() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerWeakPassword() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -377,7 +386,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerWeakPassword() {
 }
 
 // TestAccountCreatePOSTHandlerWeirdLocale makes sure that the handler fails when a weird locale is provided
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerWeirdLocale() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerWeirdLocale() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -402,7 +411,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerWeirdLocale() {
 }
 
 // TestAccountCreatePOSTHandlerRegistrationsClosed makes sure that the handler fails when registrations are closed
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerRegistrationsClosed() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerRegistrationsClosed() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -428,7 +437,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerRegistrationsClosed()
 }
 
 // TestAccountCreatePOSTHandlerReasonNotProvided makes sure that the handler fails when no reason is provided but one is required
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerReasonNotProvided() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerReasonNotProvided() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -455,7 +464,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerReasonNotProvided() {
 }
 
 // TestAccountCreatePOSTHandlerReasonNotProvided makes sure that the handler fails when a crappy reason is presented but a good one is required
-func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerInsufficientReason() {
+func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerInsufficientReason() {
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -485,7 +494,7 @@ func (suite *AccountTestSuite) TestAccountCreatePOSTHandlerInsufficientReason() 
 	TESTING: AccountUpdateCredentialsPATCHHandler
 */
 
-func (suite *AccountTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
+func (suite *AccountCreateTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
 
 	// put test local account in db
 	err := suite.db.Put(suite.testAccountLocal)
@@ -533,6 +542,6 @@ func (suite *AccountTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
 	// assert.Equal(suite.T(), `{"error":"not authorized"}`, string(b))
 }
 
-func TestAccountTestSuite(t *testing.T) {
-	suite.Run(t, new(AccountTestSuite))
+func TestAccountCreateTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountCreateTestSuite))
 }

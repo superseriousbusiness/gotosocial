@@ -119,7 +119,7 @@ func validateCreateAccount(form *mastotypes.AccountCreateRequest, c *config.Acco
 		return errors.New("registration is not open for this server")
 	}
 
-	if err := util.ValidateSignUpUsername(form.Username); err != nil {
+	if err := util.ValidateUsername(form.Username); err != nil {
 		return err
 	}
 
@@ -127,7 +127,7 @@ func validateCreateAccount(form *mastotypes.AccountCreateRequest, c *config.Acco
 		return err
 	}
 
-	if err := util.ValidateSignUpPassword(form.Password); err != nil {
+	if err := util.ValidateNewPassword(form.Password); err != nil {
 		return err
 	}
 

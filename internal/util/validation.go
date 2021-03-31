@@ -50,8 +50,8 @@ var (
 	NewUsernameRegex = regexp.MustCompile(NewUsernameRegexString)
 )
 
-// ValidateSignUpPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
-func ValidateSignUpPassword(password string) error {
+// ValidateNewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
+func ValidateNewPassword(password string) error {
 	if password == "" {
 		return errors.New("no password provided")
 	}
@@ -63,9 +63,9 @@ func ValidateSignUpPassword(password string) error {
 	return pwv.Validate(password, MinimumPasswordEntropy)
 }
 
-// ValidateSignUpUsername makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
+// ValidateUsername makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
 // Returns an error if not.
-func ValidateSignUpUsername(username string) error {
+func ValidateUsername(username string) error {
 	if username == "" {
 		return errors.New("no username provided")
 	}
@@ -125,5 +125,15 @@ func ValidateSignUpReason(reason string, reasonRequired bool) error {
 	if len(reason) > MaximumReasonLength {
 		return fmt.Errorf("reason should be no more than %d chars but given reason was %d", MaximumReasonLength, len(reason))
 	}
+	return nil
+}
+
+func ValidateDisplayName(displayName string) error {
+	// TODO: add some validation logic here -- length, characters, etc
+	return nil
+}
+
+func ValidateNote(note string) error {
+	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }

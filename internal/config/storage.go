@@ -18,10 +18,19 @@
 
 package config
 
-// MediaConfig contains configuration for receiving and parsing media files and attachments
-type MediaConfig struct {
-	// Max size of uploaded images in bytes
-	MaxImageSize int `yaml:"maxImageSize"`
-	// Max size of uploaded video in bytes
-	MaxVideoSize int `yaml:"maxVideoSize"`
+// StorageConfig contains configuration for storage and serving of media files and attachments
+type StorageConfig struct {
+	// Type of storage backend to use: currently only 'local' is supported.
+	// TODO: add S3 support here.
+	Backend string `yaml:"backend"`
+
+	// The base path for storing things. Should be an already-existing directory.
+	BasePath string `yaml:"basePath"`
+
+	// Protocol to use when *serving* media files from storage
+	ServeProtocol string `yaml:"serveProtocol"`
+	// Host to use when *serving* media files from storage
+	ServeHost string `yaml:"serveHost"`
+	// Base path to use when *serving* media files from storage
+	ServeBasePath string `yaml:"serveBasePath"`
 }

@@ -177,6 +177,11 @@ type DB interface {
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
 	AccountToMastoSensitive(account *model.Account) (*mastotypes.Account, error)
+
+	// AccountToMastoPublic takes a db model account as a param, and returns a populated mastotype account, or an error
+	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
+	// In other words, this is the public record that the server has of an account.
+	AccountToMastoPublic(account *model.Account) (*mastotypes.Account, error)
 }
 
 // New returns a new database service that satisfies the DB interface and, by extension,

@@ -129,6 +129,52 @@ func main() {
 				Value:   true,
 				EnvVars: []string{envNames.AccountsRequireApproval},
 			},
+
+			// MEDIA FLAGS
+			&cli.IntFlag{
+				Name:    flagNames.MediaMaxImageSize,
+				Usage:   "Max size of accepted images in bytes",
+				Value:   1048576, // 1mb
+				EnvVars: []string{envNames.MediaMaxImageSize},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.MediaMaxVideoSize,
+				Usage:   "Max size of accepted videos in bytes",
+				Value:   5242880, // 5mb
+				EnvVars: []string{envNames.MediaMaxVideoSize},
+			},
+
+			// STORAGE FLAGS
+			&cli.StringFlag{
+				Name:    flagNames.StorageBackend,
+				Usage:   "Storage backend to use for media attachments",
+				Value:   "local",
+				EnvVars: []string{envNames.StorageBackend},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageBasePath,
+				Usage:   "Full path to an already-created directory where gts should store/retrieve media files",
+				Value:   "/opt/gotosocial",
+				EnvVars: []string{envNames.StorageBasePath},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeProtocol,
+				Usage:   "Protocol to use for serving media attachments (use https if storage is local)",
+				Value:   "https",
+				EnvVars: []string{envNames.StorageServeProtocol},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeHost,
+				Usage:   "Hostname to serve media attachments from (use the same value as host if storage is local)",
+				Value:   "localhost",
+				EnvVars: []string{envNames.StorageServeHost},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeBasePath,
+				Usage:   "Path to append to protocol and hostname to create the base path from which media files will be served (default will mostly be fine)",
+				Value:   "/fileserver/media",
+				EnvVars: []string{envNames.StorageServeBasePath},
+			},
 		},
 		Commands: []*cli.Command{
 			{

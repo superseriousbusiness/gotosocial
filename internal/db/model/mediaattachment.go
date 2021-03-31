@@ -116,7 +116,7 @@ const (
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {
 	Original Original
-	Small Small
+	Small    Small
 }
 
 // Small implements SmallMeta and can be used for a thumbnail of any media type

@@ -22,10 +22,10 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -62,5 +62,6 @@ func (m *accountModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, verifyPath, m.accountVerifyGETHandler)
 	r.AttachHandler(http.MethodPatch, updateCredentialsPath, m.accountUpdateCredentialsPATCHHandler)
+	r.AttachHandler(http.MethodGet, basePathWithID, m.accountGETHandler)
 	return nil
 }
