@@ -39,7 +39,7 @@ func (m *accountModule) accountGETHandler(c *gin.Context) {
 
 	targetAccount := &model.Account{}
 	if err := m.db.GetByID(targetAcctID, targetAccount); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			c.JSON(http.StatusNotFound, gin.H{"error":"Record not found"})
 			return
 		} else {
