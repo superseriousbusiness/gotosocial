@@ -82,7 +82,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		}
 	}
 
-	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService), c)
+	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

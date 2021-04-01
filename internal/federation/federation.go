@@ -27,22 +27,27 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // New returns a go-fed compatible federating actor
-func New(db db.DB) pub.FederatingActor {
-	f := &Federator{}
+func New(db db.DB, log *logrus.Logger) pub.FederatingActor {
+	f := &Federator{
+		db: db,
+	}
 	return pub.NewFederatingActor(f, f, db.Federation(), f)
 }
 
 // Federator implements several go-fed interfaces in one convenient location
 type Federator struct {
+	db db.DB
 }
 
 // AuthenticateGetInbox determines whether the request is for a GET call to the Actor's Inbox.
 func (f *Federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
+	// use context.WithValue() and context.Value() to set and get values through here
 	return nil, false, nil
 }
 
