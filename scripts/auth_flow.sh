@@ -1,13 +1,33 @@
 #!/bin/sh
 
+set -eux
+
+SERVER_URL="http://localhost:8080"
+REDIRECT_URI="${SERVER_URL}"
+CLIENT_NAME="Test Application Name"
+
+REGISTRATION_REASON="Testing whether or not this dang diggity thing works!"
+REGISTRATION_EMAIL="test@example.org"
+REGISTRATION_USERNAME="test_user"
+REGISTRATION_PASSWORD="very safe password 123"
+REGISTRATION_AGREEMENT="true"
+REGISTRATION_LOCALE="en"
+
 # Step 1: create the app to register the new account
-curl -X POST -F "client_name=ahhhhhh" -F "redirect_uris=http://localhost:8080" localhost:8080/api/v1/apps
+CREATE_APP_RESPONSE=$(curl --fail -s -X POST -F "client_name=${CLIENT_NAME}" -F "redirect_uris=${REDIRECT_URI}" "${SERVER_URL}/api/v1/apps")
+CLIENT_ID=$(echo "${CREATE_APP_RESPONSE}" | jq -r .client_id)
+CLIENT_SECRET=$(echo "${CREATE_APP_RESPONSE}" | jq -r .client_secret)
+echo "Obtained client_id: ${CLIENT_ID} and client_secret: ${CLIENT_SECRET}"
 
 # Step 2: obtain a code for that app
-curl -X POST -F "scope=read" -F "grant_type=client_credentials" -F "client_id=bbec8b67-b389-49fb-ad9c-4a990e95d75a" -F "client_secret=da21d8b1-0705-4a1c-a38e-96060ab5553d" -F "redirect_uri=http://localhost:8080" localhost:8080/oauth/token
+APP_CODE_RESPONSE=$(curl --fail -s -X POST -F "scope=read" -F "grant_type=client_credentials" -F "client_id=${CLIENT_ID}" -F "client_secret=${CLIENT_SECRET}" -F "redirect_uri=${REDIRECT_URI}" "${SERVER_URL}/oauth/token")
+APP_ACCESS_TOKEN=$(echo "${APP_CODE_RESPONSE}" | jq -r .access_token)
+echo "Obtained app access token: ${APP_ACCESS_TOKEN}"
 
 # Step 3: use the code to register a new account
-curl -H "Authorization: Bearer MGVHMZQYYMYTNJK4OC0ZN2I3LTGWNWETMGE3ZTY2NTJKYZE4" -F "reason=seems like a good time my dude" -F "email=user7@example.org" -F "username=test_user7" -F "password=this is a big long password" -F "agreement=true" -F "locale=en" localhost:8080/api/v1/accounts
+ACCOUNT_REGISTER_RESPONSE=$(curl --fail -s -H "Authorization: Bearer ${APP_ACCESS_TOKEN}" -F "reason=${REGISTRATION_REASON}" -F "email=${REGISTRATION_EMAIL}" -F "username=${REGISTRATION_USERNAME}" -F "password=${REGISTRATION_PASSWORD}" -F "agreement=${REGISTRATION_AGREEMENT}" -F "locale=${REGISTRATION_LOCALE}" "${SERVER_URL}/api/v1/accounts")
+USER_ACCESS_TOKEN=$(echo "${ACCOUNT_REGISTER_RESPONSE}" | jq -r .access_token)
+echo "Obtained user access token: ${USER_ACCESS_TOKEN}"
 
-# Step 4: verify the returned access token 
-curl -H "Authorization: Bearer ODGYODAWNTUTZJUZZI0ZMJK3LWEXMJYTYZA5NMVKZDYWMGQY" localhost:8080/api/v1/accounts/verify_credentials
+# # Step 4: verify the returned access token
+curl -s -H "Authorization: Bearer ${USER_ACCESS_TOKEN}" "${SERVER_URL}/api/v1/accounts/verify_credentials" | jq
