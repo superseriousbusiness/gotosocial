@@ -53,8 +53,6 @@ type AccountUpdateTestSuite struct {
 	config               *config.Config
 	log                  *logrus.Logger
 	testAccountLocal     *model.Account
-	testAccountRemote    *model.Account
-	testUser             *model.User
 	testApplication      *model.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer

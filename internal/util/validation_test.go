@@ -90,7 +90,7 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	weirdChars := "thisusername&&&&&&&istooweird!!"
 	leadingSpace := " see_that_leading_space"
 	trailingSpace := "thisusername_ends_with_a_space "
-	newlines := fmt.Sprintf("this_is\n_almost_ok")
+	newlines := "this_is\n_almost_ok"
 	goodUsername := "this_is_a_good_username"
 	var err error
 

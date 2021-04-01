@@ -25,7 +25,7 @@ type fileServer struct {
 // New returns a new fileServer module
 func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.Logger) apimodule.ClientAPIModule {
 
-	storageBase := fmt.Sprintf("%s", config.StorageConfig.BasePath) // TODO: do this properly
+	storageBase := config.StorageConfig.BasePath // TODO: do this properly
 
 	return &fileServer{
 		config:      config,

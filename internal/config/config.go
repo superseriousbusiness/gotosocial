@@ -187,64 +187,64 @@ type KeyedFlags interface {
 // Flags is used for storing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
 type Flags struct {
-	LogLevel                 string
-	ApplicationName          string
-	ConfigPath               string
-	Host                     string
-	Protocol                 string
+	LogLevel        string
+	ApplicationName string
+	ConfigPath      string
+	Host            string
+	Protocol        string
 
-	DbType                   string
-	DbAddress                string
-	DbPort                   string
-	DbUser                   string
-	DbPassword               string
-	DbDatabase               string
+	DbType     string
+	DbAddress  string
+	DbPort     string
+	DbUser     string
+	DbPassword string
+	DbDatabase string
 
-	TemplateBaseDir          string
+	TemplateBaseDir string
 
 	AccountsOpenRegistration string
 	AccountsRequireApproval  string
 
-	MediaMaxImageSize        string
-	MediaMaxVideoSize        string
+	MediaMaxImageSize string
+	MediaMaxVideoSize string
 
-	StorageBackend           string
-	StorageBasePath          string
-	StorageServeProtocol     string
-	StorageServeHost         string
-	StorageServeBasePath     string
+	StorageBackend       string
+	StorageBasePath      string
+	StorageServeProtocol string
+	StorageServeHost     string
+	StorageServeBasePath string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
 // initializing and storing urfavecli flag variables.
 func GetFlagNames() Flags {
 	return Flags{
-		LogLevel:                 "log-level",
-		ApplicationName:          "application-name",
-		ConfigPath:               "config-path",
-		Host:                     "host",
-		Protocol:                 "protocol",
+		LogLevel:        "log-level",
+		ApplicationName: "application-name",
+		ConfigPath:      "config-path",
+		Host:            "host",
+		Protocol:        "protocol",
 
-		DbType:                   "db-type",
-		DbAddress:                "db-address",
-		DbPort:                   "db-port",
-		DbUser:                   "db-user",
-		DbPassword:               "db-password",
-		DbDatabase:               "db-database",
+		DbType:     "db-type",
+		DbAddress:  "db-address",
+		DbPort:     "db-port",
+		DbUser:     "db-user",
+		DbPassword: "db-password",
+		DbDatabase: "db-database",
 
-		TemplateBaseDir:          "template-basedir",
+		TemplateBaseDir: "template-basedir",
 
 		AccountsOpenRegistration: "accounts-open-registration",
 		AccountsRequireApproval:  "accounts-require-approval",
 
-		MediaMaxImageSize:        "media-max-image-size",
-		MediaMaxVideoSize:        "media-max-video-size",
+		MediaMaxImageSize: "media-max-image-size",
+		MediaMaxVideoSize: "media-max-video-size",
 
-		StorageBackend:           "storage-backend",
-		StorageBasePath:          "storage-base-path",
-		StorageServeProtocol:     "storage-serve-protocol",
-		StorageServeHost:         "storage-serve-host",
-		StorageServeBasePath:     "storage-serve-base-path",
+		StorageBackend:       "storage-backend",
+		StorageBasePath:      "storage-base-path",
+		StorageServeProtocol: "storage-serve-protocol",
+		StorageServeHost:     "storage-serve-host",
+		StorageServeBasePath: "storage-serve-base-path",
 	}
 }
 
@@ -252,31 +252,31 @@ func GetFlagNames() Flags {
 // initializing and storing urfavecli flag variables.
 func GetEnvNames() Flags {
 	return Flags{
-		LogLevel:                 "GTS_LOG_LEVEL",
-		ApplicationName:          "GTS_APPLICATION_NAME",
-		ConfigPath:               "GTS_CONFIG_PATH",
-		Host:                     "GTS_HOST",
-		Protocol:                 "GTS_PROTOCOL",
+		LogLevel:        "GTS_LOG_LEVEL",
+		ApplicationName: "GTS_APPLICATION_NAME",
+		ConfigPath:      "GTS_CONFIG_PATH",
+		Host:            "GTS_HOST",
+		Protocol:        "GTS_PROTOCOL",
 
-		DbType:                   "GTS_DB_TYPE",
-		DbAddress:                "GTS_DB_ADDRESS",
-		DbPort:                   "GTS_DB_PORT",
-		DbUser:                   "GTS_DB_USER",
-		DbPassword:               "GTS_DB_PASSWORD",
-		DbDatabase:               "GTS_DB_DATABASE",
+		DbType:     "GTS_DB_TYPE",
+		DbAddress:  "GTS_DB_ADDRESS",
+		DbPort:     "GTS_DB_PORT",
+		DbUser:     "GTS_DB_USER",
+		DbPassword: "GTS_DB_PASSWORD",
+		DbDatabase: "GTS_DB_DATABASE",
 
-		TemplateBaseDir:          "GTS_TEMPLATE_BASEDIR",
+		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
 
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
 		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
 
-		MediaMaxImageSize:        "GTS_MEDIA_MAX_IMAGE_SIZE",
-		MediaMaxVideoSize:        "GTS_MEDIA_MAX_VIDEO_SIZE",
+		MediaMaxImageSize: "GTS_MEDIA_MAX_IMAGE_SIZE",
+		MediaMaxVideoSize: "GTS_MEDIA_MAX_VIDEO_SIZE",
 
-		StorageBackend:           "GTS_STORAGE_BACKEND",
-		StorageBasePath:          "GTS_STORAGE_BASE_PATH",
-		StorageServeProtocol:     "GTS_STORAGE_SERVE_PROTOCOL",
-		StorageServeHost:         "GTS_STORAGE_SERVE_HOST",
-		StorageServeBasePath:     "GTS_STORAGE_SERVE_BASE_PATH",
+		StorageBackend:       "GTS_STORAGE_BACKEND",
+		StorageBasePath:      "GTS_STORAGE_BASE_PATH",
+		StorageServeProtocol: "GTS_STORAGE_SERVE_PROTOCOL",
+		StorageServeHost:     "GTS_STORAGE_SERVE_HOST",
+		StorageServeBasePath: "GTS_STORAGE_SERVE_BASE_PATH",
 	}
 }

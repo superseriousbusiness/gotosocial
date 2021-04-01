@@ -137,11 +137,10 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			if err := util.ValidateLanguage(*form.Source.Language); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
-			} else {
-				if err := m.db.UpdateOneByID(authed.Account.ID, "language", *form.Source.Language, &model.Account{}); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-					return
-				}
+			}
+			if err := m.db.UpdateOneByID(authed.Account.ID, "language", *form.Source.Language, &model.Account{}); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
 			}
 		}
 
@@ -156,18 +155,17 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			if err := util.ValidatePrivacy(*form.Source.Privacy); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
-			} else {
-				if err := m.db.UpdateOneByID(authed.Account.ID, "privacy", *form.Source.Privacy, &model.Account{}); err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-					return
-				}
+			}
+			if err := m.db.UpdateOneByID(authed.Account.ID, "privacy", *form.Source.Privacy, &model.Account{}); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
 			}
 		}
 	}
 
-	if form.FieldsAttributes != nil {
-		// TODO: parse fields attributes nicely and update
-	}
+	// if form.FieldsAttributes != nil {
+	// 	// TODO: parse fields attributes nicely and update
+	// }
 
 	// fetch the account with all updated values set
 	updatedAccount := &model.Account{}

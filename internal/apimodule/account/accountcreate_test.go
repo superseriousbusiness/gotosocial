@@ -57,8 +57,6 @@ type AccountCreateTestSuite struct {
 	config               *config.Config
 	log                  *logrus.Logger
 	testAccountLocal     *model.Account
-	testAccountRemote    *model.Account
-	testUser             *model.User
 	testApplication      *model.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
@@ -124,10 +122,10 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 		MaxImageSize: 2 << 20,
 	}
 	c.StorageConfig = &config.StorageConfig{
-		Backend: "local",
-		BasePath: "/tmp",
+		Backend:       "local",
+		BasePath:      "/tmp",
 		ServeProtocol: "http",
-		ServeHost: "localhost",
+		ServeHost:     "localhost",
 		ServeBasePath: "/fileserver/media",
 	}
 	suite.config = c

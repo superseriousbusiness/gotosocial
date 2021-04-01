@@ -33,19 +33,18 @@ import (
 func (m *accountModule) accountGETHandler(c *gin.Context) {
 	targetAcctID := c.Param(idKey)
 	if targetAcctID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error":"no account id specified"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
 		return
 	}
 
 	targetAccount := &model.Account{}
 	if err := m.db.GetByID(targetAcctID, targetAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
-			c.JSON(http.StatusNotFound, gin.H{"error":"Record not found"})
-			return
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	acctInfo, err := m.db.AccountToMastoPublic(targetAccount)

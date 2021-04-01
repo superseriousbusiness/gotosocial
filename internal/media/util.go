@@ -73,7 +73,7 @@ func supportedImageType(mimeType string) bool {
 // purgeExif is a little wrapper for the action of removing exif data from an image.
 // Only pass pngs or jpegs to this function.
 func purgeExif(b []byte) ([]byte, error) {
-	if b == nil || len(b) == 0 {
+	if len(b) == 0 {
 		return nil, errors.New("passed image was not valid")
 	}
 
@@ -81,7 +81,7 @@ func purgeExif(b []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not purge exif from image: %s", err)
 	}
-	if clean == nil || len(clean) == 0 {
+	if len(clean) == 0 {
 		return nil, errors.New("purged image was not valid")
 	}
 	return clean, nil

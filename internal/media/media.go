@@ -120,7 +120,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, errors.New("header or avatar not selected")
 	}
 
-	clean := []byte{}
+	var clean []byte
 	var err error
 
 	switch contentType {
@@ -152,7 +152,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	extension := strings.Split(contentType, "/")[1]
 	newMediaID := uuid.NewString()
 
-	base := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath, )
+	base := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
 
 	// we store the original...
 	originalPath := fmt.Sprintf("%s/%s/%s/original/%s.%s", base, accountID, headerOrAvi, newMediaID, extension)

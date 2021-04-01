@@ -70,10 +70,10 @@ func (suite *MediaTestSuite) SetupSuite() {
 		MaxImageSize: 2 << 20,
 	}
 	c.StorageConfig = &config.StorageConfig{
-		Backend: "local",
-		BasePath: "/tmp",
+		Backend:       "local",
+		BasePath:      "/tmp",
 		ServeProtocol: "http",
-		ServeHost: "localhost",
+		ServeHost:     "localhost",
 		ServeBasePath: "/fileserver/media",
 	}
 	suite.config = c

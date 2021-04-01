@@ -249,6 +249,6 @@ func New(database db.DB, log *logrus.Logger) Server {
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 	return &s{
 		server: srv,
-		log: log,
+		log:    log,
 	}
 }
