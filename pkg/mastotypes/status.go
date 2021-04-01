@@ -18,29 +18,6 @@
 
 package mastotypes
 
-// StatusRequest represents a mastodon-api status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
-// It should be used at the path https://mastodon.example/api/v1/statuses
-type StatusRequest struct {
-	// Text content of the status. If media_ids is provided, this becomes optional. Attaching a poll is optional while status is provided.
-	Status string `form:"status"`
-	// Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
-	MediaIDs []string `form:"media_ids"`
-	// Poll to include with this status.
-	Poll *PollRequest `form:"poll"`
-	// ID of the status being replied to, if status is a reply
-	InReplyToID string `form:"in_reply_to_id"`
-	// Mark status and attached media as sensitive?
-	Sensitive bool `form:"sensitive"`
-	// Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
-	SpoilerText string `form:"spoiler_text"`
-	// Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
-	Visibility string `form:"visibility"`
-	// ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
-	ScheduledAt string `form:"scheduled_at"`
-	// ISO 639 language code for this status.
-	Language string `form:"language"`
-}
-
 // Status represents a mastodon-api Status type, as defined here: https://docs.joinmastodon.org/entities/status/
 type Status struct {
 	// ID of the status in the database.
@@ -107,4 +84,27 @@ type Status struct {
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
 	Text string `json:"text"`
+}
+
+// StatusCreateRequest represents a mastodon-api status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
+// It should be used at the path https://mastodon.example/api/v1/statuses
+type StatusCreateRequest struct {
+	// Text content of the status. If media_ids is provided, this becomes optional. Attaching a poll is optional while status is provided.
+	Status string `form:"status"`
+	// Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
+	MediaIDs []string `form:"media_ids"`
+	// Poll to include with this status.
+	Poll *PollRequest `form:"poll"`
+	// ID of the status being replied to, if status is a reply
+	InReplyToID string `form:"in_reply_to_id"`
+	// Mark status and attached media as sensitive?
+	Sensitive bool `form:"sensitive"`
+	// Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
+	SpoilerText string `form:"spoiler_text"`
+	// Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
+	Visibility string `form:"visibility"`
+	// ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
+	ScheduledAt string `form:"scheduled_at"`
+	// ISO 639 language code for this status.
+	Language string `form:"language"`
 }

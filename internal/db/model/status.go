@@ -45,7 +45,10 @@ type Status struct {
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
-	Visibility *Visibility
+	Visibility          *Visibility
+	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
+	// Will probably almost always be a note.
+	ActivityStreamsType string
 }
 
 // Visibility represents the visibility granularity of a status. It is a combination of flags.

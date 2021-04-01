@@ -36,6 +36,7 @@ type Config struct {
 	AccountsConfig  *AccountsConfig `yaml:"accounts"`
 	MediaConfig     *MediaConfig    `yaml:"media"`
 	StorageConfig   *StorageConfig  `yaml:"storage"`
+	StatusesConfig  *StatusesConfig `yaml:"statuses"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -58,6 +59,7 @@ func Empty() *Config {
 		AccountsConfig: &AccountsConfig{},
 		MediaConfig:    &MediaConfig{},
 		StorageConfig:  &StorageConfig{},
+		StatusesConfig: &StatusesConfig{},
 	}
 }
 
@@ -173,6 +175,23 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.StorageConfig.ServeBasePath == "" || f.IsSet(fn.StorageServeBasePath) {
 		c.StorageConfig.ServeBasePath = f.String(fn.StorageServeBasePath)
 	}
+
+	// statuses flags
+	if c.StatusesConfig.MaxChars == 0 || f.IsSet(fn.StatusesMaxChars) {
+		c.StatusesConfig.MaxChars = f.Int(fn.StatusesMaxChars)
+	}
+	if c.StatusesConfig.CWMaxChars == 0 || f.IsSet(fn.StatusesCWMaxChars) {
+		c.StatusesConfig.CWMaxChars = f.Int(fn.StatusesCWMaxChars)
+	}
+	if c.StatusesConfig.PollMaxOptions == 0 || f.IsSet(fn.StatusesPollMaxOptions) {
+		c.StatusesConfig.PollMaxOptions = f.Int(fn.StatusesPollMaxOptions)
+	}
+	if c.StatusesConfig.PollOptionMaxChars == 0 || f.IsSet(fn.StatusesPollOptionMaxChars) {
+		c.StatusesConfig.PollOptionMaxChars = f.Int(fn.StatusesPollOptionMaxChars)
+	}
+	if c.StatusesConfig.MaxMediaFiles == 0 || f.IsSet(fn.StatusesMaxMediaFiles) {
+		c.StatusesConfig.MaxMediaFiles = f.Int(fn.StatusesMaxMediaFiles)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
@@ -213,6 +232,12 @@ type Flags struct {
 	StorageServeProtocol string
 	StorageServeHost     string
 	StorageServeBasePath string
+
+	StatusesMaxChars string
+	StatusesCWMaxChars string
+	StatusesPollMaxOptions string
+	StatusesPollOptionMaxChars string
+	StatusesMaxMediaFiles string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -245,6 +270,12 @@ func GetFlagNames() Flags {
 		StorageServeProtocol: "storage-serve-protocol",
 		StorageServeHost:     "storage-serve-host",
 		StorageServeBasePath: "storage-serve-base-path",
+
+		StatusesMaxChars: "statuses-max-chars",
+		StatusesCWMaxChars: "statuses-cw-max-chars",
+		StatusesPollMaxOptions: "statuses-poll-max-options",
+		StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
+		StatusesMaxMediaFiles: "statuses-max-media-files",
 	}
 }
 
@@ -278,5 +309,11 @@ func GetEnvNames() Flags {
 		StorageServeProtocol: "GTS_STORAGE_SERVE_PROTOCOL",
 		StorageServeHost:     "GTS_STORAGE_SERVE_HOST",
 		StorageServeBasePath: "GTS_STORAGE_SERVE_BASE_PATH",
+
+		StatusesMaxChars: "GTS_STATUSES_MAX_CHARS",
+		StatusesCWMaxChars: "GTS_STATUSES_CW_MAX_CHARS",
+		StatusesPollMaxOptions: "GTS_STATUSES_POLL_MAX_OPTIONS",
+		StatusesPollOptionMaxChars: "GTS_STATUSES_POLL_OPTION_MAX_CHARS",
+		StatusesMaxMediaFiles: "GTS_STATUSES_MAX_MEDIA_FILES",
 	}
 }

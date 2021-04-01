@@ -175,6 +175,38 @@ func main() {
 				Value:   "/fileserver/media",
 				EnvVars: []string{envNames.StorageServeBasePath},
 			},
+
+			// STATUSES FLAGS
+			&cli.IntFlag{
+				Name:    flagNames.StatusesMaxChars,
+				Usage:   "Max permitted characters for posted statuses",
+				Value:   5000,
+				EnvVars: []string{envNames.StatusesMaxChars},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.StatusesCWMaxChars,
+				Usage:   "Max permitted characters for content/spoiler warnings on statuses",
+				Value:   100,
+				EnvVars: []string{envNames.StatusesCWMaxChars},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.StatusesPollMaxOptions,
+				Usage:   "Max amount of options permitted on a poll",
+				Value:   6,
+				EnvVars: []string{envNames.StatusesPollMaxOptions},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.StatusesPollOptionMaxChars,
+				Usage:   "Max amount of characters for a poll option",
+				Value:   50,
+				EnvVars: []string{envNames.StatusesPollOptionMaxChars},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.StatusesMaxMediaFiles,
+				Usage:   "Maximum number of media files/attachments per status",
+				Value:   6,
+				EnvVars: []string{envNames.StatusesMaxMediaFiles},
+			},
 		},
 		Commands: []*cli.Command{
 			{
