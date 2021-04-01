@@ -37,6 +37,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -104,14 +105,18 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		return nil, errors.New("db connection timeout")
 	}
 
+	ps := &postgresService{
+		config: c,
+		conn:   conn,
+		log:    log,
+		cancel: cancel,
+	}
+
+	federatingDB := newFederatingDB(ps, c)
+	ps.federationDB = federatingDB
+
 	// we can confidently return this useable postgres service now
-	return &postgresService{
-		config:       c,
-		conn:         conn,
-		log:          log,
-		cancel:       cancel,
-		federationDB: newPostgresFederation(conn),
-	}, nil
+	return ps, nil
 }
 
 /*
@@ -437,17 +442,21 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		return nil, err
 	}
 
-	// should be something like https://example.org/@some_username
-	url := fmt.Sprintf("%s://%s/@%s", ps.config.Protocol, ps.config.Host, username)
+	uris := util.GenerateURIs(username, ps.config.Protocol, ps.config.Host)
 
 	a := &model.Account{
-		Username:    username,
-		DisplayName: username,
-		Reason:      reason,
-		URL:         url,
-		PrivateKey:  key,
-		PublicKey:   &key.PublicKey,
-		ActorType:   "Person",
+		Username:              username,
+		DisplayName:           username,
+		Reason:                reason,
+		URL:                   uris.UserURL,
+		PrivateKey:            key,
+		PublicKey:             &key.PublicKey,
+		ActorType:             "Person",
+		URI:                   uris.UserURI,
+		InboxURL:              uris.InboxURL,
+		OutboxURL:             uris.OutboxURL,
+		FollowersURL:          uris.FollowersURL,
+		FeaturedCollectionURL: uris.CollectionURL,
 	}
 	if _, err = ps.conn.Model(a).Insert(); err != nil {
 		return nil, err
