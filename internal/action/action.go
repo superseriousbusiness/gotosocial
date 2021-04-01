@@ -21,8 +21,8 @@ package action
 import (
 	"context"
 
-	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // GTSAction defines one *action* that can be taken by the gotosocial cli command.

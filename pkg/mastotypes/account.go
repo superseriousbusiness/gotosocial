@@ -18,6 +18,8 @@
 
 package mastotypes
 
+import "mime/multipart"
+
 // Account represents a mastodon-api Account object, as described here: https://docs.joinmastodon.org/entities/account/
 type Account struct {
 	// The account id
@@ -31,7 +33,7 @@ type Account struct {
 	// Whether the account manually approves follow requests.
 	Locked bool `json:"locked"`
 	// Whether the account has opted into discovery features such as the profile directory.
-	Discoverable bool `json:"discoverable"`
+	Discoverable bool `json:"discoverable,omitempty"`
 	// A presentational flag. Indicates that the account may perform automated actions, may not be monitored, or identifies as a robot.
 	Bot bool `json:"bot"`
 	// When the account was created. (ISO 8601 Datetime)
@@ -61,9 +63,69 @@ type Account struct {
 	// Additional metadata attached to a profile as name-value pairs.
 	Fields []Field `json:"fields"`
 	// An extra entity returned when an account is suspended.
-	Suspended bool `json:"suspended"`
+	Suspended bool `json:"suspended,omitempty"`
 	// When a timed mute will expire, if applicable. (ISO 8601 Datetime)
-	MuteExpiresAt string `json:"mute_expires_at"`
+	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// An extra entity to be used with API methods to verify credentials and update credentials.
 	Source *Source `json:"source"`
+}
+
+// AccountCreateRequest represents the form submitted during a POST request to /api/v1/accounts.
+// See https://docs.joinmastodon.org/methods/accounts/
+type AccountCreateRequest struct {
+	// Text that will be reviewed by moderators if registrations require manual approval.
+	Reason string `form:"reason"`
+	// The desired username for the account
+	Username string `form:"username" binding:"required"`
+	// The email address to be used for login
+	Email string `form:"email" binding:"required"`
+	// The password to be used for login
+	Password string `form:"password" binding:"required"`
+	// Whether the user agrees to the local rules, terms, and policies.
+	// These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
+	Agreement bool `form:"agreement" binding:"required"`
+	// The language of the confirmation email that will be sent
+	Locale string `form:"locale" binding:"required"`
+}
+
+// UpdateCredentialsRequest represents the form submitted during a PATCH request to /api/v1/accounts/update_credentials.
+// See https://docs.joinmastodon.org/methods/accounts/
+type UpdateCredentialsRequest struct {
+	// Whether the account should be shown in the profile directory.
+	Discoverable *bool `form:"discoverable"`
+	// Whether the account has a bot flag.
+	Bot *bool `form:"bot"`
+	// The display name to use for the profile.
+	DisplayName *string `form:"display_name"`
+	// The account bio.
+	Note *string `form:"note"`
+	// Avatar image encoded using multipart/form-data
+	Avatar *multipart.FileHeader `form:"avatar"`
+	// Header image encoded using multipart/form-data
+	Header *multipart.FileHeader `form:"header"`
+	// Whether manual approval of follow requests is required.
+	Locked *bool `form:"locked"`
+	// New Source values for this account
+	Source *UpdateSource `form:"source"`
+	// Profile metadata name and value
+	FieldsAttributes *[]UpdateField `form:"fields_attributes"`
+}
+
+// UpdateSource is to be used specifically in an UpdateCredentialsRequest.
+type UpdateSource struct {
+	// Default post privacy for authored statuses.
+	Privacy *string `form:"privacy"`
+	// Whether to mark authored statuses as sensitive by default.
+	Sensitive *bool `form:"sensitive"`
+	// Default language to use for authored statuses. (ISO 6391)
+	Language *string `form:"language"`
+}
+
+// UpdateField is to be used specifically in an UpdateCredentialsRequest.
+// By default, max 4 fields and 255 characters per property/value.
+type UpdateField struct {
+	// Name of the field
+	Name *string `form:"name"`
+	// Value of the field
+	Value *string `form:"value"`
 }

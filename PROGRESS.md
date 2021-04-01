@@ -11,10 +11,10 @@
     * [x] /auth/sign_in GET                                 (Show form for user signin)
     * [x] /auth/sign_in POST                                (Validate username and password and sign user in)
   * [ ] Accounts
-    * [ ] /api/v1/accounts POST                             (Register a new account)
-    * [ ] /api/v1/accounts/verify_credentials GET           (Verify account credentials with a user token)
-    * [ ] /api/v1/accounts/update_credentials PATCH         (Update user's display name/preferences)
-    * [ ] /api/v1/accounts/:id GET                          (Get account information)
+    * [x] /api/v1/accounts POST                             (Register a new account)
+    * [x] /api/v1/accounts/verify_credentials GET           (Verify account credentials with a user token)
+    * [x] /api/v1/accounts/update_credentials PATCH         (Update user's display name/preferences)
+    * [x] /api/v1/accounts/:id GET                          (Get account information)
     * [ ] /api/v1/accounts/:id/statuses GET                 (Get an account's statuses)
     * [ ] /api/v1/accounts/:id/followers GET                (Get an account's followers)
     * [ ] /api/v1/accounts/:id/following GET                (Get an account's following)
@@ -184,7 +184,7 @@
 * [ ] Cache
   * [ ] In-memory cache
 * [ ] Security features
-  * [ ] Authorization middleware
+  * [x] Authorization middleware
   * [ ] Rate limiting middleware
   * [ ] Scope middleware
   * [ ] Permissions/acl middleware for admins+moderators

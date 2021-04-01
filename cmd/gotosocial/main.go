@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gotosocial/gotosocial/internal/action"
-	"github.com/gotosocial/gotosocial/internal/config"
-	"github.com/gotosocial/gotosocial/internal/db"
-	"github.com/gotosocial/gotosocial/internal/gotosocial"
-	"github.com/gotosocial/gotosocial/internal/log"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/action"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/urfave/cli/v2"
 )
@@ -111,9 +111,69 @@ func main() {
 			// TEMPLATE FLAGS
 			&cli.StringFlag{
 				Name:    flagNames.TemplateBaseDir,
-				Usage:   "Basedir for html templating files for rendering pages and composing emails",
+				Usage:   "Basedir for html templating files for rendering pages and composing emails.",
 				Value:   "./web/template/",
 				EnvVars: []string{envNames.TemplateBaseDir},
+			},
+
+			// ACCOUNTS FLAGS
+			&cli.BoolFlag{
+				Name:    flagNames.AccountsOpenRegistration,
+				Usage:   "Allow anyone to submit an account signup request. If false, server will be invite-only.",
+				Value:   true,
+				EnvVars: []string{envNames.AccountsOpenRegistration},
+			},
+			&cli.BoolFlag{
+				Name:    flagNames.AccountsRequireApproval,
+				Usage:   "Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved.",
+				Value:   true,
+				EnvVars: []string{envNames.AccountsRequireApproval},
+			},
+
+			// MEDIA FLAGS
+			&cli.IntFlag{
+				Name:    flagNames.MediaMaxImageSize,
+				Usage:   "Max size of accepted images in bytes",
+				Value:   1048576, // 1mb
+				EnvVars: []string{envNames.MediaMaxImageSize},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.MediaMaxVideoSize,
+				Usage:   "Max size of accepted videos in bytes",
+				Value:   5242880, // 5mb
+				EnvVars: []string{envNames.MediaMaxVideoSize},
+			},
+
+			// STORAGE FLAGS
+			&cli.StringFlag{
+				Name:    flagNames.StorageBackend,
+				Usage:   "Storage backend to use for media attachments",
+				Value:   "local",
+				EnvVars: []string{envNames.StorageBackend},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageBasePath,
+				Usage:   "Full path to an already-created directory where gts should store/retrieve media files",
+				Value:   "/opt/gotosocial",
+				EnvVars: []string{envNames.StorageBasePath},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeProtocol,
+				Usage:   "Protocol to use for serving media attachments (use https if storage is local)",
+				Value:   "https",
+				EnvVars: []string{envNames.StorageServeProtocol},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeHost,
+				Usage:   "Hostname to serve media attachments from (use the same value as host if storage is local)",
+				Value:   "localhost",
+				EnvVars: []string{envNames.StorageServeHost},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.StorageServeBasePath,
+				Usage:   "Path to append to protocol and hostname to create the base path from which media files will be served (default will mostly be fine)",
+				Value:   "/fileserver/media",
+				EnvVars: []string{envNames.StorageServeBasePath},
 			},
 		},
 		Commands: []*cli.Command{

@@ -33,26 +33,21 @@ type Config struct {
 	Protocol        string          `yaml:"protocol"`
 	DBConfig        *DBConfig       `yaml:"db"`
 	TemplateConfig  *TemplateConfig `yaml:"template"`
+	AccountsConfig  *AccountsConfig `yaml:"accounts"`
+	MediaConfig     *MediaConfig    `yaml:"media"`
+	StorageConfig   *StorageConfig  `yaml:"storage"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
 func FromFile(path string) (*Config, error) {
-	c, err := loadFromFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("error creating config: %s", err)
+	if path != "" {
+		c, err := loadFromFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("error creating config: %s", err)
+		}
+		return c, nil
 	}
-	return c, nil
-}
-
-// Default returns a new config with default values.
-// Not yet implemented.
-func Default() *Config {
-	// TODO: find a way of doing this without code repetition, because having to
-	// repeat all values here and elsewhere is annoying and gonna be prone to mistakes.
-	return &Config{
-		DBConfig:       &DBConfig{},
-		TemplateConfig: &TemplateConfig{},
-	}
+	return Empty(), nil
 }
 
 // Empty just returns an empty config
@@ -60,6 +55,9 @@ func Empty() *Config {
 	return &Config{
 		DBConfig:       &DBConfig{},
 		TemplateConfig: &TemplateConfig{},
+		AccountsConfig: &AccountsConfig{},
+		MediaConfig:    &MediaConfig{},
+		StorageConfig:  &StorageConfig{},
 	}
 }
 
@@ -136,11 +134,51 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.TemplateConfig.BaseDir == "" || f.IsSet(fn.TemplateBaseDir) {
 		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
 	}
+
+	// accounts flags
+	if f.IsSet(fn.AccountsOpenRegistration) {
+		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
+	}
+
+	if f.IsSet(fn.AccountsRequireApproval) {
+		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsRequireApproval)
+	}
+
+	// media flags
+	if c.MediaConfig.MaxImageSize == 0 || f.IsSet(fn.MediaMaxImageSize) {
+		c.MediaConfig.MaxImageSize = f.Int(fn.MediaMaxImageSize)
+	}
+
+	if c.MediaConfig.MaxVideoSize == 0 || f.IsSet(fn.MediaMaxVideoSize) {
+		c.MediaConfig.MaxVideoSize = f.Int(fn.MediaMaxVideoSize)
+	}
+
+	// storage flags
+	if c.StorageConfig.Backend == "" || f.IsSet(fn.StorageBackend) {
+		c.StorageConfig.Backend = f.String(fn.StorageBackend)
+	}
+
+	if c.StorageConfig.BasePath == "" || f.IsSet(fn.StorageBasePath) {
+		c.StorageConfig.BasePath = f.String(fn.StorageBasePath)
+	}
+
+	if c.StorageConfig.ServeProtocol == "" || f.IsSet(fn.StorageServeProtocol) {
+		c.StorageConfig.ServeProtocol = f.String(fn.StorageServeProtocol)
+	}
+
+	if c.StorageConfig.ServeHost == "" || f.IsSet(fn.StorageServeHost) {
+		c.StorageConfig.ServeHost = f.String(fn.StorageServeHost)
+	}
+
+	if c.StorageConfig.ServeBasePath == "" || f.IsSet(fn.StorageServeBasePath) {
+		c.StorageConfig.ServeBasePath = f.String(fn.StorageServeBasePath)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
 // HINT: This works with a urfave cli context struct ;)
 type KeyedFlags interface {
+	Bool(k string) bool
 	String(k string) string
 	Int(k string) int
 	IsSet(k string) bool
@@ -154,13 +192,27 @@ type Flags struct {
 	ConfigPath      string
 	Host            string
 	Protocol        string
-	DbType          string
-	DbAddress       string
-	DbPort          string
-	DbUser          string
-	DbPassword      string
-	DbDatabase      string
+
+	DbType     string
+	DbAddress  string
+	DbPort     string
+	DbUser     string
+	DbPassword string
+	DbDatabase string
+
 	TemplateBaseDir string
+
+	AccountsOpenRegistration string
+	AccountsRequireApproval  string
+
+	MediaMaxImageSize string
+	MediaMaxVideoSize string
+
+	StorageBackend       string
+	StorageBasePath      string
+	StorageServeProtocol string
+	StorageServeHost     string
+	StorageServeBasePath string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -172,13 +224,27 @@ func GetFlagNames() Flags {
 		ConfigPath:      "config-path",
 		Host:            "host",
 		Protocol:        "protocol",
-		DbType:          "db-type",
-		DbAddress:       "db-address",
-		DbPort:          "db-port",
-		DbUser:          "db-user",
-		DbPassword:      "db-password",
-		DbDatabase:      "db-database",
+
+		DbType:     "db-type",
+		DbAddress:  "db-address",
+		DbPort:     "db-port",
+		DbUser:     "db-user",
+		DbPassword: "db-password",
+		DbDatabase: "db-database",
+
 		TemplateBaseDir: "template-basedir",
+
+		AccountsOpenRegistration: "accounts-open-registration",
+		AccountsRequireApproval:  "accounts-require-approval",
+
+		MediaMaxImageSize: "media-max-image-size",
+		MediaMaxVideoSize: "media-max-video-size",
+
+		StorageBackend:       "storage-backend",
+		StorageBasePath:      "storage-base-path",
+		StorageServeProtocol: "storage-serve-protocol",
+		StorageServeHost:     "storage-serve-host",
+		StorageServeBasePath: "storage-serve-base-path",
 	}
 }
 
@@ -191,12 +257,26 @@ func GetEnvNames() Flags {
 		ConfigPath:      "GTS_CONFIG_PATH",
 		Host:            "GTS_HOST",
 		Protocol:        "GTS_PROTOCOL",
-		DbType:          "GTS_DB_TYPE",
-		DbAddress:       "GTS_DB_ADDRESS",
-		DbPort:          "GTS_DB_PORT",
-		DbUser:          "GTS_DB_USER",
-		DbPassword:      "GTS_DB_PASSWORD",
-		DbDatabase:      "GTS_DB_DATABASE",
+
+		DbType:     "GTS_DB_TYPE",
+		DbAddress:  "GTS_DB_ADDRESS",
+		DbPort:     "GTS_DB_PORT",
+		DbUser:     "GTS_DB_USER",
+		DbPassword: "GTS_DB_PASSWORD",
+		DbDatabase: "GTS_DB_DATABASE",
+
 		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
+
+		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
+		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
+
+		MediaMaxImageSize: "GTS_MEDIA_MAX_IMAGE_SIZE",
+		MediaMaxVideoSize: "GTS_MEDIA_MAX_VIDEO_SIZE",
+
+		StorageBackend:       "GTS_STORAGE_BACKEND",
+		StorageBasePath:      "GTS_STORAGE_BASE_PATH",
+		StorageServeProtocol: "GTS_STORAGE_SERVE_PROTOCOL",
+		StorageServeHost:     "GTS_STORAGE_SERVE_HOST",
+		StorageServeBasePath: "GTS_STORAGE_SERVE_BASE_PATH",
 	}
 }

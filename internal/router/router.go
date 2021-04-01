@@ -19,62 +19,66 @@
 package router
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/gotosocial/gotosocial/internal/config"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Router provides the REST interface for gotosocial, using gin.
 type Router interface {
 	// Attach a gin handler to the router with the given method and path
-	AttachHandler(method string, path string, handler gin.HandlerFunc)
+	AttachHandler(method string, path string, f gin.HandlerFunc)
 	// Attach a gin middleware to the router that will be used globally
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Start the router
 	Start()
 	// Stop the router
-	Stop()
+	Stop(ctx context.Context) error
 }
 
 // router fulfils the Router interface using gin and logrus
 type router struct {
 	logger *logrus.Logger
 	engine *gin.Engine
+	srv    *http.Server
 }
 
 // Start starts the router nicely
-func (s *router) Start() {
-	// todo: start gracefully
-	if err := s.engine.Run(); err != nil {
-		s.logger.Panicf("server error: %s", err)
-	}
+func (r *router) Start() {
+	go func() {
+		if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			r.logger.Fatalf("listen: %s", err)
+		}
+	}()
 }
 
 // Stop shuts down the router nicely
-func (s *router) Stop() {
-	// todo: shut down gracefully
+func (r *router) Stop(ctx context.Context) error {
+	return r.srv.Shutdown(ctx)
 }
 
 // AttachHandler attaches the given gin.HandlerFunc to the router with the specified method and path.
 // If the path is set to ANY, then the handlerfunc will be used for ALL methods at its given path.
-func (s *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
+func (r *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
 	if method == "ANY" {
-		s.engine.Any(path, handler)
+		r.engine.Any(path, handler)
 	} else {
-		s.engine.Handle(method, path, handler)
+		r.engine.Handle(method, path, handler)
 	}
 }
 
 // AttachMiddleware attaches a gin middleware to the router that will be used globally
-func (s *router) AttachMiddleware(middleware gin.HandlerFunc) {
-	s.engine.Use(middleware)
+func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
+	r.engine.Use(middleware)
 }
 
 // New returns a new Router with the specified configuration, using the given logrus logger.
@@ -100,6 +104,10 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	return &router{
 		logger: logger,
 		engine: engine,
+		srv: &http.Server{
+			Addr:    ":8080",
+			Handler: engine,
+		},
 	}, nil
 }
 
