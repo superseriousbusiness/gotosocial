@@ -233,11 +233,11 @@ type Flags struct {
 	StorageServeHost     string
 	StorageServeBasePath string
 
-	StatusesMaxChars string
-	StatusesCWMaxChars string
-	StatusesPollMaxOptions string
+	StatusesMaxChars           string
+	StatusesCWMaxChars         string
+	StatusesPollMaxOptions     string
 	StatusesPollOptionMaxChars string
-	StatusesMaxMediaFiles string
+	StatusesMaxMediaFiles      string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -271,11 +271,11 @@ func GetFlagNames() Flags {
 		StorageServeHost:     "storage-serve-host",
 		StorageServeBasePath: "storage-serve-base-path",
 
-		StatusesMaxChars: "statuses-max-chars",
-		StatusesCWMaxChars: "statuses-cw-max-chars",
-		StatusesPollMaxOptions: "statuses-poll-max-options",
+		StatusesMaxChars:           "statuses-max-chars",
+		StatusesCWMaxChars:         "statuses-cw-max-chars",
+		StatusesPollMaxOptions:     "statuses-poll-max-options",
 		StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
-		StatusesMaxMediaFiles: "statuses-max-media-files",
+		StatusesMaxMediaFiles:      "statuses-max-media-files",
 	}
 }
 
@@ -310,10 +310,10 @@ func GetEnvNames() Flags {
 		StorageServeHost:     "GTS_STORAGE_SERVE_HOST",
 		StorageServeBasePath: "GTS_STORAGE_SERVE_BASE_PATH",
 
-		StatusesMaxChars: "GTS_STATUSES_MAX_CHARS",
-		StatusesCWMaxChars: "GTS_STATUSES_CW_MAX_CHARS",
-		StatusesPollMaxOptions: "GTS_STATUSES_POLL_MAX_OPTIONS",
+		StatusesMaxChars:           "GTS_STATUSES_MAX_CHARS",
+		StatusesCWMaxChars:         "GTS_STATUSES_CW_MAX_CHARS",
+		StatusesPollMaxOptions:     "GTS_STATUSES_POLL_MAX_OPTIONS",
 		StatusesPollOptionMaxChars: "GTS_STATUSES_POLL_OPTION_MAX_CHARS",
-		StatusesMaxMediaFiles: "GTS_STATUSES_MAX_MEDIA_FILES",
+		StatusesMaxMediaFiles:      "GTS_STATUSES_MAX_MEDIA_FILES",
 	}
 }

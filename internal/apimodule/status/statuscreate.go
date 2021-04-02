@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
@@ -57,7 +58,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateStatus(form, m.config.StatusesConfig, m.db); err != nil {
+	if err := validateCreateStatus(form, m.config.StatusesConfig, authed.Account.ID, m.db); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,16 +72,15 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ip address could not be parsed from request"})
 		return
 	}
+
+	// newStatus := &model.Status{
+
+	// }
+
 }
 
-func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.StatusesConfig, db db.DB) error {
-
-	if form.Language != "" {
-		if err := util.ValidateLanguage(form.Language); err != nil {
-			return err
-		}
-	}
-
+func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.StatusesConfig, accountID string, db db.DB) error {
+	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
 	}
@@ -89,6 +89,31 @@ func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.S
 		return errors.New("can't post media + poll in same status")
 	}
 
+	// validate status
+	if form.Status != "" {
+		if len(form.Status) > config.MaxChars {
+			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), config.MaxChars)
+		}
+	}
+
+	// validate media attachments
+	if len(form.MediaIDs) > config.MaxMediaFiles {
+		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), config.MaxMediaFiles)
+	}
+
+	for _, m := range form.MediaIDs {
+		// check these attachments exist
+		a := &model.MediaAttachment{}
+		if err := db.GetByID(m, a); err != nil {
+			return fmt.Errorf("invalid media type or media not found for media id %s: %s", m, err)
+		}
+		// check they belong to the requesting account id
+		if a.AccountID != accountID {
+			return fmt.Errorf("media attachment %s does not belong to account id %s", m, accountID)
+		}
+	}
+
+	// validate poll
 	if form.Poll != nil {
 		if form.Poll.Options == nil {
 			return errors.New("poll with no options")
@@ -103,13 +128,28 @@ func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.S
 		}
 	}
 
-	if len(form.MediaIDs) > config.MaxMediaFiles {
-		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), config.MaxMediaFiles)
+	// validate reply-to status exists and is reply-able
+	if form.InReplyToID != "" {
+		s := &model.Status{}
+		if err := db.GetByID(form.InReplyToID, s); err != nil {
+			return fmt.Errorf("status id %s cannot be retrieved from the db: %s", form.InReplyToID, err)
+		}
+		if !*s.VisibilityAdvanced.Replyable {
+			return fmt.Errorf("status with id %s is not replyable", form.InReplyToID)
+		}
 	}
 
-	if form.Status != "" {
-		if len(form.Status) > config.MaxChars {
-			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), config.MaxChars)
+	// validate spoiler text/cw
+	if form.SpoilerText != "" {
+		if len(form.SpoilerText) > config.CWMaxChars {
+			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), config.CWMaxChars)
+		}
+	}
+
+	// validate post language
+	if form.Language != "" {
+		if err := util.ValidateLanguage(form.Language); err != nil {
+			return err
 		}
 	}
 

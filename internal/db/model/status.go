@@ -45,22 +45,45 @@ type Status struct {
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
-	Visibility          *Visibility
+	Visibility Visibility
+	// advanced visibility for this status
+	VisibilityAdvanced VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 	// Will probably almost always be a note.
 	ActivityStreamsType string
 }
 
-// Visibility represents the visibility granularity of a status. It is a combination of flags.
-type Visibility struct {
-	// Is this status viewable as a direct message?
-	Direct bool
-	// Is this status viewable to followers?
-	Followers bool
-	// Is this status viewable on the local timeline?
-	Local bool
-	// Is this status boostable but not shown on public timelines?
-	Unlisted bool
-	// Is this status shown on public and federated timelines?
-	Public bool
+// Visibility represents the visibility granularity of a status.
+type Visibility string
+
+const (
+	// This status will be visible to everyone on all timelines.
+	VisibilityPublic Visibility = "public"
+	// This status will be visible to everyone, but will only show on home timeline to followers, and in lists.
+	VisibilityUnlocked Visibility = "unlocked"
+	// This status is viewable to followers only.
+	VisibilityFollowersOnly Visibility = "followers_only"
+	// This status is visible to mutual followers only.
+	VisibilityMutualsOnly Visibility = "mutuals_only"
+	// This status is visible only to mentioned recipients
+	VisibilityDirect Visibility = "direct"
+)
+
+type VisibilityAdvanced struct {
+	/*
+		ADVANCED SETTINGS -- These should all default to TRUE.
+
+		If PUBLIC is selected, they will all be overwritten to TRUE regardless of what is selected.
+		If UNLOCKED is selected, any of them can be turned on or off in any combination.
+		If FOLLOWERS-ONLY or MUTUALS-ONLY are selected, boostable will always be FALSE. The others can be turned on or off as desired.
+		If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
+	*/
+	// This status will be federated beyond the local timeline(s)
+	Federated *bool `pg:"default:true"`
+	// This status can be boosted/reblogged
+	Boostable *bool `pg:"default:true"`
+	// This status can be replied to
+	Replyable *bool `pg:"default:true"`
+	// This status can be liked/faved
+	Likeable *bool `pg:"default:true"`
 }

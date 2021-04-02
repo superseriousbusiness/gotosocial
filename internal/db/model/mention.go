@@ -16,18 +16,24 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package config
+package model
 
-// StatusesConfig pertains to posting/deleting/interacting with statuses
-type StatusesConfig struct {
-	// Maximum amount of characters allowed in a status, excluding CW
-	MaxChars int `yaml:"max_chars"`
-	// Maximum amount of characters allowed in a content-warning/spoiler field
-	CWMaxChars int `yaml:"cw_max_chars"`
-	// Maximum number of options allowed in a poll
-	PollMaxOptions int `yaml:"poll_max_options"`
-	// Maximum characters allowed per poll option
-	PollOptionMaxChars int `yaml:"poll_option_max_chars"`
-	// Maximum amount of media files allowed to be attached to one status
-	MaxMediaFiles int `yaml:"max_media_files"`
+import "time"
+
+// Mention refers to the 'tagging' or 'mention' of a user within a status.
+type Mention struct {
+	// ID of this mention in the database
+	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	// ID of the status this mention originates from
+	StatusID string
+	// When was this mention created?
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// When was this mention last updated?
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// Who created this mention?
+	OriginAccountID string
+	// Who does this mention target?
+	TargetAccountID string
+	// Prevent this mention from generating a notification?
+	Silent bool
 }

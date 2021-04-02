@@ -33,11 +33,7 @@ type Status struct {
 	// Subject or summary line, below which status content is collapsed until expanded.
 	SpoilerText string `json:"spoiler_text"`
 	// Visibility of this status.
-	// 	public = Visible to everyone, shown in public timelines.
-	// 	unlisted = Visible to public, but not included in public timelines.
-	// 	private = Visible to followers only, and to any mentioned users.
-	// 	direct = Visible only to mentioned users.
-	Visibility string `json:"visibility"`
+	Visibility Visibility `json:"visibility"`
 	// Primary language of this status. (ISO 639 Part 1 two-letter language code)
 	Language string `json:"language"`
 	// URI of the status used for federation.
@@ -102,9 +98,22 @@ type StatusCreateRequest struct {
 	// Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
 	SpoilerText string `form:"spoiler_text"`
 	// Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
-	Visibility string `form:"visibility"`
+	Visibility Visibility `form:"visibility"`
 	// ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
 	ScheduledAt string `form:"scheduled_at"`
 	// ISO 639 language code for this status.
 	Language string `form:"language"`
 }
+
+type Visibility string
+
+const (
+	// visible to everyone
+	VisibilityPublic Visibility = "public"
+	// visible to everyone but only on home timelines or in lists
+	VisibilityUnlisted Visibility = "unlisted"
+	// visible to followers only
+	VisibilityPrivate Visibility = "private"
+	// visible only to tagged recipients
+	VisibilityDirect Visibility = "direct"
+)
