@@ -25,6 +25,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
@@ -73,9 +74,20 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// newStatus := &model.Status{
+	uris := util.GenerateURIs(authed.Account.Username, m.config.Protocol, m.config.Host)
+	newStatusID := uuid.NewString()
 
-	// }
+	newStatus := &model.Status{
+		ID:                  newStatusID,
+		URI:                 fmt.Sprintf("%s/%s", uris.StatusesURI, newStatusID),
+		URL:                 fmt.Sprintf("%s/%s", uris.StatusesURL, newStatusID),
+		Content:             util.HTMLFormat(form.Status),
+		Local:               true, // will always be true if this status is being created through the client API
+		AccountID:           authed.Account.ID,
+		InReplyToID:         form.InReplyToID,
+		ContentWarning:      form.SpoilerText,
+		ActivityStreamsType: "Note",
+	}
 
 }
 

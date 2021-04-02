@@ -453,10 +453,10 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		PublicKey:             &key.PublicKey,
 		ActorType:             "Person",
 		URI:                   uris.UserURI,
-		InboxURL:              uris.InboxURL,
-		OutboxURL:             uris.OutboxURL,
-		FollowersURL:          uris.FollowersURL,
-		FeaturedCollectionURL: uris.CollectionURL,
+		InboxURL:              uris.InboxURI,
+		OutboxURL:             uris.OutboxURI,
+		FollowersURL:          uris.FollowersURI,
+		FeaturedCollectionURL: uris.CollectionURI,
 	}
 	if _, err = ps.conn.Model(a).Insert(); err != nil {
 		return nil, err
