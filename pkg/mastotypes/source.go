@@ -27,7 +27,7 @@ type Source struct {
 	//    unlisted = Unlisted post
 	//    private = Followers-only post
 	//    direct = Direct post
-	Privacy string `json:"privacy,omitempty"`
+	Privacy Visibility `json:"privacy,omitempty"`
 	// Whether new statuses should be marked sensitive by default.
 	Sensitive bool `json:"sensitive,omitempty"`
 	// The default posting language for new statuses.

@@ -254,6 +254,10 @@ func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}
 	return nil
 }
 
+// func (ps *postgresService) GetWhereMany(i interface{}, where ...model.Where) error {
+// 	return nil
+// }
+
 func (ps *postgresService) GetAll(i interface{}) error {
 	if err := ps.conn.Model(i).Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -451,7 +455,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		URL:                   uris.UserURL,
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
-		ActorType:             "Person",
+		ActorType:             model.ActivityStreamsPerson,
 		URI:                   uris.UserURI,
 		InboxURL:              uris.InboxURI,
 		OutboxURL:             uris.OutboxURI,
@@ -537,7 +541,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	}
 
 	mastoAccount.Source = &mastotypes.Source{
-		Privacy:             a.Privacy,
+		Privacy:             util.ParseMastoVisFromGTSVis(a.Privacy),
 		Sensitive:           a.Sensitive,
 		Language:            a.Language,
 		Note:                a.Note,
@@ -659,4 +663,59 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 		Emojis:         nil, // TODO: implement this
 		Fields:         fields,
 	}, nil
+}
+
+func (ps *postgresService) AccountStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error) {
+	menchies := []*model.Mention{}
+	for _, a := range targetAccounts {
+		// A mentioned account looks like "@test@example.org" -- we can guarantee this from the regex that targetAccounts should have been derived from.
+		// But we still need to do a bit of fiddling to get what we need here -- the username and domain.
+
+		// 1.  trim off the first @
+		t := strings.TrimPrefix(a, "@")
+
+		// 2. split the username and domain
+		s := strings.Split(t, "@")
+
+		// 3. it should *always* be length 2 so if it's not then something is seriously wrong
+		if len(s) != 2 {
+			return nil, fmt.Errorf("mentioned account format %s was not valid", a)
+		}
+		username := s[0]
+		domain := s[1]
+
+		// 4. check we now have a proper username and domain
+		if username == "" || domain == "" {
+			return nil, fmt.Errorf("username or domain for %s was nil", a)
+		}
+
+		// okay we're good now, we can start pulling accounts out of the database
+		mentionedAccount := &model.Account{}
+		var err error
+		if domain == ps.config.Host {
+			// local user -- should have a null domain
+			err = ps.conn.Model(mentionedAccount).Where("id = ?", username).Where("domain = null").Select()
+		} else {
+			// remote user -- should have domain defined
+			err = ps.conn.Model(mentionedAccount).Where("id = ?", username).Where("domain = ?", domain).Select()
+		}
+
+		if err != nil {
+			if err == pg.ErrNoRows {
+				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
+				ps.log.Debugf("no account found with username %s and domain %s, skipping it", username, domain)
+				continue
+			}
+			// a serious error has happened so bail
+			return nil, fmt.Errorf("error getting account with username %s and domain %s: %s", username, domain, err)
+		}
+
+		// id, createdat and updatedat will be populated by the db, so we have everything we need!
+		menchies = append(menchies, &model.Mention{
+			StatusID: statusID,
+			OriginAccountID: originAccountID,
+			TargetAccountID: mentionedAccount.ID,
+		})
+	}
+	return menchies, nil
 }

@@ -18,7 +18,12 @@
 
 package util
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+)
 
 type URIs struct {
 	HostURL     string
@@ -48,7 +53,7 @@ func GenerateURIs(username string, protocol string, host string) *URIs {
 		HostURL:       hostURL,
 		UserURL:       userURL,
 		StatusesURL:   statusesURL,
-		
+
 		UserURI:       userURI,
 		StatusesURI:   statusesURI,
 		InboxURI:      inboxURI,
@@ -56,4 +61,14 @@ func GenerateURIs(username string, protocol string, host string) *URIs {
 		FollowersURI:  followersURI,
 		CollectionURI: collectionURI,
 	}
+}
+
+func ParseGTSVisFromMastoVis(m mastotypes.Visibility) model.Visibility {
+	// TODO: convert a masto vis into a gts vis
+	return ""
+}
+
+func ParseMastoVisFromGTSVis(m model.Visibility) mastotypes.Visibility {
+	// TODO: convert a gts vis into a masto vis
+	return ""
 }

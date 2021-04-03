@@ -49,8 +49,8 @@ type Status struct {
 	// advanced visibility for this status
 	VisibilityAdvanced VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
-	// Will probably almost always be a note.
-	ActivityStreamsType string
+	// Will probably almost always be Note but who knows!.
+	ActivityStreamsType ActivityStreamsObject
 }
 
 // Visibility represents the visibility granularity of a status.
@@ -79,11 +79,11 @@ type VisibilityAdvanced struct {
 		If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
 	*/
 	// This status will be federated beyond the local timeline(s)
-	Federated *bool `pg:"default:true"`
+	Federated bool `pg:"default:true"`
 	// This status can be boosted/reblogged
-	Boostable *bool `pg:"default:true"`
+	Boostable bool `pg:"default:true"`
 	// This status can be replied to
-	Replyable *bool `pg:"default:true"`
+	Replyable bool `pg:"default:true"`
 	// This status can be liked/faved
-	Likeable *bool `pg:"default:true"`
+	Likeable bool `pg:"default:true"`
 }

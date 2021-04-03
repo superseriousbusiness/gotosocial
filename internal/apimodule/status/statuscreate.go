@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -33,6 +34,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
+
+type advancedStatusCreateForm struct {
+	mastotypes.StatusCreateRequest
+	AdvancedVisibility *advancedVisibilityFlagsForm `form:"visibility_advanced"`
+}
+
+type advancedVisibilityFlagsForm struct {
+	// The gotosocial visibility model
+	Visibility *model.Visibility
+	// This status will be federated beyond the local timeline(s)
+	Federated *bool `form:"federated"`
+	// This status can be boosted/reblogged
+	Boostable *bool `form:"boostable"`
+	// This status can be replied to
+	Replyable *bool `form:"replyable"`
+	// This status can be liked/faved
+	Likeable *bool `form:"likeable"`
+}
 
 func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
@@ -51,7 +70,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	l.Trace("parsing request form")
-	form := &mastotypes.StatusCreateRequest{}
+	form := &advancedStatusCreateForm{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
@@ -65,6 +84,10 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// here we check if any advanced visibility flags have been set and fiddle with them if so
+	l.Trace("deriving visibility")
+	basicVis, advancedVis, err := deriveTotalVisibility(form.Visibility, form.AdvancedVisibility, authed.Account.Privacy)
+
 	clientIP := c.ClientIP()
 	l.Tracef("attempting to parse client ip address %s", clientIP)
 	signUpIP := net.ParseIP(clientIP)
@@ -75,23 +98,35 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	uris := util.GenerateURIs(authed.Account.Username, m.config.Protocol, m.config.Host)
-	newStatusID := uuid.NewString()
+	thisStatusID := uuid.NewString()
+	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
+	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
 
 	newStatus := &model.Status{
-		ID:                  newStatusID,
-		URI:                 fmt.Sprintf("%s/%s", uris.StatusesURI, newStatusID),
-		URL:                 fmt.Sprintf("%s/%s", uris.StatusesURL, newStatusID),
+		ID:                  thisStatusID,
+		URI:                 thisStatusURI,
+		URL:                 thisStatusURL,
 		Content:             util.HTMLFormat(form.Status),
-		Local:               true, // will always be true if this status is being created through the client API
+		Local:               true, // will always be true if this status is being created through the client API, since only local users can do that
 		AccountID:           authed.Account.ID,
 		InReplyToID:         form.InReplyToID,
 		ContentWarning:      form.SpoilerText,
-		ActivityStreamsType: "Note",
+		Visibility:          basicVis,
+		VisibilityAdvanced:  *advancedVis,
+		ActivityStreamsType: model.ActivityStreamsNote,
+	}
+
+	// take care of side effects -- mentions, updating metadata, etc, etc
+	menchies, err := m.db.AccountStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
+	if err != nil {
+		l.Debugf("error generating mentions from status: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
+		return
 	}
 
 }
 
-func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.StatusesConfig, accountID string, db db.DB) error {
+func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig, accountID string, db db.DB) error {
 	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
@@ -146,7 +181,7 @@ func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.S
 		if err := db.GetByID(form.InReplyToID, s); err != nil {
 			return fmt.Errorf("status id %s cannot be retrieved from the db: %s", form.InReplyToID, err)
 		}
-		if !*s.VisibilityAdvanced.Replyable {
+		if !s.VisibilityAdvanced.Replyable {
 			return fmt.Errorf("status with id %s is not replyable", form.InReplyToID)
 		}
 	}
@@ -166,4 +201,81 @@ func validateCreateStatus(form *mastotypes.StatusCreateRequest, config *config.S
 	}
 
 	return nil
+}
+
+func deriveTotalVisibility(basicVisForm mastotypes.Visibility, advancedVisForm *advancedVisibilityFlagsForm, accountDefaultVis model.Visibility) (model.Visibility, *model.VisibilityAdvanced, error) {
+	// by default all flags are set to true
+	gtsAdvancedVis := &model.VisibilityAdvanced{
+		Federated: true,
+		Boostable: true,
+		Replyable: true,
+		Likeable:  true,
+	}
+
+	var gtsBasicVis model.Visibility
+	// Advanced takes priority if it's set.
+	// If it's not set, take whatever masto visibility is set.
+	// If *that's* not set either, then just take the account default.
+	if advancedVisForm != nil && advancedVisForm.Visibility != nil {
+		gtsBasicVis = *advancedVisForm.Visibility
+	} else if basicVisForm != "" {
+		gtsBasicVis = util.ParseGTSVisFromMastoVis(basicVisForm)
+	} else {
+		gtsBasicVis = accountDefaultVis
+	}
+
+	switch gtsBasicVis {
+	case model.VisibilityPublic:
+		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
+		return gtsBasicVis, gtsAdvancedVis, nil
+	case model.VisibilityUnlocked:
+		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
+		if advancedVisForm != nil {
+			if advancedVisForm.Federated != nil {
+				gtsAdvancedVis.Federated = *advancedVisForm.Federated
+			}
+
+			if advancedVisForm.Boostable != nil {
+				gtsAdvancedVis.Boostable = *advancedVisForm.Boostable
+			}
+
+			if advancedVisForm.Replyable != nil {
+				gtsAdvancedVis.Replyable = *advancedVisForm.Replyable
+			}
+
+			if advancedVisForm.Likeable != nil {
+				gtsAdvancedVis.Likeable = *advancedVisForm.Likeable
+			}
+		}
+		return gtsBasicVis, gtsAdvancedVis, nil
+	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
+		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
+		gtsAdvancedVis.Boostable = false
+
+		if advancedVisForm != nil {
+			if advancedVisForm.Federated != nil {
+				gtsAdvancedVis.Federated = *advancedVisForm.Federated
+			}
+
+			if advancedVisForm.Replyable != nil {
+				gtsAdvancedVis.Replyable = *advancedVisForm.Replyable
+			}
+
+			if advancedVisForm.Likeable != nil {
+				gtsAdvancedVis.Likeable = *advancedVisForm.Likeable
+			}
+		}
+
+		return gtsBasicVis, gtsAdvancedVis, nil
+	case model.VisibilityDirect:
+		// direct is pretty easy: there's only one possible setting so return it
+		gtsAdvancedVis.Federated = true
+		gtsAdvancedVis.Boostable = false
+		gtsAdvancedVis.Federated = true
+		gtsAdvancedVis.Likeable = true
+		return gtsBasicVis, gtsAdvancedVis, nil
+	}
+
+	// this should never happen but just in case...
+	return "", nil, errors.New("could not parse visibility")
 }

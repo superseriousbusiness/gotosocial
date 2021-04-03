@@ -79,6 +79,11 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetWhere(key string, value interface{}, i interface{}) error
 
+	// // GetWhereMany gets one entry where key = value for *ALL* parameters passed as "where".
+	// // That is, if you pass 2 'where' entries, with 1 being Key username and Value test, and the second
+	// // being Key domain and Value example.org, only entries will be returned where BOTH conditions are true.
+	// GetWhereMany(i interface{}, where ...model.Where) error
+
 	// GetAll will try to get all entries of type i.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
@@ -182,6 +187,11 @@ type DB interface {
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
 	AccountToMastoPublic(account *model.Account) (*mastotypes.Account, error)
+
+	// AccountStringsToMentions takes a slice of deduplicated account names in the form "@test@whatever.example.org", which have been
+	// mentioned in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
+	// checks in the database for the mentioned accounts, and returns a slice of mentions generated based on the given parameters.
+	AccountStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error)
 }
 
 // New returns a new database service that satisfies the DB interface and, by extension,

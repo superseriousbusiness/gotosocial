@@ -38,8 +38,8 @@ type Account struct {
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
 	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
 	Username string `pg:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
-	// Domain of the account, will be empty if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
-	Domain string `pg:",unique:userdomain"` // username and domain should be unique *with* each other
+	// Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
+	Domain string `pg:"default:null,unique:userdomain"` // username and domain should be unique *with* each other
 
 	/*
 		ACCOUNT METADATA
@@ -95,7 +95,7 @@ type Account struct {
 	// Should this account be shown in the instance's profile directory?
 	Discoverable bool
 	// Default post privacy for this account
-	Privacy string
+	Privacy Visibility
 	// Set posts from this account to sensitive by default?
 	Sensitive bool
 	// What language does this account post in?
@@ -122,7 +122,7 @@ type Account struct {
 	// URL for getting the featured collection list of this account
 	FeaturedCollectionURL string `pg:",unique"`
 	// What type of activitypub actor is this account?
-	ActorType string
+	ActorType ActivityStreamsActor
 	// This account is associated with x account id
 	AlsoKnownAs string
 

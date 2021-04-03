@@ -37,35 +37,32 @@ var (
 // It will look for fully-qualified account names in the form "@user@example.org".
 // Mentions that are just in the form "@username" will not be detected.
 func DeriveMentions(status string) []string {
-	menchies := []string{}
-	for _, match := range mentionRegex.FindAllStringSubmatch(status, -1) {
-		menchies = append(menchies, match[1])
+	mentionedAccounts := []string{}
+	for _, m := range mentionRegex.FindAllStringSubmatch(status, -1) {
+		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
-	return Unique(menchies)
+	return Unique(mentionedAccounts)
 }
 
 // Unique returns a deduplicated version of a given string slice.
 func Unique(s []string) []string {
-    keys := make(map[string]bool)
-    list := []string{}
-    for _, entry := range s {
-        if _, value := keys[entry]; !value {
-            keys[entry] = true
-            list = append(list, entry)
-        }
-    }
-    return list
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range s {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 // HTMLFormat takes a plaintext formatted status string, and converts it into
 // a nice HTML-formatted string.
 //
 // This includes:
-//
 // - Replacing line-breaks with <p>
-//
 // - Replacing URLs with hrefs.
-//
 // - Replacing mentions with links to that account's URL as stored in the database.
 func HTMLFormat(status string) string {
 	// TODO: write proper HTML formatting logic for a status
