@@ -23,13 +23,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
@@ -101,7 +101,6 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	thisStatusID := uuid.NewString()
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
-
 	newStatus := &model.Status{
 		ID:                  thisStatusID,
 		URI:                 thisStatusURI,
@@ -116,12 +115,22 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		ActivityStreamsType: model.ActivityStreamsNote,
 	}
 
-	// take care of side effects -- mentions, updating metadata, etc, etc
 	menchies, err := m.db.AccountStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating mentions from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
 		return
+	}
+
+	newStatus.Mentions = menchies
+
+	// take care of side effects -- federation, mentions, updating metadata, etc, etc
+
+
+	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
+		APObjectType: model.ActivityStreamsNote,
+		APActivityType: model.ActivityStreamsCreate,
+		Activity: newStatus,
 	}
 
 }

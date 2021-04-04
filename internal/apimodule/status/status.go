@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -54,15 +55,17 @@ type statusModule struct {
 	db           db.DB
 	oauthServer  oauth.Server
 	mediaHandler media.MediaHandler
+	distributor  distributor.Distributor
 	log          *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &statusModule{
 		config:       config,
 		db:           db,
 		mediaHandler: mediaHandler,
+		distributor:  distributor,
 		log:          log,
 	}
 }

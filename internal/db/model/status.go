@@ -51,6 +51,12 @@ type Status struct {
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 	// Will probably almost always be Note but who knows!.
 	ActivityStreamsType ActivityStreamsObject
+	// Mentions created in this status -- will not be put in the database along with the status
+	Mentions            []*Mention `pg:"-"`
+	// Hashtags used in this status -- will not be put in the database along with the status
+	Tags []*Tag `pg:"-"`
+	// Emojis used in this status -- will not be put in the database along with the status
+	Emojis []*Emoji `pg:"-"`
 }
 
 // Visibility represents the visibility granularity of a status.
