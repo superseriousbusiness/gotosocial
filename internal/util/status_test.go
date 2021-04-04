@@ -54,6 +54,51 @@ func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 	assert.Len(suite.T(), menchies, 0)
 }
 
+func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
+	statusText := `#testing123 #also testing
+
+# testing this one shouldn't work
+
+			#thisshouldwork
+
+#ThisShouldAlsoWork #not_this_though
+
+#111111 thisalsoshouldn'twork#### ##`
+
+	tags := DeriveHashtags(statusText)
+	assert.Len(suite.T(), tags, 5)
+	assert.Equal(suite.T(), "testing123", tags[0])
+	assert.Equal(suite.T(), "also", tags[1])
+	assert.Equal(suite.T(), "thisshouldwork", tags[2])
+	assert.Equal(suite.T(), "thisshouldalsowork", tags[3])
+	assert.Equal(suite.T(), "111111", tags[4])
+}
+
+func (suite *StatusTestSuite) TestDeriveEmojiOK() {
+	statusText := `:test: :another:
+
+Here's some normal text with an :emoji: at the end
+
+:spaces shouldnt work:
+
+:emoji1::emoji2:
+
+:anotheremoji:emoji2:
+:anotheremoji::anotheremoji::anotheremoji::anotheremoji:
+:underscores_ok_too:
+`
+
+	tags := DeriveEmojis(statusText)
+	assert.Len(suite.T(), tags, 7)
+	assert.Equal(suite.T(), "test", tags[0])
+	assert.Equal(suite.T(), "another", tags[1])
+	assert.Equal(suite.T(), "emoji", tags[2])
+	assert.Equal(suite.T(), "emoji1", tags[3])
+	assert.Equal(suite.T(), "emoji2", tags[4])
+	assert.Equal(suite.T(), "anotheremoji", tags[5])
+	assert.Equal(suite.T(), "underscores_ok_too", tags[6])
+}
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
 }

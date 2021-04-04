@@ -665,7 +665,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}, nil
 }
 
-func (ps *postgresService) AccountStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error) {
+func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error) {
 	menchies := []*model.Mention{}
 	for _, a := range targetAccounts {
 		// A mentioned account looks like "@test@example.org" -- we can guarantee this from the regex that targetAccounts should have been derived from.
@@ -710,7 +710,7 @@ func (ps *postgresService) AccountStringsToMentions(targetAccounts []string, ori
 			return nil, fmt.Errorf("error getting account with username %s and domain %s: %s", username, domain, err)
 		}
 
-		// id, createdat and updatedat will be populated by the db, so we have everything we need!
+		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &model.Mention{
 			StatusID: statusID,
 			OriginAccountID: originAccountID,
@@ -718,4 +718,36 @@ func (ps *postgresService) AccountStringsToMentions(targetAccounts []string, ori
 		})
 	}
 	return menchies, nil
+}
+
+// for now this function doesn't really use the database, but it's here because:
+// A) it might later and
+// B) it's v. similar to MentionStringsToMentions
+func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*model.Tag, error) {
+	newTags := []*model.Tag{}
+	for _, t := range tags {
+		newTags = append(newTags, &model.Tag{
+			Name: t,
+		})
+	}
+	return newTags, nil
+}
+
+func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*model.Emoji, error) {
+	newEmojis := []*model.Emoji{}
+	for _, e := range emojis {
+		emoji := &model.Emoji{}
+		err := ps.conn.Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Select()
+		if err != nil {
+			if err == pg.ErrNoRows {
+				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
+				ps.log.Debugf("no emoji found with shortcode %s, skipping it", e)
+				continue
+			}
+			// a serious error has happened so bail
+			return nil, fmt.Errorf("error getting emoji with shortcode %s: %s",e, err)
+		}
+		newEmojis = append(newEmojis, emoji)
+	}
+	return newEmojis, nil
 }

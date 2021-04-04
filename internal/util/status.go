@@ -21,13 +21,21 @@ package util
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // To play around with these regexes, see: https://regex101.com/r/2km2EK/1
 var (
+	// mention regex can be played around with here: https://regex101.com/r/2km2EK/1
 	hostnameRegexString = `(?:(?:[a-zA-Z]{1})|(?:[a-zA-Z]{1}[a-zA-Z]{1})|(?:[a-zA-Z]{1}[0-9]{1})|(?:[0-9]{1}[a-zA-Z]{1})|(?:[a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.(?:[a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,5}))`
 	mentionRegexString  = fmt.Sprintf(`(?: |^|\W)(@[a-zA-Z0-9_]+@%s(?: |\n)`, hostnameRegexString)
 	mentionRegex        = regexp.MustCompile(mentionRegexString)
+	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
+	hashtagRegexString = `(?: |^|\W)?#([a-zA-Z0-9]{1,30})(?:\b|\r)`
+	hashtagRegex = regexp.MustCompile(hashtagRegexString)
+	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
+	emojiRegexString = `(?: |^|\W)?:([a-zA-Z0-9_]{2,30}):(?:\b|\r)?`
+	emojiRegex = regexp.MustCompile(emojiRegexString)
 )
 
 // DeriveMentions takes a plaintext (ie., not html-formatted) status,
@@ -36,12 +44,37 @@ var (
 //
 // It will look for fully-qualified account names in the form "@user@example.org".
 // Mentions that are just in the form "@username" will not be detected.
+// The case of the returned mentions will be lowered, for consistency.
 func DeriveMentions(status string) []string {
 	mentionedAccounts := []string{}
 	for _, m := range mentionRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
-	return Unique(mentionedAccounts)
+	return Lower(Unique(mentionedAccounts))
+}
+
+// DeriveHashtags takes a plaintext (ie., not html-formatted) status,
+// and applies a regex to it to return a deduplicated list of hashtags
+// used in that status, without the leading #. The case of the returned
+// tags will be lowered, for consistency.
+func DeriveHashtags(status string) []string {
+	tags := []string{}
+	for _, m := range hashtagRegex.FindAllStringSubmatch(status, -1) {
+		tags = append(tags, m[1])
+	}
+	return Lower(Unique(tags))
+}
+
+// DeriveEmojis takes a plaintext (ie., not html-formatted) status,
+// and applies a regex to it to return a deduplicated list of emojis
+// used in that status, without the surround ::. The case of the returned
+// emojis will be lowered, for consistency.
+func DeriveEmojis(status string) []string {
+	emojis := []string{}
+	for _, m := range emojiRegex.FindAllStringSubmatch(status, -1) {
+		emojis = append(emojis, m[1])
+	}
+	return Lower(Unique(emojis))
 }
 
 // Unique returns a deduplicated version of a given string slice.
@@ -55,6 +88,15 @@ func Unique(s []string) []string {
 		}
 	}
 	return list
+}
+
+// Lower lowercases all strings in a given string slice
+func Lower(s []string) []string {
+	new := []string{}
+	for _, i := range s {
+		new = append(new, strings.ToLower(i))
+	}
+	return new
 }
 
 // HTMLFormat takes a plaintext formatted status string, and converts it into

@@ -115,23 +115,40 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		ActivityStreamsType: model.ActivityStreamsNote,
 	}
 
-	menchies, err := m.db.AccountStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
+	menchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating mentions from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
 		return
 	}
 
+	tags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), authed.Account.ID, thisStatusID)
+	if err != nil {
+		l.Debugf("error generating hashtags from status: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating hashtags from status"})
+		return
+	}
+
+	emojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), authed.Account.ID, thisStatusID)
+	if err != nil {
+		l.Debugf("error generating emojis from status: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating emojis from status"})
+		return
+	}
+
 	newStatus.Mentions = menchies
+	newStatus.Tags = tags
+	newStatus.Emojis = emojis
 
 	// take care of side effects -- federation, mentions, updating metadata, etc, etc
-
-
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
 		APObjectType: model.ActivityStreamsNote,
 		APActivityType: model.ActivityStreamsCreate,
 		Activity: newStatus,
 	}
+
+	// return populated status to submitter
+	
 
 }
 
