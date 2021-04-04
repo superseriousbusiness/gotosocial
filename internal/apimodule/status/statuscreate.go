@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -62,13 +61,15 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// check this user/account is permitted to post new statuses
+	// First check this user/account is permitted to post new statuses.
+	// There's no point continuing otherwise.
 	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
 		l.Debugf("couldn't auth: %s", err)
 		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
 		return
 	}
 
+	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Trace("parsing request form")
 	form := &advancedStatusCreateForm{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
@@ -76,24 +77,70 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
 		return
 	}
-
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateStatus(form, m.config.StatusesConfig, authed.Account.ID, m.db); err != nil {
+	if err := validateCreateStatus(form, m.config.StatusesConfig); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// At this point we know the account is permitted to post, and we know the request form
+	// is valid (at least according to the API specifications and the instance configuration).
+	// So now we can start digging a bit deeper into the status itself.
+
+	// If this status is a reply to another status, we need to do a bit of work to establish whether or not this status can be posted:
+	//
+	// 1. Does the replied status exist in the database?
+	// 2. Is the replied status marked as replyable?
+	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
+	//
+	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
+	repliedStatus := &model.Status{}
+	repliedAccount := &model.Account{}
+	if form.InReplyToID != "" {
+		// check replied status exists + is replyable
+		if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil || !repliedStatus.VisibilityAdvanced.Replyable {
+			l.Debugf("status id %s cannot be retrieved from the db: %s", form.InReplyToID, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
+			return
+		}
+		// check replied account is known to us
+		if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
+			l.Debugf("error getting account with id %s from the database: %s", repliedStatus.AccountID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
+			return
+		}
+		// check if a block exists
+		if blocked, err := m.db.Blocked(authed.Account.ID, repliedAccount.ID); err != nil || blocked {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
+			return
+		}
+	}
+
+	attachments := []*model.MediaAttachment{}
+	for _, mediaID := range form.MediaIDs {
+		// check these attachments exist
+		a := &model.MediaAttachment{}
+		if err := m.db.GetByID(mediaID, a); err != nil {
+			l.Debugf("invalid media type or media not found for media id %s: %s", m, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid media type or media not found for media id %s", mediaID)})
+			return
+		}
+		// check they belong to the requesting account id
+		if a.AccountID != authed.Account.ID {
+			l.Debugf("media attachment %s does not belong to account id %s", m, authed.Account.ID)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("media with id %s does not belong to account %s", mediaID, authed.Account.ID)})
+			return
+		}
+		attachments = append(attachments, a)
+	}
+
 	// here we check if any advanced visibility flags have been set and fiddle with them if so
 	l.Trace("deriving visibility")
 	basicVis, advancedVis, err := deriveTotalVisibility(form.Visibility, form.AdvancedVisibility, authed.Account.Privacy)
-
-	clientIP := c.ClientIP()
-	l.Tracef("attempting to parse client ip address %s", clientIP)
-	signUpIP := net.ParseIP(clientIP)
-	if signUpIP == nil {
-		l.Debugf("error validating client ip address %s", clientIP)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ip address could not be parsed from request"})
+	if err != nil {
+		l.Debugf("error parsing visibility: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -142,17 +189,31 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 
 	// take care of side effects -- federation, mentions, updating metadata, etc, etc
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
-		APObjectType: model.ActivityStreamsNote,
+		APObjectType:   model.ActivityStreamsNote,
 		APActivityType: model.ActivityStreamsCreate,
-		Activity: newStatus,
+		Activity:       newStatus,
 	}
 
 	// return populated status to submitter
-	
+	// mastoStatus := &mastotypes.Status{
+	// 	ID:                 newStatus.ID,
+	// 	CreatedAt:          time.Now().Format(time.RFC3339),
+	// 	InReplyToID:        newStatus.InReplyToID,
+	// 	InReplyToAccountID: newStatus.InReplyToAccountID,
+	// }
+
+	clientIP := c.ClientIP()
+	l.Tracef("attempting to parse client ip address %s", clientIP)
+	signUpIP := net.ParseIP(clientIP)
+	if signUpIP == nil {
+		l.Debugf("error validating client ip address %s", clientIP)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ip address could not be parsed from request"})
+		return
+	}
 
 }
 
-func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig, accountID string, db db.DB) error {
+func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig) error {
 	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
@@ -174,18 +235,6 @@ func validateCreateStatus(form *advancedStatusCreateForm, config *config.Statuse
 		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), config.MaxMediaFiles)
 	}
 
-	for _, m := range form.MediaIDs {
-		// check these attachments exist
-		a := &model.MediaAttachment{}
-		if err := db.GetByID(m, a); err != nil {
-			return fmt.Errorf("invalid media type or media not found for media id %s: %s", m, err)
-		}
-		// check they belong to the requesting account id
-		if a.AccountID != accountID {
-			return fmt.Errorf("media attachment %s does not belong to account id %s", m, accountID)
-		}
-	}
-
 	// validate poll
 	if form.Poll != nil {
 		if form.Poll.Options == nil {
@@ -198,17 +247,6 @@ func validateCreateStatus(form *advancedStatusCreateForm, config *config.Statuse
 			if len(p) > config.PollOptionMaxChars {
 				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", len(p), config.PollOptionMaxChars)
 			}
-		}
-	}
-
-	// validate reply-to status exists and is reply-able
-	if form.InReplyToID != "" {
-		s := &model.Status{}
-		if err := db.GetByID(form.InReplyToID, s); err != nil {
-			return fmt.Errorf("status id %s cannot be retrieved from the db: %s", form.InReplyToID, err)
-		}
-		if !s.VisibilityAdvanced.Replyable {
-			return fmt.Errorf("status with id %s is not replyable", form.InReplyToID)
 		}
 	}
 

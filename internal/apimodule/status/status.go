@@ -87,6 +87,9 @@ func (m *statusModule) CreateTables(db db.DB) error {
 		&model.Application{},
 		&model.EmailDomainBlock{},
 		&model.MediaAttachment{},
+		&model.Emoji{},
+		&model.Tag{},
+		&model.Mention{},
 	}
 
 	for _, m := range models {

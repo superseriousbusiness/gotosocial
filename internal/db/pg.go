@@ -511,6 +511,22 @@ func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, 
 	return nil
 }
 
+func (ps *postgresService) Blocked(account1 string, account2 string) (bool, error) {
+	var blocked bool
+	if err := ps.conn.Model(&model.Block{}).
+		Where("account_id = ?", account1).Where("target_account_id = ?", account2).
+		WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2).
+		Select(); err != nil {
+		if err == pg.ErrNoRows {
+			blocked = false
+		} else {
+			return blocked, err
+		}
+	}
+	blocked = true
+	return blocked, nil
+}
+
 /*
 	CONVERSION FUNCTIONS
 */
@@ -712,7 +728,7 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &model.Mention{
-			StatusID: statusID,
+			StatusID:        statusID,
 			OriginAccountID: originAccountID,
 			TargetAccountID: mentionedAccount.ID,
 		})
@@ -745,7 +761,7 @@ func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID
 				continue
 			}
 			// a serious error has happened so bail
-			return nil, fmt.Errorf("error getting emoji with shortcode %s: %s",e, err)
+			return nil, fmt.Errorf("error getting emoji with shortcode %s: %s", e, err)
 		}
 		newEmojis = append(newEmojis, emoji)
 	}

@@ -174,6 +174,10 @@ type DB interface {
 	// The passed mediaAttachment pointer will be populated with the value of the header, if it exists.
 	GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error
 
+	// Blocked checks whether a block exists in eiher direction between two accounts.
+	// That is, it returns true if account1 blocks account2, OR if account2 blocks account1.
+	Blocked(account1 string, account2 string) (bool, error)
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/
