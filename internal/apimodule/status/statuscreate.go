@@ -21,8 +21,8 @@ package status
 import (
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -69,7 +69,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
+	// extract the status create form from the request context
 	l.Trace("parsing request form")
 	form := &advancedStatusCreateForm{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
@@ -77,6 +77,8 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
 		return
 	}
+
+	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
 	if err := validateCreateStatus(form, m.config.StatusesConfig); err != nil {
 		l.Debugf("error validating form: %s", err)
@@ -86,64 +88,9 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 
 	// At this point we know the account is permitted to post, and we know the request form
 	// is valid (at least according to the API specifications and the instance configuration).
-	// So now we can start digging a bit deeper into the status itself.
+	// So now we can start digging a bit deeper into the form and building up the new status from it.
 
-	// If this status is a reply to another status, we need to do a bit of work to establish whether or not this status can be posted:
-	//
-	// 1. Does the replied status exist in the database?
-	// 2. Is the replied status marked as replyable?
-	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
-	//
-	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
-	repliedStatus := &model.Status{}
-	repliedAccount := &model.Account{}
-	if form.InReplyToID != "" {
-		// check replied status exists + is replyable
-		if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil || !repliedStatus.VisibilityAdvanced.Replyable {
-			l.Debugf("status id %s cannot be retrieved from the db: %s", form.InReplyToID, err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
-			return
-		}
-		// check replied account is known to us
-		if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
-			l.Debugf("error getting account with id %s from the database: %s", repliedStatus.AccountID, err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
-			return
-		}
-		// check if a block exists
-		if blocked, err := m.db.Blocked(authed.Account.ID, repliedAccount.ID); err != nil || blocked {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("status with id %s not replyable", form.InReplyToID)})
-			return
-		}
-	}
-
-	attachments := []*model.MediaAttachment{}
-	for _, mediaID := range form.MediaIDs {
-		// check these attachments exist
-		a := &model.MediaAttachment{}
-		if err := m.db.GetByID(mediaID, a); err != nil {
-			l.Debugf("invalid media type or media not found for media id %s: %s", m, err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid media type or media not found for media id %s", mediaID)})
-			return
-		}
-		// check they belong to the requesting account id
-		if a.AccountID != authed.Account.ID {
-			l.Debugf("media attachment %s does not belong to account id %s", m, authed.Account.ID)
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("media with id %s does not belong to account %s", mediaID, authed.Account.ID)})
-			return
-		}
-		attachments = append(attachments, a)
-	}
-
-	// here we check if any advanced visibility flags have been set and fiddle with them if so
-	l.Trace("deriving visibility")
-	basicVis, advancedVis, err := deriveTotalVisibility(form.Visibility, form.AdvancedVisibility, authed.Account.Privacy)
-	if err != nil {
-		l.Debugf("error parsing visibility: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
+	// first we create a new status and add some basic info to it
 	uris := util.GenerateURIs(authed.Account.Username, m.config.Protocol, m.config.Host)
 	thisStatusID := uuid.NewString()
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
@@ -152,42 +99,66 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		ID:                  thisStatusID,
 		URI:                 thisStatusURI,
 		URL:                 thisStatusURL,
-		Content:             util.HTMLFormat(form.Status),
-		Local:               true, // will always be true if this status is being created through the client API, since only local users can do that
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		Local:               true,
 		AccountID:           authed.Account.ID,
-		InReplyToID:         form.InReplyToID,
 		ContentWarning:      form.SpoilerText,
-		Visibility:          basicVis,
-		VisibilityAdvanced:  *advancedVis,
 		ActivityStreamsType: model.ActivityStreamsNote,
 	}
 
+	// check if replyToID is ok
+	if err := m.parseReplyToID(form, authed.Account.ID, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// check if mediaIDs are ok
+	if err := m.parseMediaIDs(form, authed.Account.ID, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// check if visibility settings are ok
+	if err := parseVisibility(form, authed.Account.Privacy, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// convert mentions to *model.Mention
 	menchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating mentions from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
 		return
 	}
+	newStatus.Mentions = menchies
 
+	// convert tags to *model.Tag
 	tags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating hashtags from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating hashtags from status"})
 		return
 	}
+	newStatus.Tags = tags
 
+	// convert emojis to *model.Emoji
 	emojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating emojis from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating emojis from status"})
 		return
 	}
-
-	newStatus.Mentions = menchies
-	newStatus.Tags = tags
 	newStatus.Emojis = emojis
 
-	// take care of side effects -- federation, mentions, updating metadata, etc, etc
+	// put the new status in the database
+	if err := m.db.Put(newStatus); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// pass to the distributor to take care of side effects -- federation, mentions, updating metadata, etc, etc
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
 		APObjectType:   model.ActivityStreamsNote,
 		APActivityType: model.ActivityStreamsCreate,
@@ -199,18 +170,8 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	// 	ID:                 newStatus.ID,
 	// 	CreatedAt:          time.Now().Format(time.RFC3339),
 	// 	InReplyToID:        newStatus.InReplyToID,
-	// 	InReplyToAccountID: newStatus.InReplyToAccountID,
+	// 	// InReplyToAccountID: newStatus.,
 	// }
-
-	clientIP := c.ClientIP()
-	l.Tracef("attempting to parse client ip address %s", clientIP)
-	signUpIP := net.ParseIP(clientIP)
-	if signUpIP == nil {
-		l.Debugf("error validating client ip address %s", clientIP)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "ip address could not be parsed from request"})
-		return
-	}
-
 }
 
 func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig) error {
@@ -267,7 +228,7 @@ func validateCreateStatus(form *advancedStatusCreateForm, config *config.Statuse
 	return nil
 }
 
-func deriveTotalVisibility(basicVisForm mastotypes.Visibility, advancedVisForm *advancedVisibilityFlagsForm, accountDefaultVis model.Visibility) (model.Visibility, *model.VisibilityAdvanced, error) {
+func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Visibility, status *model.Status) error {
 	// by default all flags are set to true
 	gtsAdvancedVis := &model.VisibilityAdvanced{
 		Federated: true,
@@ -280,10 +241,10 @@ func deriveTotalVisibility(basicVisForm mastotypes.Visibility, advancedVisForm *
 	// Advanced takes priority if it's set.
 	// If it's not set, take whatever masto visibility is set.
 	// If *that's* not set either, then just take the account default.
-	if advancedVisForm != nil && advancedVisForm.Visibility != nil {
-		gtsBasicVis = *advancedVisForm.Visibility
-	} else if basicVisForm != "" {
-		gtsBasicVis = util.ParseGTSVisFromMastoVis(basicVisForm)
+	if form.AdvancedVisibility != nil && form.AdvancedVisibility.Visibility != nil {
+		gtsBasicVis = *form.AdvancedVisibility.Visibility
+	} else if form.Visibility != "" {
+		gtsBasicVis = util.ParseGTSVisFromMastoVis(form.Visibility)
 	} else {
 		gtsBasicVis = accountDefaultVis
 	}
@@ -291,55 +252,105 @@ func deriveTotalVisibility(basicVisForm mastotypes.Visibility, advancedVisForm *
 	switch gtsBasicVis {
 	case model.VisibilityPublic:
 		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
-		return gtsBasicVis, gtsAdvancedVis, nil
+		break
 	case model.VisibilityUnlocked:
 		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
-		if advancedVisForm != nil {
-			if advancedVisForm.Federated != nil {
-				gtsAdvancedVis.Federated = *advancedVisForm.Federated
+		if form.AdvancedVisibility != nil {
+			if form.AdvancedVisibility.Federated != nil {
+				gtsAdvancedVis.Federated = *form.AdvancedVisibility.Federated
 			}
 
-			if advancedVisForm.Boostable != nil {
-				gtsAdvancedVis.Boostable = *advancedVisForm.Boostable
+			if form.AdvancedVisibility.Boostable != nil {
+				gtsAdvancedVis.Boostable = *form.AdvancedVisibility.Boostable
 			}
 
-			if advancedVisForm.Replyable != nil {
-				gtsAdvancedVis.Replyable = *advancedVisForm.Replyable
+			if form.AdvancedVisibility.Replyable != nil {
+				gtsAdvancedVis.Replyable = *form.AdvancedVisibility.Replyable
 			}
 
-			if advancedVisForm.Likeable != nil {
-				gtsAdvancedVis.Likeable = *advancedVisForm.Likeable
+			if form.AdvancedVisibility.Likeable != nil {
+				gtsAdvancedVis.Likeable = *form.AdvancedVisibility.Likeable
 			}
 		}
-		return gtsBasicVis, gtsAdvancedVis, nil
 	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
 		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
 		gtsAdvancedVis.Boostable = false
 
-		if advancedVisForm != nil {
-			if advancedVisForm.Federated != nil {
-				gtsAdvancedVis.Federated = *advancedVisForm.Federated
+		if form.AdvancedVisibility != nil {
+			if form.AdvancedVisibility.Federated != nil {
+				gtsAdvancedVis.Federated = *form.AdvancedVisibility.Federated
 			}
 
-			if advancedVisForm.Replyable != nil {
-				gtsAdvancedVis.Replyable = *advancedVisForm.Replyable
+			if form.AdvancedVisibility.Replyable != nil {
+				gtsAdvancedVis.Replyable = *form.AdvancedVisibility.Replyable
 			}
 
-			if advancedVisForm.Likeable != nil {
-				gtsAdvancedVis.Likeable = *advancedVisForm.Likeable
+			if form.AdvancedVisibility.Likeable != nil {
+				gtsAdvancedVis.Likeable = *form.AdvancedVisibility.Likeable
 			}
 		}
-
-		return gtsBasicVis, gtsAdvancedVis, nil
 	case model.VisibilityDirect:
 		// direct is pretty easy: there's only one possible setting so return it
 		gtsAdvancedVis.Federated = true
 		gtsAdvancedVis.Boostable = false
 		gtsAdvancedVis.Federated = true
 		gtsAdvancedVis.Likeable = true
-		return gtsBasicVis, gtsAdvancedVis, nil
 	}
 
-	// this should never happen but just in case...
-	return "", nil, errors.New("could not parse visibility")
+	status.Visibility = gtsBasicVis
+	status.VisibilityAdvanced = gtsAdvancedVis
+	return nil
+}
+
+func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *model.Status) error {
+	if form.InReplyToID == "" {
+		return nil
+	}
+
+	// If this status is a reply to another status, we need to do a bit of work to establish whether or not this status can be posted:
+	//
+	// 1. Does the replied status exist in the database?
+	// 2. Is the replied status marked as replyable?
+	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
+	//
+	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
+	repliedStatus := &model.Status{}
+	repliedAccount := &model.Account{}
+	// check replied status exists + is replyable
+	if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil || !repliedStatus.VisibilityAdvanced.Replyable {
+		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+	}
+	// check replied account is known to us
+	if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
+		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+	}
+	// check if a block exists
+	if blocked, err := m.db.Blocked(thisAccountID, repliedAccount.ID); err != nil || blocked {
+		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+	}
+	status.InReplyToID = repliedStatus.ID
+
+	return nil
+}
+
+func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *model.Status) error {
+	if form.MediaIDs == nil {
+		return nil
+	}
+
+	attachments := []*model.MediaAttachment{}
+	for _, mediaID := range form.MediaIDs {
+		// check these attachments exist
+		a := &model.MediaAttachment{}
+		if err := m.db.GetByID(mediaID, a); err != nil {
+			return fmt.Errorf("invalid media type or media not found for media id %s", mediaID)
+		}
+		// check they belong to the requesting account id
+		if a.AccountID != thisAccountID {
+			return fmt.Errorf("media with id %s does not belong to account %s", mediaID, thisAccountID)
+		}
+		attachments = append(attachments, a)
+	}
+	status.Attachments = attachments
+	return nil
 }

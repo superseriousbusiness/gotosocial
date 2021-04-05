@@ -25,13 +25,13 @@ type Status struct {
 	// The date when this status was created (ISO 8601 Datetime)
 	CreatedAt string `json:"created_at"`
 	// ID of the status being replied.
-	InReplyToID string `json:"in_reply_to_id"`
+	InReplyToID string `json:"in_reply_to_id,omitempty"`
 	// ID of the account being replied to.
-	InReplyToAccountID string `json:"in_reply_to_account_id"`
+	InReplyToAccountID string `json:"in_reply_to_account_id,omitempty"`
 	// Is this status marked as sensitive content?
 	Sensitive bool `json:"sensitive"`
 	// Subject or summary line, below which status content is collapsed until expanded.
-	SpoilerText string `json:"spoiler_text"`
+	SpoilerText string `json:"spoiler_text,omitempty"`
 	// Visibility of this status.
 	Visibility Visibility `json:"visibility"`
 	// Primary language of this status. (ISO 639 Part 1 two-letter language code)
@@ -59,7 +59,7 @@ type Status struct {
 	// HTML-encoded status content.
 	Content string `json:"content"`
 	// The status being reblogged.
-	Reblog *Status `json:"reblog"`
+	Reblog *Status `json:"reblog,omitempty"`
 	// The application used to post this status.
 	Application *Application `json:"application"`
 	// The account that authored this status.
