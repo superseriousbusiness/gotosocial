@@ -148,7 +148,7 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 		userID := args.Get(2).(string)
 		l.Infof("received userID %+v", userID)
 	}).Return(&models.Token{
-		Code: "we're authorized now!",
+		Access: "we're authorized now!",
 	}, nil)
 
 	suite.mockStorage = &storage.MockStorage{}

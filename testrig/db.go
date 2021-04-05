@@ -23,13 +23,6 @@ var testModels []interface{} = []interface{}{
 	&oauth.Client{},
 }
 
-var TestAccounts map[string]*model.Account = map[string]*model.Account{
-
-	"test_account_1": {
-		ID: "",
-	},
-}
-
 // StandardDBSetup populates a given db with all the necessary tables/models for perfoming tests.
 func StandardDBSetup(db db.DB) error {
 	for _, m := range testModels {

@@ -50,9 +50,9 @@ func GenerateURIs(username string, protocol string, host string) *URIs {
 	followersURI := fmt.Sprintf("%s/followers", userURI)
 	collectionURI := fmt.Sprintf("%s/collections/featured", userURI)
 	return &URIs{
-		HostURL:       hostURL,
-		UserURL:       userURL,
-		StatusesURL:   statusesURL,
+		HostURL:     hostURL,
+		UserURL:     userURL,
+		StatusesURL: statusesURL,
 
 		UserURI:       userURI,
 		StatusesURI:   statusesURI,

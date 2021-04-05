@@ -24,7 +24,6 @@ package model
 
 import (
 	"crypto/rsa"
-	"net/url"
 	"time"
 )
 
@@ -54,7 +53,7 @@ type Account struct {
 	// When was the avatar last updated?
 	AvatarUpdatedAt time.Time `pg:"type:timestamp"`
 	// Where can the avatar be retrieved?
-	AvatarRemoteURL *url.URL `pg:"type:text"`
+	AvatarRemoteURL string
 	// File name of the header on local storage
 	HeaderFileName string
 	// Gif? png? jpeg?
@@ -64,7 +63,7 @@ type Account struct {
 	// When was the header last updated?
 	HeaderUpdatedAt time.Time `pg:"type:timestamp"`
 	// Where can the header be retrieved?
-	HeaderRemoteURL *url.URL `pg:"type:text"`
+	HeaderRemoteURL string
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
 	DisplayName string
 	// a key/value map of fields that this account has added to their profile
@@ -74,13 +73,11 @@ type Account struct {
 	// Is this a memorial account, ie., has the user passed away?
 	Memorial bool
 	// This account has moved this account id in the database
-	MovedToAccountID int
+	MovedToAccountID string
 	// When was this account created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this account last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When should this account function until
-	SubscriptionExpiresAt time.Time `pg:"type:timestamp"`
 	// Does this account identify itself as a bot?
 	Bot bool
 	// What reason was given for signing up when this account was created?
@@ -130,7 +127,6 @@ type Account struct {
 		CRYPTO FIELDS
 	*/
 
-	Secret string
 	// Privatekey for validating activitypub requests, will obviously only be defined for local accounts
 	PrivateKey *rsa.PrivateKey
 	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
@@ -146,12 +142,10 @@ type Account struct {
 	SilencedAt time.Time `pg:"type:timestamp"`
 	// When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	SuspendedAt time.Time `pg:"type:timestamp"`
-	// How much do we trust this account 🤔
-	TrustLevel int
 	// Should we hide this account's collections?
 	HideCollections bool
 	// id of the user that suspended this account through an admin action
-	SuspensionOrigin int
+	SuspensionOrigin string
 }
 
 // Field represents a key value field on an account, for things like pronouns, website, etc.
