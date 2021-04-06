@@ -35,7 +35,7 @@ type Application struct {
 	// Client secret to use when obtaining an auth token for this application (ie., in client_secret parameter of https://docs.joinmastodon.org/methods/apps/)
 	ClientSecret string `json:"client_secret,omitempty"`
 	// Used for Push Streaming API. Returned with POST /api/v1/apps. Equivalent to https://docs.joinmastodon.org/entities/pushsubscription/#server_key
-	VapidKey string `json:"vapid_key"`
+	VapidKey string `json:"vapid_key,omitempty"`
 }
 
 // ApplicationPOSTRequest represents a POST request to https://example.org/api/v1/apps.

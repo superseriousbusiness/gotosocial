@@ -67,7 +67,7 @@ type Account struct {
 	// When a timed mute will expire, if applicable. (ISO 8601 Datetime)
 	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// An extra entity to be used with API methods to verify credentials and update credentials.
-	Source *Source `json:"source"`
+	Source *Source `json:"source,omitempty"`
 }
 
 // AccountCreateRequest represents the form submitted during a POST request to /api/v1/accounts.

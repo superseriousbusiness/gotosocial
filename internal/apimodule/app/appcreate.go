@@ -109,5 +109,5 @@ func (m *appModule) appsPOSTHandler(c *gin.Context) {
 	}
 
 	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, app.ToMasto())
+	c.JSON(http.StatusOK, app.ToMastoSensitive())
 }
