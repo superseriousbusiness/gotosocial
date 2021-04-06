@@ -165,27 +165,13 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":       {"this is a brand new status!"},
-		"spoiler_text": {"hello hello"},
-		"sensitive":    {"true"},
-		"visibility":   {"public"},
-		// 	Status string `form:"status"`
-		// // Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
-		// MediaIDs []string `form:"media_ids"`
-		// // Poll to include with this status.
-		// Poll *PollRequest `form:"poll"`
-		// // ID of the status being replied to, if status is a reply
-		// InReplyToID string `form:"in_reply_to_id"`
-		// // Mark status and attached media as sensitive?
-		// Sensitive bool `form:"sensitive"`
-		// // Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
-		// SpoilerText string `form:"spoiler_text"`
-		// // Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
-		// Visibility Visibility `form:"visibility"`
-		// // ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
-		// ScheduledAt string `form:"scheduled_at"`
-		// // ISO 639 language code for this status.
-		// Language string `form:"language"`
+		"status":              {"this is a brand new status!"},
+		"spoiler_text":        {"hello hello"},
+		"sensitive":           {"true"},
+		"visibility_advanced": {"mutuals_only"},
+		"likeable":            {"false"},
+		"replyable":           {"false"},
+		"federated":           {"false"},
 	}
 	suite.statusModule.statusCreatePOSTHandler(ctx)
 
@@ -198,6 +184,7 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
+	fmt.Println(string(b))
 
 	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
@@ -206,7 +193,47 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "this is a brand new status!", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastotypes.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
+}
+
+func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToFail() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.PGTokenToOauthToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request.Form = url.Values{
+		"status":              {"this is a reply to a status that doesn't exist"},
+		"spoiler_text":        {"don't open cuz it won't work"},
+		"in_reply_to_id":      {"3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50"},
+	}
+	suite.statusModule.statusCreatePOSTHandler(ctx)
+
+	// check response
+
+	// 1. we should have OK from our call to the function
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	fmt.Println(string(b))
+
+	statusReply := &mastotypes.Status{}
+	err = json.Unmarshal(b, statusReply)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
+	assert.Equal(suite.T(), "this is a brand new status!", statusReply.Content)
+	assert.True(suite.T(), statusReply.Sensitive)
+	assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

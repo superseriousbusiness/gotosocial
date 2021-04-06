@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/model"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -36,12 +37,12 @@ import (
 
 type advancedStatusCreateForm struct {
 	mastotypes.StatusCreateRequest
-	AdvancedVisibility *advancedVisibilityFlagsForm `form:"visibility_advanced"`
+	advancedVisibilityFlagsForm
 }
 
 type advancedVisibilityFlagsForm struct {
 	// The gotosocial visibility model
-	Visibility *model.Visibility
+	VisibilityAdvanced *model.Visibility `form:"visibility_advanced"`
 	// This status will be federated beyond the local timeline(s)
 	Federated *bool `form:"federated"`
 	// This status can be boosted/reblogged
@@ -70,7 +71,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// extract the status create form from the request context
-	l.Trace("parsing request form")
+	l.Tracef("parsing request form: %s", c.Request.Form)
 	form := &advancedStatusCreateForm{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
@@ -124,6 +125,12 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 
 	// check if visibility settings are ok
 	if err := parseVisibility(form, authed.Account.Privacy, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// handle language settings
+	if err := parseLanguage(form, authed.Account.Language, newStatus); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -186,8 +193,9 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		URI:         newStatus.URI,
 		URL:         newStatus.URL,
 		Content:     newStatus.Content,
-		Application: authed.Application.ToMasto(),
+		Application: authed.Application.ToMastoPublic(),
 		Account:     mastoAccount,
+		// MediaAttachments: ,
 		Text:        form.Status,
 	}
 	c.JSON(http.StatusOK, mastoStatus)
@@ -260,8 +268,8 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 	// Advanced takes priority if it's set.
 	// If it's not set, take whatever masto visibility is set.
 	// If *that's* not set either, then just take the account default.
-	if form.AdvancedVisibility != nil && form.AdvancedVisibility.Visibility != nil {
-		gtsBasicVis = *form.AdvancedVisibility.Visibility
+	if form.VisibilityAdvanced != nil {
+		gtsBasicVis = *form.VisibilityAdvanced
 	} else if form.Visibility != "" {
 		gtsBasicVis = util.ParseGTSVisFromMastoVis(form.Visibility)
 	} else {
@@ -274,40 +282,38 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 		break
 	case model.VisibilityUnlocked:
 		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
-		if form.AdvancedVisibility != nil {
-			if form.AdvancedVisibility.Federated != nil {
-				gtsAdvancedVis.Federated = *form.AdvancedVisibility.Federated
-			}
-
-			if form.AdvancedVisibility.Boostable != nil {
-				gtsAdvancedVis.Boostable = *form.AdvancedVisibility.Boostable
-			}
-
-			if form.AdvancedVisibility.Replyable != nil {
-				gtsAdvancedVis.Replyable = *form.AdvancedVisibility.Replyable
-			}
-
-			if form.AdvancedVisibility.Likeable != nil {
-				gtsAdvancedVis.Likeable = *form.AdvancedVisibility.Likeable
-			}
+		if form.Federated != nil {
+			gtsAdvancedVis.Federated = *form.Federated
 		}
+
+		if form.Boostable != nil {
+			gtsAdvancedVis.Boostable = *form.Boostable
+		}
+
+		if form.Replyable != nil {
+			gtsAdvancedVis.Replyable = *form.Replyable
+		}
+
+		if form.Likeable != nil {
+			gtsAdvancedVis.Likeable = *form.Likeable
+		}
+
 	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
 		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
 		gtsAdvancedVis.Boostable = false
 
-		if form.AdvancedVisibility != nil {
-			if form.AdvancedVisibility.Federated != nil {
-				gtsAdvancedVis.Federated = *form.AdvancedVisibility.Federated
-			}
-
-			if form.AdvancedVisibility.Replyable != nil {
-				gtsAdvancedVis.Replyable = *form.AdvancedVisibility.Replyable
-			}
-
-			if form.AdvancedVisibility.Likeable != nil {
-				gtsAdvancedVis.Likeable = *form.AdvancedVisibility.Likeable
-			}
+		if form.Federated != nil {
+			gtsAdvancedVis.Federated = *form.Federated
 		}
+
+		if form.Replyable != nil {
+			gtsAdvancedVis.Replyable = *form.Replyable
+		}
+
+		if form.Likeable != nil {
+			gtsAdvancedVis.Likeable = *form.Likeable
+		}
+
 	case model.VisibilityDirect:
 		// direct is pretty easy: there's only one possible setting so return it
 		gtsAdvancedVis.Federated = true
@@ -336,9 +342,18 @@ func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	repliedStatus := &model.Status{}
 	repliedAccount := &model.Account{}
 	// check replied status exists + is replyable
-	if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil || !repliedStatus.VisibilityAdvanced.Replyable {
-		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+	if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
+		} else {
+			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		}
 	}
+
+	if !repliedStatus.VisibilityAdvanced.Replyable {
+		return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
+	}
+
 	// check replied account is known to us
 	if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
@@ -371,5 +386,17 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		attachments = append(attachments, a)
 	}
 	status.Attachments = attachments
+	return nil
+}
+
+func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string, status *model.Status) error {
+	if form.Language != "" {
+		status.Language = form.Language
+	} else {
+		status.Language = accountDefaultLanguage
+	}
+	if status.Language == "" {
+		return errors.New("no language given either in status create form or account default")
+	}
 	return nil
 }

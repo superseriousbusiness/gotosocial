@@ -63,12 +63,36 @@ func GenerateURIs(username string, protocol string, host string) *URIs {
 	}
 }
 
+// ParseGTSVisFromMastoVis converts a mastodon visibility into its gts equivalent.
 func ParseGTSVisFromMastoVis(m mastotypes.Visibility) model.Visibility {
-	// TODO: convert a masto vis into a gts vis
+	switch m {
+	case mastotypes.VisibilityPublic:
+		return model.VisibilityPublic
+	case mastotypes.VisibilityUnlisted:
+		return model.VisibilityUnlocked
+	case mastotypes.VisibilityPrivate:
+		return model.VisibilityFollowersOnly
+	case mastotypes.VisibilityDirect:
+		return model.VisibilityDirect
+	default:
+		break
+	}
 	return ""
 }
 
+// ParseMastoVisFromGTSVis converts a gts visibility into its mastodon equivalent
 func ParseMastoVisFromGTSVis(m model.Visibility) mastotypes.Visibility {
-	// TODO: convert a gts vis into a masto vis
+	switch m {
+	case model.VisibilityPublic:
+		return mastotypes.VisibilityPublic
+	case model.VisibilityUnlocked:
+		return mastotypes.VisibilityUnlisted
+	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
+		return mastotypes.VisibilityPrivate
+	case model.VisibilityDirect:
+		return mastotypes.VisibilityDirect
+	default:
+		break
+	}
 	return ""
 }
