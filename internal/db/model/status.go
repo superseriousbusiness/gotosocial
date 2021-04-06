@@ -46,6 +46,10 @@ type Status struct {
 	ContentWarning string
 	// visibility entry for this status
 	Visibility Visibility
+	// mark the status as sensitive?
+	Sensitive bool
+	// what language is this status written in?
+	Language string
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types

@@ -99,12 +99,15 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		ID:                  thisStatusID,
 		URI:                 thisStatusURI,
 		URL:                 thisStatusURL,
+		Content:             util.HTMLFormat(form.Status),
 		CreatedAt:           time.Now(),
 		UpdatedAt:           time.Now(),
 		Local:               true,
 		AccountID:           authed.Account.ID,
 		ContentWarning:      form.SpoilerText,
 		ActivityStreamsType: model.ActivityStreamsNote,
+		Sensitive:           form.Sensitive,
+		Language:            form.Language,
 	}
 
 	// check if replyToID is ok
@@ -166,12 +169,28 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// return populated status to submitter
-	// mastoStatus := &mastotypes.Status{
-	// 	ID:                 newStatus.ID,
-	// 	CreatedAt:          time.Now().Format(time.RFC3339),
-	// 	InReplyToID:        newStatus.InReplyToID,
-	// 	// InReplyToAccountID: newStatus.,
-	// }
+	mastoAccount, err := m.db.AccountToMastoPublic(authed.Account)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	mastoStatus := &mastotypes.Status{
+		ID:          newStatus.ID,
+		CreatedAt:   newStatus.CreatedAt.Format(time.RFC3339),
+		InReplyToID: newStatus.InReplyToID,
+		// InReplyToAccountID: newStatus.ReplyToAccount.ID,
+		Sensitive:   newStatus.Sensitive,
+		SpoilerText: newStatus.ContentWarning,
+		Visibility:  util.ParseMastoVisFromGTSVis(newStatus.Visibility),
+		Language:    newStatus.Language,
+		URI:         newStatus.URI,
+		URL:         newStatus.URL,
+		Content:     newStatus.Content,
+		Application: authed.Application.ToMasto(),
+		Account:     mastoAccount,
+		Text:        form.Status,
+	}
+	c.JSON(http.StatusOK, mastoStatus)
 }
 
 func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig) error {

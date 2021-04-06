@@ -9,32 +9,16 @@ type MockDistributor struct {
 	mock.Mock
 }
 
-// ClientAPIIn provides a mock function with given fields:
-func (_m *MockDistributor) ClientAPIIn() chan interface{} {
+// FromClientAPI provides a mock function with given fields:
+func (_m *MockDistributor) FromClientAPI() chan FromClientAPI {
 	ret := _m.Called()
 
-	var r0 chan interface{}
-	if rf, ok := ret.Get(0).(func() chan interface{}); ok {
+	var r0 chan FromClientAPI
+	if rf, ok := ret.Get(0).(func() chan FromClientAPI); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(chan interface{})
-		}
-	}
-
-	return r0
-}
-
-// ClientAPIOut provides a mock function with given fields:
-func (_m *MockDistributor) ClientAPIOut() chan interface{} {
-	ret := _m.Called()
-
-	var r0 chan interface{}
-	if rf, ok := ret.Get(0).(func() chan interface{}); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(chan interface{})
+			r0 = ret.Get(0).(chan FromClientAPI)
 		}
 	}
 
@@ -64,6 +48,22 @@ func (_m *MockDistributor) Stop() error {
 		r0 = rf()
 	} else {
 		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ToClientAPI provides a mock function with given fields:
+func (_m *MockDistributor) ToClientAPI() chan ToClientAPI {
+	ret := _m.Called()
+
+	var r0 chan ToClientAPI
+	if rf, ok := ret.Get(0).(func() chan ToClientAPI); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(chan ToClientAPI)
+		}
 	}
 
 	return r0

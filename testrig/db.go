@@ -30,6 +30,37 @@ func StandardDBSetup(db db.DB) error {
 			return err
 		}
 	}
+
+	for _, v := range TestTokens() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range TestClients() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range TestApplications() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range TestUsers() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range TestAccounts() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
