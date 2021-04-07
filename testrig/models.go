@@ -379,13 +379,12 @@ func TestAccounts() map[string]*model.Account {
 			// HeaderRemoteURL:       "",
 			DisplayName:           "big gerald",
 			Fields:                []model.Field{},
-			Note:                  "",
+			Note:                  "i post about like, i dunno, stuff, or whatever!!!!",
 			Memorial:              false,
 			MovedToAccountID:      "",
 			CreatedAt:             time.Now().Add(-190 * time.Hour),
 			UpdatedAt:             time.Now().Add(-36 * time.Hour),
 			Bot:                   false,
-			Reason:                "",
 			Locked:                false,
 			Discoverable:          true,
 			Sensitive:             false,
@@ -439,4 +438,55 @@ func TestAccounts() map[string]*model.Account {
 		v.PublicKey = pub
 	}
 	return accounts
+}
+
+func TestStatuses() map[string]*model.Status {
+	return map[string]*model.Status{
+		"local_account_1_status_1": {
+			ID: "91b1e795-74ff-4672-a4c4-476616710e2d",
+			URI: "http://localhost:8080/users/the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
+			URL: "http://localhost:8080/@the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
+			Content: "hello everyone!",
+			CreatedAt:             time.Now().Add(-47 * time.Hour),
+			UpdatedAt:             time.Now().Add(-47 * time.Hour),
+			Local: true,
+			AccountID: "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID: "",
+			BoostOfID: "",
+			ContentWarning: "introduction post",
+			Visibility: model.VisibilityPublic,
+			Sensitive: true,
+			Language: "en",
+			VisibilityAdvanced: &model.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable: true,
+			},
+			ActivityStreamsType: model.ActivityStreamsNote,
+		},
+		"local_account_1_status_2": {
+			ID: "3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			URI: "http://localhost:8080/users/the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			URL: "http://localhost:8080/@the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			Content: "this is an unlocked local-only post that shouldn't federate, but it's still boostable, replyable, and likeable",
+			CreatedAt:             time.Now().Add(-47 * time.Hour),
+			UpdatedAt:             time.Now().Add(-47 * time.Hour),
+			Local: true,
+			AccountID: "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID: "",
+			BoostOfID: "",
+			ContentWarning: "",
+			Visibility: model.VisibilityUnlocked,
+			Sensitive: false,
+			Language: "en",
+			VisibilityAdvanced: &model.VisibilityAdvanced{
+				Federated: false,
+				Boostable: true,
+				Replyable: true,
+				Likeable: true,
+			},
+			ActivityStreamsType: model.ActivityStreamsNote,
+		},
+	}
 }
