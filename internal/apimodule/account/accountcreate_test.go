@@ -41,11 +41,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 	oauthmodels "github.com/superseriousbusiness/oauth2/v4/models"
@@ -56,12 +58,13 @@ type AccountCreateTestSuite struct {
 	suite.Suite
 	config               *config.Config
 	log                  *logrus.Logger
-	testAccountLocal     *model.Account
-	testApplication      *model.Application
+	testAccountLocal     *gtsmodel.Account
+	testApplication      *gtsmodel.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
 	mediaHandler         media.MediaHandler
+	mastoConverter       mastotypes.Converter
 	db                   db.DB
 	accountModule        *accountModule
 	newUserFormHappyPath url.Values
@@ -78,13 +81,13 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 	log.SetLevel(logrus.TraceLevel)
 	suite.log = log
 
-	suite.testAccountLocal = &model.Account{
+	suite.testAccountLocal = &gtsmodel.Account{
 		ID:       uuid.NewString(),
 		Username: "test_user",
 	}
 
 	// can use this test application throughout
-	suite.testApplication = &model.Application{
+	suite.testApplication = &gtsmodel.Application{
 		ID:           "weeweeeeeeeeeeeeee",
 		Name:         "a test application",
 		Website:      "https://some-application-website.com",
@@ -158,8 +161,10 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 	// set a media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
 	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
 
+	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
+
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.log).(*accountModule)
+	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*accountModule)
 }
 
 func (suite *AccountCreateTestSuite) TearDownSuite() {
@@ -172,14 +177,14 @@ func (suite *AccountCreateTestSuite) TearDownSuite() {
 func (suite *AccountCreateTestSuite) SetupTest() {
 	// create all the tables we might need in thie suite
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.CreateTable(m); err != nil {
@@ -210,14 +215,14 @@ func (suite *AccountCreateTestSuite) TearDownTest() {
 
 	// remove all the tables we might have used so it's clear for the next test
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -259,7 +264,7 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	t := &mastotypes.Token{}
+	t := &mastomodel.Token{}
 	err = json.Unmarshal(b, t)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "we're authorized now!", t.AccessToken)
@@ -267,7 +272,7 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 	// check new account
 
 	// 1. we should be able to get the new account from the db
-	acct := &model.Account{}
+	acct := &gtsmodel.Account{}
 	err = suite.db.GetWhere("username", "test_user", acct)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), acct)
@@ -288,7 +293,7 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 	// check new user
 
 	// 1. we should be able to get the new user from the db
-	usr := &model.User{}
+	usr := &gtsmodel.User{}
 	err = suite.db.GetWhere("unconfirmed_email", suite.newUserFormHappyPath.Get("email"), usr)
 	assert.Nil(suite.T(), err)
 	assert.NotNil(suite.T(), usr)

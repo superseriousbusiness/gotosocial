@@ -19,16 +19,13 @@
 package util
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
 
-// To play around with these regexes, see: https://regex101.com/r/2km2EK/1
 var (
-	// mention regex can be played around with here: https://regex101.com/r/2km2EK/1
-	hostnameRegexString = `(?:(?:[a-zA-Z]{1})|(?:[a-zA-Z]{1}[a-zA-Z]{1})|(?:[a-zA-Z]{1}[0-9]{1})|(?:[0-9]{1}[a-zA-Z]{1})|(?:[a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.(?:[a-zA-Z]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z]{2,5}))`
-	mentionRegexString  = fmt.Sprintf(`(?: |^|\W)(@[a-zA-Z0-9_]+@%s(?: |\n)`, hostnameRegexString)
+	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
+	mentionRegexString  = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
 	mentionRegex        = regexp.MustCompile(mentionRegexString)
 	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
 	hashtagRegexString = `(?: |^|\W)?#([a-zA-Z0-9]{1,30})(?:\b|\r)`
@@ -43,7 +40,7 @@ var (
 // mentioned in that status.
 //
 // It will look for fully-qualified account names in the form "@user@example.org".
-// Mentions that are just in the form "@username" will not be detected.
+// or the form "@username" for local users.
 // The case of the returned mentions will be lowered, for consistency.
 func DeriveMentions(status string) []string {
 	mentionedAccounts := []string{}

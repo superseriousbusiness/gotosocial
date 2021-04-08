@@ -153,8 +153,8 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:    flagNames.StorageBasePath,
-				Usage:   "Full path to an already-created directory where gts should store/retrieve media files",
-				Value:   "/opt/gotosocial",
+				Usage:   "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
+				Value:   "/gotosocial/storage/media",
 				EnvVars: []string{envNames.StorageBasePath},
 			},
 			&cli.StringFlag{

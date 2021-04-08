@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import "time"
 
@@ -40,6 +40,8 @@ type Status struct {
 	AccountID string
 	// id of the status this status is a reply to
 	InReplyToID string
+	// id of the account that this status replies to
+	InReplyToAccountID string
 	// id of the status this status is a boost of
 	BoostOfID string
 	// cw string for this status

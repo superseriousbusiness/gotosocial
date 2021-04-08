@@ -39,7 +39,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -52,12 +53,13 @@ type AccountUpdateTestSuite struct {
 	suite.Suite
 	config               *config.Config
 	log                  *logrus.Logger
-	testAccountLocal     *model.Account
-	testApplication      *model.Application
+	testAccountLocal     *gtsmodel.Account
+	testApplication      *gtsmodel.Application
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
 	mediaHandler         media.MediaHandler
+	mastoConverter       mastotypes.Converter
 	db                   db.DB
 	accountModule        *accountModule
 	newUserFormHappyPath url.Values
@@ -74,13 +76,13 @@ func (suite *AccountUpdateTestSuite) SetupSuite() {
 	log.SetLevel(logrus.TraceLevel)
 	suite.log = log
 
-	suite.testAccountLocal = &model.Account{
+	suite.testAccountLocal = &gtsmodel.Account{
 		ID:       uuid.NewString(),
 		Username: "test_user",
 	}
 
 	// can use this test application throughout
-	suite.testApplication = &model.Application{
+	suite.testApplication = &gtsmodel.Application{
 		ID:           "weeweeeeeeeeeeeeee",
 		Name:         "a test application",
 		Website:      "https://some-application-website.com",
@@ -154,8 +156,10 @@ func (suite *AccountUpdateTestSuite) SetupSuite() {
 	// set a media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
 	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
 
+	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
+
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.log).(*accountModule)
+	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*accountModule)
 }
 
 func (suite *AccountUpdateTestSuite) TearDownSuite() {
@@ -168,14 +172,14 @@ func (suite *AccountUpdateTestSuite) TearDownSuite() {
 func (suite *AccountUpdateTestSuite) SetupTest() {
 	// create all the tables we might need in thie suite
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.CreateTable(m); err != nil {
@@ -206,14 +210,14 @@ func (suite *AccountUpdateTestSuite) TearDownTest() {
 
 	// remove all the tables we might have used so it's clear for the next test
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {

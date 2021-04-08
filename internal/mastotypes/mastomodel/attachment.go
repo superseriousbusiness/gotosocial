@@ -45,8 +45,10 @@ type Attachment struct {
 	URL string `json:"url"`
 	// The location of a scaled-down preview of the attachment.
 	PreviewURL string `json:"preview_url"`
-	// The location of the full-size original attachment on the remote website.
+	// The location of the full-size original attachment on the remote server.
 	RemoteURL string `json:"remote_url,omitempty"`
+	// The location of a scaled-down preview of the attachment on the remote server.
+	PreviewRemoteURL string `json:"preview_remote_url,omitempty"`
 	// A shorter URL for the attachment.
 	TextURL string `json:"text_url,omitempty"`
 	// Metadata returned by Paperclip.

@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -62,10 +63,13 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
 
+	// build converters and util
+	mastoConverter := mastotypes.New(c, dbService)
+
 	// build client api modules
 	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, log)
-	appsModule := app.New(oauthServer, dbService, log)
+	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
+	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
 
 	apiModules := []apimodule.ClientAPIModule{
 		authModule, // this one has to go first so the other modules use its middleware

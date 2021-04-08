@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import (
 	"time"
@@ -29,7 +29,9 @@ type MediaAttachment struct {
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
 	// ID of the status to which this is attached
 	StatusID string
-	// Where can the attachment be retrieved on a remote server
+	// Where can the attachment be retrieved on *this* server
+	URL string
+	// Where can the attachment be retrieved on a remote server (empty for local media)
 	RemoteURL string
 	// When was the attachment created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
@@ -81,7 +83,9 @@ type Thumbnail struct {
 	FileSize int
 	// When was the file last updated
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// What is the remote URL of the thumbnail
+	// What is the URL of the thumbnail on the local server
+	URL string
+	// What is the remote URL of the thumbnail (empty for local media)
 	RemoteURL string
 }
 
@@ -106,11 +110,13 @@ const (
 	// FileTypeImage is for jpegs and pngs
 	FileTypeImage FileType = "image"
 	// FileTypeGif is for native gifs and soundless videos that have been converted to gifs
-	FileTypeGif FileType = "gif"
+	FileTypeGif FileType = "gifv"
 	// FileTypeAudio is for audio-only files (no video)
 	FileTypeAudio FileType = "audio"
 	// FileTypeVideo is for files with audio + visual
 	FileTypeVideo FileType = "video"
+	// FileTypeUnknown is for unknown file types (surprise surprise!)
+	FileTypeUnknown FileType = "unknown"
 )
 
 // FileMeta describes metadata about the actual contents of the file.
@@ -119,7 +125,7 @@ type FileMeta struct {
 	Small    Small
 }
 
-// Small implements SmallMeta and can be used for a thumbnail of any media type
+// Small can be used for a thumbnail of any media type
 type Small struct {
 	Width  int
 	Height int
@@ -127,7 +133,7 @@ type Small struct {
 	Aspect float64
 }
 
-// ImageOriginal implements OriginalMeta for still images
+// Original can be used for original metadata for any media type
 type Original struct {
 	Width  int
 	Height int

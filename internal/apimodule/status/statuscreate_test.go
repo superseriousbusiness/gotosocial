@@ -34,12 +34,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -49,12 +50,13 @@ type StatusCreateTestSuite struct {
 	mockOauthServer  *oauth.MockServer
 	mockStorage      *storage.MockStorage
 	mediaHandler     media.MediaHandler
+	mastoConverter   mastotypes.Converter
 	distributor      *distributor.MockDistributor
 	testTokens       map[string]*oauth.Token
 	testClients      map[string]*oauth.Client
-	testApplications map[string]*model.Application
-	testUsers        map[string]*model.User
-	testAccounts     map[string]*model.Account
+	testApplications map[string]*gtsmodel.Application
+	testUsers        map[string]*gtsmodel.User
+	testAccounts     map[string]*gtsmodel.Account
 	log              *logrus.Logger
 	db               db.DB
 	statusModule     *statusModule
@@ -113,10 +115,11 @@ func (suite *StatusCreateTestSuite) SetupSuite() {
 	suite.mockOauthServer = &oauth.MockServer{}
 	suite.mockStorage = &storage.MockStorage{}
 	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
+	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
 	suite.distributor = &distributor.MockDistributor{}
 	suite.distributor.On("FromClientAPI").Return(make(chan distributor.FromClientAPI, 100))
 
-	suite.statusModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.distributor, suite.log).(*statusModule)
+	suite.statusModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*statusModule)
 }
 
 func (suite *StatusCreateTestSuite) TearDownSuite() {
@@ -184,16 +187,15 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
-	statusReply := &mastotypes.Status{}
+	statusReply := &mastomodel.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "this is a brand new status!", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
+	assert.Equal(suite.T(), mastomodel.VisibilityPrivate, statusReply.Visibility)
 }
 
 func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToFail() {
@@ -209,31 +211,60 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToFail() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":              {"this is a reply to a status that doesn't exist"},
-		"spoiler_text":        {"don't open cuz it won't work"},
-		"in_reply_to_id":      {"3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50"},
+		"status":         {"this is a reply to a status that doesn't exist"},
+		"spoiler_text":   {"don't open cuz it won't work"},
+		"in_reply_to_id": {"3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50"},
 	}
 	suite.statusModule.statusCreatePOSTHandler(ctx)
 
 	// check response
 
-	// 1. we should have OK from our call to the function
+	suite.EqualValues(http.StatusBadRequest, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), `{"error":"status with id 3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50 not replyable because it doesn't exist"}`, string(b))
+}
+
+func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToLocalSuccess() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.PGTokenToOauthToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request.Form = url.Values{
+		"status":         {fmt.Sprintf("hello @%s this reply should work!", testrig.TestAccounts()["local_account_2"].Username)},
+		"in_reply_to_id": {testrig.TestStatuses()["local_account_2_status_1"].ID},
+	}
+	suite.statusModule.statusCreatePOSTHandler(ctx)
+
+	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
-	statusReply := &mastotypes.Status{}
+	statusReply := &mastomodel.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "this is a brand new status!", statusReply.Content)
-	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
+	assert.Equal(suite.T(), "", statusReply.SpoilerText)
+	assert.Equal(suite.T(), fmt.Sprintf("hello @%s this reply should work!", testrig.TestAccounts()["local_account_2"].Username), statusReply.Content)
+	assert.False(suite.T(), statusReply.Sensitive)
+	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), testrig.TestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
+	assert.Equal(suite.T(), testrig.TestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
+	assert.Len(suite.T(), statusReply.Mentions, 1)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

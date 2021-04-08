@@ -16,21 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
-import "time"
 
-type Tag struct {
-	ID                string    `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Name              string    `pg:"unique,notnull"`
-	CreatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Useable           bool
-	Trendable         bool
-	Listable          bool
-	ReviewedAt        time.Time
-	RequestedReviewAt time.Time
-	LastStatusAt      time.Time
-	MaxScore          float32
-	MaxScoreAt        time.Time
-}

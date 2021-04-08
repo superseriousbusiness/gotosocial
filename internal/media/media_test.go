@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -108,8 +108,8 @@ func (suite *MediaTestSuite) TearDownSuite() {
 func (suite *MediaTestSuite) SetupTest() {
 	// create all the tables we might need in thie suite
 	models := []interface{}{
-		&model.Account{},
-		&model.MediaAttachment{},
+		&gtsmodel.Account{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.CreateTable(m); err != nil {
@@ -123,8 +123,8 @@ func (suite *MediaTestSuite) TearDownTest() {
 
 	// remove all the tables we might have used so it's clear for the next test
 	models := []interface{}{
-		&model.Account{},
-		&model.MediaAttachment{},
+		&gtsmodel.Account{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {

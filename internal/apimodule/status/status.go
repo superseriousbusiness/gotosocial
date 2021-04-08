@@ -25,8 +25,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -51,22 +52,24 @@ const (
 )
 
 type statusModule struct {
-	config       *config.Config
-	db           db.DB
-	oauthServer  oauth.Server
-	mediaHandler media.MediaHandler
-	distributor  distributor.Distributor
-	log          *logrus.Logger
+	config         *config.Config
+	db             db.DB
+	oauthServer    oauth.Server
+	mediaHandler   media.MediaHandler
+	mastoConverter mastotypes.Converter
+	distributor    distributor.Distributor
+	log            *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &statusModule{
-		config:       config,
-		db:           db,
-		mediaHandler: mediaHandler,
-		distributor:  distributor,
-		log:          log,
+		config:         config,
+		db:             db,
+		mediaHandler:   mediaHandler,
+		mastoConverter: mastoConverter,
+		distributor:    distributor,
+		log:            log,
 	}
 }
 
@@ -79,17 +82,17 @@ func (m *statusModule) Route(r router.Router) error {
 
 func (m *statusModule) CreateTables(db db.DB) error {
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
-		&model.Emoji{},
-		&model.Tag{},
-		&model.Mention{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
+		&gtsmodel.Emoji{},
+		&gtsmodel.Tag{},
+		&gtsmodel.Mention{},
 	}
 
 	for _, m := range models {

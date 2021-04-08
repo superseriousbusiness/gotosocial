@@ -16,22 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import "time"
 
-type Emoji struct {
-	ID               string    `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Shortcode        string    `pg:"notnull"`
-	CreatedAt        time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt        time.Time `pg:"type:timestamp,notnull,default:now()"`
-	ImageFileName    string
-	ImageContentType string
-	ImageFileSize    string
-	ImageUpdatedAt   time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Disabled         bool
-	URI              string
-	ImageRemoteURL   string
-	VisibleInPicker  bool
-	CategoryID       string
+// EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
+type EmailDomainBlock struct {
+	// ID of this block in the database
+	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
+	Domain string `pg:",notnull"`
+	// When was this block created
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// When was this block updated
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// Account ID of the creator of this block
+	CreatedByAccountID string `pg:",notnull"`
 }

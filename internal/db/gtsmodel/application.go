@@ -16,9 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
-
-import "github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+package gtsmodel
 
 // Application represents an application that can perform actions on behalf of a user.
 // It is used to authorize tokens etc, and is associated with an oauth client id in the database.
@@ -39,24 +37,4 @@ type Application struct {
 	Scopes string
 	// a vapid key generated for this app when it was created
 	VapidKey string
-}
-
-// ToMastoSensitive returns this application as a mastodon api type, ready for serialization
-func (a *Application) ToMastoSensitive() *mastotypes.Application {
-	return &mastotypes.Application{
-		ID:           a.ID,
-		Name:         a.Name,
-		Website:      a.Website,
-		RedirectURI:  a.RedirectURI,
-		ClientID:     a.ClientID,
-		ClientSecret: a.ClientSecret,
-		VapidKey:     a.VapidKey,
-	}
-}
-
-func (a *Application) ToMastoPublic() *mastotypes.Application {
-	return &mastotypes.Application{
-		Name:         a.Name,
-		Website:      a.Website,
-	}
 }

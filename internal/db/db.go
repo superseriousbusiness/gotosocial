@@ -27,8 +27,7 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
 
 const dbTypePostgres string = "POSTGRES"
@@ -115,38 +114,38 @@ type DB interface {
 	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID.
 	// The given account pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetAccountByUserID(userID string, account *model.Account) error
+	GetAccountByUserID(userID string, account *gtsmodel.Account) error
 
 	// GetFollowRequestsForAccountID is a shortcut for the common action of fetching a list of follow requests targeting the given account ID.
 	// The given slice 'followRequests' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error
+	GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error
 
 	// GetFollowingByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is following.
 	// The given slice 'following' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetFollowingByAccountID(accountID string, following *[]model.Follow) error
+	GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error
 
 	// GetFollowersByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is followed by.
 	// The given slice 'followers' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetFollowersByAccountID(accountID string, followers *[]model.Follow) error
+	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error
 
 	// GetStatusesByAccountID is a shortcut for the common action of fetching a list of statuses produced by accountID.
 	// The given slice 'statuses' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetStatusesByAccountID(accountID string, statuses *[]model.Status) error
+	GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error
 
 	// GetStatusesByTimeDescending is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
 	// In case of no entries, a 'no entries' error will be returned
-	GetStatusesByTimeDescending(accountID string, statuses *[]model.Status, limit int) error
+	GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error
 
 	// GetLastStatusForAccountID simply gets the most recent status by the given account.
 	// The given slice 'status' pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetLastStatusForAccountID(accountID string, status *model.Status) error
+	GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error
 
 	// IsUsernameAvailable checks whether a given username is available on our domain.
 	// Returns an error if the username is already taken, or something went wrong in the db.
@@ -161,18 +160,18 @@ type DB interface {
 
 	// NewSignup creates a new user in the database with the given parameters, with an *unconfirmed* email address.
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
-	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error)
+	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error)
 
 	// SetHeaderOrAvatarForAccountID sets the header or avatar for the given accountID to the given media attachment.
-	SetHeaderOrAvatarForAccountID(mediaAttachment *model.MediaAttachment, accountID string) error
+	SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error
 
 	// GetHeaderAvatarForAccountID gets the current avatar for the given account ID.
 	// The passed mediaAttachment pointer will be populated with the value of the avatar, if it exists.
-	GetAvatarForAccountID(avatar *model.MediaAttachment, accountID string) error
+	GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error
 
 	// GetHeaderForAccountID gets the current header for the given account ID.
 	// The passed mediaAttachment pointer will be populated with the value of the header, if it exists.
-	GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error
+	GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error
 
 	// Blocked checks whether a block exists in eiher direction between two accounts.
 	// That is, it returns true if account1 blocks account2, OR if account2 blocks account1.
@@ -182,39 +181,30 @@ type DB interface {
 		USEFUL CONVERSION FUNCTIONS
 	*/
 
-	// AccountToMastoSensitive takes a db model account as a param, and returns a populated mastotype account, or an error
-	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
-	// so serve it only to an authorized user who should have permission to see it.
-	AccountToMastoSensitive(account *model.Account) (*mastotypes.Account, error)
-
-	// AccountToMastoPublic takes a db model account as a param, and returns a populated mastotype account, or an error
-	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
-	// In other words, this is the public record that the server has of an account.
-	AccountToMastoPublic(account *model.Account) (*mastotypes.Account, error)
-
-	// MentionStringsToMentions takes a slice of deduplicated, lowercase account names in the form "@test@whatever.example.org", which have been
-	// mentioned in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
+	// MentionStringsToMentions takes a slice of deduplicated, lowercase account names in the form "@test@whatever.example.org" for a remote account,
+	// or @test for a local account, which have been mentioned in a status.
+	// It takes the id of the account that wrote the status, and the id of the status itself, and then
 	// checks in the database for the mentioned accounts, and returns a slice of mentions generated based on the given parameters.
 	//
-	// Note: this func doesn't/shouldn't do any manipulation of the accounts in the DB, it's just for checking if they exist
-	// and conveniently returning them.
-	MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error)
+	// Note: this func doesn't/shouldn't do any manipulation of the accounts in the DB, it's just for checking
+	// if they exist in the db and conveniently returning them.
+	MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error)
 
 	// TagStringsToTags takes a slice of deduplicated, lowercase tags in the form "somehashtag", which have been
 	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
 	// returns a slice of *model.Tag corresponding to the given tags.
 	//
-	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking if they exist
-	// and conveniently returning them.
-	TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*model.Tag, error)
+	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking
+	// if they exist in the db and conveniently returning them.
+	TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error)
 
 	// EmojiStringsToEmojis takes a slice of deduplicated, lowercase emojis in the form ":emojiname:", which have been
 	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
 	// returns a slice of *model.Emoji corresponding to the given emojis.
 	//
-	// Note: this func doesn't/shouldn't do any manipulation of the emoji in the DB, it's just for checking if they exist
-	// and conveniently returning them.
-	EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*model.Emoji, error)
+	// Note: this func doesn't/shouldn't do any manipulation of the emoji in the DB, it's just for checking
+	// if they exist in the db and conveniently returning them.
+	EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error)
 }
 
 // New returns a new database service that satisfies the DB interface and, by extension,

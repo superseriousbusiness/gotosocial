@@ -36,9 +36,9 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -214,9 +214,9 @@ func (ps *postgresService) IsHealthy(ctx context.Context) error {
 
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
-		(*model.Account)(nil),
-		(*model.Status)(nil),
-		(*model.User)(nil),
+		(*gtsmodel.Account)(nil),
+		(*gtsmodel.Status)(nil),
+		(*gtsmodel.User)(nil),
 	}
 	ps.log.Info("creating db schema")
 
@@ -312,8 +312,8 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
-func (ps *postgresService) GetAccountByUserID(userID string, account *model.Account) error {
-	user := &model.User{
+func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
+	user := &gtsmodel.User{
 		ID: userID,
 	}
 	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
@@ -331,7 +331,7 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *model.Acco
 	return nil
 }
 
-func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error {
+func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -341,7 +341,7 @@ func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, follo
 	return nil
 }
 
-func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]model.Follow) error {
+func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -351,7 +351,7 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 	return nil
 }
 
-func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]model.Follow) error {
+func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -361,7 +361,7 @@ func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *
 	return nil
 }
 
-func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]model.Status) error {
+func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error {
 	if err := ps.conn.Model(statuses).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -371,7 +371,7 @@ func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]
 	return nil
 }
 
-func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]model.Status, limit int) error {
+func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error {
 	q := ps.conn.Model(statuses).Order("created_at DESC")
 	if limit != 0 {
 		q = q.Limit(limit)
@@ -388,7 +388,7 @@ func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuse
 	return nil
 }
 
-func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *model.Status) error {
+func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
 	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -403,7 +403,7 @@ func (ps *postgresService) IsUsernameAvailable(username string) error {
 	// if no error we fail because it means we found something
 	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := ps.conn.Model(&model.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
 		return fmt.Errorf("username %s already in use", username)
 	} else if err != pg.ErrNoRows {
 		return fmt.Errorf("db error: %s", err)
@@ -420,7 +420,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
 	// check if the email domain is blocked
-	if err := ps.conn.Model(&model.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != pg.ErrNoRows {
@@ -429,7 +429,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	}
 
 	// check if this email is associated with a user already
-	if err := ps.conn.Model(&model.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email %s already in use", email)
 	} else if err != pg.ErrNoRows {
@@ -439,7 +439,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	return nil
 }
 
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error) {
+func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		ps.log.Errorf("error creating new rsa key: %s", err)
@@ -448,14 +448,14 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 
 	uris := util.GenerateURIs(username, ps.config.Protocol, ps.config.Host)
 
-	a := &model.Account{
+	a := &gtsmodel.Account{
 		Username:              username,
 		DisplayName:           username,
 		Reason:                reason,
 		URL:                   uris.UserURL,
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
-		ActorType:             model.ActivityStreamsPerson,
+		ActorType:             gtsmodel.ActivityStreamsPerson,
 		URI:                   uris.UserURI,
 		InboxURL:              uris.InboxURI,
 		OutboxURL:             uris.OutboxURI,
@@ -470,7 +470,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %s", err)
 	}
-	u := &model.User{
+	u := &gtsmodel.User{
 		AccountID:              a.ID,
 		EncryptedPassword:      string(pw),
 		SignUpIP:               signUpIP,
@@ -486,12 +486,12 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	return u, nil
 }
 
-func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *model.MediaAttachment, accountID string) error {
+func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
 	_, err := ps.conn.Model(mediaAttachment).Insert()
 	return err
 }
 
-func (ps *postgresService) GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error {
+func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error {
 	if err := ps.conn.Model(header).Where("account_id = ?", accountID).Where("header = ?", true).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -501,7 +501,7 @@ func (ps *postgresService) GetHeaderForAccountID(header *model.MediaAttachment, 
 	return nil
 }
 
-func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, accountID string) error {
+func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error {
 	if err := ps.conn.Model(avatar).Where("account_id = ?", accountID).Where("avatar = ?", true).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -513,12 +513,13 @@ func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, 
 
 func (ps *postgresService) Blocked(account1 string, account2 string) (bool, error) {
 	var blocked bool
-	if err := ps.conn.Model(&model.Block{}).
+	if err := ps.conn.Model(&gtsmodel.Block{}).
 		Where("account_id = ?", account1).Where("target_account_id = ?", account2).
 		WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2).
 		Select(); err != nil {
 		if err == pg.ErrNoRows {
 			blocked = false
+			return blocked, nil
 		} else {
 			return blocked, err
 		}
@@ -535,7 +536,7 @@ func (ps *postgresService) Blocked(account1 string, account2 string) (bool, erro
 // The resulting account fits the specifications for the path /api/v1/accounts/verify_credentials, as described here:
 // https://docs.joinmastodon.org/methods/accounts/. Note that it's *sensitive* because it's only meant to be exposed to the user
 // that the account actually belongs to.
-func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotypes.Account, error) {
+func (ps *postgresService) AccountToMastoSensitive(a *gtsmodel.Account) (*mastotypes.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	mastoAccount, err := ps.AccountToMastoPublic(a)
 	if err != nil {
@@ -545,7 +546,7 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	fr := []model.FollowRequest{}
+	fr := []gtsmodel.FollowRequest{}
 	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
@@ -568,9 +569,9 @@ func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotype
 	return mastoAccount, nil
 }
 
-func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.Account, error) {
+func (ps *postgresService) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Account, error) {
 	// count followers
-	followers := []model.Follow{}
+	followers := []gtsmodel.Follow{}
 	if err := ps.GetFollowersByAccountID(a.ID, &followers); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting followers: %s", err)
@@ -582,7 +583,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}
 
 	// count following
-	following := []model.Follow{}
+	following := []gtsmodel.Follow{}
 	if err := ps.GetFollowingByAccountID(a.ID, &following); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting following: %s", err)
@@ -594,7 +595,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}
 
 	// count statuses
-	statuses := []model.Status{}
+	statuses := []gtsmodel.Status{}
 	if err := ps.GetStatusesByAccountID(a.ID, &statuses); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last statuses: %s", err)
@@ -606,7 +607,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}
 
 	// check when the last status was
-	lastStatus := &model.Status{}
+	lastStatus := &gtsmodel.Status{}
 	if err := ps.GetLastStatusForAccountID(a.ID, lastStatus); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last status: %s", err)
@@ -618,7 +619,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}
 
 	// build the avatar and header URLs
-	avi := &model.MediaAttachment{}
+	avi := &gtsmodel.MediaAttachment{}
 	if err := ps.GetAvatarForAccountID(avi, a.ID); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting avatar: %s", err)
@@ -627,7 +628,7 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	aviURL := avi.File.Path
 	aviURLStatic := avi.Thumbnail.Path
 
-	header := &model.MediaAttachment{}
+	header := &gtsmodel.MediaAttachment{}
 	if err := ps.GetHeaderForAccountID(avi, a.ID); err != nil {
 		if _, ok := err.(ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting header: %s", err)
@@ -681,11 +682,12 @@ func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.A
 	}, nil
 }
 
-func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*model.Mention, error) {
-	menchies := []*model.Mention{}
+func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+	menchies := []*gtsmodel.Mention{}
 	for _, a := range targetAccounts {
-		// A mentioned account looks like "@test@example.org" -- we can guarantee this from the regex that targetAccounts should have been derived from.
-		// But we still need to do a bit of fiddling to get what we need here -- the username and domain.
+		// A mentioned account looks like "@test@example.org" or just "@test" for a local account
+		// -- we can guarantee this from the regex that targetAccounts should have been derived from.
+		// But we still need to do a bit of fiddling to get what we need here -- the username and domain (if given).
 
 		// 1.  trim off the first @
 		t := strings.TrimPrefix(a, "@")
@@ -693,41 +695,51 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 		// 2. split the username and domain
 		s := strings.Split(t, "@")
 
-		// 3. it should *always* be length 2 so if it's not then something is seriously wrong
-		if len(s) != 2 {
-			return nil, fmt.Errorf("mentioned account format %s was not valid", a)
+		// 3. if it's length 1 it's a local account, length 2 means remote, anything else means something is wrong
+		var local bool
+		switch len(s) {
+		case 1:
+			local = true
+		case 2:
+			local = false
+		default:
+			return nil, fmt.Errorf("mentioned account format '%s' was not valid", a)
 		}
-		username := s[0]
-		domain := s[1]
+
+		var username, domain string
+		username = s[0]
+		if !local {
+			domain = s[1]
+		}
 
 		// 4. check we now have a proper username and domain
-		if username == "" || domain == "" {
-			return nil, fmt.Errorf("username or domain for %s was nil", a)
+		if username == "" || (!local && domain == "") {
+			return nil, fmt.Errorf("username or domain for '%s' was nil", a)
 		}
 
 		// okay we're good now, we can start pulling accounts out of the database
-		mentionedAccount := &model.Account{}
+		mentionedAccount := &gtsmodel.Account{}
 		var err error
-		if domain == ps.config.Host {
+		if local {
 			// local user -- should have a null domain
-			err = ps.conn.Model(mentionedAccount).Where("id = ?", username).Where("domain = null").Select()
+			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
 		} else {
 			// remote user -- should have domain defined
-			err = ps.conn.Model(mentionedAccount).Where("id = ?", username).Where("domain = ?", domain).Select()
+			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? = ?", pg.Ident("domain"), domain).Select()
 		}
 
 		if err != nil {
 			if err == pg.ErrNoRows {
 				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
-				ps.log.Debugf("no account found with username %s and domain %s, skipping it", username, domain)
+				ps.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
 				continue
 			}
 			// a serious error has happened so bail
-			return nil, fmt.Errorf("error getting account with username %s and domain %s: %s", username, domain, err)
+			return nil, fmt.Errorf("error getting account with username '%s' and domain '%s': %s", username, domain, err)
 		}
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
-		menchies = append(menchies, &model.Mention{
+		menchies = append(menchies, &gtsmodel.Mention{
 			StatusID:        statusID,
 			OriginAccountID: originAccountID,
 			TargetAccountID: mentionedAccount.ID,
@@ -737,26 +749,26 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 }
 
 // for now this function doesn't really use the database, but it's here because:
-// A) it might later and
+// A) it probably will later and
 // B) it's v. similar to MentionStringsToMentions
-func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*model.Tag, error) {
-	newTags := []*model.Tag{}
+func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
-		newTags = append(newTags, &model.Tag{
+		newTags = append(newTags, &gtsmodel.Tag{
 			Name: t,
 		})
 	}
 	return newTags, nil
 }
 
-func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*model.Emoji, error) {
-	newEmojis := []*model.Emoji{}
+func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+	newEmojis := []*gtsmodel.Emoji{}
 	for _, e := range emojis {
-		emoji := &model.Emoji{}
+		emoji := &gtsmodel.Emoji{}
 		err := ps.conn.Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Select()
 		if err != nil {
 			if err == pg.ErrNoRows {
-				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
+				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
 				ps.log.Debugf("no emoji found with shortcode %s, skipping it", e)
 				continue
 			}

@@ -21,7 +21,7 @@ package distributor
 import (
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
 
 // Distributor should be passed to api modules (see internal/apimodule/...). It is used for
@@ -97,13 +97,13 @@ func (d *distributor) Stop() error {
 }
 
 type FromClientAPI struct {
-	APObjectType   model.ActivityStreamsObject
-	APActivityType model.ActivityStreamsActivity
+	APObjectType   gtsmodel.ActivityStreamsObject
+	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}
 }
 
 type ToClientAPI struct {
-	APObjectType   model.ActivityStreamsObject
-	APActivityType model.ActivityStreamsActivity
+	APObjectType   gtsmodel.ActivityStreamsObject
+	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}
 }

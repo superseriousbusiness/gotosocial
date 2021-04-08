@@ -16,26 +16,24 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import "time"
 
-// FollowRequest represents one account requesting to follow another, and the metadata around that request.
-type FollowRequest struct {
-	// id of this follow request in the database
+// Mention refers to the 'tagging' or 'mention' of a user within a status.
+type Mention struct {
+	// ID of this mention in the database
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// When was this follow request created?
+	// ID of the status this mention originates from
+	StatusID string
+	// When was this mention created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this follow request last updated?
+	// When was this mention last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Who does this follow request originate from?
-	AccountID string `pg:",unique:srctarget,notnull"`
-	// Who is the target of this follow request?
-	TargetAccountID string `pg:",unique:srctarget,notnull"`
-	// Does this follow also want to see reblogs and not just posts?
-	ShowReblogs bool `pg:"default:true"`
-	// What is the activitypub URI of this follow request?
-	URI string `pg:",unique"`
-	// does the following account want to be notified when the followed account posts?
-	Notify bool
+	// Who created this mention?
+	OriginAccountID string
+	// Who does this mention target?
+	TargetAccountID string
+	// Prevent this mention from generating a notification?
+	Silent bool
 }

@@ -25,7 +25,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -33,17 +34,19 @@ import (
 const appsPath = "/api/v1/apps"
 
 type appModule struct {
-	server oauth.Server
-	db     db.DB
-	log    *logrus.Logger
+	server         oauth.Server
+	db             db.DB
+	mastoConverter mastotypes.Converter
+	log            *logrus.Logger
 }
 
 // New returns a new auth module
-func New(srv oauth.Server, db db.DB, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(srv oauth.Server, db db.DB, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &appModule{
-		server: srv,
-		db:     db,
-		log:    log,
+		server:         srv,
+		db:             db,
+		mastoConverter: mastoConverter,
+		log:            log,
 	}
 }
 
@@ -57,9 +60,9 @@ func (m *appModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},
-		&model.User{},
-		&model.Account{},
-		&model.Application{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 
 	for _, m := range models {

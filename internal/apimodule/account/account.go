@@ -28,7 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -43,21 +45,23 @@ const (
 )
 
 type accountModule struct {
-	config       *config.Config
-	db           db.DB
-	oauthServer  oauth.Server
-	mediaHandler media.MediaHandler
-	log          *logrus.Logger
+	config         *config.Config
+	db             db.DB
+	oauthServer    oauth.Server
+	mediaHandler   media.MediaHandler
+	mastoConverter mastotypes.Converter
+	log            *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &accountModule{
-		config:       config,
-		db:           db,
-		oauthServer:  oauthServer,
-		mediaHandler: mediaHandler,
-		log:          log,
+		config:         config,
+		db:             db,
+		oauthServer:    oauthServer,
+		mediaHandler:   mediaHandler,
+		mastoConverter: mastoConverter,
+		log:            log,
 	}
 }
 
@@ -70,14 +74,14 @@ func (m *accountModule) Route(r router.Router) error {
 
 func (m *accountModule) CreateTables(db db.DB) error {
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 
 	for _, m := range models {

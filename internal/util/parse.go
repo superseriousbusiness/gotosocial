@@ -21,8 +21,8 @@ package util
 import (
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 )
 
 type URIs struct {
@@ -64,16 +64,16 @@ func GenerateURIs(username string, protocol string, host string) *URIs {
 }
 
 // ParseGTSVisFromMastoVis converts a mastodon visibility into its gts equivalent.
-func ParseGTSVisFromMastoVis(m mastotypes.Visibility) model.Visibility {
+func ParseGTSVisFromMastoVis(m mastotypes.Visibility) gtsmodel.Visibility {
 	switch m {
 	case mastotypes.VisibilityPublic:
-		return model.VisibilityPublic
+		return gtsmodel.VisibilityPublic
 	case mastotypes.VisibilityUnlisted:
-		return model.VisibilityUnlocked
+		return gtsmodel.VisibilityUnlocked
 	case mastotypes.VisibilityPrivate:
-		return model.VisibilityFollowersOnly
+		return gtsmodel.VisibilityFollowersOnly
 	case mastotypes.VisibilityDirect:
-		return model.VisibilityDirect
+		return gtsmodel.VisibilityDirect
 	default:
 		break
 	}
@@ -81,15 +81,15 @@ func ParseGTSVisFromMastoVis(m mastotypes.Visibility) model.Visibility {
 }
 
 // ParseMastoVisFromGTSVis converts a gts visibility into its mastodon equivalent
-func ParseMastoVisFromGTSVis(m model.Visibility) mastotypes.Visibility {
+func ParseMastoVisFromGTSVis(m gtsmodel.Visibility) mastotypes.Visibility {
 	switch m {
-	case model.VisibilityPublic:
+	case gtsmodel.VisibilityPublic:
 		return mastotypes.VisibilityPublic
-	case model.VisibilityUnlocked:
+	case gtsmodel.VisibilityUnlocked:
 		return mastotypes.VisibilityUnlisted
-	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
+	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
 		return mastotypes.VisibilityPrivate
-	case model.VisibilityDirect:
+	case gtsmodel.VisibilityDirect:
 		return mastotypes.VisibilityDirect
 	default:
 		break

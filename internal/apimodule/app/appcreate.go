@@ -24,9 +24,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
 
 // appsPOSTHandler should be served at https://example.org/api/v1/apps
@@ -78,7 +78,7 @@ func (m *appModule) appsPOSTHandler(c *gin.Context) {
 	vapidKey := uuid.NewString()
 
 	// generate the application to put in the database
-	app := &model.Application{
+	app := &gtsmodel.Application{
 		Name:         form.ClientName,
 		Website:      form.Website,
 		RedirectURI:  form.RedirectURIs,
@@ -108,6 +108,12 @@ func (m *appModule) appsPOSTHandler(c *gin.Context) {
 		return
 	}
 
+	mastoApp, err := m.mastoConverter.AppToMastoSensitive(app)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, app.ToMastoSensitive())
+	c.JSON(http.StatusOK, mastoApp)
 }

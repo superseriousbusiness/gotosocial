@@ -16,24 +16,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import "time"
 
-// Mention refers to the 'tagging' or 'mention' of a user within a status.
-type Mention struct {
-	// ID of this mention in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// ID of the status this mention originates from
-	StatusID string
-	// When was this mention created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this mention last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Who created this mention?
-	OriginAccountID string
-	// Who does this mention target?
-	TargetAccountID string
-	// Prevent this mention from generating a notification?
-	Silent bool
+type Tag struct {
+	ID                string    `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	Name              string    `pg:"unique,notnull"`
+	CreatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
+	Useable           bool
+	Trendable         bool
+	Listable          bool
+	ReviewedAt        time.Time
+	RequestedReviewAt time.Time
+	LastStatusAt      time.Time
+	MaxScore          float32
+	MaxScoreAt        time.Time
 }

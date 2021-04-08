@@ -16,20 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 import "time"
 
-// EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
-type EmailDomainBlock struct {
-	// ID of this block in the database
+// Follow represents one account following another, and the metadata around that follow.
+type Follow struct {
+	// id of this follow in the database
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
-	Domain string `pg:",notnull"`
-	// When was this block created
+	// When was this follow created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this block updated
+	// When was this follow last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Account ID of the creator of this block
-	CreatedByAccountID string `pg:",notnull"`
+	// Who does this follow belong to?
+	AccountID string `pg:",unique:srctarget,notnull"`
+	// Who does AccountID follow?
+	TargetAccountID string `pg:",unique:srctarget,notnull"`
+	// Does this follow also want to see reblogs and not just posts?
+	ShowReblogs bool `pg:"default:true"`
+	// What is the activitypub URI of this follow?
+	URI string `pg:",unique"`
+	// does the following account want to be notified when the followed account posts?
+	Notify bool
 }

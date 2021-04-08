@@ -2,23 +2,23 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 var testModels []interface{} = []interface{}{
-	&model.Account{},
-	&model.Application{},
-	&model.Block{},
-	&model.DomainBlock{},
-	&model.EmailDomainBlock{},
-	&model.Follow{},
-	&model.FollowRequest{},
-	&model.MediaAttachment{},
-	&model.Mention{},
-	&model.Status{},
-	&model.Tag{},
-	&model.User{},
+	&gtsmodel.Account{},
+	&gtsmodel.Application{},
+	&gtsmodel.Block{},
+	&gtsmodel.DomainBlock{},
+	&gtsmodel.EmailDomainBlock{},
+	&gtsmodel.Follow{},
+	&gtsmodel.FollowRequest{},
+	&gtsmodel.MediaAttachment{},
+	&gtsmodel.Mention{},
+	&gtsmodel.Status{},
+	&gtsmodel.Tag{},
+	&gtsmodel.User{},
 	&oauth.Token{},
 	&oauth.Client{},
 }
@@ -56,6 +56,12 @@ func StandardDBSetup(db db.DB) error {
 	}
 
 	for _, v := range TestAccounts() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
+	for _, v := range TestStatuses() {
 		if err := db.Put(v); err != nil {
 			return err
 		}

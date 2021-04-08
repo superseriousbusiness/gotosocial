@@ -36,16 +36,17 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 	@someone_else@testing.best-horse.com can you confirm? @hello@test.lgbt
 
-	@thiswontwork though! @NORWILL@THIS.one!!
+	@thisisalocaluser ! @NORWILL@THIS.one!!
 
 	here is a duplicate mention: @hello@test.lgbt
 	`
 
 	menchies := DeriveMentions(statusText)
-	assert.Len(suite.T(), menchies, 3)
+	assert.Len(suite.T(), menchies, 4)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
 	assert.Equal(suite.T(), "@hello@test.lgbt", menchies[2])
+	assert.Equal(suite.T(), "@thisisalocaluser", menchies[3])
 }
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {

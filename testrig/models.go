@@ -6,20 +6,20 @@ import (
 	"net"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 func TestTokens() map[string]*oauth.Token {
 	tokens := map[string]*oauth.Token{
 		"local_account_1": {
-			ID: "64cf4214-33ab-4220-b5ca-4a6a12263b20",
-			ClientID: "73b48d42-029d-4487-80fc-329a5cf67869",
-			UserID: "44e36b79-44a4-4bd8-91e9-097f477fe97b",
-			RedirectURI: "http://localhost:8080",
-			Scope: "read write follow push",
-			Access: "NZAZOTC0OWITMDU0NC0ZODG4LWE4NJITMWUXM2M4MTRHZDEX",
-			AccessCreateAt: time.Now(),
+			ID:              "64cf4214-33ab-4220-b5ca-4a6a12263b20",
+			ClientID:        "73b48d42-029d-4487-80fc-329a5cf67869",
+			UserID:          "44e36b79-44a4-4bd8-91e9-097f477fe97b",
+			RedirectURI:     "http://localhost:8080",
+			Scope:           "read write follow push",
+			Access:          "NZAZOTC0OWITMDU0NC0ZODG4LWE4NJITMWUXM2M4MTRHZDEX",
+			AccessCreateAt:  time.Now(),
 			AccessExpiresAt: time.Now().Add(72 * time.Hour),
 		},
 	}
@@ -38,8 +38,8 @@ func TestClients() map[string]*oauth.Client {
 	return clients
 }
 
-func TestApplications() map[string]*model.Application {
-	apps := map[string]*model.Application{
+func TestApplications() map[string]*gtsmodel.Application {
+	apps := map[string]*gtsmodel.Application{
 		"application_1": {
 			ID:           "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			Name:         "really cool gts application",
@@ -54,8 +54,8 @@ func TestApplications() map[string]*model.Application {
 	return apps
 }
 
-func TestUsers() map[string]*model.User {
-	users := map[string]*model.User{
+func TestUsers() map[string]*gtsmodel.User {
+	users := map[string]*gtsmodel.User{
 		"unconfirmed_account": {
 			ID:                     "0f7b1d24-1e49-4ee0-bc7e-fd87b7289eea",
 			Email:                  "",
@@ -181,8 +181,8 @@ func TestUsers() map[string]*model.User {
 	return users
 }
 
-func TestAccounts() map[string]*model.Account {
-	accounts := map[string]*model.Account{
+func TestAccounts() map[string]*gtsmodel.Account {
+	accounts := map[string]*gtsmodel.Account{
 		"unconfirmed_account": {
 			ID:                    "59e197f5-87cd-4be8-ac7c-09082ccc4b4d",
 			Username:              "weed_lord420",
@@ -197,7 +197,7 @@ func TestAccounts() map[string]*model.Account {
 			HeaderUpdatedAt:       time.Time{},
 			HeaderRemoteURL:       "",
 			DisplayName:           "",
-			Fields:                []model.Field{},
+			Fields:                []gtsmodel.Field{},
 			Note:                  "",
 			Memorial:              false,
 			MovedToAccountID:      "",
@@ -207,7 +207,7 @@ func TestAccounts() map[string]*model.Account {
 			Reason:                "hi, please let me in! I'm looking for somewhere neato bombeato to hang out.",
 			Locked:                false,
 			Discoverable:          false,
-			Privacy:               model.VisibilityPublic,
+			Privacy:               gtsmodel.VisibilityPublic,
 			Sensitive:             false,
 			Language:              "en",
 			URI:                   "http://localhost:8080/users/weed_lord420",
@@ -218,7 +218,7 @@ func TestAccounts() map[string]*model.Account {
 			SharedInboxURL:        "",
 			FollowersURL:          "http://localhost:8080/users/weed_lord420/followers",
 			FeaturedCollectionURL: "http://localhost:8080/users/weed_lord420/collections/featured",
-			ActorType:             model.ActivityStreamsPerson,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -242,7 +242,7 @@ func TestAccounts() map[string]*model.Account {
 			HeaderUpdatedAt:       time.Time{},
 			HeaderRemoteURL:       "",
 			DisplayName:           "",
-			Fields:                []model.Field{},
+			Fields:                []gtsmodel.Field{},
 			Note:                  "",
 			Memorial:              false,
 			MovedToAccountID:      "",
@@ -252,7 +252,7 @@ func TestAccounts() map[string]*model.Account {
 			Reason:                "",
 			Locked:                false,
 			Discoverable:          true,
-			Privacy:               model.VisibilityPublic,
+			Privacy:               gtsmodel.VisibilityPublic,
 			Sensitive:             false,
 			Language:              "en",
 			URI:                   "http://localhost:8080/users/admin",
@@ -263,7 +263,7 @@ func TestAccounts() map[string]*model.Account {
 			SharedInboxURL:        "",
 			FollowersURL:          "http://localhost:8080/users/admin/followers",
 			FeaturedCollectionURL: "http://localhost:8080/users/admin/collections/featured",
-			ActorType:             model.ActivityStreamsPerson,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -287,7 +287,7 @@ func TestAccounts() map[string]*model.Account {
 			HeaderUpdatedAt:       time.Time{},
 			HeaderRemoteURL:       "",
 			DisplayName:           "original zork (he/they)",
-			Fields:                []model.Field{},
+			Fields:                []gtsmodel.Field{},
 			Note:                  "hey yo this is my profile!",
 			Memorial:              false,
 			MovedToAccountID:      "",
@@ -297,7 +297,7 @@ func TestAccounts() map[string]*model.Account {
 			Reason:                "I wanna be on this damned webbed site so bad! Please! Wow",
 			Locked:                false,
 			Discoverable:          true,
-			Privacy:               model.VisibilityPublic,
+			Privacy:               gtsmodel.VisibilityPublic,
 			Sensitive:             false,
 			Language:              "en",
 			URI:                   "http://localhost:8080/users/the_mighty_zork",
@@ -308,7 +308,7 @@ func TestAccounts() map[string]*model.Account {
 			SharedInboxURL:        "",
 			FollowersURL:          "http://localhost:8080/users/the_mighty_zork/followers",
 			FeaturedCollectionURL: "http://localhost:8080/users/the_mighty_zork/collections/featured",
-			ActorType:             model.ActivityStreamsPerson,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -332,7 +332,7 @@ func TestAccounts() map[string]*model.Account {
 			HeaderUpdatedAt:       time.Time{},
 			HeaderRemoteURL:       "",
 			DisplayName:           "happy little turtle :3",
-			Fields:                []model.Field{},
+			Fields:                []gtsmodel.Field{},
 			Note:                  "i post about things that concern me",
 			Memorial:              false,
 			MovedToAccountID:      "",
@@ -342,7 +342,7 @@ func TestAccounts() map[string]*model.Account {
 			Reason:                "",
 			Locked:                true,
 			Discoverable:          false,
-			Privacy:               model.VisibilityFollowersOnly,
+			Privacy:               gtsmodel.VisibilityFollowersOnly,
 			Sensitive:             false,
 			Language:              "en",
 			URI:                   "http://localhost:8080/users/1happyturtle",
@@ -353,7 +353,7 @@ func TestAccounts() map[string]*model.Account {
 			SharedInboxURL:        "",
 			FollowersURL:          "http://localhost:8080/users/1happyturtle/followers",
 			FeaturedCollectionURL: "http://localhost:8080/users/1happyturtle/collections/featured",
-			ActorType:             model.ActivityStreamsPerson,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -378,7 +378,7 @@ func TestAccounts() map[string]*model.Account {
 			// HeaderUpdatedAt:       time.Time{},
 			// HeaderRemoteURL:       "",
 			DisplayName:           "big gerald",
-			Fields:                []model.Field{},
+			Fields:                []gtsmodel.Field{},
 			Note:                  "i post about like, i dunno, stuff, or whatever!!!!",
 			Memorial:              false,
 			MovedToAccountID:      "",
@@ -397,7 +397,7 @@ func TestAccounts() map[string]*model.Account {
 			SharedInboxURL:        "",
 			FollowersURL:          "https://fossbros-anonymous.io/users/foss_satan/followers",
 			FeaturedCollectionURL: "https://fossbros-anonymous.io/users/foss_satan/collections/featured",
-			ActorType:             model.ActivityStreamsPerson,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             nil,
@@ -440,53 +440,168 @@ func TestAccounts() map[string]*model.Account {
 	return accounts
 }
 
-func TestStatuses() map[string]*model.Status {
-	return map[string]*model.Status{
-		"local_account_1_status_1": {
-			ID: "91b1e795-74ff-4672-a4c4-476616710e2d",
-			URI: "http://localhost:8080/users/the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
-			URL: "http://localhost:8080/@the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
-			Content: "hello everyone!",
-			CreatedAt:             time.Now().Add(-47 * time.Hour),
-			UpdatedAt:             time.Now().Add(-47 * time.Hour),
-			Local: true,
-			AccountID: "580072df-4d03-4684-a412-89fd6f7d77e6",
-			InReplyToID: "",
-			BoostOfID: "",
-			ContentWarning: "introduction post",
-			Visibility: model.VisibilityPublic,
-			Sensitive: true,
-			Language: "en",
-			VisibilityAdvanced: &model.VisibilityAdvanced{
+func TestStatuses() map[string]*gtsmodel.Status {
+	return map[string]*gtsmodel.Status{
+		"admin_account_status_1": {
+			ID:             "502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
+			URI:            "http://localhost:8080/users/admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
+			URL:            "http://localhost:8080/@admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
+			Content:        "hello world! first post on the instance!",
+			CreatedAt:      time.Now().Add(-71 * time.Hour),
+			UpdatedAt:      time.Now().Add(-71 * time.Hour),
+			Local:          true,
+			AccountID:      "0fb02eae-2214-473f-9667-0a43f22d75ff",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "",
+			Visibility:     gtsmodel.VisibilityPublic,
+			Sensitive:      false,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
-				Likeable: true,
+				Likeable:  true,
 			},
-			ActivityStreamsType: model.ActivityStreamsNote,
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"admin_account_status_2": {
+			ID:             "0fb3f1ac-5cd8-48ac-9050-3d95dc7e44e9",
+			URI:            "http://localhost:8080/users/admin/statuses/0fb3f1ac-5cd8-48ac-9050-3d95dc7e44e9",
+			URL:            "http://localhost:8080/@admin/statuses/0fb3f1ac-5cd8-48ac-9050-3d95dc7e44e9",
+			Content:        "🐕🐕🐕🐕🐕",
+			CreatedAt:      time.Now().Add(-70 * time.Hour),
+			UpdatedAt:      time.Now().Add(-70 * time.Hour),
+			Local:          true,
+			AccountID:      "0fb02eae-2214-473f-9667-0a43f22d75ff",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "open to see some puppies",
+			Visibility:     gtsmodel.VisibilityPublic,
+			Sensitive:      true,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"local_account_1_status_1": {
+			ID:             "91b1e795-74ff-4672-a4c4-476616710e2d",
+			URI:            "http://localhost:8080/users/the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
+			URL:            "http://localhost:8080/@the_mighty_zork/statuses/91b1e795-74ff-4672-a4c4-476616710e2d",
+			Content:        "hello everyone!",
+			CreatedAt:      time.Now().Add(-47 * time.Hour),
+			UpdatedAt:      time.Now().Add(-47 * time.Hour),
+			Local:          true,
+			AccountID:      "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "introduction post",
+			Visibility:     gtsmodel.VisibilityPublic,
+			Sensitive:      true,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
 		"local_account_1_status_2": {
-			ID: "3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
-			URI: "http://localhost:8080/users/the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
-			URL: "http://localhost:8080/@the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
-			Content: "this is an unlocked local-only post that shouldn't federate, but it's still boostable, replyable, and likeable",
-			CreatedAt:             time.Now().Add(-47 * time.Hour),
-			UpdatedAt:             time.Now().Add(-47 * time.Hour),
-			Local: true,
-			AccountID: "580072df-4d03-4684-a412-89fd6f7d77e6",
-			InReplyToID: "",
-			BoostOfID: "",
+			ID:             "3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			URI:            "http://localhost:8080/users/the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			URL:            "http://localhost:8080/@the_mighty_zork/statuses/3dd328d9-8bb1-48f5-bc96-5ccc1c696b4c",
+			Content:        "this is an unlocked local-only post that shouldn't federate, but it's still boostable, replyable, and likeable",
+			CreatedAt:      time.Now().Add(-46 * time.Hour),
+			UpdatedAt:      time.Now().Add(-46 * time.Hour),
+			Local:          true,
+			AccountID:      "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID:    "",
+			BoostOfID:      "",
 			ContentWarning: "",
-			Visibility: model.VisibilityUnlocked,
-			Sensitive: false,
-			Language: "en",
-			VisibilityAdvanced: &model.VisibilityAdvanced{
+			Visibility:     gtsmodel.VisibilityUnlocked,
+			Sensitive:      false,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: true,
 				Replyable: true,
-				Likeable: true,
+				Likeable:  true,
 			},
-			ActivityStreamsType: model.ActivityStreamsNote,
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"local_account_1_status_3": {
+			ID:             "5e41963f-8ab9-4147-9f00-52d56e19da65",
+			URI:            "http://localhost:8080/users/the_mighty_zork/statuses/5e41963f-8ab9-4147-9f00-52d56e19da65",
+			URL:            "http://localhost:8080/@the_mighty_zork/statuses/5e41963f-8ab9-4147-9f00-52d56e19da65",
+			Content:        "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+			CreatedAt:      time.Now().Add(-45 * time.Hour),
+			UpdatedAt:      time.Now().Add(-45 * time.Hour),
+			Local:          true,
+			AccountID:      "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "test: you shouldn't be able to interact with this post in any way",
+			Visibility:     gtsmodel.VisibilityMutualsOnly,
+			Sensitive:      false,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: false,
+				Replyable: false,
+				Likeable:  false,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"local_account_2_status_1": {
+			ID:             "8945ccf2-3873-45e9-aa13-fd7163f19775",
+			URI:            "http://localhost:8080/users/1happyturtle/statuses/8945ccf2-3873-45e9-aa13-fd7163f19775",
+			URL:            "http://localhost:8080/@1happyturtle/statuses/8945ccf2-3873-45e9-aa13-fd7163f19775",
+			Content:        "🐢 hi everyone i post about turtles 🐢",
+			CreatedAt:      time.Now().Add(-189 * time.Hour),
+			UpdatedAt:      time.Now().Add(-189 * time.Hour),
+			Local:          true,
+			AccountID:      "eecaad73-5703-426d-9312-276641daa31e",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "introduction post",
+			Visibility:     gtsmodel.VisibilityPublic,
+			Sensitive:      true,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"local_account_2_status_2": {
+			ID:             "c7e25a86-f0d3-4705-a73c-c597f687d3dd",
+			URI:            "http://localhost:8080/users/1happyturtle/statuses/c7e25a86-f0d3-4705-a73c-c597f687d3dd",
+			URL:            "http://localhost:8080/@1happyturtle/statuses/c7e25a86-f0d3-4705-a73c-c597f687d3dd",
+			Content:        "🐢 this one is federated, likeable, and boostable but not replyable 🐢",
+			CreatedAt:      time.Now().Add(-1 * time.Minute),
+			UpdatedAt:      time.Now().Add(-1 * time.Minute),
+			Local:          true,
+			AccountID:      "eecaad73-5703-426d-9312-276641daa31e",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "",
+			Visibility:     gtsmodel.VisibilityPublic,
+			Sensitive:      true,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: false,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
 	}
 }

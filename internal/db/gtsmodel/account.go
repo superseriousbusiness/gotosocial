@@ -16,11 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package model contains types used *internally* by GoToSocial and added/removed/selected from the database.
+// Package gtsmodel contains types used *internally* by GoToSocial and added/removed/selected from the database.
 // These types should never be serialized and/or sent out via public APIs, as they contain sensitive information.
 // The annotation used on these structs is for handling them via the go-pg ORM (hence why they're in this db subdir).
 // See here for more info on go-pg model annotations: https://pg.uptrace.dev/models/
-package model
+package gtsmodel
 
 import (
 	"crypto/rsa"
@@ -38,7 +38,7 @@ type Account struct {
 	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
 	Username string `pg:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
 	// Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
-	Domain string `pg:"default:null,unique:userdomain"` // username and domain should be unique *with* each other
+	Domain string `pg:",unique:userdomain"` // username and domain should be unique *with* each other
 
 	/*
 		ACCOUNT METADATA

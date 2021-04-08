@@ -28,11 +28,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
 
 type advancedStatusCreateForm struct {
@@ -42,7 +42,7 @@ type advancedStatusCreateForm struct {
 
 type advancedVisibilityFlagsForm struct {
 	// The gotosocial visibility model
-	VisibilityAdvanced *model.Visibility `form:"visibility_advanced"`
+	VisibilityAdvanced *gtsmodel.Visibility `form:"visibility_advanced"`
 	// This status will be federated beyond the local timeline(s)
 	Federated *bool `form:"federated"`
 	// This status can be boosted/reblogged
@@ -96,7 +96,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	thisStatusID := uuid.NewString()
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
-	newStatus := &model.Status{
+	newStatus := &gtsmodel.Status{
 		ID:                  thisStatusID,
 		URI:                 thisStatusURI,
 		URL:                 thisStatusURL,
@@ -106,7 +106,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		Local:               true,
 		AccountID:           authed.Account.ID,
 		ContentWarning:      form.SpoilerText,
-		ActivityStreamsType: model.ActivityStreamsNote,
+		ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		Sensitive:           form.Sensitive,
 		Language:            form.Language,
 	}
@@ -135,16 +135,23 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// convert mentions to *model.Mention
+	// convert mentions to *gtsmodel.Mention
 	menchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating mentions from status: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
 		return
 	}
+	for _, menchie := range menchies {
+		if err := m.db.Put(menchie); err != nil {
+			l.Debugf("error putting mentions in db: %s", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error while generating mentions from status"})
+			return
+		}
+	}
 	newStatus.Mentions = menchies
 
-	// convert tags to *model.Tag
+	// convert tags to *gtsmodel.Tag
 	tags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating hashtags from status: %s", err)
@@ -153,7 +160,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 	newStatus.Tags = tags
 
-	// convert emojis to *model.Emoji
+	// convert emojis to *gtsmodel.Emoji
 	emojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), authed.Account.ID, thisStatusID)
 	if err != nil {
 		l.Debugf("error generating emojis from status: %s", err)
@@ -170,33 +177,64 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 
 	// pass to the distributor to take care of side effects -- federation, mentions, updating metadata, etc, etc
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
-		APObjectType:   model.ActivityStreamsNote,
-		APActivityType: model.ActivityStreamsCreate,
+		APObjectType:   gtsmodel.ActivityStreamsNote,
+		APActivityType: gtsmodel.ActivityStreamsCreate,
 		Activity:       newStatus,
 	}
 
-	// return populated status to submitter
-	mastoAccount, err := m.db.AccountToMastoPublic(authed.Account)
+	// now we need to build up the mastodon-style status object to return to the submitter
+
+	mastoVis := util.ParseMastoVisFromGTSVis(newStatus.Visibility)
+
+	mastoAccount, err := m.mastoConverter.AccountToMastoPublic(authed.Account)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	mastoAttachments := []mastotypes.Attachment{}
+	for _, a := range newStatus.Attachments {
+		ma, err := m.mastoConverter.AttachmentToMasto(a)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		mastoAttachments = append(mastoAttachments, ma)
+	}
+
+	mastoMentions := []mastotypes.Mention{}
+	for _, gtsm := range newStatus.Mentions {
+		mm, err := m.mastoConverter.MentionToMasto(gtsm)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		mastoMentions = append(mastoMentions, mm)
+	}
+
+	mastoApplication, err := m.mastoConverter.AppToMastoPublic(authed.Application)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	mastoStatus := &mastotypes.Status{
-		ID:          newStatus.ID,
-		CreatedAt:   newStatus.CreatedAt.Format(time.RFC3339),
-		InReplyToID: newStatus.InReplyToID,
-		// InReplyToAccountID: newStatus.ReplyToAccount.ID,
-		Sensitive:   newStatus.Sensitive,
-		SpoilerText: newStatus.ContentWarning,
-		Visibility:  util.ParseMastoVisFromGTSVis(newStatus.Visibility),
-		Language:    newStatus.Language,
-		URI:         newStatus.URI,
-		URL:         newStatus.URL,
-		Content:     newStatus.Content,
-		Application: authed.Application.ToMastoPublic(),
-		Account:     mastoAccount,
-		// MediaAttachments: ,
-		Text:        form.Status,
+		ID:                 newStatus.ID,
+		CreatedAt:          newStatus.CreatedAt.Format(time.RFC3339),
+		InReplyToID:        newStatus.InReplyToID,
+		InReplyToAccountID: newStatus.InReplyToAccountID,
+		Sensitive:          newStatus.Sensitive,
+		SpoilerText:        newStatus.ContentWarning,
+		Visibility:         mastoVis,
+		Language:           newStatus.Language,
+		URI:                newStatus.URI,
+		URL:                newStatus.URL,
+		Content:            newStatus.Content,
+		Application:        mastoApplication,
+		Account:            mastoAccount,
+		MediaAttachments:   mastoAttachments,
+		Mentions:           mastoMentions,
+		Text:               form.Status,
 	}
 	c.JSON(http.StatusOK, mastoStatus)
 }
@@ -255,16 +293,16 @@ func validateCreateStatus(form *advancedStatusCreateForm, config *config.Statuse
 	return nil
 }
 
-func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Visibility, status *model.Status) error {
+func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
-	gtsAdvancedVis := &model.VisibilityAdvanced{
+	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
 		Federated: true,
 		Boostable: true,
 		Replyable: true,
 		Likeable:  true,
 	}
 
-	var gtsBasicVis model.Visibility
+	var gtsBasicVis gtsmodel.Visibility
 	// Advanced takes priority if it's set.
 	// If it's not set, take whatever masto visibility is set.
 	// If *that's* not set either, then just take the account default.
@@ -277,10 +315,10 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 	}
 
 	switch gtsBasicVis {
-	case model.VisibilityPublic:
+	case gtsmodel.VisibilityPublic:
 		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
 		break
-	case model.VisibilityUnlocked:
+	case gtsmodel.VisibilityUnlocked:
 		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
 		if form.Federated != nil {
 			gtsAdvancedVis.Federated = *form.Federated
@@ -298,7 +336,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 			gtsAdvancedVis.Likeable = *form.Likeable
 		}
 
-	case model.VisibilityFollowersOnly, model.VisibilityMutualsOnly:
+	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
 		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
 		gtsAdvancedVis.Boostable = false
 
@@ -314,7 +352,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 			gtsAdvancedVis.Likeable = *form.Likeable
 		}
 
-	case model.VisibilityDirect:
+	case gtsmodel.VisibilityDirect:
 		// direct is pretty easy: there's only one possible setting so return it
 		gtsAdvancedVis.Federated = true
 		gtsAdvancedVis.Boostable = false
@@ -327,7 +365,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis model.Vis
 	return nil
 }
 
-func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *model.Status) error {
+func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -339,8 +377,8 @@ func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
 	//
 	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
-	repliedStatus := &model.Status{}
-	repliedAccount := &model.Account{}
+	repliedStatus := &gtsmodel.Status{}
+	repliedAccount := &gtsmodel.Account{}
 	// check replied status exists + is replyable
 	if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
@@ -356,26 +394,35 @@ func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 
 	// check replied account is known to us
 	if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
-		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
+		} else {
+			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		}
 	}
 	// check if a block exists
-	if blocked, err := m.db.Blocked(thisAccountID, repliedAccount.ID); err != nil || blocked {
-		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+	if blocked, err := m.db.Blocked(thisAccountID, repliedAccount.ID); err != nil {
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		}
+	} else if blocked {
+		return fmt.Errorf("status with id %s not replyable", form.InReplyToID)
 	}
 	status.InReplyToID = repliedStatus.ID
+	status.InReplyToAccountID = repliedAccount.ID
 
 	return nil
 }
 
-func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *model.Status) error {
+func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.MediaIDs == nil {
 		return nil
 	}
 
-	attachments := []*model.MediaAttachment{}
+	attachments := []*gtsmodel.MediaAttachment{}
 	for _, mediaID := range form.MediaIDs {
 		// check these attachments exist
-		a := &model.MediaAttachment{}
+		a := &gtsmodel.MediaAttachment{}
 		if err := m.db.GetByID(mediaID, a); err != nil {
 			return fmt.Errorf("invalid media type or media not found for media id %s", mediaID)
 		}
@@ -389,7 +436,7 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 	return nil
 }
 
-func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string, status *model.Status) error {
+func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
 		status.Language = form.Language
 	} else {

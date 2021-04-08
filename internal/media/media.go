@@ -28,7 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -37,7 +37,7 @@ type MediaHandler interface {
 	// SetHeaderOrAvatarForAccountID takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*model.MediaAttachment, error)
+	SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -68,7 +68,7 @@ type HeaderInfo struct {
 	INTERFACE FUNCTIONS
 */
 
-func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*model.MediaAttachment, error) {
+func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if headerOrAvi != "header" && headerOrAvi != "avatar" {
@@ -107,7 +107,7 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID stri
 	HELPER FUNCTIONS
 */
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, headerOrAvi string, accountID string) (*model.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, headerOrAvi string, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
@@ -152,34 +152,38 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	extension := strings.Split(contentType, "/")[1]
 	newMediaID := uuid.NewString()
 
-	base := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, headerOrAvi, newMediaID, extension)
+	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, headerOrAvi, newMediaID, extension)
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/original/%s.%s", base, accountID, headerOrAvi, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/original/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
+
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/small/%s.%s", base, accountID, headerOrAvi, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/small/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
-	ma := &model.MediaAttachment{
+	ma := &gtsmodel.MediaAttachment{
 		ID:        newMediaID,
 		StatusID:  "",
+		URL:       originalURL,
 		RemoteURL: "",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Type:      model.FileTypeImage,
-		FileMeta: model.FileMeta{
-			Original: model.Original{
+		Type:      gtsmodel.FileTypeImage,
+		FileMeta: gtsmodel.FileMeta{
+			Original: gtsmodel.Original{
 				Width:  original.width,
 				Height: original.height,
 				Size:   original.size,
 				Aspect: original.aspect,
 			},
-			Small: model.Small{
+			Small: gtsmodel.Small{
 				Width:  small.width,
 				Height: small.height,
 				Size:   small.size,
@@ -191,17 +195,18 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		ScheduledStatusID: "",
 		Blurhash:          original.blurhash,
 		Processing:        2,
-		File: model.File{
+		File: gtsmodel.File{
 			Path:        originalPath,
 			ContentType: contentType,
 			FileSize:    len(original.image),
 			UpdatedAt:   time.Now(),
 		},
-		Thumbnail: model.Thumbnail{
+		Thumbnail: gtsmodel.Thumbnail{
 			Path:        smallPath,
 			ContentType: contentType,
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
+			URL:         smallURL,
 			RemoteURL:   "",
 		},
 		Avatar: isAvatar,

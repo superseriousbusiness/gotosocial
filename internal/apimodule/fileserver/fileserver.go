@@ -7,7 +7,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -44,14 +44,14 @@ func (m *fileServer) Route(s router.Router) error {
 
 func (m *fileServer) CreateTables(db db.DB) error {
 	models := []interface{}{
-		&model.User{},
-		&model.Account{},
-		&model.Follow{},
-		&model.FollowRequest{},
-		&model.Status{},
-		&model.Application{},
-		&model.EmailDomainBlock{},
-		&model.MediaAttachment{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.Status{},
+		&gtsmodel.Application{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.MediaAttachment{},
 	}
 
 	for _, m := range models {

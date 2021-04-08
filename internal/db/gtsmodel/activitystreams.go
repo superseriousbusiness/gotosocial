@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtsmodel
 
 // ActivityStreamsObject refers to https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 type ActivityStreamsObject string
