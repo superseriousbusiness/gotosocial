@@ -25,8 +25,8 @@ import (
 
 var (
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionRegexString  = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
-	mentionRegex        = regexp.MustCompile(mentionRegexString)
+	mentionRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
+	mentionRegex       = regexp.MustCompile(mentionRegexString)
 	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
 	hashtagRegexString = `(?: |^|\W)?#([a-zA-Z0-9]{1,30})(?:\b|\r)`
 	hashtagRegex       = regexp.MustCompile(hashtagRegexString)

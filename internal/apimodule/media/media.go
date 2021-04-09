@@ -32,7 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-const mediaPath = "/api/v1/media"
+const basePath = "/api/v1/media"
 
 type mediaModule struct {
 	mediaHandler   media.MediaHandler
@@ -46,7 +46,7 @@ type mediaModule struct {
 func New(db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &mediaModule{
 		mediaHandler:   mediaHandler,
-		config: config,
+		config:         config,
 		db:             db,
 		mastoConverter: mastoConverter,
 		log:            log,
@@ -55,7 +55,7 @@ func New(db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Co
 
 // Route satisfies the RESTAPIModule interface
 func (m *mediaModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, mediaPath, m.mediaCreatePOSTHandler)
+	s.AttachHandler(http.MethodPost, basePath, m.mediaCreatePOSTHandler)
 	return nil
 }
 

@@ -236,23 +236,23 @@ func (c *converter) AppToMastoPublic(a *gtsmodel.Application) (*mastotypes.Appli
 
 func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (mastotypes.Attachment, error) {
 	return mastotypes.Attachment{
-		ID: a.ID,
-		Type: string(a.Type),
-		URL: a.URL,
-		PreviewURL: a.Thumbnail.URL,
-		RemoteURL: a.RemoteURL,
+		ID:               a.ID,
+		Type:             string(a.Type),
+		URL:              a.URL,
+		PreviewURL:       a.Thumbnail.URL,
+		RemoteURL:        a.RemoteURL,
 		PreviewRemoteURL: a.Thumbnail.RemoteURL,
 		Meta: mastotypes.MediaMeta{
 			Original: mastotypes.MediaDimensions{
-				Width: a.FileMeta.Original.Width,
+				Width:  a.FileMeta.Original.Width,
 				Height: a.FileMeta.Original.Height,
-				Size: fmt.Sprintf("%dx%d", a.FileMeta.Original.Width, a.FileMeta.Original.Height),
+				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Original.Width, a.FileMeta.Original.Height),
 				Aspect: float32(a.FileMeta.Original.Aspect),
 			},
 			Small: mastotypes.MediaDimensions{
-				Width: a.FileMeta.Small.Width,
+				Width:  a.FileMeta.Small.Width,
 				Height: a.FileMeta.Small.Height,
-				Size: fmt.Sprintf("%dx%d", a.FileMeta.Small.Width, a.FileMeta.Small.Height),
+				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Small.Width, a.FileMeta.Small.Height),
 				Aspect: float32(a.FileMeta.Small.Aspect),
 			},
 			Focus: mastotypes.MediaFocus{
@@ -261,7 +261,7 @@ func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (mastotypes.A
 			},
 		},
 		Description: a.Description,
-		Blurhash: a.Blurhash,
+		Blurhash:    a.Blurhash,
 	}, nil
 }
 
@@ -284,9 +284,9 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, err
 	}
 
 	return mastotypes.Mention{
-		ID: m.ID,
+		ID:       m.ID,
 		Username: target.Username,
-		URL: target.URL,
-		Acct: acct,
+		URL:      target.URL,
+		Acct:     acct,
 	}, nil
 }

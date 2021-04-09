@@ -143,6 +143,18 @@ func main() {
 				Value:   5242880, // 5mb
 				EnvVars: []string{envNames.MediaMaxVideoSize},
 			},
+			&cli.IntFlag{
+				Name:    flagNames.MediaMinDescriptionChars,
+				Usage:   "Min required chars for an image description",
+				Value:   0,
+				EnvVars: []string{envNames.MediaMinDescriptionChars},
+			},
+			&cli.IntFlag{
+				Name:    flagNames.MediaMaxDescriptionChars,
+				Usage:   "Max permitted chars for an image description",
+				Value:   500,
+				EnvVars: []string{envNames.MediaMaxDescriptionChars},
+			},
 
 			// STORAGE FLAGS
 			&cli.StringFlag{

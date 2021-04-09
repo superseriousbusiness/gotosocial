@@ -155,6 +155,14 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 		c.MediaConfig.MaxVideoSize = f.Int(fn.MediaMaxVideoSize)
 	}
 
+	if c.MediaConfig.MinDescriptionChars == 0 || f.IsSet(fn.MediaMinDescriptionChars) {
+		c.MediaConfig.MinDescriptionChars = f.Int(fn.MediaMinDescriptionChars)
+	}
+
+	if c.MediaConfig.MaxDescriptionChars == 0 || f.IsSet(fn.MediaMaxDescriptionChars) {
+		c.MediaConfig.MaxDescriptionChars = f.Int(fn.MediaMaxDescriptionChars)
+	}
+
 	// storage flags
 	if c.StorageConfig.Backend == "" || f.IsSet(fn.StorageBackend) {
 		c.StorageConfig.Backend = f.String(fn.StorageBackend)
@@ -224,8 +232,10 @@ type Flags struct {
 	AccountsOpenRegistration string
 	AccountsRequireApproval  string
 
-	MediaMaxImageSize string
-	MediaMaxVideoSize string
+	MediaMaxImageSize        string
+	MediaMaxVideoSize        string
+	MediaMinDescriptionChars string
+	MediaMaxDescriptionChars string
 
 	StorageBackend       string
 	StorageBasePath      string
@@ -262,8 +272,10 @@ func GetFlagNames() Flags {
 		AccountsOpenRegistration: "accounts-open-registration",
 		AccountsRequireApproval:  "accounts-require-approval",
 
-		MediaMaxImageSize: "media-max-image-size",
-		MediaMaxVideoSize: "media-max-video-size",
+		MediaMaxImageSize:        "media-max-image-size",
+		MediaMaxVideoSize:        "media-max-video-size",
+		MediaMinDescriptionChars: "media-min-description-chars",
+		MediaMaxDescriptionChars: "media-max-description-chars",
 
 		StorageBackend:       "storage-backend",
 		StorageBasePath:      "storage-base-path",
@@ -301,8 +313,10 @@ func GetEnvNames() Flags {
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
 		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
 
-		MediaMaxImageSize: "GTS_MEDIA_MAX_IMAGE_SIZE",
-		MediaMaxVideoSize: "GTS_MEDIA_MAX_VIDEO_SIZE",
+		MediaMaxImageSize:        "GTS_MEDIA_MAX_IMAGE_SIZE",
+		MediaMaxVideoSize:        "GTS_MEDIA_MAX_VIDEO_SIZE",
+		MediaMinDescriptionChars: "GTS_MEDIA_MIN_DESCRIPTION_CHARS",
+		MediaMaxDescriptionChars: "GTS_MEDIA_MAX_DESCRIPTION_CHARS",
 
 		StorageBackend:       "GTS_STORAGE_BACKEND",
 		StorageBasePath:      "GTS_STORAGE_BASE_PATH",

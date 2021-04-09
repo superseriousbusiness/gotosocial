@@ -67,14 +67,13 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// open the attachment and extract the bytes from it
 	f, err := form.File.Open()
 	if err != nil {
 		l.Debugf("error opening attachment: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not open provided attachment: %s", err)})
 		return
 	}
-
-	// extract the bytes
 	buf := new(bytes.Buffer)
 	size, err := io.Copy(buf, f)
 	if err != nil {
@@ -88,6 +87,7 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
 	attachment, err := m.mediaHandler.ProcessAttachment(buf.Bytes(), authed.Account.ID)
 	if err != nil {
 		l.Debugf("error reading attachment: %s", err)
@@ -95,7 +95,14 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// now we need to add extra fields that the attachment processor doesn't know (from the form)
+	// TODO: handle this inside mediaHandler.ProcessAttachment (just pass more params to it)
+
+	// first description
 	attachment.Description = form.Description
+
+	// now parse the focus parameter
+	// TODO: tidy this up into a separate function and just return an error so all the c.JSON and return calls are obviated
 	var focusx, focusy float32
 	if form.Focus != "" {
 		spl := strings.Split(form.Focus, ",")
@@ -106,12 +113,12 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		}
 		xStr := spl[0]
 		yStr := spl[1]
-		if xStr == "" || xStr == "" {
+		if xStr == "" || yStr == "" {
 			l.Debugf("improperly formatted focus %s", form.Focus)
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("improperly formatted focus %s", form.Focus)})
 			return
 		}
-		fx, err := strconv.ParseFloat(xStr[:4], 32)
+		fx, err := strconv.ParseFloat(xStr, 32)
 		if err != nil {
 			l.Debugf("improperly formatted focus %s: %s", form.Focus, err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("improperly formatted focus %s", form.Focus)})
@@ -123,7 +130,7 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 			return
 		}
 		focusx = float32(fx)
-		fy, err := strconv.ParseFloat(yStr[:4], 32)
+		fy, err := strconv.ParseFloat(yStr, 32)
 		if err != nil {
 			l.Debugf("improperly formatted focus %s: %s", form.Focus, err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("improperly formatted focus %s", form.Focus)})
@@ -136,10 +143,11 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		}
 		focusy = float32(fy)
 	}
-
 	attachment.FileMeta.Focus.X = focusx
 	attachment.FileMeta.Focus.Y = focusy
 
+	// prepare the frontend representation now -- if there are any errors here at least we can bail without
+	// having already put something in the database and then having to clean it up again (eugh)
 	mastoAttachment, err := m.mastoConverter.AttachmentToMasto(attachment)
 	if err != nil {
 		l.Debugf("error parsing media attachment to frontend type: %s", err)
@@ -147,12 +155,14 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// now we can confidently put the attachment in the database
 	if err := m.db.Put(attachment); err != nil {
 		l.Debugf("error storing media attachment in db: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error storing media attachment in db: %s", err)})
 		return
 	}
 
+	// and return its frontend representation
 	c.JSON(http.StatusAccepted, mastoAttachment)
 }
 
@@ -162,7 +172,7 @@ func validateCreateMedia(form *mastotypes.AttachmentRequest, config *config.Medi
 		return errors.New("no attachment given")
 	}
 
-	// a very superficial check to see if no limits are exceeded
+	// a very superficial check to see if no size limits are exceeded
 	// we still don't actually know which media types we're dealing with but the other handlers will go into more detail there
 	maxSize := config.MaxVideoSize
 	if config.MaxImageSize > maxSize {
@@ -171,5 +181,12 @@ func validateCreateMedia(form *mastotypes.AttachmentRequest, config *config.Medi
 	if form.File.Size > int64(maxSize) {
 		return fmt.Errorf("file size limit exceeded: limit is %d bytes but attachment was %d bytes", maxSize, form.File.Size)
 	}
+
+	if len(form.Description) < config.MinDescriptionChars || len(form.Description) > config.MaxDescriptionChars {
+		return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", config.MinDescriptionChars, config.MaxDescriptionChars, len(form.Description))
+	}
+
+	// TODO: validate focus here
+
 	return nil
 }

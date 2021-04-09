@@ -7,6 +7,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
+// NewInMem returns an in-memory implementation of the Storage interface.
+// This is good for testing and whatnot but ***SHOULD ABSOLUTELY NOT EVER
+// BE USED IN A PRODUCTION SETTING***, because A) everything will be wiped out
+// if you restart the server and B) if you store lots of images your RAM use
+// will absolutely go through the roof.
 func NewInMem(c *config.Config, log *logrus.Logger) (Storage, error) {
 	return &inMemStorage{
 		stored: make(map[string][]byte),

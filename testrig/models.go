@@ -442,9 +442,9 @@ func TestAccounts() map[string]*gtsmodel.Account {
 
 func TestAttachments() map[string]*gtsmodel.MediaAttachment {
 	return map[string]*gtsmodel.MediaAttachment{
-		"admin_account_status_1": {
+		// "admin_account_status_1": {
 
-		},
+		// },
 	}
 }
 

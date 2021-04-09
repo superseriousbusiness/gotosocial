@@ -17,5 +17,3 @@
 */
 
 package gtsmodel
-
-

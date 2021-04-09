@@ -113,7 +113,7 @@ func (mh *mediaHandler) ProcessAttachment(data []byte, accountID string) (*gtsmo
 	if err != nil {
 		return nil, err
 	}
-	mainType := strings.Split(contentType, "/")[0] 
+	mainType := strings.Split(contentType, "/")[0]
 	switch mainType {
 	case "video":
 		if !supportedVideoType(contentType) {
