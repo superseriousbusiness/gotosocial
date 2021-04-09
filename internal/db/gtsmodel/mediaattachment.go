@@ -123,6 +123,7 @@ const (
 type FileMeta struct {
 	Original Original
 	Small    Small
+	Focus    Focus
 }
 
 // Small can be used for a thumbnail of any media type
@@ -139,4 +140,9 @@ type Original struct {
 	Height int
 	Size   int
 	Aspect float64
+}
+
+type Focus struct {
+	X float32
+	Y float32
 }

@@ -255,6 +255,10 @@ func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (mastotypes.A
 				Size: fmt.Sprintf("%dx%d", a.FileMeta.Small.Width, a.FileMeta.Small.Height),
 				Aspect: float32(a.FileMeta.Small.Aspect),
 			},
+			Focus: mastotypes.MediaFocus{
+				X: a.FileMeta.Focus.X,
+				Y: a.FileMeta.Focus.Y,
+			},
 		},
 		Description: a.Description,
 		Blurhash: a.Blurhash,

@@ -440,6 +440,14 @@ func TestAccounts() map[string]*gtsmodel.Account {
 	return accounts
 }
 
+func TestAttachments() map[string]*gtsmodel.MediaAttachment {
+	return map[string]*gtsmodel.MediaAttachment{
+		"admin_account_status_1": {
+
+		},
+	}
+}
+
 func TestStatuses() map[string]*gtsmodel.Status {
 	return map[string]*gtsmodel.Status{
 		"admin_account_status_1": {

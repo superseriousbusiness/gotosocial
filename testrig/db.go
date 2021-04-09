@@ -61,6 +61,12 @@ func StandardDBSetup(db db.DB) error {
 		}
 	}
 
+	for _, v := range TestAttachments() {
+		if err := db.Put(v); err != nil {
+			return err
+		}
+	}
+
 	for _, v := range TestStatuses() {
 		if err := db.Put(v); err != nil {
 			return err

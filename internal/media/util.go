@@ -70,6 +70,22 @@ func supportedImageType(mimeType string) bool {
 	return false
 }
 
+// supportedVideoType checks mime type of a video against a slice of accepted types,
+// and returns True if the mime type is accepted.
+func supportedVideoType(mimeType string) bool {
+	acceptedVideoTypes := []string{
+		"video/mp4",
+		"video/mpeg",
+		"video/webm",
+	}
+	for _, accepted := range acceptedVideoTypes {
+		if mimeType == accepted {
+			return true
+		}
+	}
+	return false
+}
+
 // purgeExif is a little wrapper for the action of removing exif data from an image.
 // Only pass pngs or jpegs to this function.
 func purgeExif(b []byte) ([]byte, error) {
@@ -134,7 +150,7 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 	}, nil
 }
 
-// deriveThumbnailFromImage returns a byte slice and metadata for a 256-pixel-width thumbnail
+// deriveThumbnail returns a byte slice and metadata for a 256-pixel-width thumbnail
 // of a given jpeg, png, or gif, or an error if something goes wrong.
 //
 // Note that the aspect ratio of the image will be retained,
