@@ -129,21 +129,17 @@ func (suite *StatusCreateTestSuite) TearDownSuite() {
 }
 
 func (suite *StatusCreateTestSuite) SetupTest() {
-	if err := testrig.StandardDBSetup(suite.db); err != nil {
-		panic(err)
-	}
-	suite.testTokens = testrig.TestTokens()
-	suite.testClients = testrig.TestClients()
-	suite.testApplications = testrig.TestApplications()
-	suite.testUsers = testrig.TestUsers()
-	suite.testAccounts = testrig.TestAccounts()
+	testrig.StandardDBSetup(suite.db)
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
 func (suite *StatusCreateTestSuite) TearDownTest() {
-	if err := testrig.StandardDBTeardown(suite.db); err != nil {
-		panic(err)
-	}
+	testrig.StandardDBTeardown(suite.db)
 }
 
 /*
@@ -241,8 +237,8 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToLocalSucce
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":         {fmt.Sprintf("hello @%s this reply should work!", testrig.TestAccounts()["local_account_2"].Username)},
-		"in_reply_to_id": {testrig.TestStatuses()["local_account_2_status_1"].ID},
+		"status":         {fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username)},
+		"in_reply_to_id": {testrig.NewTestStatuses()["local_account_2_status_1"].ID},
 	}
 	suite.statusModule.statusCreatePOSTHandler(ctx)
 
@@ -259,11 +255,11 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToLocalSucce
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), fmt.Sprintf("hello @%s this reply should work!", testrig.TestAccounts()["local_account_2"].Username), statusReply.Content)
+	assert.Equal(suite.T(), fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
-	assert.Equal(suite.T(), testrig.TestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
-	assert.Equal(suite.T(), testrig.TestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
+	assert.Equal(suite.T(), testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
+	assert.Equal(suite.T(), testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
 	assert.Len(suite.T(), statusReply.Mentions, 1)
 }
 

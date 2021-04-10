@@ -10,7 +10,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func TestTokens() map[string]*oauth.Token {
+func NewTestTokens() map[string]*oauth.Token {
 	tokens := map[string]*oauth.Token{
 		"local_account_1": {
 			ID:              "64cf4214-33ab-4220-b5ca-4a6a12263b20",
@@ -26,7 +26,7 @@ func TestTokens() map[string]*oauth.Token {
 	return tokens
 }
 
-func TestClients() map[string]*oauth.Client {
+func NewTestClients() map[string]*oauth.Client {
 	clients := map[string]*oauth.Client{
 		"local_account_1": {
 			ID:     "73b48d42-029d-4487-80fc-329a5cf67869",
@@ -38,7 +38,7 @@ func TestClients() map[string]*oauth.Client {
 	return clients
 }
 
-func TestApplications() map[string]*gtsmodel.Application {
+func NewTestApplications() map[string]*gtsmodel.Application {
 	apps := map[string]*gtsmodel.Application{
 		"application_1": {
 			ID:           "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
@@ -54,7 +54,7 @@ func TestApplications() map[string]*gtsmodel.Application {
 	return apps
 }
 
-func TestUsers() map[string]*gtsmodel.User {
+func NewTestUsers() map[string]*gtsmodel.User {
 	users := map[string]*gtsmodel.User{
 		"unconfirmed_account": {
 			ID:                     "0f7b1d24-1e49-4ee0-bc7e-fd87b7289eea",
@@ -181,7 +181,7 @@ func TestUsers() map[string]*gtsmodel.User {
 	return users
 }
 
-func TestAccounts() map[string]*gtsmodel.Account {
+func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
 		"unconfirmed_account": {
 			ID:                    "59e197f5-87cd-4be8-ac7c-09082ccc4b4d",
@@ -440,7 +440,7 @@ func TestAccounts() map[string]*gtsmodel.Account {
 	return accounts
 }
 
-func TestAttachments() map[string]*gtsmodel.MediaAttachment {
+func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 	return map[string]*gtsmodel.MediaAttachment{
 		// "admin_account_status_1": {
 
@@ -448,7 +448,7 @@ func TestAttachments() map[string]*gtsmodel.MediaAttachment {
 	}
 }
 
-func TestStatuses() map[string]*gtsmodel.Status {
+func NewTestStatuses() map[string]*gtsmodel.Status {
 	return map[string]*gtsmodel.Status{
 		"admin_account_status_1": {
 			ID:             "502ccd6f-0edf-48d7-9016-2dfa4d3714cd",

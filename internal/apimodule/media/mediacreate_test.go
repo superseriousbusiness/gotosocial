@@ -55,39 +55,10 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.log = log
 
 	// Direct config to local postgres instance
-	c := config.Empty()
-	c.Protocol = "http"
-	c.Host = "localhost"
-	c.DBConfig = &config.DBConfig{
-		Type:            "postgres",
-		Address:         "localhost",
-		Port:            5432,
-		User:            "postgres",
-		Password:        "postgres",
-		Database:        "postgres",
-		ApplicationName: "gotosocial",
-	}
-	c.MediaConfig = &config.MediaConfig{
-		MaxImageSize: 2 << 20,
-	}
-	c.StorageConfig = &config.StorageConfig{
-		Backend:       "local",
-		BasePath:      "/tmp",
-		ServeProtocol: "http",
-		ServeHost:     "localhost",
-		ServeBasePath: "/fileserver/media",
-	}
-	c.StatusesConfig = &config.StatusesConfig{
-		MaxChars:           500,
-		CWMaxChars:         50,
-		PollMaxOptions:     4,
-		PollOptionMaxChars: 50,
-		MaxMediaFiles:      4,
-	}
-	suite.config = c
+	suite.config = testrig.NewTestConfig()
 
 	// use an actual database for this, because it's just easier than mocking one out
-	database, err := db.New(context.Background(), c, log)
+	database, err := db.New(context.Background(), suite.config, log)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -108,21 +79,17 @@ func (suite *MediaCreateTestSuite) TearDownSuite() {
 }
 
 func (suite *MediaCreateTestSuite) SetupTest() {
-	if err := testrig.StandardDBSetup(suite.db); err != nil {
-		panic(err)
-	}
-	suite.testTokens = testrig.TestTokens()
-	suite.testClients = testrig.TestClients()
-	suite.testApplications = testrig.TestApplications()
-	suite.testUsers = testrig.TestUsers()
-	suite.testAccounts = testrig.TestAccounts()
+	testrig.StandardDBSetup(suite.db)
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
 func (suite *MediaCreateTestSuite) TearDownTest() {
-	if err := testrig.StandardDBTeardown(suite.db); err != nil {
-		panic(err)
-	}
+	testrig.StandardDBTeardown(suite.db)
 }
 
 /*

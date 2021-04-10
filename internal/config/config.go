@@ -51,7 +51,7 @@ func FromFile(path string) (*Config, error) {
 	return Empty(), nil
 }
 
-// Empty just returns an empty config
+// Empty just returns a new empty config
 func Empty() *Config {
 	return &Config{
 		DBConfig:       &DBConfig{},
@@ -62,6 +62,8 @@ func Empty() *Config {
 		StatusesConfig: &StatusesConfig{},
 	}
 }
+
+
 
 // loadFromFile takes a path to a yaml file and attempts to load a Config object from it
 func loadFromFile(path string) (*Config, error) {
@@ -142,8 +144,8 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
 	}
 
-	if f.IsSet(fn.AccountsRequireApproval) {
-		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsRequireApproval)
+	if f.IsSet(fn.AccountsApprovalRequired) {
+		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsApprovalRequired)
 	}
 
 	// media flags
@@ -230,7 +232,8 @@ type Flags struct {
 	TemplateBaseDir string
 
 	AccountsOpenRegistration string
-	AccountsRequireApproval  string
+	AccountsApprovalRequired string
+	AccountsReasonRequired   string
 
 	MediaMaxImageSize        string
 	MediaMaxVideoSize        string
@@ -248,6 +251,44 @@ type Flags struct {
 	StatusesPollMaxOptions     string
 	StatusesPollOptionMaxChars string
 	StatusesMaxMediaFiles      string
+}
+
+type Defaults struct {
+	LogLevel        string
+	ApplicationName string
+	ConfigPath      string
+	Host            string
+	Protocol        string
+
+	DbType     string
+	DbAddress  string
+	DbPort     int
+	DbUser     string
+	DbPassword string
+	DbDatabase string
+
+	TemplateBaseDir string
+
+	AccountsOpenRegistration bool
+	AccountsRequireApproval  bool
+	AccountsReasonRequired   bool
+
+	MediaMaxImageSize        int
+	MediaMaxVideoSize        int
+	MediaMinDescriptionChars int
+	MediaMaxDescriptionChars int
+
+	StorageBackend       string
+	StorageBasePath      string
+	StorageServeProtocol string
+	StorageServeHost     string
+	StorageServeBasePath string
+
+	StatusesMaxChars           int
+	StatusesCWMaxChars         int
+	StatusesPollMaxOptions     int
+	StatusesPollOptionMaxChars int
+	StatusesMaxMediaFiles      int
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -270,7 +311,8 @@ func GetFlagNames() Flags {
 		TemplateBaseDir: "template-basedir",
 
 		AccountsOpenRegistration: "accounts-open-registration",
-		AccountsRequireApproval:  "accounts-require-approval",
+		AccountsApprovalRequired: "accounts-approval-required",
+		AccountsReasonRequired:   "accounts-reason-required",
 
 		MediaMaxImageSize:        "media-max-image-size",
 		MediaMaxVideoSize:        "media-max-video-size",
@@ -311,7 +353,8 @@ func GetEnvNames() Flags {
 		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
 
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
-		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
+		AccountsApprovalRequired: "GTS_ACCOUNTS_APPROVAL_REQUIRED",
+		AccountsReasonRequired:   "GTS_ACCOUNTS_REASON_REQUIRED",
 
 		MediaMaxImageSize:        "GTS_MEDIA_MAX_IMAGE_SIZE",
 		MediaMaxVideoSize:        "GTS_MEDIA_MAX_VIDEO_SIZE",
