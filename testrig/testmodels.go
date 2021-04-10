@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package testrig
 
 import (
@@ -10,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
 func NewTestTokens() map[string]*oauth.Token {
 	tokens := map[string]*oauth.Token{
 		"local_account_1": {
@@ -26,6 +45,7 @@ func NewTestTokens() map[string]*oauth.Token {
 	return tokens
 }
 
+// NewTestClients returns a map of Clients keyed according to which account they are used by.
 func NewTestClients() map[string]*oauth.Client {
 	clients := map[string]*oauth.Client{
 		"local_account_1": {
@@ -38,6 +58,7 @@ func NewTestClients() map[string]*oauth.Client {
 	return clients
 }
 
+// NewTestApplications returns a map of applications keyed to which number application they are.
 func NewTestApplications() map[string]*gtsmodel.Application {
 	apps := map[string]*gtsmodel.Application{
 		"application_1": {
@@ -54,6 +75,7 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 	return apps
 }
 
+// NewTestUsers returns a map of Users keyed by which account belongs to them.
 func NewTestUsers() map[string]*gtsmodel.User {
 	users := map[string]*gtsmodel.User{
 		"unconfirmed_account": {
@@ -181,6 +203,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 	return users
 }
 
+// NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
 		"unconfirmed_account": {
@@ -440,14 +463,66 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	return accounts
 }
 
+// NewTestAttachments returns a map of attachments keyed according to which account
+// and status they belong to, and which attachment number of that status they are.
 func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 	return map[string]*gtsmodel.MediaAttachment{
-		// "admin_account_status_1": {
-
-		// },
+		"admin_account_status_1_attachment_1": {
+			ID:        "b052241b-f30f-4dc6-92fc-2bad0be1f8d8",
+			StatusID:  "502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
+			URL:       "http://localhost:8080/fileserver/8020dbb4-1e7b-4d99-a872-4cf94e64210f/attachment/original/b052241b-f30f-4dc6-92fc-2bad0be1f8d8.jpeg",
+			RemoteURL: "",
+			CreatedAt:      time.Now().Add(-71 * time.Hour),
+			UpdatedAt:      time.Now().Add(-71 * time.Hour),
+			Type:      gtsmodel.FileTypeImage,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  1200,
+					Height: 630,
+					Size:   756000,
+					Aspect: 1.9047619047619047,
+				},
+				Small: gtsmodel.Small{
+					Width:  256,
+					Height: 134,
+					Size:   34304,
+					Aspect: 1.9104477611940298,
+				},
+			},
+			AccountID:         "8020dbb4-1e7b-4d99-a872-4cf94e64210f",
+			Description:       "Black and white image of some 50's style text saying: Welcome On Board",
+			ScheduledStatusID: "",
+			Blurhash:          "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "/gotosocial/storage/8020dbb4-1e7b-4d99-a872-4cf94e64210f/attachment/original/b052241b-f30f-4dc6-92fc-2bad0be1f8d8.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    62529,
+				UpdatedAt:   time.Now().Add(-71 * time.Hour),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "/gotosocial/storage/8020dbb4-1e7b-4d99-a872-4cf94e64210f/attachment/small/b052241b-f30f-4dc6-92fc-2bad0be1f8d8.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    6872,
+				UpdatedAt:   time.Now().Add(-71 * time.Hour),
+				URL:         "http://localhost:8080/fileserver/8020dbb4-1e7b-4d99-a872-4cf94e64210f/attachment/small/b052241b-f30f-4dc6-92fc-2bad0be1f8d8.jpeg",
+				RemoteURL:   "",
+			},
+			Avatar: false,
+			Header: false,
+		},
 	}
 }
 
+// NewTestStored returns a map of filenames, keyed according to which attachment they pertain to.
+func NewTestStored() map[string]string {
+	return map[string]string {
+		"admin_account_status_1_attachment_1": "welcome-*.jpeg",
+	}
+}
+
+// NewTestStatuses returns a map of statuses keyed according to which account
+// and status they are.
 func NewTestStatuses() map[string]*gtsmodel.Status {
 	return map[string]*gtsmodel.Status{
 		"admin_account_status_1": {

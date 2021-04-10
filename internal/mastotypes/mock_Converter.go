@@ -104,3 +104,45 @@ func (_m *MockConverter) AppToMastoSensitive(application *gtsmodel.Application) 
 
 	return r0, r1
 }
+
+// AttachmentToMasto provides a mock function with given fields: attachment
+func (_m *MockConverter) AttachmentToMasto(attachment *gtsmodel.MediaAttachment) (mastotypes.Attachment, error) {
+	ret := _m.Called(attachment)
+
+	var r0 mastotypes.Attachment
+	if rf, ok := ret.Get(0).(func(*gtsmodel.MediaAttachment) mastotypes.Attachment); ok {
+		r0 = rf(attachment)
+	} else {
+		r0 = ret.Get(0).(mastotypes.Attachment)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gtsmodel.MediaAttachment) error); ok {
+		r1 = rf(attachment)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MentionToMasto provides a mock function with given fields: m
+func (_m *MockConverter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, error) {
+	ret := _m.Called(m)
+
+	var r0 mastotypes.Mention
+	if rf, ok := ret.Get(0).(func(*gtsmodel.Mention) mastotypes.Mention); ok {
+		r0 = rf(m)
+	} else {
+		r0 = ret.Get(0).(mastotypes.Mention)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*gtsmodel.Mention) error); ok {
+		r1 = rf(m)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

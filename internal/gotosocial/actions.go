@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
+	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -54,7 +55,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
-	storageBackend, err := storage.NewInMem(c, log)
+	storageBackend, err := storage.NewLocal(c, log)
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
@@ -70,11 +71,13 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	authModule := auth.New(oauthServer, dbService, log)
 	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
 	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
+	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
 
 	apiModules := []apimodule.ClientAPIModule{
 		authModule, // this one has to go first so the other modules use its middleware
 		accountModule,
 		appsModule,
+		mm,
 	}
 
 	for _, m := range apiModules {

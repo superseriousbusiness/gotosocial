@@ -12,6 +12,29 @@ type MockMediaHandler struct {
 	mock.Mock
 }
 
+// ProcessAttachment provides a mock function with given fields: img, accountID
+func (_m *MockMediaHandler) ProcessAttachment(img []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
+	ret := _m.Called(img, accountID)
+
+	var r0 *gtsmodel.MediaAttachment
+	if rf, ok := ret.Get(0).(func([]byte, string) *gtsmodel.MediaAttachment); ok {
+		r0 = rf(img, accountID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gtsmodel.MediaAttachment)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte, string) error); ok {
+		r1 = rf(img, accountID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SetHeaderOrAvatarForAccountID provides a mock function with given fields: img, accountID, headerOrAvi
 func (_m *MockMediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	ret := _m.Called(img, accountID, headerOrAvi)

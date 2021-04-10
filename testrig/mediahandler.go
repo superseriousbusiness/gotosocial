@@ -16,15 +16,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package storage contains an interface and implementations for storing and retrieving files and attachments.
-package storage
+package testrig
 
-// Storage is an interface for storing and retrieving blobs
-// such as images, videos, and any other attachments/documents
-// that shouldn't be stored in a database.
-type Storage interface {
-	StoreFileAt(path string, data []byte) error
-	RetrieveFileFrom(path string) ([]byte, error)
-   ListKeys() ([]string, error)
-   RemoveFileAt(path string) error
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
+)
+
+// NewTestMediaHandler returns a media handler with the default test config, the default test logger,
+// and the given db and storage.
+func NewTestMediaHandler(db db.DB, storage storage.Storage) media.MediaHandler {
+	return media.New(NewTestConfig(), db, storage, NewTestLog())
 }
