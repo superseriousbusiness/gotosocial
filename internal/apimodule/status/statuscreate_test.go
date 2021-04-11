@@ -19,7 +19,6 @@
 package status
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -45,21 +44,27 @@ import (
 )
 
 type StatusCreateTestSuite struct {
+	// standard suite interfaces
 	suite.Suite
-	config           *config.Config
-	mockOauthServer  *oauth.MockServer
-	mockStorage      *storage.MockStorage
-	mediaHandler     media.MediaHandler
-	mastoConverter   mastotypes.Converter
-	distributor      *distributor.MockDistributor
+	config         *config.Config
+	db             db.DB
+	log            *logrus.Logger
+	storage        storage.Storage
+	mastoConverter mastotypes.Converter
+	mediaHandler   media.MediaHandler
+	oauthServer    oauth.Server
+	distributor    distributor.Distributor
+
+	// standard suite models
 	testTokens       map[string]*oauth.Token
 	testClients      map[string]*oauth.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
-	log              *logrus.Logger
-	db               db.DB
-	statusModule     *statusModule
+	testAttachments  map[string]*gtsmodel.MediaAttachment
+
+	// module being tested
+	statusModule *statusModule
 }
 
 /*
@@ -68,73 +73,34 @@ type StatusCreateTestSuite struct {
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *StatusCreateTestSuite) SetupSuite() {
-	// some of our subsequent entities need a log so create this here
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-	suite.log = log
+	// setup standard items
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.log = testrig.NewTestLog()
+	suite.storage = testrig.NewTestStorage()
+	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.distributor = testrig.NewTestDistributor()
 
-	// Direct config to local postgres instance
-	c := config.Empty()
-	c.Protocol = "http"
-	c.Host = "localhost"
-	c.DBConfig = &config.DBConfig{
-		Type:            "postgres",
-		Address:         "localhost",
-		Port:            5432,
-		User:            "postgres",
-		Password:        "postgres",
-		Database:        "postgres",
-		ApplicationName: "gotosocial",
-	}
-	c.MediaConfig = &config.MediaConfig{
-		MaxImageSize: 2 << 20,
-	}
-	c.StorageConfig = &config.StorageConfig{
-		Backend:       "local",
-		BasePath:      "/tmp",
-		ServeProtocol: "http",
-		ServeHost:     "localhost",
-		ServeBasePath: "/fileserver/media",
-	}
-	c.StatusesConfig = &config.StatusesConfig{
-		MaxChars:           500,
-		CWMaxChars:         50,
-		PollMaxOptions:     4,
-		PollOptionMaxChars: 50,
-		MaxMediaFiles:      4,
-	}
-	suite.config = c
-
-	// use an actual database for this, because it's just easier than mocking one out
-	database, err := db.New(context.Background(), c, log)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.db = database
-
-	suite.mockOauthServer = &oauth.MockServer{}
-	suite.mockStorage = &storage.MockStorage{}
-	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
-	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
-	suite.distributor = &distributor.MockDistributor{}
-	suite.distributor.On("FromClientAPI").Return(make(chan distributor.FromClientAPI, 100))
-
-	suite.statusModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*statusModule)
+	// setup module being tested
+	suite.statusModule = New(suite.config, suite.db, suite.oauthServer, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*statusModule)
 }
 
 func (suite *StatusCreateTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
-	}
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }
 
 func (suite *StatusCreateTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
 }
 
 // TearDownTest drops tables to make sure there's no data in the db

@@ -472,8 +472,8 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			StatusID:  "502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
 			URL:       "http://localhost:8080/fileserver/8020dbb4-1e7b-4d99-a872-4cf94e64210f/attachment/original/b052241b-f30f-4dc6-92fc-2bad0be1f8d8.jpeg",
 			RemoteURL: "",
-			CreatedAt:      time.Now().Add(-71 * time.Hour),
-			UpdatedAt:      time.Now().Add(-71 * time.Hour),
+			CreatedAt: time.Now().Add(-71 * time.Hour),
+			UpdatedAt: time.Now().Add(-71 * time.Hour),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -516,7 +516,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 
 // NewTestStored returns a map of filenames, keyed according to which attachment they pertain to.
 func NewTestStored() map[string]string {
-	return map[string]string {
+	return map[string]string{
 		"admin_account_status_1_attachment_1": "welcome-*.jpeg",
 	}
 }

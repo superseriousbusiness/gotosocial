@@ -16,15 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package storage contains an interface and implementations for storing and retrieving files and attachments.
-package storage
+package testrig
 
-// Storage is an interface for storing and retrieving blobs
-// such as images, videos, and any other attachments/documents
-// that shouldn't be stored in a database.
-type Storage interface {
-	StoreFileAt(path string, data []byte) error
-	RetrieveFileFrom(path string) ([]byte, error)
-	ListKeys() ([]string, error)
-	RemoveFileAt(path string) error
+import "github.com/superseriousbusiness/gotosocial/internal/distributor"
+
+func NewTestDistributor() distributor.Distributor {
+	return distributor.New(nil, NewTestLog())
 }

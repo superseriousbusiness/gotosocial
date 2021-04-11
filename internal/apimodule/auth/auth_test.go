@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -31,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -161,27 +159,6 @@ func (suite *AuthTestSuite) TearDownTest() {
 		logrus.Panicf("error closing db connection: %s", err)
 	}
 	suite.db = nil
-}
-
-func (suite *AuthTestSuite) TestAPIInitialize() {
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-
-	r, err := router.New(suite.config, log)
-	if err != nil {
-		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
-	}
-
-	api := New(suite.oauthServer, suite.db, log)
-	if err := api.Route(r); err != nil {
-		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
-	}
-
-	r.Start()
-	time.Sleep(60 * time.Second)
-	if err := r.Stop(context.Background()); err != nil {
-		suite.FailNow(fmt.Sprintf("error stopping router: %s", err))
-	}
 }
 
 func TestAuthTestSuite(t *testing.T) {

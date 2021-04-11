@@ -28,7 +28,7 @@ func (s *localStorage) StoreFileAt(path string, data []byte) error {
 	l := s.log.WithField("func", "StoreFileAt")
 	l.Debugf("storing at path %s", path)
 	components := strings.Split(path, "/")
-	dir := strings.Join(components[0:len(components) - 1], "/")
+	dir := strings.Join(components[0:len(components)-1], "/")
 	if err := os.MkdirAll(dir, 0777); err != nil {
 		return fmt.Errorf("error writing file at %s: %s", path, err)
 	}

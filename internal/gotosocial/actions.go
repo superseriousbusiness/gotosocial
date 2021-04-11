@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -72,12 +73,14 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
 	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
 	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
+	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
 
 	apiModules := []apimodule.ClientAPIModule{
 		authModule, // this one has to go first so the other modules use its middleware
 		accountModule,
 		appsModule,
 		mm,
+		fileServerModule,
 	}
 
 	for _, m := range apiModules {

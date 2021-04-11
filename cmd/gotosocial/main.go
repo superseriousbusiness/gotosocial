@@ -100,7 +100,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    flagNames.DbPassword,
 				Usage:   "Database password",
-				Value: defaults.DbPassword,
+				Value:   defaults.DbPassword,
 				EnvVars: []string{envNames.DbPassword},
 			},
 			&cli.StringFlag{

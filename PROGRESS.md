@@ -69,7 +69,7 @@
     * [ ] /api/v1/suggestions GET                           (Get suggested accounts to follow)
     * [ ] /api/v1/suggestions/:account_id DELETE            (Delete a suggestion)
   * [ ] Statuses
-    * [ ] /api/v1/statuses POST                             (Create a new status)
+    * [x] /api/v1/statuses POST                             (Create a new status)
     * [ ] /api/v1/statuses/:id GET                          (View an existing status)
     * [ ] /api/v1/statuses/:id DELETE                       (Delete a status)
     * [ ] /api/v1/statuses/:id/context GET                  (View statuses above and below status ID)
@@ -86,7 +86,7 @@
     * [ ] /api/v1/statuses/:id/pin POST                     (Pin a status to profile)
     * [ ] /api/v1/statuses/:id/unpin POST                   (Unpin a status from profile)
   * [ ] Media
-    * [ ] /api/v1/media POST                                (Upload a media attachment)
+    * [x] /api/v1/media POST                                (Upload a media attachment)
     * [ ] /api/v1/media/:id GET                             (Get a media attachment)
     * [ ] /api/v1/media/:id PUT                             (Update an attachment)
   * [ ] Polls
@@ -178,8 +178,8 @@
 * [ ] Storage
   * [x] Internal/statuses/preferences etc
     * [x] Postgres interface
-  * [ ] Media storage
-    * [ ] Local storage interface
+  * [x] Media storage
+    * [x] Local storage interface
     * [ ] S3 storage interface
 * [ ] Cache
   * [ ] In-memory cache

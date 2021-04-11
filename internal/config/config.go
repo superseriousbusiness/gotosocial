@@ -63,8 +63,6 @@ func Empty() *Config {
 	}
 }
 
-
-
 // loadFromFile takes a path to a yaml file and attempts to load a Config object from it
 func loadFromFile(path string) (*Config, error) {
 	bytes, err := os.ReadFile(path)

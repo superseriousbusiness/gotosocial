@@ -169,13 +169,27 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 	newStatus.Emojis = emojis
 
-	// put the new status in the database
+	/*
+		FROM THIS POINT ONWARDS WE ARE HAPPY WITH THE STATUS -- it is valid and we will try to create it
+	*/
+
+	// put the new status in the database, generating an ID for it in the process
 	if err := m.db.Put(newStatus); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// pass to the distributor to take care of side effects -- federation, mentions, updating metadata, etc, etc
+	// change the status ID of the media attachments to the new status
+	for _, a := range newStatus.Attachments {
+		a.StatusID = newStatus.ID
+		a.UpdatedAt = time.Now()
+		if err := m.db.UpdateByID(a.ID, a); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	// pass to the distributor to take care of side effects asynchronously -- federation, mentions, updating metadata, etc, etc
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsNote,
 		APActivityType: gtsmodel.ActivityStreamsCreate,
@@ -429,6 +443,10 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		// check they belong to the requesting account id
 		if a.AccountID != thisAccountID {
 			return fmt.Errorf("media with id %s does not belong to account %s", mediaID, thisAccountID)
+		}
+		// check they're not already used in a status
+		if a.StatusID != "" || a.ScheduledStatusID != "" {
+			return fmt.Errorf("media with id %s is already attached to a status", mediaID)
 		}
 		attachments = append(attachments, a)
 	}

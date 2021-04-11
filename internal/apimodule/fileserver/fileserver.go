@@ -1,7 +1,26 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package fileserver
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
@@ -10,6 +29,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+)
+
+const (
+	accountIDKey = "account_id"
+	mediaTypeKey = "media_type"
+	mediaSizeKey = "media_size"
+	fileNameKey  = "file_name"
 )
 
 // fileServer implements the RESTAPIModule interface.
@@ -24,33 +50,23 @@ type fileServer struct {
 
 // New returns a new fileServer module
 func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.Logger) apimodule.ClientAPIModule {
-
-	storageBase := config.StorageConfig.BasePath // TODO: do this properly
-
 	return &fileServer{
 		config:      config,
 		db:          db,
 		storage:     storage,
 		log:         log,
-		storageBase: storageBase,
+		storageBase: config.StorageConfig.ServeBasePath,
 	}
 }
 
 // Route satisfies the RESTAPIModule interface
 func (m *fileServer) Route(s router.Router) error {
-	// s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
+	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, accountIDKey, mediaTypeKey, mediaSizeKey, fileNameKey), m.ServeFile)
 	return nil
 }
 
 func (m *fileServer) CreateTables(db db.DB) error {
 	models := []interface{}{
-		&gtsmodel.User{},
-		&gtsmodel.Account{},
-		&gtsmodel.Follow{},
-		&gtsmodel.FollowRequest{},
-		&gtsmodel.Status{},
-		&gtsmodel.Application{},
-		&gtsmodel.EmailDomainBlock{},
 		&gtsmodel.MediaAttachment{},
 	}
 

@@ -15,13 +15,13 @@ import (
 func NewInMem(c *config.Config, log *logrus.Logger) (Storage, error) {
 	return &inMemStorage{
 		stored: make(map[string][]byte),
-		log: log,
+		log:    log,
 	}, nil
 }
 
 type inMemStorage struct {
 	stored map[string][]byte
-	log *logrus.Logger
+	log    *logrus.Logger
 }
 
 func (s *inMemStorage) StoreFileAt(path string, data []byte) error {
@@ -41,7 +41,7 @@ func (s *inMemStorage) RetrieveFileFrom(path string) ([]byte, error) {
 	return d, nil
 }
 
-func (s *inMemStorage)ListKeys() ([]string, error) {
+func (s *inMemStorage) ListKeys() ([]string, error) {
 	keys := []string{}
 	for k := range s.stored {
 		keys = append(keys, k)

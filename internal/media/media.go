@@ -32,6 +32,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
+const (
+	MediaSmall      = "small"
+	MediaOriginal   = "original"
+	MediaAttachment = "attachment"
+	MediaHeader     = "header"
+	MediaAvatar     = "avatar"
+)
+
 // MediaHandler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type MediaHandler interface {
 	// SetHeaderOrAvatarForAccountID takes a new header image for an account, checks it out, removes exif data from it,
@@ -61,14 +69,6 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 	}
 }
 
-// HeaderInfo wraps the urls at which a Header and a StaticHeader is available from the server.
-type HeaderInfo struct {
-	// URL to the header
-	Header string
-	// Static version of the above (eg., a path to a still image if the header is a gif)
-	HeaderStatic string
-}
-
 /*
 	INTERFACE FUNCTIONS
 */
@@ -76,7 +76,7 @@ type HeaderInfo struct {
 func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
-	if headerOrAvi != "header" && headerOrAvi != "avatar" {
+	if headerOrAvi != MediaHeader && headerOrAvi != MediaAvatar {
 		return nil, errors.New("header or avatar not selected")
 	}
 
@@ -189,13 +189,13 @@ func (mh *mediaHandler) processImage(data []byte, accountID string, contentType 
 	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.%s", URLbase, accountID, newMediaID, extension)
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/attachment/original/%s.%s", mh.config.StorageConfig.BasePath, accountID, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaOriginal, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/attachment/small/%s.%s", mh.config.StorageConfig.BasePath, accountID, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaSmall, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
@@ -254,9 +254,9 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	var isAvatar bool
 
 	switch headerOrAvi {
-	case "header":
+	case MediaHeader:
 		isHeader = true
-	case "avatar":
+	case MediaAvatar:
 		isAvatar = true
 	default:
 		return nil, errors.New("header or avatar not selected")
@@ -299,13 +299,13 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, headerOrAvi, newMediaID, extension)
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/original/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, MediaOriginal, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/small/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, MediaSmall, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
