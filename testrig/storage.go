@@ -21,7 +21,6 @@ package testrig
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -39,13 +38,13 @@ func NewTestStorage() storage.Storage {
 func StandardStorageSetup(s storage.Storage, relativePath string) {
 	stored := NewTestStored()
 	a := NewTestAttachments()
-	for k, fileNameTemplate := range stored {
+	for k, paths := range stored {
 		attachmentInfo, ok := a[k]
 		if !ok {
 			panic(fmt.Errorf("key %s not found in test attachments", k))
 		}
-		filenameOriginal := strings.Replace(fileNameTemplate, "*", "original", 1)
-		filenameSmall := strings.Replace(fileNameTemplate, "*", "small", 1)
+		filenameOriginal := paths.original
+		filenameSmall := paths.small
 		pathOriginal := attachmentInfo.File.Path
 		pathSmall := attachmentInfo.Thumbnail.Path
 		bOriginal, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameOriginal))

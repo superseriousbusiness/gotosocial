@@ -116,7 +116,8 @@ func (suite *StatusCreateTestSuite) TearDownTest() {
 	TESTING: StatusCreatePOSTHandler
 */
 
-func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
+// Post a new status with some custom visibility settings
+func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.PGTokenToOauthToken(t)
@@ -160,7 +161,8 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerSuccessful() {
 	assert.Equal(suite.T(), mastomodel.VisibilityPrivate, statusReply.Visibility)
 }
 
-func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToFail() {
+// Try to reply to a status that doesn't exist
+func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.PGTokenToOauthToken(t)
 
@@ -190,7 +192,8 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToFail() {
 	assert.Equal(suite.T(), `{"error":"status with id 3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50 not replyable because it doesn't exist"}`, string(b))
 }
 
-func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToLocalSuccess() {
+// Post a reply to the status of a local user that allows replies.
+func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.PGTokenToOauthToken(t)
 
@@ -227,6 +230,63 @@ func (suite *StatusCreateTestSuite) TestStatusCreatePOSTHandlerReplyToLocalSucce
 	assert.Equal(suite.T(), testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
 	assert.Equal(suite.T(), testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
 	assert.Len(suite.T(), statusReply.Mentions, 1)
+}
+
+// Take a media file which is currently not associated with a status, and attach it to a new status.
+func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.PGTokenToOauthToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request.Form = url.Values{
+		"status":    {"here's an image attachment"},
+		"media_ids": {"7a3b9f77-ab30-461e-bdd8-e64bd1db3008"},
+	}
+	suite.statusModule.statusCreatePOSTHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	fmt.Println(string(b))
+
+	statusReply := &mastomodel.Status{}
+	err = json.Unmarshal(b, statusReply)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), "", statusReply.SpoilerText)
+	assert.Equal(suite.T(), "here's an image attachment", statusReply.Content)
+	assert.False(suite.T(), statusReply.Sensitive)
+	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+
+	// there should be one media attachment
+	assert.Len(suite.T(), statusReply.MediaAttachments, 1)
+
+	// get the updated media attachment from the database
+	gtsAttachment := &gtsmodel.MediaAttachment{}
+	err = suite.db.GetByID(statusReply.MediaAttachments[0].ID, gtsAttachment)
+	assert.NoError(suite.T(), err)
+
+	// convert it to a masto attachment
+	gtsAttachmentAsMasto, err := suite.mastoConverter.AttachmentToMasto(gtsAttachment)
+	assert.NoError(suite.T(), err)
+
+	// compare it with what we have now
+	assert.EqualValues(suite.T(), statusReply.MediaAttachments[0], gtsAttachmentAsMasto)
+
+	// the status id of the attachment should now be set to the id of the status we just created
+	assert.Equal(suite.T(), statusReply.ID, gtsAttachment.StatusID)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

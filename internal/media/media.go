@@ -50,7 +50,7 @@ type MediaHandler interface {
 	// ProcessAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 	// and then returns information to the caller about the attachment.
-	ProcessAttachment(img []byte, accountID string) (*gtsmodel.MediaAttachment, error)
+	ProcessAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -73,15 +73,15 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 	INTERFACE FUNCTIONS
 */
 
-func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(attachment []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if headerOrAvi != MediaHeader && headerOrAvi != MediaAvatar {
 		return nil, errors.New("header or avatar not selected")
 	}
 
-	// make sure we have an image we can handle
-	contentType, err := parseContentType(img)
+	// make sure we have a type we can handle
+	contentType, err := parseContentType(attachment)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +89,13 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID stri
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
-	if len(img) == 0 {
+	if len(attachment) == 0 {
 		return nil, fmt.Errorf("passed reader was of size 0")
 	}
-	l.Tracef("read %d bytes of file", len(img))
+	l.Tracef("read %d bytes of file", len(attachment))
 
 	// process it
-	ma, err := mh.processHeaderOrAvi(img, contentType, headerOrAvi, accountID)
+	ma, err := mh.processHeaderOrAvi(attachment, contentType, headerOrAvi, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("error processing %s: %s", headerOrAvi, err)
 	}
@@ -108,8 +108,8 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(img []byte, accountID stri
 	return ma, nil
 }
 
-func (mh *mediaHandler) ProcessAttachment(data []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
-	contentType, err := parseContentType(data)
+func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
+	contentType, err := parseContentType(attachment)
 	if err != nil {
 		return nil, err
 	}
@@ -119,24 +119,24 @@ func (mh *mediaHandler) ProcessAttachment(data []byte, accountID string) (*gtsmo
 		if !supportedVideoType(contentType) {
 			return nil, fmt.Errorf("video type %s not supported", contentType)
 		}
-		if len(data) == 0 {
+		if len(attachment) == 0 {
 			return nil, errors.New("video was of size 0")
 		}
-		if len(data) > mh.config.MediaConfig.MaxVideoSize {
-			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(data), mh.config.MediaConfig.MaxVideoSize)
+		if len(attachment) > mh.config.MediaConfig.MaxVideoSize {
+			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(attachment), mh.config.MediaConfig.MaxVideoSize)
 		}
-		return mh.processVideo(data, accountID, contentType)
+		return mh.processVideo(attachment, accountID, contentType)
 	case "image":
 		if !supportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
 		}
-		if len(data) == 0 {
+		if len(attachment) == 0 {
 			return nil, errors.New("image was of size 0")
 		}
-		if len(data) > mh.config.MediaConfig.MaxImageSize {
-			return nil, fmt.Errorf("image size %d bytes exceeded max image size of %d bytes", len(data), mh.config.MediaConfig.MaxImageSize)
+		if len(attachment) > mh.config.MediaConfig.MaxImageSize {
+			return nil, fmt.Errorf("image size %d bytes exceeded max image size of %d bytes", len(attachment), mh.config.MediaConfig.MaxImageSize)
 		}
-		return mh.processImage(data, accountID, contentType)
+		return mh.processImage(attachment, accountID, contentType)
 	default:
 		break
 	}
@@ -154,28 +154,29 @@ func (mh *mediaHandler) processVideo(data []byte, accountID string, contentType 
 func (mh *mediaHandler) processImage(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
 	var clean []byte
 	var err error
+	var original *imageAndMeta
+	var small *imageAndMeta
 
 	switch contentType {
-	case "image/jpeg":
+	case "image/jpeg", "image/png":
 		if clean, err = purgeExif(data); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/png":
-		if clean, err = purgeExif(data); err != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", err)
+		original, err = deriveImage(clean, contentType)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing image: %s", err)
 		}
 	case "image/gif":
 		clean = data
+		original, err = deriveGif(clean, contentType)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing gif: %s", err)
+		}
 	default:
 		return nil, errors.New("media type unrecognized")
 	}
 
-	original, err := deriveImage(clean, contentType)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing image: %s", err)
-	}
-
-	small, err := deriveThumbnail(clean, contentType)
+	small, err = deriveThumbnail(clean, contentType)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
@@ -186,7 +187,7 @@ func (mh *mediaHandler) processImage(data []byte, accountID string, contentType 
 
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
 	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, accountID, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.%s", URLbase, accountID, newMediaID, extension)
+	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, accountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
 	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaOriginal, newMediaID, extension)
@@ -195,7 +196,7 @@ func (mh *mediaHandler) processImage(data []byte, accountID string, contentType 
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaSmall, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaSmall, newMediaID) // all thumbnails/smalls are encoded as jpeg
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
@@ -235,7 +236,7 @@ func (mh *mediaHandler) processImage(data []byte, accountID string, contentType 
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        smallPath,
-			ContentType: contentType,
+			ContentType: "image/jpeg", // all thumbnails/smalls are encoded as jpeg
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,

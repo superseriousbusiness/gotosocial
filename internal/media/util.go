@@ -103,6 +103,45 @@ func purgeExif(b []byte) ([]byte, error) {
 	return clean, nil
 }
 
+func deriveGif(b []byte, extension string) (*imageAndMeta, error) {
+	var g *gif.GIF
+	var err error
+	switch extension {
+	case "image/gif":
+		g, err = gif.DecodeAll(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("extension %s not recognised", extension)
+	}
+
+	// use the first frame to get the static characteristics
+	width := g.Config.Width
+	height := g.Config.Height
+	size := width * height
+	aspect := float64(width) / float64(height)
+
+	bh, err := blurhash.Encode(4, 3, g.Image[0])
+	if err != nil || bh == "" {
+		return nil, err
+	}
+
+	out := &bytes.Buffer{}
+	if err := gif.EncodeAll(out, g); err != nil {
+		return nil, err
+	}
+
+	return &imageAndMeta{
+		image:    out.Bytes(),
+		width:    width,
+		height:   height,
+		size:     size,
+		aspect:   aspect,
+		blurhash: bh,
+	}, nil
+}
+
 func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 	var i image.Image
 	var err error
@@ -118,11 +157,6 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 		if err != nil {
 			return nil, err
 		}
-	case "image/gif":
-		i, err = gif.Decode(bytes.NewReader(b))
-		if err != nil {
-			return nil, err
-		}
 	default:
 		return nil, fmt.Errorf("extension %s not recognised", extension)
 	}
@@ -131,15 +165,17 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 	height := i.Bounds().Size().Y
 	size := width * height
 	aspect := float64(width) / float64(height)
+
 	bh, err := blurhash.Encode(4, 3, i)
 	if err != nil {
-		return nil, fmt.Errorf("error generating blurhash: %s", err)
+		return nil, err
 	}
 
 	out := &bytes.Buffer{}
 	if err := jpeg.Encode(out, i, nil); err != nil {
 		return nil, err
 	}
+
 	return &imageAndMeta{
 		image:    out.Bytes(),
 		width:    width,

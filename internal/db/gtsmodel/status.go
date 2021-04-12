@@ -30,6 +30,8 @@ type Status struct {
 	URL string `pg:",unique"`
 	// the html-formatted content of this status
 	Content string
+	// Database IDs of any media attachments associated with this status
+	Attachments []string
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
@@ -62,21 +64,21 @@ type Status struct {
 		NON-DATABASE FIELDS
 
 		These are for convenience while passing the status around internally,
-		but these fields should never be put in the db.
+		but these fields should *never* be put in the db.
 	*/
 
 	// Mentions created in this status
-	Mentions []*Mention `pg:"-"`
+	GTSMentions []*Mention `pg:"-"`
 	// Hashtags used in this status
-	Tags []*Tag `pg:"-"`
+	GTSTags []*Tag `pg:"-"`
 	// Emojis used in this status
-	Emojis []*Emoji `pg:"-"`
-	// Attachments used in this status
-	Attachments []*MediaAttachment `pg:"-"`
+	GTSEmojis []*Emoji `pg:"-"`
+	// MediaAttachments used in this status
+	GTSMediaAttachments []*MediaAttachment `pg:"-"`
 	// Status being replied to
-	ReplyToStatus *Status `pg:"-"`
+	GTSReplyToStatus *Status `pg:"-"`
 	// Account being replied to
-	ReplyToAccount *Account `pg:"-"`
+	GTSReplyToAccount *Account `pg:"-"`
 }
 
 // Visibility represents the visibility granularity of a status.

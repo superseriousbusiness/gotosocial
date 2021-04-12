@@ -110,7 +110,7 @@ const (
 	// FileTypeImage is for jpegs and pngs
 	FileTypeImage FileType = "image"
 	// FileTypeGif is for native gifs and soundless videos that have been converted to gifs
-	FileTypeGif FileType = "gifv"
+	FileTypeGif FileType = "gif"
 	// FileTypeAudio is for audio-only files (no video)
 	FileTypeAudio FileType = "audio"
 	// FileTypeVideo is for files with audio + visual

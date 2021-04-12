@@ -149,7 +149,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 			return
 		}
 	}
-	newStatus.Mentions = menchies
+	newStatus.GTSMentions = menchies
 
 	// convert tags to *gtsmodel.Tag
 	tags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), authed.Account.ID, thisStatusID)
@@ -158,7 +158,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating hashtags from status"})
 		return
 	}
-	newStatus.Tags = tags
+	newStatus.GTSTags = tags
 
 	// convert emojis to *gtsmodel.Emoji
 	emojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), authed.Account.ID, thisStatusID)
@@ -167,7 +167,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating emojis from status"})
 		return
 	}
-	newStatus.Emojis = emojis
+	newStatus.GTSEmojis = emojis
 
 	/*
 		FROM THIS POINT ONWARDS WE ARE HAPPY WITH THE STATUS -- it is valid and we will try to create it
@@ -180,7 +180,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// change the status ID of the media attachments to the new status
-	for _, a := range newStatus.Attachments {
+	for _, a := range newStatus.GTSMediaAttachments {
 		a.StatusID = newStatus.ID
 		a.UpdatedAt = time.Now()
 		if err := m.db.UpdateByID(a.ID, a); err != nil {
@@ -207,7 +207,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	mastoAttachments := []mastotypes.Attachment{}
-	for _, a := range newStatus.Attachments {
+	for _, a := range newStatus.GTSMediaAttachments {
 		ma, err := m.mastoConverter.AttachmentToMasto(a)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -217,7 +217,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	mastoMentions := []mastotypes.Mention{}
-	for _, gtsm := range newStatus.Mentions {
+	for _, gtsm := range newStatus.GTSMentions {
 		mm, err := m.mastoConverter.MentionToMasto(gtsm)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -433,7 +433,8 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		return nil
 	}
 
-	attachments := []*gtsmodel.MediaAttachment{}
+	GTSMediaAttachments := []*gtsmodel.MediaAttachment{}
+	Attachments := []string{}
 	for _, mediaID := range form.MediaIDs {
 		// check these attachments exist
 		a := &gtsmodel.MediaAttachment{}
@@ -448,9 +449,11 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		if a.StatusID != "" || a.ScheduledStatusID != "" {
 			return fmt.Errorf("media with id %s is already attached to a status", mediaID)
 		}
-		attachments = append(attachments, a)
+		GTSMediaAttachments = append(GTSMediaAttachments, a)
+		Attachments = append(Attachments, a.ID)
 	}
-	status.Attachments = attachments
+	status.GTSMediaAttachments = GTSMediaAttachments
+	status.Attachments = Attachments
 	return nil
 }
 

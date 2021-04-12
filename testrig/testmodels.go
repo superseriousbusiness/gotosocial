@@ -511,13 +511,125 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Avatar: false,
 			Header: false,
 		},
+		"local_account_1_status_4_attachment_1": {
+			ID:        "510f6033-798b-4390-81b1-c38ca2205ad3",
+			StatusID:  "18524c05-97dc-46d7-b474-c811bd9e1e32",
+			URL:       "http://localhost:8080/fileserver/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/original/510f6033-798b-4390-81b1-c38ca2205ad3.gif",
+			RemoteURL: "",
+			CreatedAt: time.Now().Add(-1 * time.Hour),
+			UpdatedAt: time.Now().Add(-1 * time.Hour),
+			Type:      gtsmodel.FileTypeGif,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  400,
+					Height: 280,
+					Size:   756000,
+					Aspect: 1.4285714285714286,
+				},
+				Small: gtsmodel.Small{
+					Width:  256,
+					Height: 179,
+					Size:   45824,
+					Aspect: 1.4301675977653632,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "580072df-4d03-4684-a412-89fd6f7d77e6",
+			Description:       "90's Trent Reznor turning to the camera",
+			ScheduledStatusID: "",
+			Blurhash:          "LEDara58O=t5EMSOENEN9]}?aK%0",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "/gotosocial/storage/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/original/510f6033-798b-4390-81b1-c38ca2205ad3.gif",
+				ContentType: "image/gif",
+				FileSize:    1109138,
+				UpdatedAt:   time.Now().Add(-1 * time.Hour),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "/gotosocial/storage/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/small/510f6033-798b-4390-81b1-c38ca2205ad3.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    8803,
+				UpdatedAt:   time.Now().Add(-1 * time.Hour),
+				URL:         "http://localhost:8080/fileserver/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/small/510f6033-798b-4390-81b1-c38ca2205ad3.jpeg",
+				RemoteURL:   "",
+			},
+			Avatar: false,
+			Header: false,
+		},
+		"local_account_1_unattached_1": {
+			ID:        "7a3b9f77-ab30-461e-bdd8-e64bd1db3008",
+			StatusID:  "", // this attachment isn't connected to a status YET
+			URL:       "http://localhost:8080/fileserver/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/original/7a3b9f77-ab30-461e-bdd8-e64bd1db3008.jpeg",
+			RemoteURL: "",
+			CreatedAt: time.Now().Add(30 * time.Second),
+			UpdatedAt: time.Now().Add(30 * time.Second),
+			Type:      gtsmodel.FileTypeGif,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  800,
+					Height: 450,
+					Size:   360000,
+					Aspect: 1.7777777777777777,
+				},
+				Small: gtsmodel.Small{
+					Width:  256,
+					Height: 144,
+					Size:   36864,
+					Aspect: 1.7777777777777777,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "580072df-4d03-4684-a412-89fd6f7d77e6",
+			Description:       "the oh you meme",
+			ScheduledStatusID: "",
+			Blurhash:          "LSAd]9ogDge-R:M|j=xWIto0xXWX",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "/gotosocial/storage/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/original/7a3b9f77-ab30-461e-bdd8-e64bd1db3008.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    27759,
+				UpdatedAt:   time.Now().Add(30 * time.Second),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "/gotosocial/storage/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/small/7a3b9f77-ab30-461e-bdd8-e64bd1db3008.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    6177,
+				UpdatedAt:   time.Now().Add(30 * time.Second),
+				URL:         "http://localhost:8080/fileserver/580072df-4d03-4684-a412-89fd6f7d77e6/attachment/small/7a3b9f77-ab30-461e-bdd8-e64bd1db3008.jpeg",
+				RemoteURL:   "",
+			},
+			Avatar: false,
+			Header: false,
+		},
 	}
 }
 
+type paths struct {
+	original string
+	small    string
+}
+
 // NewTestStored returns a map of filenames, keyed according to which attachment they pertain to.
-func NewTestStored() map[string]string {
-	return map[string]string{
-		"admin_account_status_1_attachment_1": "welcome-*.jpeg",
+func NewTestStored() map[string]paths {
+	return map[string]paths{
+		"admin_account_status_1_attachment_1": {
+			original: "welcome-original.jpeg",
+			small:    "welcome-small.jpeg",
+		},
+		"local_account_1_status_4_attachment_1": {
+			original: "trent-original.gif",
+			small:    "trent-small.jpeg",
+		},
+		"local_account_1_unattached_1": {
+			original: "ohyou-original.jpeg",
+			small:    "ohyou-small.jpeg",
+		},
 	}
 }
 
@@ -530,6 +642,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:            "http://localhost:8080/users/admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
 			URL:            "http://localhost:8080/@admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
 			Content:        "hello world! first post on the instance!",
+			Attachments:    []string{"b052241b-f30f-4dc6-92fc-2bad0be1f8d8"},
 			CreatedAt:      time.Now().Add(-71 * time.Hour),
 			UpdatedAt:      time.Now().Add(-71 * time.Hour),
 			Local:          true,
@@ -637,6 +750,30 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Boostable: false,
 				Replyable: false,
 				Likeable:  false,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+		"local_account_1_status_4": {
+			ID:             "18524c05-97dc-46d7-b474-c811bd9e1e32",
+			URI:            "http://localhost:8080/users/the_mighty_zork/statuses/18524c05-97dc-46d7-b474-c811bd9e1e32",
+			URL:            "http://localhost:8080/@the_mighty_zork/statuses/18524c05-97dc-46d7-b474-c811bd9e1e32",
+			Content:        "here's a little gif of trent",
+			Attachments:    []string{"510f6033-798b-4390-81b1-c38ca2205ad3"},
+			CreatedAt:      time.Now().Add(-1 * time.Hour),
+			UpdatedAt:      time.Now().Add(-1 * time.Hour),
+			Local:          true,
+			AccountID:      "580072df-4d03-4684-a412-89fd6f7d77e6",
+			InReplyToID:    "",
+			BoostOfID:      "",
+			ContentWarning: "eye contact, trent reznor gif",
+			Visibility:     gtsmodel.VisibilityMutualsOnly,
+			Sensitive:      false,
+			Language:       "en",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
 			},
 			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
