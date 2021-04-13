@@ -88,7 +88,7 @@ func (m *mediaModule) mediaCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
-	attachment, err := m.mediaHandler.ProcessAttachment(buf.Bytes(), authed.Account.ID)
+	attachment, err := m.mediaHandler.ProcessLocalAttachment(buf.Bytes(), authed.Account.ID)
 	if err != nil {
 		l.Debugf("error reading attachment: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("could not process attachment: %s", err)})

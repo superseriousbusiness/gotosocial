@@ -29,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -217,7 +218,7 @@ func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accoun
 	}
 
 	// do the setting
-	avatarInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "avatar")
+	avatarInfo, err := m.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaAvatar)
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -250,7 +251,7 @@ func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accoun
 	}
 
 	// do the setting
-	headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "header")
+	headerInfo, err := m.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaHeader)
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}

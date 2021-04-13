@@ -95,7 +95,6 @@ func (suite *MediaTestSuite) SetupSuite() {
 		storage: suite.mockStorage,
 		log:     log,
 	}
-
 }
 
 func (suite *MediaTestSuite) TearDownSuite() {
@@ -142,7 +141,7 @@ func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	f, err := ioutil.ReadFile("../../testrig/media/test-jpeg.jpg")
 	assert.Nil(suite.T(), err)
 
-	ma, err := suite.mediaHandler.SetHeaderOrAvatarForAccountID(f, "weeeeeee", "header")
+	ma, err := suite.mediaHandler.ProcessHeaderOrAvatar(f, "weeeeeee", "header")
 	assert.Nil(suite.T(), err)
 	suite.log.Debugf("%+v", ma)
 

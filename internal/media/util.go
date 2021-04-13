@@ -88,7 +88,16 @@ func supportedVideoType(mimeType string) bool {
 
 // supportedEmojiType checks that the content type is image/png -- the only type supported for emoji.
 func supportedEmojiType(mimeType string) bool {
-	return mimeType == "image/png"
+	acceptedEmojiTypes := []string{
+		"image/gif",
+		"image/png",
+	}
+	for _, accepted := range acceptedEmojiTypes {
+		if mimeType == accepted {
+			return true
+		}
+	}
+	return false
 }
 
 // purgeExif is a little wrapper for the action of removing exif data from an image.
@@ -147,11 +156,11 @@ func deriveGif(b []byte, extension string) (*imageAndMeta, error) {
 	}, nil
 }
 
-func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
+func deriveImage(b []byte, contentType string) (*imageAndMeta, error) {
 	var i image.Image
 	var err error
 
-	switch extension {
+	switch contentType {
 	case "image/jpeg":
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
@@ -163,7 +172,7 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("extension %s not recognised", extension)
+		return nil, fmt.Errorf("content type %s not recognised", contentType)
 	}
 
 	width := i.Bounds().Size().X
@@ -191,16 +200,16 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 	}, nil
 }
 
-// deriveThumbnail returns a byte slice and metadata for a 256-pixel-width thumbnail
+// deriveThumbnail returns a byte slice and metadata for a thumbnail of width x and height y,
 // of a given jpeg, png, or gif, or an error if something goes wrong.
 //
 // Note that the aspect ratio of the image will be retained,
-// so it will not necessarily be a square.
-func deriveThumbnail(b []byte, extension string, x uint, y uint) (*imageAndMeta, error) {
+// so it will not necessarily be a square, even if x and y are set as the same value.
+func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMeta, error) {
 	var i image.Image
 	var err error
 
-	switch extension {
+	switch contentType {
 	case "image/jpeg":
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
@@ -217,7 +226,7 @@ func deriveThumbnail(b []byte, extension string, x uint, y uint) (*imageAndMeta,
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("extension %s not recognised", extension)
+		return nil, fmt.Errorf("content type %s not recognised", contentType)
 	}
 
 	thumb := resize.Thumbnail(x, y, i, resize.NearestNeighbor)
@@ -236,6 +245,34 @@ func deriveThumbnail(b []byte, extension string, x uint, y uint) (*imageAndMeta,
 		height: height,
 		size:   size,
 		aspect: aspect,
+	}, nil
+}
+
+func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
+	var i image.Image
+	var err error
+
+	switch contentType {
+	case "image/png":
+		i, err = png.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	case "image/gif":
+		i, err = gif.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("content type %s not allowed for emoji", contentType)
+	}
+
+	out := &bytes.Buffer{}
+	if err := png.Encode(out, i); err != nil {
+		return nil, err
+	}
+	return &imageAndMeta{
+		image: out.Bytes(),
 	}, nil
 }
 

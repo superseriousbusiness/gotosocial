@@ -317,12 +317,12 @@ func (ps *postgresService) CreateInstanceAccount() error {
 	instanceAccount := &gtsmodel.Account{
 		Username: username,
 	}
-	inserted, err := ps.conn.Model(instanceAccount).Where("username = ?", username).SelectOrInsert(); 
+	inserted, err := ps.conn.Model(instanceAccount).Where("username = ?", username).SelectOrInsert()
 	if err != nil {
 		return err
 	}
 	if inserted {
-		ps.log.Infof("created instance account %s with id %s",username, instanceAccount.ID)
+		ps.log.Infof("created instance account %s with id %s", username, instanceAccount.ID)
 	} else {
 		ps.log.Infof("instance account %s already exists with id %s", username, instanceAccount.ID)
 	}

@@ -35,23 +35,26 @@ import (
 const (
 	MediaSmall      = "small"
 	MediaOriginal   = "original"
+	MediaStatic     = "static"
 	MediaAttachment = "attachment"
 	MediaHeader     = "header"
 	MediaAvatar     = "avatar"
 	MediaEmoji      = "emoji"
+
+	emojiMaxBytes = 51200
 )
 
 // MediaHandler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type MediaHandler interface {
-	// SetHeaderOrAvatarForAccountID takes a new header image for an account, checks it out, removes exif data from it,
+	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	SetHeaderOrAvatarForAccountID(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error)
 
-	// ProcessAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
+	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 	// and then returns information to the caller about the attachment.
-	ProcessAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error)
+	ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -74,7 +77,7 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 	INTERFACE FUNCTIONS
 */
 
-func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(attachment []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if headerOrAvi != MediaHeader && headerOrAvi != MediaAvatar {
@@ -109,7 +112,7 @@ func (mh *mediaHandler) SetHeaderOrAvatarForAccountID(attachment []byte, account
 	return ma, nil
 }
 
-func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
 	contentType, err := parseContentType(attachment)
 	if err != nil {
 		return nil, err
@@ -126,7 +129,7 @@ func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (
 		if len(attachment) > mh.config.MediaConfig.MaxVideoSize {
 			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(attachment), mh.config.MediaConfig.MaxVideoSize)
 		}
-		return mh.processVideo(attachment, accountID, contentType)
+		return mh.processVideoAttachment(attachment, accountID, contentType)
 	case "image":
 		if !supportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
@@ -137,7 +140,7 @@ func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (
 		if len(attachment) > mh.config.MediaConfig.MaxImageSize {
 			return nil, fmt.Errorf("image size %d bytes exceeded max image size of %d bytes", len(attachment), mh.config.MediaConfig.MaxImageSize)
 		}
-		return mh.processImage(attachment, accountID, contentType)
+		return mh.processImageAttachment(attachment, accountID, contentType)
 	default:
 		break
 	}
@@ -145,51 +148,110 @@ func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (
 }
 
 func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
+	var clean []byte
+	var err error
+	var original *imageAndMeta
+	var static *imageAndMeta
+
+	// check content type of the submitted emoji and make sure it's supported by us
 	contentType, err := parseContentType(emojiBytes)
 	if err != nil {
 		return nil, err
 	}
-	
 	if !supportedEmojiType(contentType) {
 		return nil, fmt.Errorf("content type %s not supported for emojis", contentType)
 	}
 
-	newEmojiID := uuid.NewString()
+	if len(emojiBytes) == 0 {
+		return nil, errors.New("emoji was of size 0")
+	}
+	if len(emojiBytes) > emojiMaxBytes {
+		return nil, fmt.Errorf("emoji size %d bytes exceeded max emoji size of %d bytes", len(emojiBytes), emojiMaxBytes)
+	}
+
+	// clean any exif data from image/png type but leave gifs alone
+	switch contentType {
+	case "image/png":
+		if clean, err = purgeExif(emojiBytes); err != nil {
+			return nil, fmt.Errorf("error cleaning exif data: %s", err)
+		}
+	case "image/gif":
+		clean = emojiBytes
+	default:
+		return nil, errors.New("media type unrecognized")
+	}
+
+	// unlike with other attachments we don't need to derive anything here because we don't care about the width/height etc
+	original = &imageAndMeta{
+		image: clean,
+	}
+
+	static, err = deriveStaticEmoji(clean, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("error deriving static emoji: %s", err)
+	}
+
+	// since emoji aren't 'owned' by an account, but we still want to use the same pattern for serving them through the filserver,
+	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
+	// with the same username as the instance hostname, which doesn't belong to any particular user.
 	instanceAccount := &gtsmodel.Account{}
 	if err := mh.db.GetWhere("username", mh.config.Host, instanceAccount); err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
-	instanceAccountID := instanceAccount.ID
+
+	// the file extension (either png or gif)
 	extension := strings.Split(contentType, "/")[1]
 
+	// create the urls and storage paths
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+
+	// generate a uuid for the new emoji -- normally we could let the database do this for us,
+	// but we need it below so we should create it here instead.
+	newEmojiID := uuid.NewString()
+
+	// webfinger uri for the emoji -- unrelated to actually serving the image
+	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c
 	emojiURI := fmt.Sprintf("%s://%s/%s/%s", mh.config.Protocol, mh.config.Host, MediaEmoji, newEmojiID)
-	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccountID, MediaEmoji, MediaOriginal, newEmojiID, extension)
-	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccountID, MediaEmoji, MediaOriginal, newEmojiID, extension)
-	if err := mh.storage.StoreFileAt(emojiPath, emojiBytes); err != nil {
+
+	// serve url and storage path for the original emoji -- can be png or gif
+	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, MediaEmoji, MediaOriginal, newEmojiID, extension)
+	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccount.ID, MediaEmoji, MediaOriginal, newEmojiID, extension)
+
+	// serve url and storage path for the static version -- will always be png
+	emojiStaticURL := fmt.Sprintf("%s/%s/%s/%s/%s.png", URLbase, instanceAccount.ID, MediaEmoji, MediaStatic, newEmojiID)
+	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s/%s.png", mh.config.StorageConfig.BasePath, instanceAccount.ID, MediaEmoji, MediaStatic, newEmojiID)
+
+	// store the original
+	if err := mh.storage.StoreFileAt(emojiPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
+	// store the static
+	if err := mh.storage.StoreFileAt(emojiPath, static.image); err != nil {
+		return nil, fmt.Errorf("storage error: %s", err)
+	}
+
+	// and finally return the new emoji data to the caller -- it's up to them what to do with it
 	e := &gtsmodel.Emoji{
-		ID:               newEmojiID,
-		Shortcode:        shortcode,
-		Domain:           "", // empty because this is a local emoji
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
-		ImageRemoteURL:   "", // empty because this is a local emoji
-		ImageStaticRemoteURL: "",
-		ImageURL:         emojiURL,
-		ImageStaticURL:   "",
-		ImagePath:        emojiPath,
-		ImageStaticPath: "",
-		ImageContentType: contentType,
-		ImageFileSize:    0,
-		ImageStaticFileSize: 0,
-		ImageUpdatedAt:   time.Now(),
-		Disabled:         false,
-		URI:              emojiURI,
-		VisibleInPicker:  true,
-		CategoryID:       "", // empty because this is a new emoji -- no category yet
+		ID:                   newEmojiID,
+		Shortcode:            shortcode,
+		Domain:               "", // empty because this is a local emoji
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+		ImageRemoteURL:       "", // empty because this is a local emoji
+		ImageStaticRemoteURL: "", // empty because this is a local emoji
+		ImageURL:             emojiURL,
+		ImageStaticURL:       emojiStaticURL,
+		ImagePath:            emojiPath,
+		ImageStaticPath:      emojiStaticPath,
+		ImageContentType:     contentType,
+		ImageFileSize:        len(original.image),
+		ImageStaticFileSize:  len(static.image),
+		ImageUpdatedAt:       time.Now(),
+		Disabled:             false,
+		URI:                  emojiURI,
+		VisibleInPicker:      true,
+		CategoryID:           "", // empty because this is a new emoji -- no category yet
 	}
 	return e, nil
 }
@@ -198,11 +260,11 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	HELPER FUNCTIONS
 */
 
-func (mh *mediaHandler) processVideo(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
 	return nil, nil
 }
 
-func (mh *mediaHandler) processImage(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta

@@ -39,7 +39,7 @@ const (
 	shortcodeKey = "shortcode"
 
 	emojisPath = "emojis"
-	filesPath = "files"
+	filesPath  = "files"
 )
 
 // fileServer implements the RESTAPIModule interface.

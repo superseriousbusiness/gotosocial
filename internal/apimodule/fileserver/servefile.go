@@ -75,19 +75,16 @@ func (m *fileServer) ServeFile(c *gin.Context) {
 
 	// Only serve media types that are defined in our internal media module
 	switch mediaType {
-	case media.MediaHeader:
-	case media.MediaAvatar:
-	case media.MediaAttachment:
+	case media.MediaHeader, media.MediaAvatar, media.MediaAttachment, media.MediaEmoji:
 	default:
 		l.Debugf("mediatype %s not recognized", mediaType)
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
 
-	// This corresponds to original-sized image as it was uploaded, or small, which is the thumbnail
+	// This corresponds to original-sized image as it was uploaded, small (which is the thumbnail), or static
 	switch mediaSize {
-	case media.MediaOriginal:
-	case media.MediaSmall:
+	case media.MediaOriginal, media.MediaSmall, media.MediaStatic:
 	default:
 		l.Debugf("mediasize %s not recognized", mediaSize)
 		c.String(http.StatusNotFound, "404 page not found")
