@@ -21,17 +21,41 @@ package gtsmodel
 import "time"
 
 type Emoji struct {
-	ID               string    `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Shortcode        string    `pg:"notnull"`
-	CreatedAt        time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt        time.Time `pg:"type:timestamp,notnull,default:now()"`
-	ImageFileName    string
-	ImageContentType string
-	ImageFileSize    string
-	ImageUpdatedAt   time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Disabled         bool
-	URI              string
-	ImageRemoteURL   string
-	VisibleInPicker  bool
-	CategoryID       string
+	// database ID of this emoji
+	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	// String shortcode for this emoji -- the part that's between colons. This should be lowercase a-z_
+	// eg., 'blob_hug' 'purple_heart' Must be unique with domain.
+	Shortcode string `pg:"notnull,unique:shortcodedomain"`
+	// Origin domain of this emoji, eg 'example.org', 'queer.party'. Null for local emojis.
+	Domain string `pg:",unique:shortcodedomain"`
+	// When was this emoji created. Must be unique with shortcode.
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// When was this emoji updated
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// Where can this emoji be retrieved remotely? Null for local emojis.
+	// For remote emojis, it'll be something like:
+	// https://hackers.town/system/custom_emojis/images/000/049/842/original/1b74481204feabfd.png
+	ImageRemoteURL string
+	// Where can this emoji be retrieved from the local server? Null for remote emojis.
+	// Assuming our server is hosted at 'example.org', this will be something like:
+	// 'https://example.org/fileserver/emojis/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	ImageURL string
+	// Path of the emoji image in the server storage system.
+	// Will be something like '/gotosocial/storage/emojis/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	ImagePath string `pg:",notnull"`
+	// MIME content type of the emoji image
+	// Probably "image/png"
+	ImageContentType string `pg:",notnull"`
+	// Size of the emoji image file in bytes, for serving purposes.
+	ImageFileSize int `pg:",notnull"`
+	// When was the emoji image last updated?
+	ImageUpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// Has a moderation action disabled this emoji from being shown?
+	Disabled bool `pg:",notnull,default:false"`
+	// ActivityStreams uri of this emoji. Something like 'https://example.org/emojis/1234'
+	URI string `pg:",notnull,unique"`
+	// Is this emoji visible in the admin emoji picker?
+	VisibleInPicker bool `pg:",notnull,default:true"`
+	// In which emoji category is this emoji visible?
+	CategoryID string
 }

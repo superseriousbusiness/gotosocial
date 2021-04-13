@@ -312,6 +312,23 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
+func (ps *postgresService) CreateInstanceAccount() error {
+	username := ps.config.Host
+	instanceAccount := &gtsmodel.Account{
+		Username: username,
+	}
+	inserted, err := ps.conn.Model(instanceAccount).Where("username = ?", username).SelectOrInsert(); 
+	if err != nil {
+		return err
+	}
+	if inserted {
+		ps.log.Infof("created instance account %s with id %s",username, instanceAccount.ID)
+	} else {
+		ps.log.Infof("instance account %s already exists with id %s", username, instanceAccount.ID)
+	}
+	return nil
+}
+
 func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
 	user := &gtsmodel.User{
 		ID: userID,

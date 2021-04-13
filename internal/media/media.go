@@ -38,6 +38,7 @@ const (
 	MediaAttachment = "attachment"
 	MediaHeader     = "header"
 	MediaAvatar     = "avatar"
+	MediaEmoji      = "emoji"
 )
 
 // MediaHandler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.

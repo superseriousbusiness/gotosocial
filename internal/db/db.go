@@ -111,6 +111,10 @@ type DB interface {
 		HANDY SHORTCUTS
 	*/
 
+	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
+	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
+	CreateInstanceAccount() error
+
 	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID.
 	// The given account pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
