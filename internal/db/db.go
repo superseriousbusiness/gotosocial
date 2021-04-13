@@ -113,6 +113,7 @@ type DB interface {
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
+	// This is needed for things like serving files that belong to the instance and not an individual user/account.
 	CreateInstanceAccount() error
 
 	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID.

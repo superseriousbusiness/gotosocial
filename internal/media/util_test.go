@@ -121,7 +121,7 @@ func (suite *MediaUtilTestSuite) TestDeriveThumbnailFromJPEG() {
 	assert.Nil(suite.T(), err)
 
 	// clean it up and validate the clean version
-	imageAndMeta, err := deriveThumbnail(b, "image/jpeg")
+	imageAndMeta, err := deriveThumbnail(b, "image/jpeg", 256, 256)
 	assert.Nil(suite.T(), err)
 
 	assert.Equal(suite.T(), 256, imageAndMeta.width)

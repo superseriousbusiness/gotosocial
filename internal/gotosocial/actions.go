@@ -51,6 +51,10 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	if err := dbService.CreateInstanceAccount(); err != nil {
+		return fmt.Errorf("error creating instance account: %s", err)
+	}
+
 	router, err := router.New(c, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)

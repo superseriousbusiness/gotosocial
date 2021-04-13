@@ -58,10 +58,6 @@ func NewTestDB() db.DB {
 
 // StandardDBSetup populates a given db with all the necessary tables/models for perfoming tests.
 func StandardDBSetup(db db.DB) {
-	if err := db.CreateInstanceAccount(); err != nil {
-		panic(err)
-	}
-	
 	for _, m := range testModels {
 		if err := db.CreateTable(m); err != nil {
 			panic(err)
@@ -108,6 +104,10 @@ func StandardDBSetup(db db.DB) {
 		if err := db.Put(v); err != nil {
 			panic(err)
 		}
+	}
+
+	if err := db.CreateInstanceAccount(); err != nil {
+		panic(err)
 	}
 }
 

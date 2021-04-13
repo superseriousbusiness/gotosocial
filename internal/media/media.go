@@ -144,6 +144,56 @@ func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string) (
 	return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
 }
 
+func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
+	contentType, err := parseContentType(emojiBytes)
+	if err != nil {
+		return nil, err
+	}
+	
+	if !supportedEmojiType(contentType) {
+		return nil, fmt.Errorf("content type %s not supported for emojis", contentType)
+	}
+
+	newEmojiID := uuid.NewString()
+	instanceAccount := &gtsmodel.Account{}
+	if err := mh.db.GetWhere("username", mh.config.Host, instanceAccount); err != nil {
+		return nil, fmt.Errorf("error fetching instance account: %s", err)
+	}
+	instanceAccountID := instanceAccount.ID
+	extension := strings.Split(contentType, "/")[1]
+
+	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	emojiURI := fmt.Sprintf("%s://%s/%s/%s", mh.config.Protocol, mh.config.Host, MediaEmoji, newEmojiID)
+	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccountID, MediaEmoji, MediaOriginal, newEmojiID, extension)
+	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccountID, MediaEmoji, MediaOriginal, newEmojiID, extension)
+	if err := mh.storage.StoreFileAt(emojiPath, emojiBytes); err != nil {
+		return nil, fmt.Errorf("storage error: %s", err)
+	}
+
+	e := &gtsmodel.Emoji{
+		ID:               newEmojiID,
+		Shortcode:        shortcode,
+		Domain:           "", // empty because this is a local emoji
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		ImageRemoteURL:   "", // empty because this is a local emoji
+		ImageStaticRemoteURL: "",
+		ImageURL:         emojiURL,
+		ImageStaticURL:   "",
+		ImagePath:        emojiPath,
+		ImageStaticPath: "",
+		ImageContentType: contentType,
+		ImageFileSize:    0,
+		ImageStaticFileSize: 0,
+		ImageUpdatedAt:   time.Now(),
+		Disabled:         false,
+		URI:              emojiURI,
+		VisibleInPicker:  true,
+		CategoryID:       "", // empty because this is a new emoji -- no category yet
+	}
+	return e, nil
+}
+
 /*
 	HELPER FUNCTIONS
 */
@@ -177,7 +227,7 @@ func (mh *mediaHandler) processImage(data []byte, accountID string, contentType 
 		return nil, errors.New("media type unrecognized")
 	}
 
-	small, err = deriveThumbnail(clean, contentType)
+	small, err = deriveThumbnail(clean, contentType, 256, 256)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
@@ -287,7 +337,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, fmt.Errorf("error parsing image: %s", err)
 	}
 
-	small, err := deriveThumbnail(clean, contentType)
+	small, err := deriveThumbnail(clean, contentType, 256, 256)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}

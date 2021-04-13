@@ -86,6 +86,11 @@ func supportedVideoType(mimeType string) bool {
 	return false
 }
 
+// supportedEmojiType checks that the content type is image/png -- the only type supported for emoji.
+func supportedEmojiType(mimeType string) bool {
+	return mimeType == "image/png"
+}
+
 // purgeExif is a little wrapper for the action of removing exif data from an image.
 // Only pass pngs or jpegs to this function.
 func purgeExif(b []byte) ([]byte, error) {
@@ -191,7 +196,7 @@ func deriveImage(b []byte, extension string) (*imageAndMeta, error) {
 //
 // Note that the aspect ratio of the image will be retained,
 // so it will not necessarily be a square.
-func deriveThumbnail(b []byte, extension string) (*imageAndMeta, error) {
+func deriveThumbnail(b []byte, extension string, x uint, y uint) (*imageAndMeta, error) {
 	var i image.Image
 	var err error
 
@@ -215,7 +220,7 @@ func deriveThumbnail(b []byte, extension string) (*imageAndMeta, error) {
 		return nil, fmt.Errorf("extension %s not recognised", extension)
 	}
 
-	thumb := resize.Thumbnail(256, 256, i, resize.NearestNeighbor)
+	thumb := resize.Thumbnail(x, y, i, resize.NearestNeighbor)
 	width := thumb.Bounds().Size().X
 	height := thumb.Bounds().Size().Y
 	size := width * height

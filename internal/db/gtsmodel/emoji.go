@@ -36,18 +36,31 @@ type Emoji struct {
 	// For remote emojis, it'll be something like:
 	// https://hackers.town/system/custom_emojis/images/000/049/842/original/1b74481204feabfd.png
 	ImageRemoteURL string
+	// Where can a static / non-animated version of this emoji be retrieved remotely? Null for local emojis.
+	// For remote emojis, it'll be something like:
+	// https://hackers.town/system/custom_emojis/images/000/049/842/static/1b74481204feabfd.png
+	ImageStaticRemoteURL string
 	// Where can this emoji be retrieved from the local server? Null for remote emojis.
 	// Assuming our server is hosted at 'example.org', this will be something like:
-	// 'https://example.org/fileserver/emojis/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	// 'https://example.org/fileserver/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/original/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
 	ImageURL string
-	// Path of the emoji image in the server storage system.
-	// Will be something like '/gotosocial/storage/emojis/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	// Where can a static version of this emoji be retrieved from the local server? Null for remote emojis.
+	// Assuming our server is hosted at 'example.org', this will be something like:
+	// 'https://example.org/fileserver/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/small/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	ImageStaticURL string
+	// Path of the emoji image in the server storage system. Will be something like:
+	// '/gotosocial/storage/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/original/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
 	ImagePath string `pg:",notnull"`
+	// Path of a static version of the emoji image in the server storage system. Will be something like:
+	// '/gotosocial/storage/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/small/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
+	ImageStaticPath string `pg:",notnull"`
 	// MIME content type of the emoji image
 	// Probably "image/png"
 	ImageContentType string `pg:",notnull"`
 	// Size of the emoji image file in bytes, for serving purposes.
 	ImageFileSize int `pg:",notnull"`
+	// Size of the static version of the emoji image file in bytes, for serving purposes.
+	ImageStaticFileSize int `pg:",notnull"`
 	// When was the emoji image last updated?
 	ImageUpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Has a moderation action disabled this emoji from being shown?
