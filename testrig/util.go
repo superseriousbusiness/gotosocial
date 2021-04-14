@@ -47,15 +47,13 @@ func CreateMultipartFormData(fieldName string, fileName string, extraFields map[
 		return b, nil, err
 	}
 
-	if extraFields != nil {
-		for k, v := range extraFields {
-			f, err := w.CreateFormField(k)
-			if err != nil {
-				return b, nil, err
-			}
-			if _, err := io.Copy(f, bytes.NewBufferString(v)); err != nil {
-				return b, nil, err
-			}
+	for k, v := range extraFields {
+		f, err := w.CreateFormField(k)
+		if err != nil {
+			return b, nil, err
+		}
+		if _, err := io.Copy(f, bytes.NewBufferString(v)); err != nil {
+			return b, nil, err
 		}
 	}
 

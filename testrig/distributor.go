@@ -21,5 +21,5 @@ package testrig
 import "github.com/superseriousbusiness/gotosocial/internal/distributor"
 
 func NewTestDistributor() distributor.Distributor {
-	return distributor.New(nil, NewTestLog())
+	return distributor.New(NewTestLog())
 }

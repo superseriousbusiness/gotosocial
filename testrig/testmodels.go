@@ -206,6 +206,10 @@ func NewTestUsers() map[string]*gtsmodel.User {
 // NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
+		"instance_account": {
+			ID:       "39b745a3-774d-4b65-8bb2-b63d9e20a343",
+			Username: "localhost:8080",
+		},
 		"unconfirmed_account": {
 			ID:                    "59e197f5-87cd-4be8-ac7c-09082ccc4b4d",
 			Username:              "weed_lord420",
@@ -610,14 +614,41 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 	}
 }
 
-type paths struct {
-	original string
-	small    string
+func NewTestEmojis() map[string]*gtsmodel.Emoji {
+	return map[string]*gtsmodel.Emoji{
+		"rainbow": {
+			ID:                   "a96ec4f3-1cae-47e4-a508-f9d66a6b221b",
+			Shortcode:            "rainbow",
+			Domain:               "",
+			CreatedAt:            time.Now(),
+			UpdatedAt:            time.Now(),
+			ImageRemoteURL:       "",
+			ImageStaticRemoteURL: "",
+			ImageURL:             "http://localhost:8080/fileserver/39b745a3-774d-4b65-8bb2-b63d9e20a343/emoji/original/a96ec4f3-1cae-47e4-a508-f9d66a6b221b.png",
+			ImagePath:            "/tmp/gotosocial/39b745a3-774d-4b65-8bb2-b63d9e20a343/emoji/original/a96ec4f3-1cae-47e4-a508-f9d66a6b221b.png",
+			ImageStaticURL:       "http://localhost:8080/fileserver/39b745a3-774d-4b65-8bb2-b63d9e20a343/emoji/static/a96ec4f3-1cae-47e4-a508-f9d66a6b221b.png",
+			ImageStaticPath:      "/tmp/gotosocial/39b745a3-774d-4b65-8bb2-b63d9e20a343/emoji/static/a96ec4f3-1cae-47e4-a508-f9d66a6b221b.png",
+			ImageContentType:     "image/png",
+			ImageFileSize:        36702,
+			ImageStaticFileSize:  10413,
+			ImageUpdatedAt:       time.Now(),
+			Disabled:             false,
+			URI:                  "http://localhost:8080/emoji/a96ec4f3-1cae-47e4-a508-f9d66a6b221b",
+			VisibleInPicker:      true,
+			CategoryID:           "",
+		},
+	}
 }
 
-// NewTestStored returns a map of filenames, keyed according to which attachment they pertain to.
-func NewTestStored() map[string]paths {
-	return map[string]paths{
+type filenames struct {
+	original string
+	small    string
+	static   string
+}
+
+// NewTestStoredAttachments returns a map of filenames, keyed according to which attachment they pertain to.
+func NewTestStoredAttachments() map[string]filenames {
+	return map[string]filenames{
 		"admin_account_status_1_attachment_1": {
 			original: "welcome-original.jpeg",
 			small:    "welcome-small.jpeg",
@@ -629,6 +660,15 @@ func NewTestStored() map[string]paths {
 		"local_account_1_unattached_1": {
 			original: "ohyou-original.jpeg",
 			small:    "ohyou-small.jpeg",
+		},
+	}
+}
+
+func NewTestStoredEmoji() map[string]filenames {
+	return map[string]filenames{
+		"rainbow": {
+			original: "rainbow-original.png",
+			static:   "rainbow-static.png",
 		},
 	}
 }

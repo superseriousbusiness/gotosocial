@@ -40,6 +40,7 @@ var testModels []interface{} = []interface{}{
 	&gtsmodel.Status{},
 	&gtsmodel.Tag{},
 	&gtsmodel.User{},
+	&gtsmodel.Emoji{},
 	&oauth.Token{},
 	&oauth.Client{},
 }
@@ -101,6 +102,12 @@ func StandardDBSetup(db db.DB) {
 	}
 
 	for _, v := range NewTestStatuses() {
+		if err := db.Put(v); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, v := range NewTestEmojis() {
 		if err := db.Put(v); err != nil {
 			panic(err)
 		}

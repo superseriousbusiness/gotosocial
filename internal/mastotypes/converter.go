@@ -52,9 +52,14 @@ type Converter interface {
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
 	AppToMastoPublic(application *gtsmodel.Application) (*mastotypes.Application, error)
 
+	// AttachmentToMasto converts a gts model media attacahment into its mastodon representation for serialization on the API.
 	AttachmentToMasto(attachment *gtsmodel.MediaAttachment) (mastotypes.Attachment, error)
 
+	// MentionToMasto converts a gts model mention into its mastodon (frontend) representation for serialization on the API.
 	MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, error)
+
+	// EmojiToMasto converts a gts model emoji into its mastodon (frontend) representation for serialization on the API.
+	EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error)
 }
 
 type converter struct {
@@ -62,6 +67,7 @@ type converter struct {
 	db     db.DB
 }
 
+// New returns a new Converter
 func New(config *config.Config, db db.DB) Converter {
 	return &converter{
 		config: config,
@@ -288,5 +294,15 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, err
 		Username: target.Username,
 		URL:      target.URL,
 		Acct:     acct,
+	}, nil
+}
+
+func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error) {
+	return mastotypes.Emoji{
+		Shortcode:       e.Shortcode,
+		URL:             e.ImageURL,
+		StaticURL:       e.ImageStaticURL,
+		VisibleInPicker: e.VisibleInPicker,
+		Category:        e.CategoryID,
 	}, nil
 }

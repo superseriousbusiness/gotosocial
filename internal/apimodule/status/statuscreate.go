@@ -232,6 +232,16 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	mastoEmojis := []mastotypes.Emoji{}
+	for _, gtse := range newStatus.GTSEmojis {
+		me, err := m.mastoConverter.EmojiToMasto(gtse)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		mastoEmojis = append(mastoEmojis, me)
+	}
+
 	mastoStatus := &mastotypes.Status{
 		ID:                 newStatus.ID,
 		CreatedAt:          newStatus.CreatedAt.Format(time.RFC3339),
@@ -248,6 +258,8 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		Account:            mastoAccount,
 		MediaAttachments:   mastoAttachments,
 		Mentions:           mastoMentions,
+		Tags:               nil,
+		Emojis:             mastoEmojis,
 		Text:               form.Status,
 	}
 	c.JSON(http.StatusOK, mastoStatus)
@@ -320,12 +332,15 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.
 	// Advanced takes priority if it's set.
 	// If it's not set, take whatever masto visibility is set.
 	// If *that's* not set either, then just take the account default.
+	// If that's also not set, take the default for the whole instance.
 	if form.VisibilityAdvanced != nil {
 		gtsBasicVis = *form.VisibilityAdvanced
 	} else if form.Visibility != "" {
 		gtsBasicVis = util.ParseGTSVisFromMastoVis(form.Visibility)
-	} else {
+	} else if accountDefaultVis != "" {
 		gtsBasicVis = accountDefaultVis
+	} else {
+		gtsBasicVis = gtsmodel.VisibilityDefault
 	}
 
 	switch gtsBasicVis {

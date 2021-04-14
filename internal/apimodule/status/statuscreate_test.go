@@ -161,6 +161,47 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.Equal(suite.T(), mastomodel.VisibilityPrivate, statusReply.Visibility)
 }
 
+func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
+
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.PGTokenToOauthToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request.Form = url.Values{
+		"status":              {"here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: "},
+	}
+	suite.statusModule.statusCreatePOSTHandler(ctx)
+
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	statusReply := &mastomodel.Status{}
+	err = json.Unmarshal(b, statusReply)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), "", statusReply.SpoilerText)
+	assert.Equal(suite.T(), "here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: ", statusReply.Content)
+
+	assert.Len(suite.T(), statusReply.Emojis, 1)
+	mastoEmoji := statusReply.Emojis[0]
+	gtsEmoji := testrig.NewTestEmojis()["rainbow"]
+
+	assert.Equal(suite.T(), gtsEmoji.Shortcode, mastoEmoji.Shortcode)
+	assert.Equal(suite.T(), gtsEmoji.ImageURL, mastoEmoji.URL)
+	assert.Equal(suite.T(), gtsEmoji.ImageStaticURL, mastoEmoji.StaticURL)
+}
+
 // Try to reply to a status that doesn't exist
 func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	t := suite.testTokens["local_account_1"]

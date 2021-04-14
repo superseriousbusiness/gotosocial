@@ -29,13 +29,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/action"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -51,10 +54,6 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	if err := dbService.CreateInstanceAccount(); err != nil {
-		return fmt.Errorf("error creating instance account: %s", err)
-	}
-
 	router, err := router.New(c, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
@@ -68,6 +67,10 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
+	distributor := distributor.New(log)
+	if err := distributor.Start(); err != nil {
+		return fmt.Errorf("error starting distributor: %s", err)
+	}
 
 	// build converters and util
 	mastoConverter := mastotypes.New(c, dbService)
@@ -78,6 +81,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
 	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
 	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
+	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
+	statusModule := status.New(c, dbService, oauthServer, mediaHandler, mastoConverter, distributor, log)
 
 	apiModules := []apimodule.ClientAPIModule{
 		authModule, // this one has to go first so the other modules use its middleware
@@ -85,6 +90,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		appsModule,
 		mm,
 		fileServerModule,
+		adminModule,
+		statusModule,
 	}
 
 	for _, m := range apiModules {
@@ -94,6 +101,10 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		if err := m.CreateTables(dbService); err != nil {
 			return fmt.Errorf("table creation error: %s", err)
 		}
+	}
+
+	if err := dbService.CreateInstanceAccount(); err != nil {
+		return fmt.Errorf("error creating instance account: %s", err)
 	}
 
 	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)

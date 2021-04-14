@@ -115,6 +115,11 @@ func (suite *MediaTestSuite) SetupTest() {
 			logrus.Panicf("db connection error: %s", err)
 		}
 	}
+
+	err := suite.db.CreateInstanceAccount()
+	if err != nil {
+		logrus.Panic(err)
+	}
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
@@ -149,6 +154,15 @@ func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	assert.Equal(suite.T(), "weeeeeee", ma.AccountID)
 	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", ma.Blurhash)
 	//TODO: add more checks here, cba right now!
+}
+
+func (suite *MediaTestSuite) TestProcessLocalEmoji() {
+	f, err := ioutil.ReadFile("./test/rainbow-original.png")
+	assert.NoError(suite.T(), err)
+
+	emoji, err := suite.mediaHandler.ProcessLocalEmoji(f, "rainbow")
+	assert.NoError(suite.T(), err)
+	suite.log.Debugf("%+v", emoji)
 }
 
 // TODO: add tests for sad path, gif, png....

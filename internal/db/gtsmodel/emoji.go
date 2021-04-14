@@ -25,9 +25,9 @@ type Emoji struct {
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
 	// String shortcode for this emoji -- the part that's between colons. This should be lowercase a-z_
 	// eg., 'blob_hug' 'purple_heart' Must be unique with domain.
-	Shortcode string `pg:"notnull,unique:shortcodedomain"`
-	// Origin domain of this emoji, eg 'example.org', 'queer.party'. Null for local emojis.
-	Domain string `pg:",unique:shortcodedomain"`
+	Shortcode string `pg:",notnull,unique:shortcodedomain"`
+	// Origin domain of this emoji, eg 'example.org', 'queer.party'. empty string for local emojis.
+	Domain string `pg:",notnull,default:'',use_zero,unique:shortcodedomain"`
 	// When was this emoji created. Must be unique with shortcode.
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this emoji updated

@@ -144,6 +144,7 @@
   * [ ] Custom Emojis
     * [ ] /api/v1/custom_emojis GET                         (Show this server's custom emoji)
   * [ ] Admin
+    * [x] /api/v1/admin/custom_emojis POST                  (Upload a custom emoji for instance-wide usage)
     * [ ] /api/v1/admin/accounts GET                        (View accounts filtered by criteria)
     * [ ] /api/v1/admin/accounts/:id GET                    (View admin level info about an account)
     * [ ] /api/v1/admin/accounts/:id/action POST            (Perform an admin action on account)

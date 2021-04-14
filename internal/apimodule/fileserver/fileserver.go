@@ -36,9 +36,7 @@ const (
 	mediaTypeKey = "media_type"
 	mediaSizeKey = "media_size"
 	fileNameKey  = "file_name"
-	shortcodeKey = "shortcode"
 
-	emojisPath = "emojis"
 	filesPath  = "files"
 )
 
@@ -66,7 +64,6 @@ func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.L
 // Route satisfies the RESTAPIModule interface
 func (m *fileServer) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, accountIDKey, mediaTypeKey, mediaSizeKey, fileNameKey), m.ServeFile)
-	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, accountIDKey, mediaTypeKey, mediaSizeKey, fileNameKey), m.serveEmoji)
 	return nil
 }
 

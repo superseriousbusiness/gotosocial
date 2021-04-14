@@ -33,15 +33,23 @@ import (
 )
 
 const (
+	// Key for small/thumbnail versions of media
 	MediaSmall      = "small"
+	// Key for original/fullsize versions of media and emoji
 	MediaOriginal   = "original"
+	// Key for static (non-animated) versions of emoji
 	MediaStatic     = "static"
+	// Key for media attachments
 	MediaAttachment = "attachment"
+	// Key for profile header
 	MediaHeader     = "header"
+	// Key for profile avatar
 	MediaAvatar     = "avatar"
+	// Key for emoji type
 	MediaEmoji      = "emoji"
 
-	emojiMaxBytes = 51200
+	// Maximum permitted bytes of an emoji upload (50kb)
+	EmojiMaxBytes = 51200
 )
 
 // MediaHandler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
@@ -55,6 +63,11 @@ type MediaHandler interface {
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 	// and then returns information to the caller about the attachment.
 	ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error)
+
+	// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
+	// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
+	// in the database.
+	ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
 }
 
 type mediaHandler struct {
@@ -165,8 +178,8 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	if len(emojiBytes) == 0 {
 		return nil, errors.New("emoji was of size 0")
 	}
-	if len(emojiBytes) > emojiMaxBytes {
-		return nil, fmt.Errorf("emoji size %d bytes exceeded max emoji size of %d bytes", len(emojiBytes), emojiMaxBytes)
+	if len(emojiBytes) > EmojiMaxBytes {
+		return nil, fmt.Errorf("emoji size %d bytes exceeded max emoji size of %d bytes", len(emojiBytes), EmojiMaxBytes)
 	}
 
 	// clean any exif data from image/png type but leave gifs alone
@@ -227,7 +240,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	}
 
 	// store the static
-	if err := mh.storage.StoreFileAt(emojiPath, static.image); err != nil {
+	if err := mh.storage.StoreFileAt(emojiStaticPath, static.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 

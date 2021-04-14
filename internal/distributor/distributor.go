@@ -19,7 +19,6 @@
 package distributor
 
 import (
-	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
@@ -43,7 +42,7 @@ type Distributor interface {
 
 // distributor just implements the Distributor interface
 type distributor struct {
-	federator     pub.FederatingActor
+	// federator     pub.FederatingActor
 	fromClientAPI chan FromClientAPI
 	toClientAPI   chan ToClientAPI
 	stop          chan interface{}
@@ -51,9 +50,9 @@ type distributor struct {
 }
 
 // New returns a new Distributor that uses the given federator and logger
-func New(federator pub.FederatingActor, log *logrus.Logger) Distributor {
+func New(log *logrus.Logger) Distributor {
 	return &distributor{
-		federator:     federator,
+		// federator:     federator,
 		fromClientAPI: make(chan FromClientAPI, 100),
 		toClientAPI:   make(chan ToClientAPI, 100),
 		stop:          make(chan interface{}),

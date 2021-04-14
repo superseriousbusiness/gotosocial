@@ -248,6 +248,7 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	}, nil
 }
 
+// deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
 func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
 	var i image.Image
 	var err error

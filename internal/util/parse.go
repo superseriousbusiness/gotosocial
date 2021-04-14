@@ -25,6 +25,7 @@ import (
 	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 )
 
+// URIs contains a bunch of URIs and URLs for a user, host, account, etc.
 type URIs struct {
 	HostURL     string
 	UserURL     string
@@ -38,6 +39,7 @@ type URIs struct {
 	CollectionURI string
 }
 
+// GenerateURIs throws together a bunch of URIs for the given username, with the given protocol and host.
 func GenerateURIs(username string, protocol string, host string) *URIs {
 	hostURL := fmt.Sprintf("%s://%s", protocol, host)
 	userURL := fmt.Sprintf("%s/@%s", hostURL, username)
@@ -74,8 +76,6 @@ func ParseGTSVisFromMastoVis(m mastotypes.Visibility) gtsmodel.Visibility {
 		return gtsmodel.VisibilityFollowersOnly
 	case mastotypes.VisibilityDirect:
 		return gtsmodel.VisibilityDirect
-	default:
-		break
 	}
 	return ""
 }
@@ -91,8 +91,6 @@ func ParseMastoVisFromGTSVis(m gtsmodel.Visibility) mastotypes.Visibility {
 		return mastotypes.VisibilityPrivate
 	case gtsmodel.VisibilityDirect:
 		return mastotypes.VisibilityDirect
-	default:
-		break
 	}
 	return ""
 }

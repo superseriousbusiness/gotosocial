@@ -75,12 +75,24 @@ func (m *fileServer) ServeFile(c *gin.Context) {
 
 	// Only serve media types that are defined in our internal media module
 	switch mediaType {
-	case media.MediaHeader, media.MediaAvatar, media.MediaAttachment, media.MediaEmoji:
-	default:
-		l.Debugf("mediatype %s not recognized", mediaType)
-		c.String(http.StatusNotFound, "404 page not found")
+	case media.MediaHeader, media.MediaAvatar, media.MediaAttachment:
+		m.serveAttachment(c, accountID, mediaType, mediaSize, fileName)
+		return
+	case media.MediaEmoji:
+		m.serveEmoji(c, accountID, mediaType, mediaSize, fileName)
 		return
 	}
+	l.Debugf("mediatype %s not recognized", mediaType)
+	c.String(http.StatusNotFound, "404 page not found")
+}
+
+func (m *fileServer) serveAttachment(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
+	l := m.log.WithFields(logrus.Fields{
+		"func":        "serveAttachment",
+		"request_uri": c.Request.RequestURI,
+		"user_agent":  c.Request.UserAgent(),
+		"origin_ip":   c.ClientIP(),
+	})
 
 	// This corresponds to original-sized image as it was uploaded, small (which is the thumbnail), or static
 	switch mediaSize {
@@ -146,4 +158,84 @@ func (m *fileServer) ServeFile(c *gin.Context) {
 
 	// finally we can return with all the information we derived above
 	c.DataFromReader(http.StatusOK, int64(contentLength), contentType, bytes.NewReader(attachmentBytes), map[string]string{})
+}
+
+func (m *fileServer) serveEmoji(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
+	l := m.log.WithFields(logrus.Fields{
+		"func":        "serveEmoji",
+		"request_uri": c.Request.RequestURI,
+		"user_agent":  c.Request.UserAgent(),
+		"origin_ip":   c.ClientIP(),
+	})
+
+	// This corresponds to original-sized emoji as it was uploaded, or static
+	switch mediaSize {
+	case media.MediaOriginal, media.MediaStatic:
+	default:
+		l.Debugf("mediasize %s not recognized", mediaSize)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+
+	// derive the media id and the file extension from the last part of the request
+	spl := strings.Split(fileName, ".")
+	if len(spl) != 2 {
+		l.Debugf("filename %s not parseable", fileName)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+	wantedEmojiID := spl[0]
+	fileExtension := spl[1]
+	if wantedEmojiID == "" || fileExtension == "" {
+		l.Debugf("filename %s not parseable", fileName)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+
+	// now we know the attachment ID that the caller is asking for we can use it to pull the attachment out of the db
+	emoji := &gtsmodel.Emoji{}
+	if err := m.db.GetByID(wantedEmojiID, emoji); err != nil {
+		l.Debugf("emoji with id %s not retrievable: %s", wantedEmojiID, err)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+
+	// make sure the instance account id owns the requested emoji
+	instanceAccount := &gtsmodel.Account{}
+	if err := m.db.GetWhere("username", m.config.Host, instanceAccount); err != nil {
+		l.Debugf("error fetching instance account: %s", err)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+	if accountID != instanceAccount.ID {
+		l.Debugf("account %s does not own emoji with id %s", accountID, wantedEmojiID)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+
+	// now we can start preparing the response depending on whether we're serving a thumbnail or a larger attachment
+	var storagePath string
+	var contentType string
+	var contentLength int
+	switch mediaSize {
+	case media.MediaOriginal:
+		storagePath = emoji.ImagePath
+		contentType = emoji.ImageContentType
+		contentLength = emoji.ImageFileSize
+	case media.MediaStatic:
+		storagePath = emoji.ImageStaticPath
+		contentType = "image/png"
+		contentLength = emoji.ImageStaticFileSize
+	}
+
+	// use the path listed on the emoji we pulled out of the database to retrieve the object from storage
+	emojiBytes, err := m.storage.RetrieveFileFrom(storagePath)
+	if err != nil {
+		l.Debugf("error retrieving emoji from storage: %s", err)
+		c.String(http.StatusNotFound, "404 page not found")
+		return
+	}
+
+	// finally we can return with all the information we derived above
+	c.DataFromReader(http.StatusOK, int64(contentLength), contentType, bytes.NewReader(emojiBytes), map[string]string{})
 }

@@ -49,7 +49,7 @@ type Status struct {
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
-	Visibility Visibility
+	Visibility Visibility `pg:",notnull"`
 	// mark the status as sensitive?
 	Sensitive bool
 	// what language is this status written in?
@@ -95,6 +95,8 @@ const (
 	VisibilityMutualsOnly Visibility = "mutuals_only"
 	// This status is visible only to mentioned recipients
 	VisibilityDirect Visibility = "direct"
+	// Default visibility to use when no other setting can be found
+	VisibilityDefault Visibility = "public"
 )
 
 type VisibilityAdvanced struct {

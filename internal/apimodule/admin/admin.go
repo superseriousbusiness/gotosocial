@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status
+package admin
 
 import (
 	"fmt"
@@ -27,61 +27,46 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	idKey          = "id"
-	basePath       = "/api/v1/statuses"
-	basePathWithID = basePath + "/:" + idKey
-	contextPath    = basePath + "/context"
-	rebloggedPath  = basePath + "/reblogged_by"
-	favouritedPath = basePath + "/favourited_by"
-	favouritePath  = basePath + "/favourite"
-	reblogPath     = basePath + "/reblog"
-	unreblogPath   = basePath + "/unreblog"
-	bookmarkPath   = basePath + "/bookmark"
-	unbookmarkPath = basePath + "/unbookmark"
-	mutePath       = basePath + "/mute"
-	unmutePath     = basePath + "/unmute"
-	pinPath        = basePath + "/pin"
-	unpinPath      = basePath + "/unpin"
+	idKey                 = "id"
+	basePath              = "/api/v1/admin"
+	emojiPath             = basePath + "/custom_emojis"
+	basePathWithID        = basePath + "/:" + idKey
+	verifyPath            = basePath + "/verify_credentials"
+	updateCredentialsPath = basePath + "/update_credentials"
 )
 
-type statusModule struct {
+type adminModule struct {
 	config         *config.Config
 	db             db.DB
-	oauthServer    oauth.Server
 	mediaHandler   media.MediaHandler
 	mastoConverter mastotypes.Converter
-	distributor    distributor.Distributor
 	log            *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &statusModule{
+func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &adminModule{
 		config:         config,
 		db:             db,
 		mediaHandler:   mediaHandler,
 		mastoConverter: mastoConverter,
-		distributor:    distributor,
 		log:            log,
 	}
 }
 
 // Route attaches all routes from this module to the given router
-func (m *statusModule) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, basePath, m.statusCreatePOSTHandler)
-	// r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
+func (m *adminModule) Route(r router.Router) error {
+	r.AttachHandler(http.MethodPost, emojiPath, m.emojiCreatePOSTHandler)
 	return nil
 }
 
-func (m *statusModule) CreateTables(db db.DB) error {
+func (m *adminModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
@@ -92,8 +77,6 @@ func (m *statusModule) CreateTables(db db.DB) error {
 		&gtsmodel.EmailDomainBlock{},
 		&gtsmodel.MediaAttachment{},
 		&gtsmodel.Emoji{},
-		&gtsmodel.Tag{},
-		&gtsmodel.Mention{},
 	}
 
 	for _, m := range models {
@@ -103,14 +86,3 @@ func (m *statusModule) CreateTables(db db.DB) error {
 	}
 	return nil
 }
-
-// func (m *statusModule) muxHandler(c *gin.Context) {
-// 	ru := c.Request.RequestURI
-// 	if strings.HasPrefix(ru, verifyPath) {
-// 		m.accountVerifyGETHandler(c)
-// 	} else if strings.HasPrefix(ru, updateCredentialsPath) {
-// 		m.accountUpdateCredentialsPATCHHandler(c)
-// 	} else {
-// 		m.accountGETHandler(c)
-// 	}
-// }
