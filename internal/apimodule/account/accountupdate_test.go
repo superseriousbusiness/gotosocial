@@ -44,7 +44,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/models"
 	oauthmodels "github.com/superseriousbusiness/oauth2/v4/models"
 )
 
@@ -143,7 +142,7 @@ func (suite *AccountUpdateTestSuite) SetupSuite() {
 		l.Infof("received clientSecret %+v", clientSecret)
 		userID := args.Get(2).(string)
 		l.Infof("received userID %+v", userID)
-	}).Return(&models.Token{
+	}).Return(&oauthmodels.Token{
 		Code: "we're authorized now!",
 	}, nil)
 
