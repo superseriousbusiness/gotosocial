@@ -16,24 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package security
 
-import "time"
+import "github.com/gin-gonic/gin"
 
-// Mention refers to the 'tagging' or 'mention' of a user within a status.
-type Mention struct {
-	// ID of this mention in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// ID of the status this mention originates from
-	StatusID string `pg:",notnull"`
-	// When was this mention created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this mention last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Who created this mention?
-	OriginAccountID string `pg:",notnull"`
-	// Who does this mention target?
-	TargetAccountID string `pg:",notnull"`
-	// Prevent this mention from generating a notification?
-	Silent bool
+// flocBlock prevents google chrome cohort tracking by writing the Permissions-Policy header after all other parts of the request have been completed.
+// See: https://plausible.io/blog/google-floc
+func (m *module) flocBlock(c *gin.Context) {
+	c.Header("Permissions-Policy", "interest-cohort=()")
 }

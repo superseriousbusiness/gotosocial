@@ -20,17 +20,22 @@ package gtsmodel
 
 import "time"
 
+// Tag represents a hashtag for gathering public statuses together
 type Tag struct {
-	ID                string    `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-	Name              string    `pg:"unique,notnull"`
-	CreatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
-	UpdatedAt         time.Time `pg:"type:timestamp,notnull,default:now()"`
-	Useable           bool
-	Trendable         bool
-	Listable          bool
-	ReviewedAt        time.Time
-	RequestedReviewAt time.Time
-	LastStatusAt      time.Time
-	MaxScore          float32
-	MaxScoreAt        time.Time
+	// id of this tag in the database
+	ID string `pg:",unique,type:uuid,default:gen_random_uuid(),pk,notnull"`
+	// name of this tag -- the tag without the hash part
+	Name string `pg:",unique,pk,notnull"`
+	// Which account ID is the first one we saw using this tag?
+	FirstSeenFromAccountID string
+	// when was this tag created
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// when was this tag last updated
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// can our instance users use this tag?
+	Useable bool `pg:",notnull,default:true"`
+	// can our instance users look up this tag?
+	Listable bool `pg:",notnull,default:true"`
+	// when was this tag last used?
+	LastStatusAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 }

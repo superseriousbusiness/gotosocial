@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/security"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -83,9 +84,14 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
 	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
 	statusModule := status.New(c, dbService, oauthServer, mediaHandler, mastoConverter, distributor, log)
+	securityModule := security.New(c, log)
 
 	apiModules := []apimodule.ClientAPIModule{
-		authModule, // this one has to go first so the other modules use its middleware
+		// modules with middleware go first
+		securityModule,
+		authModule,
+
+		// now everything else
 		accountModule,
 		appsModule,
 		mm,

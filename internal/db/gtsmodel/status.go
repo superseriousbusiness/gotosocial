@@ -31,7 +31,13 @@ type Status struct {
 	// the html-formatted content of this status
 	Content string
 	// Database IDs of any media attachments associated with this status
-	Attachments []string
+	Attachments []string `pg:",array"`
+	// Database IDs of any tags used in this status
+	Tags []string `pg:",array"`
+	// Database IDs of any mentions in this status
+	Mentions []string `pg:",array"`
+	// Database IDs of any emojis used in this status
+	Emojis []string `pg:",array"`
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?

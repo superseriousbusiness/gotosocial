@@ -60,6 +60,9 @@ type Converter interface {
 
 	// EmojiToMasto converts a gts model emoji into its mastodon (frontend) representation for serialization on the API.
 	EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error)
+
+	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
+	TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error)
 }
 
 type converter struct {
@@ -290,7 +293,7 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, err
 	}
 
 	return mastotypes.Mention{
-		ID:       m.ID,
+		ID:       target.ID,
 		Username: target.Username,
 		URL:      target.URL,
 		Acct:     acct,
@@ -304,5 +307,14 @@ func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error) {
 		StaticURL:       e.ImageStaticURL,
 		VisibleInPicker: e.VisibleInPicker,
 		Category:        e.CategoryID,
+	}, nil
+}
+
+func (c *converter) TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error) {
+	tagURL := fmt.Sprintf("%s://%s/tags/%s", c.config.Protocol, c.config.Host, t.Name)
+
+	return mastotypes.Tag{
+		Name: t.Name,
+		URL:  tagURL, // we don't serve URLs with collections of tagged statuses (FOR NOW) so this is purely for mastodon compatibility ¯\_(ツ)_/¯
 	}, nil
 }

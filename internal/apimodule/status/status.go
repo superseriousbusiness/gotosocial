@@ -85,6 +85,7 @@ func (m *statusModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
+		&gtsmodel.Block{},
 		&gtsmodel.Follow{},
 		&gtsmodel.FollowRequest{},
 		&gtsmodel.Status{},

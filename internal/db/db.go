@@ -92,6 +92,11 @@ type DB interface {
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	Put(i interface{}) error
 
+	// Upsert stores or updates i based on the given conflict column, as in https://www.postgresqltutorial.com/postgresql-upsert/
+	// It is up to the implementation to figure out how to store it, and using what key.
+	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
+	Upsert(i interface{}, conflictColumn string) error
+
 	// UpdateByID updates i with id id.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	UpdateByID(id string, i interface{}) error
@@ -192,15 +197,16 @@ type DB interface {
 	// checks in the database for the mentioned accounts, and returns a slice of mentions generated based on the given parameters.
 	//
 	// Note: this func doesn't/shouldn't do any manipulation of the accounts in the DB, it's just for checking
-	// if they exist in the db and conveniently returning them.
+	// if they exist in the db and conveniently returning them if they do.
 	MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error)
 
 	// TagStringsToTags takes a slice of deduplicated, lowercase tags in the form "somehashtag", which have been
 	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
-	// returns a slice of *model.Tag corresponding to the given tags.
+	// returns a slice of *model.Tag corresponding to the given tags. If the tag already exists in database, that tag
+	// will be returned. Otherwise a pointer to a new tag struct will be created and returned.
 	//
 	// Note: this func doesn't/shouldn't do any manipulation of the tags in the DB, it's just for checking
-	// if they exist in the db and conveniently returning them.
+	// if they exist in the db already, and conveniently returning them, or creating new tag structs.
 	TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error)
 
 	// EmojiStringsToEmojis takes a slice of deduplicated, lowercase emojis in the form ":emojiname:", which have been
@@ -208,7 +214,7 @@ type DB interface {
 	// returns a slice of *model.Emoji corresponding to the given emojis.
 	//
 	// Note: this func doesn't/shouldn't do any manipulation of the emoji in the DB, it's just for checking
-	// if they exist in the db and conveniently returning them.
+	// if they exist in the db and conveniently returning them if they do.
 	EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error)
 }
 

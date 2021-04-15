@@ -34,6 +34,7 @@ import (
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -273,8 +274,18 @@ func (ps *postgresService) Put(i interface{}) error {
 	return err
 }
 
+func (ps *postgresService) Upsert(i interface{}, conflictColumn string) error {
+	if _, err := ps.conn.Model(i).OnConflict(fmt.Sprintf("(%s) DO UPDATE", conflictColumn)).Insert(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
 func (ps *postgresService) UpdateByID(id string, i interface{}) error {
-	if _, err := ps.conn.Model(i).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+	if _, err := ps.conn.Model(i).Where("id = ?", id).OnConflict("(id) DO UPDATE").Insert(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -765,15 +776,33 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 	return menchies, nil
 }
 
-// for now this function doesn't really use the database, but it's here because:
-// A) it probably will later and
-// B) it's v. similar to MentionStringsToMentions
 func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
-		newTags = append(newTags, &gtsmodel.Tag{
-			Name: t,
-		})
+		tag := &gtsmodel.Tag{}
+		// we can use selectorinsert here to create the new tag if it doesn't exist already
+		// inserted will be true if this is a new tag we just created
+		if err := ps.conn.Model(tag).Where("name = ?", t).Select(); err != nil {
+			if err == pg.ErrNoRows {
+				// tag doesn't exist yet so populate it
+				tag.ID = uuid.NewString()
+				tag.Name = t
+				tag.FirstSeenFromAccountID = originAccountID
+				tag.CreatedAt = time.Now()
+				tag.UpdatedAt = time.Now()
+				tag.Useable = true
+				tag.Listable = true
+			} else {
+				return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
+			}
+		}
+
+		// bail already if the tag isn't useable
+		if !tag.Useable {
+			continue
+		}
+		tag.LastStatusAt = time.Now()
+		newTags = append(newTags, tag)
 	}
 	return newTags, nil
 }

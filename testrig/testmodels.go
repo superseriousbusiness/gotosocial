@@ -681,8 +681,11 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			ID:             "502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
 			URI:            "http://localhost:8080/users/admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
 			URL:            "http://localhost:8080/@admin/statuses/502ccd6f-0edf-48d7-9016-2dfa4d3714cd",
-			Content:        "hello world! first post on the instance!",
+			Content:        "hello world! #welcome ! first post on the instance :rainbow: !",
 			Attachments:    []string{"b052241b-f30f-4dc6-92fc-2bad0be1f8d8"},
+			Tags:           []string{"a7e8f5ca-88a1-4652-8079-a187eab8d56e"},
+			Mentions:       []string{},
+			Emojis:         []string{"a96ec4f3-1cae-47e4-a508-f9d66a6b221b"},
 			CreatedAt:      time.Now().Add(-71 * time.Hour),
 			UpdatedAt:      time.Now().Add(-71 * time.Hour),
 			Local:          true,
@@ -862,6 +865,21 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Likeable:  true,
 			},
 			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
+	}
+}
+
+func NewTestTags() map[string]*gtsmodel.Tag {
+	return map[string]*gtsmodel.Tag{
+		"welcome": {
+			ID:                     "a7e8f5ca-88a1-4652-8079-a187eab8d56e",
+			Name:                   "welcome",
+			FirstSeenFromAccountID: "",
+			CreatedAt:              time.Now().Add(-71 * time.Hour),
+			UpdatedAt:              time.Now().Add(-71 * time.Hour),
+			Useable:                true,
+			Listable:               true,
+			LastStatusAt:           time.Now().Add(-71 * time.Hour),
 		},
 	}
 }

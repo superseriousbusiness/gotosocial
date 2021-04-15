@@ -16,24 +16,35 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package security
 
-import "time"
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
 
-// Mention refers to the 'tagging' or 'mention' of a user within a status.
-type Mention struct {
-	// ID of this mention in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// ID of the status this mention originates from
-	StatusID string `pg:",notnull"`
-	// When was this mention created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this mention last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Who created this mention?
-	OriginAccountID string `pg:",notnull"`
-	// Who does this mention target?
-	TargetAccountID string `pg:",notnull"`
-	// Prevent this mention from generating a notification?
-	Silent bool
+// module implements the apiclient interface
+type module struct {
+	config *config.Config
+	log *logrus.Logger
+}
+
+// New returns a new security module
+func New(config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &module{
+		config: config,
+		log:    log,
+	}
+}
+
+func (m *module) Route(s router.Router) error {
+	s.AttachMiddleware(m.flocBlock)
+	return nil
+}
+
+func (m *module) CreateTables(db db.DB) error {
+	return nil
 }

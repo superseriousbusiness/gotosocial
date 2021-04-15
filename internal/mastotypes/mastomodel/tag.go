@@ -20,4 +20,8 @@ package mastotypes
 
 // Tag represents a hashtag used within the content of a status. See https://docs.joinmastodon.org/entities/tag/
 type Tag struct {
+   // The value of the hashtag after the # sign.
+   Name string `json:"name"`
+   // A link to the hashtag on the instance.
+   URL string `json:"url"`
 }

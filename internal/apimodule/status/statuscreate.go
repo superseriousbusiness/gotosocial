@@ -135,39 +135,21 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// convert mentions to *gtsmodel.Mention
-	menchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), authed.Account.ID, thisStatusID)
-	if err != nil {
-		l.Debugf("error generating mentions from status: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating mentions from status"})
+	// handle mentions
+	if err := m.parseMentions(form, authed.Account.ID, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	for _, menchie := range menchies {
-		if err := m.db.Put(menchie); err != nil {
-			l.Debugf("error putting mentions in db: %s", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error while generating mentions from status"})
-			return
-		}
-	}
-	newStatus.GTSMentions = menchies
 
-	// convert tags to *gtsmodel.Tag
-	tags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), authed.Account.ID, thisStatusID)
-	if err != nil {
-		l.Debugf("error generating hashtags from status: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating hashtags from status"})
+	if err := m.parseTags(form, authed.Account.ID, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	newStatus.GTSTags = tags
 
-	// convert emojis to *gtsmodel.Emoji
-	emojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), authed.Account.ID, thisStatusID)
-	if err != nil {
-		l.Debugf("error generating emojis from status: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error generating emojis from status"})
+	if err := m.parseEmojis(form, authed.Account.ID, newStatus); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	newStatus.GTSEmojis = emojis
 
 	/*
 		FROM THIS POINT ONWARDS WE ARE HAPPY WITH THE STATUS -- it is valid and we will try to create it
@@ -196,8 +178,9 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		Activity:       newStatus,
 	}
 
-	// now we need to build up the mastodon-style status object to return to the submitter
-
+	/*
+		FROM THIS POINT ONWARDS WE ARE JUST CREATING THE FRONTEND REPRESENTATION OF THE STATUS TO RETURN TO THE SUBMITTER
+	*/
 	mastoVis := util.ParseMastoVisFromGTSVis(newStatus.Visibility)
 
 	mastoAccount, err := m.mastoConverter.AccountToMastoPublic(authed.Account)
@@ -232,6 +215,16 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	mastoTags := []mastotypes.Tag{}
+	for _, gtst := range newStatus.GTSTags {
+		mt, err := m.mastoConverter.TagToMasto(gtst)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		mastoTags = append(mastoTags, mt)
+	}
+
 	mastoEmojis := []mastotypes.Emoji{}
 	for _, gtse := range newStatus.GTSEmojis {
 		me, err := m.mastoConverter.EmojiToMasto(gtse)
@@ -258,7 +251,7 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		Account:            mastoAccount,
 		MediaAttachments:   mastoAttachments,
 		Mentions:           mastoMentions,
-		Tags:               nil,
+		Tags:               mastoTags,
 		Emojis:             mastoEmojis,
 		Text:               form.Status,
 	}
@@ -448,8 +441,8 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		return nil
 	}
 
-	GTSMediaAttachments := []*gtsmodel.MediaAttachment{}
-	Attachments := []string{}
+	gtsMediaAttachments := []*gtsmodel.MediaAttachment{}
+	attachments := []string{}
 	for _, mediaID := range form.MediaIDs {
 		// check these attachments exist
 		a := &gtsmodel.MediaAttachment{}
@@ -464,11 +457,11 @@ func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccount
 		if a.StatusID != "" || a.ScheduledStatusID != "" {
 			return fmt.Errorf("media with id %s is already attached to a status", mediaID)
 		}
-		GTSMediaAttachments = append(GTSMediaAttachments, a)
-		Attachments = append(Attachments, a.ID)
+		gtsMediaAttachments = append(gtsMediaAttachments, a)
+		attachments = append(attachments, a.ID)
 	}
-	status.GTSMediaAttachments = GTSMediaAttachments
-	status.Attachments = Attachments
+	status.GTSMediaAttachments = gtsMediaAttachments
+	status.Attachments = attachments
 	return nil
 }
 
@@ -481,5 +474,59 @@ func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string
 	if status.Language == "" {
 		return errors.New("no language given either in status create form or account default")
 	}
+	return nil
+}
+
+func (m *statusModule) parseMentions(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+	menchies := []string{}
+	gtsMenchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), accountID, status.ID)
+	if err != nil {
+		return fmt.Errorf("error generating mentions from status: %s", err)
+	}
+	for _, menchie := range gtsMenchies {
+		if err := m.db.Put(menchie); err != nil {
+			return fmt.Errorf("error putting mentions in db: %s", err)
+		}
+		menchies = append(menchies, menchie.ID)
+	}
+	// add full populated gts menchies to the status for passing them around conveniently
+	status.GTSMentions = gtsMenchies
+	// add just the ids of the mentioned accounts to the status for putting in the db
+	status.Mentions = menchies
+	return nil
+}
+
+func (m *statusModule) parseTags(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+	tags := []string{}
+	gtsTags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), accountID, status.ID)
+	if err != nil {
+		return fmt.Errorf("error generating hashtags from status: %s", err)
+	}
+	for _, tag := range gtsTags {
+		if err := m.db.Upsert(tag, "name"); err != nil {
+			return fmt.Errorf("error putting tags in db: %s", err)
+		}
+		tags = append(tags, tag.ID)
+	}
+	// add full populated gts tags to the status for passing them around conveniently
+	status.GTSTags = gtsTags
+	// add just the ids of the used tags to the status for putting in the db
+	status.Tags = tags
+	return nil
+}
+
+func (m *statusModule) parseEmojis(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+	emojis := []string{}
+	gtsEmojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), accountID, status.ID)
+	if err != nil {
+		return fmt.Errorf("error generating emojis from status: %s", err)
+	}
+	for _, e := range gtsEmojis {
+		emojis = append(emojis, e.ID)
+	}
+	// add full populated gts emojis to the status for passing them around conveniently
+	status.GTSEmojis = gtsEmojis
+	// add just the ids of the used emojis to the status for putting in the db
+	status.Emojis = emojis
 	return nil
 }
