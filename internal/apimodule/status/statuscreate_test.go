@@ -131,7 +131,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":              {"this is a brand new status!"},
+		"status":              {"this is a brand new status! #helloworld"},
 		"spoiler_text":        {"hello hello"},
 		"sensitive":           {"true"},
 		"visibility_advanced": {"mutuals_only"},
@@ -156,9 +156,19 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "this is a brand new status!", statusReply.Content)
+	assert.Equal(suite.T(), "this is a brand new status! #helloworld", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), mastomodel.VisibilityPrivate, statusReply.Visibility)
+	assert.Len(suite.T(), statusReply.Tags, 1)
+	assert.Equal(suite.T(), mastomodel.Tag{
+		Name: "helloworld",
+		URL: "http://localhost:8080/tags/helloworld",
+	}, statusReply.Tags[0])
+
+	gtsTag := &gtsmodel.Tag{}
+	err = suite.db.GetWhere("name", "helloworld", gtsTag)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
