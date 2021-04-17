@@ -16,12 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package mastotypes
+package gtsmodel
 
-// Tag represents a hashtag used within the content of a status. See https://docs.joinmastodon.org/entities/tag/
-type Tag struct {
-	// The value of the hashtag after the # sign.
-	Name string `json:"name"`
-	// A link to the hashtag on the instance.
-	URL string `json:"url"`
+import "time"
+
+// StatusPin refers to a status 'pinned' to the top of an account
+type StatusPin struct {
+	// id of this pin in the database
+	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	// when was this pin created
+	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	// id of the account that created ('did') the pinning (this should always be the same as the author of the status)
+	AccountID string `pg:",notnull"`
+	// database id of the status that has been pinned
+	StatusID string `pg:",notnull"`
 }

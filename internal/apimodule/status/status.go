@@ -21,7 +21,9 @@ package status
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -77,7 +79,7 @@ func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler
 // Route attaches all routes from this module to the given router
 func (m *statusModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, basePath, m.statusCreatePOSTHandler)
-	// r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
 	return nil
 }
 
@@ -89,6 +91,10 @@ func (m *statusModule) CreateTables(db db.DB) error {
 		&gtsmodel.Follow{},
 		&gtsmodel.FollowRequest{},
 		&gtsmodel.Status{},
+		&gtsmodel.StatusFave{},
+		&gtsmodel.StatusBookmark{},
+		&gtsmodel.StatusMute{},
+		&gtsmodel.StatusPin{},
 		&gtsmodel.Application{},
 		&gtsmodel.EmailDomainBlock{},
 		&gtsmodel.MediaAttachment{},
@@ -105,13 +111,14 @@ func (m *statusModule) CreateTables(db db.DB) error {
 	return nil
 }
 
-// func (m *statusModule) muxHandler(c *gin.Context) {
-// 	ru := c.Request.RequestURI
-// 	if strings.HasPrefix(ru, verifyPath) {
-// 		m.accountVerifyGETHandler(c)
-// 	} else if strings.HasPrefix(ru, updateCredentialsPath) {
-// 		m.accountUpdateCredentialsPATCHHandler(c)
-// 	} else {
-// 		m.accountGETHandler(c)
-// 	}
-// }
+func (m *statusModule) muxHandler(c *gin.Context) {
+	m.log.Debug("entering mux handler")
+	ru := c.Request.RequestURI
+	if strings.HasPrefix(ru, contextPath) {
+		// TODO
+	} else if strings.HasPrefix(ru, rebloggedPath) {
+		// TODO
+	} else {
+		m.statusGETHandler(c)
+	}
+}

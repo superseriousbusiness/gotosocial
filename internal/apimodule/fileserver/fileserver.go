@@ -37,7 +37,7 @@ const (
 	mediaSizeKey = "media_size"
 	fileNameKey  = "file_name"
 
-	filesPath  = "files"
+	filesPath = "files"
 )
 
 // fileServer implements the RESTAPIModule interface.

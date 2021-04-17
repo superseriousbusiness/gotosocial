@@ -34,7 +34,7 @@ type Status struct {
 	Attachments []string `pg:",array"`
 	// Database IDs of any tags used in this status
 	Tags []string `pg:",array"`
-	// Database IDs of any mentions in this status
+	// Database IDs of any accounts mentioned in this status
 	Mentions []string `pg:",array"`
 	// Database IDs of any emojis used in this status
 	Emojis []string `pg:",array"`
@@ -60,11 +60,15 @@ type Status struct {
 	Sensitive bool
 	// what language is this status written in?
 	Language string
+	// Which application was used to create this status?
+	CreatedWithApplicationID string
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 	// Will probably almost always be Note but who knows!.
 	ActivityStreamsType ActivityStreamsObject
+	// Original text of the status without formatting
+	Text string
 
 	/*
 		NON-DATABASE FIELDS
@@ -105,6 +109,7 @@ const (
 	VisibilityDefault Visibility = "public"
 )
 
+// VisibilityAdvanced denotes a set of flags that can be set on a status for fine-tuning visibility and interactivity of the status.
 type VisibilityAdvanced struct {
 	/*
 		ADVANCED SETTINGS -- These should all default to TRUE.
@@ -122,4 +127,12 @@ type VisibilityAdvanced struct {
 	Replyable bool `pg:"default:true"`
 	// This status can be liked/faved
 	Likeable bool `pg:"default:true"`
+}
+
+// RelevantAccounts denotes accounts that are replied to, boosted by, or mentioned in a status.
+type RelevantAccounts struct {
+	ReplyToAccount        *Account
+	BoostedAccount        *Account
+	BoostedReplyToAccount *Account
+	MentionedAccounts     []*Account
 }

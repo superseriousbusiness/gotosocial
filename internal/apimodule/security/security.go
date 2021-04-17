@@ -29,7 +29,7 @@ import (
 // module implements the apiclient interface
 type module struct {
 	config *config.Config
-	log *logrus.Logger
+	log    *logrus.Logger
 }
 
 // New returns a new security module

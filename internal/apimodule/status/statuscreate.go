@@ -97,18 +97,20 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
 	newStatus := &gtsmodel.Status{
-		ID:                  thisStatusID,
-		URI:                 thisStatusURI,
-		URL:                 thisStatusURL,
-		Content:             util.HTMLFormat(form.Status),
-		CreatedAt:           time.Now(),
-		UpdatedAt:           time.Now(),
-		Local:               true,
-		AccountID:           authed.Account.ID,
-		ContentWarning:      form.SpoilerText,
-		ActivityStreamsType: gtsmodel.ActivityStreamsNote,
-		Sensitive:           form.Sensitive,
-		Language:            form.Language,
+		ID:                       thisStatusID,
+		URI:                      thisStatusURI,
+		URL:                      thisStatusURL,
+		Content:                  util.HTMLFormat(form.Status),
+		CreatedAt:                time.Now(),
+		UpdatedAt:                time.Now(),
+		Local:                    true,
+		AccountID:                authed.Account.ID,
+		ContentWarning:           form.SpoilerText,
+		ActivityStreamsType:      gtsmodel.ActivityStreamsNote,
+		Sensitive:                form.Sensitive,
+		Language:                 form.Language,
+		CreatedWithApplicationID: authed.Application.ID,
+		Text:                     form.Status,
 	}
 
 	// check if replyToID is ok
@@ -181,79 +183,10 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 	/*
 		FROM THIS POINT ONWARDS WE ARE JUST CREATING THE FRONTEND REPRESENTATION OF THE STATUS TO RETURN TO THE SUBMITTER
 	*/
-	mastoVis := util.ParseMastoVisFromGTSVis(newStatus.Visibility)
-
-	mastoAccount, err := m.mastoConverter.AccountToMastoPublic(authed.Account)
+	mastoStatus, err := m.mastoConverter.StatusToMasto(newStatus, authed.Account, authed.Account, nil, newStatus.GTSReplyToAccount, newStatus.GTSReplyToStatus)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	mastoAttachments := []mastotypes.Attachment{}
-	for _, a := range newStatus.GTSMediaAttachments {
-		ma, err := m.mastoConverter.AttachmentToMasto(a)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		mastoAttachments = append(mastoAttachments, ma)
-	}
-
-	mastoMentions := []mastotypes.Mention{}
-	for _, gtsm := range newStatus.GTSMentions {
-		mm, err := m.mastoConverter.MentionToMasto(gtsm)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		mastoMentions = append(mastoMentions, mm)
-	}
-
-	mastoApplication, err := m.mastoConverter.AppToMastoPublic(authed.Application)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	mastoTags := []mastotypes.Tag{}
-	for _, gtst := range newStatus.GTSTags {
-		mt, err := m.mastoConverter.TagToMasto(gtst)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		mastoTags = append(mastoTags, mt)
-	}
-
-	mastoEmojis := []mastotypes.Emoji{}
-	for _, gtse := range newStatus.GTSEmojis {
-		me, err := m.mastoConverter.EmojiToMasto(gtse)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		mastoEmojis = append(mastoEmojis, me)
-	}
-
-	mastoStatus := &mastotypes.Status{
-		ID:                 newStatus.ID,
-		CreatedAt:          newStatus.CreatedAt.Format(time.RFC3339),
-		InReplyToID:        newStatus.InReplyToID,
-		InReplyToAccountID: newStatus.InReplyToAccountID,
-		Sensitive:          newStatus.Sensitive,
-		SpoilerText:        newStatus.ContentWarning,
-		Visibility:         mastoVis,
-		Language:           newStatus.Language,
-		URI:                newStatus.URI,
-		URL:                newStatus.URL,
-		Content:            newStatus.Content,
-		Application:        mastoApplication,
-		Account:            mastoAccount,
-		MediaAttachments:   mastoAttachments,
-		Mentions:           mastoMentions,
-		Tags:               mastoTags,
-		Emojis:             mastoEmojis,
-		Text:               form.Status,
 	}
 	c.JSON(http.StatusOK, mastoStatus)
 }
@@ -487,7 +420,7 @@ func (m *statusModule) parseMentions(form *advancedStatusCreateForm, accountID s
 		if err := m.db.Put(menchie); err != nil {
 			return fmt.Errorf("error putting mentions in db: %s", err)
 		}
-		menchies = append(menchies, menchie.ID)
+		menchies = append(menchies, menchie.TargetAccountID)
 	}
 	// add full populated gts menchies to the status for passing them around conveniently
 	status.GTSMentions = gtsMenchies

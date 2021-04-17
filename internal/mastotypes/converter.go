@@ -63,6 +63,9 @@ type Converter interface {
 
 	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
 	TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error)
+
+	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
+	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*mastotypes.Status, error)
 }
 
 type converter struct {
@@ -316,5 +319,213 @@ func (c *converter) TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error) {
 	return mastotypes.Tag{
 		Name: t.Name,
 		URL:  tagURL, // we don't serve URLs with collections of tagged statuses (FOR NOW) so this is purely for mastodon compatibility ¯\_(ツ)_/¯
+	}, nil
+}
+
+func (c *converter) StatusToMasto(
+	s *gtsmodel.Status,
+	targetAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
+	boostOfAccount *gtsmodel.Account,
+	replyToAccount *gtsmodel.Account,
+	reblogOfStatus *gtsmodel.Status) (*mastotypes.Status, error) {
+
+	repliesCount, err := c.db.GetReplyCountForStatus(s)
+	if err != nil {
+		return nil, fmt.Errorf("error counting replies: %s", err)
+	}
+
+	reblogsCount, err := c.db.GetReblogCountForStatus(s)
+	if err != nil {
+		return nil, fmt.Errorf("error counting reblogs: %s", err)
+	}
+
+	favesCount, err := c.db.GetFaveCountForStatus(s)
+	if err != nil {
+		return nil, fmt.Errorf("error counting faves: %s", err)
+	}
+
+	faved, err := c.db.StatusFavedBy(s, requestingAccount.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
+	}
+
+	reblogged, err := c.db.StatusRebloggedBy(s, requestingAccount.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
+	}
+
+	muted, err := c.db.StatusMutedBy(s, requestingAccount.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
+	}
+
+	bookmarked, err := c.db.StatusBookmarkedBy(s, requestingAccount.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
+	}
+
+	pinned, err := c.db.StatusPinnedBy(s, requestingAccount.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking if requesting account has pinned status: %s", err)
+	}
+
+	var mastoRebloggedStatus *mastotypes.Status // TODO
+
+	application := &gtsmodel.Application{}
+	if err := c.db.GetByID(s.CreatedWithApplicationID, application); err != nil {
+		return nil, fmt.Errorf("error fetching application used to create status: %s", err)
+	}
+	mastoApplication, err := c.AppToMastoPublic(application)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing application used to create status: %s", err)
+	}
+
+	mastoTargetAccount, err := c.AccountToMastoPublic(targetAccount)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing account of status author: %s", err)
+	}
+
+	mastoAttachments := []mastotypes.Attachment{}
+	// the status might already have some gts attachments on it if it's not been pulled directly from the database
+	// if so, we can directly convert the gts attachments into masto ones
+	if s.GTSMediaAttachments != nil {
+		for _, gtsAttachment := range s.GTSMediaAttachments {
+			mastoAttachment, err := c.AttachmentToMasto(gtsAttachment)
+			if err != nil {
+				return nil, fmt.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
+			}
+			mastoAttachments = append(mastoAttachments, mastoAttachment)
+		}
+		// the status doesn't have gts attachments on it, but it does have attachment IDs
+		// in this case, we need to pull the gts attachments from the db to convert them into masto ones
+	} else {
+		for _, a := range s.Attachments {
+			gtsAttachment := &gtsmodel.MediaAttachment{}
+			if err := c.db.GetByID(a, gtsAttachment); err != nil {
+				return nil, fmt.Errorf("error getting attachment with id %s: %s", a, err)
+			}
+			mastoAttachment, err := c.AttachmentToMasto(gtsAttachment)
+			if err != nil {
+				return nil, fmt.Errorf("error converting attachment with id %s: %s", a, err)
+			}
+			mastoAttachments = append(mastoAttachments, mastoAttachment)
+		}
+	}
+
+	mastoMentions := []mastotypes.Mention{}
+	// the status might already have some gts mentions on it if it's not been pulled directly from the database
+	// if so, we can directly convert the gts mentions into masto ones
+	if s.GTSMentions != nil {
+		for _, gtsMention := range s.GTSMentions {
+			mastoMention, err := c.MentionToMasto(gtsMention)
+			if err != nil {
+				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+			}
+			mastoMentions = append(mastoMentions, mastoMention)
+		}
+		// the status doesn't have gts mentions on it, but it does have mention IDs
+		// in this case, we need to pull the gts mentions from the db to convert them into masto ones
+	} else {
+		for _, m := range s.Mentions {
+			gtsMention := &gtsmodel.Mention{}
+			if err := c.db.GetByID(m, gtsMention); err != nil {
+				return nil, fmt.Errorf("error getting mention with id %s: %s", m, err)
+			}
+			mastoMention, err := c.MentionToMasto(gtsMention)
+			if err != nil {
+				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+			}
+			mastoMentions = append(mastoMentions, mastoMention)
+		}
+	}
+
+	mastoTags := []mastotypes.Tag{}
+	// the status might already have some gts tags on it if it's not been pulled directly from the database
+	// if so, we can directly convert the gts tags into masto ones
+	if s.GTSTags != nil {
+		for _, gtsTag := range s.GTSTags {
+			mastoTag, err := c.TagToMasto(gtsTag)
+			if err != nil {
+				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+			}
+			mastoTags = append(mastoTags, mastoTag)
+		}
+		// the status doesn't have gts tags on it, but it does have tag IDs
+		// in this case, we need to pull the gts tags from the db to convert them into masto ones
+	} else {
+		for _, t := range s.Tags {
+			gtsTag := &gtsmodel.Tag{}
+			if err := c.db.GetByID(t, gtsTag); err != nil {
+				return nil, fmt.Errorf("error getting tag with id %s: %s", t, err)
+			}
+			mastoTag, err := c.TagToMasto(gtsTag)
+			if err != nil {
+				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+			}
+			mastoTags = append(mastoTags, mastoTag)
+		}
+	}
+
+	mastoEmojis := []mastotypes.Emoji{}
+	// the status might already have some gts emojis on it if it's not been pulled directly from the database
+	// if so, we can directly convert the gts emojis into masto ones
+	if s.GTSEmojis != nil {
+		for _, gtsEmoji := range s.GTSEmojis {
+			mastoEmoji, err := c.EmojiToMasto(gtsEmoji)
+			if err != nil {
+				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			}
+			mastoEmojis = append(mastoEmojis, mastoEmoji)
+		}
+		// the status doesn't have gts emojis on it, but it does have emoji IDs
+		// in this case, we need to pull the gts emojis from the db to convert them into masto ones
+	} else {
+		for _, e := range s.Emojis {
+			gtsEmoji := &gtsmodel.Emoji{}
+			if err := c.db.GetByID(e, gtsEmoji); err != nil {
+				return nil, fmt.Errorf("error getting emoji with id %s: %s", e, err)
+			}
+			mastoEmoji, err := c.EmojiToMasto(gtsEmoji)
+			if err != nil {
+				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			}
+			mastoEmojis = append(mastoEmojis, mastoEmoji)
+		}
+	}
+
+	var mastoCard  *mastotypes.Card
+	var mastoPoll *mastotypes.Poll
+
+	return &mastotypes.Status{
+		ID:                 s.ID,
+		CreatedAt:          s.CreatedAt.Format(time.RFC3339),
+		InReplyToID:        s.InReplyToID,
+		InReplyToAccountID: s.InReplyToAccountID,
+		Sensitive:          s.Sensitive,
+		SpoilerText:        s.ContentWarning,
+		Visibility:         util.ParseMastoVisFromGTSVis(s.Visibility),
+		Language:           s.Language,
+		URI:                s.URI,
+		URL:                s.URL,
+		RepliesCount:       repliesCount,
+		ReblogsCount:       reblogsCount,
+		FavouritesCount:    favesCount,
+		Favourited:         faved,
+		Reblogged:          reblogged,
+		Muted:              muted,
+		Bookmarked:         bookmarked,
+		Pinned:             pinned,
+		Content:            s.Content,
+		Reblog:             mastoRebloggedStatus,
+		Application:        mastoApplication,
+		Account:            mastoTargetAccount,
+		MediaAttachments:   mastoAttachments,
+		Mentions:           mastoMentions,
+		Tags:               mastoTags,
+		Emojis:             mastoEmojis,
+		Card:               mastoCard, // TODO: implement cards
+		Poll:               mastoPoll, // TODO: implement polls
+		Text:               s.Text,
 	}, nil
 }

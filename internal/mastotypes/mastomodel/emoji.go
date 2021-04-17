@@ -42,7 +42,7 @@ type Emoji struct {
 // EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
 type EmojiCreateRequest struct {
 	// Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
-	Shortcode string                `form:"shortcode" validation:"required"`
+	Shortcode string `form:"shortcode" validation:"required"`
 	// Image file to use for the emoji. Must be png or gif and no larger than 50kb.
-	Image     *multipart.FileHeader `form:"image" validation:"required"`
+	Image *multipart.FileHeader `form:"image" validation:"required"`
 }

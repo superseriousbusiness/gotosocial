@@ -162,7 +162,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.Len(suite.T(), statusReply.Tags, 1)
 	assert.Equal(suite.T(), mastomodel.Tag{
 		Name: "helloworld",
-		URL: "http://localhost:8080/tags/helloworld",
+		URL:  "http://localhost:8080/tags/helloworld",
 	}, statusReply.Tags[0])
 
 	gtsTag := &gtsmodel.Tag{}
@@ -185,7 +185,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":              {"here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: "},
+		"status": {"here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: "},
 	}
 	suite.statusModule.statusCreatePOSTHandler(ctx)
 

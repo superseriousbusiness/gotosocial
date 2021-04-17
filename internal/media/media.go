@@ -34,19 +34,19 @@ import (
 
 const (
 	// Key for small/thumbnail versions of media
-	MediaSmall      = "small"
+	MediaSmall = "small"
 	// Key for original/fullsize versions of media and emoji
-	MediaOriginal   = "original"
+	MediaOriginal = "original"
 	// Key for static (non-animated) versions of emoji
-	MediaStatic     = "static"
+	MediaStatic = "static"
 	// Key for media attachments
 	MediaAttachment = "attachment"
 	// Key for profile header
-	MediaHeader     = "header"
+	MediaHeader = "header"
 	// Key for profile avatar
-	MediaAvatar     = "avatar"
+	MediaAvatar = "avatar"
 	// Key for emoji type
-	MediaEmoji      = "emoji"
+	MediaEmoji = "emoji"
 
 	// Maximum permitted bytes of an emoji upload (50kb)
 	EmojiMaxBytes = 51200

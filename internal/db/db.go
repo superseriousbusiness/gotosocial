@@ -187,6 +187,54 @@ type DB interface {
 	// That is, it returns true if account1 blocks account2, OR if account2 blocks account1.
 	Blocked(account1 string, account2 string) (bool, error)
 
+	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
+	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts
+	// or account domains.
+	//
+	// StatusVisible will also check through the given slice of 'otherRelevantAccounts', which should include:
+	//
+	// 1. Accounts mentioned in the targetStatus
+	//
+	// 2. Accounts replied to by the target status
+	//
+	// 3. Accounts boosted by the target status
+	//
+	// Will return an error if something goes wrong while pulling stuff out of the database.
+	StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
+
+	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
+	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
+
+	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
+	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error)
+
+	// PullRelevantAccountsFromStatus returns all accounts mentioned in a status, replied to by a status, or boosted by a status
+	PullRelevantAccountsFromStatus(status *gtsmodel.Status) (*gtsmodel.RelevantAccounts, error)
+
+	// GetReplyCountForStatus returns the amount of replies recorded for a status, or an error if something goes wrong
+	GetReplyCountForStatus(status *gtsmodel.Status) (int, error)
+
+	// GetReblogCountForStatus returns the amount of reblogs/boosts recorded for a status, or an error if something goes wrong
+	GetReblogCountForStatus(status *gtsmodel.Status) (int, error)
+
+	// GetFaveCountForStatus returns the amount of faves/likes recorded for a status, or an error if something goes wrong
+	GetFaveCountForStatus(status *gtsmodel.Status) (int, error)
+
+	// StatusFavedBy checks if a given status has been faved by a given account ID
+	StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error)
+
+	// StatusRebloggedBy checks if a given status has been reblogged/boosted by a given account ID
+	StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, error)
+
+	// StatusMutedBy checks if a given status has been muted by a given account ID
+	StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, error)
+
+	// StatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
+	StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error)
+
+	// StatusPinnedBy checks if a given status has been pinned by a given account ID
+	StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error)
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/
