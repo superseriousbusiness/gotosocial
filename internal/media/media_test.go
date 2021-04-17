@@ -143,7 +143,7 @@ func (suite *MediaTestSuite) TearDownTest() {
 
 func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	// load test image
-	f, err := ioutil.ReadFile("../../testrig/media/test-jpeg.jpg")
+	f, err := ioutil.ReadFile("./test/test-jpeg.jpg")
 	assert.Nil(suite.T(), err)
 
 	ma, err := suite.mediaHandler.ProcessHeaderOrAvatar(f, "weeeeeee", "header")
