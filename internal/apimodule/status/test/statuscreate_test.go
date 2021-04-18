@@ -31,6 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -64,7 +65,7 @@ type StatusCreateTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// module being tested
-	statusModule *statusModule
+	statusModule *status.StatusModule
 }
 
 /*
@@ -84,7 +85,7 @@ func (suite *StatusCreateTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = New(suite.config, suite.db, suite.oauthServer, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*statusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
 }
 
 func (suite *StatusCreateTestSuite) TearDownSuite() {
@@ -129,7 +130,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status":              {"this is a brand new status! #helloworld"},
 		"spoiler_text":        {"hello hello"},
@@ -139,7 +140,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 		"replyable":           {"false"},
 		"federated":           {"false"},
 	}
-	suite.statusModule.statusCreatePOSTHandler(ctx)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
 	// check response
 
@@ -183,11 +184,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status": {"here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: "},
 	}
-	suite.statusModule.statusCreatePOSTHandler(ctx)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
@@ -224,13 +225,13 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status":         {"this is a reply to a status that doesn't exist"},
 		"spoiler_text":   {"don't open cuz it won't work"},
 		"in_reply_to_id": {"3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50"},
 	}
-	suite.statusModule.statusCreatePOSTHandler(ctx)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
 	// check response
 
@@ -255,12 +256,12 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status":         {fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username)},
 		"in_reply_to_id": {testrig.NewTestStatuses()["local_account_2_status_1"].ID},
 	}
-	suite.statusModule.statusCreatePOSTHandler(ctx)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -295,12 +296,12 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status":    {"here's an image attachment"},
 		"media_ids": {"7a3b9f77-ab30-461e-bdd8-e64bd1db3008"},
 	}
-	suite.statusModule.statusCreatePOSTHandler(ctx)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

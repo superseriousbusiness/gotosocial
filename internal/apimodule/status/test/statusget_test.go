@@ -23,6 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -55,7 +56,7 @@ type StatusGetTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// module being tested
-	statusModule *statusModule
+	statusModule *status.StatusModule
 }
 
 /*
@@ -75,7 +76,7 @@ func (suite *StatusGetTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = New(suite.config, suite.db, suite.oauthServer, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*statusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
 }
 
 func (suite *StatusGetTestSuite) TearDownSuite() {

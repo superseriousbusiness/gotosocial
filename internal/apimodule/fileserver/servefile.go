@@ -33,7 +33,7 @@ import (
 //
 // Note: to mitigate scraping attempts, no information should be given out on a bad request except "404 page not found".
 // Don't give away account ids or media ids or anything like that; callers shouldn't be able to infer anything.
-func (m *fileServer) ServeFile(c *gin.Context) {
+func (m *FileServer) ServeFile(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "ServeFile",
 		"request_uri": c.Request.RequestURI,
@@ -45,28 +45,28 @@ func (m *fileServer) ServeFile(c *gin.Context) {
 	// We use request params to check what to pull out of the database/storage so check everything. A request URL should be formatted as follows:
 	// "https://example.org/fileserver/[ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]"
 	// "FILE_NAME" consists of two parts, the attachment's database id, a period, and the file extension.
-	accountID := c.Param(accountIDKey)
+	accountID := c.Param(AccountIDKey)
 	if accountID == "" {
 		l.Debug("missing accountID from request")
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
 
-	mediaType := c.Param(mediaTypeKey)
+	mediaType := c.Param(MediaTypeKey)
 	if mediaType == "" {
 		l.Debug("missing mediaType from request")
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
 
-	mediaSize := c.Param(mediaSizeKey)
+	mediaSize := c.Param(MediaSizeKey)
 	if mediaSize == "" {
 		l.Debug("missing mediaSize from request")
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
 
-	fileName := c.Param(fileNameKey)
+	fileName := c.Param(FileNameKey)
 	if fileName == "" {
 		l.Debug("missing fileName from request")
 		c.String(http.StatusNotFound, "404 page not found")
@@ -86,7 +86,7 @@ func (m *fileServer) ServeFile(c *gin.Context) {
 	c.String(http.StatusNotFound, "404 page not found")
 }
 
-func (m *fileServer) serveAttachment(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
+func (m *FileServer) serveAttachment(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "serveAttachment",
 		"request_uri": c.Request.RequestURI,
@@ -160,7 +160,7 @@ func (m *fileServer) serveAttachment(c *gin.Context, accountID string, mediaType
 	c.DataFromReader(http.StatusOK, int64(contentLength), contentType, bytes.NewReader(attachmentBytes), map[string]string{})
 }
 
-func (m *fileServer) serveEmoji(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
+func (m *FileServer) serveEmoji(c *gin.Context, accountID string, mediaType string, mediaSize string, fileName string) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "serveEmoji",
 		"request_uri": c.Request.RequestURI,

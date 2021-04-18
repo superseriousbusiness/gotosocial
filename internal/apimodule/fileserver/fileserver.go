@@ -32,17 +32,17 @@ import (
 )
 
 const (
-	accountIDKey = "account_id"
-	mediaTypeKey = "media_type"
-	mediaSizeKey = "media_size"
-	fileNameKey  = "file_name"
+	AccountIDKey = "account_id"
+	MediaTypeKey = "media_type"
+	MediaSizeKey = "media_size"
+	FileNameKey  = "file_name"
 
-	filesPath = "files"
+	FilesPath = "files"
 )
 
-// fileServer implements the RESTAPIModule interface.
+// FileServer implements the RESTAPIModule interface.
 // The goal here is to serve requested media files if the gotosocial server is configured to use local storage.
-type fileServer struct {
+type FileServer struct {
 	config      *config.Config
 	db          db.DB
 	storage     storage.Storage
@@ -52,7 +52,7 @@ type fileServer struct {
 
 // New returns a new fileServer module
 func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &fileServer{
+	return &FileServer{
 		config:      config,
 		db:          db,
 		storage:     storage,
@@ -62,12 +62,12 @@ func New(config *config.Config, db db.DB, storage storage.Storage, log *logrus.L
 }
 
 // Route satisfies the RESTAPIModule interface
-func (m *fileServer) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, accountIDKey, mediaTypeKey, mediaSizeKey, fileNameKey), m.ServeFile)
+func (m *FileServer) Route(s router.Router) error {
+	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, AccountIDKey, MediaTypeKey, MediaSizeKey, FileNameKey), m.ServeFile)
 	return nil
 }
 
-func (m *fileServer) CreateTables(db db.DB) error {
+func (m *FileServer) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.MediaAttachment{},
 	}

@@ -32,9 +32,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-const basePath = "/api/v1/media"
+const BasePath = "/api/v1/media"
 
-type mediaModule struct {
+type MediaModule struct {
 	mediaHandler   media.MediaHandler
 	config         *config.Config
 	db             db.DB
@@ -44,7 +44,7 @@ type mediaModule struct {
 
 // New returns a new auth module
 func New(db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &mediaModule{
+	return &MediaModule{
 		mediaHandler:   mediaHandler,
 		config:         config,
 		db:             db,
@@ -54,12 +54,12 @@ func New(db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Co
 }
 
 // Route satisfies the RESTAPIModule interface
-func (m *mediaModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, basePath, m.mediaCreatePOSTHandler)
+func (m *MediaModule) Route(s router.Router) error {
+	s.AttachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
 	return nil
 }
 
-func (m *mediaModule) CreateTables(db db.DB) error {
+func (m *MediaModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.MediaAttachment{},
 	}

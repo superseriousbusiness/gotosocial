@@ -345,40 +345,53 @@ func (c *converter) StatusToMasto(
 		return nil, fmt.Errorf("error counting faves: %s", err)
 	}
 
-	faved, err := c.db.StatusFavedBy(s, requestingAccount.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
-	}
+	var faved bool
+	var reblogged bool
+	var bookmarked bool
+	var pinned bool
+	var muted bool
 
-	reblogged, err := c.db.StatusRebloggedBy(s, requestingAccount.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
-	}
+	// requestingAccount will be nil for public requests without auth
+	// But if it's not nil, we can also get information about the requestingAccount's interaction with this status
+	if requestingAccount != nil {
+		faved, err = c.db.StatusFavedBy(s, requestingAccount.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
+		}
 
-	muted, err := c.db.StatusMutedBy(s, requestingAccount.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
-	}
+		reblogged, err = c.db.StatusRebloggedBy(s, requestingAccount.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
+		}
 
-	bookmarked, err := c.db.StatusBookmarkedBy(s, requestingAccount.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
-	}
+		muted, err = c.db.StatusMutedBy(s, requestingAccount.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
+		}
 
-	pinned, err := c.db.StatusPinnedBy(s, requestingAccount.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking if requesting account has pinned status: %s", err)
+		bookmarked, err = c.db.StatusBookmarkedBy(s, requestingAccount.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
+		}
+
+		pinned, err = c.db.StatusPinnedBy(s, requestingAccount.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking if requesting account has pinned status: %s", err)
+		}
 	}
 
 	var mastoRebloggedStatus *mastotypes.Status // TODO
 
-	application := &gtsmodel.Application{}
-	if err := c.db.GetByID(s.CreatedWithApplicationID, application); err != nil {
-		return nil, fmt.Errorf("error fetching application used to create status: %s", err)
-	}
-	mastoApplication, err := c.AppToMastoPublic(application)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing application used to create status: %s", err)
+	var mastoApplication *mastotypes.Application
+	if s.CreatedWithApplicationID != "" {
+		gtsApplication := &gtsmodel.Application{}
+		if err := c.db.GetByID(s.CreatedWithApplicationID, gtsApplication); err != nil {
+			return nil, fmt.Errorf("error fetching application used to create status: %s", err)
+		}
+		mastoApplication, err = c.AppToMastoPublic(gtsApplication)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing application used to create status: %s", err)
+		}
 	}
 
 	mastoTargetAccount, err := c.AccountToMastoPublic(targetAccount)

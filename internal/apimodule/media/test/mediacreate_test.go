@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package media
+package test
 
 import (
 	"bytes"
@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	mediamodule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
 	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -63,7 +64,7 @@ type MediaCreateTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// item being tested
-	mediaModule *mediaModule
+	mediaModule *mediamodule.MediaModule
 }
 
 /*
@@ -81,7 +82,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.mediaModule = New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediaModule)
+	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediamodule.MediaModule)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
@@ -92,7 +93,7 @@ func (suite *MediaCreateTestSuite) TearDownSuite() {
 
 func (suite *MediaCreateTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
-	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -129,18 +130,18 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	}
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../testrig/media/test-jpeg.jpg", map[string]string{
+	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
 		"description": "this is a test image -- a cool background from somewhere",
 		"focus":       "-0.5,0.5",
 	})
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 
 	// do the actual request
-	suite.mediaModule.mediaCreatePOSTHandler(ctx)
+	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
 	storageKeysAfterRequest, err := suite.storage.ListKeys()

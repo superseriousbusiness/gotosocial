@@ -53,7 +53,7 @@ type advancedVisibilityFlagsForm struct {
 	Likeable *bool `form:"likeable"`
 }
 
-func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
+func (m *StatusModule) StatusCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.MustAuth(c, true, true, true, true) // posting a status is serious business so we want *everything*
 	if err != nil {
@@ -180,10 +180,8 @@ func (m *statusModule) statusCreatePOSTHandler(c *gin.Context) {
 		Activity:       newStatus,
 	}
 
-	/*
-		FROM THIS POINT ONWARDS WE ARE JUST CREATING THE FRONTEND REPRESENTATION OF THE STATUS TO RETURN TO THE SUBMITTER
-	*/
-	mastoStatus, err := m.mastoConverter.StatusToMasto(newStatus, authed.Account, authed.Account, nil, newStatus.GTSReplyToAccount, newStatus.GTSReplyToStatus)
+	// return the frontend representation of the new status to the submitter
+	mastoStatus, err := m.mastoConverter.StatusToMasto(newStatus, authed.Account, authed.Account, nil, newStatus.GTSReplyToAccount, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -320,7 +318,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.
 	return nil
 }
 
-func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (m *StatusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -369,7 +367,7 @@ func (m *statusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	return nil
 }
 
-func (m *statusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (m *StatusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.MediaIDs == nil {
 		return nil
 	}
@@ -410,7 +408,7 @@ func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string
 	return nil
 }
 
-func (m *statusModule) parseMentions(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *StatusModule) parseMentions(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	menchies := []string{}
 	gtsMenchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), accountID, status.ID)
 	if err != nil {
@@ -429,7 +427,7 @@ func (m *statusModule) parseMentions(form *advancedStatusCreateForm, accountID s
 	return nil
 }
 
-func (m *statusModule) parseTags(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *StatusModule) parseTags(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	tags := []string{}
 	gtsTags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), accountID, status.ID)
 	if err != nil {
@@ -448,7 +446,7 @@ func (m *statusModule) parseTags(form *advancedStatusCreateForm, accountID strin
 	return nil
 }
 
-func (m *statusModule) parseEmojis(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *StatusModule) parseEmojis(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	emojis := []string{}
 	gtsEmojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), accountID, status.ID)
 	if err != nil {

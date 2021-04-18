@@ -32,32 +32,30 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	idKey          = "id"
-	basePath       = "/api/v1/statuses"
-	basePathWithID = basePath + "/:" + idKey
-	contextPath    = basePath + "/context"
-	rebloggedPath  = basePath + "/reblogged_by"
-	favouritedPath = basePath + "/favourited_by"
-	favouritePath  = basePath + "/favourite"
-	reblogPath     = basePath + "/reblog"
-	unreblogPath   = basePath + "/unreblog"
-	bookmarkPath   = basePath + "/bookmark"
-	unbookmarkPath = basePath + "/unbookmark"
-	mutePath       = basePath + "/mute"
-	unmutePath     = basePath + "/unmute"
-	pinPath        = basePath + "/pin"
-	unpinPath      = basePath + "/unpin"
+	IDKey          = "id"
+	BasePath       = "/api/v1/statuses"
+	BasePathWithID = BasePath + "/:" + IDKey
+	ContextPath    = BasePath + "/context"
+	RebloggedPath  = BasePath + "/reblogged_by"
+	FavouritedPath = BasePath + "/favourited_by"
+	FavouritePath  = BasePath + "/favourite"
+	ReblogPath     = BasePath + "/reblog"
+	UnreblogPath   = BasePath + "/unreblog"
+	BookmarkPath   = BasePath + "/bookmark"
+	UnbookmarkPath = BasePath + "/unbookmark"
+	MutePath       = BasePath + "/mute"
+	UnmutePath     = BasePath + "/unmute"
+	PinPath        = BasePath + "/pin"
+	UnpinPath      = BasePath + "/unpin"
 )
 
-type statusModule struct {
+type StatusModule struct {
 	config         *config.Config
 	db             db.DB
-	oauthServer    oauth.Server
 	mediaHandler   media.MediaHandler
 	mastoConverter mastotypes.Converter
 	distributor    distributor.Distributor
@@ -65,8 +63,8 @@ type statusModule struct {
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &statusModule{
+func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &StatusModule{
 		config:         config,
 		db:             db,
 		mediaHandler:   mediaHandler,
@@ -77,13 +75,14 @@ func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler
 }
 
 // Route attaches all routes from this module to the given router
-func (m *statusModule) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, basePath, m.statusCreatePOSTHandler)
-	r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
+func (m *StatusModule) Route(r router.Router) error {
+	r.AttachHandler(http.MethodPost, BasePath, m.StatusCreatePOSTHandler)
+	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodDelete, BasePathWithID, m.muxHandler)
 	return nil
 }
 
-func (m *statusModule) CreateTables(db db.DB) error {
+func (m *StatusModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
@@ -111,14 +110,19 @@ func (m *statusModule) CreateTables(db db.DB) error {
 	return nil
 }
 
-func (m *statusModule) muxHandler(c *gin.Context) {
+func (m *StatusModule) muxHandler(c *gin.Context) {
 	m.log.Debug("entering mux handler")
 	ru := c.Request.RequestURI
-	if strings.HasPrefix(ru, contextPath) {
-		// TODO
-	} else if strings.HasPrefix(ru, rebloggedPath) {
-		// TODO
-	} else {
-		m.statusGETHandler(c)
+	if c.Request.Method == http.MethodGet {
+		if strings.HasPrefix(ru, ContextPath) {
+			// TODO
+		} else if strings.HasPrefix(ru, RebloggedPath) {
+			// TODO
+		} else {
+			m.StatusGETHandler(c)
+		}
+	}
+	if c.Request.Method == http.MethodDelete {
+		m.StatusDELETEHandler(c)
 	}
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 
 	"github.com/urfave/cli/v2"
 )
@@ -251,6 +252,19 @@ func main() {
 						Usage: "initialize a database with the required schema for gotosocial; has no effect & is safe to run on an already-initialized db",
 						Action: func(c *cli.Context) error {
 							return runAction(c, db.Initialize)
+						},
+					},
+				},
+			},
+			{
+				Name:  "testrig",
+				Usage: "gotosocial testrig tasks",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "start",
+						Usage: "start the gotosocial testrig",
+						Action: func(c *cli.Context) error {
+							return runAction(c, testrig.Run)
 						},
 					},
 				},

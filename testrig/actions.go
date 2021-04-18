@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gotosocial
+package testrig
 
 import (
 	"context"
@@ -38,43 +38,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 )
 
-// Run creates and starts a gotosocial server
-var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := db.New(ctx, c, log)
-	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
-	}
-
-	router, err := router.New(c, log)
-	if err != nil {
-		return fmt.Errorf("error creating router: %s", err)
-	}
-
-	storageBackend, err := storage.NewLocal(c, log)
-	if err != nil {
-		return fmt.Errorf("error creating storage backend: %s", err)
-	}
-
-	// build backend handlers
-	mediaHandler := media.New(c, dbService, storageBackend, log)
-	oauthServer := oauth.New(dbService, log)
-	distributor := distributor.New(log)
+// Run creates and starts a gotosocial testrig server
+var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
+	dbService := NewTestDB()
+	router := NewTestRouter()
+	storageBackend := NewTestStorage()
+	mediaHandler := NewTestMediaHandler(dbService, storageBackend)
+	oauthServer := NewTestOauthServer(dbService)
+	distributor := NewTestDistributor()
 	if err := distributor.Start(); err != nil {
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
+	mastoConverter := NewTestMastoConverter(dbService)
 
-	// build converters and util
-	mastoConverter := mastotypes.New(c, dbService)
+	c := NewTestConfig()
+
+	StandardDBSetup(dbService)
+	StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// build client api modules
 	authModule := auth.New(oauthServer, dbService, log)
@@ -109,11 +93,11 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		}
 	}
 
-	if err := dbService.CreateInstanceAccount(); err != nil {
-		return fmt.Errorf("error creating instance account: %s", err)
-	}
+	// if err := dbService.CreateInstanceAccount(); err != nil {
+	// 	return fmt.Errorf("error creating instance account: %s", err)
+	// }
 
-	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)
+	gts, err := gotosocial.New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}
@@ -127,6 +111,9 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
 	log.Infof("received signal %s, shutting down", sig)
+
+	StandardDBTeardown(dbService)
+	StandardStorageTeardown(storageBackend)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {

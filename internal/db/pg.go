@@ -60,12 +60,6 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	}
 	log.Debugf("using pg options: %+v", opts)
 
-	readyChan := make(chan interface{})
-	opts.OnConnect = func(ctx context.Context, c *pg.Conn) error {
-		close(readyChan)
-		return nil
-	}
-
 	// create a connection
 	pgCtx, cancel := context.WithCancel(ctx)
 	conn := pg.Connect(opts).WithContext(pgCtx)
@@ -80,8 +74,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		})
 	}
 
-	// actually *begin* the connection so that we can tell if the db is there
-	// and listening, and also trigger the opts.OnConnect function passed in above
+	// actually *begin* the connection so that we can tell if the db is there and listening
 	if err := conn.Ping(ctx); err != nil {
 		cancel()
 		return nil, fmt.Errorf("db connection error: %s", err)
@@ -94,16 +87,6 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
 	log.Infof("connected to postgres version: %s", version)
-
-	// make sure the opts.OnConnect function has been triggered
-	// and closed the ready channel
-	select {
-	case <-readyChan:
-		log.Infof("postgres connection ready")
-	case <-time.After(5 * time.Second):
-		cancel()
-		return nil, errors.New("db connection timeout")
-	}
 
 	ps := &postgresService{
 		config: c,
@@ -585,15 +568,18 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
 	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
 	if requestingAccount == nil {
+
 		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
 			return true, nil
 		}
+		l.Debug("requesting account is nil but the target status isn't public")
 		return false, nil
 	}
 
 	// if requesting account is suspended then don't show the status -- although they probably shouldn't have gotten
 	// this far (ie., been authed) in the first place: this is just for safety.
 	if !requestingAccount.SuspendedAt.IsZero() {
+		l.Debug("requesting account is suspended")
 		return false, nil
 	}
 
@@ -603,24 +589,33 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 		if err := ps.conn.Model(requestingUser).Where("account_id = ?", requestingAccount.ID).Select(); err != nil {
 			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
 			if err == pg.ErrNoRows {
+				l.Debug("requesting account is local but there's no corresponding user")
 				return false, nil
 			} else {
+				l.Debugf("requesting account is local but there was an error getting the corresponding user: %s", err)
 				return false, err
 			}
 		}
 		// okay, user exists, so make sure it has full privileges/is confirmed/approved
 		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
+			l.Debug("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
 			return false, nil
 		}
+	}
+
+	// if the target status belongs to the requesting account, they should always be able to view it at this point
+	if targetStatus.AccountID == requestingAccount.ID {
+		return true, nil
 	}
 
 	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
 	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
 	if blocked, err := ps.Blocked(targetAccount.ID, requestingAccount.ID); err != nil {
-		// something went wrong figuring out if the accounts have a block
+		l.Debug("something went wrong figuring out if the accounts have a block: %s", err)
 		return false, err
 	} else if blocked {
 		// don't allow the status to be viewed if a block exists in *either* direction between these two accounts, no creepy stalking please
+		l.Debug("a block exists between requesting account and target account")
 		return false, nil
 	}
 

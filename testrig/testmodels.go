@@ -48,11 +48,23 @@ func NewTestTokens() map[string]*oauth.Token {
 // NewTestClients returns a map of Clients keyed according to which account they are used by.
 func NewTestClients() map[string]*oauth.Client {
 	clients := map[string]*oauth.Client{
+		"admin_account": {
+			ID:     "1c5cefc8-f0c9-4307-8506-ca6e3888675e",
+			Secret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a",
+			Domain: "http://localhost:8080",
+			UserID: "0fb02eae-2214-473f-9667-0a43f22d75ff", // admin_account
+		},
 		"local_account_1": {
 			ID:     "73b48d42-029d-4487-80fc-329a5cf67869",
 			Secret: "c3724c74-dc3b-41b2-a108-0ea3d8399830",
 			Domain: "http://localhost:8080",
 			UserID: "44e36b79-44a4-4bd8-91e9-097f477fe97b", // local_account_1
+		},
+		"local_account_2": {
+			ID:     "a4f6a2ea-a32b-4600-8853-72fc4ad98a1f",
+			Secret: "8f5603a5-c721-46cd-8f1b-2e368f51379f",
+			Domain: "http://localhost:8080",
+			UserID: "d120bd97-866f-4a05-9690-a1294b9934c3", // local_account_2
 		},
 	}
 	return clients
@@ -61,6 +73,16 @@ func NewTestClients() map[string]*oauth.Client {
 // NewTestApplications returns a map of applications keyed to which number application they are.
 func NewTestApplications() map[string]*gtsmodel.Application {
 	apps := map[string]*gtsmodel.Application{
+		"admin_account": {
+			ID:           "9bf9e368-037f-444d-8ffd-1091d1c21c4c",
+			Name:         "superseriousbusiness",
+			Website:      "https://superserious.business",
+			RedirectURI:  "http://localhost:8080",
+			ClientID:     "1c5cefc8-f0c9-4307-8506-ca6e3888675e", // admin client
+			ClientSecret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a", // admin client
+			Scopes:       "read write follow push",
+			VapidKey:     "76ae0095-8a10-438f-9f49-522d1985b190",
+		},
 		"application_1": {
 			ID:           "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			Name:         "really cool gts application",
@@ -70,6 +92,16 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientSecret: "c3724c74-dc3b-41b2-a108-0ea3d8399830", // client_1
 			Scopes:       "read write follow push",
 			VapidKey:     "4738dfd7-ca73-4aa6-9aa9-80e946b7db36",
+		},
+		"application_2": {
+			ID:           "6b0cd164-8497-4cd5-bec9-957886fac5df",
+			Name:         "kindaweird",
+			Website:      "https://kindaweird.app",
+			RedirectURI:  "http://localhost:8080",
+			ClientID:     "a4f6a2ea-a32b-4600-8853-72fc4ad98a1f", // client_2
+			ClientSecret: "8f5603a5-c721-46cd-8f1b-2e368f51379f", // client_2
+			Scopes:       "read write follow push",
+			VapidKey:     "c040a5fc-e1e2-4859-bbea-0a3efbca1c4b",
 		},
 	}
 	return apps
@@ -128,7 +160,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			CreatedByApplicationID: "",
 			LastEmailedAt:          time.Now().Add(-30 * time.Minute),
 			ConfirmationToken:      "",
-			ConfirmedAt:            time.Time{},
+			ConfirmedAt:            time.Now().Add(-72 * time.Hour),
 			ConfirmationSentAt:     time.Time{},
 			UnconfirmedEmail:       "",
 			Moderator:              true,
@@ -689,13 +721,14 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:      time.Now().Add(-71 * time.Hour),
 			UpdatedAt:      time.Now().Add(-71 * time.Hour),
 			Local:          true,
-			AccountID:      "0fb02eae-2214-473f-9667-0a43f22d75ff",
+			AccountID:      "8020dbb4-1e7b-4d99-a872-4cf94e64210f",
 			InReplyToID:    "",
 			BoostOfID:      "",
 			ContentWarning: "",
 			Visibility:     gtsmodel.VisibilityPublic,
 			Sensitive:      false,
 			Language:       "en",
+			CreatedWithApplicationID: "9bf9e368-037f-444d-8ffd-1091d1c21c4c",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
@@ -712,13 +745,14 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:      time.Now().Add(-70 * time.Hour),
 			UpdatedAt:      time.Now().Add(-70 * time.Hour),
 			Local:          true,
-			AccountID:      "0fb02eae-2214-473f-9667-0a43f22d75ff",
+			AccountID:      "8020dbb4-1e7b-4d99-a872-4cf94e64210f",
 			InReplyToID:    "",
 			BoostOfID:      "",
 			ContentWarning: "open to see some puppies",
 			Visibility:     gtsmodel.VisibilityPublic,
 			Sensitive:      true,
 			Language:       "en",
+			CreatedWithApplicationID: "9bf9e368-037f-444d-8ffd-1091d1c21c4c",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
@@ -742,6 +776,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityPublic,
 			Sensitive:      true,
 			Language:       "en",
+			CreatedWithApplicationID: "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
@@ -765,6 +800,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityUnlocked,
 			Sensitive:      false,
 			Language:       "en",
+			CreatedWithApplicationID: "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: true,
@@ -788,6 +824,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityMutualsOnly,
 			Sensitive:      false,
 			Language:       "en",
+			CreatedWithApplicationID: "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: false,
@@ -812,6 +849,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityMutualsOnly,
 			Sensitive:      false,
 			Language:       "en",
+			CreatedWithApplicationID: "f88697b8-ee3d-46c2-ac3f-dbb85566c3cc",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
@@ -835,6 +873,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityPublic,
 			Sensitive:      true,
 			Language:       "en",
+			CreatedWithApplicationID: "6b0cd164-8497-4cd5-bec9-957886fac5df",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
@@ -858,6 +897,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Visibility:     gtsmodel.VisibilityPublic,
 			Sensitive:      true,
 			Language:       "en",
+			CreatedWithApplicationID: "6b0cd164-8497-4cd5-bec9-957886fac5df",
 			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,

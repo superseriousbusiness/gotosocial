@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package fileserver
+package test
 
 import (
 	"context"
@@ -30,6 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -60,7 +61,7 @@ type ServeFileTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// item being tested
-	fileServer *fileServer
+	fileServer *fileserver.FileServer
 }
 
 /*
@@ -78,7 +79,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.fileServer = New(suite.config, suite.db, suite.storage, suite.log).(*fileServer)
+	suite.fileServer = fileserver.New(suite.config, suite.db, suite.storage, suite.log).(*fileserver.FileServer)
 }
 
 func (suite *ServeFileTestSuite) TearDownSuite() {
@@ -89,7 +90,7 @@ func (suite *ServeFileTestSuite) TearDownSuite() {
 
 func (suite *ServeFileTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
-	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -120,19 +121,19 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	// but because we're calling the ServeFile function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   accountIDKey,
+			Key:   fileserver.AccountIDKey,
 			Value: targetAttachment.AccountID,
 		},
 		gin.Param{
-			Key:   mediaTypeKey,
+			Key:   fileserver.MediaTypeKey,
 			Value: media.MediaAttachment,
 		},
 		gin.Param{
-			Key:   mediaSizeKey,
+			Key:   fileserver.MediaSizeKey,
 			Value: media.MediaOriginal,
 		},
 		gin.Param{
-			Key:   fileNameKey,
+			Key:   fileserver.FileNameKey,
 			Value: fmt.Sprintf("%s.jpeg", targetAttachment.ID),
 		},
 	}

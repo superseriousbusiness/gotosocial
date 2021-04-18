@@ -25,25 +25,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusGETHandler(c *gin.Context) {
+func (m *StatusModule) StatusDELETEHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
-		"func":        "statusGETHandler",
+		"func":        "StatusDELETEHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),
 		"origin_ip":   c.ClientIP(),
 	})
 	l.Debugf("entering function")
 
-	var requestingAccount *gtsmodel.Account
 	authed, err := oauth.MustAuth(c, true, false, true, true) // we don't really need an app here but we want everything else
 	if err != nil {
-		l.Debug("not authed but will continue to serve anyway if public status")
-		requestingAccount = nil
-	} else {
-		requestingAccount = authed.Account
+		l.Debug("not authed so can't delete status")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
+		return
 	}
 
 	targetStatusID := c.Param(IDKey)
@@ -60,11 +59,9 @@ func (m *StatusModule) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	l.Tracef("going to search for target account %s", targetStatus.AccountID)
-	targetAccount := &gtsmodel.Account{}
-	if err := m.db.GetByID(targetStatus.AccountID, targetAccount); err != nil {
-		l.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err)
-		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})
+	if targetStatus.AccountID != authed.Account.ID {
+		l.Debug("status doesn't belong to requesting account")
+		c.JSON(http.StatusForbidden, gin.H{"error": "not allowed"})
 		return
 	}
 
@@ -72,20 +69,6 @@ func (m *StatusModule) StatusGETHandler(c *gin.Context) {
 	relevantAccounts, err := m.db.PullRelevantAccountsFromStatus(targetStatus)
 	if err != nil {
 		l.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err)
-		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})
-		return
-	}
-
-	l.Trace("going to see if status is visible")
-	visible, err := m.db.StatusVisible(targetStatus, targetAccount, requestingAccount, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
-	if err != nil {
-		l.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err)
-		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})
-		return
-	}
-
-	if !visible {
-		l.Trace("status is not visible")
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})
 		return
 	}
@@ -100,11 +83,23 @@ func (m *StatusModule) StatusGETHandler(c *gin.Context) {
 		}
 	}
 
-	mastoStatus, err := m.mastoConverter.StatusToMasto(targetStatus, targetAccount, requestingAccount, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
+	mastoStatus, err := m.mastoConverter.StatusToMasto(targetStatus, authed.Account, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
 	if err != nil {
 		l.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})
 		return
+	}
+
+	if err := m.db.DeleteByID(targetStatus.ID, targetStatus); err != nil {
+		l.Errorf("error deleting status from the database: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
+		APObjectType: gtsmodel.ActivityStreamsNote,
+		APActivityType: gtsmodel.ActivityStreamsDelete,
+		Activity: targetStatus,
 	}
 
 	c.JSON(http.StatusOK, mastoStatus)
