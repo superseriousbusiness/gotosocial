@@ -497,12 +497,44 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 }
 
 func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
-	_, err := ps.conn.Model(mediaAttachment).Insert()
-	return err
+	if mediaAttachment.Avatar && mediaAttachment.Header {
+		return errors.New("one media attachment cannot be both header and avatar")
+	}
+
+	var headerOrAVI string
+	if mediaAttachment.Avatar {
+		headerOrAVI = "avatar"
+	} else if mediaAttachment.Header {
+		headerOrAVI = "header"
+	} else {
+		return errors.New("given media attachment was neither a header nor an avatar")
+	}
+
+	// TODO: there are probably more side effects here that need to be handled
+	if _, err := ps.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+		return err
+	}
+
+	if _, err := ps.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error {
-	if err := ps.conn.Model(header).Where("account_id = ?", accountID).Where("header = ?", true).Select(); err != nil {
+	acct := &gtsmodel.Account{}
+	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+
+	if acct.HeaderMediaAttachmentID == "" {
+		return ErrNoEntries{}
+	}
+
+	if err := ps.conn.Model(header).Where("id = ?", acct.HeaderMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -512,7 +544,19 @@ func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachmen
 }
 
 func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error {
-	if err := ps.conn.Model(avatar).Where("account_id = ?", accountID).Where("avatar = ?", true).Select(); err != nil {
+	acct := &gtsmodel.Account{}
+	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+
+	if acct.AvatarMediaAttachmentID == "" {
+		return ErrNoEntries{}
+	}
+
+	if err := ps.conn.Model(avatar).Where("id = ?", acct.AvatarMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -804,6 +848,79 @@ func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID
 
 func (ps *postgresService) StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error) {
 	return ps.conn.Model(&gtsmodel.StatusPin{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
+	// first check if a fave already exists, we can just return if so
+	existingFave := &gtsmodel.StatusFave{}
+	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
+	if err == nil {
+		// fave already exists so just return nothing at all
+		return nil, nil
+	}
+
+	// an error occurred so it might exist or not, we don't know
+	if err != pg.ErrNoRows {
+		return nil, err
+	}
+
+	// it doesn't exist so create it
+	newFave := &gtsmodel.StatusFave{
+		AccountID:       accountID,
+		TargetAccountID: status.AccountID,
+		StatusID:        status.ID,
+	}
+	if _, err = ps.conn.Model(newFave).Insert(); err != nil {
+		return nil, err
+	}
+
+	return newFave, nil
+}
+
+func (ps *postgresService) UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
+	// if a fave doesn't exist, we don't need to do anything
+	existingFave := &gtsmodel.StatusFave{}
+	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
+	// the fave doesn't exist so return nothing at all
+	if err == pg.ErrNoRows {
+		return nil, nil
+	}
+
+	// an error occurred so it might exist or not, we don't know
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+
+	// the fave exists so remove it
+	if _, err = ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Delete(); err != nil {
+		return nil, err
+	}
+
+	return existingFave, nil
+}
+
+func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
+	accounts := []*gtsmodel.Account{}
+
+	faves := []*gtsmodel.StatusFave{}
+	if err := ps.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return accounts, nil // no rows just means nobody has faved this status, so that's fine
+		}
+		return nil, err // an actual error has occurred
+	}
+
+	for _, f := range faves {
+		acc := &gtsmodel.Account{}
+		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
+			if err == pg.ErrNoRows {
+				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
+			}
+			return nil, err // an actual error has occurred
+		}
+		accounts = append(accounts, acc)
+	}
+	return accounts, nil
 }
 
 /*

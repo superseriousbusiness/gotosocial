@@ -156,6 +156,8 @@ func (m *FileServer) serveAttachment(c *gin.Context, accountID string, mediaType
 		return
 	}
 
+	l.Errorf("about to serve content length: %d attachment bytes is: %d", int64(contentLength), int64(len(attachmentBytes)))
+
 	// finally we can return with all the information we derived above
 	c.DataFromReader(http.StatusOK, int64(contentLength), contentType, bytes.NewReader(attachmentBytes), map[string]string{})
 }

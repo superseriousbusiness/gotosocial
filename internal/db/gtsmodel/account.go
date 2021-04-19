@@ -44,26 +44,10 @@ type Account struct {
 		ACCOUNT METADATA
 	*/
 
-	// File name of the avatar on local storage
-	AvatarFileName string
-	// Gif? png? jpeg?
-	AvatarContentType string
-	// Size of the avatar in bytes
-	AvatarFileSize int
-	// When was the avatar last updated?
-	AvatarUpdatedAt time.Time `pg:"type:timestamp"`
-	// Where can the avatar be retrieved?
-	AvatarRemoteURL string
-	// File name of the header on local storage
-	HeaderFileName string
-	// Gif? png? jpeg?
-	HeaderContentType string
-	// Size of the header in bytes
-	HeaderFileSize int
-	// When was the header last updated?
-	HeaderUpdatedAt time.Time `pg:"type:timestamp"`
-	// Where can the header be retrieved?
-	HeaderRemoteURL string
+	// ID of the avatar as a media attachment
+	AvatarMediaAttachmentID string
+	// ID of the header as a media attachment
+	HeaderMediaAttachmentID string
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
 	DisplayName string
 	// a key/value map of fields that this account has added to their profile

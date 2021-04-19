@@ -235,6 +235,18 @@ type DB interface {
 	// StatusPinnedBy checks if a given status has been pinned by a given account ID
 	StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
+	// FaveStatus faves the given status, using accountID as the faver.
+	// The returned fave will be nil if the status was already faved.
+	FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
+
+	// UnfaveStatus unfaves the given status, using accountID as the unfaver (sure, that's a word).
+	// The returned fave will be nil if the status was already not faved.
+	UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
+
+	// WhoFavedStatus returns a slice of accounts who faved the given status.
+	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
+	WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/

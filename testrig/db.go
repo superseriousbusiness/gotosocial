@@ -123,6 +123,12 @@ func StandardDBSetup(db db.DB) {
 		}
 	}
 
+	for _, v := range NewTestFaves() {
+		if err := db.Put(v); err != nil {
+			panic(err)
+		}
+	}
+
 	if err := db.CreateInstanceAccount(); err != nil {
 		panic(err)
 	}

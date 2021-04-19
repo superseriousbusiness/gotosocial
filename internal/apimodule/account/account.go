@@ -69,6 +69,7 @@ func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler
 func (m *accountModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodPatch, basePathWithID, m.muxHandler)
 	return nil
 }
 
@@ -94,11 +95,16 @@ func (m *accountModule) CreateTables(db db.DB) error {
 
 func (m *accountModule) muxHandler(c *gin.Context) {
 	ru := c.Request.RequestURI
-	if strings.HasPrefix(ru, verifyPath) {
-		m.accountVerifyGETHandler(c)
-	} else if strings.HasPrefix(ru, updateCredentialsPath) {
-		m.accountUpdateCredentialsPATCHHandler(c)
-	} else {
-		m.accountGETHandler(c)
+	switch c.Request.Method {
+	case http.MethodGet:
+		if strings.HasPrefix(ru, verifyPath) {
+			m.accountVerifyGETHandler(c)
+		} else {
+			m.accountGETHandler(c)
+		}
+	case http.MethodPatch:
+		if strings.HasPrefix(ru, updateCredentialsPath) {
+			m.accountUpdateCredentialsPATCHHandler(c)
+		}
 	}
 }

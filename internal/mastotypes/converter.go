@@ -170,8 +170,8 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Accou
 			return nil, fmt.Errorf("error getting avatar: %s", err)
 		}
 	}
-	aviURL := avi.File.Path
-	aviURLStatic := avi.Thumbnail.Path
+	aviURL := avi.URL
+	aviURLStatic := avi.Thumbnail.URL
 
 	header := &gtsmodel.MediaAttachment{}
 	if err := c.db.GetHeaderForAccountID(avi, a.ID); err != nil {
@@ -179,8 +179,8 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Accou
 			return nil, fmt.Errorf("error getting header: %s", err)
 		}
 	}
-	headerURL := header.File.Path
-	headerURLStatic := header.Thumbnail.Path
+	headerURL := header.URL
+	headerURLStatic := header.Thumbnail.URL
 
 	// get the fields set on this account
 	fields := []mastotypes.Field{}

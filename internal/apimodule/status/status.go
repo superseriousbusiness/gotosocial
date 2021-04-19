@@ -36,21 +36,28 @@ import (
 )
 
 const (
-	IDKey          = "id"
-	BasePath       = "/api/v1/statuses"
-	BasePathWithID = BasePath + "/:" + IDKey
-	ContextPath    = BasePath + "/context"
-	RebloggedPath  = BasePath + "/reblogged_by"
-	FavouritedPath = BasePath + "/favourited_by"
-	FavouritePath  = BasePath + "/favourite"
-	ReblogPath     = BasePath + "/reblog"
-	UnreblogPath   = BasePath + "/unreblog"
-	BookmarkPath   = BasePath + "/bookmark"
-	UnbookmarkPath = BasePath + "/unbookmark"
-	MutePath       = BasePath + "/mute"
-	UnmutePath     = BasePath + "/unmute"
-	PinPath        = BasePath + "/pin"
-	UnpinPath      = BasePath + "/unpin"
+	IDKey           = "id"
+	BasePath        = "/api/v1/statuses"
+	BasePathWithID  = BasePath + "/:" + IDKey
+
+	ContextPath     = BasePathWithID + "/context"
+
+	FavouritedPath  = BasePathWithID + "/favourited_by"
+	FavouritePath   = BasePathWithID + "/favourite"
+	UnfavouritePath = BasePathWithID + "/unfavourite"
+
+	RebloggedPath   = BasePathWithID + "/reblogged_by"
+	ReblogPath      = BasePathWithID + "/reblog"
+	UnreblogPath    = BasePathWithID + "/unreblog"
+
+	BookmarkPath    = BasePathWithID + "/bookmark"
+	UnbookmarkPath  = BasePathWithID + "/unbookmark"
+
+	MutePath        = BasePathWithID + "/mute"
+	UnmutePath      = BasePathWithID + "/unmute"
+
+	PinPath         = BasePathWithID + "/pin"
+	UnpinPath       = BasePathWithID + "/unpin"
 )
 
 type StatusModule struct {
@@ -77,8 +84,13 @@ func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, masto
 // Route attaches all routes from this module to the given router
 func (m *StatusModule) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, BasePath, m.StatusCreatePOSTHandler)
+	r.AttachHandler(http.MethodDelete, BasePathWithID, m.StatusDELETEHandler)
+
+	r.AttachHandler(http.MethodPost, FavouritePath, m.StatusFavePOSTHandler)
+	r.AttachHandler(http.MethodPost, UnfavouritePath, m.StatusFavePOSTHandler)
+
+
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
-	r.AttachHandler(http.MethodDelete, BasePathWithID, m.muxHandler)
 	return nil
 }
 
@@ -113,16 +125,15 @@ func (m *StatusModule) CreateTables(db db.DB) error {
 func (m *StatusModule) muxHandler(c *gin.Context) {
 	m.log.Debug("entering mux handler")
 	ru := c.Request.RequestURI
-	if c.Request.Method == http.MethodGet {
+
+	switch c.Request.Method {
+	case http.MethodGet:
 		if strings.HasPrefix(ru, ContextPath) {
 			// TODO
-		} else if strings.HasPrefix(ru, RebloggedPath) {
-			// TODO
+		} else if strings.HasPrefix(ru, FavouritedPath) {
+			m.StatusFavedByGETHandler(c)
 		} else {
 			m.StatusGETHandler(c)
 		}
-	}
-	if c.Request.Method == http.MethodDelete {
-		m.StatusDELETEHandler(c)
 	}
 }
