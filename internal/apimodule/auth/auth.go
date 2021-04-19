@@ -31,7 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -75,9 +75,9 @@ func (m *authModule) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},
-		&model.User{},
-		&model.Account{},
-		&model.Application{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 
 	for _, m := range models {

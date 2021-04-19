@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
 
 // accountGetHandler serves the account information held by the server in response to a GET
@@ -37,7 +37,7 @@ func (m *accountModule) accountGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetAccount := &model.Account{}
+	targetAccount := &gtsmodel.Account{}
 	if err := m.db.GetByID(targetAcctID, targetAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
@@ -47,7 +47,7 @@ func (m *accountModule) accountGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctInfo, err := m.db.AccountToMastoPublic(targetAccount)
+	acctInfo, err := m.mastoConverter.AccountToMastoPublic(targetAccount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

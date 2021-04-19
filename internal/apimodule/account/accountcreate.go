@@ -27,10 +27,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
@@ -83,7 +83,7 @@ func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 // accountCreate does the dirty work of making an account and user in the database.
 // It then returns a token to the caller, for use with the new account, as per the
 // spec here: https://docs.joinmastodon.org/methods/accounts/
-func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, signUpIP net.IP, token oauth2.TokenInfo, app *model.Application) (*mastotypes.Token, error) {
+func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, signUpIP net.IP, token oauth2.TokenInfo, app *gtsmodel.Application) (*mastotypes.Token, error) {
 	l := m.log.WithField("func", "accountCreate")
 
 	// don't store a reason if we don't require one

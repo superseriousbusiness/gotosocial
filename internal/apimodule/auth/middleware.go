@@ -20,7 +20,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -46,7 +46,7 @@ func (m *authModule) oauthTokenMiddleware(c *gin.Context) {
 		l.Tracef("authenticated user %s with bearer token, scope is %s", uid, ti.GetScope())
 
 		// fetch user's and account for this user id
-		user := &model.User{}
+		user := &gtsmodel.User{}
 		if err := m.db.GetByID(uid, user); err != nil || user == nil {
 			l.Warnf("no user found for validated uid %s", uid)
 			return
@@ -54,7 +54,7 @@ func (m *authModule) oauthTokenMiddleware(c *gin.Context) {
 		c.Set(oauth.SessionAuthorizedUser, user)
 		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedUser, user)
 
-		acct := &model.Account{}
+		acct := &gtsmodel.Account{}
 		if err := m.db.GetByID(user.AccountID, acct); err != nil || acct == nil {
 			l.Warnf("no account found for validated user %s", uid)
 			return
@@ -66,7 +66,7 @@ func (m *authModule) oauthTokenMiddleware(c *gin.Context) {
 	// check for application token
 	if cid := ti.GetClientID(); cid != "" {
 		l.Tracef("authenticated client %s with bearer token, scope is %s", cid, ti.GetScope())
-		app := &model.Application{}
+		app := &gtsmodel.Application{}
 		if err := m.db.GetWhere("client_id", cid, app); err != nil {
 			l.Tracef("no app found for client %s", cid)
 		}

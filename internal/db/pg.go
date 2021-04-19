@@ -34,11 +34,11 @@ import (
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -60,12 +60,6 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 	}
 	log.Debugf("using pg options: %+v", opts)
 
-	readyChan := make(chan interface{})
-	opts.OnConnect = func(ctx context.Context, c *pg.Conn) error {
-		close(readyChan)
-		return nil
-	}
-
 	// create a connection
 	pgCtx, cancel := context.WithCancel(ctx)
 	conn := pg.Connect(opts).WithContext(pgCtx)
@@ -80,8 +74,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		})
 	}
 
-	// actually *begin* the connection so that we can tell if the db is there
-	// and listening, and also trigger the opts.OnConnect function passed in above
+	// actually *begin* the connection so that we can tell if the db is there and listening
 	if err := conn.Ping(ctx); err != nil {
 		cancel()
 		return nil, fmt.Errorf("db connection error: %s", err)
@@ -94,16 +87,6 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
 	log.Infof("connected to postgres version: %s", version)
-
-	// make sure the opts.OnConnect function has been triggered
-	// and closed the ready channel
-	select {
-	case <-readyChan:
-		log.Infof("postgres connection ready")
-	case <-time.After(5 * time.Second):
-		cancel()
-		return nil, errors.New("db connection timeout")
-	}
 
 	ps := &postgresService{
 		config: c,
@@ -214,9 +197,9 @@ func (ps *postgresService) IsHealthy(ctx context.Context) error {
 
 func (ps *postgresService) CreateSchema(ctx context.Context) error {
 	models := []interface{}{
-		(*model.Account)(nil),
-		(*model.Status)(nil),
-		(*model.User)(nil),
+		(*gtsmodel.Account)(nil),
+		(*gtsmodel.Status)(nil),
+		(*gtsmodel.User)(nil),
 	}
 	ps.log.Info("creating db schema")
 
@@ -254,6 +237,10 @@ func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}
 	return nil
 }
 
+// func (ps *postgresService) GetWhereMany(i interface{}, where ...model.Where) error {
+// 	return nil
+// }
+
 func (ps *postgresService) GetAll(i interface{}) error {
 	if err := ps.conn.Model(i).Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -269,8 +256,18 @@ func (ps *postgresService) Put(i interface{}) error {
 	return err
 }
 
+func (ps *postgresService) Upsert(i interface{}, conflictColumn string) error {
+	if _, err := ps.conn.Model(i).OnConflict(fmt.Sprintf("(%s) DO UPDATE", conflictColumn)).Insert(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
 func (ps *postgresService) UpdateByID(id string, i interface{}) error {
-	if _, err := ps.conn.Model(i).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+	if _, err := ps.conn.Model(i).Where("id = ?", id).OnConflict("(id) DO UPDATE").Insert(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -308,8 +305,25 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
-func (ps *postgresService) GetAccountByUserID(userID string, account *model.Account) error {
-	user := &model.User{
+func (ps *postgresService) CreateInstanceAccount() error {
+	username := ps.config.Host
+	instanceAccount := &gtsmodel.Account{
+		Username: username,
+	}
+	inserted, err := ps.conn.Model(instanceAccount).Where("username = ?", username).SelectOrInsert()
+	if err != nil {
+		return err
+	}
+	if inserted {
+		ps.log.Infof("created instance account %s with id %s", username, instanceAccount.ID)
+	} else {
+		ps.log.Infof("instance account %s already exists with id %s", username, instanceAccount.ID)
+	}
+	return nil
+}
+
+func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
+	user := &gtsmodel.User{
 		ID: userID,
 	}
 	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
@@ -327,7 +341,7 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *model.Acco
 	return nil
 }
 
-func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error {
+func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -337,7 +351,7 @@ func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, follo
 	return nil
 }
 
-func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]model.Follow) error {
+func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -347,7 +361,7 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 	return nil
 }
 
-func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]model.Follow) error {
+func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -357,7 +371,7 @@ func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *
 	return nil
 }
 
-func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]model.Status) error {
+func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error {
 	if err := ps.conn.Model(statuses).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -367,7 +381,7 @@ func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]
 	return nil
 }
 
-func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]model.Status, limit int) error {
+func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error {
 	q := ps.conn.Model(statuses).Order("created_at DESC")
 	if limit != 0 {
 		q = q.Limit(limit)
@@ -384,7 +398,7 @@ func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuse
 	return nil
 }
 
-func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *model.Status) error {
+func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
 	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
@@ -399,7 +413,7 @@ func (ps *postgresService) IsUsernameAvailable(username string) error {
 	// if no error we fail because it means we found something
 	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := ps.conn.Model(&model.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
 		return fmt.Errorf("username %s already in use", username)
 	} else if err != pg.ErrNoRows {
 		return fmt.Errorf("db error: %s", err)
@@ -416,7 +430,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
 	// check if the email domain is blocked
-	if err := ps.conn.Model(&model.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != pg.ErrNoRows {
@@ -425,7 +439,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	}
 
 	// check if this email is associated with a user already
-	if err := ps.conn.Model(&model.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+	if err := ps.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email %s already in use", email)
 	} else if err != pg.ErrNoRows {
@@ -435,7 +449,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	return nil
 }
 
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error) {
+func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		ps.log.Errorf("error creating new rsa key: %s", err)
@@ -444,19 +458,19 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 
 	uris := util.GenerateURIs(username, ps.config.Protocol, ps.config.Host)
 
-	a := &model.Account{
+	a := &gtsmodel.Account{
 		Username:              username,
 		DisplayName:           username,
 		Reason:                reason,
 		URL:                   uris.UserURL,
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
-		ActorType:             "Person",
+		ActorType:             gtsmodel.ActivityStreamsPerson,
 		URI:                   uris.UserURI,
-		InboxURL:              uris.InboxURL,
-		OutboxURL:             uris.OutboxURL,
-		FollowersURL:          uris.FollowersURL,
-		FeaturedCollectionURL: uris.CollectionURL,
+		InboxURL:              uris.InboxURI,
+		OutboxURL:             uris.OutboxURI,
+		FollowersURL:          uris.FollowersURI,
+		FeaturedCollectionURL: uris.CollectionURI,
 	}
 	if _, err = ps.conn.Model(a).Insert(); err != nil {
 		return nil, err
@@ -466,7 +480,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %s", err)
 	}
-	u := &model.User{
+	u := &gtsmodel.User{
 		AccountID:              a.ID,
 		EncryptedPassword:      string(pw),
 		SignUpIP:               signUpIP,
@@ -482,13 +496,45 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	return u, nil
 }
 
-func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *model.MediaAttachment, accountID string) error {
-	_, err := ps.conn.Model(mediaAttachment).Insert()
-	return err
+func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
+	if mediaAttachment.Avatar && mediaAttachment.Header {
+		return errors.New("one media attachment cannot be both header and avatar")
+	}
+
+	var headerOrAVI string
+	if mediaAttachment.Avatar {
+		headerOrAVI = "avatar"
+	} else if mediaAttachment.Header {
+		headerOrAVI = "header"
+	} else {
+		return errors.New("given media attachment was neither a header nor an avatar")
+	}
+
+	// TODO: there are probably more side effects here that need to be handled
+	if _, err := ps.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+		return err
+	}
+
+	if _, err := ps.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (ps *postgresService) GetHeaderForAccountID(header *model.MediaAttachment, accountID string) error {
-	if err := ps.conn.Model(header).Where("account_id = ?", accountID).Where("header = ?", true).Select(); err != nil {
+func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error {
+	acct := &gtsmodel.Account{}
+	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+
+	if acct.HeaderMediaAttachmentID == "" {
+		return ErrNoEntries{}
+	}
+
+	if err := ps.conn.Model(header).Where("id = ?", acct.HeaderMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
@@ -497,166 +543,502 @@ func (ps *postgresService) GetHeaderForAccountID(header *model.MediaAttachment, 
 	return nil
 }
 
-func (ps *postgresService) GetAvatarForAccountID(avatar *model.MediaAttachment, accountID string) error {
-	if err := ps.conn.Model(avatar).Where("account_id = ?", accountID).Where("avatar = ?", true).Select(); err != nil {
+func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error {
+	acct := &gtsmodel.Account{}
+	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+
+	if acct.AvatarMediaAttachmentID == "" {
+		return ErrNoEntries{}
+	}
+
+	if err := ps.conn.Model(avatar).Where("id = ?", acct.AvatarMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return ErrNoEntries{}
 		}
 		return err
 	}
 	return nil
+}
+
+func (ps *postgresService) Blocked(account1 string, account2 string) (bool, error) {
+	var blocked bool
+	if err := ps.conn.Model(&gtsmodel.Block{}).
+		Where("account_id = ?", account1).Where("target_account_id = ?", account2).
+		WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2).
+		Select(); err != nil {
+		if err == pg.ErrNoRows {
+			blocked = false
+			return blocked, nil
+		} else {
+			return blocked, err
+		}
+	}
+	blocked = true
+	return blocked, nil
+}
+
+func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {
+	l := ps.log.WithField("func", "StatusVisible")
+
+	// if target account is suspended then don't show the status
+	if !targetAccount.SuspendedAt.IsZero() {
+		l.Debug("target account suspended at is not zero")
+		return false, nil
+	}
+
+	// if the target user doesn't exist (anymore) then the status also shouldn't be visible
+	targetUser := &gtsmodel.User{}
+	if err := ps.conn.Model(targetUser).Where("account_id = ?", targetAccount.ID).Select(); err != nil {
+		l.Debug("target user could not be selected")
+		if err == pg.ErrNoRows {
+			return false, ErrNoEntries{}
+		} else {
+			return false, err
+		}
+	}
+
+	// if target user is disabled, not yet approved, or not confirmed then don't show the status
+	// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
+	if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
+		l.Debug("target user is disabled, not approved, or not confirmed")
+		return false, nil
+	}
+
+	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
+	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
+	if requestingAccount == nil {
+
+		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
+			return true, nil
+		}
+		l.Debug("requesting account is nil but the target status isn't public")
+		return false, nil
+	}
+
+	// if requesting account is suspended then don't show the status -- although they probably shouldn't have gotten
+	// this far (ie., been authed) in the first place: this is just for safety.
+	if !requestingAccount.SuspendedAt.IsZero() {
+		l.Debug("requesting account is suspended")
+		return false, nil
+	}
+
+	// check if we have a local account -- if so we can check the user for that account in the DB
+	if requestingAccount.Domain == "" {
+		requestingUser := &gtsmodel.User{}
+		if err := ps.conn.Model(requestingUser).Where("account_id = ?", requestingAccount.ID).Select(); err != nil {
+			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
+			if err == pg.ErrNoRows {
+				l.Debug("requesting account is local but there's no corresponding user")
+				return false, nil
+			} else {
+				l.Debugf("requesting account is local but there was an error getting the corresponding user: %s", err)
+				return false, err
+			}
+		}
+		// okay, user exists, so make sure it has full privileges/is confirmed/approved
+		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
+			l.Debug("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
+			return false, nil
+		}
+	}
+
+	// if the target status belongs to the requesting account, they should always be able to view it at this point
+	if targetStatus.AccountID == requestingAccount.ID {
+		return true, nil
+	}
+
+	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
+	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
+	if blocked, err := ps.Blocked(targetAccount.ID, requestingAccount.ID); err != nil {
+		l.Debugf("something went wrong figuring out if the accounts have a block: %s", err)
+		return false, err
+	} else if blocked {
+		// don't allow the status to be viewed if a block exists in *either* direction between these two accounts, no creepy stalking please
+		l.Debug("a block exists between requesting account and target account")
+		return false, nil
+	}
+
+	// check other accounts mentioned/boosted by/replied to by the status, if they exist
+	if relevantAccounts != nil {
+		// status replies to account id
+		if relevantAccounts.ReplyToAccount != nil {
+			if blocked, err := ps.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
+				return false, err
+			} else if blocked {
+				return false, nil
+			}
+		}
+
+		// status boosts accounts id
+		if relevantAccounts.BoostedAccount != nil {
+			if blocked, err := ps.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID); err != nil {
+				return false, err
+			} else if blocked {
+				return false, nil
+			}
+		}
+
+		// status boosts a reply to account id
+		if relevantAccounts.BoostedReplyToAccount != nil {
+			if blocked, err := ps.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID); err != nil {
+				return false, err
+			} else if blocked {
+				return false, nil
+			}
+		}
+
+		// status mentions accounts
+		for _, a := range relevantAccounts.MentionedAccounts {
+			if blocked, err := ps.Blocked(a.ID, requestingAccount.ID); err != nil {
+				return false, err
+			} else if blocked {
+				return false, nil
+			}
+		}
+	}
+
+	// at this point we know neither account blocks the other, or another account mentioned or otherwise referred to in the status
+	// that means it's now just a matter of checking the visibility settings of the status itself
+	switch targetStatus.Visibility {
+	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
+		// no problem here, just return OK
+		return true, nil
+	case gtsmodel.VisibilityFollowersOnly:
+		// check one-way follow
+		follows, err := ps.Follows(requestingAccount, targetAccount)
+		if err != nil {
+			return false, err
+		}
+		if !follows {
+			return false, nil
+		}
+		return true, nil
+	case gtsmodel.VisibilityMutualsOnly:
+		// check mutual follow
+		mutuals, err := ps.Mutuals(requestingAccount, targetAccount)
+		if err != nil {
+			return false, err
+		}
+		if !mutuals {
+			return false, nil
+		}
+		return true, nil
+	case gtsmodel.VisibilityDirect:
+		// make sure the requesting account is mentioned in the status
+		for _, menchie := range targetStatus.Mentions {
+			if menchie == requestingAccount.ID {
+				return true, nil // yep it's mentioned!
+			}
+		}
+		return false, nil // it's not mentioned -_-
+	}
+
+	return false, errors.New("reached the end of StatusVisible with no result")
+}
+
+func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
+	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
+}
+
+func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error) {
+	// make sure account 1 follows account 2
+	f1, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account1.ID).Where("target_account_id = ?", account2.ID).Exists()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	// make sure account 2 follows account 1
+	f2, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account2.ID).Where("target_account_id = ?", account1.ID).Exists()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	return f1 && f2, nil
+}
+
+func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (*gtsmodel.RelevantAccounts, error) {
+	accounts := &gtsmodel.RelevantAccounts{
+		MentionedAccounts: []*gtsmodel.Account{},
+	}
+
+	// get the replied to account from the status and add it to the pile
+	if targetStatus.InReplyToAccountID != "" {
+		repliedToAccount := &gtsmodel.Account{}
+		if err := ps.conn.Model(repliedToAccount).Where("id = ?", targetStatus.InReplyToAccountID).Select(); err != nil {
+			return accounts, err
+		}
+		accounts.ReplyToAccount = repliedToAccount
+	}
+
+	// get the boosted account from the status and add it to the pile
+	if targetStatus.BoostOfID != "" {
+		// retrieve the boosted status first
+		boostedStatus := &gtsmodel.Status{}
+		if err := ps.conn.Model(boostedStatus).Where("id = ?", targetStatus.BoostOfID).Select(); err != nil {
+			return accounts, err
+		}
+		boostedAccount := &gtsmodel.Account{}
+		if err := ps.conn.Model(boostedAccount).Where("id = ?", boostedStatus.AccountID).Select(); err != nil {
+			return accounts, err
+		}
+		accounts.BoostedAccount = boostedAccount
+
+		// the boosted status might be a reply to another account so we should get that too
+		if boostedStatus.InReplyToAccountID != "" {
+			boostedStatusRepliedToAccount := &gtsmodel.Account{}
+			if err := ps.conn.Model(boostedStatusRepliedToAccount).Where("id = ?", boostedStatus.InReplyToAccountID).Select(); err != nil {
+				return accounts, err
+			}
+			accounts.BoostedReplyToAccount = boostedStatusRepliedToAccount
+		}
+	}
+
+	// now get all accounts with IDs that are mentioned in the status
+	for _, mentionedAccountID := range targetStatus.Mentions {
+		mentionedAccount := &gtsmodel.Account{}
+		if err := ps.conn.Model(mentionedAccount).Where("id = ?", mentionedAccountID).Select(); err != nil {
+			return accounts, err
+		}
+		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
+	}
+
+	return accounts, nil
+}
+
+func (ps *postgresService) GetReplyCountForStatus(status *gtsmodel.Status) (int, error) {
+	return ps.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
+}
+
+func (ps *postgresService) GetReblogCountForStatus(status *gtsmodel.Status) (int, error) {
+	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
+}
+
+func (ps *postgresService) GetFaveCountForStatus(status *gtsmodel.Status) (int, error) {
+	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
+}
+
+func (ps *postgresService) StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error) {
+	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, error) {
+	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, error) {
+	return ps.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error) {
+	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error) {
+	return ps.conn.Model(&gtsmodel.StatusPin{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+}
+
+func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
+	// first check if a fave already exists, we can just return if so
+	existingFave := &gtsmodel.StatusFave{}
+	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
+	if err == nil {
+		// fave already exists so just return nothing at all
+		return nil, nil
+	}
+
+	// an error occurred so it might exist or not, we don't know
+	if err != pg.ErrNoRows {
+		return nil, err
+	}
+
+	// it doesn't exist so create it
+	newFave := &gtsmodel.StatusFave{
+		AccountID:       accountID,
+		TargetAccountID: status.AccountID,
+		StatusID:        status.ID,
+	}
+	if _, err = ps.conn.Model(newFave).Insert(); err != nil {
+		return nil, err
+	}
+
+	return newFave, nil
+}
+
+func (ps *postgresService) UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
+	// if a fave doesn't exist, we don't need to do anything
+	existingFave := &gtsmodel.StatusFave{}
+	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
+	// the fave doesn't exist so return nothing at all
+	if err == pg.ErrNoRows {
+		return nil, nil
+	}
+
+	// an error occurred so it might exist or not, we don't know
+	if err != nil && err != pg.ErrNoRows {
+		return nil, err
+	}
+
+	// the fave exists so remove it
+	if _, err = ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Delete(); err != nil {
+		return nil, err
+	}
+
+	return existingFave, nil
+}
+
+func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
+	accounts := []*gtsmodel.Account{}
+
+	faves := []*gtsmodel.StatusFave{}
+	if err := ps.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return accounts, nil // no rows just means nobody has faved this status, so that's fine
+		}
+		return nil, err // an actual error has occurred
+	}
+
+	for _, f := range faves {
+		acc := &gtsmodel.Account{}
+		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
+			if err == pg.ErrNoRows {
+				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
+			}
+			return nil, err // an actual error has occurred
+		}
+		accounts = append(accounts, acc)
+	}
+	return accounts, nil
 }
 
 /*
 	CONVERSION FUNCTIONS
 */
 
-// AccountToMastoSensitive takes an internal account model and transforms it into an account ready to be served through the API.
-// The resulting account fits the specifications for the path /api/v1/accounts/verify_credentials, as described here:
-// https://docs.joinmastodon.org/methods/accounts/. Note that it's *sensitive* because it's only meant to be exposed to the user
-// that the account actually belongs to.
-func (ps *postgresService) AccountToMastoSensitive(a *model.Account) (*mastotypes.Account, error) {
-	// we can build this sensitive account easily by first getting the public account....
-	mastoAccount, err := ps.AccountToMastoPublic(a)
-	if err != nil {
-		return nil, err
-	}
+func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+	menchies := []*gtsmodel.Mention{}
+	for _, a := range targetAccounts {
+		// A mentioned account looks like "@test@example.org" or just "@test" for a local account
+		// -- we can guarantee this from the regex that targetAccounts should have been derived from.
+		// But we still need to do a bit of fiddling to get what we need here -- the username and domain (if given).
 
-	// then adding the Source object to it...
+		// 1.  trim off the first @
+		t := strings.TrimPrefix(a, "@")
 
-	// check pending follow requests aimed at this account
-	fr := []model.FollowRequest{}
-	if err := ps.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting follow requests: %s", err)
+		// 2. split the username and domain
+		s := strings.Split(t, "@")
+
+		// 3. if it's length 1 it's a local account, length 2 means remote, anything else means something is wrong
+		var local bool
+		switch len(s) {
+		case 1:
+			local = true
+		case 2:
+			local = false
+		default:
+			return nil, fmt.Errorf("mentioned account format '%s' was not valid", a)
 		}
-	}
-	var frc int
-	if fr != nil {
-		frc = len(fr)
-	}
 
-	mastoAccount.Source = &mastotypes.Source{
-		Privacy:             a.Privacy,
-		Sensitive:           a.Sensitive,
-		Language:            a.Language,
-		Note:                a.Note,
-		Fields:              mastoAccount.Fields,
-		FollowRequestsCount: frc,
-	}
+		var username, domain string
+		username = s[0]
+		if !local {
+			domain = s[1]
+		}
 
-	return mastoAccount, nil
+		// 4. check we now have a proper username and domain
+		if username == "" || (!local && domain == "") {
+			return nil, fmt.Errorf("username or domain for '%s' was nil", a)
+		}
+
+		// okay we're good now, we can start pulling accounts out of the database
+		mentionedAccount := &gtsmodel.Account{}
+		var err error
+		if local {
+			// local user -- should have a null domain
+			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
+		} else {
+			// remote user -- should have domain defined
+			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? = ?", pg.Ident("domain"), domain).Select()
+		}
+
+		if err != nil {
+			if err == pg.ErrNoRows {
+				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
+				ps.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
+				continue
+			}
+			// a serious error has happened so bail
+			return nil, fmt.Errorf("error getting account with username '%s' and domain '%s': %s", username, domain, err)
+		}
+
+		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
+		menchies = append(menchies, &gtsmodel.Mention{
+			StatusID:        statusID,
+			OriginAccountID: originAccountID,
+			TargetAccountID: mentionedAccount.ID,
+		})
+	}
+	return menchies, nil
 }
 
-func (ps *postgresService) AccountToMastoPublic(a *model.Account) (*mastotypes.Account, error) {
-	// count followers
-	followers := []model.Follow{}
-	if err := ps.GetFollowersByAccountID(a.ID, &followers); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting followers: %s", err)
+func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+	newTags := []*gtsmodel.Tag{}
+	for _, t := range tags {
+		tag := &gtsmodel.Tag{}
+		// we can use selectorinsert here to create the new tag if it doesn't exist already
+		// inserted will be true if this is a new tag we just created
+		if err := ps.conn.Model(tag).Where("name = ?", t).Select(); err != nil {
+			if err == pg.ErrNoRows {
+				// tag doesn't exist yet so populate it
+				tag.ID = uuid.NewString()
+				tag.Name = t
+				tag.FirstSeenFromAccountID = originAccountID
+				tag.CreatedAt = time.Now()
+				tag.UpdatedAt = time.Now()
+				tag.Useable = true
+				tag.Listable = true
+			} else {
+				return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
+			}
 		}
-	}
-	var followersCount int
-	if followers != nil {
-		followersCount = len(followers)
-	}
 
-	// count following
-	following := []model.Follow{}
-	if err := ps.GetFollowingByAccountID(a.ID, &following); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting following: %s", err)
+		// bail already if the tag isn't useable
+		if !tag.Useable {
+			continue
 		}
+		tag.LastStatusAt = time.Now()
+		newTags = append(newTags, tag)
 	}
-	var followingCount int
-	if following != nil {
-		followingCount = len(following)
-	}
+	return newTags, nil
+}
 
-	// count statuses
-	statuses := []model.Status{}
-	if err := ps.GetStatusesByAccountID(a.ID, &statuses); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting last statuses: %s", err)
+func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+	newEmojis := []*gtsmodel.Emoji{}
+	for _, e := range emojis {
+		emoji := &gtsmodel.Emoji{}
+		err := ps.conn.Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Select()
+		if err != nil {
+			if err == pg.ErrNoRows {
+				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
+				ps.log.Debugf("no emoji found with shortcode %s, skipping it", e)
+				continue
+			}
+			// a serious error has happened so bail
+			return nil, fmt.Errorf("error getting emoji with shortcode %s: %s", e, err)
 		}
+		newEmojis = append(newEmojis, emoji)
 	}
-	var statusesCount int
-	if statuses != nil {
-		statusesCount = len(statuses)
-	}
-
-	// check when the last status was
-	lastStatus := &model.Status{}
-	if err := ps.GetLastStatusForAccountID(a.ID, lastStatus); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting last status: %s", err)
-		}
-	}
-	var lastStatusAt string
-	if lastStatus != nil {
-		lastStatusAt = lastStatus.CreatedAt.Format(time.RFC3339)
-	}
-
-	// build the avatar and header URLs
-	avi := &model.MediaAttachment{}
-	if err := ps.GetAvatarForAccountID(avi, a.ID); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting avatar: %s", err)
-		}
-	}
-	aviURL := avi.File.Path
-	aviURLStatic := avi.Thumbnail.Path
-
-	header := &model.MediaAttachment{}
-	if err := ps.GetHeaderForAccountID(avi, a.ID); err != nil {
-		if _, ok := err.(ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting header: %s", err)
-		}
-	}
-	headerURL := header.File.Path
-	headerURLStatic := header.Thumbnail.Path
-
-	// get the fields set on this account
-	fields := []mastotypes.Field{}
-	for _, f := range a.Fields {
-		mField := mastotypes.Field{
-			Name:  f.Name,
-			Value: f.Value,
-		}
-		if !f.VerifiedAt.IsZero() {
-			mField.VerifiedAt = f.VerifiedAt.Format(time.RFC3339)
-		}
-		fields = append(fields, mField)
-	}
-
-	var acct string
-	if a.Domain != "" {
-		// this is a remote user
-		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
-	} else {
-		// this is a local user
-		acct = a.Username
-	}
-
-	return &mastotypes.Account{
-		ID:             a.ID,
-		Username:       a.Username,
-		Acct:           acct,
-		DisplayName:    a.DisplayName,
-		Locked:         a.Locked,
-		Bot:            a.Bot,
-		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
-		Note:           a.Note,
-		URL:            a.URL,
-		Avatar:         aviURL,
-		AvatarStatic:   aviURLStatic,
-		Header:         headerURL,
-		HeaderStatic:   headerURLStatic,
-		FollowersCount: followersCount,
-		FollowingCount: followingCount,
-		StatusesCount:  statusesCount,
-		LastStatusAt:   lastStatusAt,
-		Emojis:         nil, // TODO: implement this
-		Fields:         fields,
-	}, nil
+	return newEmojis, nil
 }

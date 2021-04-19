@@ -24,4 +24,8 @@ type MediaConfig struct {
 	MaxImageSize int `yaml:"maxImageSize"`
 	// Max size of uploaded video in bytes
 	MaxVideoSize int `yaml:"maxVideoSize"`
+	// Minimum amount of chars required in an image description
+	MinDescriptionChars int `yaml:"minDescriptionChars"`
+	// Max amount of chars allowed in an image description
+	MaxDescriptionChars int `yaml:"maxDescriptionChars"`
 }

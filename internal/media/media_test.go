@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -95,7 +95,6 @@ func (suite *MediaTestSuite) SetupSuite() {
 		storage: suite.mockStorage,
 		log:     log,
 	}
-
 }
 
 func (suite *MediaTestSuite) TearDownSuite() {
@@ -108,13 +107,18 @@ func (suite *MediaTestSuite) TearDownSuite() {
 func (suite *MediaTestSuite) SetupTest() {
 	// create all the tables we might need in thie suite
 	models := []interface{}{
-		&model.Account{},
-		&model.MediaAttachment{},
+		&gtsmodel.Account{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.CreateTable(m); err != nil {
 			logrus.Panicf("db connection error: %s", err)
 		}
+	}
+
+	err := suite.db.CreateInstanceAccount()
+	if err != nil {
+		logrus.Panic(err)
 	}
 }
 
@@ -123,8 +127,8 @@ func (suite *MediaTestSuite) TearDownTest() {
 
 	// remove all the tables we might have used so it's clear for the next test
 	models := []interface{}{
-		&model.Account{},
-		&model.MediaAttachment{},
+		&gtsmodel.Account{},
+		&gtsmodel.MediaAttachment{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -142,7 +146,7 @@ func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	f, err := ioutil.ReadFile("./test/test-jpeg.jpg")
 	assert.Nil(suite.T(), err)
 
-	ma, err := suite.mediaHandler.SetHeaderOrAvatarForAccountID(f, "weeeeeee", "header")
+	ma, err := suite.mediaHandler.ProcessHeaderOrAvatar(f, "weeeeeee", "header")
 	assert.Nil(suite.T(), err)
 	suite.log.Debugf("%+v", ma)
 
@@ -150,6 +154,15 @@ func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	assert.Equal(suite.T(), "weeeeeee", ma.AccountID)
 	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", ma.Blurhash)
 	//TODO: add more checks here, cba right now!
+}
+
+func (suite *MediaTestSuite) TestProcessLocalEmoji() {
+	f, err := ioutil.ReadFile("./test/rainbow-original.png")
+	assert.NoError(suite.T(), err)
+
+	emoji, err := suite.mediaHandler.ProcessLocalEmoji(f, "rainbow")
+	assert.NoError(suite.T(), err)
+	suite.log.Debugf("%+v", emoji)
 }
 
 // TODO: add tests for sad path, gif, png....

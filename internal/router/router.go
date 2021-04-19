@@ -83,7 +83,17 @@ func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
 
 // New returns a new Router with the specified configuration, using the given logrus logger.
 func New(config *config.Config, logger *logrus.Logger) (Router, error) {
-	engine := gin.New()
+	lvl, err := logrus.ParseLevel(config.LogLevel)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse log level %s to set router level: %s", config.LogLevel, err)
+	}
+	switch lvl {
+	case logrus.TraceLevel, logrus.DebugLevel:
+		gin.SetMode(gin.DebugMode)
+	default:
+		gin.SetMode(gin.ReleaseMode)
+	}
+	engine := gin.Default()
 
 	// create a new session store middleware
 	store, err := sessionStore()

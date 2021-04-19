@@ -22,16 +22,14 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,9 +37,9 @@ type AuthTestSuite struct {
 	suite.Suite
 	oauthServer     oauth.Server
 	db              db.DB
-	testAccount     *model.Account
-	testApplication *model.Application
-	testUser        *model.User
+	testAccount     *gtsmodel.Account
+	testApplication *gtsmodel.Application
+	testUser        *gtsmodel.User
 	testClient      *oauth.Client
 	config          *config.Config
 }
@@ -75,11 +73,11 @@ func (suite *AuthTestSuite) SetupSuite() {
 
 	acctID := uuid.NewString()
 
-	suite.testAccount = &model.Account{
+	suite.testAccount = &gtsmodel.Account{
 		ID:       acctID,
 		Username: "test_user",
 	}
-	suite.testUser = &model.User{
+	suite.testUser = &gtsmodel.User{
 		EncryptedPassword: string(encryptedPassword),
 		Email:             "user@example.org",
 		AccountID:         acctID,
@@ -89,7 +87,7 @@ func (suite *AuthTestSuite) SetupSuite() {
 		Secret: "some-secret",
 		Domain: fmt.Sprintf("%s://%s", c.Protocol, c.Host),
 	}
-	suite.testApplication = &model.Application{
+	suite.testApplication = &gtsmodel.Application{
 		Name:         "a test application",
 		Website:      "https://some-application-website.com",
 		RedirectURI:  "http://localhost:8080",
@@ -115,9 +113,9 @@ func (suite *AuthTestSuite) SetupTest() {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},
-		&model.User{},
-		&model.Account{},
-		&model.Application{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 
 	for _, m := range models {
@@ -148,9 +146,9 @@ func (suite *AuthTestSuite) TearDownTest() {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},
-		&model.User{},
-		&model.Account{},
-		&model.Application{},
+		&gtsmodel.User{},
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -161,27 +159,6 @@ func (suite *AuthTestSuite) TearDownTest() {
 		logrus.Panicf("error closing db connection: %s", err)
 	}
 	suite.db = nil
-}
-
-func (suite *AuthTestSuite) TestAPIInitialize() {
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-
-	r, err := router.New(suite.config, log)
-	if err != nil {
-		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
-	}
-
-	api := New(suite.oauthServer, suite.db, log)
-	if err := api.Route(r); err != nil {
-		suite.FailNow(fmt.Sprintf("error mapping routes onto router: %s", err))
-	}
-
-	r.Start()
-	time.Sleep(60 * time.Second)
-	if err := r.Stop(context.Background()); err != nil {
-		suite.FailNow(fmt.Sprintf("error stopping router: %s", err))
-	}
 }
 
 func TestAuthTestSuite(t *testing.T) {

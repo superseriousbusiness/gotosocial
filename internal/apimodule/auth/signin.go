@@ -24,7 +24,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -84,7 +84,7 @@ func (m *authModule) validatePassword(email string, password string) (userid str
 	}
 
 	// first we select the user from the database based on email address, bail if no user found for that email
-	gtsUser := &model.User{}
+	gtsUser := &gtsmodel.User{}
 
 	if err := m.db.GetWhere("email", email, gtsUser); err != nil {
 		l.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)

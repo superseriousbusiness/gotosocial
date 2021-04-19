@@ -27,10 +27,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
 )
 
 // accountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
@@ -67,7 +68,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 
 	if form.Discoverable != nil {
-		if err := m.db.UpdateOneByID(authed.Account.ID, "discoverable", *form.Discoverable, &model.Account{}); err != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "discoverable", *form.Discoverable, &gtsmodel.Account{}); err != nil {
 			l.Debugf("error updating discoverable: %s", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -75,7 +76,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 
 	if form.Bot != nil {
-		if err := m.db.UpdateOneByID(authed.Account.ID, "bot", *form.Bot, &model.Account{}); err != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "bot", *form.Bot, &gtsmodel.Account{}); err != nil {
 			l.Debugf("error updating bot: %s", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -87,7 +88,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if err := m.db.UpdateOneByID(authed.Account.ID, "display_name", *form.DisplayName, &model.Account{}); err != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "display_name", *form.DisplayName, &gtsmodel.Account{}); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -98,7 +99,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if err := m.db.UpdateOneByID(authed.Account.ID, "note", *form.Note, &model.Account{}); err != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "note", *form.Note, &gtsmodel.Account{}); err != nil {
 			l.Debugf("error updating note: %s", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -126,7 +127,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 
 	if form.Locked != nil {
-		if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &model.Account{}); err != nil {
+		if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -138,14 +139,14 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
-			if err := m.db.UpdateOneByID(authed.Account.ID, "language", *form.Source.Language, &model.Account{}); err != nil {
+			if err := m.db.UpdateOneByID(authed.Account.ID, "language", *form.Source.Language, &gtsmodel.Account{}); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
 		}
 
 		if form.Source.Sensitive != nil {
-			if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &model.Account{}); err != nil {
+			if err := m.db.UpdateOneByID(authed.Account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -156,7 +157,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
-			if err := m.db.UpdateOneByID(authed.Account.ID, "privacy", *form.Source.Privacy, &model.Account{}); err != nil {
+			if err := m.db.UpdateOneByID(authed.Account.ID, "privacy", *form.Source.Privacy, &gtsmodel.Account{}); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
@@ -168,14 +169,14 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	// }
 
 	// fetch the account with all updated values set
-	updatedAccount := &model.Account{}
+	updatedAccount := &gtsmodel.Account{}
 	if err := m.db.GetByID(authed.Account.ID, updatedAccount); err != nil {
 		l.Debugf("could not fetch updated account %s: %s", authed.Account.ID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	acctSensitive, err := m.db.AccountToMastoSensitive(updatedAccount)
+	acctSensitive, err := m.mastoConverter.AccountToMastoSensitive(updatedAccount)
 	if err != nil {
 		l.Tracef("could not convert account into mastosensitive account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -195,7 +196,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 // UpdateAccountAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accountID string) (*model.MediaAttachment, error) {
+func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(avatar.Size) > m.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("avatar with size %d exceeded max image size of %d bytes", avatar.Size, m.config.MediaConfig.MaxImageSize)
@@ -217,7 +218,7 @@ func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accoun
 	}
 
 	// do the setting
-	avatarInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "avatar")
+	avatarInfo, err := m.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaAvatar)
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -228,7 +229,7 @@ func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accoun
 // UpdateAccountHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accountID string) (*model.MediaAttachment, error) {
+func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(header.Size) > m.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", header.Size, m.config.MediaConfig.MaxImageSize)
@@ -250,7 +251,7 @@ func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accoun
 	}
 
 	// do the setting
-	headerInfo, err := m.mediaHandler.SetHeaderOrAvatarForAccountID(buf.Bytes(), accountID, "header")
+	headerInfo, err := m.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaHeader)
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}

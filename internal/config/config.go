@@ -36,6 +36,7 @@ type Config struct {
 	AccountsConfig  *AccountsConfig `yaml:"accounts"`
 	MediaConfig     *MediaConfig    `yaml:"media"`
 	StorageConfig   *StorageConfig  `yaml:"storage"`
+	StatusesConfig  *StatusesConfig `yaml:"statuses"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -50,7 +51,7 @@ func FromFile(path string) (*Config, error) {
 	return Empty(), nil
 }
 
-// Empty just returns an empty config
+// Empty just returns a new empty config
 func Empty() *Config {
 	return &Config{
 		DBConfig:       &DBConfig{},
@@ -58,6 +59,7 @@ func Empty() *Config {
 		AccountsConfig: &AccountsConfig{},
 		MediaConfig:    &MediaConfig{},
 		StorageConfig:  &StorageConfig{},
+		StatusesConfig: &StatusesConfig{},
 	}
 }
 
@@ -140,8 +142,8 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
 	}
 
-	if f.IsSet(fn.AccountsRequireApproval) {
-		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsRequireApproval)
+	if f.IsSet(fn.AccountsApprovalRequired) {
+		c.AccountsConfig.RequireApproval = f.Bool(fn.AccountsApprovalRequired)
 	}
 
 	// media flags
@@ -151,6 +153,14 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 
 	if c.MediaConfig.MaxVideoSize == 0 || f.IsSet(fn.MediaMaxVideoSize) {
 		c.MediaConfig.MaxVideoSize = f.Int(fn.MediaMaxVideoSize)
+	}
+
+	if c.MediaConfig.MinDescriptionChars == 0 || f.IsSet(fn.MediaMinDescriptionChars) {
+		c.MediaConfig.MinDescriptionChars = f.Int(fn.MediaMinDescriptionChars)
+	}
+
+	if c.MediaConfig.MaxDescriptionChars == 0 || f.IsSet(fn.MediaMaxDescriptionChars) {
+		c.MediaConfig.MaxDescriptionChars = f.Int(fn.MediaMaxDescriptionChars)
 	}
 
 	// storage flags
@@ -172,6 +182,23 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 
 	if c.StorageConfig.ServeBasePath == "" || f.IsSet(fn.StorageServeBasePath) {
 		c.StorageConfig.ServeBasePath = f.String(fn.StorageServeBasePath)
+	}
+
+	// statuses flags
+	if c.StatusesConfig.MaxChars == 0 || f.IsSet(fn.StatusesMaxChars) {
+		c.StatusesConfig.MaxChars = f.Int(fn.StatusesMaxChars)
+	}
+	if c.StatusesConfig.CWMaxChars == 0 || f.IsSet(fn.StatusesCWMaxChars) {
+		c.StatusesConfig.CWMaxChars = f.Int(fn.StatusesCWMaxChars)
+	}
+	if c.StatusesConfig.PollMaxOptions == 0 || f.IsSet(fn.StatusesPollMaxOptions) {
+		c.StatusesConfig.PollMaxOptions = f.Int(fn.StatusesPollMaxOptions)
+	}
+	if c.StatusesConfig.PollOptionMaxChars == 0 || f.IsSet(fn.StatusesPollOptionMaxChars) {
+		c.StatusesConfig.PollOptionMaxChars = f.Int(fn.StatusesPollOptionMaxChars)
+	}
+	if c.StatusesConfig.MaxMediaFiles == 0 || f.IsSet(fn.StatusesMaxMediaFiles) {
+		c.StatusesConfig.MaxMediaFiles = f.Int(fn.StatusesMaxMediaFiles)
 	}
 }
 
@@ -203,16 +230,63 @@ type Flags struct {
 	TemplateBaseDir string
 
 	AccountsOpenRegistration string
-	AccountsRequireApproval  string
+	AccountsApprovalRequired string
+	AccountsReasonRequired   string
 
-	MediaMaxImageSize string
-	MediaMaxVideoSize string
+	MediaMaxImageSize        string
+	MediaMaxVideoSize        string
+	MediaMinDescriptionChars string
+	MediaMaxDescriptionChars string
 
 	StorageBackend       string
 	StorageBasePath      string
 	StorageServeProtocol string
 	StorageServeHost     string
 	StorageServeBasePath string
+
+	StatusesMaxChars           string
+	StatusesCWMaxChars         string
+	StatusesPollMaxOptions     string
+	StatusesPollOptionMaxChars string
+	StatusesMaxMediaFiles      string
+}
+
+type Defaults struct {
+	LogLevel        string
+	ApplicationName string
+	ConfigPath      string
+	Host            string
+	Protocol        string
+
+	DbType     string
+	DbAddress  string
+	DbPort     int
+	DbUser     string
+	DbPassword string
+	DbDatabase string
+
+	TemplateBaseDir string
+
+	AccountsOpenRegistration bool
+	AccountsRequireApproval  bool
+	AccountsReasonRequired   bool
+
+	MediaMaxImageSize        int
+	MediaMaxVideoSize        int
+	MediaMinDescriptionChars int
+	MediaMaxDescriptionChars int
+
+	StorageBackend       string
+	StorageBasePath      string
+	StorageServeProtocol string
+	StorageServeHost     string
+	StorageServeBasePath string
+
+	StatusesMaxChars           int
+	StatusesCWMaxChars         int
+	StatusesPollMaxOptions     int
+	StatusesPollOptionMaxChars int
+	StatusesMaxMediaFiles      int
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -235,16 +309,25 @@ func GetFlagNames() Flags {
 		TemplateBaseDir: "template-basedir",
 
 		AccountsOpenRegistration: "accounts-open-registration",
-		AccountsRequireApproval:  "accounts-require-approval",
+		AccountsApprovalRequired: "accounts-approval-required",
+		AccountsReasonRequired:   "accounts-reason-required",
 
-		MediaMaxImageSize: "media-max-image-size",
-		MediaMaxVideoSize: "media-max-video-size",
+		MediaMaxImageSize:        "media-max-image-size",
+		MediaMaxVideoSize:        "media-max-video-size",
+		MediaMinDescriptionChars: "media-min-description-chars",
+		MediaMaxDescriptionChars: "media-max-description-chars",
 
 		StorageBackend:       "storage-backend",
 		StorageBasePath:      "storage-base-path",
 		StorageServeProtocol: "storage-serve-protocol",
 		StorageServeHost:     "storage-serve-host",
 		StorageServeBasePath: "storage-serve-base-path",
+
+		StatusesMaxChars:           "statuses-max-chars",
+		StatusesCWMaxChars:         "statuses-cw-max-chars",
+		StatusesPollMaxOptions:     "statuses-poll-max-options",
+		StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
+		StatusesMaxMediaFiles:      "statuses-max-media-files",
 	}
 }
 
@@ -268,15 +351,24 @@ func GetEnvNames() Flags {
 		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
 
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
-		AccountsRequireApproval:  "GTS_ACCOUNTS_REQUIRE_APPROVAL",
+		AccountsApprovalRequired: "GTS_ACCOUNTS_APPROVAL_REQUIRED",
+		AccountsReasonRequired:   "GTS_ACCOUNTS_REASON_REQUIRED",
 
-		MediaMaxImageSize: "GTS_MEDIA_MAX_IMAGE_SIZE",
-		MediaMaxVideoSize: "GTS_MEDIA_MAX_VIDEO_SIZE",
+		MediaMaxImageSize:        "GTS_MEDIA_MAX_IMAGE_SIZE",
+		MediaMaxVideoSize:        "GTS_MEDIA_MAX_VIDEO_SIZE",
+		MediaMinDescriptionChars: "GTS_MEDIA_MIN_DESCRIPTION_CHARS",
+		MediaMaxDescriptionChars: "GTS_MEDIA_MAX_DESCRIPTION_CHARS",
 
 		StorageBackend:       "GTS_STORAGE_BACKEND",
 		StorageBasePath:      "GTS_STORAGE_BASE_PATH",
 		StorageServeProtocol: "GTS_STORAGE_SERVE_PROTOCOL",
 		StorageServeHost:     "GTS_STORAGE_SERVE_HOST",
 		StorageServeBasePath: "GTS_STORAGE_SERVE_BASE_PATH",
+
+		StatusesMaxChars:           "GTS_STATUSES_MAX_CHARS",
+		StatusesCWMaxChars:         "GTS_STATUSES_CW_MAX_CHARS",
+		StatusesPollMaxOptions:     "GTS_STATUSES_POLL_MAX_OPTIONS",
+		StatusesPollOptionMaxChars: "GTS_STATUSES_POLL_OPTION_MAX_CHARS",
+		StatusesMaxMediaFiles:      "GTS_STATUSES_MAX_MEDIA_FILES",
 	}
 }

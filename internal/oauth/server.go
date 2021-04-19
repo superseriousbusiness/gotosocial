@@ -26,7 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -34,6 +34,9 @@ import (
 )
 
 const (
+	// SessionAuthorizedToken is the key set in the gin context for the Token
+	// of a User who has successfully passed Bearer token authorization.
+	// The interface returned from grabbing this key should be parsed as oauth2.TokenInfo
 	SessionAuthorizedToken = "authorized_token"
 	// SessionAuthorizedUser is the key set in the gin context for the id of
 	// a User who has successfully passed Bearer token authorization.
@@ -65,9 +68,9 @@ type s struct {
 
 type Authed struct {
 	Token       oauth2.TokenInfo
-	Application *model.Application
-	User        *model.User
-	Account     *model.Account
+	Application *gtsmodel.Application
+	User        *gtsmodel.User
+	Account     *gtsmodel.Account
 }
 
 // GetAuthed is a convenience function for returning an Authed struct from a gin context.
@@ -96,7 +99,7 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 
 	i, ok = ctx.Get(SessionAuthorizedApplication)
 	if ok {
-		parsed, ok := i.(*model.Application)
+		parsed, ok := i.(*gtsmodel.Application)
 		if !ok {
 			return nil, errors.New("could not parse application from session context")
 		}
@@ -105,7 +108,7 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 
 	i, ok = ctx.Get(SessionAuthorizedUser)
 	if ok {
-		parsed, ok := i.(*model.User)
+		parsed, ok := i.(*gtsmodel.User)
 		if !ok {
 			return nil, errors.New("could not parse user from session context")
 		}
@@ -114,7 +117,7 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 
 	i, ok = ctx.Get(SessionAuthorizedAccount)
 	if ok {
-		parsed, ok := i.(*model.Account)
+		parsed, ok := i.(*gtsmodel.Account)
 		if !ok {
 			return nil, errors.New("could not parse account from session context")
 		}

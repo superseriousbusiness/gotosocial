@@ -6,9 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
-	mastotypes "github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
-
-	model "github.com/superseriousbusiness/gotosocial/internal/db/model"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 
 	net "net"
 
@@ -20,22 +18,20 @@ type MockDB struct {
 	mock.Mock
 }
 
-// AccountToMastoSensitive provides a mock function with given fields: account
-func (_m *MockDB) AccountToMastoSensitive(account *model.Account) (*mastotypes.Account, error) {
-	ret := _m.Called(account)
+// Blocked provides a mock function with given fields: account1, account2
+func (_m *MockDB) Blocked(account1 string, account2 string) (bool, error) {
+	ret := _m.Called(account1, account2)
 
-	var r0 *mastotypes.Account
-	if rf, ok := ret.Get(0).(func(*model.Account) *mastotypes.Account); ok {
-		r0 = rf(account)
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string, string) bool); ok {
+		r0 = rf(account1, account2)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*mastotypes.Account)
-		}
+		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*model.Account) error); ok {
-		r1 = rf(account)
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(account1, account2)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -99,6 +95,29 @@ func (_m *MockDB) DropTable(i interface{}) error {
 	return r0
 }
 
+// EmojiStringsToEmojis provides a mock function with given fields: emojis, originAccountID, statusID
+func (_m *MockDB) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+	ret := _m.Called(emojis, originAccountID, statusID)
+
+	var r0 []*gtsmodel.Emoji
+	if rf, ok := ret.Get(0).(func([]string, string, string) []*gtsmodel.Emoji); ok {
+		r0 = rf(emojis, originAccountID, statusID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*gtsmodel.Emoji)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]string, string, string) error); ok {
+		r1 = rf(emojis, originAccountID, statusID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Federation provides a mock function with given fields:
 func (_m *MockDB) Federation() pub.Database {
 	ret := _m.Called()
@@ -116,11 +135,11 @@ func (_m *MockDB) Federation() pub.Database {
 }
 
 // GetAccountByUserID provides a mock function with given fields: userID, account
-func (_m *MockDB) GetAccountByUserID(userID string, account *model.Account) error {
+func (_m *MockDB) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
 	ret := _m.Called(userID, account)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *model.Account) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *gtsmodel.Account) error); ok {
 		r0 = rf(userID, account)
 	} else {
 		r0 = ret.Error(0)
@@ -143,6 +162,20 @@ func (_m *MockDB) GetAll(i interface{}) error {
 	return r0
 }
 
+// GetAvatarForAccountID provides a mock function with given fields: avatar, accountID
+func (_m *MockDB) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error {
+	ret := _m.Called(avatar, accountID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*gtsmodel.MediaAttachment, string) error); ok {
+		r0 = rf(avatar, accountID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetByID provides a mock function with given fields: id, i
 func (_m *MockDB) GetByID(id string, i interface{}) error {
 	ret := _m.Called(id, i)
@@ -158,11 +191,11 @@ func (_m *MockDB) GetByID(id string, i interface{}) error {
 }
 
 // GetFollowRequestsForAccountID provides a mock function with given fields: accountID, followRequests
-func (_m *MockDB) GetFollowRequestsForAccountID(accountID string, followRequests *[]model.FollowRequest) error {
+func (_m *MockDB) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	ret := _m.Called(accountID, followRequests)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *[]model.FollowRequest) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *[]gtsmodel.FollowRequest) error); ok {
 		r0 = rf(accountID, followRequests)
 	} else {
 		r0 = ret.Error(0)
@@ -172,11 +205,11 @@ func (_m *MockDB) GetFollowRequestsForAccountID(accountID string, followRequests
 }
 
 // GetFollowersByAccountID provides a mock function with given fields: accountID, followers
-func (_m *MockDB) GetFollowersByAccountID(accountID string, followers *[]model.Follow) error {
+func (_m *MockDB) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
 	ret := _m.Called(accountID, followers)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *[]model.Follow) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *[]gtsmodel.Follow) error); ok {
 		r0 = rf(accountID, followers)
 	} else {
 		r0 = ret.Error(0)
@@ -186,11 +219,11 @@ func (_m *MockDB) GetFollowersByAccountID(accountID string, followers *[]model.F
 }
 
 // GetFollowingByAccountID provides a mock function with given fields: accountID, following
-func (_m *MockDB) GetFollowingByAccountID(accountID string, following *[]model.Follow) error {
+func (_m *MockDB) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
 	ret := _m.Called(accountID, following)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *[]model.Follow) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *[]gtsmodel.Follow) error); ok {
 		r0 = rf(accountID, following)
 	} else {
 		r0 = ret.Error(0)
@@ -199,12 +232,26 @@ func (_m *MockDB) GetFollowingByAccountID(accountID string, following *[]model.F
 	return r0
 }
 
+// GetHeaderForAccountID provides a mock function with given fields: header, accountID
+func (_m *MockDB) GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error {
+	ret := _m.Called(header, accountID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*gtsmodel.MediaAttachment, string) error); ok {
+		r0 = rf(header, accountID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetLastStatusForAccountID provides a mock function with given fields: accountID, status
-func (_m *MockDB) GetLastStatusForAccountID(accountID string, status *model.Status) error {
+func (_m *MockDB) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
 	ret := _m.Called(accountID, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *model.Status) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *gtsmodel.Status) error); ok {
 		r0 = rf(accountID, status)
 	} else {
 		r0 = ret.Error(0)
@@ -214,11 +261,11 @@ func (_m *MockDB) GetLastStatusForAccountID(accountID string, status *model.Stat
 }
 
 // GetStatusesByAccountID provides a mock function with given fields: accountID, statuses
-func (_m *MockDB) GetStatusesByAccountID(accountID string, statuses *[]model.Status) error {
+func (_m *MockDB) GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error {
 	ret := _m.Called(accountID, statuses)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *[]model.Status) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *[]gtsmodel.Status) error); ok {
 		r0 = rf(accountID, statuses)
 	} else {
 		r0 = ret.Error(0)
@@ -228,11 +275,11 @@ func (_m *MockDB) GetStatusesByAccountID(accountID string, statuses *[]model.Sta
 }
 
 // GetStatusesByTimeDescending provides a mock function with given fields: accountID, statuses, limit
-func (_m *MockDB) GetStatusesByTimeDescending(accountID string, statuses *[]model.Status, limit int) error {
+func (_m *MockDB) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error {
 	ret := _m.Called(accountID, statuses, limit)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *[]model.Status, int) error); ok {
+	if rf, ok := ret.Get(0).(func(string, *[]gtsmodel.Status, int) error); ok {
 		r0 = rf(accountID, statuses, limit)
 	} else {
 		r0 = ret.Error(0)
@@ -297,16 +344,39 @@ func (_m *MockDB) IsUsernameAvailable(username string) error {
 	return r0
 }
 
+// MentionStringsToMentions provides a mock function with given fields: targetAccounts, originAccountID, statusID
+func (_m *MockDB) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+	ret := _m.Called(targetAccounts, originAccountID, statusID)
+
+	var r0 []*gtsmodel.Mention
+	if rf, ok := ret.Get(0).(func([]string, string, string) []*gtsmodel.Mention); ok {
+		r0 = rf(targetAccounts, originAccountID, statusID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*gtsmodel.Mention)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]string, string, string) error); ok {
+		r1 = rf(targetAccounts, originAccountID, statusID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewSignup provides a mock function with given fields: username, reason, requireApproval, email, password, signUpIP, locale, appID
-func (_m *MockDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*model.User, error) {
+func (_m *MockDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error) {
 	ret := _m.Called(username, reason, requireApproval, email, password, signUpIP, locale, appID)
 
-	var r0 *model.User
-	if rf, ok := ret.Get(0).(func(string, string, bool, string, string, net.IP, string, string) *model.User); ok {
+	var r0 *gtsmodel.User
+	if rf, ok := ret.Get(0).(func(string, string, bool, string, string, net.IP, string, string) *gtsmodel.User); ok {
 		r0 = rf(username, reason, requireApproval, email, password, signUpIP, locale, appID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*model.User)
+			r0 = ret.Get(0).(*gtsmodel.User)
 		}
 	}
 
@@ -334,6 +404,20 @@ func (_m *MockDB) Put(i interface{}) error {
 	return r0
 }
 
+// SetHeaderOrAvatarForAccountID provides a mock function with given fields: mediaAttachment, accountID
+func (_m *MockDB) SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
+	ret := _m.Called(mediaAttachment, accountID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*gtsmodel.MediaAttachment, string) error); ok {
+		r0 = rf(mediaAttachment, accountID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Stop provides a mock function with given fields: ctx
 func (_m *MockDB) Stop(ctx context.Context) error {
 	ret := _m.Called(ctx)
@@ -348,6 +432,29 @@ func (_m *MockDB) Stop(ctx context.Context) error {
 	return r0
 }
 
+// TagStringsToTags provides a mock function with given fields: tags, originAccountID, statusID
+func (_m *MockDB) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+	ret := _m.Called(tags, originAccountID, statusID)
+
+	var r0 []*gtsmodel.Tag
+	if rf, ok := ret.Get(0).(func([]string, string, string) []*gtsmodel.Tag); ok {
+		r0 = rf(tags, originAccountID, statusID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*gtsmodel.Tag)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]string, string, string) error); ok {
+		r1 = rf(tags, originAccountID, statusID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateByID provides a mock function with given fields: id, i
 func (_m *MockDB) UpdateByID(id string, i interface{}) error {
 	ret := _m.Called(id, i)
@@ -355,6 +462,20 @@ func (_m *MockDB) UpdateByID(id string, i interface{}) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
 		r0 = rf(id, i)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateOneByID provides a mock function with given fields: id, key, value, i
+func (_m *MockDB) UpdateOneByID(id string, key string, value interface{}, i interface{}) error {
+	ret := _m.Called(id, key, value, i)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, interface{}, interface{}) error); ok {
+		r0 = rf(id, key, value, i)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -27,8 +27,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db/model"
-	"github.com/superseriousbusiness/gotosocial/pkg/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 )
 
 // authorizeGETHandler should be served as GET at https://example.org/oauth/authorize
@@ -57,7 +57,7 @@ func (m *authModule) authorizeGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session"})
 		return
 	}
-	app := &model.Application{
+	app := &gtsmodel.Application{
 		ClientID: clientID,
 	}
 	if err := m.db.GetWhere("client_id", app.ClientID, app); err != nil {
@@ -66,7 +66,7 @@ func (m *authModule) authorizeGETHandler(c *gin.Context) {
 	}
 
 	// we can also use the userid of the user to fetch their username from the db to greet them nicely <3
-	user := &model.User{
+	user := &gtsmodel.User{
 		ID: userID,
 	}
 	if err := m.db.GetByID(user.ID, user); err != nil {
@@ -74,7 +74,7 @@ func (m *authModule) authorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	acct := &model.Account{
+	acct := &gtsmodel.Account{
 		ID: user.AccountID,
 	}
 
