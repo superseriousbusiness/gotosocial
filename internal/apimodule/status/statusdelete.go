@@ -97,9 +97,9 @@ func (m *StatusModule) StatusDELETEHandler(c *gin.Context) {
 	}
 
 	m.distributor.FromClientAPI() <- distributor.FromClientAPI{
-		APObjectType: gtsmodel.ActivityStreamsNote,
+		APObjectType:   gtsmodel.ActivityStreamsNote,
 		APActivityType: gtsmodel.ActivityStreamsDelete,
-		Activity: targetStatus,
+		Activity:       targetStatus,
 	}
 
 	c.JSON(http.StatusOK, mastoStatus)

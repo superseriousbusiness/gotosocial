@@ -94,7 +94,7 @@ func (m *StatusModule) StatusFavedByGETHandler(c *gin.Context) {
 	// get ALL accounts that faved a status -- doesn't take account of blocks and mutes and stuff
 	favingAccounts, err := m.db.WhoFavedStatus(targetStatus)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -103,7 +103,7 @@ func (m *StatusModule) StatusFavedByGETHandler(c *gin.Context) {
 	for _, acc := range favingAccounts {
 		blocked, err := m.db.Blocked(authed.Account.ID, acc.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		if !blocked {
@@ -118,7 +118,7 @@ func (m *StatusModule) StatusFavedByGETHandler(c *gin.Context) {
 	for _, acc := range filteredAccounts {
 		mastoAccount, err := m.mastoConverter.AccountToMastoPublic(acc)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		mastoAccounts = append(mastoAccounts, mastoAccount)

@@ -122,7 +122,6 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.PGTokenToOauthToken(t)
 
-
 	targetStatus := suite.testStatuses["admin_account_status_2"]
 
 	// setup

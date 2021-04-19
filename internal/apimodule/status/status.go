@@ -36,28 +36,28 @@ import (
 )
 
 const (
-	IDKey           = "id"
-	BasePath        = "/api/v1/statuses"
-	BasePathWithID  = BasePath + "/:" + IDKey
+	IDKey          = "id"
+	BasePath       = "/api/v1/statuses"
+	BasePathWithID = BasePath + "/:" + IDKey
 
-	ContextPath     = BasePathWithID + "/context"
+	ContextPath = BasePathWithID + "/context"
 
 	FavouritedPath  = BasePathWithID + "/favourited_by"
 	FavouritePath   = BasePathWithID + "/favourite"
 	UnfavouritePath = BasePathWithID + "/unfavourite"
 
-	RebloggedPath   = BasePathWithID + "/reblogged_by"
-	ReblogPath      = BasePathWithID + "/reblog"
-	UnreblogPath    = BasePathWithID + "/unreblog"
+	RebloggedPath = BasePathWithID + "/reblogged_by"
+	ReblogPath    = BasePathWithID + "/reblog"
+	UnreblogPath  = BasePathWithID + "/unreblog"
 
-	BookmarkPath    = BasePathWithID + "/bookmark"
-	UnbookmarkPath  = BasePathWithID + "/unbookmark"
+	BookmarkPath   = BasePathWithID + "/bookmark"
+	UnbookmarkPath = BasePathWithID + "/unbookmark"
 
-	MutePath        = BasePathWithID + "/mute"
-	UnmutePath      = BasePathWithID + "/unmute"
+	MutePath   = BasePathWithID + "/mute"
+	UnmutePath = BasePathWithID + "/unmute"
 
-	PinPath         = BasePathWithID + "/pin"
-	UnpinPath       = BasePathWithID + "/unpin"
+	PinPath   = BasePathWithID + "/pin"
+	UnpinPath = BasePathWithID + "/unpin"
 )
 
 type StatusModule struct {
@@ -88,7 +88,6 @@ func (m *StatusModule) Route(r router.Router) error {
 
 	r.AttachHandler(http.MethodPost, FavouritePath, m.StatusFavePOSTHandler)
 	r.AttachHandler(http.MethodPost, UnfavouritePath, m.StatusFavePOSTHandler)
-
 
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	return nil

@@ -33,12 +33,8 @@ import (
 )
 
 const (
-	idKey                 = "id"
-	basePath              = "/api/v1/admin"
-	emojiPath             = basePath + "/custom_emojis"
-	basePathWithID        = basePath + "/:" + idKey
-	verifyPath            = basePath + "/verify_credentials"
-	updateCredentialsPath = basePath + "/update_credentials"
+	basePath  = "/api/v1/admin"
+	emojiPath = basePath + "/custom_emojis"
 )
 
 type adminModule struct {

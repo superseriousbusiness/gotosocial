@@ -507,7 +507,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	var mastoCard  *mastotypes.Card
+	var mastoCard *mastotypes.Card
 	var mastoPoll *mastotypes.Poll
 
 	return &mastotypes.Status{

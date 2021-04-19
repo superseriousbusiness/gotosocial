@@ -655,7 +655,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
 	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
 	if blocked, err := ps.Blocked(targetAccount.ID, requestingAccount.ID); err != nil {
-		l.Debug("something went wrong figuring out if the accounts have a block: %s", err)
+		l.Debugf("something went wrong figuring out if the accounts have a block: %s", err)
 		return false, err
 	} else if blocked {
 		// don't allow the status to be viewed if a block exists in *either* direction between these two accounts, no creepy stalking please
