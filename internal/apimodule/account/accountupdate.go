@@ -34,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// accountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
+// AccountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
 // It should be served as a PATCH at /api/v1/accounts/update_credentials
 //
 // TODO: this can be optimized massively by building up a picture of what we want the new account
@@ -42,7 +42,7 @@ import (
 // which is not gonna make the database very happy when lots of requests are going through.
 // This way it would also be safer because the update won't happen until *all* the fields are validated.
 // Otherwise we risk doing a partial update and that's gonna cause probllleeemmmsss.
-func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
+func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountUpdateCredentialsPATCHHandler")
 	authed, err := oauth.MustAuth(c, true, false, false, true)
 	if err != nil {
@@ -196,7 +196,7 @@ func (m *accountModule) accountUpdateCredentialsPATCHHandler(c *gin.Context) {
 // UpdateAccountAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (m *Module) UpdateAccountAvatar(avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(avatar.Size) > m.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("avatar with size %d exceeded max image size of %d bytes", avatar.Size, m.config.MediaConfig.MaxImageSize)
@@ -229,7 +229,7 @@ func (m *accountModule) UpdateAccountAvatar(avatar *multipart.FileHeader, accoun
 // UpdateAccountHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (m *accountModule) UpdateAccountHeader(header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (m *Module) UpdateAccountHeader(header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(header.Size) > m.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", header.Size, m.config.MediaConfig.MaxImageSize)

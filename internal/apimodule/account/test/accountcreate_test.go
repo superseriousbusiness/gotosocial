@@ -39,6 +39,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -63,10 +64,10 @@ type AccountCreateTestSuite struct {
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
-	mediaHandler         media.MediaHandler
+	mediaHandler         media.Handler
 	mastoConverter       mastotypes.Converter
 	db                   db.DB
-	accountModule        *accountModule
+	accountModule        *account.Module
 	newUserFormHappyPath url.Values
 }
 
@@ -164,7 +165,7 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
 
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*accountModule)
+	suite.accountModule = account.New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*account.Module)
 }
 
 func (suite *AccountCreateTestSuite) TearDownSuite() {
@@ -250,9 +251,9 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 
@@ -324,9 +325,9 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerNoAuth() {
 	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 
@@ -349,8 +350,8 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerNoForm() {
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -371,11 +372,11 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerWeakPassword() 
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
 	// set a weak password
 	ctx.Request.Form.Set("password", "weak")
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -396,11 +397,11 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerWeirdLocale() {
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
 	// set an invalid locale
 	ctx.Request.Form.Set("locale", "neverneverland")
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -421,12 +422,12 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerRegistrationsCl
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
 
 	// close registrations
 	suite.config.AccountsConfig.OpenRegistration = false
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -447,13 +448,13 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerReasonNotProvid
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
 
 	// remove reason
 	ctx.Request.Form.Set("reason", "")
 
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -474,13 +475,13 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerInsufficientRea
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", account.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = suite.newUserFormHappyPath
 
 	// remove reason
 	ctx.Request.Form.Set("reason", "just cuz")
 
-	suite.accountModule.accountCreatePOSTHandler(ctx)
+	suite.accountModule.AccountCreatePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusBadRequest, recorder.Code)
@@ -526,9 +527,9 @@ func (suite *AccountCreateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccountLocal)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", updateCredentialsPath), body) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", account.UpdateCredentialsPath), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", writer.FormDataContentType())
-	suite.accountModule.accountUpdateCredentialsPATCHHandler(ctx)
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
 
 	// check response
 

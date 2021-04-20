@@ -52,7 +52,7 @@ type StatusFaveTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 	distributor    distributor.Distributor
 
@@ -66,7 +66,7 @@ type StatusFaveTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 
 	// module being tested
-	statusModule *status.StatusModule
+	statusModule *status.Module
 }
 
 /*
@@ -86,7 +86,7 @@ func (suite *StatusFaveTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusFaveTestSuite) TearDownSuite() {
@@ -120,7 +120,7 @@ func (suite *StatusFaveTestSuite) TearDownTest() {
 func (suite *StatusFaveTestSuite) TestPostFave() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	targetStatus := suite.testStatuses["admin_account_status_2"]
 
@@ -168,7 +168,7 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	targetStatus := suite.testStatuses["local_account_2_status_3"] // this one is unlikeable and unreplyable
 

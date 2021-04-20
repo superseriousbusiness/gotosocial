@@ -31,10 +31,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 )
 
-// authorizeGETHandler should be served as GET at https://example.org/oauth/authorize
+// AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (m *authModule) authorizeGETHandler(c *gin.Context) {
+func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
@@ -46,7 +46,7 @@ func (m *authModule) authorizeGETHandler(c *gin.Context) {
 		if err := parseAuthForm(c, l); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
-			c.Redirect(http.StatusFound, authSignInPath)
+			c.Redirect(http.StatusFound, AuthSignInPath)
 		}
 		return
 	}
@@ -108,11 +108,11 @@ func (m *authModule) authorizeGETHandler(c *gin.Context) {
 	})
 }
 
-// authorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
+// AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
 // At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
 // so we should proceed with the authentication flow and generate an oauth token for them if we can.
 // See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
-func (m *authModule) authorizePOSTHandler(c *gin.Context) {
+func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 

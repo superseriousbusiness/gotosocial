@@ -105,15 +105,16 @@ type StatusCreateRequest struct {
 	Language string `form:"language"`
 }
 
+// Visibility denotes the visibility of this status to other users
 type Visibility string
 
 const (
-	// visible to everyone
+	// VisibilityPublic means visible to everyone
 	VisibilityPublic Visibility = "public"
-	// visible to everyone but only on home timelines or in lists
+	// VisibilityUnlisted means visible to everyone but only on home timelines or in lists
 	VisibilityUnlisted Visibility = "unlisted"
-	// visible to followers only
+	// VisibilityPrivate means visible to followers only
 	VisibilityPrivate Visibility = "private"
-	// visible only to tagged recipients
+	// VisibilityDirect means visible only to tagged recipients
 	VisibilityDirect Visibility = "direct"
 )

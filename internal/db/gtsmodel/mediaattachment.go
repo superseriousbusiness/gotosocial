@@ -93,13 +93,13 @@ type Thumbnail struct {
 type ProcessingStatus int
 
 const (
-	// ProcessingStatusReceived: the attachment has been received and is awaiting processing. No thumbnail available yet.
+	// ProcessingStatusReceived indicates the attachment has been received and is awaiting processing. No thumbnail available yet.
 	ProcessingStatusReceived ProcessingStatus = 0
-	// ProcessingStatusProcessing: the attachment is currently being processed. Thumbnail is available but full media is not.
+	// ProcessingStatusProcessing indicates the attachment is currently being processed. Thumbnail is available but full media is not.
 	ProcessingStatusProcessing ProcessingStatus = 1
-	// ProcessingStatusProcessed: the attachment has been fully processed and is ready to be served.
+	// ProcessingStatusProcessed indicates the attachment has been fully processed and is ready to be served.
 	ProcessingStatusProcessed ProcessingStatus = 2
-	// ProcessingStatusError: something went wrong processing the attachment and it won't be tried again--these can be deleted.
+	// ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
 	ProcessingStatusError ProcessingStatus = 666
 )
 
@@ -142,6 +142,8 @@ type Original struct {
 	Aspect float64
 }
 
+// Focus describes the 'center' of the image for display purposes.
+// X and Y should each be between -1 and 1
 type Focus struct {
 	X float32
 	Y float32

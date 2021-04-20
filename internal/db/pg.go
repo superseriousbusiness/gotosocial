@@ -574,9 +574,8 @@ func (ps *postgresService) Blocked(account1 string, account2 string) (bool, erro
 		if err == pg.ErrNoRows {
 			blocked = false
 			return blocked, nil
-		} else {
-			return blocked, err
 		}
+		return blocked, err
 	}
 	blocked = true
 	return blocked, nil
@@ -597,9 +596,8 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 		l.Debug("target user could not be selected")
 		if err == pg.ErrNoRows {
 			return false, ErrNoEntries{}
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 
 	// if target user is disabled, not yet approved, or not confirmed then don't show the status
@@ -635,10 +633,9 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			if err == pg.ErrNoRows {
 				l.Debug("requesting account is local but there's no corresponding user")
 				return false, nil
-			} else {
-				l.Debugf("requesting account is local but there was an error getting the corresponding user: %s", err)
-				return false, err
 			}
+			l.Debugf("requesting account is local but there was an error getting the corresponding user: %s", err)
+			return false, err
 		}
 		// okay, user exists, so make sure it has full privileges/is confirmed/approved
 		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
@@ -751,9 +748,8 @@ func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmode
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 
 	// make sure account 2 follows account 1
@@ -761,9 +757,8 @@ func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmode
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return false, nil
-		} else {
-			return false, err
 		}
+		return false, err
 	}
 
 	return f1 && f2, nil

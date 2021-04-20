@@ -20,6 +20,7 @@ package testrig
 
 import "github.com/superseriousbusiness/gotosocial/internal/router"
 
+// NewTestRouter returns a Router suitable for testing
 func NewTestRouter() router.Router {
 	r, err := router.New(NewTestConfig(), NewTestLog())
 	if err != nil {

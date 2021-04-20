@@ -34,10 +34,10 @@ import (
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
-// accountCreatePOSTHandler handles create account requests, validates them,
+// AccountCreatePOSTHandler handles create account requests, validates them,
 // and puts them in the database if they're valid.
 // It should be served as a POST at /api/v1/accounts
-func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
+func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountCreatePOSTHandler")
 	authed, err := oauth.MustAuth(c, true, true, false, false)
 	if err != nil {
@@ -83,7 +83,7 @@ func (m *accountModule) accountCreatePOSTHandler(c *gin.Context) {
 // accountCreate does the dirty work of making an account and user in the database.
 // It then returns a token to the caller, for use with the new account, as per the
 // spec here: https://docs.joinmastodon.org/methods/accounts/
-func (m *accountModule) accountCreate(form *mastotypes.AccountCreateRequest, signUpIP net.IP, token oauth2.TokenInfo, app *gtsmodel.Application) (*mastotypes.Token, error) {
+func (m *Module) accountCreate(form *mastotypes.AccountCreateRequest, signUpIP net.IP, token oauth2.TokenInfo, app *gtsmodel.Application) (*mastotypes.Token, error) {
 	l := m.log.WithField("func", "accountCreate")
 
 	// don't store a reason if we don't require one

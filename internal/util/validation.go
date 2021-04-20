@@ -128,16 +128,19 @@ func ValidateSignUpReason(reason string, reasonRequired bool) error {
 	return nil
 }
 
+// ValidateDisplayName checks that a requested display name is valid
 func ValidateDisplayName(displayName string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
 
+// ValidateNote checks that a given profile/account note/bio is valid
 func ValidateNote(note string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
 
+// ValidatePrivacy checks that the desired privacy setting is valid
 func ValidatePrivacy(privacy string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil

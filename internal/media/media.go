@@ -33,27 +33,27 @@ import (
 )
 
 const (
-	// Key for small/thumbnail versions of media
+	// MediaSmall is the key for small/thumbnail versions of media
 	MediaSmall = "small"
-	// Key for original/fullsize versions of media and emoji
+	// MediaOriginal is the key for original/fullsize versions of media and emoji
 	MediaOriginal = "original"
-	// Key for static (non-animated) versions of emoji
+	// MediaStatic is the key for static (non-animated) versions of emoji
 	MediaStatic = "static"
-	// Key for media attachments
+	// MediaAttachment is the key for media attachments
 	MediaAttachment = "attachment"
-	// Key for profile header
+	// MediaHeader is the key for profile header requests
 	MediaHeader = "header"
-	// Key for profile avatar
+	// MediaAvatar is the key for profile avatar requests
 	MediaAvatar = "avatar"
-	// Key for emoji type
+	// MediaEmoji is the key for emoji type requests
 	MediaEmoji = "emoji"
 
-	// Maximum permitted bytes of an emoji upload (50kb)
+	// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
 	EmojiMaxBytes = 51200
 )
 
-// MediaHandler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
-type MediaHandler interface {
+// Handler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
+type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
@@ -77,7 +77,8 @@ type mediaHandler struct {
 	log     *logrus.Logger
 }
 
-func New(config *config.Config, database db.DB, storage storage.Storage, log *logrus.Logger) MediaHandler {
+// New returns a new handler with the given config, db, storage, and logger
+func New(config *config.Config, database db.DB, storage storage.Storage, log *logrus.Logger) Handler {
 	return &mediaHandler{
 		config:  config,
 		db:      database,
@@ -90,6 +91,9 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 	INTERFACE FUNCTIONS
 */
 
+// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
+// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
+// and then returns information to the caller about the new header.
 func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
@@ -125,6 +129,9 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	return ma, nil
 }
 
+// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
+// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
+// and then returns information to the caller about the attachment.
 func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
 	contentType, err := parseContentType(attachment)
 	if err != nil {
@@ -160,6 +167,9 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 	return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
 }
 
+// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
+// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
+// in the database.
 func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
 	var clean []byte
 	var err error

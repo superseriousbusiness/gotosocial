@@ -26,25 +26,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-// module implements the apiclient interface
-type module struct {
+// Module implements the ClientAPIModule interface for security middleware
+type Module struct {
 	config *config.Config
 	log    *logrus.Logger
 }
 
 // New returns a new security module
 func New(config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &module{
+	return &Module{
 		config: config,
 		log:    log,
 	}
 }
 
-func (m *module) Route(s router.Router) error {
-	s.AttachMiddleware(m.flocBlock)
+// Route attaches security middleware to the given router
+func (m *Module) Route(s router.Router) error {
+	s.AttachMiddleware(m.FlocBlock)
 	return nil
 }
 
-func (m *module) CreateTables(db db.DB) error {
+// CreateTables doesn't do diddly squat at the moment, it's just for fulfilling the interface
+func (m *Module) CreateTables(db db.DB) error {
 	return nil
 }

@@ -251,6 +251,7 @@ type Flags struct {
 	StatusesMaxMediaFiles      string
 }
 
+// Defaults contains all the default values for a gotosocial config
 type Defaults struct {
 	LogLevel        string
 	ApplicationName string

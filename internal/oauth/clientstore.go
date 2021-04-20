@@ -64,6 +64,7 @@ func (cs *clientStore) Delete(ctx context.Context, id string) error {
 	return cs.db.DeleteByID(id, poc)
 }
 
+// Client is a handy little wrapper for typical oauth client details
 type Client struct {
 	ID     string
 	Secret string

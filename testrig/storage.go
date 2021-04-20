@@ -36,15 +36,15 @@ func NewTestStorage() storage.Storage {
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
 func StandardStorageSetup(s storage.Storage, relativePath string) {
-	storedA := NewTestStoredAttachments()
+	storedA := newTestStoredAttachments()
 	a := NewTestAttachments()
 	for k, paths := range storedA {
 		attachmentInfo, ok := a[k]
 		if !ok {
 			panic(fmt.Errorf("key %s not found in test attachments", k))
 		}
-		filenameOriginal := paths.original
-		filenameSmall := paths.small
+		filenameOriginal := paths.Original
+		filenameSmall := paths.Small
 		pathOriginal := attachmentInfo.File.Path
 		pathSmall := attachmentInfo.Thumbnail.Path
 		bOriginal, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameOriginal))
@@ -63,15 +63,15 @@ func StandardStorageSetup(s storage.Storage, relativePath string) {
 		}
 	}
 
-	storedE := NewTestStoredEmoji()
+	storedE := newTestStoredEmoji()
 	e := NewTestEmojis()
 	for k, paths := range storedE {
 		emojiInfo, ok := e[k]
 		if !ok {
 			panic(fmt.Errorf("key %s not found in test emojis", k))
 		}
-		filenameOriginal := paths.original
-		filenameStatic := paths.static
+		filenameOriginal := paths.Original
+		filenameStatic := paths.Static
 		pathOriginal := emojiInfo.ImagePath
 		pathStatic := emojiInfo.ImageStaticPath
 		bOriginal, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameOriginal))

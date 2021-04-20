@@ -20,8 +20,9 @@ package security
 
 import "github.com/gin-gonic/gin"
 
-// flocBlock prevents google chrome cohort tracking by writing the Permissions-Policy header after all other parts of the request have been completed.
+// FlocBlock is a middleware that prevents google chrome cohort tracking by
+// writing the Permissions-Policy header after all other parts of the request have been completed.
 // See: https://plausible.io/blog/google-floc
-func (m *module) flocBlock(c *gin.Context) {
+func (m *Module) FlocBlock(c *gin.Context) {
 	c.Header("Permissions-Policy", "interest-cohort=()")
 }

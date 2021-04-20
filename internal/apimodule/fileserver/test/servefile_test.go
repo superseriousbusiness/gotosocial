@@ -49,7 +49,7 @@ type ServeFileTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 
 	// standard suite models

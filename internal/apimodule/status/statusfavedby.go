@@ -29,7 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusFavedByGETHandler(c *gin.Context) {
+// StatusFavedByGETHandler is for serving a list of accounts that have faved a given status
+func (m *Module) StatusFavedByGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "statusGETHandler",
 		"request_uri": c.Request.RequestURI,

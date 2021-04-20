@@ -26,6 +26,6 @@ import (
 
 // NewTestMediaHandler returns a media handler with the default test config, the default test logger,
 // and the given db and storage.
-func NewTestMediaHandler(db db.DB, storage storage.Storage) media.MediaHandler {
+func NewTestMediaHandler(db db.DB, storage storage.Storage) media.Handler {
 	return media.New(NewTestConfig(), db, storage, NewTestLog())
 }

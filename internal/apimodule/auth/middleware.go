@@ -24,12 +24,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// oauthTokenMiddleware checks if the client has presented a valid oauth Bearer token.
+// OauthTokenMiddleware checks if the client has presented a valid oauth Bearer token.
 // If so, it will check the User that the token belongs to, and set that in the context of
 // the request. Then, it will look up the account for that user, and set that in the request too.
 // If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
 // public requests that don't have a Bearer token set (eg., for public instance information and so on).
-func (m *authModule) oauthTokenMiddleware(c *gin.Context) {
+func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 	l := m.log.WithField("func", "ValidatePassword")
 	l.Trace("entering OauthTokenMiddleware")
 

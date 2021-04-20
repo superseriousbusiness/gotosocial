@@ -33,7 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (m *adminModule) emojiCreatePOSTHandler(c *gin.Context) {
+func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "emojiCreatePOSTHandler",
 		"request_uri": c.Request.RequestURI,

@@ -22,29 +22,29 @@ package gtsmodel
 type ActivityStreamsObject string
 
 const (
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-article
+	// ActivityStreamsArticle https://www.w3.org/TR/activitystreams-vocabulary/#dfn-article
 	ActivityStreamsArticle ActivityStreamsObject = "Article"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
+	// ActivityStreamsAudio https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
 	ActivityStreamsAudio ActivityStreamsObject = "Audio"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
+	// ActivityStreamsDocument https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
 	ActivityStreamsDocument ActivityStreamsObject = "Event"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
+	// ActivityStreamsEvent https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
 	ActivityStreamsEvent ActivityStreamsObject = "Event"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image
+	// ActivityStreamsImage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image
 	ActivityStreamsImage ActivityStreamsObject = "Image"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note
+	// ActivityStreamsNote https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note
 	ActivityStreamsNote ActivityStreamsObject = "Note"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-page
+	// ActivityStreamsPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-page
 	ActivityStreamsPage ActivityStreamsObject = "Page"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-place
+	// ActivityStreamsPlace https://www.w3.org/TR/activitystreams-vocabulary/#dfn-place
 	ActivityStreamsPlace ActivityStreamsObject = "Place"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-profile
+	// ActivityStreamsProfile https://www.w3.org/TR/activitystreams-vocabulary/#dfn-profile
 	ActivityStreamsProfile ActivityStreamsObject = "Profile"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship
+	// ActivityStreamsRelationship https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship
 	ActivityStreamsRelationship ActivityStreamsObject = "Relationship"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tombstone
+	// ActivityStreamsTombstone https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tombstone
 	ActivityStreamsTombstone ActivityStreamsObject = "Tombstone"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
+	// ActivityStreamsVideo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
 	ActivityStreamsVideo ActivityStreamsObject = "Video"
 )
 
@@ -52,15 +52,15 @@ const (
 type ActivityStreamsActor string
 
 const (
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-application
+	// ActivityStreamsApplication https://www.w3.org/TR/activitystreams-vocabulary/#dfn-application
 	ActivityStreamsApplication ActivityStreamsActor = "Application"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-group
+	// ActivityStreamsGroup https://www.w3.org/TR/activitystreams-vocabulary/#dfn-group
 	ActivityStreamsGroup ActivityStreamsActor = "Group"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-organization
+	// ActivityStreamsOrganization https://www.w3.org/TR/activitystreams-vocabulary/#dfn-organization
 	ActivityStreamsOrganization ActivityStreamsActor = "Organization"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person
+	// ActivityStreamsPerson https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person
 	ActivityStreamsPerson ActivityStreamsActor = "Person"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-service
+	// ActivityStreamsService https://www.w3.org/TR/activitystreams-vocabulary/#dfn-service
 	ActivityStreamsService ActivityStreamsActor = "Service"
 )
 
@@ -68,60 +68,60 @@ const (
 type ActivityStreamsActivity string
 
 const (
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-accept
+	// ActivityStreamsAccept https://www.w3.org/TR/activitystreams-vocabulary/#dfn-accept
 	ActivityStreamsAccept ActivityStreamsActivity = "Accept"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-add
+	// ActivityStreamsAdd https://www.w3.org/TR/activitystreams-vocabulary/#dfn-add
 	ActivityStreamsAdd ActivityStreamsActivity = "Add"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-announce
+	// ActivityStreamsAnnounce https://www.w3.org/TR/activitystreams-vocabulary/#dfn-announce
 	ActivityStreamsAnnounce ActivityStreamsActivity = "Announce"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-arrive
+	// ActivityStreamsArrive https://www.w3.org/TR/activitystreams-vocabulary/#dfn-arrive
 	ActivityStreamsArrive ActivityStreamsActivity = "Arrive"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-block
+	// ActivityStreamsBlock https://www.w3.org/TR/activitystreams-vocabulary/#dfn-block
 	ActivityStreamsBlock ActivityStreamsActivity = "Block"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-create
+	// ActivityStreamsCreate https://www.w3.org/TR/activitystreams-vocabulary/#dfn-create
 	ActivityStreamsCreate ActivityStreamsActivity = "Create"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-delete
+	// ActivityStreamsDelete https://www.w3.org/TR/activitystreams-vocabulary/#dfn-delete
 	ActivityStreamsDelete ActivityStreamsActivity = "Delete"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-dislike
+	// ActivityStreamsDislike https://www.w3.org/TR/activitystreams-vocabulary/#dfn-dislike
 	ActivityStreamsDislike ActivityStreamsActivity = "Dislike"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-flag
+	// ActivityStreamsFlag https://www.w3.org/TR/activitystreams-vocabulary/#dfn-flag
 	ActivityStreamsFlag ActivityStreamsActivity = "Flag"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-follow
+	// ActivityStreamsFollow https://www.w3.org/TR/activitystreams-vocabulary/#dfn-follow
 	ActivityStreamsFollow ActivityStreamsActivity = "Follow"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-ignore
+	// ActivityStreamsIgnore https://www.w3.org/TR/activitystreams-vocabulary/#dfn-ignore
 	ActivityStreamsIgnore ActivityStreamsActivity = "Ignore"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-invite
+	// ActivityStreamsInvite https://www.w3.org/TR/activitystreams-vocabulary/#dfn-invite
 	ActivityStreamsInvite ActivityStreamsActivity = "Invite"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-join
+	// ActivityStreamsJoin https://www.w3.org/TR/activitystreams-vocabulary/#dfn-join
 	ActivityStreamsJoin ActivityStreamsActivity = "Join"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-leave
+	// ActivityStreamsLeave https://www.w3.org/TR/activitystreams-vocabulary/#dfn-leave
 	ActivityStreamsLeave ActivityStreamsActivity = "Leave"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-like
+	// ActivityStreamsLike https://www.w3.org/TR/activitystreams-vocabulary/#dfn-like
 	ActivityStreamsLike ActivityStreamsActivity = "Like"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-listen
+	// ActivityStreamsListen https://www.w3.org/TR/activitystreams-vocabulary/#dfn-listen
 	ActivityStreamsListen ActivityStreamsActivity = "Listen"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-move
+	// ActivityStreamsMove https://www.w3.org/TR/activitystreams-vocabulary/#dfn-move
 	ActivityStreamsMove ActivityStreamsActivity = "Move"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-offer
+	// ActivityStreamsOffer https://www.w3.org/TR/activitystreams-vocabulary/#dfn-offer
 	ActivityStreamsOffer ActivityStreamsActivity = "Offer"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-question
+	// ActivityStreamsQuestion https://www.w3.org/TR/activitystreams-vocabulary/#dfn-question
 	ActivityStreamsQuestion ActivityStreamsActivity = "Question"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-reject
+	// ActivityStreamsReject https://www.w3.org/TR/activitystreams-vocabulary/#dfn-reject
 	ActivityStreamsReject ActivityStreamsActivity = "Reject"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-read
+	// ActivityStreamsRead https://www.w3.org/TR/activitystreams-vocabulary/#dfn-read
 	ActivityStreamsRead ActivityStreamsActivity = "Read"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-remove
+	// ActivityStreamsRemove https://www.w3.org/TR/activitystreams-vocabulary/#dfn-remove
 	ActivityStreamsRemove ActivityStreamsActivity = "Remove"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tentativereject
+	// ActivityStreamsTentativeReject https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tentativereject
 	ActivityStreamsTentativeReject ActivityStreamsActivity = "TentativeReject"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tentativeaccept
+	// ActivityStreamsTentativeAccept https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tentativeaccept
 	ActivityStreamsTentativeAccept ActivityStreamsActivity = "TentativeAccept"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-travel
+	// ActivityStreamsTravel https://www.w3.org/TR/activitystreams-vocabulary/#dfn-travel
 	ActivityStreamsTravel ActivityStreamsActivity = "Travel"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-undo
+	// ActivityStreamsUndo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-undo
 	ActivityStreamsUndo ActivityStreamsActivity = "Undo"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-update
+	// ActivityStreamsUpdate https://www.w3.org/TR/activitystreams-vocabulary/#dfn-update
 	ActivityStreamsUpdate ActivityStreamsActivity = "Update"
-	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-view
+	// ActivityStreamsView https://www.w3.org/TR/activitystreams-vocabulary/#dfn-view
 	ActivityStreamsView ActivityStreamsActivity = "View"
 )

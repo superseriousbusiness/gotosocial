@@ -37,25 +37,31 @@ import (
 )
 
 const (
-	idKey                 = "id"
-	basePath              = "/api/v1/accounts"
-	basePathWithID        = basePath + "/:" + idKey
-	verifyPath            = basePath + "/verify_credentials"
-	updateCredentialsPath = basePath + "/update_credentials"
+	// IDKey is the key to use for retrieving account ID in requests
+	IDKey = "id"
+	// BasePath is the base API path for this module
+	BasePath = "/api/v1/accounts"
+	// BasePathWithID is the base path for this module with the ID key
+	BasePathWithID = BasePath + "/:" + IDKey
+	// VerifyPath is for verifying account credentials
+	VerifyPath = BasePath + "/verify_credentials"
+	// UpdateCredentialsPath is for updating account credentials
+	UpdateCredentialsPath = BasePath + "/update_credentials"
 )
 
-type accountModule struct {
+// Module implements the ClientAPIModule interface for account-related actions
+type Module struct {
 	config         *config.Config
 	db             db.DB
 	oauthServer    oauth.Server
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	mastoConverter mastotypes.Converter
 	log            *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &accountModule{
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.Handler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &Module{
 		config:         config,
 		db:             db,
 		oauthServer:    oauthServer,
@@ -66,14 +72,15 @@ func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler
 }
 
 // Route attaches all routes from this module to the given router
-func (m *accountModule) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, basePath, m.accountCreatePOSTHandler)
-	r.AttachHandler(http.MethodGet, basePathWithID, m.muxHandler)
-	r.AttachHandler(http.MethodPatch, basePathWithID, m.muxHandler)
+func (m *Module) Route(r router.Router) error {
+	r.AttachHandler(http.MethodPost, BasePath, m.AccountCreatePOSTHandler)
+	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
 	return nil
 }
 
-func (m *accountModule) CreateTables(db db.DB) error {
+// CreateTables creates the required tables for this module in the given database
+func (m *Module) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
@@ -93,18 +100,18 @@ func (m *accountModule) CreateTables(db db.DB) error {
 	return nil
 }
 
-func (m *accountModule) muxHandler(c *gin.Context) {
+func (m *Module) muxHandler(c *gin.Context) {
 	ru := c.Request.RequestURI
 	switch c.Request.Method {
 	case http.MethodGet:
-		if strings.HasPrefix(ru, verifyPath) {
-			m.accountVerifyGETHandler(c)
+		if strings.HasPrefix(ru, VerifyPath) {
+			m.AccountVerifyGETHandler(c)
 		} else {
-			m.accountGETHandler(c)
+			m.AccountGETHandler(c)
 		}
 	case http.MethodPatch:
-		if strings.HasPrefix(ru, updateCredentialsPath) {
-			m.accountUpdateCredentialsPATCHHandler(c)
+		if strings.HasPrefix(ru, UpdateCredentialsPath) {
+			m.AccountUpdateCredentialsPATCHHandler(c)
 		}
 	}
 }

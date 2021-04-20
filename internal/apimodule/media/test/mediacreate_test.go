@@ -52,7 +52,7 @@ type MediaCreateTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 
 	// standard suite models
@@ -64,7 +64,7 @@ type MediaCreateTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// item being tested
-	mediaModule *mediamodule.MediaModule
+	mediaModule *mediamodule.Module
 }
 
 /*
@@ -82,7 +82,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediamodule.MediaModule)
+	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediamodule.Module)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
@@ -115,7 +115,7 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 
 	// set up the context for the request
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])

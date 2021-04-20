@@ -29,9 +29,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// appsPOSTHandler should be served at https://example.org/api/v1/apps
+// AppsPOSTHandler should be served at https://example.org/api/v1/apps
 // It is equivalent to: https://docs.joinmastodon.org/methods/apps/
-func (m *appModule) appsPOSTHandler(c *gin.Context) {
+func (m *Module) AppsPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AppsPOSTHandler")
 	l.Trace("entering AppsPOSTHandler")
 

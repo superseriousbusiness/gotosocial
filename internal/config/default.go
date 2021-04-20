@@ -96,6 +96,8 @@ func Default() *Config {
 	}
 }
 
+// GetDefaults returns a populated Defaults struct with most of the values set to reasonable defaults.
+// Note that if you use this function, you still need to set Host and, if desired, ConfigPath.
 func GetDefaults() Defaults {
 	return Defaults{
 		LogLevel:        "info",
@@ -136,6 +138,7 @@ func GetDefaults() Defaults {
 	}
 }
 
+// GetTestDefaults returns a Defaults struct with values set that are suitable for local testing.
 func GetTestDefaults() Defaults {
 	return Defaults{
 		LogLevel:        "trace",

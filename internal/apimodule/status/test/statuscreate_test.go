@@ -52,7 +52,7 @@ type StatusCreateTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 	distributor    distributor.Distributor
 
@@ -65,7 +65,7 @@ type StatusCreateTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// module being tested
-	statusModule *status.StatusModule
+	statusModule *status.Module
 }
 
 /*
@@ -85,7 +85,7 @@ func (suite *StatusCreateTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusCreateTestSuite) TearDownSuite() {
@@ -121,7 +121,7 @@ func (suite *StatusCreateTestSuite) TearDownTest() {
 func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -175,7 +175,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -216,7 +216,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 // Try to reply to a status that doesn't exist
 func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -247,7 +247,7 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 // Post a reply to the status of a local user that allows replies.
 func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -287,7 +287,7 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 // Take a media file which is currently not associated with a status, and attach it to a new status.
 func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()

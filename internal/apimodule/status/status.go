@@ -36,42 +36,60 @@ import (
 )
 
 const (
+	// IDKey is for status UUIDs
 	IDKey          = "id"
+	// BasePath is the base path for serving the status API
 	BasePath       = "/api/v1/statuses"
+	// BasePathWithID is just the base path with the ID key in it.
+	// Use this anywhere you need to know the ID of the status being queried.
 	BasePathWithID = BasePath + "/:" + IDKey
 
+	// ContextPath is used for fetching context of posts
 	ContextPath = BasePathWithID + "/context"
 
+	// FavouritedPath is for seeing who's faved a given status
 	FavouritedPath  = BasePathWithID + "/favourited_by"
+	// FavouritePath is for posting a fave on a status
 	FavouritePath   = BasePathWithID + "/favourite"
+	// UnfavouritePath is for removing a fave from a status
 	UnfavouritePath = BasePathWithID + "/unfavourite"
 
+	// RebloggedPath is for seeing who's boosted a given status
 	RebloggedPath = BasePathWithID + "/reblogged_by"
+	// ReblogPath is for boosting/reblogging a given status
 	ReblogPath    = BasePathWithID + "/reblog"
+	// UnreblogPath is for undoing a boost/reblog of a given status
 	UnreblogPath  = BasePathWithID + "/unreblog"
 
+	// BookmarkPath is for creating a bookmark on a given status
 	BookmarkPath   = BasePathWithID + "/bookmark"
+	// UnbookmarkPath is for removing a bookmark from a given status
 	UnbookmarkPath = BasePathWithID + "/unbookmark"
 
+	// MutePath is for muting a given status so that notifications will no longer be received about it.
 	MutePath   = BasePathWithID + "/mute"
+	// UnmutePath is for undoing an existing mute
 	UnmutePath = BasePathWithID + "/unmute"
 
+	// PinPath is for pinning a status to an account profile so that it's the first thing people see
 	PinPath   = BasePathWithID + "/pin"
+	// UnpinPath is for undoing a pin and returning a status to the ever-swirling drain of time and entropy
 	UnpinPath = BasePathWithID + "/unpin"
 )
 
-type StatusModule struct {
+// Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with statuses
+type Module struct {
 	config         *config.Config
 	db             db.DB
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	mastoConverter mastotypes.Converter
 	distributor    distributor.Distributor
 	log            *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &StatusModule{
+func New(config *config.Config, db db.DB, mediaHandler media.Handler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &Module{
 		config:         config,
 		db:             db,
 		mediaHandler:   mediaHandler,
@@ -82,7 +100,7 @@ func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, masto
 }
 
 // Route attaches all routes from this module to the given router
-func (m *StatusModule) Route(r router.Router) error {
+func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, BasePath, m.StatusCreatePOSTHandler)
 	r.AttachHandler(http.MethodDelete, BasePathWithID, m.StatusDELETEHandler)
 
@@ -93,7 +111,8 @@ func (m *StatusModule) Route(r router.Router) error {
 	return nil
 }
 
-func (m *StatusModule) CreateTables(db db.DB) error {
+// CreateTables populates necessary tables in the given DB
+func (m *Module) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
@@ -121,7 +140,8 @@ func (m *StatusModule) CreateTables(db db.DB) error {
 	return nil
 }
 
-func (m *StatusModule) muxHandler(c *gin.Context) {
+// muxHandler is a little workaround to overcome the limitations of Gin
+func (m *Module) muxHandler(c *gin.Context) {
 	m.log.Debug("entering mux handler")
 	ru := c.Request.RequestURI
 

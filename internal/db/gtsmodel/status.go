@@ -95,17 +95,17 @@ type Status struct {
 type Visibility string
 
 const (
-	// This status will be visible to everyone on all timelines.
+	// VisibilityPublic means this status will be visible to everyone on all timelines.
 	VisibilityPublic Visibility = "public"
-	// This status will be visible to everyone, but will only show on home timeline to followers, and in lists.
+	// VisibilityUnlocked means this status will be visible to everyone, but will only show on home timeline to followers, and in lists.
 	VisibilityUnlocked Visibility = "unlocked"
-	// This status is viewable to followers only.
+	// VisibilityFollowersOnly means this status is viewable to followers only.
 	VisibilityFollowersOnly Visibility = "followers_only"
-	// This status is visible to mutual followers only.
+	// VisibilityMutualsOnly means this status is visible to mutual followers only.
 	VisibilityMutualsOnly Visibility = "mutuals_only"
-	// This status is visible only to mentioned recipients
+	// VisibilityDirect means this status is visible only to mentioned recipients
 	VisibilityDirect Visibility = "direct"
-	// Default visibility to use when no other setting can be found
+	// VisibilityDefault is used when no other setting can be found
 	VisibilityDefault Visibility = "public"
 )
 

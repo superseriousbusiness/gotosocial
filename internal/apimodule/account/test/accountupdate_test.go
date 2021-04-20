@@ -37,6 +37,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
@@ -58,10 +59,10 @@ type AccountUpdateTestSuite struct {
 	testToken            oauth2.TokenInfo
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
-	mediaHandler         media.MediaHandler
+	mediaHandler         media.Handler
 	mastoConverter       mastotypes.Converter
 	db                   db.DB
-	accountModule        *accountModule
+	accountModule        *account.Module
 	newUserFormHappyPath url.Values
 }
 
@@ -159,7 +160,7 @@ func (suite *AccountUpdateTestSuite) SetupSuite() {
 	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
 
 	// and finally here's the thing we're actually testing!
-	suite.accountModule = New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*accountModule)
+	suite.accountModule = account.New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*account.Module)
 }
 
 func (suite *AccountUpdateTestSuite) TearDownSuite() {
@@ -278,9 +279,9 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccountLocal)
 	ctx.Set(oauth.SessionAuthorizedToken, suite.testToken)
-	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", updateCredentialsPath), body) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", account.UpdateCredentialsPath), body) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", writer.FormDataContentType())
-	suite.accountModule.accountUpdateCredentialsPATCHHandler(ctx)
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
 
 	// check response
 

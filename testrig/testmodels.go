@@ -700,39 +700,39 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 }
 
 type filenames struct {
-	original string
-	small    string
-	static   string
+	Original string
+	Small    string
+	Static   string
 }
 
-// NewTestStoredAttachments returns a map of filenames, keyed according to which attachment they pertain to.
-func NewTestStoredAttachments() map[string]filenames {
+// newTestStoredAttachments returns a map of filenames, keyed according to which attachment they pertain to.
+func newTestStoredAttachments() map[string]filenames {
 	return map[string]filenames{
 		"admin_account_status_1_attachment_1": {
-			original: "welcome-original.jpeg",
-			small:    "welcome-small.jpeg",
+			Original: "welcome-original.jpeg",
+			Small:    "welcome-small.jpeg",
 		},
 		"local_account_1_status_4_attachment_1": {
-			original: "trent-original.gif",
-			small:    "trent-small.jpeg",
+			Original: "trent-original.gif",
+			Small:    "trent-small.jpeg",
 		},
 		"local_account_1_unattached_1": {
-			original: "ohyou-original.jpeg",
-			small:    "ohyou-small.jpeg",
+			Original: "ohyou-original.jpeg",
+			Small:    "ohyou-small.jpeg",
 		},
 		"local_account_1_avatar": {
-			original: "zork-original.jpeg",
-			small:    "zork-small.jpeg",
+			Original: "zork-original.jpeg",
+			Small:    "zork-small.jpeg",
 		},
 	}
 }
 
-// NewtestStoredEmoji returns a map of filenames, keyed according to which emoji they pertain to
-func NewTestStoredEmoji() map[string]filenames {
+// newTestStoredEmoji returns a map of filenames, keyed according to which emoji they pertain to
+func newTestStoredEmoji() map[string]filenames {
 	return map[string]filenames{
 		"rainbow": {
-			original: "rainbow-original.png",
-			static:   "rainbow-static.png",
+			Original: "rainbow-original.png",
+			Static:   "rainbow-static.png",
 		},
 	}
 }

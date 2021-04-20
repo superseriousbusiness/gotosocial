@@ -29,7 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusUnfavePOSTHandler(c *gin.Context) {
+// StatusUnfavePOSTHandler is for undoing a fave on a status with a given ID
+func (m *Module) StatusUnfavePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusUnfavePOSTHandler",
 		"request_uri": c.Request.RequestURI,

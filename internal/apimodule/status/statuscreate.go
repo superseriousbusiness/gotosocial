@@ -53,7 +53,8 @@ type advancedVisibilityFlagsForm struct {
 	Likeable *bool `form:"likeable"`
 }
 
-func (m *StatusModule) StatusCreatePOSTHandler(c *gin.Context) {
+// StatusCreatePOSTHandler deals with the creation of new statuses
+func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.MustAuth(c, true, true, true, true) // posting a status is serious business so we want *everything*
 	if err != nil {
@@ -318,7 +319,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.
 	return nil
 }
 
-func (m *StatusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (m *Module) parseReplyToID(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -336,9 +337,8 @@ func (m *StatusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	if err := m.db.GetByID(form.InReplyToID, repliedStatus); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
-		} else {
-			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 		}
+		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 
 	if !repliedStatus.VisibilityAdvanced.Replyable {
@@ -349,9 +349,8 @@ func (m *StatusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	if err := m.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
-		} else {
-			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 		}
+		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 	// check if a block exists
 	if blocked, err := m.db.Blocked(thisAccountID, repliedAccount.ID); err != nil {
@@ -367,7 +366,7 @@ func (m *StatusModule) parseReplyToID(form *advancedStatusCreateForm, thisAccoun
 	return nil
 }
 
-func (m *StatusModule) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (m *Module) parseMediaIDs(form *advancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.MediaIDs == nil {
 		return nil
 	}
@@ -408,7 +407,7 @@ func parseLanguage(form *advancedStatusCreateForm, accountDefaultLanguage string
 	return nil
 }
 
-func (m *StatusModule) parseMentions(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *Module) parseMentions(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	menchies := []string{}
 	gtsMenchies, err := m.db.MentionStringsToMentions(util.DeriveMentions(form.Status), accountID, status.ID)
 	if err != nil {
@@ -427,7 +426,7 @@ func (m *StatusModule) parseMentions(form *advancedStatusCreateForm, accountID s
 	return nil
 }
 
-func (m *StatusModule) parseTags(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *Module) parseTags(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	tags := []string{}
 	gtsTags, err := m.db.TagStringsToTags(util.DeriveHashtags(form.Status), accountID, status.ID)
 	if err != nil {
@@ -446,7 +445,7 @@ func (m *StatusModule) parseTags(form *advancedStatusCreateForm, accountID strin
 	return nil
 }
 
-func (m *StatusModule) parseEmojis(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (m *Module) parseEmojis(form *advancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	emojis := []string{}
 	gtsEmojis, err := m.db.EmojiStringsToEmojis(util.DeriveEmojis(form.Status), accountID, status.ID)
 	if err != nil {

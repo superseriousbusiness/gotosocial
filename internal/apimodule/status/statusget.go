@@ -28,7 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusGETHandler(c *gin.Context) {
+// StatusGETHandler is for handling requests to just get one status based on its ID
+func (m *Module) StatusGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "statusGETHandler",
 		"request_uri": c.Request.RequestURI,

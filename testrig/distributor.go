@@ -20,6 +20,7 @@ package testrig
 
 import "github.com/superseriousbusiness/gotosocial/internal/distributor"
 
+// NewTestDistributor returns a Distributor suitable for testing purposes
 func NewTestDistributor() distributor.Distributor {
 	return distributor.New(NewTestLog())
 }

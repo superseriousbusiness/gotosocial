@@ -31,9 +31,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-const appsPath = "/api/v1/apps"
+// BasePath is the base path for this api module
+const BasePath = "/api/v1/apps"
 
-type appModule struct {
+// Module implements the ClientAPIModule interface for requests relating to registering/removing applications
+type Module struct {
 	server         oauth.Server
 	db             db.DB
 	mastoConverter mastotypes.Converter
@@ -42,7 +44,7 @@ type appModule struct {
 
 // New returns a new auth module
 func New(srv oauth.Server, db db.DB, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &appModule{
+	return &Module{
 		server:         srv,
 		db:             db,
 		mastoConverter: mastoConverter,
@@ -51,12 +53,13 @@ func New(srv oauth.Server, db db.DB, mastoConverter mastotypes.Converter, log *l
 }
 
 // Route satisfies the RESTAPIModule interface
-func (m *appModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodPost, appsPath, m.appsPOSTHandler)
+func (m *Module) Route(s router.Router) error {
+	s.AttachHandler(http.MethodPost, BasePath, m.AppsPOSTHandler)
 	return nil
 }
 
-func (m *appModule) CreateTables(db db.DB) error {
+// CreateTables creates the necessary tables for this module in the given database
+func (m *Module) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},

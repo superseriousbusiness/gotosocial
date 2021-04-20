@@ -52,7 +52,7 @@ type StatusFavedByTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 	distributor    distributor.Distributor
 
@@ -66,7 +66,7 @@ type StatusFavedByTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 
 	// module being tested
-	statusModule *status.StatusModule
+	statusModule *status.Module
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
@@ -82,7 +82,7 @@ func (suite *StatusFavedByTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusFavedByTestSuite) TearDownSuite() {
@@ -114,7 +114,7 @@ func (suite *StatusFavedByTestSuite) TearDownTest() {
 
 func (suite *StatusFavedByTestSuite) TestGetFavedBy() {
 	t := suite.testTokens["local_account_2"]
-	oauthToken := oauth.PGTokenToOauthToken(t)
+	oauthToken := oauth.TokenToOauthToken(t)
 
 	targetStatus := suite.testStatuses["admin_account_status_1"] // this status is faved by local_account_1
 

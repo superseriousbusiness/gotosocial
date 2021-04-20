@@ -20,6 +20,7 @@ package gtsmodel
 
 import "time"
 
+// Emoji represents a custom emoji that's been uploaded through the admin UI, and is useable by instance denizens.
 type Emoji struct {
 	// database ID of this emoji
 	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`

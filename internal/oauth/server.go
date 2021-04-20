@@ -46,7 +46,7 @@ const (
 	// of a User who has successfully passed Bearer token authorization.
 	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Account
 	SessionAuthorizedAccount = "authorized_account"
-	// SessionAuthorizedAccount is the key set in the gin context for the Application
+	// SessionAuthorizedApplication is the key set in the gin context for the Application
 	// of a Client who has successfully passed Bearer token authorization.
 	// The interface returned from grabbing this key should be parsed as a *gtsmodel.Application
 	SessionAuthorizedApplication = "authorized_app"
@@ -66,6 +66,10 @@ type s struct {
 	log    *logrus.Logger
 }
 
+// Authed wraps an authorized token, application, user, and account.
+// It is used in the functions GetAuthed and MustAuth.
+// Because the user might *not* be authed, any of the fields in this struct
+// might be nil, so make sure to check that when you're using this struct anywhere.
 type Authed struct {
 	Token       oauth2.TokenInfo
 	Application *gtsmodel.Application
@@ -208,6 +212,7 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 	return accessToken, nil
 }
 
+// New returns a new oauth server that implements the Server interface
 func New(database db.DB, log *logrus.Logger) Server {
 	ts := newTokenStore(context.Background(), database, log)
 	cs := newClientStore(database)

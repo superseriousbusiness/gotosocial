@@ -25,7 +25,6 @@ import (
 	"sync"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -49,7 +48,19 @@ func newFederatingDB(db DB, config *config.Config) pub.Database {
 /*
    GO-FED DB INTERFACE-IMPLEMENTING FUNCTIONS
 */
-func (f *federatingDB) Lock(ctx context.Context, id *url.URL) error {
+
+// Lock takes a lock for the object at the specified id. If an error
+// is returned, the lock must not have been taken.
+//
+// The lock must be able to succeed for an id that does not exist in
+// the database. This means acquiring the lock does not guarantee the
+// entry exists in the database.
+//
+// Locks are encouraged to be lightweight and in the Go layer, as some
+// processes require tight loops acquiring and releasing locks.
+//
+// Used to ensure race conditions in multiple requests do not occur.
+func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 	// Before any other Database methods are called, the relevant `id`
 	// entries are locked to allow for fine-grained concurrency.
 
@@ -65,7 +76,11 @@ func (f *federatingDB) Lock(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (f *federatingDB) Unlock(ctx context.Context, id *url.URL) error {
+// Unlock makes the lock for the object at the specified id available.
+// If an error is returned, the lock must have still been freed.
+//
+// Used to ensure race conditions in multiple requests do not occur.
+func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 	// Once Go-Fed is done calling Database methods, the relevant `id`
 	// entries are unlocked.
 
@@ -78,82 +93,168 @@ func (f *federatingDB) Unlock(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (f *federatingDB) InboxContains(ctx context.Context, inbox *url.URL, id *url.URL) (bool, error) {
+// InboxContains returns true if the OrderedCollection at 'inbox'
+// contains the specified 'id'.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
 	return false, nil
 }
 
-func (f *federatingDB) GetInbox(ctx context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+// GetInbox returns the first ordered collection page of the outbox at
+// the specified IRI, for prepending new items.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) SetInbox(ctx context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
+// SetInbox saves the inbox value given from GetInbox, with new items
+// prepended. Note that the new items must not be added as independent
+// database entries. Separate calls to Create will do that.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
-func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (owns bool, err error) {
-	return id.Host == f.config.Host, nil
-}
-
-func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (f *federatingDB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
-	return nil, nil
-}
-
-func (f *federatingDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
+// Owns returns true if the database has an entry for the IRI and it
+// exists in the database.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Owns(c context.Context, id *url.URL) (owns bool, err error) {
 	return false, nil
 }
 
-func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
+// ActorForOutbox fetches the actor's IRI for the given outbox IRI.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	t, err := streams.NewTypeResolver()
-	if err != nil {
-		return err
-	}
-	if err := t.Resolve(ctx, asType); err != nil {
-		return err
-	}
-	asType.GetTypeName()
+// ActorForInbox fetches the actor's IRI for the given outbox IRI.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	return nil, nil
+}
+
+// OutboxForInbox fetches the corresponding actor's outbox IRI for the
+// actor's inbox IRI.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+	return nil, nil
+}
+
+// Exists returns true if the database has an entry for the specified
+// id. It may not be owned by this application instance.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
+	return false, nil
+}
+
+// Get returns the database entry for the specified id.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, err error) {
+	return nil, nil
+}
+
+// Create adds a new entry to the database which must be able to be
+// keyed by its id.
+//
+// Note that Activity values received from federated peers may also be
+// created in the database this way if the Federating Protocol is
+// enabled. The client may freely decide to store only the id instead of
+// the entire value.
+//
+// The library makes this call only after acquiring a lock first.
+//
+// Under certain conditions and network activities, Create may be called
+// multiple times for the same ActivityStreams object.
+func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 	return nil
 }
 
-func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
+// Update sets an existing entry to the database based on the value's
+// id.
+//
+// Note that Activity values received from federated peers may also be
+// updated in the database this way if the Federating Protocol is
+// enabled. The client may freely decide to store only the id instead of
+// the entire value.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
 	return nil
 }
 
-func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
+// Delete removes the entry with the given id.
+//
+// Delete is only called for federated objects. Deletes from the Social
+// Protocol instead call Update to create a Tombstone.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
 	return nil
 }
 
-func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+// GetOutbox returns the first ordered collection page of the outbox
+// at the specified IRI, for prepending new items.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+// SetOutbox saves the outbox value given from GetOutbox, with new items
+// prepended. Note that the new items must not be added as independent
+// database entries. Separate calls to Create will do that.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
-func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (id *url.URL, err error) {
+// NewID creates a new IRI id for the provided activity or object. The
+// implementation does not need to set the 'id' property and simply
+// needs to determine the value.
+//
+// The go-fed library will handle setting the 'id' property on the
+// activity or object provided with the value returned.
+func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+// Followers obtains the Followers Collection for an actor with the
+// given id.
+//
+// If modified, the library will then call Update.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+// Following obtains the Following Collection for an actor with the
+// given id.
+//
+// If modified, the library will then call Update.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }
 
-func (f *federatingDB) Liked(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+// Liked obtains the Liked Collection for an actor with the
+// given id.
+//
+// If modified, the library will then call Update.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	return nil, nil
 }

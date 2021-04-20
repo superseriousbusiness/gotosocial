@@ -95,12 +95,14 @@ func (d *distributor) Stop() error {
 	return nil
 }
 
+// FromClientAPI wraps a message that travels from the client API into the distributor
 type FromClientAPI struct {
 	APObjectType   gtsmodel.ActivityStreamsObject
 	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}
 }
 
+// ToClientAPI wraps a message that travels from the distributor into the client API
 type ToClientAPI struct {
 	APObjectType   gtsmodel.ActivityStreamsObject
 	APActivityType gtsmodel.ActivityStreamsActivity

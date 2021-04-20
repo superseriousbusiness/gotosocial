@@ -32,12 +32,14 @@ import (
 )
 
 const (
+	// AccountIDKey is the url key for account id (an account uuid)
 	AccountIDKey = "account_id"
+	// MediaTypeKey is the url key for media type (usually something like attachment or header etc)
 	MediaTypeKey = "media_type"
+	// MediaSizeKey is the url key for the desired media size--original/small/static
 	MediaSizeKey = "media_size"
+	// FileNameKey is the actual filename being sought. Will usually be a UUID then something like .jpeg
 	FileNameKey  = "file_name"
-
-	FilesPath = "files"
 )
 
 // FileServer implements the RESTAPIModule interface.
@@ -67,6 +69,7 @@ func (m *FileServer) Route(s router.Router) error {
 	return nil
 }
 
+// CreateTables populates necessary tables in the given DB
 func (m *FileServer) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.MediaAttachment{},

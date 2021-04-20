@@ -29,7 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusDELETEHandler(c *gin.Context) {
+// StatusDELETEHandler verifies and handles deletion of a status
+func (m *Module) StatusDELETEHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusDELETEHandler",
 		"request_uri": c.Request.RequestURI,

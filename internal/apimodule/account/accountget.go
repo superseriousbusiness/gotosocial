@@ -26,12 +26,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
 
-// accountGetHandler serves the account information held by the server in response to a GET
+// AccountGETHandler serves the account information held by the server in response to a GET
 // request. It should be served as a GET at /api/v1/accounts/:id.
 //
 // See: https://docs.joinmastodon.org/methods/accounts/
-func (m *accountModule) accountGETHandler(c *gin.Context) {
-	targetAcctID := c.Param(idKey)
+func (m *Module) AccountGETHandler(c *gin.Context) {
+	targetAcctID := c.Param(IDKey)
 	if targetAcctID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
 		return

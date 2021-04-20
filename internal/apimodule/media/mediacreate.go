@@ -33,7 +33,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *MediaModule) MediaCreatePOSTHandler(c *gin.Context) {
+// MediaCreatePOSTHandler handles requests to create/upload media attachments
+func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.MustAuth(c, true, true, true, true) // posting new media is serious business so we want *everything*
 	if err != nil {

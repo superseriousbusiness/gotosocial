@@ -28,23 +28,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// login just wraps a form-submitted username (we want an email) and password
 type login struct {
 	Email    string `form:"username"`
 	Password string `form:"password"`
 }
 
-// signInGETHandler should be served at https://example.org/auth/sign_in.
+// SignInGETHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
-func (m *authModule) signInGETHandler(c *gin.Context) {
+func (m *Module) SignInGETHandler(c *gin.Context) {
 	m.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
 }
 
-// signInPOSTHandler should be served at https://example.org/auth/sign_in.
+// SignInPOSTHandler should be served at https://example.org/auth/sign_in.
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
-func (m *authModule) signInPOSTHandler(c *gin.Context) {
+func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "SignInPOSTHandler")
 	s := sessions.Default(c)
 	form := &login{}
@@ -54,7 +55,7 @@ func (m *authModule) signInPOSTHandler(c *gin.Context) {
 	}
 	l.Tracef("parsed form: %+v", form)
 
-	userid, err := m.validatePassword(form.Email, form.Password)
+	userid, err := m.ValidatePassword(form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
 		return
@@ -67,14 +68,14 @@ func (m *authModule) signInPOSTHandler(c *gin.Context) {
 	}
 
 	l.Trace("redirecting to auth page")
-	c.Redirect(http.StatusFound, oauthAuthorizePath)
+	c.Redirect(http.StatusFound, OauthAuthorizePath)
 }
 
-// validatePassword takes an email address and a password.
+// ValidatePassword takes an email address and a password.
 // The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a uuid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (m *authModule) validatePassword(email string, password string) (userid string, err error) {
+func (m *Module) ValidatePassword(email string, password string) (userid string, err error) {
 	l := m.log.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not

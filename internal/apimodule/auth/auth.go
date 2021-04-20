@@ -16,12 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package auth is a module that provides oauth functionality to a router.
-// It adds the following paths:
-//    /auth/sign_in
-//    /oauth/token
-//    /oauth/authorize
-// It also includes the oauthTokenMiddleware, which can be attached to a router to authenticate every request by Bearer token.
 package auth
 
 import (
@@ -37,12 +31,16 @@ import (
 )
 
 const (
-	authSignInPath     = "/auth/sign_in"
-	oauthTokenPath     = "/oauth/token"
-	oauthAuthorizePath = "/oauth/authorize"
+	// AuthSignInPath is the API path for users to sign in through
+	AuthSignInPath     = "/auth/sign_in"
+	// OauthTokenPath is the API path to use for granting token requests to users with valid credentials
+	OauthTokenPath     = "/oauth/token"
+	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
+	OauthAuthorizePath = "/oauth/authorize"
 )
 
-type authModule struct {
+// Module implements the ClientAPIModule interface for
+type Module struct {
 	server oauth.Server
 	db     db.DB
 	log    *logrus.Logger
@@ -50,7 +48,7 @@ type authModule struct {
 
 // New returns a new auth module
 func New(srv oauth.Server, db db.DB, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &authModule{
+	return &Module{
 		server: srv,
 		db:     db,
 		log:    log,
@@ -58,20 +56,21 @@ func New(srv oauth.Server, db db.DB, log *logrus.Logger) apimodule.ClientAPIModu
 }
 
 // Route satisfies the RESTAPIModule interface
-func (m *authModule) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, authSignInPath, m.signInGETHandler)
-	s.AttachHandler(http.MethodPost, authSignInPath, m.signInPOSTHandler)
+func (m *Module) Route(s router.Router) error {
+	s.AttachHandler(http.MethodGet, AuthSignInPath, m.SignInGETHandler)
+	s.AttachHandler(http.MethodPost, AuthSignInPath, m.SignInPOSTHandler)
 
-	s.AttachHandler(http.MethodPost, oauthTokenPath, m.tokenPOSTHandler)
+	s.AttachHandler(http.MethodPost, OauthTokenPath, m.TokenPOSTHandler)
 
-	s.AttachHandler(http.MethodGet, oauthAuthorizePath, m.authorizeGETHandler)
-	s.AttachHandler(http.MethodPost, oauthAuthorizePath, m.authorizePOSTHandler)
+	s.AttachHandler(http.MethodGet, OauthAuthorizePath, m.AuthorizeGETHandler)
+	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
 
-	s.AttachMiddleware(m.oauthTokenMiddleware)
+	s.AttachMiddleware(m.OauthTokenMiddleware)
 	return nil
 }
 
-func (m *authModule) CreateTables(db db.DB) error {
+// CreateTables creates the necessary tables for this module in the given database
+func (m *Module) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&oauth.Client{},
 		&oauth.Token{},

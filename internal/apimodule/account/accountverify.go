@@ -25,10 +25,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// accountVerifyGETHandler serves a user's account details to them IF they reached this
+// AccountVerifyGETHandler serves a user's account details to them IF they reached this
 // handler while in possession of a valid token, according to the oauth middleware.
 // It should be served as a GET at /api/v1/accounts/verify_credentials
-func (m *accountModule) accountVerifyGETHandler(c *gin.Context) {
+func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountVerifyGETHandler")
 	authed, err := oauth.MustAuth(c, true, false, false, true)
 	if err != nil {

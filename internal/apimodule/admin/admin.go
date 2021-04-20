@@ -33,21 +33,24 @@ import (
 )
 
 const (
-	basePath  = "/api/v1/admin"
-	emojiPath = basePath + "/custom_emojis"
+	// BasePath is the base API path for this module
+	BasePath  = "/api/v1/admin"
+	// EmojiPath is used for posting/deleting custom emojis
+	EmojiPath = BasePath + "/custom_emojis"
 )
 
-type adminModule struct {
+// Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
+type Module struct {
 	config         *config.Config
 	db             db.DB
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	mastoConverter mastotypes.Converter
 	log            *logrus.Logger
 }
 
-// New returns a new account module
-func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
-	return &adminModule{
+// New returns a new admin module
+func New(config *config.Config, db db.DB, mediaHandler media.Handler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+	return &Module{
 		config:         config,
 		db:             db,
 		mediaHandler:   mediaHandler,
@@ -57,12 +60,13 @@ func New(config *config.Config, db db.DB, mediaHandler media.MediaHandler, masto
 }
 
 // Route attaches all routes from this module to the given router
-func (m *adminModule) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, emojiPath, m.emojiCreatePOSTHandler)
+func (m *Module) Route(r router.Router) error {
+	r.AttachHandler(http.MethodPost, EmojiPath, m.emojiCreatePOSTHandler)
 	return nil
 }
 
-func (m *adminModule) CreateTables(db db.DB) error {
+// CreateTables creates the necessary tables for this module in the given database
+func (m *Module) CreateTables(db db.DB) error {
 	models := []interface{}{
 		&gtsmodel.User{},
 		&gtsmodel.Account{},

@@ -98,7 +98,7 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 	if !ok {
 		return errors.New("info param was not a models.Token")
 	}
-	if err := pts.db.Put(OAuthTokenToPGToken(t)); err != nil {
+	if err := pts.db.Put(TokenToPGToken(t)); err != nil {
 		return fmt.Errorf("error in tokenstore create: %s", err)
 	}
 	return nil
@@ -130,7 +130,7 @@ func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.Token
 	if err := pts.db.GetWhere("code", code, pgt); err != nil {
 		return nil, err
 	}
-	return PGTokenToOauthToken(pgt), nil
+	return TokenToOauthToken(pgt), nil
 }
 
 // GetByAccess selects a token from the DB based on the Access field
@@ -144,7 +144,7 @@ func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.T
 	if err := pts.db.GetWhere("access", access, pgt); err != nil {
 		return nil, err
 	}
-	return PGTokenToOauthToken(pgt), nil
+	return TokenToOauthToken(pgt), nil
 }
 
 // GetByRefresh selects a token from the DB based on the Refresh field
@@ -158,7 +158,7 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 	if err := pts.db.GetWhere("refresh", refresh, pgt); err != nil {
 		return nil, err
 	}
-	return PGTokenToOauthToken(pgt), nil
+	return TokenToOauthToken(pgt), nil
 }
 
 /*
@@ -194,8 +194,8 @@ type Token struct {
 	RefreshExpiresAt    time.Time `pg:"type:timestamp"`
 }
 
-// OAuthTokenToPGToken is a lil util function that takes a gotosocial token and gives back a token for inserting into postgres
-func OAuthTokenToPGToken(tkn *models.Token) *Token {
+// TokenToPGToken is a lil util function that takes a gotosocial token and gives back a token for inserting into postgres
+func TokenToPGToken(tkn *models.Token) *Token {
 	now := time.Now()
 
 	// For the following, we want to make sure we're not adding a time.Now() to an *empty* ExpiresIn, otherwise that's
@@ -236,8 +236,8 @@ func OAuthTokenToPGToken(tkn *models.Token) *Token {
 	}
 }
 
-// PGTokenToOauthToken is a lil util function that takes a postgres token and gives back a gotosocial token
-func PGTokenToOauthToken(pgt *Token) *models.Token {
+// TokenToOauthToken is a lil util function that takes a postgres token and gives back a gotosocial token
+func TokenToOauthToken(pgt *Token) *models.Token {
 	now := time.Now()
 
 	return &models.Token{

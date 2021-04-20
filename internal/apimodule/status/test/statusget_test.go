@@ -43,7 +43,7 @@ type StatusGetTestSuite struct {
 	log            *logrus.Logger
 	storage        storage.Storage
 	mastoConverter mastotypes.Converter
-	mediaHandler   media.MediaHandler
+	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 	distributor    distributor.Distributor
 
@@ -56,7 +56,7 @@ type StatusGetTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 
 	// module being tested
-	statusModule *status.StatusModule
+	statusModule *status.Module
 }
 
 /*
@@ -76,7 +76,7 @@ func (suite *StatusGetTestSuite) SetupSuite() {
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.StatusModule)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusGetTestSuite) TearDownSuite() {

@@ -29,7 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *StatusModule) StatusFavePOSTHandler(c *gin.Context) {
+// StatusFavePOSTHandler handles fave requests against a given status ID
+func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusFavePOSTHandler",
 		"request_uri": c.Request.RequestURI,
