@@ -380,7 +380,55 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	var mastoRebloggedStatus *mastotypes.Status // TODO
+	var mastoRebloggedStatus *mastotypes.Status
+	if s.BoostOfID != "" {
+		// the boosted status might have been set on this struct already so check first before doing db calls
+		var gtsBoostedStatus *gtsmodel.Status
+		if s.GTSBoostedStatus != nil {
+			// it's set, great!
+			gtsBoostedStatus = s.GTSBoostedStatus
+		} else {
+			// it's not set so fetch it from the db
+			gtsBoostedStatus = &gtsmodel.Status{}
+			if err := c.db.GetByID(s.BoostOfID, gtsBoostedStatus); err != nil {
+				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
+			}
+		}
+
+		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
+		var gtsBoostedAccount *gtsmodel.Account
+		if s.GTSBoostedAccount != nil {
+			// it's set, great!
+			gtsBoostedAccount = s.GTSBoostedAccount
+		} else if boostOfAccount != nil {
+			// it's been given as a param, great!
+			gtsBoostedAccount = boostOfAccount
+		} else if boostOfAccount == nil && s.GTSBoostedAccount == nil {
+			// it's not set so fetch it from the db
+			gtsBoostedAccount = &gtsmodel.Account{}
+			if err := c.db.GetByID(gtsBoostedStatus.AccountID, gtsBoostedAccount); err != nil {
+				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", gtsBoostedStatus.AccountID, s.BoostOfID, err)
+			}
+		}
+
+		// the boosted status might be a reply so check this
+		var gtsBoostedReplyToAccount *gtsmodel.Account
+		if gtsBoostedStatus.InReplyToAccountID != "" {
+			gtsBoostedReplyToAccount = &gtsmodel.Account{}
+			if err := c.db.GetByID(gtsBoostedStatus.InReplyToAccountID, gtsBoostedReplyToAccount); err != nil {
+				return nil, fmt.Errorf("error getting account that boosted status was a reply to: %s", err)
+			}
+		}
+
+		if gtsBoostedStatus != nil || gtsBoostedAccount != nil {
+			mastoRebloggedStatus, err = c.StatusToMasto(gtsBoostedStatus, gtsBoostedAccount, requestingAccount, nil, gtsBoostedReplyToAccount, nil)
+			if err != nil {
+				return nil, fmt.Errorf("error converting boosted status to mastotype: %s", err)
+			}
+		} else {
+			return nil, fmt.Errorf("boost of id was set to %s but that status or account was nil", s.BoostOfID)
+		}
+	}
 
 	var mastoApplication *mastotypes.Application
 	if s.CreatedWithApplicationID != "" {
