@@ -34,7 +34,7 @@ import (
 
 const (
 	// BasePath is the base API path for this module
-	BasePath  = "/api/v1/admin"
+	BasePath = "/api/v1/admin"
 	// EmojiPath is used for posting/deleting custom emojis
 	EmojiPath = BasePath + "/custom_emojis"
 )

@@ -962,6 +962,30 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			},
 			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
+		"local_account_2_status_4": {
+			ID:                       "57e41a35-20da-4bc9-9cfd-db2089f924db",
+			URI:                      "http://localhost:8080/users/1happyturtle/statuses/57e41a35-20da-4bc9-9cfd-db2089f924db",
+			URL:                      "http://localhost:8080/@1happyturtle/statuses/57e41a35-20da-4bc9-9cfd-db2089f924db",
+			Content:                  "🐢 this is a public status but I want it local only and not boostable 🐢",
+			CreatedAt:                time.Now().Add(-1 * time.Minute),
+			UpdatedAt:                time.Now().Add(-1 * time.Minute),
+			Local:                    true,
+			AccountID:                "eecaad73-5703-426d-9312-276641daa31e",
+			InReplyToID:              "",
+			BoostOfID:                "",
+			ContentWarning:           "",
+			Visibility:               gtsmodel.VisibilityPublic,
+			Sensitive:                true,
+			Language:                 "en",
+			CreatedWithApplicationID: "6b0cd164-8497-4cd5-bec9-957886fac5df",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: false,
+				Boostable: false,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
 	}
 }
 

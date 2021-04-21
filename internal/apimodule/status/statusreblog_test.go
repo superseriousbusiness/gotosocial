@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status
+package status_test
 
 import (
 	"encoding/json"
@@ -44,7 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusUnfaveTestSuite struct {
+type StatusReblogTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	config         *config.Config
@@ -74,7 +74,7 @@ type StatusUnfaveTestSuite struct {
 */
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *StatusUnfaveTestSuite) SetupSuite() {
+func (suite *StatusReblogTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
@@ -89,14 +89,14 @@ func (suite *StatusUnfaveTestSuite) SetupSuite() {
 	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
-func (suite *StatusUnfaveTestSuite) TearDownSuite() {
+func (suite *StatusReblogTestSuite) TearDownSuite() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *StatusUnfaveTestSuite) SetupTest() {
+func (suite *StatusReblogTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -107,7 +107,7 @@ func (suite *StatusUnfaveTestSuite) SetupTest() {
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
-func (suite *StatusUnfaveTestSuite) TearDownTest() {
+func (suite *StatusReblogTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
@@ -116,13 +116,12 @@ func (suite *StatusUnfaveTestSuite) TearDownTest() {
 	ACTUAL TESTS
 */
 
-// unfave a status
-func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
+// boost a status
+func (suite *StatusReblogTestSuite) TestPostReblog() {
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.TokenToOauthToken(t)
 
-	// this is the status we wanna unfave: in the testrig it's already faved by this account
 	targetStatus := suite.testStatuses["admin_account_status_1"]
 
 	// setup
@@ -132,7 +131,7 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.UnfavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -143,7 +142,7 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 		},
 	}
 
-	suite.statusModule.StatusUnfavePOSTHandler(ctx)
+	suite.statusModule.StatusReblogPOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -153,26 +152,45 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
+	fmt.Println(string(b))
+
 	statusReply := &mastomodel.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
-	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
-	assert.False(suite.T(), statusReply.Favourited)
-	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
+
+	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
+	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
+	assert.Equal(suite.T(), "the_mighty_zork", statusReply.Account.Username)
+	assert.Len(suite.T(), statusReply.MediaAttachments, 0)
+	assert.Len(suite.T(), statusReply.Mentions, 0)
+	assert.Len(suite.T(), statusReply.Emojis, 0)
+	assert.Len(suite.T(), statusReply.Tags, 0)
+
+	assert.NotNil(suite.T(), statusReply.Application)
+	assert.Equal(suite.T(), "really cool gts application", statusReply.Application.Name)
+
+	assert.NotNil(suite.T(), statusReply.Reblog)
+	assert.Equal(suite.T(), 1, statusReply.Reblog.ReblogsCount)
+	assert.Equal(suite.T(), 1, statusReply.Reblog.FavouritesCount)
+	assert.Equal(suite.T(), targetStatus.Content, statusReply.Reblog.Content)
+	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.Reblog.SpoilerText)
+	assert.Equal(suite.T(), targetStatus.AccountID, statusReply.Reblog.Account.ID)
+	assert.Len(suite.T(), statusReply.Reblog.MediaAttachments, 1)
+	assert.Len(suite.T(), statusReply.Reblog.Tags, 1)
+	assert.Len(suite.T(), statusReply.Reblog.Emojis, 1)
+	assert.Equal(suite.T(), "superseriousbusiness", statusReply.Reblog.Application.Name)
 }
 
-// try to unfave a status that's already not faved
-func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
+// try to boost a status that's not boostable
+func (suite *StatusReblogTestSuite) TestPostUnboostable() {
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.TokenToOauthToken(t)
 
-	// this is the status we wanna unfave: in the testrig it's not faved by this account
-	targetStatus := suite.testStatuses["admin_account_status_2"]
+	targetStatus := suite.testStatuses["local_account_2_status_4"]
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -181,7 +199,7 @@ func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.UnfavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -192,28 +210,56 @@ func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 		},
 	}
 
-	suite.statusModule.StatusUnfavePOSTHandler(ctx)
+	suite.statusModule.StatusReblogPOSTHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	suite.EqualValues(http.StatusForbidden, recorder.Code) // we 403 unboostable statuses
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-
-	statusReply := &mastomodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
-
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
-	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
-	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
-	assert.False(suite.T(), statusReply.Favourited)
-	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
+	assert.Equal(suite.T(), fmt.Sprintf(`{"error":"status %s not boostable"}`, targetStatus.ID), string(b))
 }
 
-func TestStatusUnfaveTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusUnfaveTestSuite))
+// try to boost a status that's not visible to the user
+func (suite *StatusReblogTestSuite) TestPostNotVisible() {
+
+	t := suite.testTokens["local_account_2"]
+	oauthToken := oauth.TokenToOauthToken(t)
+
+	targetStatus := suite.testStatuses["local_account_1_status_3"] // this is a mutual only status and these accounts aren't mutuals
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_2"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   status.IDKey,
+			Value: targetStatus.ID,
+		},
+	}
+
+	suite.statusModule.StatusReblogPOSTHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusNotFound, recorder.Code) // we 404 statuses that aren't visible
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), fmt.Sprintf(`{"error":"status %s not found"}`, targetStatus.ID), string(b))
+}
+
+func TestStatusReblogTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusReblogTestSuite))
 }
