@@ -456,21 +456,21 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		return nil, err
 	}
 
-	uris := util.GenerateURIs(username, ps.config.Protocol, ps.config.Host)
+	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
 
 	a := &gtsmodel.Account{
 		Username:              username,
 		DisplayName:           username,
 		Reason:                reason,
-		URL:                   uris.UserURL,
+		URL:                   newAccountURIs.UserURL,
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
 		ActorType:             gtsmodel.ActivityStreamsPerson,
-		URI:                   uris.UserURI,
-		InboxURL:              uris.InboxURI,
-		OutboxURL:             uris.OutboxURI,
-		FollowersURL:          uris.FollowersURI,
-		FeaturedCollectionURL: uris.CollectionURI,
+		URI:                   newAccountURIs.UserURI,
+		InboxURL:              newAccountURIs.InboxURI,
+		OutboxURL:             newAccountURIs.OutboxURI,
+		FollowersURL:          newAccountURIs.FollowersURI,
+		FeaturedCollectionURL: newAccountURIs.CollectionURI,
 	}
 	if _, err = ps.conn.Model(a).Insert(); err != nil {
 		return nil, err

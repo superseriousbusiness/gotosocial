@@ -19,51 +19,9 @@
 package util
 
 import (
-	"fmt"
-
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 )
-
-// URIs contains a bunch of URIs and URLs for a user, host, account, etc.
-type URIs struct {
-	HostURL     string
-	UserURL     string
-	StatusesURL string
-
-	UserURI       string
-	StatusesURI   string
-	InboxURI      string
-	OutboxURI     string
-	FollowersURI  string
-	CollectionURI string
-}
-
-// GenerateURIs throws together a bunch of URIs for the given username, with the given protocol and host.
-func GenerateURIs(username string, protocol string, host string) *URIs {
-	hostURL := fmt.Sprintf("%s://%s", protocol, host)
-	userURL := fmt.Sprintf("%s/@%s", hostURL, username)
-	statusesURL := fmt.Sprintf("%s/statuses", userURL)
-
-	userURI := fmt.Sprintf("%s/users/%s", hostURL, username)
-	statusesURI := fmt.Sprintf("%s/statuses", userURI)
-	inboxURI := fmt.Sprintf("%s/inbox", userURI)
-	outboxURI := fmt.Sprintf("%s/outbox", userURI)
-	followersURI := fmt.Sprintf("%s/followers", userURI)
-	collectionURI := fmt.Sprintf("%s/collections/featured", userURI)
-	return &URIs{
-		HostURL:     hostURL,
-		UserURL:     userURL,
-		StatusesURL: statusesURL,
-
-		UserURI:       userURI,
-		StatusesURI:   statusesURI,
-		InboxURI:      inboxURI,
-		OutboxURI:     outboxURI,
-		FollowersURI:  followersURI,
-		CollectionURI: collectionURI,
-	}
-}
 
 // ParseGTSVisFromMastoVis converts a mastodon visibility into its gts equivalent.
 func ParseGTSVisFromMastoVis(m mastotypes.Visibility) gtsmodel.Visibility {

@@ -16,13 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package util_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type StatusTestSuite struct {
@@ -41,7 +42,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 	here is a duplicate mention: @hello@test.lgbt
 	`
 
-	menchies := DeriveMentions(statusText)
+	menchies := util.DeriveMentions(statusText)
 	assert.Len(suite.T(), menchies, 4)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
@@ -51,7 +52,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 	statusText := ``
-	menchies := DeriveMentions(statusText)
+	menchies := util.DeriveMentions(statusText)
 	assert.Len(suite.T(), menchies, 0)
 }
 
@@ -66,7 +67,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 
 #111111 thisalsoshouldn'twork#### ##`
 
-	tags := DeriveHashtags(statusText)
+	tags := util.DeriveHashtags(statusText)
 	assert.Len(suite.T(), tags, 5)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
@@ -89,7 +90,7 @@ Here's some normal text with an :emoji: at the end
 :underscores_ok_too:
 `
 
-	tags := DeriveEmojis(statusText)
+	tags := util.DeriveEmojis(statusText)
 	assert.Len(suite.T(), tags, 7)
 	assert.Equal(suite.T(), "test", tags[0])
 	assert.Equal(suite.T(), "another", tags[1])

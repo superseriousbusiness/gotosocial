@@ -34,7 +34,7 @@ func DeriveMentions(status string) []string {
 	for _, m := range mentionRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
-	return Lower(Unique(mentionedAccounts))
+	return lower(unique(mentionedAccounts))
 }
 
 // DeriveHashtags takes a plaintext (ie., not html-formatted) status,
@@ -46,7 +46,7 @@ func DeriveHashtags(status string) []string {
 	for _, m := range hashtagRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, m[1])
 	}
-	return Lower(Unique(tags))
+	return lower(unique(tags))
 }
 
 // DeriveEmojis takes a plaintext (ie., not html-formatted) status,
@@ -58,11 +58,11 @@ func DeriveEmojis(status string) []string {
 	for _, m := range emojiRegex.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
-	return Lower(Unique(emojis))
+	return lower(unique(emojis))
 }
 
-// Unique returns a deduplicated version of a given string slice.
-func Unique(s []string) []string {
+// unique returns a deduplicated version of a given string slice.
+func unique(s []string) []string {
 	keys := make(map[string]bool)
 	list := []string{}
 	for _, entry := range s {
@@ -74,8 +74,8 @@ func Unique(s []string) []string {
 	return list
 }
 
-// Lower lowercases all strings in a given string slice
-func Lower(s []string) []string {
+// lower lowercases all strings in a given string slice
+func lower(s []string) []string {
 	new := []string{}
 	for _, i := range s {
 		new = append(new, strings.ToLower(i))

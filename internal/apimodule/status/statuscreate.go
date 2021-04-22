@@ -93,7 +93,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	// So now we can start digging a bit deeper into the form and building up the new status from it.
 
 	// first we create a new status and add some basic info to it
-	uris := util.GenerateURIs(authed.Account.Username, m.config.Protocol, m.config.Host)
+	uris := util.GenerateURIsForAccount(authed.Account.Username, m.config.Protocol, m.config.Host)
 	thisStatusID := uuid.NewString()
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
