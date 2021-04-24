@@ -95,7 +95,7 @@ func newPostgresService(ctx context.Context, c *config.Config, log *logrus.Entry
 		cancel: cancel,
 	}
 
-	federatingDB := newFederatingDB(ps, c)
+	federatingDB := newFederatingDB(ps, c, log)
 	ps.federationDB = federatingDB
 
 	// we can confidently return this useable postgres service now

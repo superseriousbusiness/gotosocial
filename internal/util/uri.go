@@ -21,44 +21,55 @@ package util
 import (
 	"fmt"
 	"net/url"
+	"strings"
 )
 
 const (
 	// UsersPath is for serving users info
-	UsersPath       = "users"
+	UsersPath = "users"
+	// ActorsPath is for serving actors info
+	ActorsPath = "actors"
 	// StatusesPath is for serving statuses
-	StatusesPath    = "statuses"
+	StatusesPath = "statuses"
 	// InboxPath represents the webfinger inbox location
-	InboxPath       = "inbox"
+	InboxPath = "inbox"
 	// OutboxPath represents the webfinger outbox location
-	OutboxPath      = "outbox"
+	OutboxPath = "outbox"
 	// FollowersPath represents the webfinger followers location
-	FollowersPath   = "followers"
+	FollowersPath = "followers"
+	// FollowingPath represents the webfinger following location
+	FollowingPath = "following"
+	// LikedPath represents the webfinger liked location
+	LikedPath = "liked"
 	// CollectionsPath represents the webfinger collections location
 	CollectionsPath = "collections"
 	// FeaturedPath represents the webfinger featured location
-	FeaturedPath    = "featured"
+	FeaturedPath = "featured"
 )
 
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
 type UserURIs struct {
 	// The web URL of the instance host, eg https://example.org
-	HostURL     string
+	HostURL string
 	// The web URL of the user, eg., https://example.org/@example_user
-	UserURL     string
+	UserURL string
 	// The web URL for statuses of this user, eg., https://example.org/@example_user/statuses
 	StatusesURL string
 
 	// The webfinger URI of this user, eg., https://example.org/users/example_user
-	UserURI       string
+	UserURI string
 	// The webfinger URI for this user's statuses, eg., https://example.org/users/example_user/statuses
-	StatusesURI   string
+	StatusesURI string
 	// The webfinger URI for this user's activitypub inbox, eg., https://example.org/users/example_user/inbox
-	InboxURI      string
+	InboxURI string
 	// The webfinger URI for this user's activitypub outbox, eg., https://example.org/users/example_user/outbox
-	OutboxURI     string
+	OutboxURI string
 	// The webfinger URI for this user's followers, eg., https://example.org/users/example_user/followers
-	FollowersURI  string
+	FollowersURI string
+	// The webfinger URI for this user's following, eg., https://example.org/users/example_user/following
+	FollowingURI string
+	// The webfinger URI for this user's liked posts eg., https://example.org/users/example_user/liked
+	LikedURI string
 	// The webfinger URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
 	CollectionURI string
 }
@@ -76,6 +87,8 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 	inboxURI := fmt.Sprintf("%s/%s", userURI, InboxPath)
 	outboxURI := fmt.Sprintf("%s/%s", userURI, OutboxPath)
 	followersURI := fmt.Sprintf("%s/%s", userURI, FollowersPath)
+	followingURI := fmt.Sprintf("%s/%s", userURI, FollowingPath)
+	likedURI := fmt.Sprintf("%s/%s", userURI, LikedPath)
 	collectionURI := fmt.Sprintf("%s/%s/%s", userURI, CollectionsPath, FeaturedPath)
 	return &UserURIs{
 		HostURL:     hostURL,
@@ -87,10 +100,61 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 		InboxURI:      inboxURI,
 		OutboxURI:     outboxURI,
 		FollowersURI:  followersURI,
+		FollowingURI:  followingURI,
+		LikedURI:      likedURI,
 		CollectionURI: collectionURI,
 	}
 }
 
-func ParseActivityPubRequestURL(id *url.URL) error {
-	return nil
+// IsUserPath returns true if the given URL path corresponds to eg /users/example_username
+func IsUserPath(id *url.URL) bool {
+	return userPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
+func IsInstanceActorPath(id *url.URL) bool {
+	return actorPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsFollowersPath returns true if the given URL path corresponds to eg /users/example_username/followers
+func IsFollowersPath(id *url.URL) bool {
+	return followersPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsFollowingPath returns true if the given URL path corresponds to eg /users/example_username/following
+func IsFollowingPath(id *url.URL) bool {
+	return followingPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
+func IsLikedPath(id *url.URL) bool {
+	return followingPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
+func IsStatusesPath(id *url.URL) bool {
+	return statusesPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// ParseStatusesPath returns the username and uuid from a path such as /users/example_username/statuses/SOME_UUID_OF_A_STATUS
+func ParseStatusesPath(id *url.URL) (username string, uuid string, err error) {
+	matches := statusesPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 3 {
+		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	uuid = matches[2]
+	return
+}
+
+// ParseUserPath returns the username from a path such as /users/example_username
+func ParseUserPath(id *url.URL) (username string, err error) {
+	matches := userPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
 }

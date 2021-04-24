@@ -21,12 +21,16 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"sync"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
@@ -35,13 +39,15 @@ type federatingDB struct {
 	locks  *sync.Map
 	db     DB
 	config *config.Config
+	log    *logrus.Entry
 }
 
-func newFederatingDB(db DB, config *config.Config) pub.Database {
+func newFederatingDB(db DB, config *config.Config, log *logrus.Entry) pub.Database {
 	return &federatingDB{
 		locks:  new(sync.Map),
 		db:     db,
 		config: config,
+		log:    log,
 	}
 }
 
@@ -118,11 +124,75 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 	return nil
 }
 
-// Owns returns true if the database has an entry for the IRI and it
-// exists in the database.
-//
+// Owns returns true if the IRI belongs to this instance, and if
+// the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Owns(c context.Context, id *url.URL) (owns bool, err error) {
+func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
+	l := f.log.WithFields(logrus.Fields{
+		"func":       "Owns",
+		"activityID": id.String(),
+	})
+
+	// if the id host isn't this instance host, we don't own this IRI
+	if id.Host != f.config.Host {
+		return false, nil
+	}
+
+	// apparently we own it, so what *is* it?
+
+	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
+	if util.IsStatusesPath(id) {
+		username, uid, err := util.ParseStatusesPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
+		}
+		acct := &gtsmodel.Account{}
+		if err := f.db.GetWhere("username", username, acct); err != nil {
+			if _, ok := err.(ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		if acct.Domain != "" {
+			// this is a remote account so we don't own it after all
+			return false, nil
+		}
+		status := &gtsmodel.Status{}
+		if err := f.db.GetByID(uid, status); err != nil {
+			if _, ok := err.(ErrNoEntries); ok {
+				// there are no entries for this status
+				return false, nil
+			}
+			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
+		}
+		// the user exists, the status exists, we own both, we're good
+		return true, nil
+	}
+
+	// check if it's a user, eg /users/example_username
+	if util.IsUserPath(id) {
+		username, err := util.ParseUserPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
+		}
+		acct := &gtsmodel.Account{}
+		if err := f.db.GetWhere("username", username, acct); err != nil {
+			if _, ok := err.(ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		if acct.Domain != "" {
+			// this is a remote account so we don't own it after all
+			return false, nil
+		}
+		// the user exists, we own it, we're good
+		return true, nil
+	}
+
+	l.Info("could not match activityID")
 	return false, nil
 }
 

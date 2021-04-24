@@ -31,7 +31,7 @@ import (
 // The case of the returned mentions will be lowered, for consistency.
 func DeriveMentions(status string) []string {
 	mentionedAccounts := []string{}
-	for _, m := range mentionRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
 	return lower(unique(mentionedAccounts))
@@ -43,7 +43,7 @@ func DeriveMentions(status string) []string {
 // tags will be lowered, for consistency.
 func DeriveHashtags(status string) []string {
 	tags := []string{}
-	for _, m := range hashtagRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range hashtagFinderRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, m[1])
 	}
 	return lower(unique(tags))
@@ -55,7 +55,7 @@ func DeriveHashtags(status string) []string {
 // emojis will be lowered, for consistency.
 func DeriveEmojis(status string) []string {
 	emojis := []string{}
-	for _, m := range emojiRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
 	return lower(unique(emojis))
