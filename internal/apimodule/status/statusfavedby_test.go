@@ -16,26 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package test
+package status_test
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	mediamodule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -44,7 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type MediaCreateTestSuite struct {
+type StatusFavedByTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	config         *config.Config
@@ -54,6 +54,7 @@ type MediaCreateTestSuite struct {
 	mastoConverter mastotypes.Converter
 	mediaHandler   media.Handler
 	oauthServer    oauth.Server
+	distributor    distributor.Distributor
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -62,16 +63,14 @@ type MediaCreateTestSuite struct {
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
 	testAttachments  map[string]*gtsmodel.MediaAttachment
+	testStatuses     map[string]*gtsmodel.Status
 
-	// item being tested
-	mediaModule *mediamodule.Module
+	// module being tested
+	statusModule *status.Module
 }
 
-/*
-	TEST INFRASTRUCTURE
-*/
-
-func (suite *MediaCreateTestSuite) SetupSuite() {
+// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
+func (suite *StatusFavedByTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
@@ -80,18 +79,18 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediamodule.Module)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
-func (suite *MediaCreateTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
-	}
+func (suite *StatusFavedByTestSuite) TearDownSuite() {
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *MediaCreateTestSuite) SetupTest() {
+func (suite *StatusFavedByTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
@@ -100,9 +99,11 @@ func (suite *MediaCreateTestSuite) SetupTest() {
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
 }
 
-func (suite *MediaCreateTestSuite) TearDownTest() {
+// TearDownTest drops tables to make sure there's no data in the db
+func (suite *StatusFavedByTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
@@ -111,84 +112,48 @@ func (suite *MediaCreateTestSuite) TearDownTest() {
 	ACTUAL TESTS
 */
 
-func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() {
-
-	// set up the context for the request
-	t := suite.testTokens["local_account_1"]
+func (suite *StatusFavedByTestSuite) TestGetFavedBy() {
+	t := suite.testTokens["local_account_2"]
 	oauthToken := oauth.TokenToOauthToken(t)
+
+	targetStatus := suite.testStatuses["admin_account_status_1"] // this status is faved by local_account_1
+
+	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_2"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_2"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritedPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 
-	// see what's in storage *before* the request
-	storageKeysBeforeRequest, err := suite.storage.ListKeys()
-	if err != nil {
-		panic(err)
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   status.IDKey,
+			Value: targetStatus.ID,
+		},
 	}
 
-	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
-		"description": "this is a test image -- a cool background from somewhere",
-		"focus":       "-0.5,0.5",
-	})
-	if err != nil {
-		panic(err)
-	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
-	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
-
-	// do the actual request
-	suite.mediaModule.MediaCreatePOSTHandler(ctx)
-
-	// check what's in storage *after* the request
-	storageKeysAfterRequest, err := suite.storage.ListKeys()
-	if err != nil {
-		panic(err)
-	}
+	suite.statusModule.StatusFavedByGETHandler(ctx)
 
 	// check response
-	suite.EqualValues(http.StatusAccepted, recorder.Code)
+	suite.EqualValues(http.StatusOK, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
-	attachmentReply := &mastomodel.Attachment{}
-	err = json.Unmarshal(b, attachmentReply)
+	accts := []mastomodel.Account{}
+	err = json.Unmarshal(b, &accts)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), "this is a test image -- a cool background from somewhere", attachmentReply.Description)
-	assert.Equal(suite.T(), "image", attachmentReply.Type)
-	assert.EqualValues(suite.T(), mastomodel.MediaMeta{
-		Original: mastomodel.MediaDimensions{
-			Width:  1920,
-			Height: 1080,
-			Size:   "1920x1080",
-			Aspect: 1.7777778,
-		},
-		Small: mastomodel.MediaDimensions{
-			Width:  256,
-			Height: 144,
-			Size:   "256x144",
-			Aspect: 1.7777778,
-		},
-		Focus: mastomodel.MediaFocus{
-			X: -0.5,
-			Y: 0.5,
-		},
-	}, attachmentReply.Meta)
-	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", attachmentReply.Blurhash)
-	assert.NotEmpty(suite.T(), attachmentReply.ID)
-	assert.NotEmpty(suite.T(), attachmentReply.URL)
-	assert.NotEmpty(suite.T(), attachmentReply.PreviewURL)
-	assert.Equal(suite.T(), len(storageKeysBeforeRequest)+2, len(storageKeysAfterRequest)) // 2 images should be added to storage: the original and the thumbnail
+	assert.Len(suite.T(), accts, 1)
+	assert.Equal(suite.T(), "the_mighty_zork", accts[0].Username)
 }
 
-func TestMediaCreateTestSuite(t *testing.T) {
-	suite.Run(t, new(MediaCreateTestSuite))
+func TestStatusFavedByTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusFavedByTestSuite))
 }

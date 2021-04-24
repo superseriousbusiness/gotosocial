@@ -47,6 +47,16 @@ const (
 	FeaturedPath = "featured"
 )
 
+// APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
+type APContextKey string
+
+const (
+	// APActivityKey can be used to set and retrieve the actual go-fed pub.Activity within a context.
+	APActivityKey APContextKey = "activity"
+	// APUsernameKey can be used to set and retrieve the username of the user being interacted with.
+	APUsernameKey APContextKey = "username"
+)
+
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
 type UserURIs struct {
 	// The web URL of the instance host, eg https://example.org
@@ -111,6 +121,11 @@ func IsUserPath(id *url.URL) bool {
 	return userPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
+// IsInboxPath returns true if the given URL path corresponds to eg /users/example_username/inbox
+func IsInboxPath(id *url.URL) bool {
+	return inboxPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
 // IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
 func IsInstanceActorPath(id *url.URL) bool {
 	return actorPathRegex.MatchString(strings.ToLower(id.Path))
@@ -128,7 +143,7 @@ func IsFollowingPath(id *url.URL) bool {
 
 // IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
 func IsLikedPath(id *url.URL) bool {
-	return followingPathRegex.MatchString(strings.ToLower(id.Path))
+	return likedPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
 // IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
@@ -151,6 +166,17 @@ func ParseStatusesPath(id *url.URL) (username string, uuid string, err error) {
 // ParseUserPath returns the username from a path such as /users/example_username
 func ParseUserPath(id *url.URL) (username string, err error) {
 	matches := userPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
+}
+
+// ParseInboxPath returns the username from a path such as /users/example_username/inbox
+func ParseInboxPath(id *url.URL) (username string, err error) {
+	matches := inboxPathRegex.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return

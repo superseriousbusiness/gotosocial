@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package oauth
+package oauth_test
 
 import (
 	"context"
@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
@@ -69,7 +70,7 @@ func (suite *PgClientStoreTestSuite) SetupTest() {
 	suite.db = db
 
 	models := []interface{}{
-		&Client{},
+		&oauth.Client{},
 	}
 
 	for _, m := range models {
@@ -82,7 +83,7 @@ func (suite *PgClientStoreTestSuite) SetupTest() {
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
 func (suite *PgClientStoreTestSuite) TearDownTest() {
 	models := []interface{}{
-		&Client{},
+		&oauth.Client{},
 	}
 	for _, m := range models {
 		if err := suite.db.DropTable(m); err != nil {
@@ -97,7 +98,7 @@ func (suite *PgClientStoreTestSuite) TearDownTest() {
 
 func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 	// set a new client in the store
-	cs := newClientStore(suite.db)
+	cs := oauth.NewClientStore(suite.db)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -115,7 +116,7 @@ func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 
 func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
 	// set a new client in the store
-	cs := newClientStore(suite.db)
+	cs := oauth.NewClientStore(suite.db)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}

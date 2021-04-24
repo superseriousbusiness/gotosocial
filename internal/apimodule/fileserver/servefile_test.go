@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package test
+package fileserver_test
 
 import (
 	"context"

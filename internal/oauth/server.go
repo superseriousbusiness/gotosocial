@@ -215,7 +215,7 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 // New returns a new oauth server that implements the Server interface
 func New(database db.DB, log *logrus.Logger) Server {
 	ts := newTokenStore(context.Background(), database, log)
-	cs := newClientStore(database)
+	cs := NewClientStore(database)
 
 	manager := manage.NewDefaultManager()
 	manager.MapTokenStorage(ts)

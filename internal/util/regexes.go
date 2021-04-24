@@ -60,6 +60,10 @@ var (
 	// userPathRegex parses a path that validates and captures the username part from eg /users/example_username
 	userPathRegex = regexp.MustCompile(userPathRegexString)
 
+	inboxPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, InboxPath)
+	// inboxPathRegex parses a path that validates and captures the username part from eg /users/example_username/inbox
+	inboxPathRegex = regexp.MustCompile(inboxPathRegexString)
+
 	actorPathRegexString = fmt.Sprintf(`^?/%s/(%s)$`, ActorsPath, usernameRegexString)
 	// actorPathRegex parses a path that validates and captures the username part from eg /actors/example_username
 	actorPathRegex = regexp.MustCompile(actorPathRegexString)

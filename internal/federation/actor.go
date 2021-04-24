@@ -16,6 +16,29 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package oauth_test
+// Package federation provides ActivityPub/federation functionality for GoToSocial
+package federation
 
-// TODO: write tests
+import (
+	"github.com/go-fed/activity/pub"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+)
+
+// New returns a go-fed compatible federating actor
+func New(db db.DB, config *config.Config, log *logrus.Logger) pub.FederatingActor {
+
+	c := &Commoner{
+		db:     db,
+		log:    log,
+		config: config,
+	}
+
+	f := &Federator{
+		db:     db,
+		log:    log,
+		config: config,
+	}
+	return pub.NewFederatingActor(c, f, db.Federation(), &Clock{})
+}

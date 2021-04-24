@@ -16,4 +16,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package account
+package federation
+
+import "time"
+
+/*
+	GOFED CLOCK INTERFACE
+	Determines the time.
+*/
+
+// Clock implements the Clock interface of go-fed
+type Clock struct{}
+
+// Now just returns the time now
+func (c *Clock) Now() time.Time {
+	return time.Now()
+}

@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status
+package status_test
 
 import (
 	"encoding/json"
@@ -44,7 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusFaveTestSuite struct {
+type StatusUnfaveTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	config         *config.Config
@@ -74,7 +74,7 @@ type StatusFaveTestSuite struct {
 */
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *StatusFaveTestSuite) SetupSuite() {
+func (suite *StatusUnfaveTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
@@ -89,12 +89,12 @@ func (suite *StatusFaveTestSuite) SetupSuite() {
 	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
 }
 
-func (suite *StatusFaveTestSuite) TearDownSuite() {
+func (suite *StatusUnfaveTestSuite) TearDownSuite() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-func (suite *StatusFaveTestSuite) SetupTest() {
+func (suite *StatusUnfaveTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
@@ -107,7 +107,7 @@ func (suite *StatusFaveTestSuite) SetupTest() {
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
-func (suite *StatusFaveTestSuite) TearDownTest() {
+func (suite *StatusUnfaveTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
@@ -116,13 +116,14 @@ func (suite *StatusFaveTestSuite) TearDownTest() {
 	ACTUAL TESTS
 */
 
-// fave a status
-func (suite *StatusFaveTestSuite) TestPostFave() {
+// unfave a status
+func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.TokenToOauthToken(t)
 
-	targetStatus := suite.testStatuses["admin_account_status_2"]
+	// this is the status we wanna unfave: in the testrig it's already faved by this account
+	targetStatus := suite.testStatuses["admin_account_status_1"]
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -131,7 +132,7 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.UnfavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -142,7 +143,56 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 		},
 	}
 
-	suite.statusModule.StatusFavePOSTHandler(ctx)
+	suite.statusModule.StatusUnfavePOSTHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	statusReply := &mastomodel.Status{}
+	err = json.Unmarshal(b, statusReply)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
+	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
+	assert.False(suite.T(), statusReply.Sensitive)
+	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.False(suite.T(), statusReply.Favourited)
+	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
+}
+
+// try to unfave a status that's already not faved
+func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
+
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.TokenToOauthToken(t)
+
+	// this is the status we wanna unfave: in the testrig it's not faved by this account
+	targetStatus := suite.testStatuses["admin_account_status_2"]
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.UnfavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   status.IDKey,
+			Value: targetStatus.ID,
+		},
+	}
+
+	suite.statusModule.StatusUnfavePOSTHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -160,48 +210,10 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
-	assert.True(suite.T(), statusReply.Favourited)
-	assert.Equal(suite.T(), 1, statusReply.FavouritesCount)
+	assert.False(suite.T(), statusReply.Favourited)
+	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
 }
 
-// try to fave a status that's not faveable
-func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
-
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
-
-	targetStatus := suite.testStatuses["local_account_2_status_3"] // this one is unlikeable and unreplyable
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   status.IDKey,
-			Value: targetStatus.ID,
-		},
-	}
-
-	suite.statusModule.StatusFavePOSTHandler(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusForbidden, recorder.Code) // we 403 unlikeable statuses
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), fmt.Sprintf(`{"error":"status %s not faveable"}`, targetStatus.ID), string(b))
-}
-
-func TestStatusFaveTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusFaveTestSuite))
+func TestStatusUnfaveTestSuite(t *testing.T) {
+	suite.Run(t, new(StatusUnfaveTestSuite))
 }
