@@ -19,23 +19,30 @@
 package federation_test
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ProtocolTestSuite struct {
 	suite.Suite
-	config    *config.Config
-	db        db.DB
-	log       *logrus.Logger
-	federator *federation.Federator
+	config     *config.Config
+	db         db.DB
+	log        *logrus.Logger
+	federator  *federation.Federator
+	activities map[string]pub.Activity
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
@@ -44,6 +51,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
+	suite.activities = testrig.NewTestActivities()
 
 	// setup module being tested
 	suite.federator = federation.NewFederator(suite.db, suite.log, suite.config).(*federation.Federator)
@@ -58,26 +66,32 @@ func (suite *ProtocolTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
+// make sure PostInboxRequestBodyHook properly sets the inbox username and activity on the context
 func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 
+	activity := suite.activities["dm_for_zork"]
+
 	// setup
-	// recorder := httptest.NewRecorder()
-	// ctx := context.Background()
-	// request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
+	ctx := context.Background()
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
 
-	// activity :=
+	newContext, err := suite.federator.PostInboxRequestBodyHook(ctx, request, activity)
+	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), newContext)
 
-	// _, err := suite.federator.PostInboxRequestBodyHook(ctx, request, nil)
-	// assert.NoError(suite.T(), err)
+	usernameI := newContext.Value(util.APUsernameKey)
+	assert.NotNil(suite.T(), usernameI)
+	username, ok := usernameI.(string)
+	assert.True(suite.T(), ok)
+	assert.NotEmpty(suite.T(), username)
+	assert.Equal(suite.T(), "the_mighty_zork", username)
 
-	// check response
-	// suite.EqualValues(http.StatusOK, recorder.Code)
-
-	// result := recorder.Result()
-	// defer result.Body.Close()
-	// b, err := ioutil.ReadAll(result.Body)
-	// assert.NoError(suite.T(), err)
-
+	activityI := newContext.Value(util.APActivityKey)
+	assert.NotNil(suite.T(), activityI)
+	returnedActivity, ok := activityI.(pub.Activity)
+	assert.True(suite.T(), ok)
+	assert.NotNil(suite.T(), returnedActivity)
+	assert.EqualValues(suite.T(), activity, returnedActivity)
 }
 
 func TestProtocolTestSuite(t *testing.T) {

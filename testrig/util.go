@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"io"
 	"mime/multipart"
+	"net/url"
 	"os"
 )
 
@@ -61,4 +62,14 @@ func CreateMultipartFormData(fieldName string, fileName string, extraFields map[
 		return b, nil, err
 	}
 	return b, w, nil
+}
+
+// URLMustParse tries to parse the given URL and panics if it can't.
+// Should only be used in tests.
+func URLMustParse(stringURL string) *url.URL {
+	u, err := url.Parse(stringURL)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

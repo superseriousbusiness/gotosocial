@@ -22,8 +22,12 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"net"
+	"net/url"
 	"time"
 
+	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -992,4 +996,121 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 			StatusID:        "502ccd6f-0edf-48d7-9016-2dfa4d3714cd", // admin account status 1
 		},
 	}
+}
+
+func NewTestActivities() map[string]pub.Activity {
+	dmForZork := newNote(
+		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		URLMustParse("https://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		"hey zork here's a new private note for you",
+		"new note for zork",
+		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
+		nil,
+		true)
+	createDmForZork := wrapNoteInCreate(
+		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
+		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		dmForZork)
+
+	return map[string]pub.Activity{
+		"dm_for_zork": createDmForZork,
+	}
+}
+
+func newNote(
+	noteID *url.URL,
+	noteURL *url.URL,
+	noteContent string,
+	noteSummary string,
+	noteAttributedTo *url.URL,
+	noteTo []*url.URL,
+	noteCC []*url.URL,
+	noteSensitive bool) vocab.ActivityStreamsNote {
+
+	// create the note itself
+	note := streams.NewActivityStreamsNote()
+
+	// set id
+	if noteID != nil {
+		id := streams.NewJSONLDIdProperty()
+		id.Set(noteID)
+		note.SetJSONLDId(id)
+	}
+
+	// set noteURL
+	if noteURL != nil {
+		url := streams.NewActivityStreamsUrlProperty()
+		url.AppendIRI(noteURL)
+		note.SetActivityStreamsUrl(url)
+	}
+
+	// set noteContent
+	if noteContent != "" {
+		content := streams.NewActivityStreamsContentProperty()
+		content.AppendXMLSchemaString(noteContent)
+		note.SetActivityStreamsContent(content)
+	}
+
+	// set noteSummary (aka content warning)
+	if noteSummary != "" {
+		summary := streams.NewActivityStreamsSummaryProperty()
+		summary.AppendXMLSchemaString(noteSummary)
+		note.SetActivityStreamsSummary(summary)
+	}
+
+	// set noteAttributedTo (the url of the author of the note)
+	if noteAttributedTo != nil {
+		attributedTo := streams.NewActivityStreamsAttributedToProperty()
+		attributedTo.AppendIRI(noteAttributedTo)
+		note.SetActivityStreamsAttributedTo(attributedTo)
+	}
+
+	return note
+}
+
+func wrapNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
+	// create the.... create
+	create := streams.NewActivityStreamsCreate()
+
+	// set createID
+	if createID != nil {
+		id := streams.NewJSONLDIdProperty()
+		id.Set(createID)
+		create.SetJSONLDId(id)
+	}
+
+	// set createActor
+	if createActor != nil {
+		actor := streams.NewActivityStreamsActorProperty()
+		actor.AppendIRI(createActor)
+		create.SetActivityStreamsActor(actor)
+	}
+
+	// set createPublished (time)
+	if !createPublished.IsZero() {
+		published := streams.NewActivityStreamsPublishedProperty()
+		published.Set(createPublished)
+		create.SetActivityStreamsPublished(published)
+	}
+
+	// setCreateTo
+	if createNote.GetActivityStreamsTo() != nil {
+		create.SetActivityStreamsTo(createNote.GetActivityStreamsTo())
+	}
+
+	// setCreateCC
+	if createNote.GetActivityStreamsCc() != nil {
+		create.SetActivityStreamsCc(createNote.GetActivityStreamsCc())
+	}
+
+	// set createNote
+	if createNote != nil {
+		note := streams.NewActivityStreamsObjectProperty()
+		note.AppendActivityStreamsNote(createNote)
+		create.SetActivityStreamsObject(note)
+	}
+
+	return create
 }

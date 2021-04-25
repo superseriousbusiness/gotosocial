@@ -86,7 +86,6 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		"url":       r.URL.String(),
 		"aptype":    activity.GetTypeName(),
 	})
-	l.Debugf("received inbox post request %+v", activity)
 
 	if !util.IsInboxPath(r.URL) {
 		err := fmt.Errorf("url %s did not corresponding to inbox path", r.URL.String())
