@@ -20,6 +20,8 @@ package federation_test
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -92,6 +94,15 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	assert.True(suite.T(), ok)
 	assert.NotNil(suite.T(), returnedActivity)
 	assert.EqualValues(suite.T(), activity, returnedActivity)
+
+	r, err := returnedActivity.Serialize()
+	assert.NoError(suite.T(), err)
+
+	b, err := json.Marshal(r)
+	assert.NoError(suite.T(), err)
+
+	fmt.Println(string(b))
+
 }
 
 func TestProtocolTestSuite(t *testing.T) {
