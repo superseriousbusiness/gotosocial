@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -44,6 +45,7 @@ type ProtocolTestSuite struct {
 	db         db.DB
 	log        *logrus.Logger
 	federator  *federation.Federator
+	tc         transport.Controller
 	activities map[string]pub.Activity
 }
 
@@ -53,10 +55,13 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
+	suite.tc = testrig.NewTestTransportController(suite.db, testrig.NewMockHTTPClient(func(req *http.Request)(*http.Response, error) {
+		return nil, nil
+	}))
 	suite.activities = testrig.NewTestActivities()
 
 	// setup module being tested
-	suite.federator = federation.NewFederator(suite.db, suite.log, suite.config).(*federation.Federator)
+	suite.federator = federation.NewFederator(suite.db, suite.log, suite.config, suite.tc).(*federation.Federator)
 }
 
 func (suite *ProtocolTestSuite) SetupTest() {

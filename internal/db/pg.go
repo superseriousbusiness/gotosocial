@@ -465,6 +465,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		URL:                   newAccountURIs.UserURL,
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
+		PublicKeyURI:          newAccountURIs.PublicKeyURI,
 		ActorType:             gtsmodel.ActivityStreamsPerson,
 		URI:                   newAccountURIs.UserURI,
 		InboxURL:              newAccountURIs.InboxURI,

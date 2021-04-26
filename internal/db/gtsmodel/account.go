@@ -115,6 +115,8 @@ type Account struct {
 	PrivateKey *rsa.PrivateKey
 	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
 	PublicKey *rsa.PublicKey
+	// Web-reachable location of this account's public key
+	PublicKeyURI string
 
 	/*
 		ADMIN FIELDS

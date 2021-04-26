@@ -45,6 +45,8 @@ const (
 	CollectionsPath = "collections"
 	// FeaturedPath represents the webfinger featured location
 	FeaturedPath = "featured"
+	// PublicKeyPath is for serving an account's public key
+	PublicKeyPath = "publickey"
 )
 
 // APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
@@ -82,6 +84,8 @@ type UserURIs struct {
 	LikedURI string
 	// The webfinger URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
 	CollectionURI string
+	// The URI for this user's public key, eg., https://example.org/users/example_user/publickey
+	PublicKeyURI string
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
@@ -100,6 +104,8 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 	followingURI := fmt.Sprintf("%s/%s", userURI, FollowingPath)
 	likedURI := fmt.Sprintf("%s/%s", userURI, LikedPath)
 	collectionURI := fmt.Sprintf("%s/%s/%s", userURI, CollectionsPath, FeaturedPath)
+	publicKeyURI := fmt.Sprintf("%s/%s", userURI, PublicKeyPath)
+
 	return &UserURIs{
 		HostURL:     hostURL,
 		UserURL:     userURL,
@@ -113,6 +119,7 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 		FollowingURI:  followingURI,
 		LikedURI:      likedURI,
 		CollectionURI: collectionURI,
+		PublicKeyURI:  publicKeyURI,
 	}
 }
 

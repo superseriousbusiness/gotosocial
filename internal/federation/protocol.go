@@ -30,22 +30,25 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Federator implements the go-fed federating protocol interface
 type Federator struct {
-	db     db.DB
-	log    *logrus.Logger
-	config *config.Config
+	db                  db.DB
+	log                 *logrus.Logger
+	config              *config.Config
+	transportController transport.Controller
 }
 
 // NewFederator returns the gotosocial implementation of the go-fed FederatingProtocol interface
-func NewFederator(db db.DB, log *logrus.Logger, config *config.Config) pub.FederatingProtocol {
+func NewFederator(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.FederatingProtocol {
 	return &Federator{
-		db:     db,
-		log:    log,
-		config: config,
+		db:                  db,
+		log:                 log,
+		config:              config,
+		transportController: transportController,
 	}
 }
 
@@ -76,16 +79,17 @@ func NewFederator(db db.DB, log *logrus.Logger, config *config.Config) pub.Feder
 // write a response to the ResponseWriter as is expected that the caller
 // to PostInbox will do so when handling the error.
 func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
-	if activity == nil {
-		return nil, errors.New("nil activity in PostInboxRequestBodyHook")
-	}
-
 	l := f.log.WithFields(logrus.Fields{
 		"func":      "PostInboxRequestBodyHook",
 		"useragent": r.UserAgent(),
 		"url":       r.URL.String(),
-		"aptype":    activity.GetTypeName(),
 	})
+
+	if activity == nil {
+		err := errors.New("nil activity in PostInboxRequestBodyHook")
+		l.Debug(err)
+		return nil, err
+	}
 
 	if !util.IsInboxPath(r.URL) {
 		err := fmt.Errorf("url %s did not corresponding to inbox path", r.URL.String())
@@ -123,8 +127,28 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	// TODO
-	return nil, false, nil
+	l := f.log.WithFields(logrus.Fields{
+		"func":      "AuthenticatePostInbox",
+		"useragent": r.UserAgent(),
+		"url":       r.URL.String(),
+	})
+	l.Trace("received request to authenticate")
+
+	if !util.IsInboxPath(r.URL) {
+		err := fmt.Errorf("url %s did not corresponding to inbox path", r.URL.String())
+		l.Debug(err)
+		return nil, false, err
+	}
+
+	username, err := util.ParseInboxPath(r.URL)
+	if err != nil {
+		err := fmt.Errorf("could not parse username from url: %s", r.URL.String())
+		l.Debug(err)
+		return nil, false, err
+	}
+	l.Tracef("parsed username %s from %s", username, r.URL.String())
+
+	return validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
 }
 
 // Blocked should determine whether to permit a set of actors given by
