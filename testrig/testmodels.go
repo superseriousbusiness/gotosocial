@@ -998,6 +998,7 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
+// NewTestActivities returns a bunch of pub.Activity types for use in testing the federation protocols.
 func NewTestActivities() map[string]pub.Activity {
 	dmForZork := newNote(
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),

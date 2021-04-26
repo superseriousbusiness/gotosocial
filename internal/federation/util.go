@@ -37,7 +37,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-
 /*
 	publicKeyer is BORROWED DIRECTLY FROM https://github.com/go-fed/apcore/blob/master/ap/util.go
 	Thank you @cj@mastodon.technology ! <3
@@ -50,8 +49,8 @@ type publicKeyer interface {
 	getPublicKeyFromResponse is BORROWED DIRECTLY FROM https://github.com/go-fed/apcore/blob/master/ap/util.go
 	Thank you @cj@mastodon.technology ! <3
 */
-func getPublicKeyFromResponse(c context.Context, b []byte, keyId *url.URL) (p crypto.PublicKey, err error) {
-	m := make(map[string]interface{}, 0)
+func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p crypto.PublicKey, err error) {
+	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	if err != nil {
 		return
@@ -77,19 +76,19 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyId *url.URL) (p cr
 			continue
 		}
 		pkValue := pkpIter.Get()
-		var pkId *url.URL
-		pkId, err = pub.GetId(pkValue)
+		var pkID *url.URL
+		pkID, err = pub.GetId(pkValue)
 		if err != nil {
 			return
 		}
-		if pkId.String() != keyId.String() {
+		if pkID.String() != keyID.String() {
 			continue
 		}
 		pkpFound = pkValue
 		break
 	}
 	if pkpFound == nil {
-		err = fmt.Errorf("cannot find publicKey with id: %s", keyId)
+		err = fmt.Errorf("cannot find publicKey with id: %s", keyID)
 		return
 	}
 	pkPemProp := pkpFound.GetW3IDSecurityV1PublicKeyPem()

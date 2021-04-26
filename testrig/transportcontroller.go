@@ -43,15 +43,15 @@ func NewTestTransportController(db db.DB, client pub.HttpClient) transport.Contr
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,
 // but will always just execute the given `do` function, allowing responses to be mocked.
 func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error)) pub.HttpClient {
-	return &mockHttpClient{
+	return &mockHTTPClient{
 		do: do,
 	}
 }
 
-type mockHttpClient struct {
+type mockHTTPClient struct {
 	do func(req *http.Request) (*http.Response, error)
 }
 
-func (m *mockHttpClient) Do(req *http.Request) (*http.Response, error) {
+func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.do(req)
 }

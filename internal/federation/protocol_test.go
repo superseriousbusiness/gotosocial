@@ -55,7 +55,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
-	suite.tc = testrig.NewTestTransportController(suite.db, testrig.NewMockHTTPClient(func(req *http.Request)(*http.Response, error) {
+	suite.tc = testrig.NewTestTransportController(suite.db, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return nil, nil
 	}))
 	suite.activities = testrig.NewTestActivities()
