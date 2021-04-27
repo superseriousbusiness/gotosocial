@@ -34,23 +34,23 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ServeFileTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config         *config.Config
-	db             db.DB
-	log            *logrus.Logger
-	storage        storage.Storage
-	mastoConverter mastotypes.Converter
-	mediaHandler   media.Handler
-	oauthServer    oauth.Server
+	config       *config.Config
+	db           db.DB
+	log          *logrus.Logger
+	storage      storage.Storage
+	tc           typeutils.TypeConverter
+	mediaHandler media.Handler
+	oauthServer  oauth.Server
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -74,7 +74,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 

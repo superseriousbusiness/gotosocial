@@ -41,10 +41,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 	oauthmodels "github.com/superseriousbusiness/oauth2/v4/models"
@@ -60,7 +60,7 @@ type AccountUpdateTestSuite struct {
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
 	mediaHandler         media.Handler
-	mastoConverter       mastotypes.Converter
+	mastoConverter       typeutils.TypeConverter
 	db                   db.DB
 	accountModule        *account.Module
 	newUserFormHappyPath url.Values
@@ -157,7 +157,7 @@ func (suite *AccountUpdateTestSuite) SetupSuite() {
 	// set a media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
 	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
 
-	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
+	suite.mastoConverter = typeutils.NewConverter(suite.config, suite.db)
 
 	// and finally here's the thing we're actually testing!
 	suite.accountModule = account.New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*account.Module)

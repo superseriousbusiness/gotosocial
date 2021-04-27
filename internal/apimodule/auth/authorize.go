@@ -28,7 +28,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 )
 
 // AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize

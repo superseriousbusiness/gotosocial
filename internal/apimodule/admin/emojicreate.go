@@ -27,7 +27,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -99,7 +99,7 @@ func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoEmoji, err := m.mastoConverter.EmojiToMasto(emoji)
+	mastoEmoji, err := m.tc.EmojiToMasto(emoji)
 	if err != nil {
 		l.Debugf("error converting emoji to mastotype: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("could not convert emoji: %s", err)})

@@ -27,9 +27,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // BasePath is the base API path for making media requests
@@ -37,21 +37,21 @@ const BasePath = "/api/v1/media"
 
 // Module implements the ClientAPIModule interface for media
 type Module struct {
-	mediaHandler   media.Handler
-	config         *config.Config
-	db             db.DB
-	mastoConverter mastotypes.Converter
-	log            *logrus.Logger
+	mediaHandler media.Handler
+	config       *config.Config
+	db           db.DB
+	tc           typeutils.TypeConverter
+	log          *logrus.Logger
 }
 
 // New returns a new auth module
-func New(db db.DB, mediaHandler media.Handler, mastoConverter mastotypes.Converter, config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(db db.DB, mediaHandler media.Handler, tc typeutils.TypeConverter, config *config.Config, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &Module{
-		mediaHandler:   mediaHandler,
-		config:         config,
-		db:             db,
-		mastoConverter: mastoConverter,
-		log:            log,
+		mediaHandler: mediaHandler,
+		config:       config,
+		db:           db,
+		tc:           tc,
+		log:          log,
 	}
 }
 

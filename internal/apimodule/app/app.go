@@ -26,9 +26,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // BasePath is the base path for this api module
@@ -36,19 +36,19 @@ const BasePath = "/api/v1/apps"
 
 // Module implements the ClientAPIModule interface for requests relating to registering/removing applications
 type Module struct {
-	server         oauth.Server
-	db             db.DB
-	mastoConverter mastotypes.Converter
-	log            *logrus.Logger
+	server oauth.Server
+	db     db.DB
+	tc     typeutils.TypeConverter
+	log    *logrus.Logger
 }
 
 // New returns a new auth module
-func New(srv oauth.Server, db db.DB, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(srv oauth.Server, db db.DB, tc typeutils.TypeConverter, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &Module{
-		server:         srv,
-		db:             db,
-		mastoConverter: mastoConverter,
-		log:            log,
+		server: srv,
+		db:     db,
+		tc:     tc,
+		log:    log,
 	}
 }
 

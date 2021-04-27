@@ -38,7 +38,7 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 	}
 
 	l.Tracef("retrieved account %+v, converting to mastosensitive...", authed.Account.ID)
-	acctSensitive, err := m.mastoConverter.AccountToMastoSensitive(authed.Account)
+	acctSensitive, err := m.tc.AccountToMastoSensitive(authed.Account)
 	if err != nil {
 		l.Tracef("could not convert account into mastosensitive account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

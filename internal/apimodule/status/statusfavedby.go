@@ -25,7 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -117,7 +117,7 @@ func (m *Module) StatusFavedByGETHandler(c *gin.Context) {
 	// now we can return the masto representation of those accounts
 	mastoAccounts := []*mastotypes.Account{}
 	for _, acc := range filteredAccounts {
-		mastoAccount, err := m.mastoConverter.AccountToMastoPublic(acc)
+		mastoAccount, err := m.tc.AccountToMastoPublic(acc)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

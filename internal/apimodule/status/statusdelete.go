@@ -84,7 +84,7 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		}
 	}
 
-	mastoStatus, err := m.mastoConverter.StatusToMasto(targetStatus, authed.Account, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
+	mastoStatus, err := m.tc.StatusToMasto(targetStatus, authed.Account, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
 	if err != nil {
 		l.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})

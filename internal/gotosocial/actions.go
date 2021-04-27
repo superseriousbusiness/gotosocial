@@ -41,11 +41,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Run creates and starts a gotosocial server
@@ -74,16 +74,16 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	}
 
 	// build converters and util
-	mastoConverter := mastotypes.New(c, dbService)
+	ic := typeutils.NewConverter(c, dbService)
 
 	// build client api modules
 	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
-	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
-	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
+	accountModule := account.New(c, dbService, oauthServer, mediaHandler, ic, log)
+	appsModule := app.New(oauthServer, dbService, ic, log)
+	mm := mediaModule.New(dbService, mediaHandler, ic, c, log)
 	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
-	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
-	statusModule := status.New(c, dbService, mediaHandler, mastoConverter, distributor, log)
+	adminModule := admin.New(c, dbService, mediaHandler, ic, log)
+	statusModule := status.New(c, dbService, mediaHandler, ic, distributor, log)
 	securityModule := security.New(c, log)
 
 	apiModules := []apimodule.ClientAPIModule{

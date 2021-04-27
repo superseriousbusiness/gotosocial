@@ -53,7 +53,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 	if err := distributor.Start(); err != nil {
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
-	mastoConverter := NewTestMastoConverter(dbService)
+	mastoConverter := NewTestTypeConverter(dbService)
 
 	c := NewTestConfig()
 

@@ -115,7 +115,7 @@ func (m *Module) StatusUnfavePOSTHandler(c *gin.Context) {
 		}
 	}
 
-	mastoStatus, err := m.mastoConverter.StatusToMasto(targetStatus, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
+	mastoStatus, err := m.tc.StatusToMasto(targetStatus, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
 	if err != nil {
 		l.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": fmt.Sprintf("status %s not found", targetStatusID)})

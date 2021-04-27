@@ -44,7 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -65,7 +65,7 @@ type AccountCreateTestSuite struct {
 	mockOauthServer      *oauth.MockServer
 	mockStorage          *storage.MockStorage
 	mediaHandler         media.Handler
-	mastoConverter       mastotypes.Converter
+	mastoConverter       typeutils.TypeConverter
 	db                   db.DB
 	accountModule        *account.Module
 	newUserFormHappyPath url.Values
@@ -162,7 +162,7 @@ func (suite *AccountCreateTestSuite) SetupSuite() {
 	// set a media handler because some handlers (eg update credentials) need to upload media (new header/avatar)
 	suite.mediaHandler = media.New(suite.config, suite.db, suite.mockStorage, log)
 
-	suite.mastoConverter = mastotypes.New(suite.config, suite.db)
+	suite.mastoConverter = typeutils.NewConverter(suite.config, suite.db)
 
 	// and finally here's the thing we're actually testing!
 	suite.accountModule = account.New(suite.config, suite.db, suite.mockOauthServer, suite.mediaHandler, suite.mastoConverter, suite.log).(*account.Module)
@@ -265,7 +265,7 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	t := &mastomodel.Token{}
+	t := &mastotypes.Token{}
 	err = json.Unmarshal(b, t)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "we're authorized now!", t.AccessToken)

@@ -47,7 +47,7 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctInfo, err := m.mastoConverter.AccountToMastoPublic(targetAccount)
+	acctInfo, err := m.tc.AccountToMastoPublic(targetAccount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

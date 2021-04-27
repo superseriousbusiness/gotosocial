@@ -150,15 +150,7 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 	l.Tracef("parsed username %s from %s", username, r.URL.String())
 
-	newContext, authed, err := validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
-
-	if err != nil {
-		l.Debug(err)
-	}
-
-	return newContext, authed, err
-
-
+	return validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
 }
 
 // Blocked should determine whether to permit a set of actors given by

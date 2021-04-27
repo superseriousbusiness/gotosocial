@@ -37,10 +37,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -51,7 +51,7 @@ type StatusFavedByTestSuite struct {
 	db             db.DB
 	log            *logrus.Logger
 	storage        storage.Storage
-	mastoConverter mastotypes.Converter
+	mastoConverter typeutils.TypeConverter
 	mediaHandler   media.Handler
 	oauthServer    oauth.Server
 	distributor    distributor.Distributor
@@ -76,7 +76,7 @@ func (suite *StatusFavedByTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.mastoConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.distributor = testrig.NewTestDistributor()
@@ -146,7 +146,7 @@ func (suite *StatusFavedByTestSuite) TestGetFavedBy() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	accts := []mastomodel.Account{}
+	accts := []mastotypes.Account{}
 	err = json.Unmarshal(b, &accts)
 	assert.NoError(suite.T(), err)
 

@@ -29,7 +29,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -149,7 +149,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 	// prepare the frontend representation now -- if there are any errors here at least we can bail without
 	// having already put something in the database and then having to clean it up again (eugh)
-	mastoAttachment, err := m.mastoConverter.AttachmentToMasto(attachment)
+	mastoAttachment, err := m.tc.AttachmentToMasto(attachment)
 	if err != nil {
 		l.Debugf("error parsing media attachment to frontend type: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error parsing media attachment to frontend type: %s", err)})

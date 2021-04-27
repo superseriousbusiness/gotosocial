@@ -30,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 const (
@@ -79,23 +79,23 @@ const (
 
 // Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with statuses
 type Module struct {
-	config         *config.Config
-	db             db.DB
-	mediaHandler   media.Handler
-	mastoConverter mastotypes.Converter
-	distributor    distributor.Distributor
-	log            *logrus.Logger
+	config       *config.Config
+	db           db.DB
+	mediaHandler media.Handler
+	tc           typeutils.TypeConverter
+	distributor  distributor.Distributor
+	log          *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, mediaHandler media.Handler, mastoConverter mastotypes.Converter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, mediaHandler media.Handler, tc typeutils.TypeConverter, distributor distributor.Distributor, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &Module{
-		config:         config,
-		db:             db,
-		mediaHandler:   mediaHandler,
-		mastoConverter: mastoConverter,
-		distributor:    distributor,
-		log:            log,
+		config:       config,
+		db:           db,
+		mediaHandler: mediaHandler,
+		tc:           tc,
+		distributor:  distributor,
+		log:          log,
 	}
 }
 

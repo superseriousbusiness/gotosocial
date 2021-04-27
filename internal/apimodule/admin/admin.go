@@ -27,9 +27,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 const (
@@ -41,21 +41,21 @@ const (
 
 // Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
 type Module struct {
-	config         *config.Config
-	db             db.DB
-	mediaHandler   media.Handler
-	mastoConverter mastotypes.Converter
-	log            *logrus.Logger
+	config       *config.Config
+	db           db.DB
+	mediaHandler media.Handler
+	tc           typeutils.TypeConverter
+	log          *logrus.Logger
 }
 
 // New returns a new admin module
-func New(config *config.Config, db db.DB, mediaHandler media.Handler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, mediaHandler media.Handler, tc typeutils.TypeConverter, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &Module{
-		config:         config,
-		db:             db,
-		mediaHandler:   mediaHandler,
-		mastoConverter: mastoConverter,
-		log:            log,
+		config:       config,
+		db:           db,
+		mediaHandler: mediaHandler,
+		tc:           tc,
+		log:          log,
 	}
 }
 

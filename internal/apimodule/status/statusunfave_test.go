@@ -37,24 +37,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusUnfaveTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config         *config.Config
-	db             db.DB
-	log            *logrus.Logger
-	storage        storage.Storage
-	mastoConverter mastotypes.Converter
-	mediaHandler   media.Handler
-	oauthServer    oauth.Server
-	distributor    distributor.Distributor
+	config       *config.Config
+	db           db.DB
+	log          *logrus.Logger
+	storage      storage.Storage
+	tc           typeutils.TypeConverter
+	mediaHandler media.Handler
+	oauthServer  oauth.Server
+	distributor  distributor.Distributor
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -80,13 +80,13 @@ func (suite *StatusUnfaveTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.tc, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusUnfaveTestSuite) TearDownSuite() {
@@ -153,14 +153,14 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
 	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPublic, statusReply.Visibility)
 	assert.False(suite.T(), statusReply.Favourited)
 	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
 }
@@ -202,14 +202,14 @@ func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
 	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPublic, statusReply.Visibility)
 	assert.False(suite.T(), statusReply.Favourited)
 	assert.Equal(suite.T(), 0, statusReply.FavouritesCount)
 }

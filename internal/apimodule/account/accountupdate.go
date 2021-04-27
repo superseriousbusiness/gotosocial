@@ -28,7 +28,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -176,7 +176,7 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, err := m.mastoConverter.AccountToMastoSensitive(updatedAccount)
+	acctSensitive, err := m.tc.AccountToMastoSensitive(updatedAccount)
 	if err != nil {
 		l.Tracef("could not convert account into mastosensitive account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

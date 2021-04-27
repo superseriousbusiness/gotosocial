@@ -20,10 +20,10 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// NewTestMastoConverter returned a mastotypes converter with the given db and the default test config
-func NewTestMastoConverter(db db.DB) mastotypes.Converter {
-	return mastotypes.New(NewTestConfig(), db)
+// NewTestTypeConverter returned a type converter with the given db and the default test config
+func NewTestTypeConverter(db db.DB) typeutils.TypeConverter {
+	return typeutils.NewConverter(NewTestConfig(), db)
 }

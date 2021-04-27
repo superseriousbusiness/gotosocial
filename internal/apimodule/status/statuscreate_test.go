@@ -37,24 +37,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config         *config.Config
-	db             db.DB
-	log            *logrus.Logger
-	storage        storage.Storage
-	mastoConverter mastotypes.Converter
-	mediaHandler   media.Handler
-	oauthServer    oauth.Server
-	distributor    distributor.Distributor
+	config       *config.Config
+	db           db.DB
+	log          *logrus.Logger
+	storage      storage.Storage
+	tc           typeutils.TypeConverter
+	mediaHandler media.Handler
+	oauthServer  oauth.Server
+	distributor  distributor.Distributor
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -79,13 +79,13 @@ func (suite *StatusCreateTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
+	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.tc, suite.distributor, suite.log).(*status.Module)
 }
 
 func (suite *StatusCreateTestSuite) TearDownSuite() {
@@ -152,16 +152,16 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "this is a brand new status! #helloworld", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPrivate, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
 	assert.Len(suite.T(), statusReply.Tags, 1)
-	assert.Equal(suite.T(), mastomodel.Tag{
+	assert.Equal(suite.T(), mastotypes.Tag{
 		Name: "helloworld",
 		URL:  "http://localhost:8080/tags/helloworld",
 	}, statusReply.Tags[0])
@@ -197,7 +197,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
@@ -271,14 +271,14 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
 	assert.Equal(suite.T(), fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPublic, statusReply.Visibility)
 	assert.Equal(suite.T(), testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
 	assert.Equal(suite.T(), testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
 	assert.Len(suite.T(), statusReply.Mentions, 1)
@@ -313,14 +313,14 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 
 	fmt.Println(string(b))
 
-	statusReply := &mastomodel.Status{}
+	statusReply := &mastotypes.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "here's an image attachment", statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), mastomodel.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), mastotypes.VisibilityPublic, statusReply.Visibility)
 
 	// there should be one media attachment
 	assert.Len(suite.T(), statusReply.MediaAttachments, 1)
@@ -331,7 +331,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	assert.NoError(suite.T(), err)
 
 	// convert it to a masto attachment
-	gtsAttachmentAsMasto, err := suite.mastoConverter.AttachmentToMasto(gtsAttachment)
+	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// compare it with what we have now

@@ -16,15 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package typeutils
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 )
 
-// ParseGTSVisFromMastoVis converts a mastodon visibility into its gts equivalent.
-func ParseGTSVisFromMastoVis(m mastotypes.Visibility) gtsmodel.Visibility {
+// MastoVisToVis converts a mastodon visibility into its gts equivalent.
+func (c *converter) MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility {
 	switch m {
 	case mastotypes.VisibilityPublic:
 		return gtsmodel.VisibilityPublic
@@ -38,8 +38,8 @@ func ParseGTSVisFromMastoVis(m mastotypes.Visibility) gtsmodel.Visibility {
 	return ""
 }
 
-// ParseMastoVisFromGTSVis converts a gts visibility into its mastodon equivalent
-func ParseMastoVisFromGTSVis(m gtsmodel.Visibility) mastotypes.Visibility {
+// VisToMasto converts a gts visibility into its mastodon equivalent
+func (c *converter) VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility {
 	switch m {
 	case gtsmodel.VisibilityPublic:
 		return mastotypes.VisibilityPublic

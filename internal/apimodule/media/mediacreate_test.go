@@ -37,23 +37,23 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config         *config.Config
-	db             db.DB
-	log            *logrus.Logger
-	storage        storage.Storage
-	mastoConverter mastotypes.Converter
-	mediaHandler   media.Handler
-	oauthServer    oauth.Server
+	config       *config.Config
+	db           db.DB
+	log          *logrus.Logger
+	storage      storage.Storage
+	tc           typeutils.TypeConverter
+	mediaHandler media.Handler
+	oauthServer  oauth.Server
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -77,12 +77,12 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.mastoConverter, suite.config, suite.log).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.db, suite.mediaHandler, suite.tc, suite.config, suite.log).(*mediamodule.Module)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
@@ -158,26 +158,26 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	assert.NoError(suite.T(), err)
 	fmt.Println(string(b))
 
-	attachmentReply := &mastomodel.Attachment{}
+	attachmentReply := &mastotypes.Attachment{}
 	err = json.Unmarshal(b, attachmentReply)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "this is a test image -- a cool background from somewhere", attachmentReply.Description)
 	assert.Equal(suite.T(), "image", attachmentReply.Type)
-	assert.EqualValues(suite.T(), mastomodel.MediaMeta{
-		Original: mastomodel.MediaDimensions{
+	assert.EqualValues(suite.T(), mastotypes.MediaMeta{
+		Original: mastotypes.MediaDimensions{
 			Width:  1920,
 			Height: 1080,
 			Size:   "1920x1080",
 			Aspect: 1.7777778,
 		},
-		Small: mastomodel.MediaDimensions{
+		Small: mastotypes.MediaDimensions{
 			Width:  256,
 			Height: 144,
 			Size:   "256x144",
 			Aspect: 1.7777778,
 		},
-		Focus: mastomodel.MediaFocus{
+		Focus: mastotypes.MediaFocus{
 			X: -0.5,
 			Y: 0.5,
 		},

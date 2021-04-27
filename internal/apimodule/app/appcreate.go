@@ -25,7 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -108,7 +108,7 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoApp, err := m.mastoConverter.AppToMastoSensitive(app)
+	mastoApp, err := m.tc.AppToMastoSensitive(app)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -51,23 +51,23 @@ const (
 
 // Module implements the ClientAPIModule interface for account-related actions
 type Module struct {
-	config         *config.Config
-	db             db.DB
-	oauthServer    oauth.Server
-	mediaHandler   media.Handler
-	mastoConverter mastotypes.Converter
-	log            *logrus.Logger
+	config       *config.Config
+	db           db.DB
+	oauthServer  oauth.Server
+	mediaHandler media.Handler
+	tc           typeutils.TypeConverter
+	log          *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.Handler, mastoConverter mastotypes.Converter, log *logrus.Logger) apimodule.ClientAPIModule {
+func New(config *config.Config, db db.DB, oauthServer oauth.Server, mediaHandler media.Handler, tc typeutils.TypeConverter, log *logrus.Logger) apimodule.ClientAPIModule {
 	return &Module{
-		config:         config,
-		db:             db,
-		oauthServer:    oauthServer,
-		mediaHandler:   mediaHandler,
-		mastoConverter: mastoConverter,
-		log:            log,
+		config:       config,
+		db:           db,
+		oauthServer:  oauthServer,
+		mediaHandler: mediaHandler,
+		tc:           tc,
+		log:          log,
 	}
 }
 

@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package mastotypes
+package typeutils
 
 import (
 	"fmt"
@@ -25,13 +25,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 )
 
-// Converter is an interface for the common action of converting between mastotypes (frontend, serializable) models and internal gts models used in the database.
+// TypeConverter is an interface for the common action of converting between mastotypes (frontend, serializable) models,
+// internal gts models used in the database, and models used in federation.
+//
 // It requires access to the database because many of the conversions require pulling out database entries and counting them etc.
-type Converter interface {
+// That said, it *absolutely should not* manipulate database entries in any way, only examine them.
+type TypeConverter interface {
 	// AccountToMastoSensitive takes a db model account as a param, and returns a populated mastotype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
@@ -66,6 +68,12 @@ type Converter interface {
 
 	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
 	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*mastotypes.Status, error)
+
+	// VisToMasto converts a gts visibility into its mastodon equivalent
+	VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility
+
+	// MastoVisToVis converts a mastodon visibility into its gts equivalent.
+	MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility
 }
 
 type converter struct {
@@ -73,8 +81,8 @@ type converter struct {
 	db     db.DB
 }
 
-// New returns a new Converter
-func New(config *config.Config, db db.DB) Converter {
+// NewConverter returns a new Converter
+func NewConverter(config *config.Config, db db.DB) TypeConverter {
 	return &converter{
 		config: config,
 		db:     db,
@@ -103,7 +111,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*mastotypes.Ac
 	}
 
 	mastoAccount.Source = &mastotypes.Source{
-		Privacy:             util.ParseMastoVisFromGTSVis(a.Privacy),
+		Privacy:             c.VisToMasto(a.Privacy),
 		Sensitive:           a.Sensitive,
 		Language:            a.Language,
 		Note:                a.Note,
@@ -517,7 +525,7 @@ func (c *converter) StatusToMasto(
 		InReplyToAccountID: s.InReplyToAccountID,
 		Sensitive:          s.Sensitive,
 		SpoilerText:        s.ContentWarning,
-		Visibility:         util.ParseMastoVisFromGTSVis(s.Visibility),
+		Visibility:         c.VisToMasto(s.Visibility),
 		Language:           s.Language,
 		URI:                s.URI,
 		URL:                s.URL,

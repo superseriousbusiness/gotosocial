@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
-	mastotypes "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
+	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -82,7 +82,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateStatus(form, m.config.StatusesConfig); err != nil {
+	if err := m.validateCreateStatus(form, m.config.StatusesConfig); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -127,7 +127,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// check if visibility settings are ok
-	if err := parseVisibility(form, authed.Account.Privacy, newStatus); err != nil {
+	if err := m.parseVisibility(form, authed.Account.Privacy, newStatus); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -182,7 +182,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := m.mastoConverter.StatusToMasto(newStatus, authed.Account, authed.Account, nil, newStatus.GTSReplyToAccount, nil)
+	mastoStatus, err := m.tc.StatusToMasto(newStatus, authed.Account, authed.Account, nil, newStatus.GTSReplyToAccount, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -190,7 +190,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, mastoStatus)
 }
 
-func validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig) error {
+func (m *Module) validateCreateStatus(form *advancedStatusCreateForm, config *config.StatusesConfig) error {
 	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
@@ -244,7 +244,7 @@ func validateCreateStatus(form *advancedStatusCreateForm, config *config.Statuse
 	return nil
 }
 
-func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
+func (m *Module) parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
 		Federated: true,
@@ -261,7 +261,7 @@ func parseVisibility(form *advancedStatusCreateForm, accountDefaultVis gtsmodel.
 	if form.VisibilityAdvanced != nil {
 		gtsBasicVis = *form.VisibilityAdvanced
 	} else if form.Visibility != "" {
-		gtsBasicVis = util.ParseGTSVisFromMastoVis(form.Visibility)
+		gtsBasicVis = m.tc.MastoVisToVis(form.Visibility)
 	} else if accountDefaultVis != "" {
 		gtsBasicVis = accountDefaultVis
 	} else {
