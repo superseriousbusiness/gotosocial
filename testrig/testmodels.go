@@ -19,9 +19,15 @@
 package testrig
 
 import (
+	"bytes"
+	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/json"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -287,6 +293,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
+			PublicKeyURI:            "http://localhost:8080/users/weed_lord420/publickey",
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
@@ -314,6 +321,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Language:                "en",
 			URI:                     "http://localhost:8080/users/admin",
 			URL:                     "http://localhost:8080/@admin",
+			PublicKeyURI:            "http://localhost:8080/users/admin/publickey",
 			LastWebfingeredAt:       time.Time{},
 			InboxURL:                "http://localhost:8080/users/admin/inbox",
 			OutboxURL:               "http://localhost:8080/users/admin/outbox",
@@ -361,6 +369,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
+			PublicKeyURI:            "http://localhost:8080/users/the_mighty_zork/publickey",
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
@@ -398,6 +407,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
+			PublicKeyURI:            "http://localhost:8080/users/1happyturtle/publickey",
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
@@ -440,8 +450,9 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FeaturedCollectionURL: "https://fossbros-anonymous.io/users/foss_satan/collections/featured",
 			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
-			PrivateKey:            &rsa.PrivateKey{},
-			PublicKey:             nil,
+			PrivateKey:            nil,
+			PublicKey:             &rsa.PublicKey{},
+			PublicKeyURI:          "http://fossbros-anonymous.io/users/foss_satan#publickey",
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
@@ -472,10 +483,10 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		}
 		pub := &priv.PublicKey
 
-		// only local accounts get a private key
-		if v.Domain == "" {
-			v.PrivateKey = priv
-		}
+		// normally only local accounts get a private key (obviously)
+		// but for testing purposes and signing requests, we'll give
+		// remote accounts a private key as well
+		v.PrivateKey = priv
 		v.PublicKey = pub
 	}
 	return accounts
@@ -998,8 +1009,17 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
+type ActivityWithSignature struct {
+	Activity        pub.Activity
+	SignatureHeader string
+	DigestHeader    string
+	DateHeader      string
+}
+
 // NewTestActivities returns a bunch of pub.Activity types for use in testing the federation protocols.
-func NewTestActivities() map[string]pub.Activity {
+// A struct of accounts needs to be passed in because the activities will also be bundled along with
+// their requesting signatures.
+func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	dmForZork := newNote(
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		URLMustParse("https://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
@@ -1014,12 +1034,63 @@ func NewTestActivities() map[string]pub.Activity {
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
+	sig, digest, date := getSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURL))
 
-	return map[string]pub.Activity{
-		"dm_for_zork": createDmForZork,
+	return map[string]ActivityWithSignature{
+		"dm_for_zork": {
+			Activity:        createDmForZork,
+			SignatureHeader: sig,
+			DigestHeader:    digest,
+			DateHeader:      date,
+		},
 	}
 }
 
+// getSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// the HTTP Signature for the given activity, public key ID, private key, and destination.
+func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+
+	// create a client that basically just pulls the signature out of the request and sets it
+	client := &mockHTTPClient{
+		do: func(req *http.Request) (*http.Response, error) {
+			signatureHeader = req.Header.Get("Signature")
+			digestHeader = req.Header.Get("Digest")
+			dateHeader = req.Header.Get("Date")
+			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
+			return &http.Response{
+				StatusCode: 200,
+				Body:       r,
+			}, nil
+		},
+	}
+
+	// use the client to create a new transport
+	c := NewTestTransportController(client)
+	tp, err := c.NewTransport(pubKeyID, privkey)
+	if err != nil {
+		panic(err)
+	}
+
+	// convert the activity into json bytes
+	m, err := activity.Serialize()
+	if err != nil {
+		panic(err)
+	}
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+
+	// trigger the delivery function, which will trigger the 'do' function of the recorder above
+	if err := tp.Deliver(context.Background(), bytes, destination); err != nil {
+		panic(err)
+	}
+
+	// headers should now be populated
+	return
+}
+
+// newNote returns a new activity streams note for the given parameters
 func newNote(
 	noteID *url.URL,
 	noteURL *url.URL,
@@ -1071,6 +1142,7 @@ func newNote(
 	return note
 }
 
+// wrapNoteInCreate wraps the given activity streams note in a Create activity streams action
 func wrapNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
 	// create the.... create
 	create := streams.NewActivityStreamsCreate()

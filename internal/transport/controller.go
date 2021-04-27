@@ -26,7 +26,6 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -36,17 +35,15 @@ type Controller interface {
 
 type controller struct {
 	config   *config.Config
-	db       db.DB
 	clock    pub.Clock
 	client   pub.HttpClient
 	appAgent string
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.HttpClient, log *logrus.Logger) Controller {
+func NewController(config *config.Config,clock pub.Clock, client pub.HttpClient, log *logrus.Logger) Controller {
 	return &controller{
 		config:   config,
-		db:       db,
 		clock:    clock,
 		client:   client,
 		appAgent: fmt.Sprintf("%s %s", config.ApplicationName, config.Host),
@@ -54,10 +51,10 @@ func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.
 }
 
 func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (pub.Transport, error) {
-	prefs := []httpsig.Algorithm{httpsig.Algorithm("rsa-sha256"), httpsig.Algorithm("rsa-sha512")}
-	digestAlgo := httpsig.DigestAlgorithm("SHA-256")
-	getHeaders := []string{"(request-target)", "Date"}
-	postHeaders := []string{"(request-target)", "Date", "Digest"}
+	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256, httpsig.RSA_SHA512}
+	digestAlgo := httpsig.DigestSha256
+	getHeaders := []string{"(request-target)", "date"}
+	postHeaders := []string{"(request-target)", "date", "digest"}
 
 	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature)
 	if err != nil {

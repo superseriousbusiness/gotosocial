@@ -56,7 +56,11 @@ const (
 	// APActivityKey can be used to set and retrieve the actual go-fed pub.Activity within a context.
 	APActivityKey APContextKey = "activity"
 	// APUsernameKey can be used to set and retrieve the username of the user being interacted with.
-	APUsernameKey APContextKey = "username"
+	APUsernameKey       APContextKey = "username"
+	// APRequestingHostKey can be used to set and retrieve the host of an incoming federation request.
+	APRequestingHostKey APContextKey = "requestingHost"
+	// APRequestingAccountKey can be used to set and retrieve the account of an incoming federation request.
+	APRequestingAccountKey APContextKey = "requestingAccount"
 )
 
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.

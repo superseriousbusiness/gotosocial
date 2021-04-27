@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 /*
@@ -110,41 +111,62 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p cr
 // validateInboundFederationRequest validates an incoming federation request (!!) by deriving the public key
 // of the requester from the request, checking the owner of the inbox that's being requested, and doing
 // some fiddling around with http signatures.
-func validateInboundFederationRequest(ctx context.Context, request *http.Request, db db.DB, inboxUsername string, transportController transport.Controller) (context.Context, bool, error) {
+//
+// A *side effect* of calling this function is that the name of the host making the request will be set
+// onto the returned context, using APRequestingHostKey. If known to us already, the remote account making
+// the request will also be set on the context, using APRequestingAccountKey. If not known to us already,
+// the value of this key will be set to nil and the account will have to be fetched further down the line.
+func validateInboundFederationRequest(ctx context.Context, request *http.Request, dbConn db.DB, inboxUsername string, transportController transport.Controller) (context.Context, bool, error) {
 	v, err := httpsig.NewVerifier(request)
 	if err != nil {
 		return ctx, false, fmt.Errorf("could not create http sig verifier: %s", err)
 	}
 
-	requesterPublicKeyID, err := url.Parse(v.KeyId())
+	requestingPublicKeyID, err := url.Parse(v.KeyId())
 	if err != nil {
 		return ctx, false, fmt.Errorf("could not create parse key id into a url: %s", err)
 	}
 
-	acct := &gtsmodel.Account{}
-	if err := db.GetWhere("username", inboxUsername, acct); err != nil {
+	requestedAccount := &gtsmodel.Account{}
+	if err := dbConn.GetWhere("username", inboxUsername, requestedAccount); err != nil {
 		return ctx, false, fmt.Errorf("could not fetch username %s from the database: %s", inboxUsername, err)
 	}
 
-	transport, err := transportController.NewTransport(acct.PublicKeyURI, acct.PrivateKey)
+	transport, err := transportController.NewTransport(requestedAccount.PublicKeyURI, requestedAccount.PrivateKey)
 	if err != nil {
 		return ctx, false, fmt.Errorf("error creating new transport: %s", err)
 	}
 
-	b, err := transport.Dereference(ctx, requesterPublicKeyID)
+	b, err := transport.Dereference(ctx, requestingPublicKeyID)
 	if err != nil {
-		return ctx, false, fmt.Errorf("error deferencing key %s: %s", requesterPublicKeyID.String(), err)
+		return ctx, false, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
 	}
 
-	requesterPublicKey, err := getPublicKeyFromResponse(ctx, b, requesterPublicKeyID)
+	requestingPublicKey, err := getPublicKeyFromResponse(ctx, b, requestingPublicKeyID)
 	if err != nil {
-		return ctx, false, fmt.Errorf("error getting key %s from response %s: %s", requesterPublicKeyID.String(), string(b), err)
+		return ctx, false, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
 	}
 
 	algo := httpsig.RSA_SHA256
-	if err := v.Verify(requesterPublicKey, algo); err != nil {
-		return ctx, false, fmt.Errorf("error verifying key %s: %s", requesterPublicKeyID.String(), err)
+	if err := v.Verify(requestingPublicKey, algo); err != nil {
+		return ctx, false, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
 	}
 
-	return ctx, true, nil
+	var requestingAccount *gtsmodel.Account
+	a := &gtsmodel.Account{}
+	if err := dbConn.GetWhere("public_key_uri", requestingPublicKeyID.String(), a); err == nil {
+		// we know about this account already so we can set it on the context
+		requestingAccount = a
+	} else {
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			return ctx, false, fmt.Errorf("database error finding account with public key uri %s: %s", requestingPublicKeyID.String(), err)
+		}
+		// do nothing here, requestingAccount will stay nil and we'll have to figure it out further down the line
+	}
+
+	// all good at this point, so just set some stuff on the context
+	contextWithHost := context.WithValue(ctx, util.APRequestingHostKey, requestingPublicKeyID.Host)
+	contextWithRequestingAccount := context.WithValue(contextWithHost, util.APRequestingAccountKey, requestingAccount)
+
+	return contextWithRequestingAccount, true, nil
 }

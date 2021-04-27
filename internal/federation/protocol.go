@@ -105,6 +105,8 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 	}
 	l.Tracef("parsed username %s from %s", username, r.URL.String())
 
+	l.Tracef("signature: %s", r.Header.Get("Signature"))
+
 	ctxWithUsername := context.WithValue(ctx, util.APUsernameKey, username)
 	ctxWithActivity := context.WithValue(ctxWithUsername, util.APActivityKey, activity)
 	return ctxWithActivity, nil
@@ -148,7 +150,15 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 	l.Tracef("parsed username %s from %s", username, r.URL.String())
 
-	return validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
+	newContext, authed, err := validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
+
+	if err != nil {
+		l.Debug(err)
+	}
+
+	return newContext, authed, err
+
+
 }
 
 // Blocked should determine whether to permit a set of actors given by
