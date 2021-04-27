@@ -29,11 +29,15 @@ import (
 )
 
 // TypeConverter is an interface for the common action of converting between mastotypes (frontend, serializable) models,
-// internal gts models used in the database, and models used in federation.
+// internal gts models used in the database, and activitypub models used in federation.
 //
 // It requires access to the database because many of the conversions require pulling out database entries and counting them etc.
 // That said, it *absolutely should not* manipulate database entries in any way, only examine them.
 type TypeConverter interface {
+	/*
+		INTERNAL (gts) MODEL TO FRONTEND (mastodon) MODEL
+	*/
+
 	// AccountToMastoSensitive takes a db model account as a param, and returns a populated mastotype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
@@ -72,8 +76,20 @@ type TypeConverter interface {
 	// VisToMasto converts a gts visibility into its mastodon equivalent
 	VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility
 
+	/*
+		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
+	*/
+
 	// MastoVisToVis converts a mastodon visibility into its gts equivalent.
 	MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility
+
+	/*
+		ACTIVITYPUB MODEL TO INTERNAL (gts) MODEL
+	*/
+
+	/*
+		INTERNAL (gts) MODEL TO ACTIVITYPUB MODEL
+	*/
 }
 
 type converter struct {
