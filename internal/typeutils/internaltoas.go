@@ -22,7 +22,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"net/url"
-	"strings"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
@@ -129,8 +128,9 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	}
 	urlProp := streams.NewActivityStreamsUrlProperty()
 	urlProp.AppendIRI(profileURL)
+	person.SetActivityStreamsUrl(urlProp)
 
-	// manuallyApproveFollowers
+	// manuallyApprovesFollowers
 	// Will be shown as a locked account.
 	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
 
@@ -141,7 +141,7 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	person.SetTootDiscoverable(discoverableProp)
 
 	// devices
-	// NOT IMPLEMENTED
+	// NOT IMPLEMENTED, probably won't implement
 
 	// alsoKnownAs
 	// Required for Move activity.
@@ -177,9 +177,9 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 		Type:  "PUBLIC KEY",
 		Bytes: encodedPublicKey,
 	})
-	publicKeyString := strings.ReplaceAll(string(publicKeyBytes), "\n", "\\n") // replace all the newlines with backslash n
 	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
-	publicKeyPEMProp.Set(publicKeyString)
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
 
 	// append the public key to the public key property
 	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
@@ -188,19 +188,69 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
 
 	// tag
-	// Any tags used in the summary of this profile
+	// TODO: Any tags used in the summary of this profile
 
 	// attachment
 	// Used for profile fields.
+	// TODO: The PropertyValue type has to be added: https://schema.org/PropertyValue
 
 	// endpoints
 	// NOT IMPLEMENTED -- this is for shared inbox which we don't use
 
 	// icon
 	// Used as profile avatar.
+	if a.AvatarMediaAttachmentID != "" {
+		iconProperty := streams.NewActivityStreamsIconProperty()
+
+		iconImage := streams.NewActivityStreamsImage()
+
+		avatar := &gtsmodel.MediaAttachment{}
+		if err := c.db.GetByID(a.AvatarMediaAttachmentID, avatar); err != nil {
+			return nil, err
+		}
+
+		mediaType := streams.NewActivityStreamsMediaTypeProperty()
+		mediaType.Set(avatar.File.ContentType)
+		iconImage.SetActivityStreamsMediaType(mediaType)
+
+		avatarURLProperty := streams.NewActivityStreamsUrlProperty()
+		avatarURL, err := url.Parse(avatar.URL)
+		if err != nil {
+			return nil, err
+		}
+		avatarURLProperty.AppendIRI(avatarURL)
+		iconImage.SetActivityStreamsUrl(avatarURLProperty)
+
+		iconProperty.AppendActivityStreamsImage(iconImage)
+		person.SetActivityStreamsIcon(iconProperty)
+	}
 
 	// image
 	// Used as profile header.
+	if a.HeaderMediaAttachmentID != "" {
+		iconProperty := streams.NewActivityStreamsIconProperty()
+
+		iconImage := streams.NewActivityStreamsImage()
+
+		header := &gtsmodel.MediaAttachment{}
+		if err := c.db.GetByID(a.HeaderMediaAttachmentID, header); err != nil {
+			return nil, err
+		}
+
+		mediaType := streams.NewActivityStreamsMediaTypeProperty()
+		mediaType.Set(header.File.ContentType)
+		iconImage.SetActivityStreamsMediaType(mediaType)
+
+		headerURLProperty := streams.NewActivityStreamsUrlProperty()
+		headerURL, err := url.Parse(header.URL)
+		if err != nil {
+			return nil, err
+		}
+		headerURLProperty.AppendIRI(headerURL)
+		iconImage.SetActivityStreamsUrl(headerURLProperty)
+
+		iconProperty.AppendActivityStreamsImage(iconImage)
+	}
 
 	return person, nil
 }
