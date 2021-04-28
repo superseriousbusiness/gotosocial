@@ -37,18 +37,3 @@ func (c *converter) MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility {
 	}
 	return ""
 }
-
-// VisToMasto converts a gts visibility into its mastodon equivalent
-func (c *converter) VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility {
-	switch m {
-	case gtsmodel.VisibilityPublic:
-		return mastotypes.VisibilityPublic
-	case gtsmodel.VisibilityUnlocked:
-		return mastotypes.VisibilityUnlisted
-	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
-		return mastotypes.VisibilityPrivate
-	case gtsmodel.VisibilityDirect:
-		return mastotypes.VisibilityDirect
-	}
-	return ""
-}

@@ -93,15 +93,15 @@ type Account struct {
 	// Last time this account was located using the webfinger API.
 	LastWebfingeredAt time.Time `pg:"type:timestamp"`
 	// Address of this account's activitypub inbox, for sending activity to
-	InboxURL string `pg:",unique"`
+	InboxURI string `pg:",unique"`
 	// Address of this account's activitypub outbox
-	OutboxURL string `pg:",unique"`
-	// Don't support shared inbox right now so this is just a stub for a future implementation
-	SharedInboxURL string `pg:",unique"`
-	// URL for getting the followers list of this account
-	FollowersURL string `pg:",unique"`
+	OutboxURI string `pg:",unique"`
+	// URI for getting the following list of this account
+	FollowingURI string `pg:",unique"`
+	// URI for getting the followers list of this account
+	FollowersURI string `pg:",unique"`
 	// URL for getting the featured collection list of this account
-	FeaturedCollectionURL string `pg:",unique"`
+	FeaturedCollectionURI string `pg:",unique"`
 	// What type of activitypub actor is this account?
 	ActorType ActivityStreamsActor
 	// This account is associated with x account id

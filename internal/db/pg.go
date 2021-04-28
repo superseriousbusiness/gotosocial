@@ -468,10 +468,11 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		PublicKeyURI:          newAccountURIs.PublicKeyURI,
 		ActorType:             gtsmodel.ActivityStreamsPerson,
 		URI:                   newAccountURIs.UserURI,
-		InboxURL:              newAccountURIs.InboxURI,
-		OutboxURL:             newAccountURIs.OutboxURI,
-		FollowersURL:          newAccountURIs.FollowersURI,
-		FeaturedCollectionURL: newAccountURIs.CollectionURI,
+		InboxURI:              newAccountURIs.InboxURI,
+		OutboxURI:             newAccountURIs.OutboxURI,
+		FollowersURI:          newAccountURIs.FollowersURI,
+		FollowingURI:          newAccountURIs.FollowingURI,
+		FeaturedCollectionURI: newAccountURIs.CollectionURI,
 	}
 	if _, err = ps.conn.Model(a).Insert(); err != nil {
 		return nil, err

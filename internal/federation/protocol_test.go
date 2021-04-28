@@ -144,7 +144,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 			"owner": "%s",
 			"publicKeyPem": "%s"
 		}
-	}`, sendingAccount.URI, sendingAccount.Username, sendingAccount.InboxURL, sendingAccount.PublicKeyURI, sendingAccount.URI, publicKeyString)
+	}`, sendingAccount.URI, sendingAccount.Username, sendingAccount.InboxURI, sendingAccount.PublicKeyURI, sendingAccount.URI, publicKeyString)
 
 	// create a transport controller whose client will just return the response body string we specified above
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
