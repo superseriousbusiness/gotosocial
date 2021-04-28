@@ -137,6 +137,11 @@ func IsInboxPath(id *url.URL) bool {
 	return inboxPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
+// IsOutboxPath returns true if the given URL path corresponds to eg /users/example_username/outbox
+func IsOutboxPath(id *url.URL) bool {
+	return outboxPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
 // IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
 func IsInstanceActorPath(id *url.URL) bool {
 	return actorPathRegex.MatchString(strings.ToLower(id.Path))
@@ -188,6 +193,17 @@ func ParseUserPath(id *url.URL) (username string, err error) {
 // ParseInboxPath returns the username from a path such as /users/example_username/inbox
 func ParseInboxPath(id *url.URL) (username string, err error) {
 	matches := inboxPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
+}
+
+// ParseOutboxPath returns the username from a path such as /users/example_username/outbox
+func ParseOutboxPath(id *url.URL) (username string, err error) {
+	matches := outboxPathRegex.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return

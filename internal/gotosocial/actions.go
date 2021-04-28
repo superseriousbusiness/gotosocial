@@ -21,6 +21,7 @@ package gotosocial
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -45,6 +46,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -72,6 +74,9 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	if err := distributor.Start(); err != nil {
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
+	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
+	federatingActor := federation.NewFederatingActor(dbService, transportController, c, log)
+	federator := federation.NewFederator(federatingActor, distributor)
 
 	// build converters and util
 	ic := typeutils.NewConverter(c, dbService)
@@ -113,7 +118,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating instance account: %s", err)
 	}
 
-	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService, c, log), c)
+	gts, err := New(dbService, &cache.MockCache{}, router, federator, c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

@@ -32,8 +32,13 @@ import (
 type Distributor interface {
 	// FromClientAPI returns a channel for accepting messages that come from the gts client API.
 	FromClientAPI() chan FromClientAPI
-	// ClientAPIOut returns a channel for putting in messages that need to go to the gts client API.
+	// ToClientAPI returns a channel for putting in messages that need to go to the gts client API.
 	ToClientAPI() chan ToClientAPI
+	// FromFederator returns a channel for accepting messages that come from the federator (activitypub).
+	FromFederator() chan FromFederator
+	// ToFederator returns a channel for putting in messages that need to go to the federator (activitypub).
+	ToFederator() chan ToFederator
+
 	// Start starts the Distributor, reading from its channels and passing messages back and forth.
 	Start() error
 	// Stop stops the distributor cleanly, finishing handling any remaining messages before closing down.
@@ -45,6 +50,8 @@ type distributor struct {
 	// federator     pub.FederatingActor
 	fromClientAPI chan FromClientAPI
 	toClientAPI   chan ToClientAPI
+	fromFederator chan FromFederator
+	toFederator   chan ToFederator
 	stop          chan interface{}
 	log           *logrus.Logger
 }
@@ -55,19 +62,27 @@ func New(log *logrus.Logger) Distributor {
 		// federator:     federator,
 		fromClientAPI: make(chan FromClientAPI, 100),
 		toClientAPI:   make(chan ToClientAPI, 100),
+		fromFederator: make(chan FromFederator, 100),
+		toFederator:   make(chan ToFederator, 100),
 		stop:          make(chan interface{}),
 		log:           log,
 	}
 }
 
-// ClientAPIIn returns a channel for accepting messages that come from the gts client API.
 func (d *distributor) FromClientAPI() chan FromClientAPI {
 	return d.fromClientAPI
 }
 
-// ClientAPIOut returns a channel for putting in messages that need to go to the gts client API.
 func (d *distributor) ToClientAPI() chan ToClientAPI {
 	return d.toClientAPI
+}
+
+func (d *distributor) FromFederator() chan FromFederator {
+	return d.fromFederator
+}
+
+func (d *distributor) ToFederator() chan ToFederator {
+	return d.toFederator
 }
 
 // Start starts the Distributor, reading from its channels and passing messages back and forth.
@@ -80,6 +95,10 @@ func (d *distributor) Start() error {
 				d.log.Infof("received message FROM client API: %+v", clientMsg)
 			case clientMsg := <-d.toClientAPI:
 				d.log.Infof("received message TO client API: %+v", clientMsg)
+			case federatorMsg := <-d.fromFederator:
+				d.log.Infof("received message FROM federator: %+v", federatorMsg)
+			case federatorMsg := <-d.toFederator:
+				d.log.Infof("received message TO federator: %+v", federatorMsg)
 			case <-d.stop:
 				break DistLoop
 			}
@@ -104,6 +123,20 @@ type FromClientAPI struct {
 
 // ToClientAPI wraps a message that travels from the distributor into the client API
 type ToClientAPI struct {
+	APObjectType   gtsmodel.ActivityStreamsObject
+	APActivityType gtsmodel.ActivityStreamsActivity
+	Activity       interface{}
+}
+
+// FromFederator wraps a message that travels from the federator into the distributor
+type FromFederator struct {
+	APObjectType   gtsmodel.ActivityStreamsObject
+	APActivityType gtsmodel.ActivityStreamsActivity
+	Activity       interface{}
+}
+
+// ToFederator wraps a message that travels from the distributor into the federator
+type ToFederator struct {
 	APObjectType   gtsmodel.ActivityStreamsObject
 	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}

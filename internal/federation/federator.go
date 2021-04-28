@@ -16,22 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package federation provides ActivityPub/federation functionality for GoToSocial
 package federation
 
 import (
 	"github.com/go-fed/activity/pub"
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 )
 
-// NewFederatingActor returns a go-fed compatible federating actor
-func NewFederatingActor(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger) pub.FederatingActor {
-	c := NewCommonBehavior(db, log, config, transportController)
-	f := NewFederatingProtocol(db, log, config, transportController)
-	pubDatabase := db.Federation()
-	clock := &Clock{}
-	return pub.NewFederatingActor(c, f, pubDatabase, clock)
+// Federator wraps everything needed to manage activitypub federation from gotosocial
+type Federator interface {
+}
+
+type federator struct {
+	actor       pub.FederatingActor
+	distributor distributor.Distributor
+}
+
+// NewFederator returns a new federator that uses the given actor and distributor
+func NewFederator(actor pub.FederatingActor, distributor distributor.Distributor) Federator {
+	return &federator{
+		actor:       actor,
+		distributor: distributor,
+	}
 }

@@ -20,6 +20,7 @@ package federation
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,13 +29,27 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// Commoner implements the go-fed common behavior interface
-type Commoner struct {
-	db     db.DB
-	log    *logrus.Logger
-	config *config.Config
+// commonBehavior implements the go-fed common behavior interface
+type commonBehavior struct {
+	db                  db.DB
+	log                 *logrus.Logger
+	config              *config.Config
+	transportController transport.Controller
+}
+
+// NewCommonBehavior returns an implementation of the pub.CommonBehavior interface that uses the given db, log, config, and transportController
+func NewCommonBehavior(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.CommonBehavior {
+	return &commonBehavior{
+		db:                  db,
+		log:                 log,
+		config:              config,
+		transportController: transportController,
+	}
 }
 
 /*
@@ -63,7 +78,7 @@ type Commoner struct {
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (c *Commoner) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (c *commonBehavior) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	// use context.WithValue() and context.Value() to set and get values through here
 	return nil, false, nil
@@ -88,7 +103,7 @@ func (c *Commoner) AuthenticateGetInbox(ctx context.Context, w http.ResponseWrit
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (c *Commoner) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (c *commonBehavior) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// TODO
 	return nil, false, nil
 }
@@ -101,7 +116,7 @@ func (c *Commoner) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWri
 //
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
-func (c *Commoner) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (c *commonBehavior) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }
@@ -129,34 +144,29 @@ func (c *Commoner) GetOutbox(ctx context.Context, r *http.Request) (vocab.Activi
 // Note that the library will not maintain a long-lived pointer to the
 // returned Transport so that any private credentials are able to be
 // garbage collected.
-func (c *Commoner) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
-	// TODO
-	// prefs := []httpsig.Algorithm{httpsig.RSA_SHA256}
-	// digestPref := httpsig.DigestSha256
-	// getHeadersToSign := []string{httpsig.RequestTarget, "Date"}
-	// postHeadersToSign := []string{httpsig.RequestTarget, "Date", "Digest"}
-	// // Using github.com/go-fed/httpsig for HTTP Signatures:
-	// getSigner, _, err := httpsig.NewSigner(prefs, digestPref, getHeadersToSign, httpsig.Signature)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// postSigner, _, err := httpsig.NewSigner(prefs, digestPref, postHeadersToSign, httpsig.Signature)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// pubKeyId, privKey, err := s.getKeysForActorBoxIRI(actorBoxIRI)
-	// client := &http.Client{
-	// 	Timeout: time.Second * 30,
-	// }
-	// t := pub.NewHttpSigTransport(
-	// 	client,
-	// 	f.config.Host,
-	// 	&Clock{},
-	// 	getSigner,
-	// 	postSigner,
-	// 	pubKeyId,
-	// 	privKey)
+func (c *commonBehavior) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
 
-	return nil, nil
+	var username string
+	var err error
 
+	if util.IsInboxPath(actorBoxIRI) {
+		username, err = util.ParseInboxPath(actorBoxIRI)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse path %s as an inbox: %s", actorBoxIRI.String(), err)
+		}
+	} else if util.IsOutboxPath(actorBoxIRI) {
+		username, err = util.ParseOutboxPath(actorBoxIRI)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse path %s as an outbox: %s", actorBoxIRI.String(), err)
+		}
+	} else {
+		return nil, fmt.Errorf("id %s was neither an inbox path nor an outbox path", actorBoxIRI.String())
+	}
+
+	account := &gtsmodel.Account{}
+	if err := c.db.GetWhere("username", username, account); err != nil {
+		return nil, err
+	}
+
+	return c.transportController.NewTransport(account.PublicKeyURI, account.PrivateKey)
 }

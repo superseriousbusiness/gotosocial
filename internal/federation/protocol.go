@@ -34,17 +34,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// Federator implements the go-fed federating protocol interface
-type Federator struct {
+// FederatingProtocol implements the go-fed federating protocol interface
+type FederatingProtocol struct {
 	db                  db.DB
 	log                 *logrus.Logger
 	config              *config.Config
 	transportController transport.Controller
 }
 
-// NewFederator returns the gotosocial implementation of the go-fed FederatingProtocol interface
-func NewFederator(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.FederatingProtocol {
-	return &Federator{
+// NewFederatingProtocol returns the gotosocial implementation of the go-fed FederatingProtocol interface
+func NewFederatingProtocol(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.FederatingProtocol {
+	return &FederatingProtocol{
 		db:                  db,
 		log:                 log,
 		config:              config,
@@ -78,7 +78,7 @@ func NewFederator(db db.DB, log *logrus.Logger, config *config.Config, transport
 // PostInbox. In this case, the DelegateActor implementation must not
 // write a response to the ResponseWriter as is expected that the caller
 // to PostInbox will do so when handling the error.
-func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
+func (f *FederatingProtocol) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func":      "PostInboxRequestBodyHook",
 		"useragent": r.UserAgent(),
@@ -128,7 +128,7 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *FederatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func":      "AuthenticatePostInbox",
 		"useragent": r.UserAgent(),
@@ -167,7 +167,7 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // Finally, if the authentication and authorization succeeds, then
 // blocked must be false and error nil. The request will continue
 // to be processed.
-func (f *Federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
+func (f *FederatingProtocol) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
 	// TODO
 	return false, nil
 }
@@ -191,7 +191,7 @@ func (f *Federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 //
 // Applications are not expected to handle every single ActivityStreams
 // type and extension. The unhandled ones are passed to DefaultCallback.
-func (f *Federator) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
+func (f *FederatingProtocol) FederatingCallbacks(ctx context.Context) (pub.FederatingWrappedCallbacks, []interface{}, error) {
 	// TODO
 	return pub.FederatingWrappedCallbacks{}, nil, nil
 }
@@ -203,7 +203,7 @@ func (f *Federator) FederatingCallbacks(ctx context.Context) (pub.FederatingWrap
 // Applications are not expected to handle every single ActivityStreams
 // type and extension, so the unhandled ones are passed to
 // DefaultCallback.
-func (f *Federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
+func (f *FederatingProtocol) DefaultCallback(ctx context.Context, activity pub.Activity) error {
 	l := f.log.WithFields(logrus.Fields{
 		"func":   "DefaultCallback",
 		"aptype": activity.GetTypeName(),
@@ -216,7 +216,7 @@ func (f *Federator) DefaultCallback(ctx context.Context, activity pub.Activity) 
 // an activity to determine if inbox forwarding needs to occur.
 //
 // Zero or negative numbers indicate infinite recursion.
-func (f *Federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
+func (f *FederatingProtocol) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
@@ -226,7 +226,7 @@ func (f *Federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 // delivery.
 //
 // Zero or negative numbers indicate infinite recursion.
-func (f *Federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
+func (f *FederatingProtocol) MaxDeliveryRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 0
 }
@@ -238,7 +238,7 @@ func (f *Federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
 //
 // The activity is provided as a reference for more intelligent
 // logic to be used, but the implementation must not modify it.
-func (f *Federator) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
+func (f *FederatingProtocol) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
 	// TODO
 	return nil, nil
 }
@@ -251,7 +251,7 @@ func (f *Federator) FilterForwarding(ctx context.Context, potentialRecipients []
 //
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
-func (f *Federator) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (f *FederatingProtocol) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// TODO
 	return nil, nil
 }

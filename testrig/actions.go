@@ -19,8 +19,11 @@
 package testrig
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -44,6 +47,7 @@ import (
 
 // Run creates and starts a gotosocial testrig server
 var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
+	c := NewTestConfig()
 	dbService := NewTestDB()
 	router := NewTestRouter()
 	storageBackend := NewTestStorage()
@@ -54,8 +58,15 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
 	mastoConverter := NewTestTypeConverter(dbService)
-
-	c := NewTestConfig()
+	transportController := NewTestTransportController(NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+		return &http.Response{
+			StatusCode: 200,
+			Body:       r,
+		}, nil
+	}))
+	federatingActor := federation.NewFederatingActor(dbService, transportController, c, log)
+	federator := federation.NewFederator(federatingActor, distributor)
 
 	StandardDBSetup(dbService)
 	StandardStorageSetup(storageBackend, "./testrig/media")
@@ -97,7 +108,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 	// 	return fmt.Errorf("error creating instance account: %s", err)
 	// }
 
-	gts, err := gotosocial.New(dbService, &cache.MockCache{}, router, federation.New(dbService, c, log), c)
+	gts, err := gotosocial.New(dbService, &cache.MockCache{}, router, federator, c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}
