@@ -46,12 +46,12 @@ import (
 
 type ProtocolTestSuite struct {
 	suite.Suite
-	config     *config.Config
-	db         db.DB
-	log        *logrus.Logger
+	config      *config.Config
+	db          db.DB
+	log         *logrus.Logger
 	distributor distributor.Distributor
-	accounts   map[string]*gtsmodel.Account
-	activities map[string]testrig.ActivityWithSignature
+	accounts    map[string]*gtsmodel.Account
+	activities  map[string]testrig.ActivityWithSignature
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
