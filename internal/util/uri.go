@@ -63,6 +63,10 @@ const (
 	APRequestingAccountKey APContextKey = "requestingAccount"
 )
 
+type ginContextKey struct{}
+// GinContextKey is used solely for setting and retrieving the gin context from a context.Context
+var GinContextKey = &ginContextKey{}
+
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
 type UserURIs struct {
 	// The web URL of the instance host, eg https://example.org
