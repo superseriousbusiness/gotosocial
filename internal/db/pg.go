@@ -341,6 +341,16 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.A
 	return nil
 }
 
+func (ps *postgresService) GetLocalAccountByUsername(username string, account *gtsmodel.Account) error {
+	if err := ps.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return ErrNoEntries{}
+		}
+		return err
+	}
+	return nil
+}
+
 func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {

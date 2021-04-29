@@ -218,7 +218,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
 	// with the same username as the instance hostname, which doesn't belong to any particular user.
 	instanceAccount := &gtsmodel.Account{}
-	if err := mh.db.GetWhere("username", mh.config.Host, instanceAccount); err != nil {
+	if err := mh.db.GetLocalAccountByUsername(mh.config.Host, instanceAccount); err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
 

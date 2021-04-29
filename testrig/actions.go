@@ -65,8 +65,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 			Body:       r,
 		}, nil
 	}))
-	federatingActor := federation.NewFederatingActor(dbService, transportController, c, log)
-	federator := federation.NewFederator(federatingActor, distributor)
+	federator := federation.NewFederator(dbService, transportController, c, log, distributor)
 
 	StandardDBSetup(dbService)
 	StandardStorageSetup(storageBackend, "./testrig/media")

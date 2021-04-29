@@ -126,6 +126,12 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetAccountByUserID(userID string, account *gtsmodel.Account) error
 
+	// GetLocalAccountByUsername is a shortcut for the common action of fetching an account ON THIS INSTANCE
+	// according to its username, which should be unique.
+	// The given account pointer will be set to the result of the query, whatever it is.
+	// In case of no entries, a 'no entries' error will be returned
+	GetLocalAccountByUsername(username string, account *gtsmodel.Account) error
+
 	// GetFollowRequestsForAccountID is a shortcut for the common action of fetching a list of follow requests targeting the given account ID.
 	// The given slice 'followRequests' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned

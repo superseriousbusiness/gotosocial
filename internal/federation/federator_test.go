@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -48,6 +49,7 @@ type ProtocolTestSuite struct {
 	config     *config.Config
 	db         db.DB
 	log        *logrus.Logger
+	distributor distributor.Distributor
 	accounts   map[string]*gtsmodel.Account
 	activities map[string]testrig.ActivityWithSignature
 }
@@ -58,6 +60,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
+	suite.distributor = testrig.NewTestDistributor()
 	suite.accounts = testrig.NewTestAccounts()
 	suite.activities = testrig.NewTestActivities(suite.accounts)
 }
@@ -83,7 +86,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}))
 	// setup module being tested
-	federator := federation.NewFederatingProtocol(suite.db, suite.log, suite.config, tc).(*federation.FederatingProtocol)
+	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor)
 
 	// setup request
 	ctx := context.Background()
@@ -117,6 +120,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	// the activity we're gonna use
 	activity := suite.activities["dm_for_zork"]
 	sendingAccount := suite.accounts["remote_account_1"]
+	inboxAccount := suite.accounts["local_account_1"]
 
 	encodedPublicKey, err := x509.MarshalPKIXPublicKey(sendingAccount.PublicKey)
 	assert.NoError(suite.T(), err)
@@ -160,14 +164,22 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 
 	// setup request
 	ctx := context.Background()
+	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
+	// which should have set the account and username onto the request. We can replicate that behavior here:
+	ctxWithUsername := context.WithValue(ctx, util.APUsernameKey, inboxAccount.Username)
+	ctxWithAccount := context.WithValue(ctxWithUsername, util.APAccountKey, inboxAccount)
+	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivityKey, activity)
+
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
 	// we need these headers for the request to be validated
 	request.Header.Set("Signature", activity.SignatureHeader)
 	request.Header.Set("Date", activity.DateHeader)
 	request.Header.Set("Digest", activity.DigestHeader)
+	// we can pass this recorder as a writer and read it back after
+	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.AuthenticatePostInbox(ctx, nil, request)
+	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithActivity, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 

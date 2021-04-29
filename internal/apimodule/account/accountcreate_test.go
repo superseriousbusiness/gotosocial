@@ -274,7 +274,7 @@ func (suite *AccountCreateTestSuite) TestAccountCreatePOSTHandlerSuccessful() {
 
 	// 1. we should be able to get the new account from the db
 	acct := &gtsmodel.Account{}
-	err = suite.db.GetWhere("username", "test_user", acct)
+	err = suite.db.GetLocalAccountByUsername("test_user", acct)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), acct)
 	// 2. reason should be set

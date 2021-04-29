@@ -75,8 +75,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
-	federatingActor := federation.NewFederatingActor(dbService, transportController, c, log)
-	federator := federation.NewFederator(federatingActor, distributor)
+	federator := federation.NewFederator(dbService, transportController, c, log, distributor)
 
 	// build converters and util
 	ic := typeutils.NewConverter(c, dbService)

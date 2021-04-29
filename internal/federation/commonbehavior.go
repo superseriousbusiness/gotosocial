@@ -20,19 +20,16 @@ package federation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -45,8 +42,8 @@ type commonBehavior struct {
 	transportController transport.Controller
 }
 
-// NewCommonBehavior returns an implementation of the pub.CommonBehavior interface that uses the given db, log, config, and transportController
-func NewCommonBehavior(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.CommonBehavior {
+// newCommonBehavior returns an implementation of the pub.CommonBehavior interface that uses the given db, log, config, and transportController
+func newCommonBehavior(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.CommonBehavior {
 	return &commonBehavior{
 		db:                  db,
 		log:                 log,
@@ -82,44 +79,8 @@ func NewCommonBehavior(db db.DB, log *logrus.Logger, config *config.Config, tran
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (c *commonBehavior) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	l := c.log.WithFields(logrus.Fields{
-		"func": "AuthenticateGetInbox",
-		"url":  r.URL.String(),
-	})
-
-	if !util.IsInboxPath(r.URL) {
-		err := errors.New("url %s was not for an inbox", r.URL.String())
-	}
-
-	// Earlier in the chain before this function was called, we set a *copy* of the *gin.Context as a value on the context.Context,
-	// this means that we can retrieve that and use it to check whether we're authorized or not.
-
-	// retrieve what should be a copy of a *gin.Context from the context.Context
-	gctxI := ctx.Value(util.GinContextKey)
-	if gctxI == nil {
-		err := errors.New("AuthenticateGetInbox: nothing was set on the gincontext key of context.Context")
-		l.Error(err)
-		return nil, false, err
-	}
-
-	// cast it to what is hopefully a *gin.Context
-	gctx, ok := gctxI.(*gin.Context)
-	if !ok {
-		err := errors.New("AuthenticateGetInbox: something was set on context.Context but it wasn't a *gin.Context")
-		l.Error(err)
-		return nil, false, err
-	}
-
-	authed, err := oauth.MustAuth(gctx, true, false, true, true) // we need a token, user, and account to be considered 'authed'
-	if err != nil {
-		// whatever happened, we're not authorized -- we don't care so much about an error at this point so just log it and move on
-		l.Debugf("not authed: %s", err)
-		return ctx, false, nil
-	}
-
-	// we need the check now that the authed user is the same as the user that the inbox belongs to
-
-
+	// IMPLEMENTATION NOTE: For GoToSocial, we serve outboxes and inboxes through
+	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return nil, false, nil
 }
 
@@ -143,7 +104,8 @@ func (c *commonBehavior) AuthenticateGetInbox(ctx context.Context, w http.Respon
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (c *commonBehavior) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	// TODO
+	// IMPLEMENTATION NOTE: For GoToSocial, we serve outboxes and inboxes through
+	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return nil, false, nil
 }
 
@@ -156,7 +118,8 @@ func (c *commonBehavior) AuthenticateGetOutbox(ctx context.Context, w http.Respo
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
 func (c *commonBehavior) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
-	// TODO
+	// IMPLEMENTATION NOTE: For GoToSocial, we serve outboxes and inboxes through
+	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return nil, nil
 }
 
@@ -203,8 +166,8 @@ func (c *commonBehavior) NewTransport(ctx context.Context, actorBoxIRI *url.URL,
 	}
 
 	account := &gtsmodel.Account{}
-	if err := c.db.GetWhere("username", username, account); err != nil {
-		return nil, err
+	if err := c.db.GetLocalAccountByUsername(username, account); err != nil {
+		return nil, fmt.Errorf("error getting account with username %s from the db: %s", username, err)
 	}
 
 	return c.transportController.NewTransport(account.PublicKeyURI, account.PrivateKey)

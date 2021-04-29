@@ -204,7 +204,7 @@ func (m *FileServer) serveEmoji(c *gin.Context, accountID string, mediaType stri
 
 	// make sure the instance account id owns the requested emoji
 	instanceAccount := &gtsmodel.Account{}
-	if err := m.db.GetWhere("username", m.config.Host, instanceAccount); err != nil {
+	if err := m.db.GetLocalAccountByUsername(m.config.Host, instanceAccount); err != nil {
 		l.Debugf("error fetching instance account: %s", err)
 		c.String(http.StatusNotFound, "404 page not found")
 		return

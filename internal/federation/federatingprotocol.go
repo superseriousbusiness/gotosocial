@@ -27,9 +27,11 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -92,23 +94,32 @@ func (f *FederatingProtocol) PostInboxRequestBodyHook(ctx context.Context, r *ht
 	}
 
 	if !util.IsInboxPath(r.URL) {
-		err := fmt.Errorf("url %s did not corresponding to inbox path", r.URL.String())
+		err := fmt.Errorf("url %s did not correspond to inbox path", r.URL.String())
 		l.Debug(err)
 		return nil, err
 	}
 
-	username, err := util.ParseInboxPath(r.URL)
+	inboxUsername, err := util.ParseInboxPath(r.URL)
 	if err != nil {
 		err := fmt.Errorf("could not parse username from url: %s", r.URL.String())
 		l.Debug(err)
 		return nil, err
 	}
-	l.Tracef("parsed username %s from %s", username, r.URL.String())
-
+	l.Tracef("parsed username %s from %s", inboxUsername, r.URL.String())
 	l.Tracef("signature: %s", r.Header.Get("Signature"))
 
-	ctxWithUsername := context.WithValue(ctx, util.APUsernameKey, username)
-	ctxWithActivity := context.WithValue(ctxWithUsername, util.APActivityKey, activity)
+	// get the gts account from the username
+	inboxAccount := &gtsmodel.Account{}
+	if err := f.db.GetLocalAccountByUsername(inboxUsername, inboxAccount); err != nil {
+		err := fmt.Errorf("AuthenticateGetInbox: error fetching inbox account for %s from database: %s", r.URL.String(), err)
+		l.Error(err)
+		// return an abridged version of the error so we don't leak anything to the caller
+		return nil, errors.New("database error")
+	}
+
+	ctxWithUsername := context.WithValue(ctx, util.APUsernameKey, inboxUsername)
+	ctxWithAccount := context.WithValue(ctxWithUsername, util.APAccountKey, inboxAccount)
+	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivityKey, activity)
 	return ctxWithActivity, nil
 }
 
@@ -128,6 +139,16 @@ func (f *FederatingProtocol) PostInboxRequestBodyHook(ctx context.Context, r *ht
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
+//
+// IMPLEMENTATION NOTES:
+// AuthenticatePostInbox validates an incoming federation request (!!) by deriving the public key
+// of the requester from the request, checking the owner of the inbox that's being requested, and doing
+// some fiddling around with http signatures.
+//
+// A *side effect* of calling this function is that the name of the host making the request will be set
+// onto the returned context, using APRequestingHostKey. If known to us already, the remote account making
+// the request will also be set on the context, using APRequestingAccountKey. If not known to us already,
+// the value of this key will be set to nil and the account will have to be fetched further down the line.
 func (f *FederatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func":      "AuthenticatePostInbox",
@@ -136,21 +157,64 @@ func (f *FederatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.R
 	})
 	l.Trace("received request to authenticate")
 
-	if !util.IsInboxPath(r.URL) {
-		err := fmt.Errorf("url %s did not corresponding to inbox path", r.URL.String())
-		l.Debug(err)
-		return nil, false, err
+	// account should have been set in PostInboxRequestBodyHook
+	// if it's not set, we should bail because we can't do anything
+	i := ctx.Value(util.APAccountKey)
+	if i == nil {
+		return nil, false, errors.New("could not retrieve inbox owner")
+	}
+	requestedAccount, ok := i.(*gtsmodel.Account)
+	if !ok {
+		return nil, false, errors.New("could not cast inbox owner")
 	}
 
-	username, err := util.ParseInboxPath(r.URL)
+	v, err := httpsig.NewVerifier(r)
 	if err != nil {
-		err := fmt.Errorf("could not parse username from url: %s", r.URL.String())
-		l.Debug(err)
-		return nil, false, err
+		return ctx, false, fmt.Errorf("could not create http sig verifier: %s", err)
 	}
-	l.Tracef("parsed username %s from %s", username, r.URL.String())
 
-	return validateInboundFederationRequest(ctx, r, f.db, username, f.transportController)
+	requestingPublicKeyID, err := url.Parse(v.KeyId())
+	if err != nil {
+		return ctx, false, fmt.Errorf("could not create parse key id into a url: %s", err)
+	}
+
+	transport, err := f.transportController.NewTransport(requestedAccount.PublicKeyURI, requestedAccount.PrivateKey)
+	if err != nil {
+		return ctx, false, fmt.Errorf("error creating new transport: %s", err)
+	}
+
+	b, err := transport.Dereference(ctx, requestingPublicKeyID)
+	if err != nil {
+		return ctx, false, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
+	}
+
+	requestingPublicKey, err := getPublicKeyFromResponse(ctx, b, requestingPublicKeyID)
+	if err != nil {
+		return ctx, false, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
+	}
+
+	algo := httpsig.RSA_SHA256
+	if err := v.Verify(requestingPublicKey, algo); err != nil {
+		return ctx, false, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
+	}
+
+	var requestingAccount *gtsmodel.Account
+	a := &gtsmodel.Account{}
+	if err := f.db.GetWhere("public_key_uri", requestingPublicKeyID.String(), a); err == nil {
+		// we know about this account already so we can set it on the context
+		requestingAccount = a
+	} else {
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			return ctx, false, fmt.Errorf("database error finding account with public key uri %s: %s", requestingPublicKeyID.String(), err)
+		}
+		// do nothing here, requestingAccount will stay nil and we'll have to figure it out further down the line
+	}
+
+	// all good at this point, so just set some stuff on the context
+	contextWithHost := context.WithValue(ctx, util.APRequestingHostKey, requestingPublicKeyID.Host)
+	contextWithRequestingAccount := context.WithValue(contextWithHost, util.APRequestingAccountKey, requestingAccount)
+
+	return contextWithRequestingAccount, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by
@@ -252,6 +316,7 @@ func (f *FederatingProtocol) FilterForwarding(ctx context.Context, potentialReci
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
 func (f *FederatingProtocol) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
-	// TODO
+	// IMPLEMENTATION NOTE: For GoToSocial, we serve outboxes and inboxes through
+	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return nil, nil
 }

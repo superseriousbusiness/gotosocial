@@ -147,16 +147,12 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere("username", username, acct); err != nil {
+		if err := f.db.GetLocalAccountByUsername(username, acct); err != nil {
 			if _, ok := err.(ErrNoEntries); ok {
 				// there are no entries for this username
 				return false, nil
 			}
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
-		}
-		if acct.Domain != "" {
-			// this is a remote account so we don't own it after all
-			return false, nil
 		}
 		status := &gtsmodel.Status{}
 		if err := f.db.GetByID(uid, status); err != nil {
@@ -177,16 +173,12 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere("username", username, acct); err != nil {
+		if err := f.db.GetLocalAccountByUsername(username, acct); err != nil {
 			if _, ok := err.(ErrNoEntries); ok {
 				// there are no entries for this username
 				return false, nil
 			}
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
-		}
-		if acct.Domain != "" {
-			// this is a remote account so we don't own it after all
-			return false, nil
 		}
 		// the user exists, we own it, we're good
 		return true, nil
