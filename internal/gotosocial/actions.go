@@ -67,6 +67,9 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
 
+	// build converters and util
+	typeConverter := typeutils.NewConverter(c, dbService)
+
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
@@ -75,19 +78,16 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
-	federator := federation.NewFederator(dbService, transportController, c, log, distributor)
-
-	// build converters and util
-	ic := typeutils.NewConverter(c, dbService)
+	federator := federation.NewFederator(dbService, transportController, c, log, distributor, typeConverter)
 
 	// build client api modules
 	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, ic, log)
-	appsModule := app.New(oauthServer, dbService, ic, log)
-	mm := mediaModule.New(dbService, mediaHandler, ic, c, log)
+	accountModule := account.New(c, dbService, oauthServer, mediaHandler, typeConverter, log)
+	appsModule := app.New(oauthServer, dbService, typeConverter, log)
+	mm := mediaModule.New(dbService, mediaHandler, typeConverter, c, log)
 	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
-	adminModule := admin.New(c, dbService, mediaHandler, ic, log)
-	statusModule := status.New(c, dbService, mediaHandler, ic, distributor, log)
+	adminModule := admin.New(c, dbService, mediaHandler, typeConverter, log)
+	statusModule := status.New(c, dbService, mediaHandler, typeConverter, distributor, log)
 	securityModule := security.New(c, log)
 
 	apiModules := []apimodule.ClientAPIModule{

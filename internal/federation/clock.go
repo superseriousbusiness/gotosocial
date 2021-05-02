@@ -18,7 +18,11 @@
 
 package federation
 
-import "time"
+import (
+	"time"
+
+	"github.com/go-fed/activity/pub"
+)
 
 /*
 	GOFED CLOCK INTERFACE
@@ -31,4 +35,8 @@ type Clock struct{}
 // Now just returns the time now
 func (c *Clock) Now() time.Time {
 	return time.Now()
+}
+
+func NewClock() pub.Clock {
+   return &Clock{}
 }

@@ -53,19 +53,14 @@ const (
 type APContextKey string
 
 const (
-	// APActivityKey can be used to set and retrieve the actual go-fed pub.Activity within a context.
-	APActivityKey APContextKey = "activity"
-	// APUsernameKey can be used to set and retrieve the username of the user being interacted with.
-	APUsernameKey APContextKey = "username"
-	// APAccountKey can be used the set and retrieve the account being interacted with
-	APAccountKey APContextKey = "account"
-	// APPrivateAccessKey can be used to set and retrieve whether or not the requesting account
-	// OWNS the inbox or outbox being interacted with. If so, it should be able to see everything in that box.
-	APPrivateAccessKey APContextKey = "privateAccess"
-	// APRequestingHostKey can be used to set and retrieve the host of an incoming federation request.
-	APRequestingHostKey APContextKey = "requestingHost"
-	// APRequestingAccountKey can be used to set and retrieve the account of an incoming federation request.
-	APRequestingAccountKey APContextKey = "requestingAccount"
+	// APActivity can be used to set and retrieve the actual go-fed pub.Activity within a context.
+	APActivity APContextKey = "activity"
+	// APAccount can be used the set and retrieve the account being interacted with
+	APAccount APContextKey = "account"
+	// APRequestingAccount can be used to set and retrieve the account of an incoming federation request.
+	APRequestingAccount APContextKey = "requestingAccount"
+	// APRequestingPublicKeyID can be used to set and retrieve the public key ID of an incoming federation request.
+	APRequestingPublicKeyID APContextKey = "requestingPublicKeyID"
 )
 
 type ginContextKey struct{}

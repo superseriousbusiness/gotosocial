@@ -57,7 +57,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 	if err := distributor.Start(); err != nil {
 		return fmt.Errorf("error starting distributor: %s", err)
 	}
-	mastoConverter := NewTestTypeConverter(dbService)
+	typeConverter := NewTestTypeConverter(dbService)
 	transportController := NewTestTransportController(NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
 		return &http.Response{
@@ -65,19 +65,19 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 			Body:       r,
 		}, nil
 	}))
-	federator := federation.NewFederator(dbService, transportController, c, log, distributor)
+	federator := federation.NewFederator(dbService, transportController, c, log, distributor, typeConverter)
 
 	StandardDBSetup(dbService)
 	StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// build client api modules
 	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
-	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
-	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
+	accountModule := account.New(c, dbService, oauthServer, mediaHandler, typeConverter, log)
+	appsModule := app.New(oauthServer, dbService, typeConverter, log)
+	mm := mediaModule.New(dbService, mediaHandler, typeConverter, c, log)
 	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
-	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
-	statusModule := status.New(c, dbService, mediaHandler, mastoConverter, distributor, log)
+	adminModule := admin.New(c, dbService, mediaHandler, typeConverter, log)
+	statusModule := status.New(c, dbService, mediaHandler, typeConverter, distributor, log)
 	securityModule := security.New(c, log)
 
 	apiModules := []apimodule.ClientAPIModule{

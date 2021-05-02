@@ -34,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// commonBehavior implements the go-fed common behavior interface
+// commonBehavior implements the GTSCommonBehavior interface
 type commonBehavior struct {
 	db                  db.DB
 	log                 *logrus.Logger
@@ -42,7 +42,8 @@ type commonBehavior struct {
 	transportController transport.Controller
 }
 
-// newCommonBehavior returns an implementation of the pub.CommonBehavior interface that uses the given db, log, config, and transportController
+// newCommonBehavior returns an implementation of the GTSCommonBehavior interface that uses the given db, log, config, and transportController.
+// This interface is a superset of the pub.CommonBehavior interface, so it can be used anywhere that interface would be used.
 func newCommonBehavior(db db.DB, log *logrus.Logger, config *config.Config, transportController transport.Controller) pub.CommonBehavior {
 	return &commonBehavior{
 		db:                  db,
@@ -171,4 +172,11 @@ func (c *commonBehavior) NewTransport(ctx context.Context, actorBoxIRI *url.URL,
 	}
 
 	return c.transportController.NewTransport(account.PublicKeyURI, account.PrivateKey)
+}
+
+// GetUser returns the activitypub representation of the user specified in the path of r, eg https://example.org/users/example_user.
+// AuthenticateGetUser should be called first, to make sure the requester has permission to view the requested user.
+// The returned user should be a translation from a *gtsmodel.Account to a serializable ActivityStreamsPerson.
+func (c *commonBehavior) GetUser(ctx context.Context, r *http.Request) (vocab.ActivityStreamsPerson, error) {
+	return nil, nil
 }

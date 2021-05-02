@@ -24,12 +24,16 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 )
 
 /*
@@ -100,4 +104,85 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p cr
 	}
 	p, err = x509.ParsePKIXPublicKey(block.Bytes)
 	return
+}
+
+// AuthenticateFederatedRequest authenticates any kind of federated request from a remote server. This includes things like
+// GET requests for dereferencing users or statuses etc and POST requests for delivering new Activities.
+//
+// Error means the request did not pass authentication. No error means it's authentic.
+//
+// Authenticate in this case is defined as just making sure that the http request is actually signed by whoever claims
+// to have signed it, by fetching the public key from the signature and checking it against the remote public key.
+//
+// The provided transport will be used to dereference the public key ID of the request signature. Ideally you should pass in a transport
+// with the credentials of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
+// Ie., if the request on this server is for https://example.org/users/some_username then you should pass in a transport that's been initialized with
+// the keys belonging to local user 'some_username'. The remote server will then know that this is the user making the
+// dereferencing request, and they can decide to allow or deny the request depending on their settings.
+//
+// Note that this function *does not* dereference the remote account that the signature key is associated with, but it will
+// return the public key URL associated with that account, so that other functions can dereference it with that, as required.
+func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*url.URL, error) {
+	verifier, err := httpsig.NewVerifier(r)
+	if err != nil {
+		return nil, fmt.Errorf("could not create http sig verifier: %s", err)
+	}
+
+	// The key ID should be given in the signature so that we know where to fetch it from the remote server.
+	// This will be something like https://example.org/users/whatever_requesting_user#main-key
+	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
+	if err != nil {
+		return nil, fmt.Errorf("could not parse key id into a url: %s", err)
+	}
+
+	// use the new transport to fetch the requesting public key from the remote server
+	b, err := transport.Dereference(context.Background(), requestingPublicKeyID)
+	if err != nil {
+		return nil, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
+	}
+
+	// if the key isn't in the response, we can't authenticate the request
+	requestingPublicKey, err := getPublicKeyFromResponse(context.Background(), b, requestingPublicKeyID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
+	}
+
+	// do the actual authentication here!
+	algo := httpsig.RSA_SHA256 // TODO: make this more robust
+	if err := verifier.Verify(requestingPublicKey, algo); err != nil {
+		return nil, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
+	}
+
+	// all good!
+	return requestingPublicKeyID, nil
+}
+
+func DereferenceAccount(transport pub.Transport, publicKeyID *url.URL) (vocab.ActivityStreamsPerson, error) {
+	b, err := transport.Dereference(context.Background(), publicKeyID)
+	if err != nil {
+		return nil, fmt.Errorf("error deferencing %s: %s", publicKeyID.String(), err)
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, fmt.Errorf("error unmarshalling bytes into json: %s", err)
+	}
+
+	t, err := streams.ToType(context.Background(), m)
+	if err != nil {
+		return nil, fmt.Errorf("error resolving json into ap vocab type: %s", err)
+	}
+
+	switch t.GetTypeName() {
+	case string(gtsmodel.ActivityStreamsPerson):
+		p, ok := t.(vocab.ActivityStreamsPerson)
+		if !ok {
+			return nil, errors.New("error resolving type as activitystreams person")
+		}
+		return p, nil
+	case string(gtsmodel.ActivityStreamsApplication):
+		// TODO: convert application into person
+	}
+
+	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
 }

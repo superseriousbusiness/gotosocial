@@ -40,18 +40,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ProtocolTestSuite struct {
 	suite.Suite
-	config      *config.Config
-	db          db.DB
-	log         *logrus.Logger
-	distributor distributor.Distributor
-	accounts    map[string]*gtsmodel.Account
-	activities  map[string]testrig.ActivityWithSignature
+	config        *config.Config
+	db            db.DB
+	log           *logrus.Logger
+	distributor   distributor.Distributor
+	typeConverter typeutils.TypeConverter
+	accounts      map[string]*gtsmodel.Account
+	activities    map[string]testrig.ActivityWithSignature
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
@@ -61,6 +63,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.distributor = testrig.NewTestDistributor()
+	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()
 	suite.activities = testrig.NewTestActivities(suite.accounts)
 }
@@ -86,7 +89,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}))
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor)
+	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()
@@ -94,20 +97,12 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	request.Header.Set("Signature", activity.SignatureHeader)
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	newContext, err := federator.FederatingProtocol().PostInboxRequestBodyHook(ctx, request, activity.Activity)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), newContext)
 
-	// username should be set on context now
-	usernameI := newContext.Value(util.APUsernameKey)
-	assert.NotNil(suite.T(), usernameI)
-	username, ok := usernameI.(string)
-	assert.True(suite.T(), ok)
-	assert.NotEmpty(suite.T(), username)
-	assert.Equal(suite.T(), "the_mighty_zork", username)
-
 	// activity should be set on context now
-	activityI := newContext.Value(util.APActivityKey)
+	activityI := newContext.Value(util.APActivity)
 	assert.NotNil(suite.T(), activityI)
 	returnedActivity, ok := activityI.(pub.Activity)
 	assert.True(suite.T(), ok)
@@ -160,15 +155,14 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	}))
 
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederatingProtocol(suite.db, suite.log, suite.config, tc)
+	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
-	ctxWithUsername := context.WithValue(ctx, util.APUsernameKey, inboxAccount.Username)
-	ctxWithAccount := context.WithValue(ctxWithUsername, util.APAccountKey, inboxAccount)
-	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivityKey, activity)
+	ctxWithAccount := context.WithValue(ctx, util.APAccount, inboxAccount)
+	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
 
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
 	// we need these headers for the request to be validated
@@ -179,23 +173,16 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithActivity, recorder, request)
+	newContext, authed, err := federator.FederatingProtocol().AuthenticatePostInbox(ctxWithActivity, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 
 	// since we know this account already it should be set on the context
-	requestingAccountI := newContext.Value(util.APRequestingAccountKey)
+	requestingAccountI := newContext.Value(util.APRequestingAccount)
 	assert.NotNil(suite.T(), requestingAccountI)
 	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
 	assert.True(suite.T(), ok)
 	assert.Equal(suite.T(), sendingAccount.Username, requestingAccount.Username)
-
-	// the host making the request should also be set on the context
-	requestingHostI := newContext.Value(util.APRequestingHostKey)
-	assert.NotNil(suite.T(), requestingHostI)
-	requestingHost, ok := requestingHostI.(string)
-	assert.True(suite.T(), ok)
-	assert.Equal(suite.T(), sendingAccount.Domain, requestingHost)
 }
 
 func TestProtocolTestSuite(t *testing.T) {
