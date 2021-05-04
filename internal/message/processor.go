@@ -54,19 +54,26 @@ type Processor interface {
 	// AccountGet processes the given request for account information.
 	AccountGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
 
+	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
 	// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.
 	StatusDelete(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	// StatusFave processes the faving of a given status, returning the updated status if the fave goes through.
 	StatusFave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 	StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
+	// StatusGet gets the given status, taking account of privacy settings and blocks etc.
 	StatusGet(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 
+	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
 
+	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 
 	// Start starts the Processor, reading from its channels and passing messages back and forth.
