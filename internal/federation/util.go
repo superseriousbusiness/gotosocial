@@ -20,7 +20,6 @@ package federation
 
 import (
 	"context"
-	"crypto"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -45,30 +44,30 @@ type publicKeyer interface {
 }
 
 /*
-	getPublicKeyFromResponse is BORROWED DIRECTLY FROM https://github.com/go-fed/apcore/blob/master/ap/util.go
+	getPublicKeyFromResponse is adapted from https://github.com/go-fed/apcore/blob/master/ap/util.go
 	Thank you @cj@mastodon.technology ! <3
 */
-func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p crypto.PublicKey, err error) {
+func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (vocab.W3IDSecurityV1PublicKey, error) {
 	m := make(map[string]interface{})
-	err = json.Unmarshal(b, &m)
-	if err != nil {
-		return
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
 	}
-	var t vocab.Type
-	t, err = streams.ToType(c, m)
+
+	t, err := streams.ToType(c, m)
 	if err != nil {
-		return
+		return nil, err
 	}
+
 	pker, ok := t.(publicKeyer)
 	if !ok {
-		err = fmt.Errorf("ActivityStreams type cannot be converted to one known to have publicKey property: %T", t)
-		return
+		return nil, fmt.Errorf("ActivityStreams type cannot be converted to one known to have publicKey property: %T", t)
 	}
+
 	pkp := pker.GetW3IDSecurityV1PublicKey()
 	if pkp == nil {
-		err = fmt.Errorf("publicKey property is not provided")
-		return
+		return nil, errors.New("publicKey property is not provided")
 	}
+
 	var pkpFound vocab.W3IDSecurityV1PublicKey
 	for pkpIter := pkp.Begin(); pkpIter != pkp.End(); pkpIter = pkpIter.Next() {
 		if !pkpIter.IsW3IDSecurityV1PublicKey() {
@@ -78,7 +77,7 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p cr
 		var pkID *url.URL
 		pkID, err = pub.GetId(pkValue)
 		if err != nil {
-			return
+			return nil, err
 		}
 		if pkID.String() != keyID.String() {
 			continue
@@ -86,24 +85,12 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p cr
 		pkpFound = pkValue
 		break
 	}
+
 	if pkpFound == nil {
-		err = fmt.Errorf("cannot find publicKey with id: %s", keyID)
-		return
+		return nil, fmt.Errorf("cannot find publicKey with id: %s", keyID)
 	}
-	pkPemProp := pkpFound.GetW3IDSecurityV1PublicKeyPem()
-	if pkPemProp == nil || !pkPemProp.IsXMLSchemaString() {
-		err = fmt.Errorf("publicKeyPem property is not provided or it is not embedded as a value")
-		return
-	}
-	pubKeyPem := pkPemProp.Get()
-	var block *pem.Block
-	block, _ = pem.Decode([]byte(pubKeyPem))
-	if block == nil || block.Type != "PUBLIC KEY" {
-		err = fmt.Errorf("could not decode publicKeyPem to PUBLIC KEY pem block type")
-		return
-	}
-	p, err = x509.ParsePKIXPublicKey(block.Bytes)
-	return
+
+	return pkpFound, nil
 }
 
 // AuthenticateFederatedRequest authenticates any kind of federated request from a remote server. This includes things like
@@ -121,7 +108,7 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (p cr
 // dereferencing request, and they can decide to allow or deny the request depending on their settings.
 //
 // Note that this function *does not* dereference the remote account that the signature key is associated with, but it will
-// return the public key URL associated with that account, so that other functions can dereference it with that, as required.
+// return the owner of the public key, so that other functions can dereference it with that, as required.
 func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*url.URL, error) {
 	verifier, err := httpsig.NewVerifier(r)
 	if err != nil {
@@ -147,20 +134,42 @@ func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*ur
 		return nil, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
 	}
 
+	pkOwnerProp := requestingPublicKey.GetW3IDSecurityV1Owner()
+	if pkOwnerProp == nil || !pkOwnerProp.IsIRI() {
+		return nil, errors.New("publicKeyOwner property is not provided or it is not embedded as a value")
+	}
+	pkOwnerURI := pkOwnerProp.GetIRI()
+
+	pkPemProp := requestingPublicKey.GetW3IDSecurityV1PublicKeyPem()
+	if pkPemProp == nil || !pkPemProp.IsXMLSchemaString() {
+		return nil, errors.New("publicKeyPem property is not provided or it is not embedded as a value")
+	}
+
+	pubKeyPem := pkPemProp.Get()
+	block, _ := pem.Decode([]byte(pubKeyPem))
+	if block == nil || block.Type != "PUBLIC KEY" {
+		return nil, errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type")
+	}
+
+	p, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
+	}
+
 	// do the actual authentication here!
 	algo := httpsig.RSA_SHA256 // TODO: make this more robust
-	if err := verifier.Verify(requestingPublicKey, algo); err != nil {
+	if err := verifier.Verify(p, algo); err != nil {
 		return nil, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
 	}
 
 	// all good!
-	return requestingPublicKeyID, nil
+	return pkOwnerURI, nil
 }
 
-func DereferenceAccount(transport pub.Transport, publicKeyID *url.URL) (vocab.ActivityStreamsPerson, error) {
-	b, err := transport.Dereference(context.Background(), publicKeyID)
+func DereferenceAccount(transport pub.Transport, id *url.URL) (vocab.ActivityStreamsPerson, error) {
+	b, err := transport.Dereference(context.Background(), id)
 	if err != nil {
-		return nil, fmt.Errorf("error deferencing %s: %s", publicKeyID.String(), err)
+		return nil, fmt.Errorf("error deferencing %s: %s", id.String(), err)
 	}
 
 	m := make(map[string]interface{})

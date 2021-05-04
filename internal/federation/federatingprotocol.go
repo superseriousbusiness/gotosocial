@@ -138,27 +138,29 @@ func (f *federatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.R
 		return ctx, false, fmt.Errorf("error creating transport: %s", err)
 	}
 
-	requestingPublicKeyID, err := AuthenticateFederatedRequest(transport, r)
+	publicKeyOwnerURI, err := AuthenticateFederatedRequest(transport, r)
 	if err != nil {
 		l.Debugf("request not authenticated: %s", err)
 		return ctx, false, fmt.Errorf("not authenticated: %s", err)
 	}
 
 	requestingAccount := &gtsmodel.Account{}
-	if err := f.db.GetWhere("public_key_uri", requestingPublicKeyID.String(), requestingAccount); err != nil {
+	if err := f.db.GetWhere("uri", publicKeyOwnerURI.String(), requestingAccount); err != nil {
 		// there's been a proper error so return it
 		if _, ok := err.(db.ErrNoEntries); !ok {
-			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", requestingPublicKeyID.String(), err)
+			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
+
 		// we just don't know this account (yet) so try to dereference it
 		// TODO: slow-fed
-		person, err := DereferenceAccount(transport, requestingPublicKeyID)
+		person, err := DereferenceAccount(transport, publicKeyOwnerURI)
 		if err != nil {
-			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", requestingPublicKeyID.String(), err)
+			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
+		
 		a, err := f.typeConverter.ASPersonToAccount(person)
 		if err != nil {
-			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", requestingPublicKeyID.String(), err)
+			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
 		}
 		requestingAccount = a
 	}
