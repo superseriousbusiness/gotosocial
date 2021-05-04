@@ -23,7 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -54,7 +54,7 @@ func NewTestDB() db.DB {
 	config := NewTestConfig()
 	l := logrus.New()
 	l.SetLevel(logrus.TraceLevel)
-	testDB, err := db.New(context.Background(), config, l)
+	testDB, err := db.NewPostgresService(context.Background(), config, l)
 	if err != nil {
 		panic(err)
 	}

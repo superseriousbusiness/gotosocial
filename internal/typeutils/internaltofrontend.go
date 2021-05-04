@@ -23,11 +23,11 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*mastotypes.Account, error) {
+func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	mastoAccount, err := c.AccountToMastoPublic(a)
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*mastotypes.Ac
 		frc = len(fr)
 	}
 
-	mastoAccount.Source = &mastotypes.Source{
+	mastoAccount.Source = &model.Source{
 		Privacy:             c.VisToMasto(a.Privacy),
 		Sensitive:           a.Sensitive,
 		Language:            a.Language,
@@ -60,7 +60,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*mastotypes.Ac
 	return mastoAccount, nil
 }
 
-func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Account, error) {
+func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
 	// count followers
 	followers := []gtsmodel.Follow{}
 	if err := c.db.GetFollowersByAccountID(a.ID, &followers); err != nil {
@@ -129,9 +129,9 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Accou
 	headerURLStatic := header.Thumbnail.URL
 
 	// get the fields set on this account
-	fields := []mastotypes.Field{}
+	fields := []model.Field{}
 	for _, f := range a.Fields {
-		mField := mastotypes.Field{
+		mField := model.Field{
 			Name:  f.Name,
 			Value: f.Value,
 		}
@@ -150,7 +150,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Accou
 		acct = a.Username
 	}
 
-	return &mastotypes.Account{
+	return &model.Account{
 		ID:             a.ID,
 		Username:       a.Username,
 		Acct:           acct,
@@ -173,8 +173,8 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*mastotypes.Accou
 	}, nil
 }
 
-func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*mastotypes.Application, error) {
-	return &mastotypes.Application{
+func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*model.Application, error) {
+	return &model.Application{
 		ID:           a.ID,
 		Name:         a.Name,
 		Website:      a.Website,
@@ -185,35 +185,35 @@ func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*mastotypes.Ap
 	}, nil
 }
 
-func (c *converter) AppToMastoPublic(a *gtsmodel.Application) (*mastotypes.Application, error) {
-	return &mastotypes.Application{
+func (c *converter) AppToMastoPublic(a *gtsmodel.Application) (*model.Application, error) {
+	return &model.Application{
 		Name:    a.Name,
 		Website: a.Website,
 	}, nil
 }
 
-func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (mastotypes.Attachment, error) {
-	return mastotypes.Attachment{
+func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (model.Attachment, error) {
+	return model.Attachment{
 		ID:               a.ID,
 		Type:             string(a.Type),
 		URL:              a.URL,
 		PreviewURL:       a.Thumbnail.URL,
 		RemoteURL:        a.RemoteURL,
 		PreviewRemoteURL: a.Thumbnail.RemoteURL,
-		Meta: mastotypes.MediaMeta{
-			Original: mastotypes.MediaDimensions{
+		Meta: model.MediaMeta{
+			Original: model.MediaDimensions{
 				Width:  a.FileMeta.Original.Width,
 				Height: a.FileMeta.Original.Height,
 				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Original.Width, a.FileMeta.Original.Height),
 				Aspect: float32(a.FileMeta.Original.Aspect),
 			},
-			Small: mastotypes.MediaDimensions{
+			Small: model.MediaDimensions{
 				Width:  a.FileMeta.Small.Width,
 				Height: a.FileMeta.Small.Height,
 				Size:   fmt.Sprintf("%dx%d", a.FileMeta.Small.Width, a.FileMeta.Small.Height),
 				Aspect: float32(a.FileMeta.Small.Aspect),
 			},
-			Focus: mastotypes.MediaFocus{
+			Focus: model.MediaFocus{
 				X: a.FileMeta.Focus.X,
 				Y: a.FileMeta.Focus.Y,
 			},
@@ -223,10 +223,10 @@ func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (mastotypes.A
 	}, nil
 }
 
-func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, error) {
+func (c *converter) MentionToMasto(m *gtsmodel.Mention) (model.Mention, error) {
 	target := &gtsmodel.Account{}
 	if err := c.db.GetByID(m.TargetAccountID, target); err != nil {
-		return mastotypes.Mention{}, err
+		return model.Mention{}, err
 	}
 
 	var local bool
@@ -241,7 +241,7 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, err
 		acct = fmt.Sprintf("@%s@%s", target.Username, target.Domain)
 	}
 
-	return mastotypes.Mention{
+	return model.Mention{
 		ID:       target.ID,
 		Username: target.Username,
 		URL:      target.URL,
@@ -249,8 +249,8 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, err
 	}, nil
 }
 
-func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error) {
-	return mastotypes.Emoji{
+func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (model.Emoji, error) {
+	return model.Emoji{
 		Shortcode:       e.Shortcode,
 		URL:             e.ImageURL,
 		StaticURL:       e.ImageStaticURL,
@@ -259,10 +259,10 @@ func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error) {
 	}, nil
 }
 
-func (c *converter) TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error) {
+func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
 	tagURL := fmt.Sprintf("%s://%s/tags/%s", c.config.Protocol, c.config.Host, t.Name)
 
-	return mastotypes.Tag{
+	return model.Tag{
 		Name: t.Name,
 		URL:  tagURL, // we don't serve URLs with collections of tagged statuses (FOR NOW) so this is purely for mastodon compatibility ¯\_(ツ)_/¯
 	}, nil
@@ -274,7 +274,7 @@ func (c *converter) StatusToMasto(
 	requestingAccount *gtsmodel.Account,
 	boostOfAccount *gtsmodel.Account,
 	replyToAccount *gtsmodel.Account,
-	reblogOfStatus *gtsmodel.Status) (*mastotypes.Status, error) {
+	reblogOfStatus *gtsmodel.Status) (*model.Status, error) {
 
 	repliesCount, err := c.db.GetReplyCountForStatus(s)
 	if err != nil {
@@ -326,9 +326,9 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	var mastoRebloggedStatus *mastotypes.Status // TODO
+	var mastoRebloggedStatus *model.Status // TODO
 
-	var mastoApplication *mastotypes.Application
+	var mastoApplication *model.Application
 	if s.CreatedWithApplicationID != "" {
 		gtsApplication := &gtsmodel.Application{}
 		if err := c.db.GetByID(s.CreatedWithApplicationID, gtsApplication); err != nil {
@@ -345,7 +345,7 @@ func (c *converter) StatusToMasto(
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
 
-	mastoAttachments := []mastotypes.Attachment{}
+	mastoAttachments := []model.Attachment{}
 	// the status might already have some gts attachments on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts attachments into masto ones
 	if s.GTSMediaAttachments != nil {
@@ -372,7 +372,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoMentions := []mastotypes.Mention{}
+	mastoMentions := []model.Mention{}
 	// the status might already have some gts mentions on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts mentions into masto ones
 	if s.GTSMentions != nil {
@@ -399,7 +399,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoTags := []mastotypes.Tag{}
+	mastoTags := []model.Tag{}
 	// the status might already have some gts tags on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts tags into masto ones
 	if s.GTSTags != nil {
@@ -426,7 +426,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoEmojis := []mastotypes.Emoji{}
+	mastoEmojis := []model.Emoji{}
 	// the status might already have some gts emojis on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts emojis into masto ones
 	if s.GTSEmojis != nil {
@@ -453,10 +453,10 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	var mastoCard *mastotypes.Card
-	var mastoPoll *mastotypes.Poll
+	var mastoCard *model.Card
+	var mastoPoll *model.Poll
 
-	return &mastotypes.Status{
+	return &model.Status{
 		ID:                 s.ID,
 		CreatedAt:          s.CreatedAt.Format(time.RFC3339),
 		InReplyToID:        s.InReplyToID,
@@ -490,16 +490,16 @@ func (c *converter) StatusToMasto(
 }
 
 // VisToMasto converts a gts visibility into its mastodon equivalent
-func (c *converter) VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility {
+func (c *converter) VisToMasto(m gtsmodel.Visibility) model.Visibility {
 	switch m {
 	case gtsmodel.VisibilityPublic:
-		return mastotypes.VisibilityPublic
+		return model.VisibilityPublic
 	case gtsmodel.VisibilityUnlocked:
-		return mastotypes.VisibilityUnlisted
+		return model.VisibilityUnlisted
 	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
-		return mastotypes.VisibilityPrivate
+		return model.VisibilityPrivate
 	case gtsmodel.VisibilityDirect:
-		return mastotypes.VisibilityDirect
+		return model.VisibilityDirect
 	}
 	return ""
 }

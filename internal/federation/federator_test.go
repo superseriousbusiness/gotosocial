@@ -37,9 +37,10 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -50,7 +51,8 @@ type ProtocolTestSuite struct {
 	config        *config.Config
 	db            db.DB
 	log           *logrus.Logger
-	distributor   distributor.Distributor
+	processor     message.Processor
+	storage       storage.Storage
 	typeConverter typeutils.TypeConverter
 	accounts      map[string]*gtsmodel.Account
 	activities    map[string]testrig.ActivityWithSignature
@@ -62,7 +64,8 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
-	suite.distributor = testrig.NewTestDistributor()
+	suite.storage = testrig.NewTestStorage()
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage)
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()
 	suite.activities = testrig.NewTestActivities(suite.accounts)
@@ -89,7 +92,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}))
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor, suite.typeConverter)
+	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.processor, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()
@@ -155,7 +158,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	}))
 
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.distributor, suite.typeConverter)
+	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.processor, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()

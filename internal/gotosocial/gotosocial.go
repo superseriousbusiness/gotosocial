@@ -21,7 +21,6 @@ package gotosocial
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -38,10 +37,9 @@ type Gotosocial interface {
 // New returns a new gotosocial server, initialized with the given configuration.
 // An error will be returned the caller if something goes wrong during initialization
 // eg., no db or storage connection, port for router already in use, etc.
-func New(db db.DB, cache cache.Cache, apiRouter router.Router, federator federation.Federator, config *config.Config) (Gotosocial, error) {
+func New(db db.DB, apiRouter router.Router, federator federation.Federator, config *config.Config) (Gotosocial, error) {
 	return &gotosocial{
 		db:        db,
-		cache:     cache,
 		apiRouter: apiRouter,
 		federator: federator,
 		config:    config,
@@ -51,7 +49,6 @@ func New(db db.DB, cache cache.Cache, apiRouter router.Router, federator federat
 // gotosocial fulfils the gotosocial interface.
 type gotosocial struct {
 	db        db.DB
-	cache     cache.Cache
 	apiRouter router.Router
 	federator federation.Federator
 	config    *config.Config

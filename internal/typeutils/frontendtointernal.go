@@ -19,20 +19,20 @@
 package typeutils
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // MastoVisToVis converts a mastodon visibility into its gts equivalent.
-func (c *converter) MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility {
+func (c *converter) MastoVisToVis(m model.Visibility) gtsmodel.Visibility {
 	switch m {
-	case mastotypes.VisibilityPublic:
+	case model.VisibilityPublic:
 		return gtsmodel.VisibilityPublic
-	case mastotypes.VisibilityUnlisted:
+	case model.VisibilityUnlisted:
 		return gtsmodel.VisibilityUnlocked
-	case mastotypes.VisibilityPrivate:
+	case model.VisibilityPrivate:
 		return gtsmodel.VisibilityFollowersOnly
-	case mastotypes.VisibilityDirect:
+	case model.VisibilityDirect:
 		return gtsmodel.VisibilityDirect
 	}
 	return ""

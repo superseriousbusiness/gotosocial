@@ -23,7 +23,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
+	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -38,7 +38,7 @@ type Federator interface {
 
 type federator struct {
 	actor               pub.FederatingActor
-	distributor         distributor.Distributor
+	processor           message.Processor
 	federatingProtocol  pub.FederatingProtocol
 	commonBehavior      pub.CommonBehavior
 	clock               pub.Clock
@@ -46,7 +46,7 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, distributor distributor.Distributor, typeConverter typeutils.TypeConverter) Federator {
+func NewFederator(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, processor message.Processor, typeConverter typeutils.TypeConverter) Federator {
 
 	clock := &Clock{}
 	federatingProtocol := newFederatingProtocol(db, log, config, transportController, typeConverter)
@@ -55,7 +55,7 @@ func NewFederator(db db.DB, transportController transport.Controller, config *co
 
 	return &federator{
 		actor:               actor,
-		distributor:         distributor,
+		processor:           processor,
 		federatingProtocol:  federatingProtocol,
 		commonBehavior:      commonBehavior,
 		clock:               clock,

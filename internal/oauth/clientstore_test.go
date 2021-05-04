@@ -62,7 +62,7 @@ func (suite *PgClientStoreTestSuite) SetupTest() {
 		Database:        "postgres",
 		ApplicationName: "gotosocial",
 	}
-	db, err := db.New(context.Background(), c, log)
+	db, err := db.NewPostgresService(context.Background(), c, log)
 	if err != nil {
 		logrus.Panicf("error creating database connection: %s", err)
 	}

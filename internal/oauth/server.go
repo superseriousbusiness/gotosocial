@@ -26,7 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -66,18 +66,18 @@ type s struct {
 	log    *logrus.Logger
 }
 
-// Authed wraps an authorized token, application, user, and account.
+// Auth wraps an authorized token, application, user, and account.
 // It is used in the functions GetAuthed and MustAuth.
 // Because the user might *not* be authed, any of the fields in this struct
 // might be nil, so make sure to check that when you're using this struct anywhere.
-type Authed struct {
+type Auth struct {
 	Token       oauth2.TokenInfo
 	Application *gtsmodel.Application
 	User        *gtsmodel.User
 	Account     *gtsmodel.Account
 }
 
-// GetAuthed is a convenience function for returning an Authed struct from a gin context.
+// Authed is a convenience function for returning an Authed struct from a gin context.
 // In essence, it tries to extract a token, application, user, and account from the context,
 // and then sets them on a struct for convenience.
 //
@@ -86,9 +86,10 @@ type Authed struct {
 // If *ALL* are not present, then nil and an error will be returned.
 //
 // If something goes wrong during parsing, then nil and an error will be returned (consider this not authed).
-func GetAuthed(c *gin.Context) (*Authed, error) {
+// Authed is like GetAuthed, but will fail if one of the requirements is not met.
+func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Auth, error) {
 	ctx := c.Copy()
-	a := &Authed{}
+	a := &Auth{}
 	var i interface{}
 	var ok bool
 
@@ -128,19 +129,6 @@ func GetAuthed(c *gin.Context) (*Authed, error) {
 		a.Account = parsed
 	}
 
-	if a.Token == nil && a.Application == nil && a.User == nil && a.Account == nil {
-		return nil, errors.New("not authorized")
-	}
-
-	return a, nil
-}
-
-// MustAuth is like GetAuthed, but will fail if one of the requirements is not met.
-func MustAuth(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Authed, error) {
-	a, err := GetAuthed(c)
-	if err != nil {
-		return nil, err
-	}
 	if requireToken && a.Token == nil {
 		return nil, errors.New("token not supplied")
 	}

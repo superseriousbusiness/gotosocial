@@ -20,13 +20,13 @@ package typeutils
 
 import (
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// TypeConverter is an interface for the common action of converting between mastotypes (frontend, serializable) models,
+// TypeConverter is an interface for the common action of converting between apimodule (frontend, serializable) models,
 // internal gts models used in the database, and activitypub models used in federation.
 //
 // It requires access to the database because many of the conversions require pulling out database entries and counting them etc.
@@ -39,47 +39,47 @@ type TypeConverter interface {
 	// AccountToMastoSensitive takes a db model account as a param, and returns a populated mastotype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
-	AccountToMastoSensitive(account *gtsmodel.Account) (*mastotypes.Account, error)
+	AccountToMastoSensitive(account *gtsmodel.Account) (*model.Account, error)
 
 	// AccountToMastoPublic takes a db model account as a param, and returns a populated mastotype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
-	AccountToMastoPublic(account *gtsmodel.Account) (*mastotypes.Account, error)
+	AccountToMastoPublic(account *gtsmodel.Account) (*model.Account, error)
 
 	// AppToMastoSensitive takes a db model application as a param, and returns a populated mastotype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 	// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
-	AppToMastoSensitive(application *gtsmodel.Application) (*mastotypes.Application, error)
+	AppToMastoSensitive(application *gtsmodel.Application) (*model.Application, error)
 
 	// AppToMastoPublic takes a db model application as a param, and returns a populated mastotype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
-	AppToMastoPublic(application *gtsmodel.Application) (*mastotypes.Application, error)
+	AppToMastoPublic(application *gtsmodel.Application) (*model.Application, error)
 
 	// AttachmentToMasto converts a gts model media attacahment into its mastodon representation for serialization on the API.
-	AttachmentToMasto(attachment *gtsmodel.MediaAttachment) (mastotypes.Attachment, error)
+	AttachmentToMasto(attachment *gtsmodel.MediaAttachment) (model.Attachment, error)
 
 	// MentionToMasto converts a gts model mention into its mastodon (frontend) representation for serialization on the API.
-	MentionToMasto(m *gtsmodel.Mention) (mastotypes.Mention, error)
+	MentionToMasto(m *gtsmodel.Mention) (model.Mention, error)
 
 	// EmojiToMasto converts a gts model emoji into its mastodon (frontend) representation for serialization on the API.
-	EmojiToMasto(e *gtsmodel.Emoji) (mastotypes.Emoji, error)
+	EmojiToMasto(e *gtsmodel.Emoji) (model.Emoji, error)
 
 	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
-	TagToMasto(t *gtsmodel.Tag) (mastotypes.Tag, error)
+	TagToMasto(t *gtsmodel.Tag) (model.Tag, error)
 
 	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
-	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*mastotypes.Status, error)
+	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*model.Status, error)
 
 	// VisToMasto converts a gts visibility into its mastodon equivalent
-	VisToMasto(m gtsmodel.Visibility) mastotypes.Visibility
+	VisToMasto(m gtsmodel.Visibility) model.Visibility
 
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
 	*/
 
 	// MastoVisToVis converts a mastodon visibility into its gts equivalent.
-	MastoVisToVis(m mastotypes.Visibility) gtsmodel.Visibility
+	MastoVisToVis(m model.Visibility) gtsmodel.Visibility
 
 	/*
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL

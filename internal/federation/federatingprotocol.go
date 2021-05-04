@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -157,7 +157,7 @@ func (f *federatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.R
 		if err != nil {
 			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
-		
+
 		a, err := f.typeConverter.ASPersonToAccount(person)
 		if err != nil {
 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
@@ -165,7 +165,7 @@ func (f *federatingProtocol) AuthenticatePostInbox(ctx context.Context, w http.R
 		requestingAccount = a
 	}
 
-	return newContext, true, nil
+	return nil, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by

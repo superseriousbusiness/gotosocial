@@ -20,17 +20,13 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"strings"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const dbTypePostgres string = "POSTGRES"
+const DBTypePostgres string = "POSTGRES"
 
 // ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
@@ -282,15 +278,4 @@ type DB interface {
 	// Note: this func doesn't/shouldn't do any manipulation of the emoji in the DB, it's just for checking
 	// if they exist in the db and conveniently returning them if they do.
 	EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error)
-}
-
-// New returns a new database service that satisfies the DB interface and, by extension,
-// the go-fed database interface described here: https://github.com/go-fed/activity/blob/master/pub/database.go
-func New(ctx context.Context, c *config.Config, log *logrus.Logger) (DB, error) {
-	switch strings.ToUpper(c.DBConfig.Type) {
-	case dbTypePostgres:
-		return newPostgresService(ctx, c, log.WithField("service", "db"))
-	default:
-		return nil, fmt.Errorf("database type %s not supported", c.DBConfig.Type)
-	}
 }

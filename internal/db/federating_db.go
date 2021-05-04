@@ -29,7 +29,7 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -39,10 +39,10 @@ type federatingDB struct {
 	locks  *sync.Map
 	db     DB
 	config *config.Config
-	log    *logrus.Entry
+	log    *logrus.Logger
 }
 
-func newFederatingDB(db DB, config *config.Config, log *logrus.Entry) pub.Database {
+func NewFederatingDB(db DB, config *config.Config, log *logrus.Logger) pub.Database {
 	return &federatingDB{
 		locks:  new(sync.Map),
 		db:     db,
