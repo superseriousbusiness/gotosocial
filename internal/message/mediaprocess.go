@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -92,4 +94,93 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	}
 
 	return &mastoAttachment, nil
+}
+
+func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+	// parse the form fields
+	mediaSize, err := media.ParseMediaSize(form.MediaSize)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("media size %s not valid", form.MediaSize))
+	}
+
+	mediaType, err := media.ParseMediaType(form.MediaType)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("media type %s not valid", form.MediaType))
+	}
+
+	spl := strings.Split(form.FileName, ".")
+	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
+		return nil, NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
+	}
+	wantedMediaID := spl[0]
+
+	// get the account that owns the media and make sure it's not suspended
+	acct := &gtsmodel.Account{}
+	if err := p.db.GetByID(form.AccountID, acct); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", form.AccountID, err))
+	}
+	if !acct.SuspendedAt.IsZero() {
+		return nil, NewErrorNotFound(fmt.Errorf("account with id %s is suspended", form.AccountID))
+	}
+
+	// make sure the requesting account and the media account don't block each other
+	if authed.Account != nil {
+		blocked, err := p.db.Blocked(authed.Account.ID, form.AccountID)
+		if err != nil {
+			return nil, NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, authed.Account.ID, err))
+		}
+		if blocked {
+			return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s: %s", form.AccountID, authed.Account.ID))
+		}
+	}
+
+	content := &apimodel.Content{}
+	var storagePath string
+	switch mediaType {
+	case media.Emoji:
+		e := &gtsmodel.Emoji{}
+		if err := p.db.GetByID(wantedMediaID, e); err != nil {
+			return nil, NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
+		}
+		if e.Disabled {
+			return nil, NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedMediaID))
+		}
+		switch mediaSize {
+		case media.Original:
+			content.ContentType = e.ImageContentType
+			storagePath = e.ImagePath
+		case media.Static:
+			content.ContentType = e.ImageStaticContentType
+			storagePath = e.ImageStaticPath
+		default:
+			return nil, NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
+		}
+	case media.Attachment:
+		a := &gtsmodel.MediaAttachment{}
+		if err := p.db.GetByID(wantedMediaID, a); err != nil {
+			return nil, NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
+		}
+		if a.AccountID != form.AccountID {
+			return nil, NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, form.AccountID))
+		}
+		switch mediaSize {
+		case media.Original:
+			content.ContentType = a.File.ContentType
+			storagePath = a.File.Path
+		case media.Small:
+			content.ContentType = a.Thumbnail.ContentType
+			storagePath = a.Thumbnail.Path
+		default:
+			return nil, NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
+		}
+	}
+
+	bytes, err := p.storage.RetrieveFileFrom(storagePath)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
+	}
+
+	content.ContentLength = int64(len(bytes))
+	content.Content = bytes
+	return content, nil
 }

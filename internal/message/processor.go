@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -72,7 +73,7 @@ type Processor interface {
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
-
+	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 
@@ -93,11 +94,12 @@ type processor struct {
 	tc           typeutils.TypeConverter
 	oauthServer  oauth.Server
 	mediaHandler media.Handler
+	storage      storage.Storage
 	db           db.DB
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, oauthServer oauth.Server, mediaHandler media.Handler, db db.DB, log *logrus.Logger) Processor {
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, oauthServer oauth.Server, mediaHandler media.Handler, storage storage.Storage, db db.DB, log *logrus.Logger) Processor {
 	return &processor{
 		toClientAPI:  make(chan ToClientAPI, 100),
 		toFederator:  make(chan ToFederator, 100),
@@ -107,6 +109,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, oauthServer
 		tc:           tc,
 		oauthServer:  oauthServer,
 		mediaHandler: mediaHandler,
+		storage:      storage,
 		db:           db,
 	}
 }

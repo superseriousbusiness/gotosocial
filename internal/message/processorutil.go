@@ -263,7 +263,7 @@ func (p *processor) updateAccountAvatar(avatar *multipart.FileHeader, accountID 
 	}
 
 	// do the setting
-	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaAvatar)
+	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Avatar)
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -296,7 +296,7 @@ func (p *processor) updateAccountHeader(header *multipart.FileHeader, accountID 
 	}
 
 	// do the setting
-	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.MediaHeader)
+	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Header)
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}

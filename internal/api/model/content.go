@@ -16,15 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package model
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
-)
+// Content wraps everything needed to serve a blob of content (some kind of media) through the API.
+type Content struct {
+	// MIME content type
+	ContentType string
+	// ContentLength in bytes
+	ContentLength int64
+	// Actual content blob
+	Content []byte
+}
 
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage storage.Storage) message.Processor {
-	return message.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, NewTestLog())
+// GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.
+type GetContentRequestForm struct {
+	// AccountID of the content owner
+	AccountID string
+	// MediaType of the content (should be convertible to a media.MediaType)
+	MediaType string
+	// MediaSize of the content (should be convertible to a media.MediaSize)
+	MediaSize string
+	// Filename of the content
+	FileName string
 }

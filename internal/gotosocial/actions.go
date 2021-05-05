@@ -72,7 +72,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
-	processor := message.NewProcessor(c, typeConverter, oauthServer, mediaHandler, dbService, log)
+	processor := message.NewProcessor(c, typeConverter, oauthServer, mediaHandler, storageBackend, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

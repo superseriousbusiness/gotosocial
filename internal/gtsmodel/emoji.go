@@ -58,6 +58,8 @@ type Emoji struct {
 	// MIME content type of the emoji image
 	// Probably "image/png"
 	ImageContentType string `pg:",notnull"`
+	// MIME content type of the static version of the emoji image.
+	ImageStaticContentType string `pg:",notnull"`
 	// Size of the emoji image file in bytes, for serving purposes.
 	ImageFileSize int `pg:",notnull"`
 	// Size of the static version of the emoji image file in bytes, for serving purposes.

@@ -129,11 +129,11 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 		},
 		gin.Param{
 			Key:   fileserver.MediaTypeKey,
-			Value: media.MediaAttachment,
+			Value: string(media.Attachment),
 		},
 		gin.Param{
 			Key:   fileserver.MediaSizeKey,
-			Value: media.MediaOriginal,
+			Value: string(media.Original),
 		},
 		gin.Param{
 			Key:   fileserver.FileNameKey,

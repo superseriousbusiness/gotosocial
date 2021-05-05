@@ -285,3 +285,31 @@ type imageAndMeta struct {
 	aspect   float64
 	blurhash string
 }
+
+// ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
+func ParseMediaType(s string) (MediaType, error) {
+	switch MediaType(s) {
+	case Attachment:
+		return Attachment, nil
+	case Header:
+		return Header, nil
+	case Avatar:
+		return Avatar, nil
+	case Emoji:
+		return Emoji, nil
+	}
+	return "", fmt.Errorf("%s not a recognized MediaType", s)
+}
+
+// ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
+func ParseMediaSize(s string) (MediaSize, error) {
+	switch MediaSize(s) {
+	case Small:
+		return Small, nil
+	case Original:
+		return Original, nil
+	case Static:
+		return Static, nil
+	}
+	return "", fmt.Errorf("%s not a recognized MediaSize", s)
+}
