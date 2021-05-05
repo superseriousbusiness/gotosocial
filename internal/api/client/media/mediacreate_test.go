@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/message"
@@ -52,6 +53,7 @@ type MediaCreateTestSuite struct {
 	db           db.DB
 	log          *logrus.Logger
 	storage      storage.Storage
+	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	mediaHandler media.Handler
 	oauthServer  oauth.Server
@@ -82,7 +84,8 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)))
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.config, suite.processor, suite.log).(*mediamodule.Module)

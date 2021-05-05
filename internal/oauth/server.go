@@ -23,10 +23,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -66,82 +64,53 @@ type s struct {
 	log    *logrus.Logger
 }
 
-// Auth wraps an authorized token, application, user, and account.
-// It is used in the functions GetAuthed and MustAuth.
-// Because the user might *not* be authed, any of the fields in this struct
-// might be nil, so make sure to check that when you're using this struct anywhere.
-type Auth struct {
-	Token       oauth2.TokenInfo
-	Application *gtsmodel.Application
-	User        *gtsmodel.User
-	Account     *gtsmodel.Account
-}
+// New returns a new oauth server that implements the Server interface
+func New(database db.DB, log *logrus.Logger) Server {
+	ts := newTokenStore(context.Background(), database, log)
+	cs := NewClientStore(database)
 
-// Authed is a convenience function for returning an Authed struct from a gin context.
-// In essence, it tries to extract a token, application, user, and account from the context,
-// and then sets them on a struct for convenience.
-//
-// If any are not present in the context, they will be set to nil on the returned Authed struct.
-//
-// If *ALL* are not present, then nil and an error will be returned.
-//
-// If something goes wrong during parsing, then nil and an error will be returned (consider this not authed).
-// Authed is like GetAuthed, but will fail if one of the requirements is not met.
-func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Auth, error) {
-	ctx := c.Copy()
-	a := &Auth{}
-	var i interface{}
-	var ok bool
+	manager := manage.NewDefaultManager()
+	manager.MapTokenStorage(ts)
+	manager.MapClientStorage(cs)
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	sc := &server.Config{
+		TokenType: "Bearer",
+		// Must follow the spec.
+		AllowGetAccessRequest: false,
+		// Support only the non-implicit flow.
+		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
+		// Allow:
+		// - Authorization Code (for first & third parties)
+		// - Client Credentials (for applications)
+		AllowedGrantTypes: []oauth2.GrantType{
+			oauth2.AuthorizationCode,
+			oauth2.ClientCredentials,
+		},
+		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{oauth2.CodeChallengePlain},
+	}
 
-	i, ok = ctx.Get(SessionAuthorizedToken)
-	if ok {
-		parsed, ok := i.(oauth2.TokenInfo)
-		if !ok {
-			return nil, errors.New("could not parse token from session context")
+	srv := server.NewServer(sc, manager)
+	srv.SetInternalErrorHandler(func(err error) *errors.Response {
+		log.Errorf("internal oauth error: %s", err)
+		return nil
+	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		log.Errorf("internal response error: %s", re.Error)
+	})
+
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
+		userID := r.FormValue("userid")
+		if userID == "" {
+			return "", errors.New("userid was empty")
 		}
-		a.Token = parsed
+		return userID, nil
+	})
+	srv.SetClientInfoHandler(server.ClientFormHandler)
+	return &s{
+		server: srv,
+		log:    log,
 	}
-
-	i, ok = ctx.Get(SessionAuthorizedApplication)
-	if ok {
-		parsed, ok := i.(*gtsmodel.Application)
-		if !ok {
-			return nil, errors.New("could not parse application from session context")
-		}
-		a.Application = parsed
-	}
-
-	i, ok = ctx.Get(SessionAuthorizedUser)
-	if ok {
-		parsed, ok := i.(*gtsmodel.User)
-		if !ok {
-			return nil, errors.New("could not parse user from session context")
-		}
-		a.User = parsed
-	}
-
-	i, ok = ctx.Get(SessionAuthorizedAccount)
-	if ok {
-		parsed, ok := i.(*gtsmodel.Account)
-		if !ok {
-			return nil, errors.New("could not parse account from session context")
-		}
-		a.Account = parsed
-	}
-
-	if requireToken && a.Token == nil {
-		return nil, errors.New("token not supplied")
-	}
-	if requireApp && a.Application == nil {
-		return nil, errors.New("application not supplied")
-	}
-	if requireUser && a.User == nil {
-		return nil, errors.New("user not supplied")
-	}
-	if requireAccount && a.Account == nil {
-		return nil, errors.New("account not supplied")
-	}
-	return a, nil
 }
 
 // HandleTokenRequest wraps the oauth2 library's HandleTokenRequest function
@@ -198,53 +167,4 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 	}
 	s.log.Tracef("obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
-}
-
-// New returns a new oauth server that implements the Server interface
-func New(database db.DB, log *logrus.Logger) Server {
-	ts := newTokenStore(context.Background(), database, log)
-	cs := NewClientStore(database)
-
-	manager := manage.NewDefaultManager()
-	manager.MapTokenStorage(ts)
-	manager.MapClientStorage(cs)
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-	sc := &server.Config{
-		TokenType: "Bearer",
-		// Must follow the spec.
-		AllowGetAccessRequest: false,
-		// Support only the non-implicit flow.
-		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
-		// Allow:
-		// - Authorization Code (for first & third parties)
-		// - Client Credentials (for applications)
-		AllowedGrantTypes: []oauth2.GrantType{
-			oauth2.AuthorizationCode,
-			oauth2.ClientCredentials,
-		},
-		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{oauth2.CodeChallengePlain},
-	}
-
-	srv := server.NewServer(sc, manager)
-	srv.SetInternalErrorHandler(func(err error) *errors.Response {
-		log.Errorf("internal oauth error: %s", err)
-		return nil
-	})
-
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Errorf("internal response error: %s", re.Error)
-	})
-
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
-		userID := r.FormValue("userid")
-		if userID == "" {
-			return "", errors.New("userid was empty")
-		}
-		return userID, nil
-	})
-	srv.SetClientInfoHandler(server.ClientFormHandler)
-	return &s{
-		server: srv,
-		log:    log,
-	}
 }

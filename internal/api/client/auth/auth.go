@@ -24,7 +24,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -39,17 +40,19 @@ const (
 
 // Module implements the ClientAPIModule interface for
 type Module struct {
-	config    *config.Config
-	processor message.Processor
-	log       *logrus.Logger
+	config *config.Config
+	db     db.DB
+	server oauth.Server
+	log    *logrus.Logger
 }
 
 // New returns a new auth module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, db db.DB, server oauth.Server, log *logrus.Logger) api.ClientModule {
 	return &Module{
-		config:    config,
-		processor: processor,
-		log:       log,
+		config: config,
+		db:     db,
+		server: server,
+		log:    log,
 	}
 }
 

@@ -30,7 +30,7 @@ import (
 // If user or account can't be found, then the handler won't *fail*, in case the server wants to allow
 // public requests that don't have a Bearer token set (eg., for public instance information and so on).
 func (m *Module) OauthTokenMiddleware(c *gin.Context) {
-	l := m.log.WithField("func", "ValidatePassword")
+	l := m.log.WithField("func", "OauthTokenMiddleware")
 	l.Trace("entering OauthTokenMiddleware")
 
 	ti, err := m.server.ValidationBearerToken(c.Request)

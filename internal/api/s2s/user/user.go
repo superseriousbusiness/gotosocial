@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package federation
+package user
 
 import (
 	"net/http"
@@ -24,10 +24,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -51,20 +49,16 @@ var ActivityPubAcceptHeaders = []string{
 
 // Module implements the FederationAPIModule interface
 type Module struct {
-	federator federation.Federator
 	config    *config.Config
-	db        db.DB
-	tc        typeutils.TypeConverter
+	processor message.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new auth module
-func New(db db.DB, federator federation.Federator, tc typeutils.TypeConverter, config *config.Config, log *logrus.Logger) api.FederationModule {
+func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.FederationModule {
 	return &Module{
-		federator: federator,
 		config:    config,
-		db:        db,
-		tc:        tc,
+		processor: processor,
 		log:       log,
 	}
 }

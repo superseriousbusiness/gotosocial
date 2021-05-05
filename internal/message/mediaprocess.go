@@ -130,10 +130,12 @@ func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentReques
 			return nil, NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, authed.Account.ID, err))
 		}
 		if blocked {
-			return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s: %s", form.AccountID, authed.Account.ID))
+			return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", form.AccountID, authed.Account.ID))
 		}
 	}
 
+	// the way we store emojis is a little different from the way we store other attachments,
+	// so we need to take different steps depending on the media type being requested
 	content := &apimodel.Content{}
 	var storagePath string
 	switch mediaType {
@@ -155,7 +157,7 @@ func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentReques
 		default:
 			return nil, NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
 		}
-	case media.Attachment:
+	case media.Attachment, media.Header, media.Avatar:
 		a := &gtsmodel.MediaAttachment{}
 		if err := p.db.GetByID(wantedMediaID, a); err != nil {
 			return nil, NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))

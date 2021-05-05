@@ -50,10 +50,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 	dbService := NewTestDB()
 	router := NewTestRouter()
 	storageBackend := NewTestStorage()
-	processor := NewTestProcessor(dbService, storageBackend)
-	if err := processor.Start(); err != nil {
-		return fmt.Errorf("error starting processor: %s", err)
-	}
+
 	typeConverter := NewTestTypeConverter(dbService)
 	transportController := NewTestTransportController(NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
@@ -62,13 +59,17 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 			Body:       r,
 		}, nil
 	}))
-	federator := federation.NewFederator(dbService, transportController, c, log, processor, typeConverter)
+	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	processor := NewTestProcessor(dbService, storageBackend, federator)
+	if err := processor.Start(); err != nil {
+		return fmt.Errorf("error starting processor: %s", err)
+	}
 
 	StandardDBSetup(dbService)
 	StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// build client api modules
-	authModule := auth.New(c, processor, log)
+	authModule := auth.New(c, dbService, NewTestOauthServer(dbService), log)
 	accountModule := account.New(c, processor, log)
 	appsModule := app.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)

@@ -45,7 +45,8 @@ func (suite *StatusGetTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.log = testrig.NewTestLog()
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)))
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.statusModule = status.New(suite.config, suite.processor, suite.log).(*status.Module)
 	testrig.StandardDBSetup(suite.db)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
@@ -55,7 +56,6 @@ func (suite *StatusGetTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
-
 
 // Post a new status with some custom visibility settings
 func (suite *StatusGetTestSuite) TestPostNewStatus() {

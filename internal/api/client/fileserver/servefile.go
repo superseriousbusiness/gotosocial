@@ -85,6 +85,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		FileName:  fileName,
 	})
 	if err != nil {
+		l.Debug(err)
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}

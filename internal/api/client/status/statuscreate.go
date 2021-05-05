@@ -68,7 +68,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	mastoStatus, err := m.processor.StatusCreate(authed, form)
 	if err != nil {
 		l.Debugf("error processing status create: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error":"bad request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 

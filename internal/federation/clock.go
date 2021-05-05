@@ -38,5 +38,5 @@ func (c *Clock) Now() time.Time {
 }
 
 func NewClock() pub.Clock {
-   return &Clock{}
+	return &Clock{}
 }

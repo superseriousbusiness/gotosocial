@@ -72,15 +72,15 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
-	processor := message.NewProcessor(c, typeConverter, oauthServer, mediaHandler, storageBackend, dbService, log)
+	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
+	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	processor := message.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
-	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
-	federator := federation.NewFederator(dbService, transportController, c, log, processor, typeConverter)
 
 	// build client api modules
-	authModule := auth.New(c, processor, log)
+	authModule := auth.New(c, dbService, oauthServer, log)
 	accountModule := account.New(c, processor, log)
 	appsModule := app.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)

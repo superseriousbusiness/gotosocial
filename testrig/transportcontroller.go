@@ -19,6 +19,8 @@
 package testrig
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/go-fed/activity/pub"
@@ -41,7 +43,22 @@ func NewTestTransportController(client pub.HttpClient) transport.Controller {
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,
 // but will always just execute the given `do` function, allowing responses to be mocked.
+//
+// If 'do' is nil, then a no-op function will be used instead, that just returns status 200.
+//
+// Note that you should never ever make ACTUAL http calls with this thing.
 func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error)) pub.HttpClient {
+	if do == nil {
+		return &mockHTTPClient{
+			do: func(req *http.Request) (*http.Response, error) {
+				r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+				return &http.Response{
+					StatusCode: 200,
+					Body:       r,
+				}, nil
+			},
+		}
+	}
 	return &mockHTTPClient{
 		do: do,
 	}

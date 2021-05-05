@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/message"
@@ -49,6 +50,7 @@ type ServeFileTestSuite struct {
 	db           db.DB
 	log          *logrus.Logger
 	storage      storage.Storage
+	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    message.Processor
 	mediaHandler media.Handler
@@ -76,7 +78,8 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)))
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)

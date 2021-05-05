@@ -19,11 +19,13 @@
 package federation
 
 import (
+	"net/http"
+	"net/url"
+
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -32,35 +34,36 @@ import (
 type Federator interface {
 	FederatingActor() pub.FederatingActor
 	TransportController() transport.Controller
-	FederatingProtocol() pub.FederatingProtocol
-	CommonBehavior() pub.CommonBehavior
+	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
+	pub.CommonBehavior
+	pub.FederatingProtocol
 }
 
 type federator struct {
-	actor               pub.FederatingActor
-	processor           message.Processor
-	federatingProtocol  pub.FederatingProtocol
-	commonBehavior      pub.CommonBehavior
+	config              *config.Config
+	db                  db.DB
 	clock               pub.Clock
+	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
+	actor               pub.FederatingActor
+	log                 *logrus.Logger
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, processor message.Processor, typeConverter typeutils.TypeConverter) Federator {
+func NewFederator(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
 
 	clock := &Clock{}
-	federatingProtocol := newFederatingProtocol(db, log, config, transportController, typeConverter)
-	commonBehavior := newCommonBehavior(db, log, config, transportController)
-	actor := newFederatingActor(commonBehavior, federatingProtocol, db.Federation(), clock)
-
-	return &federator{
-		actor:               actor,
-		processor:           processor,
-		federatingProtocol:  federatingProtocol,
-		commonBehavior:      commonBehavior,
-		clock:               clock,
+	f := &federator{
+		config:              config,
+		db:                  db,
+		clock:               &Clock{},
+		typeConverter:       typeConverter,
 		transportController: transportController,
+		log:                 log,
 	}
+	actor := newFederatingActor(f, f, db.Federation(), clock)
+	f.actor = actor
+	return f
 }
 
 func (f *federator) FederatingActor() pub.FederatingActor {
@@ -69,12 +72,4 @@ func (f *federator) FederatingActor() pub.FederatingActor {
 
 func (f *federator) TransportController() transport.Controller {
 	return f.transportController
-}
-
-func (f *federator) FederatingProtocol() pub.FederatingProtocol {
-	return f.federatingProtocol
-}
-
-func (f *federator) CommonBehavior() pub.CommonBehavior {
-	return f.commonBehavior
 }

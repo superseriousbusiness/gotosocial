@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account, error) {

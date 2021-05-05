@@ -101,15 +101,16 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 // Authenticate in this case is defined as just making sure that the http request is actually signed by whoever claims
 // to have signed it, by fetching the public key from the signature and checking it against the remote public key.
 //
-// The provided transport will be used to dereference the public key ID of the request signature. Ideally you should pass in a transport
-// with the credentials of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
-// Ie., if the request on this server is for https://example.org/users/some_username then you should pass in a transport that's been initialized with
-// the keys belonging to local user 'some_username'. The remote server will then know that this is the user making the
-// dereferencing request, and they can decide to allow or deny the request depending on their settings.
+// The provided username will be used to generate a transport for making remote requests/derefencing the public key ID of the request signature.
+// Ideally you should pass in the username of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
+// Ie., if the request on this server is for https://example.org/users/some_username then you should pass in the username 'some_username'.
+// The remote server will then know that this is the user making the dereferencing request, and they can decide to allow or deny the request depending on their settings.
+//
+// Note that it is also valid to pass in an empty string here, in which case the keys of the instance account will be used.
 //
 // Note that this function *does not* dereference the remote account that the signature key is associated with, but it will
 // return the owner of the public key, so that other functions can dereference it with that, as required.
-func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*url.URL, error) {
+func (f *federator) AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error) {
 	verifier, err := httpsig.NewVerifier(r)
 	if err != nil {
 		return nil, fmt.Errorf("could not create http sig verifier: %s", err)
@@ -122,7 +123,12 @@ func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*ur
 		return nil, fmt.Errorf("could not parse key id into a url: %s", err)
 	}
 
-	// use the new transport to fetch the requesting public key from the remote server
+	transport, err := f.GetTransportForUser(username)
+	if err != nil {
+		return nil, fmt.Errorf("transport err: %s", err)
+	}
+
+	// The actual http call to the remote server is made right here in the Dereference function.
 	b, err := transport.Dereference(context.Background(), requestingPublicKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
@@ -134,17 +140,13 @@ func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*ur
 		return nil, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
 	}
 
-	pkOwnerProp := requestingPublicKey.GetW3IDSecurityV1Owner()
-	if pkOwnerProp == nil || !pkOwnerProp.IsIRI() {
-		return nil, errors.New("publicKeyOwner property is not provided or it is not embedded as a value")
-	}
-	pkOwnerURI := pkOwnerProp.GetIRI()
-
+	// we should be able to get the actual key embedded in the vocab.W3IDSecurityV1PublicKey
 	pkPemProp := requestingPublicKey.GetW3IDSecurityV1PublicKeyPem()
 	if pkPemProp == nil || !pkPemProp.IsXMLSchemaString() {
 		return nil, errors.New("publicKeyPem property is not provided or it is not embedded as a value")
 	}
 
+	// and decode the PEM so that we can parse it as a golang public key
 	pubKeyPem := pkPemProp.Get()
 	block, _ := pem.Decode([]byte(pubKeyPem))
 	if block == nil || block.Type != "PUBLIC KEY" {
@@ -162,14 +164,26 @@ func AuthenticateFederatedRequest(transport pub.Transport, r *http.Request) (*ur
 		return nil, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
 	}
 
-	// all good!
+	// all good! we just need the URI of the key owner to return
+	pkOwnerProp := requestingPublicKey.GetW3IDSecurityV1Owner()
+	if pkOwnerProp == nil || !pkOwnerProp.IsIRI() {
+		return nil, errors.New("publicKeyOwner property is not provided or it is not embedded as a value")
+	}
+	pkOwnerURI := pkOwnerProp.GetIRI()
+
 	return pkOwnerURI, nil
 }
 
-func DereferenceAccount(transport pub.Transport, id *url.URL) (vocab.ActivityStreamsPerson, error) {
-	b, err := transport.Dereference(context.Background(), id)
+func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (vocab.ActivityStreamsPerson, error) {
+
+	transport, err := f.GetTransportForUser(username)
 	if err != nil {
-		return nil, fmt.Errorf("error deferencing %s: %s", id.String(), err)
+		return nil, fmt.Errorf("transport err: %s", err)
+	}
+
+	b, err := transport.Dereference(context.Background(), remoteAccountID)
+	if err != nil {
+		return nil, fmt.Errorf("error deferencing %s: %s", remoteAccountID.String(), err)
 	}
 
 	m := make(map[string]interface{})
@@ -194,4 +208,26 @@ func DereferenceAccount(transport pub.Transport, id *url.URL) (vocab.ActivityStr
 	}
 
 	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
+}
+
+func (f *federator) GetTransportForUser(username string) (pub.Transport, error) {
+	// We need an account to use to create a transport for dereferecing the signature.
+	// If a username has been given, we can fetch the account with that username and use it.
+	// Otherwise, we can take the instance account and use those credentials to make the request.
+	ourAccount := &gtsmodel.Account{}
+	var u string
+	if username == "" {
+		u = f.config.Host
+	} else {
+		u = username
+	}
+	if err := f.db.GetLocalAccountByUsername(u, ourAccount); err != nil {
+		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
+	}
+
+	transport, err := f.TransportController().NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
+	}
+	return transport, nil
 }

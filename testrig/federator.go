@@ -21,11 +21,9 @@ package testrig
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage storage.Storage, federator federation.Federator) message.Processor {
-	return message.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, NewTestLog())
+func NewTestFederator(db db.DB, tc transport.Controller) federation.Federator {
+	return federation.NewFederator(db, tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db))
 }

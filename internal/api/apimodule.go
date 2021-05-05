@@ -34,5 +34,5 @@ type ClientModule interface {
 // of functionalities and/or side effects to a router, by mapping routes and/or middlewares onto it--in other words, a REST API ;)
 // Unlike ClientAPIModule, federation API module is not intended to be interacted with by clients directly -- it is primarily a server-to-server interface.
 type FederationModule interface {
-   Route(s router.Router) error
+	Route(s router.Router) error
 }
