@@ -7,7 +7,6 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -15,7 +14,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) processVisibility(form *model.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
+func (p *processor) processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
 		Federated: true,
