@@ -157,6 +157,9 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 	if err != nil {
 		return nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
 	}
+	if p == nil {
+		return nil, errors.New("returned public key was empty")
+	}
 
 	// do the actual authentication here!
 	algo := httpsig.RSA_SHA256 // TODO: make this more robust

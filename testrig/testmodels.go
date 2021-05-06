@@ -440,14 +440,14 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Discoverable:          true,
 			Sensitive:             false,
 			Language:              "en",
-			URI:                   "https://fossbros-anonymous.io/users/foss_satan",
-			URL:                   "https://fossbros-anonymous.io/@foss_satan",
+			URI:                   "http://fossbros-anonymous.io/users/foss_satan",
+			URL:                   "http://fossbros-anonymous.io/@foss_satan",
 			LastWebfingeredAt:     time.Time{},
-			InboxURI:              "https://fossbros-anonymous.io/users/foss_satan/inbox",
-			OutboxURI:             "https://fossbros-anonymous.io/users/foss_satan/outbox",
-			FollowersURI:          "https://fossbros-anonymous.io/users/foss_satan/followers",
-			FollowingURI:          "https://fossbros-anonymous.io/users/foss_satan/following",
-			FeaturedCollectionURI: "https://fossbros-anonymous.io/users/foss_satan/collections/featured",
+			InboxURI:              "http://fossbros-anonymous.io/users/foss_satan/inbox",
+			OutboxURI:             "http://fossbros-anonymous.io/users/foss_satan/outbox",
+			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
+			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
+			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
 			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            nil,
@@ -1047,12 +1047,20 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	}
 }
 
+func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
+	sig, digest, date := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
+	return map[string]ActivityWithSignature{
+		"foss_satan_dereference_zork": {
+			SignatureHeader: sig,
+			DigestHeader:    digest,
+			DateHeader:      date,
+		},
+	}
+}
+
 // getSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given activity, public key ID, private key, and destination.
 func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
-
-	streams.NewActivityStreamsPerson()
-
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1086,6 +1094,39 @@ func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 
 	// trigger the delivery function, which will trigger the 'do' function of the recorder above
 	if err := tp.Deliver(context.Background(), bytes, destination); err != nil {
+		panic(err)
+	}
+
+	// headers should now be populated
+	return
+}
+
+// getSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
+func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+	// create a client that basically just pulls the signature out of the request and sets it
+	client := &mockHTTPClient{
+		do: func(req *http.Request) (*http.Response, error) {
+			signatureHeader = req.Header.Get("Signature")
+			digestHeader = req.Header.Get("Digest")
+			dateHeader = req.Header.Get("Date")
+			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
+			return &http.Response{
+				StatusCode: 200,
+				Body:       r,
+			}, nil
+		},
+	}
+
+	// use the client to create a new transport
+	c := NewTestTransportController(client)
+	tp, err := c.NewTransport(pubKeyID, privkey)
+	if err != nil {
+		panic(err)
+	}
+
+	// trigger the delivery function, which will trigger the 'do' function of the recorder above
+	if _, err := tp.Dereference(context.Background(), destination); err != nil {
 		panic(err)
 	}
 

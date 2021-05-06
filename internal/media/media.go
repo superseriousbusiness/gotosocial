@@ -113,7 +113,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	if err != nil {
 		return nil, err
 	}
-	if !supportedImageType(contentType) {
+	if !SupportedImageType(contentType) {
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
@@ -146,8 +146,8 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 	}
 	mainType := strings.Split(contentType, "/")[0]
 	switch mainType {
-	case "video":
-		if !supportedVideoType(contentType) {
+	case MIMEVideo:
+		if !SupportedVideoType(contentType) {
 			return nil, fmt.Errorf("video type %s not supported", contentType)
 		}
 		if len(attachment) == 0 {
@@ -157,8 +157,8 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(attachment), mh.config.MediaConfig.MaxVideoSize)
 		}
 		return mh.processVideoAttachment(attachment, accountID, contentType)
-	case "image":
-		if !supportedImageType(contentType) {
+	case MIMEImage:
+		if !SupportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
 		}
 		if len(attachment) == 0 {
@@ -199,13 +199,13 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 		return nil, fmt.Errorf("emoji size %d bytes exceeded max emoji size of %d bytes", len(emojiBytes), EmojiMaxBytes)
 	}
 
-	// clean any exif data from image/png type but leave gifs alone
+	// clean any exif data from png but leave gifs alone
 	switch contentType {
-	case "image/png":
+	case MIMEPng:
 		if clean, err = purgeExif(emojiBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = emojiBytes
 	default:
 		return nil, errors.New("media type unrecognized")
@@ -275,7 +275,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 		ImagePath:              emojiPath,
 		ImageStaticPath:        emojiStaticPath,
 		ImageContentType:       contentType,
-		ImageStaticContentType: "image/png", // static version will always be a png
+		ImageStaticContentType: MIMEPng, // static version will always be a png
 		ImageFileSize:          len(original.image),
 		ImageStaticFileSize:    len(static.image),
 		ImageUpdatedAt:         time.Now(),
@@ -302,7 +302,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 	var small *imageAndMeta
 
 	switch contentType {
-	case "image/jpeg", "image/png":
+	case MIMEJpeg, MIMEPng:
 		if clean, err = purgeExif(data); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
@@ -310,7 +310,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 		if err != nil {
 			return nil, fmt.Errorf("error parsing image: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = data
 		original, err = deriveGif(clean, contentType)
 		if err != nil {
@@ -380,7 +380,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        smallPath,
-			ContentType: "image/jpeg", // all thumbnails/smalls are encoded as jpeg
+			ContentType: MIMEJpeg, // all thumbnails/smalls are encoded as jpeg
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,
@@ -411,15 +411,15 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	var err error
 
 	switch contentType {
-	case "image/jpeg":
+	case MIMEJpeg:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/png":
+	case MIMEPng:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = imageBytes
 	default:
 		return nil, errors.New("media type unrecognized")

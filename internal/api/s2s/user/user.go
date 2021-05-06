@@ -34,10 +34,10 @@ const (
 	UsernameKey = "username"
 	// UsersBasePath is the base path for serving information about Users eg https://example.org/users
 	UsersBasePath = "/" + util.UsersPath
-	// UsersBasePathWithID is just the users base path with the Username key in it.
+	// UsersBasePathWithUsername is just the users base path with the Username key in it.
 	// Use this anywhere you need to know the username of the user being queried.
 	// Eg https://example.org/users/:username
-	UsersBasePathWithID = UsersBasePath + "/:" + UsernameKey
+	UsersBasePathWithUsername = UsersBasePath + "/:" + UsernameKey
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
@@ -65,6 +65,6 @@ func New(config *config.Config, processor message.Processor, log *logrus.Logger)
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, UsersBasePathWithID, m.UsersGETHandler)
+	s.AttachHandler(http.MethodGet, UsersBasePathWithUsername, m.UsersGETHandler)
 	return nil
 }

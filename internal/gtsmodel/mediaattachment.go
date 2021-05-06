@@ -108,15 +108,15 @@ type FileType string
 
 const (
 	// FileTypeImage is for jpegs and pngs
-	FileTypeImage FileType = "image"
+	FileTypeImage FileType = "Image"
 	// FileTypeGif is for native gifs and soundless videos that have been converted to gifs
-	FileTypeGif FileType = "gif"
+	FileTypeGif FileType = "Gif"
 	// FileTypeAudio is for audio-only files (no video)
-	FileTypeAudio FileType = "audio"
+	FileTypeAudio FileType = "Audio"
 	// FileTypeVideo is for files with audio + visual
-	FileTypeVideo FileType = "video"
+	FileTypeVideo FileType = "Video"
 	// FileTypeUnknown is for unknown file types (surprise surprise!)
-	FileTypeUnknown FileType = "unknown"
+	FileTypeUnknown FileType = "Unknown"
 )
 
 // FileMeta describes metadata about the actual contents of the file.
