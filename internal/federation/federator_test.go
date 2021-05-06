@@ -97,7 +97,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	request.Header.Set("Signature", activity.SignatureHeader)
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, err := federator.FederatingProtocol().PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), newContext)
 
@@ -173,7 +173,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.FederatingProtocol().AuthenticatePostInbox(ctxWithActivity, recorder, request)
+	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithActivity, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 

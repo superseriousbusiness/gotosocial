@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-fed/activity/streams"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -69,7 +70,7 @@ func (suite *InternalToASTestSuite) TestPostAccountToAS() {
 	asPerson, err := suite.typeconverter.AccountToAS(testAccount)
 	assert.NoError(suite.T(), err)
 
-	ser, err := asPerson.Serialize()
+	ser, err := streams.Serialize(asPerson)
 	assert.NoError(suite.T(), err)
 
 	bytes, err := json.Marshal(ser)

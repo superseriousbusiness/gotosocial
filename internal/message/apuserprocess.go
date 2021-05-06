@@ -1,63 +1,70 @@
 package message
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/go-fed/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) GetAPUser(requestHeaders http.Header, username string) (interface{}, error) {
+func (p *processor) GetAPUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode) {
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
 
-	// // get the account the request is referring to
-	// requestedAccount := &gtsmodel.Account{}
-	// if err := m.db.GetLocalAccountByUsername(username, requestedAccount); err != nil {
-	// 	return nil, NewErrorNotAuthorized(fmt.Errorf("database error getting account with username %s: %s", username, err))
-	// }
+	// authenticate the request
+	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil {
+		return nil, NewErrorNotAuthorized(err)
+	}
 
-	// // and create a transport for it
-	// transport, err := p.federator.TransportController().NewTransport(requestedAccount.PublicKeyURI, requestedAccount.PrivateKey)
-	// if err != nil {
-	// 	l.Errorf("error creating transport for username %s: %s", requestedUsername, err)
-	// 	// we'll just return not authorized here to avoid giving anything away
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
-	// 	return
-	// }
+	requestingAccount := &gtsmodel.Account{}
+	err = p.db.GetWhere("uri", requestingAccountURI.String(), requestingAccount)
+	if err != nil {
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			// we don't have an entry for this account yet
+			// what we do now should depend on our chosen federation method
+			// for now though, we'll just dereference it
+			// TODO: slow-fed
+			requestingPerson, err := p.federator.DereferenceRemoteAccount(requestedUsername, requestingAccountURI)
+			if err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+			requestedAccount, err = p.tc.ASPersonToAccount(requestingPerson)
+			if err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+			if err := p.db.Put(requestingAccount); err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+		} else {
+			// something has actually gone wrong
+			return nil, NewErrorInternalError(err)
+		}
+	}
 
-	// // authenticate the request
-	// authentication, err := federation.AuthenticateFederatedRequest(transport, c.Request)
-	// if err != nil {
-	// 	l.Errorf("error authenticating GET user request: %s", err)
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
-	// 	return
-	// }
+	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-	// if !authentication.Authenticated {
-	// 	l.Debug("request not authorized")
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
-	// 	return
-	// }
+	if blocked {
+		return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
 
-	// requestingAccount := &gtsmodel.Account{}
-	// if authentication.RequestingPublicKeyID != nil {
-	// 	if err := m.db.GetWhere("public_key_uri", authentication.RequestingPublicKeyID.String(), requestingAccount); err != nil {
+	requestedPerson, err := p.tc.AccountToAS(requestedAccount)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-	// 	}
-	// }
+	data, err := streams.Serialize(requestedPerson)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-	// authorization, err := federation.AuthorizeFederatedRequest
-
-	// person, err := m.tc.AccountToAS(requestedAccount)
-	// if err != nil {
-	// 	l.Errorf("error converting account to ap person: %s", err)
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
-	// 	return
-	// }
-
-	// data, err := person.Serialize()
-	// if err != nil {
-	// 	l.Errorf("error serializing user: %s", err)
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
-	// 	return
-	// }
-
-	// c.JSON(http.StatusOK, data)
-	return nil, nil
+	return data, nil
 }

@@ -82,11 +82,7 @@ func (p *processor) StatusCreate(auth *oauth.Auth, form *apimodel.AdvancedStatus
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := p.tc.StatusToMasto(newStatus, auth.Account, auth.Account, nil, newStatus.GTSReplyToAccount, nil)
-	if err != nil {
-		return nil, err
-	}
-	return mastoStatus, nil
+	return p.tc.StatusToMasto(newStatus, auth.Account, auth.Account, nil, newStatus.GTSReplyToAccount, nil)
 }
 
 func (p *processor) StatusDelete(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {

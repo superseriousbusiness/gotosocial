@@ -578,6 +578,7 @@ func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachmen
 }
 
 func (ps *postgresService) Blocked(account1 string, account2 string) (bool, error) {
+	// TODO: check domain blocks as well
 	var blocked bool
 	if err := ps.conn.Model(&gtsmodel.Block{}).
 		Where("account_id = ?", account1).Where("target_account_id = ?", account2).

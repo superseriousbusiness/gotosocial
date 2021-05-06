@@ -137,7 +137,9 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		requestingAccount = a
 	}
 
-	return nil, true, nil
+	contextWithRequestingAccount := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
+
+	return contextWithRequestingAccount, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by

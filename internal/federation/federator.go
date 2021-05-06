@@ -23,6 +23,7 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -32,9 +33,17 @@ import (
 
 // Federator wraps various interfaces and functions to manage activitypub federation from gotosocial
 type Federator interface {
+	// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
 	FederatingActor() pub.FederatingActor
-	TransportController() transport.Controller
+	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
+	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
+	// DereferenceRemoteAccount can be used to get the ActivityStreamsPerson representation of a remote account, based on the account ID (which is a URI).
+	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
+	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (vocab.ActivityStreamsPerson, error)
+	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
+	// This can be used for making signed http requests.
+	GetTransportForUser(username string) (pub.Transport, error)
 	pub.CommonBehavior
 	pub.FederatingProtocol
 }
@@ -68,8 +77,4 @@ func NewFederator(db db.DB, transportController transport.Controller, config *co
 
 func (f *federator) FederatingActor() pub.FederatingActor {
 	return f.actor
-}
-
-func (f *federator) TransportController() transport.Controller {
-	return f.transportController
 }

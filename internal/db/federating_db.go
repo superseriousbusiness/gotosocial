@@ -104,7 +104,30 @@ func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
-	return false, nil
+
+	if !util.IsInboxPath(inbox) {
+		return false, fmt.Errorf("%s is not an inbox URI", inbox.String())
+	}
+
+	if !util.IsStatusesPath(id) {
+		return false, fmt.Errorf("%s is not a status URI", id.String())
+	}
+	_, statusID, err := util.ParseStatusesPath(inbox)
+	if err != nil {
+		return false, fmt.Errorf("status URI %s was not parseable: %s", id.String(), err)
+	}
+
+	if err := f.db.GetByID(statusID, &gtsmodel.Status{}); err != nil {
+		if _, ok := err.(ErrNoEntries); ok {
+			// we don't have it
+			return false, nil
+		}
+		// actual error
+		return false, fmt.Errorf("error getting status from db: %s", err)
+	}
+
+	// we must have it
+	return true, nil
 }
 
 // GetInbox returns the first ordered collection page of the outbox at
@@ -128,11 +151,6 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
-	l := f.log.WithFields(logrus.Fields{
-		"func":       "Owns",
-		"activityID": id.String(),
-	})
-
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
 		return false, nil
@@ -142,27 +160,18 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
 	if util.IsStatusesPath(id) {
-		username, uid, err := util.ParseStatusesPath(id)
+		_, uid, err := util.ParseStatusesPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		acct := &gtsmodel.Account{}
-		if err := f.db.GetLocalAccountByUsername(username, acct); err != nil {
-			if _, ok := err.(ErrNoEntries); ok {
-				// there are no entries for this username
-				return false, nil
-			}
-			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
-		}
-		status := &gtsmodel.Status{}
-		if err := f.db.GetByID(uid, status); err != nil {
+		if err := f.db.GetWhere("uri", uid, &gtsmodel.Status{}); err != nil {
 			if _, ok := err.(ErrNoEntries); ok {
 				// there are no entries for this status
 				return false, nil
 			}
+			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
-		// the user exists, the status exists, we own both, we're good
 		return true, nil
 	}
 
@@ -172,34 +181,52 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		acct := &gtsmodel.Account{}
-		if err := f.db.GetLocalAccountByUsername(username, acct); err != nil {
+		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
 			if _, ok := err.(ErrNoEntries); ok {
 				// there are no entries for this username
 				return false, nil
 			}
+			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		// the user exists, we own it, we're good
 		return true, nil
 	}
 
-	l.Info("could not match activityID")
-	return false, nil
+	return false, fmt.Errorf("could not match activityID: %s", id.String())
 }
 
 // ActorForOutbox fetches the actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
+	if !util.IsOutboxPath(outboxIRI) {
+		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
+	}
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("outbox_uri", outboxIRI.String(), acct); err != nil {
+		if _, ok := err.(ErrNoEntries); ok {
+			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
+		}
+		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
+	}
+	return url.Parse(acct.URI)
 }
 
 // ActorForInbox fetches the actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	return nil, nil
+	if !util.IsInboxPath(inboxIRI) {
+		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
+	}
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+		if _, ok := err.(ErrNoEntries); ok {
+			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
+		}
+		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
+	}
+	return url.Parse(acct.URI)
 }
 
 // OutboxForInbox fetches the corresponding actor's outbox IRI for the
@@ -207,7 +234,17 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
-	return nil, nil
+	if !util.IsInboxPath(inboxIRI) {
+		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
+	}
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+		if _, ok := err.(ErrNoEntries); ok {
+			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
+		}
+		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
+	}
+	return url.Parse(acct.OutboxURI)
 }
 
 // Exists returns true if the database has an entry for the specified

@@ -28,6 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+
+
 // Converts a gts model account into an Activity Streams person type, following
 // the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
 func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {

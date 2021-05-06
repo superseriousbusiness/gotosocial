@@ -93,13 +93,13 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 	return pkpFound, nil
 }
 
-// AuthenticateFederatedRequest authenticates any kind of federated request from a remote server. This includes things like
-// GET requests for dereferencing users or statuses etc and POST requests for delivering new Activities.
-//
-// Error means the request did not pass authentication. No error means it's authentic.
+// AuthenticateFederatedRequest authenticates any kind of incoming federated request from a remote server. This includes things like
+// GET requests for dereferencing our users or statuses etc, and POST requests for delivering new Activities. The function returns
+// the URL of the owner of the public key used in the http signature.
 //
 // Authenticate in this case is defined as just making sure that the http request is actually signed by whoever claims
-// to have signed it, by fetching the public key from the signature and checking it against the remote public key.
+// to have signed it, by fetching the public key from the signature and checking it against the remote public key. This function
+// *does not* check whether the request is authorized, only whether it's authentic.
 //
 // The provided username will be used to generate a transport for making remote requests/derefencing the public key ID of the request signature.
 // Ideally you should pass in the username of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
@@ -108,8 +108,8 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 //
 // Note that it is also valid to pass in an empty string here, in which case the keys of the instance account will be used.
 //
-// Note that this function *does not* dereference the remote account that the signature key is associated with, but it will
-// return the owner of the public key, so that other functions can dereference it with that, as required.
+// Also note that this function *does not* dereference the remote account that the signature key is associated with.
+// Other functions should use the returned URL to dereference the remote account, if required.
 func (f *federator) AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error) {
 	verifier, err := httpsig.NewVerifier(r)
 	if err != nil {
@@ -225,9 +225,56 @@ func (f *federator) GetTransportForUser(username string) (pub.Transport, error) 
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}
 
-	transport, err := f.TransportController().NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
+	transport, err := f.transportController.NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
 	}
 	return transport, nil
+}
+
+const (
+	activityStreamsContext = "https://www.w3.org/ns/activitystreams"
+	w3idContext            = "https://w3id.org/security/v1"
+	tootContext            = "http://joinmastodon.org/ns#"
+	schemaContext          = "http://schema.org#"
+)
+
+// ActivityStreamsContext returns the url representation of https://www.w3.org/ns/activitystreams
+func ActivityStreamsContext() *url.URL {
+	u, err := url.Parse(activityStreamsContext)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+// W3IDContext returns the url representation of https://w3id.org/security/v1
+func W3IDContext() *url.URL {
+	u, err := url.Parse(w3idContext)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+// TootContext returns the url representation of http://joinmastodon.org/ns#
+func TootContext() *url.URL {
+	u, err := url.Parse(tootContext)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+// SchemaContext returns the url representation of http://schema.org#
+func SchemaContext() *url.URL {
+	u, err := url.Parse(schemaContext)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+func StandardContexts() vocab.ActivityStreamsContextProperty {
+	return nil
 }

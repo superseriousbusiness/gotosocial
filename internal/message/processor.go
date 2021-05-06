@@ -19,6 +19,8 @@
 package message
 
 import (
+	"net/http"
+
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -48,7 +50,7 @@ type Processor interface {
 	FromFederator() chan FromFederator
 
 	/*
-		API-FACING PROCESSING FUNCTIONS
+		CLIENT API-FACING PROCESSING FUNCTIONS
 		These functions are intended to be called when the API client needs an immediate (ie., synchronous) reply
 		to an HTTP request. As such, they will only do the bare-minimum of work necessary to give a properly
 		formed reply. For more intensive (and time-consuming) calls, where you don't require an immediate
@@ -81,6 +83,16 @@ type Processor interface {
 	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+
+	/*
+		FEDERATION API-FACING PROCESSING FUNCTIONS
+		These functions are intended to be called when the federating client needs an immediate (ie., synchronous) reply
+		to an HTTP request. As such, they will only do the bare-minimum of work necessary to give a properly
+		formed reply. For more intensive (and time-consuming) calls, where you don't require an immediate
+		response, pass work to the processor using a channel instead.
+	*/
+
+	GetAPUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
 
 	// Start starts the Processor, reading from its channels and passing messages back and forth.
 	Start() error
