@@ -19,58 +19,48 @@
 package typeutils_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type InternalToASTestSuite struct {
+type ASToInternalTestSuite struct {
 	ConverterStandardTestSuite
 }
 
-// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *InternalToASTestSuite) SetupSuite() {
-	// setup standard items
+func (suite *ASToInternalTestSuite) SetupSuite() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.accounts = testrig.NewTestAccounts()
-	suite.people =  testrig.NewTestFediPeople()
+	suite.people = testrig.NewTestFediPeople()
 	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
 }
 
-func (suite *InternalToASTestSuite) SetupTest() {
+func (suite *ASToInternalTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
 }
 
-// TearDownTest drops tables to make sure there's no data in the db
-func (suite *InternalToASTestSuite) TearDownTest() {
+func (suite *ASToInternalTestSuite) TestASPersonToAccount() {
+
+	testPerson := suite.people["new_person_1"]
+
+	acct, err := suite.typeconverter.ASPersonToAccount(testPerson)
+	assert.NoError(suite.T(), err)
+
+	fmt.Printf("%+v", acct)
+	// TODO: write assertions here, rn we're just eyeballing the output
+
+}
+
+func (suite *ASToInternalTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *InternalToASTestSuite) TestAccountToAS() {
-	testAccount := suite.accounts["local_account_1"] // take zork for this test
-
-	asPerson, err := suite.typeconverter.AccountToAS(testAccount)
-	assert.NoError(suite.T(), err)
-
-	ser, err := streams.Serialize(asPerson)
-	assert.NoError(suite.T(), err)
-
-	bytes, err := json.Marshal(ser)
-	assert.NoError(suite.T(), err)
-
-	fmt.Println(string(bytes))
-	// TODO: write assertions here, rn we're just eyeballing the output
-}
-
-func TestInternalToASTestSuite(t *testing.T) {
-	suite.Run(t, new(InternalToASTestSuite))
+func TestASToInternalTestSuite(t *testing.T) {
+	suite.Run(t, new(ASToInternalTestSuite))
 }

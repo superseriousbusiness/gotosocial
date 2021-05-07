@@ -46,8 +46,12 @@ type Processor interface {
 	FromClientAPI() chan FromClientAPI
 	// ToFederator returns a channel for putting in messages that need to go to the federator (activitypub).
 	ToFederator() chan ToFederator
-	// FromFederator returns a channel for putting messages in that come from the federator going into the processor
+	// FromFederator returns a channel for putting messages in that come from the federator (activitypub) going into the processor
 	FromFederator() chan FromFederator
+	// Start starts the Processor, reading from its channels and passing messages back and forth.
+	Start() error
+	// Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
+	Stop() error
 
 	/*
 		CLIENT API-FACING PROCESSING FUNCTIONS
@@ -80,6 +84,7 @@ type Processor interface {
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	// MediaGet handles the fetching of a media attachment, using the given request form.
 	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -92,12 +97,12 @@ type Processor interface {
 		response, pass work to the processor using a channel instead.
 	*/
 
-	GetAPUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
+	// before returning a JSON serializable interface to the caller.
+	GetFediUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
 
-	// Start starts the Processor, reading from its channels and passing messages back and forth.
-	Start() error
-	// Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
-	Stop() error
+	
+
 }
 
 // processor just implements the Processor interface
@@ -161,8 +166,12 @@ func (p *processor) Start() error {
 			select {
 			case clientMsg := <-p.toClientAPI:
 				p.log.Infof("received message TO client API: %+v", clientMsg)
+			case clientMsg := <-p.fromClientAPI:
+				p.log.Infof("received message FROM client API: %+v", clientMsg)
 			case federatorMsg := <-p.toFederator:
 				p.log.Infof("received message TO federator: %+v", federatorMsg)
+			case federatorMsg := <-p.fromFederator:
+				p.log.Infof("received message FROM federator: %+v", federatorMsg)
 			case <-p.stop:
 				break DistLoop
 			}

@@ -230,9 +230,9 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	// image
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
-		iconProperty := streams.NewActivityStreamsIconProperty()
+		headerProperty := streams.NewActivityStreamsImageProperty()
 
-		iconImage := streams.NewActivityStreamsImage()
+		headerImage := streams.NewActivityStreamsImage()
 
 		header := &gtsmodel.MediaAttachment{}
 		if err := c.db.GetByID(a.HeaderMediaAttachmentID, header); err != nil {
@@ -241,7 +241,7 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
 		mediaType.Set(header.File.ContentType)
-		iconImage.SetActivityStreamsMediaType(mediaType)
+		headerImage.SetActivityStreamsMediaType(mediaType)
 
 		headerURLProperty := streams.NewActivityStreamsUrlProperty()
 		headerURL, err := url.Parse(header.URL)
@@ -249,9 +249,9 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 			return nil, err
 		}
 		headerURLProperty.AppendIRI(headerURL)
-		iconImage.SetActivityStreamsUrl(headerURLProperty)
+		headerImage.SetActivityStreamsUrl(headerURLProperty)
 
-		iconProperty.AppendActivityStreamsImage(iconImage)
+		headerProperty.AppendActivityStreamsImage(headerImage)
 	}
 
 	return person, nil

@@ -24,7 +24,9 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -1047,6 +1049,37 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	}
 }
 
+// NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
+func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
+	new_person_1priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	new_person_1pub := &new_person_1priv.PublicKey
+
+	return map[string]vocab.ActivityStreamsPerson{
+		"new_person_1": newPerson(
+			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/inbox"),
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
+			"brand_new_person",
+			"Geoff Brando New Personson",
+			"hey I'm a new person, your instance hasn't seen me yet uwu",
+			URLMustParse("https://unknown-instance.com/@brand_new_person"),
+			true,
+			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
+			new_person_1pub,
+			URLMustParse("https://unknown-instance.com/media/some_avatar_filename.jpeg"),
+			"image/jpeg",
+			URLMustParse("https://unknown-instance.com/media/some_header_filename.jpeg"),
+			"image/png",
+		),
+	}
+}
+
 func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	sig, digest, date := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
 	return map[string]ActivityWithSignature{
@@ -1132,6 +1165,186 @@ func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 
 	// headers should now be populated
 	return
+}
+
+func newPerson(
+	profileIDURI *url.URL,
+	followingURI *url.URL,
+	followersURI *url.URL,
+	inboxURI *url.URL,
+	outboxURI *url.URL,
+	featuredURI *url.URL,
+	username string,
+	displayName string,
+	note string,
+	profileURL *url.URL,
+	discoverable bool,
+	publicKeyURI *url.URL,
+	pkey *rsa.PublicKey,
+	avatarURL *url.URL,
+	avatarContentType string,
+	headerURL *url.URL,
+	headerContentType string) vocab.ActivityStreamsPerson {
+	person := streams.NewActivityStreamsPerson()
+
+	// id should be the activitypub URI of this user
+	// something like https://example.org/users/example_user
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(profileIDURI)
+	person.SetJSONLDId(idProp)
+
+	// following
+	// The URI for retrieving a list of accounts this user is following
+	followingProp := streams.NewActivityStreamsFollowingProperty()
+	followingProp.SetIRI(followingURI)
+	person.SetActivityStreamsFollowing(followingProp)
+
+	// followers
+	// The URI for retrieving a list of this user's followers
+	followersProp := streams.NewActivityStreamsFollowersProperty()
+	followersProp.SetIRI(followersURI)
+	person.SetActivityStreamsFollowers(followersProp)
+
+	// inbox
+	// the activitypub inbox of this user for accepting messages
+	inboxProp := streams.NewActivityStreamsInboxProperty()
+	inboxProp.SetIRI(inboxURI)
+	person.SetActivityStreamsInbox(inboxProp)
+
+	// outbox
+	// the activitypub outbox of this user for serving messages
+	outboxProp := streams.NewActivityStreamsOutboxProperty()
+	outboxProp.SetIRI(outboxURI)
+	person.SetActivityStreamsOutbox(outboxProp)
+
+	// featured posts
+	// Pinned posts.
+	featuredProp := streams.NewTootFeaturedProperty()
+	featuredProp.SetIRI(featuredURI)
+	person.SetTootFeatured(featuredProp)
+
+	// featuredTags
+	// NOT IMPLEMENTED
+
+	// preferredUsername
+	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
+	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
+	preferredUsernameProp.SetXMLSchemaString(username)
+	person.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+
+	// name
+	// Used as profile display name.
+	nameProp := streams.NewActivityStreamsNameProperty()
+	if displayName != "" {
+		nameProp.AppendXMLSchemaString(displayName)
+	} else {
+		nameProp.AppendXMLSchemaString(username)
+	}
+	person.SetActivityStreamsName(nameProp)
+
+	// summary
+	// Used as profile bio.
+	if note != "" {
+		summaryProp := streams.NewActivityStreamsSummaryProperty()
+		summaryProp.AppendXMLSchemaString(note)
+		person.SetActivityStreamsSummary(summaryProp)
+	}
+
+	// url
+	// Used as profile link.
+	urlProp := streams.NewActivityStreamsUrlProperty()
+	urlProp.AppendIRI(profileURL)
+	person.SetActivityStreamsUrl(urlProp)
+
+	// manuallyApprovesFollowers
+	// Will be shown as a locked account.
+	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+
+	// discoverable
+	// Will be shown in the profile directory.
+	discoverableProp := streams.NewTootDiscoverableProperty()
+	discoverableProp.Set(discoverable)
+	person.SetTootDiscoverable(discoverableProp)
+
+	// devices
+	// NOT IMPLEMENTED, probably won't implement
+
+	// alsoKnownAs
+	// Required for Move activity.
+	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+
+	// publicKey
+	// Required for signatures.
+	publicKeyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	// create the public key
+	publicKey := streams.NewW3IDSecurityV1PublicKey()
+
+	// set ID for the public key
+	publicKeyIDProp := streams.NewJSONLDIdProperty()
+	publicKeyIDProp.SetIRI(publicKeyURI)
+	publicKey.SetJSONLDId(publicKeyIDProp)
+
+	// set owner for the public key
+	publicKeyOwnerProp := streams.NewW3IDSecurityV1OwnerProperty()
+	publicKeyOwnerProp.SetIRI(profileIDURI)
+	publicKey.SetW3IDSecurityV1Owner(publicKeyOwnerProp)
+
+	// set the pem key itself
+	encodedPublicKey, err := x509.MarshalPKIXPublicKey(pkey)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: encodedPublicKey,
+	})
+	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
+
+	// append the public key to the public key property
+	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
+
+	// set the public key property on the Person
+	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
+
+	// tag
+	// TODO: Any tags used in the summary of this profile
+
+	// attachment
+	// Used for profile fields.
+	// TODO: The PropertyValue type has to be added: https://schema.org/PropertyValue
+
+	// endpoints
+	// NOT IMPLEMENTED -- this is for shared inbox which we don't use
+
+	// icon
+	// Used as profile avatar.
+	iconProperty := streams.NewActivityStreamsIconProperty()
+	iconImage := streams.NewActivityStreamsImage()
+	mediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(avatarContentType)
+	iconImage.SetActivityStreamsMediaType(mediaType)
+	avatarURLProperty := streams.NewActivityStreamsUrlProperty()
+	avatarURLProperty.AppendIRI(avatarURL)
+	iconImage.SetActivityStreamsUrl(avatarURLProperty)
+	iconProperty.AppendActivityStreamsImage(iconImage)
+	person.SetActivityStreamsIcon(iconProperty)
+
+	// image
+	// Used as profile header.
+	headerProperty := streams.NewActivityStreamsImageProperty()
+	headerImage := streams.NewActivityStreamsImage()
+	headerMediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(headerContentType)
+	headerImage.SetActivityStreamsMediaType(headerMediaType)
+	headerURLProperty := streams.NewActivityStreamsUrlProperty()
+	headerURLProperty.AppendIRI(headerURL)
+	headerImage.SetActivityStreamsUrl(headerURLProperty)
+	headerProperty.AppendActivityStreamsImage(headerImage)
+
+	return person
 }
 
 // newNote returns a new activity streams note for the given parameters
