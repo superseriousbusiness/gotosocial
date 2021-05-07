@@ -46,7 +46,7 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 	}
 
 	// convert it to our internal account representation
-	requestingAccount, err = p.tc.ASPersonToAccount(requestingPerson)
+	requestingAccount, err = p.tc.ASRepresentationToAccount(requestingPerson)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't convert dereferenced uri %s to gtsmodel account: %s", requestingAccountURI.String(), err)
 	}

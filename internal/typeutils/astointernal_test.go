@@ -45,11 +45,11 @@ func (suite *ASToInternalTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
 }
 
-func (suite *ASToInternalTestSuite) TestASPersonToAccount() {
+func (suite *ASToInternalTestSuite) TestASRepresentationToAccount() {
 
 	testPerson := suite.people["new_person_1"]
 
-	acct, err := suite.typeconverter.ASPersonToAccount(testPerson)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(testPerson)
 	assert.NoError(suite.T(), err)
 
 	fmt.Printf("%+v", acct)

@@ -38,6 +38,7 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -1050,14 +1051,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 }
 
 // NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
-func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
+func NewTestFediPeople() map[string]typeutils.Accountable {
 	new_person_1priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 	new_person_1pub := &new_person_1priv.PublicKey
 
-	return map[string]vocab.ActivityStreamsPerson{
+	return map[string]typeutils.Accountable{
 		"new_person_1": newPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
@@ -1184,7 +1185,7 @@ func newPerson(
 	avatarURL *url.URL,
 	avatarContentType string,
 	headerURL *url.URL,
-	headerContentType string) vocab.ActivityStreamsPerson {
+	headerContentType string) typeutils.Accountable {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user

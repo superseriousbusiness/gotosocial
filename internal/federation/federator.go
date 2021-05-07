@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -38,9 +37,9 @@ type Federator interface {
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
-	// DereferenceRemoteAccount can be used to get the ActivityStreamsPerson representation of a remote account, based on the account ID (which is a URI).
+	// DereferenceRemoteAccount can be used to get the representation of a remote account, based on the account ID (which is a URI).
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (vocab.ActivityStreamsPerson, error)
+	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
 	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
 	// This can be used for making signed http requests.
 	GetTransportForUser(username string) (pub.Transport, error)

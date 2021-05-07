@@ -22,14 +22,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) ASPersonToAccount(person vocab.ActivityStreamsPerson) (*gtsmodel.Account, error) {
-	// first check if we actually already know this person
-	uriProp := person.GetJSONLDId()
+func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmodel.Account, error) {
+	// first check if we actually already know this account
+	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
 		return nil, errors.New("no id property found on person, or id was not an iri")
 	}
@@ -52,7 +51,7 @@ func (c *converter) ASPersonToAccount(person vocab.ActivityStreamsPerson) (*gtsm
 
 	// Username aka preferredUsername
 	// We need this one so bail if it's not set.
-	username, err := extractPreferredUsername(person)
+	username, err := extractPreferredUsername(accountable)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't extract username: %s", err)
 	}
@@ -63,64 +62,103 @@ func (c *converter) ASPersonToAccount(person vocab.ActivityStreamsPerson) (*gtsm
 
 	// avatar aka icon
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if avatarURL, err := extractIconURL(person); err == nil {
+	if avatarURL, err := extractIconURL(accountable); err == nil {
 		acct.AvatarRemoteURL = avatarURL.String()
 	}
 
 	// header aka image
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if headerURL, err := extractImageURL(person); err == nil {
+	if headerURL, err := extractImageURL(accountable); err == nil {
 		acct.HeaderRemoteURL = headerURL.String()
 	}
 
 	// display name aka name
 	// we default to the username, but take the more nuanced name property if it exists
 	acct.DisplayName = username
-	if displayName, err := extractName(person); err == nil {
+	if displayName, err := extractName(accountable); err == nil {
 		acct.DisplayName = displayName
 	}
 
-	// fields aka attachment array
-    // TODO
+	// TODO: fields aka attachment array
 
-    // note aka summary
-	// TODO
+	// note aka summary
+	note, err := extractSummary(accountable)
+	if err == nil && note != "" {
+		acct.Note = note
+	}
 
-    // bot
-	// TODO: parse this from application vs. person type
+	// check for bot and actor type
+	switch gtsmodel.ActivityStreamsActor(accountable.GetTypeName()) {
+	case gtsmodel.ActivityStreamsPerson, gtsmodel.ActivityStreamsGroup, gtsmodel.ActivityStreamsOrganization:
+		// people, groups, and organizations aren't bots
+		acct.Bot = false
+		// apps and services are
+	case gtsmodel.ActivityStreamsApplication, gtsmodel.ActivityStreamsService:
+		acct.Bot = true
+	default:
+		// we don't know what this is!
+		return nil, fmt.Errorf("type name %s not recognised or not convertible to gtsmodel.ActivityStreamsActor", accountable.GetTypeName())
+	}
+	acct.ActorType = gtsmodel.ActivityStreamsActor(accountable.GetTypeName())
 
-    // locked aka manuallyApprovesFollowers
-    // TODO
+	// TODO: locked aka manuallyApprovesFollowers
 
-    // discoverable
-	// TODO
+	// discoverable
+	// default to false -- take custom value if it's set though
+	acct.Discoverable = false
+	discoverable, err := extractDiscoverable(accountable)
+	if err == nil {
+		acct.Discoverable = discoverable
+	}
 
-    // url property
-	// TODO
+	// url property
+	url, err := extractURL(accountable)
+	if err != nil {
+		return nil, fmt.Errorf("could not extract url for person with id %s: %s", uri.String(), err)
+	}
+	acct.URL = url.String()
 
-    // InboxURI
-    // TODO
+	// InboxURI
+	if accountable.GetActivityStreamsInbox() == nil || accountable.GetActivityStreamsInbox().GetIRI() == nil {
+		return nil, fmt.Errorf("person with id %s had no inbox uri", uri.String())
+	}
+	acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 
-    // OutboxURI
-	// TODO
+	// OutboxURI
+	if accountable.GetActivityStreamsOutbox() == nil || accountable.GetActivityStreamsOutbox().GetIRI() == nil {
+		return nil, fmt.Errorf("person with id %s had no outbox uri", uri.String())
+	}
+	acct.OutboxURI = accountable.GetActivityStreamsOutbox().GetIRI().String()
 
 	// FollowingURI
-	// TODO
+	if accountable.GetActivityStreamsFollowing() == nil || accountable.GetActivityStreamsFollowing().GetIRI() == nil {
+		return nil, fmt.Errorf("person with id %s had no following uri", uri.String())
+	}
+	acct.FollowingURI = accountable.GetActivityStreamsFollowing().GetIRI().String()
 
 	// FollowersURI
-	// TODO
+	if accountable.GetActivityStreamsFollowers() == nil || accountable.GetActivityStreamsFollowers().GetIRI() == nil {
+		return nil, fmt.Errorf("person with id %s had no followers uri", uri.String())
+	}
+	acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
 
-    // FeaturedURI
-	// TODO
+	// FeaturedURI
+	// very much optional
+	if accountable.GetTootFeatured() != nil && accountable.GetTootFeatured().GetIRI() != nil {
+		acct.FeaturedCollectionURI = accountable.GetTootFeatured().GetIRI().String()
+	}
 
-	// FeaturedTagsURI
-	// TODO
+	// TODO: FeaturedTagsURI
 
-    // alsoKnownAs
-	// TODO
+	// TODO: alsoKnownAs
 
-    // publicKey
-	// TODO
+	// publicKey
+	pkey, pkeyURL, err := extractPublicKeyForOwner(accountable, uri)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't get public key for person %s: %s", uri.String(), err)
+	}
+	acct.PublicKey = pkey
+	acct.PublicKeyURI = pkeyURL.String()
 
 	return acct, nil
 }

@@ -85,8 +85,8 @@ type TypeConverter interface {
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL
 	*/
 
-	// ASPersonToAccount converts an activitystreams person into a gts model account
-	ASPersonToAccount(person vocab.ActivityStreamsPerson) (*gtsmodel.Account, error)
+	// ASPersonToAccount converts a remote account/person/application representation into a gts model account
+	ASRepresentationToAccount(accountable Accountable) (*gtsmodel.Account, error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

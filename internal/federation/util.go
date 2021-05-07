@@ -33,6 +33,7 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 /*
@@ -177,7 +178,7 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 	return pkOwnerURI, nil
 }
 
-func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (vocab.ActivityStreamsPerson, error) {
+func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {
 
 	transport, err := f.GetTransportForUser(username)
 	if err != nil {

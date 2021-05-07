@@ -19,7 +19,6 @@
 package typeutils_test
 
 import (
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -34,7 +33,7 @@ type ConverterStandardTestSuite struct {
 	db       db.DB
 	log      *logrus.Logger
 	accounts map[string]*gtsmodel.Account
-	people   map[string]vocab.ActivityStreamsPerson
+	people   map[string]typeutils.Accountable
 
 	typeconverter typeutils.TypeConverter
 }
