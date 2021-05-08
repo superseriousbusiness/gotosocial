@@ -55,12 +55,13 @@ func FromFile(path string) (*Config, error) {
 // Empty just returns a new empty config
 func Empty() *Config {
 	return &Config{
-		DBConfig:       &DBConfig{},
-		TemplateConfig: &TemplateConfig{},
-		AccountsConfig: &AccountsConfig{},
-		MediaConfig:    &MediaConfig{},
-		StorageConfig:  &StorageConfig{},
-		StatusesConfig: &StatusesConfig{},
+		DBConfig:          &DBConfig{},
+		TemplateConfig:    &TemplateConfig{},
+		AccountsConfig:    &AccountsConfig{},
+		MediaConfig:       &MediaConfig{},
+		StorageConfig:     &StorageConfig{},
+		StatusesConfig:    &StatusesConfig{},
+		LetsEncryptConfig: &LetsEncryptConfig{},
 	}
 }
 

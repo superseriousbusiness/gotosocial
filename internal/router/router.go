@@ -71,7 +71,7 @@ func (r *router) Start() {
 			}
 		}()
 
-		// and serve the actual TLS handler on port 443 
+		// and serve the actual TLS handler on port 443
 		go func() {
 			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 				r.logger.Fatalf("listen: %s", err)
