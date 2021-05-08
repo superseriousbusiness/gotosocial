@@ -180,6 +180,104 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 	return mastoStatus, nil
 }
 
+func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, ErrorWithCode) {
+	l := p.log.WithField("func", "StatusBoost")
+
+	l.Tracef("going to search for target status %s", targetStatusID)
+	targetStatus := &gtsmodel.Status{}
+	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+	}
+
+	l.Tracef("going to search for target account %s", targetStatus.AccountID)
+	targetAccount := &gtsmodel.Account{}
+	if err := p.db.GetByID(targetStatus.AccountID, targetAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err))
+	}
+
+	l.Trace("going to get relevant accounts")
+	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(targetStatus)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err))
+	}
+
+	l.Trace("going to see if status is visible")
+	visible, err := p.db.StatusVisible(targetStatus, targetAccount, authed.Account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+	}
+
+	if !visible {
+		return nil, NewErrorNotFound(errors.New("status is not visible"))
+	}
+
+	if !targetStatus.VisibilityAdvanced.Boostable {
+		return nil, NewErrorForbidden(errors.New("status is not boostable"))
+	}
+
+	// it's visible! it's boostable! so let's boost the FUCK out of it
+	// first we create a new status and add some basic info to it -- this will be the wrapper for the boosted status
+
+	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
+	uris := util.GenerateURIsForAccount(authed.Account.Username, p.config.Protocol, p.config.Host)
+	boostWrapperStatusID := uuid.NewString()
+	boostWrapperStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, boostWrapperStatusID)
+	boostWrapperStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, boostWrapperStatusID)
+
+	boostWrapperStatus := &gtsmodel.Status{
+		ID:  boostWrapperStatusID,
+		URI: boostWrapperStatusURI,
+		URL: boostWrapperStatusURL,
+
+		// the boosted status is not created now, but the boost certainly is
+		CreatedAt:                time.Now(),
+		UpdatedAt:                time.Now(),
+		Local:                    true, // always local since this is being done through the client API
+		AccountID:                authed.Account.ID,
+		CreatedWithApplicationID: authed.Application.ID,
+
+		// replies can be boosted, but boosts are never replies
+		InReplyToID:        "",
+		InReplyToAccountID: "",
+
+		// these will all be wrapped in the boosted status so set them empty here
+		Attachments: []string{},
+		Tags:        []string{},
+		Mentions:    []string{},
+		Emojis:      []string{},
+
+		// the below fields will be taken from the target status
+		Content:             util.HTMLFormat(targetStatus.Content),
+		ContentWarning:      targetStatus.ContentWarning,
+		ActivityStreamsType: targetStatus.ActivityStreamsType,
+		Sensitive:           targetStatus.Sensitive,
+		Language:            targetStatus.Language,
+		Text:                targetStatus.Text,
+		BoostOfID:           targetStatus.ID,
+		Visibility:          targetStatus.Visibility,
+		VisibilityAdvanced:  targetStatus.VisibilityAdvanced,
+
+		// attach these here for convenience -- the boosted status/account won't go in the DB
+		// but they're needed in the processor and for the frontend. Since we have them, we can
+		// attach them so we don't need to fetch them again later (save some DB calls)
+		GTSBoostedStatus:  targetStatus,
+		GTSBoostedAccount: targetAccount,
+	}
+
+	// put the boost in the database
+	if err := p.db.Put(boostWrapperStatus); err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	// return the frontend representation of the new status to the submitter
+	mastoStatus, err := p.tc.StatusToMasto(boostWrapperStatus, authed.Account, authed.Account, targetAccount, nil, targetStatus)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
+	}
+
+	return mastoStatus, nil
+}
+
 func (p *processor) StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error) {
 	l := p.log.WithField("func", "StatusFavedBy")
 
