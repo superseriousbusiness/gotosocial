@@ -22,32 +22,9 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
-	"regexp"
 
 	pwv "github.com/wagslane/go-password-validator"
 	"golang.org/x/text/language"
-)
-
-const (
-	// MinimumPasswordEntropy dictates password strength. See https://github.com/wagslane/go-password-validator
-	MinimumPasswordEntropy = 60
-	// MinimumReasonLength is the length of chars we expect as a bare minimum effort
-	MinimumReasonLength = 40
-	// MaximumReasonLength is the maximum amount of chars we're happy to accept
-	MaximumReasonLength = 500
-	// MaximumEmailLength is the maximum length of an email address we're happy to accept
-	MaximumEmailLength = 256
-	// MaximumUsernameLength is the maximum length of a username we're happy to accept
-	MaximumUsernameLength = 64
-	// MaximumPasswordLength is the maximum length of a password we're happy to accept
-	MaximumPasswordLength = 64
-	// NewUsernameRegexString is string representation of the regular expression for validating usernames
-	NewUsernameRegexString = `^[a-z0-9_]+$`
-)
-
-var (
-	// NewUsernameRegex is the compiled regex for validating new usernames
-	NewUsernameRegex = regexp.MustCompile(NewUsernameRegexString)
 )
 
 // ValidateNewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
@@ -56,11 +33,11 @@ func ValidateNewPassword(password string) error {
 		return errors.New("no password provided")
 	}
 
-	if len(password) > MaximumPasswordLength {
-		return fmt.Errorf("password should be no more than %d chars", MaximumPasswordLength)
+	if len(password) > maximumPasswordLength {
+		return fmt.Errorf("password should be no more than %d chars", maximumPasswordLength)
 	}
 
-	return pwv.Validate(password, MinimumPasswordEntropy)
+	return pwv.Validate(password, minimumPasswordEntropy)
 }
 
 // ValidateUsername makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
@@ -70,11 +47,11 @@ func ValidateUsername(username string) error {
 		return errors.New("no username provided")
 	}
 
-	if len(username) > MaximumUsernameLength {
-		return fmt.Errorf("username should be no more than %d chars but '%s' was %d", MaximumUsernameLength, username, len(username))
+	if len(username) > maximumUsernameLength {
+		return fmt.Errorf("username should be no more than %d chars but '%s' was %d", maximumUsernameLength, username, len(username))
 	}
 
-	if !NewUsernameRegex.MatchString(username) {
+	if !usernameValidationRegex.MatchString(username) {
 		return fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", username)
 	}
 
@@ -88,8 +65,8 @@ func ValidateEmail(email string) error {
 		return errors.New("no email provided")
 	}
 
-	if len(email) > MaximumEmailLength {
-		return fmt.Errorf("email address should be no more than %d chars but '%s' was %d", MaximumEmailLength, email, len(email))
+	if len(email) > maximumEmailLength {
+		return fmt.Errorf("email address should be no more than %d chars but '%s' was %d", maximumEmailLength, email, len(email))
 	}
 
 	_, err := mail.ParseAddress(email)
@@ -118,12 +95,12 @@ func ValidateSignUpReason(reason string, reasonRequired bool) error {
 		return errors.New("no reason provided")
 	}
 
-	if len(reason) < MinimumReasonLength {
-		return fmt.Errorf("reason should be at least %d chars but '%s' was %d", MinimumReasonLength, reason, len(reason))
+	if len(reason) < minimumReasonLength {
+		return fmt.Errorf("reason should be at least %d chars but '%s' was %d", minimumReasonLength, reason, len(reason))
 	}
 
-	if len(reason) > MaximumReasonLength {
-		return fmt.Errorf("reason should be no more than %d chars but given reason was %d", MaximumReasonLength, len(reason))
+	if len(reason) > maximumReasonLength {
+		return fmt.Errorf("reason should be no more than %d chars but given reason was %d", maximumReasonLength, len(reason))
 	}
 	return nil
 }
@@ -150,7 +127,7 @@ func ValidatePrivacy(privacy string) error {
 // for emoji shortcodes, to figure out whether it's a valid shortcode, ie., 2-30 characters,
 // lowercase a-z, numbers, and underscores.
 func ValidateEmojiShortcode(shortcode string) error {
-	if !emojiShortcodeRegex.MatchString(shortcode) {
+	if !emojiShortcodeValidationRegex.MatchString(shortcode) {
 		return fmt.Errorf("shortcode %s did not pass validation, must be between 2 and 30 characters, lowercase letters, numbers, and underscores only", shortcode)
 	}
 	return nil

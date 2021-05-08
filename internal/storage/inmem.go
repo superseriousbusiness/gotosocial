@@ -35,7 +35,7 @@ func (s *inMemStorage) RetrieveFileFrom(path string) ([]byte, error) {
 	l := s.log.WithField("func", "RetrieveFileFrom")
 	l.Debugf("retrieving from path %s", path)
 	d, ok := s.stored[path]
-	if !ok {
+	if !ok || len(d) == 0 {
 		return nil, fmt.Errorf("no data found at path %s", path)
 	}
 	return d, nil

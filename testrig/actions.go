@@ -19,24 +19,26 @@
 package testrig
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
-	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/security"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
+	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
+	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
@@ -44,33 +46,39 @@ import (
 
 // Run creates and starts a gotosocial testrig server
 var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
+	c := NewTestConfig()
 	dbService := NewTestDB()
 	router := NewTestRouter()
 	storageBackend := NewTestStorage()
-	mediaHandler := NewTestMediaHandler(dbService, storageBackend)
-	oauthServer := NewTestOauthServer(dbService)
-	distributor := NewTestDistributor()
-	if err := distributor.Start(); err != nil {
-		return fmt.Errorf("error starting distributor: %s", err)
-	}
-	mastoConverter := NewTestMastoConverter(dbService)
 
-	c := NewTestConfig()
+	typeConverter := NewTestTypeConverter(dbService)
+	transportController := NewTestTransportController(NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+		return &http.Response{
+			StatusCode: 200,
+			Body:       r,
+		}, nil
+	}))
+	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	processor := NewTestProcessor(dbService, storageBackend, federator)
+	if err := processor.Start(); err != nil {
+		return fmt.Errorf("error starting processor: %s", err)
+	}
 
 	StandardDBSetup(dbService)
 	StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// build client api modules
-	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
-	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
-	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
-	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
-	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
-	statusModule := status.New(c, dbService, mediaHandler, mastoConverter, distributor, log)
+	authModule := auth.New(c, dbService, NewTestOauthServer(dbService), log)
+	accountModule := account.New(c, processor, log)
+	appsModule := app.New(c, processor, log)
+	mm := mediaModule.New(c, processor, log)
+	fileServerModule := fileserver.New(c, processor, log)
+	adminModule := admin.New(c, processor, log)
+	statusModule := status.New(c, processor, log)
 	securityModule := security.New(c, log)
 
-	apiModules := []apimodule.ClientAPIModule{
+	apis := []api.ClientModule{
 		// modules with middleware go first
 		securityModule,
 		authModule,
@@ -84,20 +92,13 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 		statusModule,
 	}
 
-	for _, m := range apiModules {
+	for _, m := range apis {
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
 		}
-		if err := m.CreateTables(dbService); err != nil {
-			return fmt.Errorf("table creation error: %s", err)
-		}
 	}
 
-	// if err := dbService.CreateInstanceAccount(); err != nil {
-	// 	return fmt.Errorf("error creating instance account: %s", err)
-	// }
-
-	gts, err := gotosocial.New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)
+	gts, err := gotosocial.New(dbService, router, federator, c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

@@ -21,36 +21,37 @@ package gotosocial
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/account"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/app"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/auth"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
-	mediaModule "github.com/superseriousbusiness/gotosocial/internal/apimodule/media"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/security"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
+	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
+	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Run creates and starts a gotosocial server
 var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := db.New(ctx, c, log)
+	dbService, err := db.NewPostgresService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -65,28 +66,30 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
 
+	// build converters and util
+	typeConverter := typeutils.NewConverter(c, dbService)
+
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
-	distributor := distributor.New(log)
-	if err := distributor.Start(); err != nil {
-		return fmt.Errorf("error starting distributor: %s", err)
+	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
+	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	processor := message.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, dbService, log)
+	if err := processor.Start(); err != nil {
+		return fmt.Errorf("error starting processor: %s", err)
 	}
 
-	// build converters and util
-	mastoConverter := mastotypes.New(c, dbService)
-
 	// build client api modules
-	authModule := auth.New(oauthServer, dbService, log)
-	accountModule := account.New(c, dbService, oauthServer, mediaHandler, mastoConverter, log)
-	appsModule := app.New(oauthServer, dbService, mastoConverter, log)
-	mm := mediaModule.New(dbService, mediaHandler, mastoConverter, c, log)
-	fileServerModule := fileserver.New(c, dbService, storageBackend, log)
-	adminModule := admin.New(c, dbService, mediaHandler, mastoConverter, log)
-	statusModule := status.New(c, dbService, mediaHandler, mastoConverter, distributor, log)
+	authModule := auth.New(c, dbService, oauthServer, log)
+	accountModule := account.New(c, processor, log)
+	appsModule := app.New(c, processor, log)
+	mm := mediaModule.New(c, processor, log)
+	fileServerModule := fileserver.New(c, processor, log)
+	adminModule := admin.New(c, processor, log)
+	statusModule := status.New(c, processor, log)
 	securityModule := security.New(c, log)
 
-	apiModules := []apimodule.ClientAPIModule{
+	apis := []api.ClientModule{
 		// modules with middleware go first
 		securityModule,
 		authModule,
@@ -100,12 +103,9 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		statusModule,
 	}
 
-	for _, m := range apiModules {
+	for _, m := range apis {
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
-		}
-		if err := m.CreateTables(dbService); err != nil {
-			return fmt.Errorf("table creation error: %s", err)
 		}
 	}
 
@@ -113,7 +113,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating instance account: %s", err)
 	}
 
-	gts, err := New(dbService, &cache.MockCache{}, router, federation.New(dbService, log), c)
+	gts, err := New(dbService, router, federator, c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

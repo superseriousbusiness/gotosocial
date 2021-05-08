@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
@@ -78,7 +78,7 @@ func (suite *MediaTestSuite) SetupSuite() {
 	}
 	suite.config = c
 	// use an actual database for this, because it's just easier than mocking one out
-	database, err := db.New(context.Background(), c, log)
+	database, err := db.NewPostgresService(context.Background(), c, log)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

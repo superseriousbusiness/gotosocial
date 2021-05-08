@@ -18,19 +18,78 @@
 
 package util
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
+
+const (
+	minimumPasswordEntropy      = 60 // dictates password strength. See https://github.com/wagslane/go-password-validator
+	minimumReasonLength         = 40
+	maximumReasonLength         = 500
+	maximumEmailLength          = 256
+	maximumUsernameLength       = 64
+	maximumPasswordLength       = 64
+	maximumEmojiShortcodeLength = 30
+	maximumHashtagLength        = 30
+)
 
 var (
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
-	mentionRegex       = regexp.MustCompile(mentionRegexString)
+	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
+	mentionFinderRegex       = regexp.MustCompile(mentionFinderRegexString)
+
 	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
-	hashtagRegexString = `(?: |^|\W)?#([a-zA-Z0-9]{1,30})(?:\b|\r)`
-	hashtagRegex       = regexp.MustCompile(hashtagRegexString)
-	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
-	emojiRegexString = `(?: |^|\W)?:([a-zA-Z0-9_]{2,30}):(?:\b|\r)?`
-	emojiRegex       = regexp.MustCompile(emojiRegexString)
+	hashtagFinderRegexString = fmt.Sprintf(`(?: |^|\W)?#([a-zA-Z0-9]{1,%d})(?:\b|\r)`, maximumHashtagLength)
+	hashtagFinderRegex       = regexp.MustCompile(hashtagFinderRegexString)
+
 	// emoji shortcode regex can be played with here: https://regex101.com/r/zMDRaG/1
-	emojiShortcodeString = `^[a-z0-9_]{2,30}$`
-	emojiShortcodeRegex  = regexp.MustCompile(emojiShortcodeString)
+	emojiShortcodeRegexString     = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumEmojiShortcodeLength)
+	emojiShortcodeValidationRegex = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcodeRegexString))
+
+	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
+	emojiFinderRegexString = fmt.Sprintf(`(?: |^|\W)?:(%s):(?:\b|\r)?`, emojiShortcodeRegexString)
+	emojiFinderRegex       = regexp.MustCompile(emojiFinderRegexString)
+
+	// usernameRegexString defines an acceptable username on this instance
+	usernameRegexString = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumUsernameLength)
+	// usernameValidationRegex can be used to validate usernames of new signups
+	usernameValidationRegex = regexp.MustCompile(fmt.Sprintf(`^%s$`, usernameRegexString))
+
+	userPathRegexString = fmt.Sprintf(`^?/%s/(%s)$`, UsersPath, usernameRegexString)
+	// userPathRegex parses a path that validates and captures the username part from eg /users/example_username
+	userPathRegex = regexp.MustCompile(userPathRegexString)
+
+	inboxPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, InboxPath)
+	// inboxPathRegex parses a path that validates and captures the username part from eg /users/example_username/inbox
+	inboxPathRegex = regexp.MustCompile(inboxPathRegexString)
+
+	outboxPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, OutboxPath)
+	// outboxPathRegex parses a path that validates and captures the username part from eg /users/example_username/outbox
+	outboxPathRegex = regexp.MustCompile(outboxPathRegexString)
+
+	actorPathRegexString = fmt.Sprintf(`^?/%s/(%s)$`, ActorsPath, usernameRegexString)
+	// actorPathRegex parses a path that validates and captures the username part from eg /actors/example_username
+	actorPathRegex = regexp.MustCompile(actorPathRegexString)
+
+	followersPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, FollowersPath)
+	// followersPathRegex parses a path that validates and captures the username part from eg /users/example_username/followers
+	followersPathRegex = regexp.MustCompile(followersPathRegexString)
+
+	followingPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, FollowingPath)
+	// followingPathRegex parses a path that validates and captures the username part from eg /users/example_username/following
+	followingPathRegex = regexp.MustCompile(followingPathRegexString)
+
+	likedPathRegexString = fmt.Sprintf(`^/?%s/%s/%s$`, UsersPath, usernameRegexString, LikedPath)
+	// followingPathRegex parses a path that validates and captures the username part from eg /users/example_username/liked
+	likedPathRegex = regexp.MustCompile(likedPathRegexString)
+
+	// see https://ihateregex.io/expr/uuid/
+	uuidRegexString = `[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}`
+
+	statusesPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, StatusesPath, uuidRegexString)
+	// statusesPathRegex parses a path that validates and captures the username part and the uuid part
+	// from eg /users/example_username/statuses/123e4567-e89b-12d3-a456-426655440000.
+	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
+	statusesPathRegex = regexp.MustCompile(statusesPathRegexString)
 )

@@ -33,6 +33,26 @@ import (
 	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
 )
 
+const (
+	// MIMEImage is the mime type for image
+	MIMEImage = "image"
+	// MIMEJpeg is the jpeg image mime type
+	MIMEJpeg = "image/jpeg"
+	// MIMEGif is the gif image mime type
+	MIMEGif = "image/gif"
+	// MIMEPng is the png image mime type
+	MIMEPng = "image/png"
+
+	// MIMEVideo is the mime type for video
+	MIMEVideo = "video"
+	// MIMEMp4 is the mp4 video mime type
+	MIMEMp4 = "video/mp4"
+	// MIMEMpeg is the mpeg video mime type
+	MIMEMpeg = "video/mpeg"
+	// MIMEWebm is the webm video mime type
+	MIMEWebm = "video/webm"
+)
+
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.
 func parseContentType(content []byte) (string, error) {
@@ -54,13 +74,13 @@ func parseContentType(content []byte) (string, error) {
 	return kind.MIME.Value, nil
 }
 
-// supportedImageType checks mime type of an image against a slice of accepted types,
+// SupportedImageType checks mime type of an image against a slice of accepted types,
 // and returns True if the mime type is accepted.
-func supportedImageType(mimeType string) bool {
+func SupportedImageType(mimeType string) bool {
 	acceptedImageTypes := []string{
-		"image/jpeg",
-		"image/gif",
-		"image/png",
+		MIMEJpeg,
+		MIMEGif,
+		MIMEPng,
 	}
 	for _, accepted := range acceptedImageTypes {
 		if mimeType == accepted {
@@ -70,13 +90,13 @@ func supportedImageType(mimeType string) bool {
 	return false
 }
 
-// supportedVideoType checks mime type of a video against a slice of accepted types,
+// SupportedVideoType checks mime type of a video against a slice of accepted types,
 // and returns True if the mime type is accepted.
-func supportedVideoType(mimeType string) bool {
+func SupportedVideoType(mimeType string) bool {
 	acceptedVideoTypes := []string{
-		"video/mp4",
-		"video/mpeg",
-		"video/webm",
+		MIMEMp4,
+		MIMEMpeg,
+		MIMEWebm,
 	}
 	for _, accepted := range acceptedVideoTypes {
 		if mimeType == accepted {
@@ -89,8 +109,8 @@ func supportedVideoType(mimeType string) bool {
 // supportedEmojiType checks that the content type is image/png -- the only type supported for emoji.
 func supportedEmojiType(mimeType string) bool {
 	acceptedEmojiTypes := []string{
-		"image/gif",
-		"image/png",
+		MIMEGif,
+		MIMEPng,
 	}
 	for _, accepted := range acceptedEmojiTypes {
 		if mimeType == accepted {
@@ -121,7 +141,7 @@ func deriveGif(b []byte, extension string) (*imageAndMeta, error) {
 	var g *gif.GIF
 	var err error
 	switch extension {
-	case "image/gif":
+	case MIMEGif:
 		g, err = gif.DecodeAll(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -161,12 +181,12 @@ func deriveImage(b []byte, contentType string) (*imageAndMeta, error) {
 	var err error
 
 	switch contentType {
-	case "image/jpeg":
+	case MIMEJpeg:
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case "image/png":
+	case MIMEPng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -210,17 +230,17 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	var err error
 
 	switch contentType {
-	case "image/jpeg":
+	case MIMEJpeg:
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case "image/png":
+	case MIMEPng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case "image/gif":
+	case MIMEGif:
 		i, err = gif.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -254,12 +274,12 @@ func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
 	var err error
 
 	switch contentType {
-	case "image/png":
+	case MIMEPng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case "image/gif":
+	case MIMEGif:
 		i, err = gif.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -284,4 +304,32 @@ type imageAndMeta struct {
 	size     int
 	aspect   float64
 	blurhash string
+}
+
+// ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
+func ParseMediaType(s string) (Type, error) {
+	switch Type(s) {
+	case Attachment:
+		return Attachment, nil
+	case Header:
+		return Header, nil
+	case Avatar:
+		return Avatar, nil
+	case Emoji:
+		return Emoji, nil
+	}
+	return "", fmt.Errorf("%s not a recognized MediaType", s)
+}
+
+// ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
+func ParseMediaSize(s string) (Size, error) {
+	switch Size(s) {
+	case Small:
+		return Small, nil
+	case Original:
+		return Original, nil
+	case Static:
+		return Static, nil
+	}
+	return "", fmt.Errorf("%s not a recognized MediaSize", s)
 }

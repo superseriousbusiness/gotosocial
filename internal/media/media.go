@@ -28,25 +28,32 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
+// Size describes the *size* of a piece of media
+type Size string
+
+// Type describes the *type* of a piece of media
+type Type string
+
 const (
-	// MediaSmall is the key for small/thumbnail versions of media
-	MediaSmall = "small"
-	// MediaOriginal is the key for original/fullsize versions of media and emoji
-	MediaOriginal = "original"
-	// MediaStatic is the key for static (non-animated) versions of emoji
-	MediaStatic = "static"
-	// MediaAttachment is the key for media attachments
-	MediaAttachment = "attachment"
-	// MediaHeader is the key for profile header requests
-	MediaHeader = "header"
-	// MediaAvatar is the key for profile avatar requests
-	MediaAvatar = "avatar"
-	// MediaEmoji is the key for emoji type requests
-	MediaEmoji = "emoji"
+	// Small is the key for small/thumbnail versions of media
+	Small Size = "small"
+	// Original is the key for original/fullsize versions of media and emoji
+	Original Size = "original"
+	// Static is the key for static (non-animated) versions of emoji
+	Static Size = "static"
+
+	// Attachment is the key for media attachments
+	Attachment Type = "attachment"
+	// Header is the key for profile header requests
+	Header Type = "header"
+	// Avatar is the key for profile avatar requests
+	Avatar Type = "avatar"
+	// Emoji is the key for emoji type requests
+	Emoji Type = "emoji"
 
 	// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
 	EmojiMaxBytes = 51200
@@ -57,7 +64,7 @@ type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(img []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(img []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
@@ -94,10 +101,10 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 // ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, headerOrAvi string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
-	if headerOrAvi != MediaHeader && headerOrAvi != MediaAvatar {
+	if mediaType != Header && mediaType != Avatar {
 		return nil, errors.New("header or avatar not selected")
 	}
 
@@ -106,7 +113,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	if err != nil {
 		return nil, err
 	}
-	if !supportedImageType(contentType) {
+	if !SupportedImageType(contentType) {
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
@@ -116,14 +123,14 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	l.Tracef("read %d bytes of file", len(attachment))
 
 	// process it
-	ma, err := mh.processHeaderOrAvi(attachment, contentType, headerOrAvi, accountID)
+	ma, err := mh.processHeaderOrAvi(attachment, contentType, mediaType, accountID)
 	if err != nil {
-		return nil, fmt.Errorf("error processing %s: %s", headerOrAvi, err)
+		return nil, fmt.Errorf("error processing %s: %s", mediaType, err)
 	}
 
 	// set it in the database
 	if err := mh.db.SetHeaderOrAvatarForAccountID(ma, accountID); err != nil {
-		return nil, fmt.Errorf("error putting %s in database: %s", headerOrAvi, err)
+		return nil, fmt.Errorf("error putting %s in database: %s", mediaType, err)
 	}
 
 	return ma, nil
@@ -139,8 +146,8 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 	}
 	mainType := strings.Split(contentType, "/")[0]
 	switch mainType {
-	case "video":
-		if !supportedVideoType(contentType) {
+	case MIMEVideo:
+		if !SupportedVideoType(contentType) {
 			return nil, fmt.Errorf("video type %s not supported", contentType)
 		}
 		if len(attachment) == 0 {
@@ -150,8 +157,8 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(attachment), mh.config.MediaConfig.MaxVideoSize)
 		}
 		return mh.processVideoAttachment(attachment, accountID, contentType)
-	case "image":
-		if !supportedImageType(contentType) {
+	case MIMEImage:
+		if !SupportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
 		}
 		if len(attachment) == 0 {
@@ -192,13 +199,13 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 		return nil, fmt.Errorf("emoji size %d bytes exceeded max emoji size of %d bytes", len(emojiBytes), EmojiMaxBytes)
 	}
 
-	// clean any exif data from image/png type but leave gifs alone
+	// clean any exif data from png but leave gifs alone
 	switch contentType {
-	case "image/png":
+	case MIMEPng:
 		if clean, err = purgeExif(emojiBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = emojiBytes
 	default:
 		return nil, errors.New("media type unrecognized")
@@ -218,7 +225,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
 	// with the same username as the instance hostname, which doesn't belong to any particular user.
 	instanceAccount := &gtsmodel.Account{}
-	if err := mh.db.GetWhere("username", mh.config.Host, instanceAccount); err != nil {
+	if err := mh.db.GetLocalAccountByUsername(mh.config.Host, instanceAccount); err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
 
@@ -234,15 +241,15 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 
 	// webfinger uri for the emoji -- unrelated to actually serving the image
 	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c
-	emojiURI := fmt.Sprintf("%s://%s/%s/%s", mh.config.Protocol, mh.config.Host, MediaEmoji, newEmojiID)
+	emojiURI := fmt.Sprintf("%s://%s/%s/%s", mh.config.Protocol, mh.config.Host, Emoji, newEmojiID)
 
 	// serve url and storage path for the original emoji -- can be png or gif
-	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, MediaEmoji, MediaOriginal, newEmojiID, extension)
-	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccount.ID, MediaEmoji, MediaOriginal, newEmojiID, extension)
+	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, Emoji, Original, newEmojiID, extension)
+	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccount.ID, Emoji, Original, newEmojiID, extension)
 
 	// serve url and storage path for the static version -- will always be png
-	emojiStaticURL := fmt.Sprintf("%s/%s/%s/%s/%s.png", URLbase, instanceAccount.ID, MediaEmoji, MediaStatic, newEmojiID)
-	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s/%s.png", mh.config.StorageConfig.BasePath, instanceAccount.ID, MediaEmoji, MediaStatic, newEmojiID)
+	emojiStaticURL := fmt.Sprintf("%s/%s/%s/%s/%s.png", URLbase, instanceAccount.ID, Emoji, Static, newEmojiID)
+	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s/%s.png", mh.config.StorageConfig.BasePath, instanceAccount.ID, Emoji, Static, newEmojiID)
 
 	// store the original
 	if err := mh.storage.StoreFileAt(emojiPath, original.image); err != nil {
@@ -256,25 +263,26 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 
 	// and finally return the new emoji data to the caller -- it's up to them what to do with it
 	e := &gtsmodel.Emoji{
-		ID:                   newEmojiID,
-		Shortcode:            shortcode,
-		Domain:               "", // empty because this is a local emoji
-		CreatedAt:            time.Now(),
-		UpdatedAt:            time.Now(),
-		ImageRemoteURL:       "", // empty because this is a local emoji
-		ImageStaticRemoteURL: "", // empty because this is a local emoji
-		ImageURL:             emojiURL,
-		ImageStaticURL:       emojiStaticURL,
-		ImagePath:            emojiPath,
-		ImageStaticPath:      emojiStaticPath,
-		ImageContentType:     contentType,
-		ImageFileSize:        len(original.image),
-		ImageStaticFileSize:  len(static.image),
-		ImageUpdatedAt:       time.Now(),
-		Disabled:             false,
-		URI:                  emojiURI,
-		VisibleInPicker:      true,
-		CategoryID:           "", // empty because this is a new emoji -- no category yet
+		ID:                     newEmojiID,
+		Shortcode:              shortcode,
+		Domain:                 "", // empty because this is a local emoji
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		ImageRemoteURL:         "", // empty because this is a local emoji
+		ImageStaticRemoteURL:   "", // empty because this is a local emoji
+		ImageURL:               emojiURL,
+		ImageStaticURL:         emojiStaticURL,
+		ImagePath:              emojiPath,
+		ImageStaticPath:        emojiStaticPath,
+		ImageContentType:       contentType,
+		ImageStaticContentType: MIMEPng, // static version will always be a png
+		ImageFileSize:          len(original.image),
+		ImageStaticFileSize:    len(static.image),
+		ImageUpdatedAt:         time.Now(),
+		Disabled:               false,
+		URI:                    emojiURI,
+		VisibleInPicker:        true,
+		CategoryID:             "", // empty because this is a new emoji -- no category yet
 	}
 	return e, nil
 }
@@ -294,7 +302,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 	var small *imageAndMeta
 
 	switch contentType {
-	case "image/jpeg", "image/png":
+	case MIMEJpeg, MIMEPng:
 		if clean, err = purgeExif(data); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
@@ -302,7 +310,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 		if err != nil {
 			return nil, fmt.Errorf("error parsing image: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = data
 		original, err = deriveGif(clean, contentType)
 		if err != nil {
@@ -326,13 +334,13 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, accountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaOriginal, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, Attachment, Original, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, accountID, MediaAttachment, MediaSmall, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, accountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
@@ -372,7 +380,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        smallPath,
-			ContentType: "image/jpeg", // all thumbnails/smalls are encoded as jpeg
+			ContentType: MIMEJpeg, // all thumbnails/smalls are encoded as jpeg
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,
@@ -386,14 +394,14 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 
 }
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, headerOrAvi string, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
-	switch headerOrAvi {
-	case MediaHeader:
+	switch mediaType {
+	case Header:
 		isHeader = true
-	case MediaAvatar:
+	case Avatar:
 		isAvatar = true
 	default:
 		return nil, errors.New("header or avatar not selected")
@@ -403,15 +411,15 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	var err error
 
 	switch contentType {
-	case "image/jpeg":
+	case MIMEJpeg:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/png":
+	case MIMEPng:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case "image/gif":
+	case MIMEGif:
 		clean = imageBytes
 	default:
 		return nil, errors.New("media type unrecognized")
@@ -432,17 +440,17 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	newMediaID := uuid.NewString()
 
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
-	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, headerOrAvi, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, headerOrAvi, newMediaID, extension)
+	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
+	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, MediaOriginal, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Original, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, headerOrAvi, MediaSmall, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Small, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}

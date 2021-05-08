@@ -16,6 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package db_test
 
 // TODO: write tests for postgres
