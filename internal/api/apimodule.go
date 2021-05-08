@@ -16,7 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package apimodule is basically a wrapper for a lot of modules (in subdirectories) that satisfy the ClientAPIModule interface.
 package api
 
 import (

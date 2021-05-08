@@ -65,6 +65,8 @@ type Processor interface {
 	AccountCreate(authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
 	// AccountGet processes the given request for account information.
 	AccountGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
+	// AccountUpdate processes the update of an account with the given form
+	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)

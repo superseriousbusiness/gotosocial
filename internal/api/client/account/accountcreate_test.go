@@ -48,7 +48,6 @@ package account_test
 // }
 
 // func (suite *AccountCreateTestSuite) SetupSuite() {
-// 	testrig.StandardDBSetup(suite.db)
 // 	suite.testTokens = testrig.NewTestTokens()
 // 	suite.testClients = testrig.NewTestClients()
 // 	suite.testApplications = testrig.NewTestApplications()
@@ -61,13 +60,18 @@ package account_test
 // func (suite *AccountCreateTestSuite) SetupTest() {
 // 	suite.config = testrig.NewTestConfig()
 // 	suite.db = testrig.NewTestDB()
+// 	suite.storage = testrig.NewTestStorage()
 // 	suite.log = testrig.NewTestLog()
-// 	suite.processor = testrig.NewTestProcessor(suite.db)
+// 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)))
+// 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 // 	suite.accountModule = account.New(suite.config, suite.processor, suite.log).(*account.Module)
+// 	testrig.StandardDBSetup(suite.db)
+// 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 // }
 
 // func (suite *AccountCreateTestSuite) TearDownTest() {
 // 	testrig.StandardDBTeardown(suite.db)
+// 	testrig.StandardStorageTeardown(suite.storage)
 // }
 
 // // TestAccountCreatePOSTHandlerSuccessful checks the happy path for an account creation request: all the fields provided are valid,

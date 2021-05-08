@@ -45,7 +45,7 @@ const (
 
 	// MIMEVideo is the mime type for video
 	MIMEVideo = "video"
-	// MIMEmp4 is the mp4 video mime type
+	// MIMEMp4 is the mp4 video mime type
 	MIMEMp4 = "video/mp4"
 	// MIMEMpeg is the mpeg video mime type
 	MIMEMpeg = "video/mpeg"
@@ -307,8 +307,8 @@ type imageAndMeta struct {
 }
 
 // ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
-func ParseMediaType(s string) (MediaType, error) {
-	switch MediaType(s) {
+func ParseMediaType(s string) (Type, error) {
+	switch Type(s) {
 	case Attachment:
 		return Attachment, nil
 	case Header:
@@ -322,8 +322,8 @@ func ParseMediaType(s string) (MediaType, error) {
 }
 
 // ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
-func ParseMediaSize(s string) (MediaSize, error) {
-	switch MediaSize(s) {
+func ParseMediaSize(s string) (Size, error) {
+	switch Size(s) {
 	case Small:
 		return Small, nil
 	case Original:

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
+// nolint
 type StatusStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite

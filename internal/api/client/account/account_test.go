@@ -6,12 +6,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
+// nolint
 type AccountStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
@@ -19,6 +22,8 @@ type AccountStandardTestSuite struct {
 	db        db.DB
 	log       *logrus.Logger
 	tc        typeutils.TypeConverter
+	storage   storage.Storage
+	federator federation.Federator
 	processor message.Processor
 
 	// standard suite models

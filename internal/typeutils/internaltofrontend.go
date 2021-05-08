@@ -120,7 +120,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	aviURLStatic := avi.Thumbnail.URL
 
 	header := &gtsmodel.MediaAttachment{}
-	if err := c.db.GetHeaderForAccountID(avi, a.ID); err != nil {
+	if err := c.db.GetHeaderForAccountID(header, a.ID); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting header: %s", err)
 		}

@@ -14,6 +14,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
+// nolint
 type UserStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite

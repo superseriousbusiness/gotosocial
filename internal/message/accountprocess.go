@@ -154,10 +154,6 @@ func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCrede
 		}
 	}
 
-	// if form.FieldsAttributes != nil {
-	// 	// TODO: parse fields attributes nicely and update
-	// }
-
 	// fetch the account with all updated values set
 	updatedAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(authed.Account.ID, updatedAccount); err != nil {

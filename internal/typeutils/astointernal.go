@@ -35,14 +35,14 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	uri := uriProp.GetIRI()
 
 	acct := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", uri.String(), acct); err == nil {
+	err := c.db.GetWhere("uri", uri.String(), acct)
+	if err == nil {
 		// we already know this account so we can skip generating it
 		return acct, nil
-	} else {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			// we don't know the account and there's been a real error
-			return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
-		}
+	}
+	if _, ok := err.(db.ErrNoEntries); !ok {
+		// we don't know the account and there's been a real error
+		return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
 	}
 
 	// we don't know the account so we need to generate it from the person -- at least we already have the URI!

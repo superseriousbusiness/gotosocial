@@ -32,28 +32,28 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
-// MediaSize describes the *size* of a piece of media
-type MediaSize string
+// Size describes the *size* of a piece of media
+type Size string
 
-// MediaType describes the *type* of a piece of media
-type MediaType string
+// Type describes the *type* of a piece of media
+type Type string
 
 const (
 	// Small is the key for small/thumbnail versions of media
-	Small MediaSize = "small"
+	Small Size = "small"
 	// Original is the key for original/fullsize versions of media and emoji
-	Original MediaSize = "original"
+	Original Size = "original"
 	// Static is the key for static (non-animated) versions of emoji
-	Static MediaSize = "static"
+	Static Size = "static"
 
 	// Attachment is the key for media attachments
-	Attachment MediaType = "attachment"
+	Attachment Type = "attachment"
 	// Header is the key for profile header requests
-	Header MediaType = "header"
+	Header Type = "header"
 	// Avatar is the key for profile avatar requests
-	Avatar MediaType = "avatar"
+	Avatar Type = "avatar"
 	// Emoji is the key for emoji type requests
-	Emoji MediaType = "emoji"
+	Emoji Type = "emoji"
 
 	// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
 	EmojiMaxBytes = 51200
@@ -64,7 +64,7 @@ type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(img []byte, accountID string, mediaType MediaType) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(img []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
@@ -101,7 +101,7 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 // ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType MediaType) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if mediaType != Header && mediaType != Avatar {
@@ -394,7 +394,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 
 }
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType MediaType, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
