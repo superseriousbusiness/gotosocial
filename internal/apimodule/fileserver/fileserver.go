@@ -39,7 +39,7 @@ const (
 	// MediaSizeKey is the url key for the desired media size--original/small/static
 	MediaSizeKey = "media_size"
 	// FileNameKey is the actual filename being sought. Will usually be a UUID then something like .jpeg
-	FileNameKey = "file_name"
+	FileNameKey  = "file_name"
 )
 
 // FileServer implements the RESTAPIModule interface.

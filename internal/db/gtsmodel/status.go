@@ -89,10 +89,6 @@ type Status struct {
 	GTSReplyToStatus *Status `pg:"-"`
 	// Account being replied to
 	GTSReplyToAccount *Account `pg:"-"`
-	// Status being boosted
-	GTSBoostedStatus *Status `pg:"-"`
-	// Account of the boosted status
-	GTSBoostedAccount *Account `pg:"-"`
 }
 
 // Visibility represents the visibility granularity of a status.
