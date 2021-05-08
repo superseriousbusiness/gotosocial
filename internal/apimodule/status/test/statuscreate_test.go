@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status_test
+package status
 
 import (
 	"encoding/json"

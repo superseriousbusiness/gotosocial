@@ -16,6 +16,4 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package app_test
-
-// TODO: write tests
+package account

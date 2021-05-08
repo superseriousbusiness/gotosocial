@@ -37,9 +37,9 @@ import (
 
 const (
 	// IDKey is for status UUIDs
-	IDKey = "id"
+	IDKey          = "id"
 	// BasePath is the base path for serving the status API
-	BasePath = "/api/v1/statuses"
+	BasePath       = "/api/v1/statuses"
 	// BasePathWithID is just the base path with the ID key in it.
 	// Use this anywhere you need to know the ID of the status being queried.
 	BasePathWithID = BasePath + "/:" + IDKey
@@ -48,31 +48,31 @@ const (
 	ContextPath = BasePathWithID + "/context"
 
 	// FavouritedPath is for seeing who's faved a given status
-	FavouritedPath = BasePathWithID + "/favourited_by"
+	FavouritedPath  = BasePathWithID + "/favourited_by"
 	// FavouritePath is for posting a fave on a status
-	FavouritePath = BasePathWithID + "/favourite"
+	FavouritePath   = BasePathWithID + "/favourite"
 	// UnfavouritePath is for removing a fave from a status
 	UnfavouritePath = BasePathWithID + "/unfavourite"
 
 	// RebloggedPath is for seeing who's boosted a given status
 	RebloggedPath = BasePathWithID + "/reblogged_by"
 	// ReblogPath is for boosting/reblogging a given status
-	ReblogPath = BasePathWithID + "/reblog"
+	ReblogPath    = BasePathWithID + "/reblog"
 	// UnreblogPath is for undoing a boost/reblog of a given status
-	UnreblogPath = BasePathWithID + "/unreblog"
+	UnreblogPath  = BasePathWithID + "/unreblog"
 
 	// BookmarkPath is for creating a bookmark on a given status
-	BookmarkPath = BasePathWithID + "/bookmark"
+	BookmarkPath   = BasePathWithID + "/bookmark"
 	// UnbookmarkPath is for removing a bookmark from a given status
 	UnbookmarkPath = BasePathWithID + "/unbookmark"
 
 	// MutePath is for muting a given status so that notifications will no longer be received about it.
-	MutePath = BasePathWithID + "/mute"
+	MutePath   = BasePathWithID + "/mute"
 	// UnmutePath is for undoing an existing mute
 	UnmutePath = BasePathWithID + "/unmute"
 
 	// PinPath is for pinning a status to an account profile so that it's the first thing people see
-	PinPath = BasePathWithID + "/pin"
+	PinPath   = BasePathWithID + "/pin"
 	// UnpinPath is for undoing a pin and returning a status to the ever-swirling drain of time and entropy
 	UnpinPath = BasePathWithID + "/unpin"
 )
@@ -106,8 +106,6 @@ func (m *Module) Route(r router.Router) error {
 
 	r.AttachHandler(http.MethodPost, FavouritePath, m.StatusFavePOSTHandler)
 	r.AttachHandler(http.MethodPost, UnfavouritePath, m.StatusFavePOSTHandler)
-
-	r.AttachHandler(http.MethodPost, ReblogPath, m.StatusReblogPOSTHandler)
 
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	return nil

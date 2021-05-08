@@ -16,35 +16,32 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status_test
+package test
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/apimodule/status"
+	"github.com/superseriousbusiness/gotosocial/internal/apimodule/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/distributor"
 	"github.com/superseriousbusiness/gotosocial/internal/mastotypes"
-	mastomodel "github.com/superseriousbusiness/gotosocial/internal/mastotypes/mastomodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusFavedByTestSuite struct {
+type ServeFileTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	config         *config.Config
@@ -54,7 +51,6 @@ type StatusFavedByTestSuite struct {
 	mastoConverter mastotypes.Converter
 	mediaHandler   media.Handler
 	oauthServer    oauth.Server
-	distributor    distributor.Distributor
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -63,14 +59,16 @@ type StatusFavedByTestSuite struct {
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
 	testAttachments  map[string]*gtsmodel.MediaAttachment
-	testStatuses     map[string]*gtsmodel.Status
 
-	// module being tested
-	statusModule *status.Module
+	// item being tested
+	fileServer *fileserver.FileServer
 }
 
-// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *StatusFavedByTestSuite) SetupSuite() {
+/*
+	TEST INFRASTRUCTURE
+*/
+
+func (suite *ServeFileTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
@@ -79,31 +77,29 @@ func (suite *StatusFavedByTestSuite) SetupSuite() {
 	suite.mastoConverter = testrig.NewTestMastoConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.distributor = testrig.NewTestDistributor()
 
 	// setup module being tested
-	suite.statusModule = status.New(suite.config, suite.db, suite.mediaHandler, suite.mastoConverter, suite.distributor, suite.log).(*status.Module)
+	suite.fileServer = fileserver.New(suite.config, suite.db, suite.storage, suite.log).(*fileserver.FileServer)
 }
 
-func (suite *StatusFavedByTestSuite) TearDownSuite() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
+func (suite *ServeFileTestSuite) TearDownSuite() {
+	if err := suite.db.Stop(context.Background()); err != nil {
+		logrus.Panicf("error closing db connection: %s", err)
+	}
 }
 
-func (suite *StatusFavedByTestSuite) SetupTest() {
+func (suite *ServeFileTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db)
-	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
 }
 
-// TearDownTest drops tables to make sure there's no data in the db
-func (suite *StatusFavedByTestSuite) TearDownTest() {
+func (suite *ServeFileTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
@@ -112,48 +108,50 @@ func (suite *StatusFavedByTestSuite) TearDownTest() {
 	ACTUAL TESTS
 */
 
-func (suite *StatusFavedByTestSuite) TestGetFavedBy() {
-	t := suite.testTokens["local_account_2"]
-	oauthToken := oauth.TokenToOauthToken(t)
+func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
+	targetAttachment, ok := suite.testAttachments["admin_account_status_1_attachment_1"]
+	assert.True(suite.T(), ok)
+	assert.NotNil(suite.T(), targetAttachment)
 
-	targetStatus := suite.testStatuses["admin_account_status_1"] // this status is faved by local_account_1
-
-	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_2"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_2"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritedPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.URL, nil)
 
 	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
+	// but because we're calling the ServeFile function directly, we need to set them manually.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   status.IDKey,
-			Value: targetStatus.ID,
+			Key:   fileserver.AccountIDKey,
+			Value: targetAttachment.AccountID,
+		},
+		gin.Param{
+			Key:   fileserver.MediaTypeKey,
+			Value: media.MediaAttachment,
+		},
+		gin.Param{
+			Key:   fileserver.MediaSizeKey,
+			Value: media.MediaOriginal,
+		},
+		gin.Param{
+			Key:   fileserver.FileNameKey,
+			Value: fmt.Sprintf("%s.jpeg", targetAttachment.ID),
 		},
 	}
 
-	suite.statusModule.StatusFavedByGETHandler(ctx)
-
-	// check response
+	// call the function we're testing and check status code
+	suite.fileServer.ServeFile(ctx)
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := ioutil.ReadAll(recorder.Body)
 	assert.NoError(suite.T(), err)
+	assert.NotNil(suite.T(), b)
 
-	accts := []mastomodel.Account{}
-	err = json.Unmarshal(b, &accts)
+	fileInStorage, err := suite.storage.RetrieveFileFrom(targetAttachment.File.Path)
 	assert.NoError(suite.T(), err)
-
-	assert.Len(suite.T(), accts, 1)
-	assert.Equal(suite.T(), "the_mighty_zork", accts[0].Username)
+	assert.NotNil(suite.T(), fileInStorage)
+	assert.Equal(suite.T(), b, fileInStorage)
 }
 
-func TestStatusFavedByTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusFavedByTestSuite))
+func TestServeFileTestSuite(t *testing.T) {
+	suite.Run(t, new(ServeFileTestSuite))
 }
