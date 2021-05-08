@@ -31,6 +31,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // Router provides the REST interface for gotosocial, using gin.
@@ -47,18 +48,43 @@ type Router interface {
 
 // router fulfils the Router interface using gin and logrus
 type router struct {
-	logger *logrus.Logger
-	engine *gin.Engine
-	srv    *http.Server
+	logger      *logrus.Logger
+	engine      *gin.Engine
+	srv         *http.Server
+	config      *config.Config
+	certManager *autocert.Manager
 }
 
-// Start starts the router nicely
+// Start starts the router nicely.
+//
+// Different ports and handlers will be served depending on whether letsencrypt is enabled or not.
+// If it is enabled, then port 80 will be used for handling LE requests, and port 443 will be used
+// for serving actual requests.
+//
+// If letsencrypt is not being used, then port 8080 only will be used for serving requests.
 func (r *router) Start() {
-	go func() {
-		if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			r.logger.Fatalf("listen: %s", err)
-		}
-	}()
+	if r.config.LetsEncryptConfig.Enabled {
+		// serve the http handler on port 80 for receiving letsencrypt requests and solving their devious riddles
+		go func() {
+			if err := http.ListenAndServe(":http", r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
+				r.logger.Fatalf("listen: %s", err)
+			}
+		}()
+
+		// and serve the actual TLS handler on port 443 
+		go func() {
+			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				r.logger.Fatalf("listen: %s", err)
+			}
+		}()
+	} else {
+		// no tls required so just serve on port 8080
+		go func() {
+			if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				r.logger.Fatalf("listen: %s", err)
+			}
+		}()
+	}
 }
 
 // Stop shuts down the router nicely
@@ -93,6 +119,8 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	default:
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.Default()
 
 	// create a new session store middleware
@@ -111,13 +139,40 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	logger.Debugf("loading templates from %s", tmPath)
 	engine.LoadHTMLGlob(tmPath)
 
-	return &router{
-		logger: logger,
-		engine: engine,
-		srv: &http.Server{
+	// create the actual http server here
+	var s *http.Server
+	var m *autocert.Manager
+
+	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
+	// In either case, the gin engine will still be used for routing requests.
+	if config.LetsEncryptConfig.Enabled {
+		// le IS enabled, so roll up an autocert manager for handling letsencrypt requests
+		m = &autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(config.Host),
+			Cache:      autocert.DirCache(config.LetsEncryptConfig.CertDir),
+			Email:      config.LetsEncryptConfig.EmailAddress,
+		}
+		// and create an HTTPS server
+		s = &http.Server{
+			Addr:      ":https",
+			TLSConfig: m.TLSConfig(),
+			Handler:   engine,
+		}
+	} else {
+		// le is NOT enabled, so just serve bare requests on port 8080
+		s = &http.Server{
 			Addr:    ":8080",
 			Handler: engine,
-		},
+		}
+	}
+
+	return &router{
+		logger:      logger,
+		engine:      engine,
+		srv:         s,
+		config:      config,
+		certManager: m,
 	}, nil
 }
 
@@ -135,4 +190,14 @@ func sessionStore() (memstore.Store, error) {
 	}
 
 	return memstore.NewStore(auth, crypt), nil
+}
+
+func httpsRedirect(w http.ResponseWriter, req *http.Request) {
+	target := "https://" + req.Host + req.URL.Path
+
+	if len(req.URL.RawQuery) > 0 {
+		target += "?" + req.URL.RawQuery
+	}
+
+	http.Redirect(w, req, target, http.StatusTemporaryRedirect)
 }

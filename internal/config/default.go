@@ -45,6 +45,11 @@ func TestDefault() *Config {
 			PollOptionMaxChars: defaults.StatusesPollOptionMaxChars,
 			MaxMediaFiles:      defaults.StatusesMaxMediaFiles,
 		},
+		LetsEncryptConfig: &LetsEncryptConfig{
+			Enabled:      defaults.LetsEncryptEnabled,
+			CertDir:      defaults.LetsEncryptCertDir,
+			EmailAddress: defaults.LetsEncryptEmailAddress,
+		},
 	}
 }
 
@@ -93,6 +98,11 @@ func Default() *Config {
 			PollOptionMaxChars: defaults.StatusesPollOptionMaxChars,
 			MaxMediaFiles:      defaults.StatusesMaxMediaFiles,
 		},
+		LetsEncryptConfig: &LetsEncryptConfig{
+			Enabled:      defaults.LetsEncryptEnabled,
+			CertDir:      defaults.LetsEncryptCertDir,
+			EmailAddress: defaults.LetsEncryptEmailAddress,
+		},
 	}
 }
 
@@ -135,6 +145,10 @@ func GetDefaults() Defaults {
 		StatusesPollMaxOptions:     6,
 		StatusesPollOptionMaxChars: 50,
 		StatusesMaxMediaFiles:      6,
+
+		LetsEncryptEnabled:      true,
+		LetsEncryptCertDir:      "/gotosocial/storage/certs",
+		LetsEncryptEmailAddress: "",
 	}
 }
 
@@ -176,5 +190,9 @@ func GetTestDefaults() Defaults {
 		StatusesPollMaxOptions:     6,
 		StatusesPollOptionMaxChars: 50,
 		StatusesMaxMediaFiles:      6,
+
+		LetsEncryptEnabled:      false,
+		LetsEncryptCertDir:      "",
+		LetsEncryptEmailAddress: "",
 	}
 }

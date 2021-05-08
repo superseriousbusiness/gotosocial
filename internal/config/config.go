@@ -27,16 +27,17 @@ import (
 
 // Config pulls together all the configuration needed to run gotosocial
 type Config struct {
-	LogLevel        string          `yaml:"logLevel"`
-	ApplicationName string          `yaml:"applicationName"`
-	Host            string          `yaml:"host"`
-	Protocol        string          `yaml:"protocol"`
-	DBConfig        *DBConfig       `yaml:"db"`
-	TemplateConfig  *TemplateConfig `yaml:"template"`
-	AccountsConfig  *AccountsConfig `yaml:"accounts"`
-	MediaConfig     *MediaConfig    `yaml:"media"`
-	StorageConfig   *StorageConfig  `yaml:"storage"`
-	StatusesConfig  *StatusesConfig `yaml:"statuses"`
+	LogLevel          string             `yaml:"logLevel"`
+	ApplicationName   string             `yaml:"applicationName"`
+	Host              string             `yaml:"host"`
+	Protocol          string             `yaml:"protocol"`
+	DBConfig          *DBConfig          `yaml:"db"`
+	TemplateConfig    *TemplateConfig    `yaml:"template"`
+	AccountsConfig    *AccountsConfig    `yaml:"accounts"`
+	MediaConfig       *MediaConfig       `yaml:"media"`
+	StorageConfig     *StorageConfig     `yaml:"storage"`
+	StatusesConfig    *StatusesConfig    `yaml:"statuses"`
+	LetsEncryptConfig *LetsEncryptConfig `yaml:"letsEncrypt"`
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -200,6 +201,19 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.StatusesConfig.MaxMediaFiles == 0 || f.IsSet(fn.StatusesMaxMediaFiles) {
 		c.StatusesConfig.MaxMediaFiles = f.Int(fn.StatusesMaxMediaFiles)
 	}
+
+	// letsencrypt flags
+	if f.IsSet(fn.LetsEncryptEnabled) {
+		c.LetsEncryptConfig.Enabled = f.Bool(fn.LetsEncryptEnabled)
+	}
+
+	if c.LetsEncryptConfig.CertDir == "" || f.IsSet(fn.LetsEncryptCertDir) {
+		c.LetsEncryptConfig.CertDir = f.String(fn.LetsEncryptCertDir)
+	}
+
+	if c.LetsEncryptConfig.EmailAddress == "" || f.IsSet(fn.LetsEncryptEmailAddress) {
+		c.LetsEncryptConfig.EmailAddress = f.String(fn.LetsEncryptEmailAddress)
+	}
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
@@ -249,6 +263,10 @@ type Flags struct {
 	StatusesPollMaxOptions     string
 	StatusesPollOptionMaxChars string
 	StatusesMaxMediaFiles      string
+
+	LetsEncryptEnabled      string
+	LetsEncryptCertDir      string
+	LetsEncryptEmailAddress string
 }
 
 // Defaults contains all the default values for a gotosocial config
@@ -288,6 +306,10 @@ type Defaults struct {
 	StatusesPollMaxOptions     int
 	StatusesPollOptionMaxChars int
 	StatusesMaxMediaFiles      int
+
+	LetsEncryptEnabled      bool
+	LetsEncryptCertDir      string
+	LetsEncryptEmailAddress string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -329,6 +351,10 @@ func GetFlagNames() Flags {
 		StatusesPollMaxOptions:     "statuses-poll-max-options",
 		StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
 		StatusesMaxMediaFiles:      "statuses-max-media-files",
+
+		LetsEncryptEnabled:      "letsencrypt-enabled",
+		LetsEncryptCertDir:      "letsencrypt-cert-dir",
+		LetsEncryptEmailAddress: "letsencrypt-email",
 	}
 }
 
@@ -371,5 +397,9 @@ func GetEnvNames() Flags {
 		StatusesPollMaxOptions:     "GTS_STATUSES_POLL_MAX_OPTIONS",
 		StatusesPollOptionMaxChars: "GTS_STATUSES_POLL_OPTION_MAX_CHARS",
 		StatusesMaxMediaFiles:      "GTS_STATUSES_MAX_MEDIA_FILES",
+
+		LetsEncryptEnabled:      "GTS_LETSENCRYPT_ENABLED",
+		LetsEncryptCertDir:      "GTS_LETSENCRYPT_CERT_DIR",
+		LetsEncryptEmailAddress: "GTS_LETSENCRYPT_EMAIL",
 	}
 }
