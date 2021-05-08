@@ -42,7 +42,7 @@ func (suite *InternalToASTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.accounts = testrig.NewTestAccounts()
-	suite.people =  testrig.NewTestFediPeople()
+	suite.people = testrig.NewTestFediPeople()
 	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
 }
 

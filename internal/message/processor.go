@@ -102,9 +102,6 @@ type Processor interface {
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetFediUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
-
-	
-
 }
 
 // processor just implements the Processor interface
