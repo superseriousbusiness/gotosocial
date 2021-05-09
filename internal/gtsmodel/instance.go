@@ -15,7 +15,7 @@ type Instance struct {
 	// When was this instance created in the db?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this instance last updated in the db?
-	UpdatedAt   time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this instance suspended, if at all?
 	SuspendedAt time.Time
 	// ID of any existing domain block for this instance in the database

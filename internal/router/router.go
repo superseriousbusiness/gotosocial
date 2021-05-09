@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
@@ -140,7 +141,13 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	engine.LoadHTMLGlob(tmPath)
 
 	// create the actual http server here
-	var s *http.Server
+	s := &http.Server{
+		Handler:           engine,
+		ReadTimeout:       1 * time.Second,
+		WriteTimeout:      1 * time.Second,
+		IdleTimeout:       30 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
+	}
 	var m *autocert.Manager
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
@@ -154,17 +161,11 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 			Email:      config.LetsEncryptConfig.EmailAddress,
 		}
 		// and create an HTTPS server
-		s = &http.Server{
-			Addr:      ":https",
-			TLSConfig: m.TLSConfig(),
-			Handler:   engine,
-		}
+		s.Addr = ":https"
+		s.TLSConfig = m.TLSConfig()
 	} else {
 		// le is NOT enabled, so just serve bare requests on port 8080
-		s = &http.Server{
-			Addr:    ":8080",
-			Handler: engine,
-		}
+		s.Addr = ":8080"
 	}
 
 	return &router{

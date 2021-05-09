@@ -18,5 +18,5 @@ func (p *processor) InstanceGet(domain string) (*apimodel.Instance, ErrorWithCod
 		return nil, NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
 
-	return  ai, nil
+	return ai, nil
 }

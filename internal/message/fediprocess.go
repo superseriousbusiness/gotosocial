@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-fed/activity/streams"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -99,4 +100,33 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 	}
 
 	return data, nil
+}
+
+func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode) {
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
+
+	// return the webfinger representation
+	return &apimodel.WebfingerAccountResponse{
+		Subject: fmt.Sprintf("acct:%s@%s", requestedAccount.Username, p.config.Host),
+		Aliases: []string{
+			requestedAccount.URI,
+			requestedAccount.URL,
+		},
+		Links: []apimodel.WebfingerLink{
+			{
+				Rel:  "http://webfinger.net/rel/profile-page",
+				Type: "text/html",
+				Href: requestedAccount.URL,
+			},
+			{
+				Rel:  "self",
+				Type: "application/activity+json",
+				Href: requestedAccount.URI,
+			},
+		},
+	}, nil
 }

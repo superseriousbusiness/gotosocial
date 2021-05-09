@@ -554,11 +554,11 @@ func (c *converter) VisToMasto(m gtsmodel.Visibility) model.Visibility {
 
 func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error) {
 	mi := &model.Instance{
-		URI: i.URI,
-		Title: i.Title,
-		Description: i.Description,
+		URI:              i.URI,
+		Title:            i.Title,
+		Description:      i.Description,
 		ShortDescription: i.ShortDescription,
-		Email: i.ContactEmail,
+		Email:            i.ContactEmail,
 	}
 
 	if i.Domain == c.config.Host {

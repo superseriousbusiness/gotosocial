@@ -344,8 +344,8 @@ func (ps *postgresService) CreateInstanceAccount() error {
 func (ps *postgresService) CreateInstanceInstance() error {
 	i := &gtsmodel.Instance{
 		Domain: ps.config.Host,
-		Title: ps.config.Host,
-		URI: fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
+		Title:  ps.config.Host,
+		URI:    fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
 	}
 	inserted, err := ps.conn.Model(i).Where("domain = ?", ps.config.Host).SelectOrInsert()
 	if err != nil {
@@ -354,7 +354,7 @@ func (ps *postgresService) CreateInstanceInstance() error {
 	if inserted {
 		ps.log.Infof("created instance instance %s with id %s", ps.config.Host, i.ID)
 	} else {
-		ps.log.Infof("instance instance %s already exists with id %s",  ps.config.Host, i.ID)
+		ps.log.Infof("instance instance %s already exists with id %s", ps.config.Host, i.ID)
 	}
 	return nil
 }

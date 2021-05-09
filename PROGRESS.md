@@ -77,7 +77,7 @@
     * [x] /api/v1/statuses/:id/favourited_by GET            (See who has faved a status)
     * [x] /api/v1/statuses/:id/favourite POST               (Fave a status)
     * [x] /api/v1/statuses/:id/unfavourite POST             (Unfave a status)
-    * [ ] /api/v1/statuses/:id/reblog POST                  (Reblog a status)
+    * [x] /api/v1/statuses/:id/reblog POST                  (Reblog a status)
     * [ ] /api/v1/statuses/:id/unreblog POST                (Undo a reblog)
     * [ ] /api/v1/statuses/:id/bookmark POST                (Bookmark a status)
     * [ ] /api/v1/statuses/:id/unbookmark POST              (Undo a bookmark)
@@ -133,7 +133,7 @@
   * [ ] Search
     * [ ] /api/v2/search GET                                (Get search query results)
   * [ ] Instance
-    * [ ] /api/v1/instance GET                              (Get instance information)
+    * [x] /api/v1/instance GET                              (Get instance information)
     * [ ] /api/v1/instance PATCH                            (Update instance information)
     * [ ] /api/v1/instance/peers GET                        (Get list of federated servers)
     * [ ] /api/v1/instance/activity GET                     (Instance activity over the last 3 months, binned weekly.)
@@ -169,7 +169,8 @@
   * [ ] Oembed
     * [ ] /api/oembed GET                                   (Get oembed metadata for a status URL)
 * [ ] Server-To-Server (Federation protocol)
-  * [ ] Mechanism to trigger side effects from client AP
+  * [x] Mechanism to trigger side effects from client AP
+  * [x] Webfinger account lookups
   * [ ] Federation modes
     * [ ] 'Slow' federation
       * [ ] Reputation scoring system for instances

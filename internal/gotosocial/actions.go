@@ -37,6 +37,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
+	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -109,6 +111,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	accountModule := account.New(c, processor, log)
 	instanceModule := instance.New(c, processor, log)
 	appsModule := app.New(c, processor, log)
+	webfingerModule := webfinger.New(c, processor, log)
+	usersModule := user.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)
 	fileServerModule := fileserver.New(c, processor, log)
 	adminModule := admin.New(c, processor, log)
@@ -128,6 +132,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		fileServerModule,
 		adminModule,
 		statusModule,
+		webfingerModule,
+		usersModule,
 	}
 
 	for _, m := range apis {
