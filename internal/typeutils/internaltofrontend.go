@@ -551,3 +551,33 @@ func (c *converter) VisToMasto(m gtsmodel.Visibility) model.Visibility {
 	}
 	return ""
 }
+
+func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error) {
+	mi := &model.Instance{
+		URI: i.URI,
+		Title: i.Title,
+		Description: i.Description,
+		ShortDescription: i.ShortDescription,
+		Email: i.ContactEmail,
+	}
+
+	if i.Domain == c.config.Host {
+		mi.Registrations = c.config.AccountsConfig.OpenRegistration
+		mi.ApprovalRequired = c.config.AccountsConfig.RequireApproval
+		mi.InvitesEnabled = false // TODO
+		mi.MaxTootChars = uint(c.config.StatusesConfig.MaxChars)
+	}
+
+	// contact account is optional but let's try to get it
+	if i.ContactAccountID != "" {
+		ia := &gtsmodel.Account{}
+		if err := c.db.GetByID(i.ContactAccountID, ia); err == nil {
+			ma, err := c.AccountToMastoPublic(ia)
+			if err == nil {
+				mi.ContactAccount = ma
+			}
+		}
+	}
+
+	return mi, nil
+}

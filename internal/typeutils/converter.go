@@ -74,6 +74,9 @@ type TypeConverter interface {
 	// VisToMasto converts a gts visibility into its mastodon equivalent
 	VisToMasto(m gtsmodel.Visibility) model.Visibility
 
+	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
+	InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error)
+
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
 	*/

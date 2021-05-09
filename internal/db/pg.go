@@ -307,17 +307,54 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 
 func (ps *postgresService) CreateInstanceAccount() error {
 	username := ps.config.Host
-	instanceAccount := &gtsmodel.Account{
-		Username: username,
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		ps.log.Errorf("error creating new rsa key: %s", err)
+		return err
 	}
-	inserted, err := ps.conn.Model(instanceAccount).Where("username = ?", username).SelectOrInsert()
+
+	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
+	a := &gtsmodel.Account{
+		Username:              ps.config.Host,
+		DisplayName:           username,
+		URL:                   newAccountURIs.UserURL,
+		PrivateKey:            key,
+		PublicKey:             &key.PublicKey,
+		PublicKeyURI:          newAccountURIs.PublicKeyURI,
+		ActorType:             gtsmodel.ActivityStreamsPerson,
+		URI:                   newAccountURIs.UserURI,
+		InboxURI:              newAccountURIs.InboxURI,
+		OutboxURI:             newAccountURIs.OutboxURI,
+		FollowersURI:          newAccountURIs.FollowersURI,
+		FollowingURI:          newAccountURIs.FollowingURI,
+		FeaturedCollectionURI: newAccountURIs.CollectionURI,
+	}
+	inserted, err := ps.conn.Model(a).Where("username = ?", username).SelectOrInsert()
 	if err != nil {
 		return err
 	}
 	if inserted {
-		ps.log.Infof("created instance account %s with id %s", username, instanceAccount.ID)
+		ps.log.Infof("created instance account %s with id %s", username, a.ID)
 	} else {
-		ps.log.Infof("instance account %s already exists with id %s", username, instanceAccount.ID)
+		ps.log.Infof("instance account %s already exists with id %s", username, a.ID)
+	}
+	return nil
+}
+
+func (ps *postgresService) CreateInstanceInstance() error {
+	i := &gtsmodel.Instance{
+		Domain: ps.config.Host,
+		Title: ps.config.Host,
+		URI: fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
+	}
+	inserted, err := ps.conn.Model(i).Where("domain = ?", ps.config.Host).SelectOrInsert()
+	if err != nil {
+		return err
+	}
+	if inserted {
+		ps.log.Infof("created instance instance %s with id %s", ps.config.Host, i.ID)
+	} else {
+		ps.log.Infof("instance instance %s already exists with id %s",  ps.config.Host, i.ID)
 	}
 	return nil
 }
