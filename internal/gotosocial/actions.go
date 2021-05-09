@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
@@ -68,6 +69,7 @@ var models []interface{} = []interface{}{
 	&gtsmodel.Tag{},
 	&gtsmodel.User{},
 	&gtsmodel.Emoji{},
+	&gtsmodel.Instance{},
 	&oauth.Token{},
 	&oauth.Client{},
 }
@@ -105,6 +107,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	// build client api modules
 	authModule := auth.New(c, dbService, oauthServer, log)
 	accountModule := account.New(c, processor, log)
+	instanceModule := instance.New(c, processor, log)
 	appsModule := app.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)
 	fileServerModule := fileserver.New(c, processor, log)
@@ -119,6 +122,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 
 		// now everything else
 		accountModule,
+		instanceModule,
 		appsModule,
 		mm,
 		fileServerModule,
@@ -140,6 +144,10 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 
 	if err := dbService.CreateInstanceAccount(); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
+	}
+
+	if err := dbService.CreateInstanceInstance(); err != nil {
+		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
 	gts, err := New(dbService, router, federator, c)

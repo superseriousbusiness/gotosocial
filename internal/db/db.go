@@ -117,6 +117,11 @@ type DB interface {
 	// This is needed for things like serving files that belong to the instance and not an individual user/account.
 	CreateInstanceAccount() error
 
+	// CreateInstanceInstance creates an instance in the database with the same domain as the instance host value.
+	// Ie., if the instance is hosted at 'example.org' the instance will have a domain of 'example.org'.
+	// This is needed for things like serving instance information through /api/v1/instance
+	CreateInstanceInstance() error
+
 	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID.
 	// The given account pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned

@@ -23,9 +23,9 @@ type Instance struct {
 	// REQUIRED
 
 	// The domain name of the instance.
-	URI string `json:"uri"`
+	URI string `json:"uri,omitempty"`
 	// The title of the website.
-	Title string `json:"title"`
+	Title string `json:"title,omitempty"`
 	// Admin-defined description of the Mastodon site.
 	Description string `json:"description"`
 	// A shorter description defined by the admin.
@@ -33,9 +33,9 @@ type Instance struct {
 	// An email that may be contacted for any inquiries.
 	Email string `json:"email"`
 	// The version of Mastodon installed on the instance.
-	Version string `json:"version"`
+	Version string `json:"version,omitempty"`
 	// Primary langauges of the website and its staff.
-	Languages []string `json:"languages"`
+	Languages []string `json:"languages,omitempty"`
 	// Whether registrations are enabled.
 	Registrations bool `json:"registrations"`
 	// Whether registrations require moderator approval.
@@ -43,16 +43,16 @@ type Instance struct {
 	// Whether invites are enabled.
 	InvitesEnabled bool `json:"invites_enabled"`
 	// URLs of interest for clients apps.
-	URLS *InstanceURLs `json:"urls"`
+	URLS *InstanceURLs `json:"urls,omitempty"`
 	// Statistics about how much information the instance contains.
-	Stats *InstanceStats `json:"stats"`
-
-	// OPTIONAL
-
+	Stats *InstanceStats `json:"stats,omitempty"`
 	// Banner image for the website.
-	Thumbnail string `json:"thumbnail,omitempty"`
+	Thumbnail string `json:"thumbnail"`
 	// A user that can be contacted, as an alternative to email.
 	ContactAccount *Account `json:"contact_account,omitempty"`
+	// What's the maximum allowed length of a post on this instance?
+	// This is provided for compatibility with Tusky.
+	MaxTootChars uint `json:"max_toot_chars"`
 }
 
 // InstanceURLs represents URLs necessary for successfully connecting to the instance as a user. See https://docs.joinmastodon.org/entities/instance/

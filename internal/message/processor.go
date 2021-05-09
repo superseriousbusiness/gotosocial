@@ -68,8 +68,19 @@ type Processor interface {
 	// AccountUpdate processes the update of an account with the given form
 	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 
+	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
+	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
+
+	// InstanceGet retrieves instance information for serving at api/v1/instance
+	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
+
+	// MediaCreate handles the creation of a media attachment, using the given form.
+	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	// MediaGet handles the fetching of a media attachment, using the given request form.
+	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
@@ -85,13 +96,6 @@ type Processor interface {
 	StatusGet(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
-
-	// MediaCreate handles the creation of a media attachment, using the given form.
-	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
-	// MediaGet handles the fetching of a media attachment, using the given request form.
-	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
-	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
-	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
