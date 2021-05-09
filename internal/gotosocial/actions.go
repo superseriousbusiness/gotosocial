@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -48,6 +49,28 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
+
+var models []interface{} = []interface{}{
+	&gtsmodel.Account{},
+	&gtsmodel.Application{},
+	&gtsmodel.Block{},
+	&gtsmodel.DomainBlock{},
+	&gtsmodel.EmailDomainBlock{},
+	&gtsmodel.Follow{},
+	&gtsmodel.FollowRequest{},
+	&gtsmodel.MediaAttachment{},
+	&gtsmodel.Mention{},
+	&gtsmodel.Status{},
+	&gtsmodel.StatusFave{},
+	&gtsmodel.StatusBookmark{},
+	&gtsmodel.StatusMute{},
+	&gtsmodel.StatusPin{},
+	&gtsmodel.Tag{},
+	&gtsmodel.User{},
+	&gtsmodel.Emoji{},
+	&oauth.Token{},
+	&oauth.Client{},
+}
 
 // Run creates and starts a gotosocial server
 var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
@@ -106,6 +129,12 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	for _, m := range apis {
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
+		}
+	}
+
+	for _, m := range models {
+		if err := dbService.CreateTable(m); err != nil {
+			return fmt.Errorf("table creation error: %s", err)
 		}
 	}
 

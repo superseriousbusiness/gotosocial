@@ -228,6 +228,26 @@ func main() {
 				Value:   defaults.StatusesMaxMediaFiles,
 				EnvVars: []string{envNames.StatusesMaxMediaFiles},
 			},
+
+			// LETSENCRYPT FLAGS
+			&cli.BoolFlag{
+				Name:    flagNames.LetsEncryptEnabled,
+				Usage:   "Enable letsencrypt TLS certs for this server. If set to true, then cert dir also needs to be set (or take the default).",
+				Value:   defaults.LetsEncryptEnabled,
+				EnvVars: []string{envNames.LetsEncryptEnabled},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.LetsEncryptCertDir,
+				Usage:   "Directory to store acquired letsencrypt certificates.",
+				Value:   defaults.LetsEncryptCertDir,
+				EnvVars: []string{envNames.LetsEncryptCertDir},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.LetsEncryptEmailAddress,
+				Usage:   "Email address to use when requesting letsencrypt certs. Will receive updates on cert expiry etc.",
+				Value:   defaults.LetsEncryptEmailAddress,
+				EnvVars: []string{envNames.LetsEncryptEmailAddress},
+			},
 		},
 		Commands: []*cli.Command{
 			{
