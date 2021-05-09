@@ -108,6 +108,9 @@ type Processor interface {
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetFediUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+
+	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
+	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode)
 }
 
 // processor just implements the Processor interface

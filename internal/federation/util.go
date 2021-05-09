@@ -112,6 +112,9 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 // Also note that this function *does not* dereference the remote account that the signature key is associated with.
 // Other functions should use the returned URL to dereference the remote account, if required.
 func (f *federator) AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error) {
+	// set this extra field for signature validation
+	r.Header.Set("host", f.config.Host)
+
 	verifier, err := httpsig.NewVerifier(r)
 	if err != nil {
 		return nil, fmt.Errorf("could not create http sig verifier: %s", err)
@@ -208,7 +211,11 @@ func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *u
 		}
 		return p, nil
 	case string(gtsmodel.ActivityStreamsApplication):
-		// TODO: convert application into person
+		p, ok := t.(vocab.ActivityStreamsApplication)
+		if !ok {
+			return nil, errors.New("error resolving type as activitystreams application")
+		}
+		return p, nil
 	}
 
 	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())

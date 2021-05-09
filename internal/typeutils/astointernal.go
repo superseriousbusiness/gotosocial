@@ -119,31 +119,26 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	acct.URL = url.String()
 
 	// InboxURI
-	if accountable.GetActivityStreamsInbox() == nil || accountable.GetActivityStreamsInbox().GetIRI() == nil {
-		return nil, fmt.Errorf("person with id %s had no inbox uri", uri.String())
+	if accountable.GetActivityStreamsInbox() != nil || accountable.GetActivityStreamsInbox().GetIRI() != nil {
+		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
-	acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 
 	// OutboxURI
-	if accountable.GetActivityStreamsOutbox() == nil || accountable.GetActivityStreamsOutbox().GetIRI() == nil {
-		return nil, fmt.Errorf("person with id %s had no outbox uri", uri.String())
+	if accountable.GetActivityStreamsOutbox() != nil && accountable.GetActivityStreamsOutbox().GetIRI() != nil {
+		acct.OutboxURI = accountable.GetActivityStreamsOutbox().GetIRI().String()
 	}
-	acct.OutboxURI = accountable.GetActivityStreamsOutbox().GetIRI().String()
 
 	// FollowingURI
-	if accountable.GetActivityStreamsFollowing() == nil || accountable.GetActivityStreamsFollowing().GetIRI() == nil {
-		return nil, fmt.Errorf("person with id %s had no following uri", uri.String())
+	if accountable.GetActivityStreamsFollowing() != nil && accountable.GetActivityStreamsFollowing().GetIRI() != nil {
+		acct.FollowingURI = accountable.GetActivityStreamsFollowing().GetIRI().String()
 	}
-	acct.FollowingURI = accountable.GetActivityStreamsFollowing().GetIRI().String()
 
 	// FollowersURI
-	if accountable.GetActivityStreamsFollowers() == nil || accountable.GetActivityStreamsFollowers().GetIRI() == nil {
-		return nil, fmt.Errorf("person with id %s had no followers uri", uri.String())
+	if accountable.GetActivityStreamsFollowers() != nil && accountable.GetActivityStreamsFollowers().GetIRI() != nil {
+		acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
 	}
-	acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
 
 	// FeaturedURI
-	// very much optional
 	if accountable.GetTootFeatured() != nil && accountable.GetTootFeatured().GetIRI() != nil {
 		acct.FeaturedCollectionURI = accountable.GetTootFeatured().GetIRI().String()
 	}
