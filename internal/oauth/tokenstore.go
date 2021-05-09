@@ -56,7 +56,7 @@ func newTokenStore(ctx context.Context, db db.DB, log *logrus.Logger) oauth2.Tok
 				log.Info("breaking cleanloop")
 				break cleanloop
 			case <-time.After(1 * time.Minute):
-				log.Debug("sweeping out old oauth entries broom broom")
+				log.Trace("sweeping out old oauth entries broom broom")
 				if err := pts.sweep(); err != nil {
 					log.Errorf("error while sweeping oauth entries: %s", err)
 				}
@@ -82,7 +82,7 @@ func (pts *tokenStore) sweep() error {
 		// we only want to check if a token expired before now if the expiry time is *not zero*;
 		// ie., if it's been explicity set.
 		if !pgt.CodeExpiresAt.IsZero() && pgt.CodeExpiresAt.Before(now) || !pgt.RefreshExpiresAt.IsZero() && pgt.RefreshExpiresAt.Before(now) || !pgt.AccessExpiresAt.IsZero() && pgt.AccessExpiresAt.Before(now) {
-			if err := pts.db.DeleteByID(pgt.ID, &pgt); err != nil {
+			if err := pts.db.DeleteByID(pgt.ID, pgt); err != nil {
 				return err
 			}
 		}
