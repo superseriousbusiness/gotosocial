@@ -82,7 +82,7 @@ func (pts *tokenStore) sweep() error {
 		// we only want to check if a token expired before now if the expiry time is *not zero*;
 		// ie., if it's been explicity set.
 		if !pgt.CodeExpiresAt.IsZero() && pgt.CodeExpiresAt.Before(now) || !pgt.RefreshExpiresAt.IsZero() && pgt.RefreshExpiresAt.Before(now) || !pgt.AccessExpiresAt.IsZero() && pgt.AccessExpiresAt.Before(now) {
-			if err := pts.db.DeleteByID(pgt.ID, &pgt); err != nil {
+			if err := pts.db.DeleteByID(pgt.ID, pgt); err != nil {
 				return err
 			}
 		}
