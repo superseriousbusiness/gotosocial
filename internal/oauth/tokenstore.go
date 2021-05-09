@@ -56,7 +56,7 @@ func newTokenStore(ctx context.Context, db db.DB, log *logrus.Logger) oauth2.Tok
 				log.Info("breaking cleanloop")
 				break cleanloop
 			case <-time.After(1 * time.Minute):
-				log.Debug("sweeping out old oauth entries broom broom")
+				log.Trace("sweeping out old oauth entries broom broom")
 				if err := pts.sweep(); err != nil {
 					log.Errorf("error while sweeping oauth entries: %s", err)
 				}
