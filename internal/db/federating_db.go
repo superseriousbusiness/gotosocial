@@ -104,6 +104,13 @@ func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "InboxContains",
+			"id": id.String(),
+		},
+	)
+	l.Debug("entering INBOXCONTAINS function")
 
 	if !util.IsInboxPath(inbox) {
 		return false, fmt.Errorf("%s is not an inbox URI", inbox.String())
@@ -151,6 +158,14 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Owns",
+			"id": id.String(),
+		},
+	)
+	l.Debug("entering OWNS function")
+
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
 		return false, nil
@@ -199,6 +214,14 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "ActorForOutbox",
+			"inboxIRI": outboxIRI.String(),
+		},
+	)
+	l.Debug("entering ACTORFOROUTBOX function")
+
 	if !util.IsOutboxPath(outboxIRI) {
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
 	}
@@ -216,6 +239,14 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "ActorForInbox",
+			"inboxIRI": inboxIRI.String(),
+		},
+	)
+	l.Debug("entering ACTORFORINBOX function")
+
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
@@ -234,6 +265,14 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "OutboxForInbox",
+			"inboxIRI": inboxIRI.String(),
+		},
+	)
+	l.Debug("entering OUTBOXFORINBOX function")
+
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
@@ -252,6 +291,14 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Exists",
+			"id": id.String(),
+		},
+	)
+	l.Debug("entering EXISTS function")
+
 	return false, nil
 }
 
@@ -259,6 +306,13 @@ func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err 
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Get",
+			"id": id.String(),
+		},
+	)
+	l.Debug("entering GET function")
 	return nil, nil
 }
 
@@ -275,6 +329,13 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Create",
+			"asType": asType.GetTypeName(),
+		},
+	)
+	l.Debugf("received CREATE asType %+v", asType)
 	return nil
 }
 
@@ -288,6 +349,13 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Update",
+			"asType": asType.GetTypeName(),
+		},
+	)
+	l.Debugf("received UPDATE asType %+v", asType)
 	return nil
 }
 
@@ -298,6 +366,13 @@ func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Delete",
+			"id": id.String(),
+		},
+	)
+	l.Debugf("received DELETE id %s", id.String())
 	return nil
 }
 
@@ -325,6 +400,14 @@ func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreams
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
+
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "NewID",
+			"asType": t.GetTypeName(),
+		},
+	)
+	l.Debugf("received NEWID request for asType %+v", t)
 	return nil, nil
 }
 

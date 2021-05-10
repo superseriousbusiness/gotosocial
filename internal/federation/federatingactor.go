@@ -77,6 +77,13 @@ func (f *federatingActor) PostInbox(c context.Context, w http.ResponseWriter, r 
 	return f.actor.PostInbox(c, w, r)
 }
 
+// PostInboxScheme is similar to PostInbox, except clients are able to
+// specify which protocol scheme to handle the incoming request and the
+// data stored within the application (HTTP, HTTPS, etc).
+func (f *federatingActor) PostInboxScheme(c context.Context, w http.ResponseWriter, r *http.Request, scheme string) (bool, error) {
+	return f.actor.PostInboxScheme(c, w, r, scheme)
+}
+
 // GetInbox returns true if the request was handled as an ActivityPub
 // GET to an actor's inbox. If false, the request was not an ActivityPub
 // request and may still be handled by the caller in another way, such
@@ -116,6 +123,13 @@ func (f *federatingActor) GetInbox(c context.Context, w http.ResponseWriter, r *
 // federate the Activity to peers.
 func (f *federatingActor) PostOutbox(c context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
 	return f.actor.PostOutbox(c, w, r)
+}
+
+// PostOutboxScheme is similar to PostOutbox, except clients are able to
+// specify which protocol scheme to handle the incoming request and the
+// data stored within the application (HTTP, HTTPS, etc).
+func (f *federatingActor) PostOutboxScheme(c context.Context, w http.ResponseWriter, r *http.Request, scheme string) (bool, error) {
+	return f.actor.PostOutboxScheme(c, w, r, scheme)
 }
 
 // GetOutbox returns true if the request was handled as an ActivityPub

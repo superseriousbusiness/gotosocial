@@ -61,6 +61,8 @@ const (
 	APRequestingAccount APContextKey = "requestingAccount"
 	// APRequestingPublicKeyID can be used to set and retrieve the public key ID of an incoming federation request.
 	APRequestingPublicKeyID APContextKey = "requestingPublicKeyID"
+	// APFromFederatorChanKey can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
+	APFromFederatorChanKey APContextKey = "fromFederatorChan"
 )
 
 type ginContextKey struct{}

@@ -19,6 +19,7 @@
 package message
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -116,6 +117,18 @@ type Processor interface {
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode)
+
+	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
+	//
+	// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.
+	// If false, the request was not an ActivityPub request and may still be handled by the caller in another way, such as serving a web page.
+	//
+	// If the error is nil, then the ResponseWriter's headers and response has already been written. If a non-nil error is returned, then no response has been written.
+	//
+	// If the Actor was constructed with the Federated Protocol enabled, side effects will occur.
+	//
+	// If the Federated Protocol is not enabled, writes the http.StatusMethodNotAllowed status code in the response. No side effects occur.
+	InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error)
 }
 
 // processor just implements the Processor interface

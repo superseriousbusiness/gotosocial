@@ -7,7 +7,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-fed/activity v1.0.0
+	github.com/go-fed/activity v1.0.1-0.20210426194615-e0de0863dcc1
 	github.com/go-fed/httpsig v0.1.1-0.20190914113940-c2de3672e5b5
 	github.com/go-pg/pg/extra/pgdebug v0.2.0
 	github.com/go-pg/pg/v10 v10.8.0
