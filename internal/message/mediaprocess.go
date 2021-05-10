@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -17,6 +18,8 @@ import (
 func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
 	// First check this user/account is permitted to create media
 	// There's no point continuing otherwise.
+	//
+	// TODO: move this check to the oauth.Authed function and do it for all accounts
 	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
 		return nil, errors.New("not authorized to post new media")
 	}
@@ -49,7 +52,7 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	attachment.Description = form.Description
 
 	// now parse the focus parameter
-	// TODO: tidy this up into a separate function and just return an error so all the c.JSON and return calls are obviated
+	// TODO: tidy this up into a separate function and just return an error
 	var focusx, focusy float32
 	if form.Focus != "" {
 		spl := strings.Split(form.Focus, ",")
@@ -96,7 +99,29 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	return &mastoAttachment, nil
 }
 
-func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+func (p *processor) MediaGet(authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, ErrorWithCode) {
+	attachment := &gtsmodel.MediaAttachment{}
+	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			// attachment doesn't exist
+			return nil, NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
+		}
+		return nil, NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
+	}
+
+	if attachment.AccountID != authed.Account.ID {
+		return nil, NewErrorNotFound(errors.New("attachment not owned by requesting account"))
+	}
+
+	a, err := p.tc.AttachmentToMasto(attachment)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
+	}
+
+	return &a, nil
+}
+
+func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
 	// parse the form fields
 	mediaSize, err := media.ParseMediaSize(form.MediaSize)
 	if err != nil {

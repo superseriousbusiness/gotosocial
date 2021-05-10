@@ -33,6 +33,10 @@ import (
 
 // BasePath is the base API path for making media requests
 const BasePath = "/api/v1/media"
+// IDKey is the key for media attachment IDs
+const IDKey = "id"
+// BasePathWithID corresponds to a media attachment with the given ID
+const BasePathWithID = BasePath + "/:" + IDKey
 
 // Module implements the ClientAPIModule interface for media
 type Module struct {
@@ -53,6 +57,7 @@ func New(config *config.Config, processor message.Processor, log *logrus.Logger)
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
+	s.AttachHandler(http.MethodGet, BasePathWithID, m.MediaGETHandler)
 	return nil
 }
 
