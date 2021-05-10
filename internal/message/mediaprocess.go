@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -17,6 +18,8 @@ import (
 func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
 	// First check this user/account is permitted to create media
 	// There's no point continuing otherwise.
+	//
+	// TODO: move this check to the oauth.Authed function and do it for all accounts
 	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
 		return nil, errors.New("not authorized to post new media")
 	}
@@ -49,34 +52,9 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	attachment.Description = form.Description
 
 	// now parse the focus parameter
-	// TODO: tidy this up into a separate function and just return an error so all the c.JSON and return calls are obviated
-	var focusx, focusy float32
-	if form.Focus != "" {
-		spl := strings.Split(form.Focus, ",")
-		if len(spl) != 2 {
-			return nil, fmt.Errorf("improperly formatted focus %s", form.Focus)
-		}
-		xStr := spl[0]
-		yStr := spl[1]
-		if xStr == "" || yStr == "" {
-			return nil, fmt.Errorf("improperly formatted focus %s", form.Focus)
-		}
-		fx, err := strconv.ParseFloat(xStr, 32)
-		if err != nil {
-			return nil, fmt.Errorf("improperly formatted focus %s: %s", form.Focus, err)
-		}
-		if fx > 1 || fx < -1 {
-			return nil, fmt.Errorf("improperly formatted focus %s", form.Focus)
-		}
-		focusx = float32(fx)
-		fy, err := strconv.ParseFloat(yStr, 32)
-		if err != nil {
-			return nil, fmt.Errorf("improperly formatted focus %s: %s", form.Focus, err)
-		}
-		if fy > 1 || fy < -1 {
-			return nil, fmt.Errorf("improperly formatted focus %s", form.Focus)
-		}
-		focusy = float32(fy)
+	focusx, focusy, err := parseFocus(form.Focus)
+	if err != nil {
+		return nil, err
 	}
 	attachment.FileMeta.Focus.X = focusx
 	attachment.FileMeta.Focus.Y = focusy
@@ -96,7 +74,70 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	return &mastoAttachment, nil
 }
 
-func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+func (p *processor) MediaGet(authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, ErrorWithCode) {
+	attachment := &gtsmodel.MediaAttachment{}
+	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			// attachment doesn't exist
+			return nil, NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
+		}
+		return nil, NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
+	}
+
+	if attachment.AccountID != authed.Account.ID {
+		return nil, NewErrorNotFound(errors.New("attachment not owned by requesting account"))
+	}
+
+	a, err := p.tc.AttachmentToMasto(attachment)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
+	}
+
+	return &a, nil
+}
+
+func (p *processor) MediaUpdate(authed *oauth.Auth, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode) {
+	attachment := &gtsmodel.MediaAttachment{}
+	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			// attachment doesn't exist
+			return nil, NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
+		}
+		return nil, NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
+	}
+
+	if attachment.AccountID != authed.Account.ID {
+		return nil, NewErrorNotFound(errors.New("attachment not owned by requesting account"))
+	}
+
+	if form.Description != nil {
+		attachment.Description = *form.Description
+		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
+			return nil, NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
+		}
+	}
+
+	if form.Focus != nil {
+		focusx, focusy, err := parseFocus(*form.Focus)
+		if err != nil {
+			return nil, NewErrorBadRequest(err)
+		}
+		attachment.FileMeta.Focus.X = focusx
+		attachment.FileMeta.Focus.Y = focusy
+		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
+			return nil, NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
+		}
+	}
+
+	a, err := p.tc.AttachmentToMasto(attachment)
+	if err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
+	}
+
+	return &a, nil
+}
+
+func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
 	// parse the form fields
 	mediaSize, err := media.ParseMediaSize(form.MediaSize)
 	if err != nil {
@@ -185,4 +226,42 @@ func (p *processor) MediaGet(authed *oauth.Auth, form *apimodel.GetContentReques
 	content.ContentLength = int64(len(bytes))
 	content.Content = bytes
 	return content, nil
+}
+
+func parseFocus(focus string) (focusx, focusy float32, err error) {
+	if focus == "" {
+		return
+	}
+	spl := strings.Split(focus, ",")
+	if len(spl) != 2 {
+		err = fmt.Errorf("improperly formatted focus %s", focus)
+		return
+	}
+	xStr := spl[0]
+	yStr := spl[1]
+	if xStr == "" || yStr == "" {
+		err = fmt.Errorf("improperly formatted focus %s", focus)
+		return
+	}
+	fx, err := strconv.ParseFloat(xStr, 32)
+	if err != nil {
+		err = fmt.Errorf("improperly formatted focus %s: %s", focus, err)
+		return
+	}
+	if fx > 1 || fx < -1 {
+		err = fmt.Errorf("improperly formatted focus %s", focus)
+		return
+	}
+	focusx = float32(fx)
+	fy, err := strconv.ParseFloat(yStr, 32)
+	if err != nil {
+		err = fmt.Errorf("improperly formatted focus %s: %s", focus, err)
+		return
+	}
+	if fy > 1 || fy < -1 {
+		err = fmt.Errorf("improperly formatted focus %s", focus)
+		return
+	}
+	focusy = float32(fy)
+	return
 }

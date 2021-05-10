@@ -41,8 +41,8 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 	// extract the media create form from the request context
 	l.Tracef("parsing request form: %s", c.Request.Form)
-	form := &model.AttachmentRequest{}
-	if err := c.ShouldBind(form); err != nil || form == nil {
+	var form model.AttachmentRequest
+	if err := c.ShouldBind(&form); err != nil {
 		l.Debugf("could not parse form from request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
 		return
@@ -50,19 +50,19 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateMedia(form, m.config.MediaConfig); err != nil {
+	if err := validateCreateMedia(&form, m.config.MediaConfig); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	mastoAttachment, err := m.processor.MediaCreate(authed, form)
+	mastoAttachment, err := m.processor.MediaCreate(authed, &form)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusAccepted, mastoAttachment)
+	c.JSON(http.StatusOK, mastoAttachment)
 }
 
 func validateCreateMedia(form *model.AttachmentRequest, config *config.MediaConfig) error {

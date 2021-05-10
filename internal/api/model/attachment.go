@@ -23,10 +23,16 @@ import "mime/multipart"
 // AttachmentRequest represents the form data parameters submitted by a client during a media upload request.
 // See: https://docs.joinmastodon.org/methods/statuses/media/
 type AttachmentRequest struct {
-	File        *multipart.FileHeader `form:"file"`
-	Thumbnail   *multipart.FileHeader `form:"thumbnail"`
-	Description string                `form:"description"`
-	Focus       string                `form:"focus"`
+	File        *multipart.FileHeader `form:"file" binding:"required"`
+	Description string                `form:"description" json:"description" xml:"description"`
+	Focus       string                `form:"focus" json:"focus" xml:"focus"`
+}
+
+// AttachmentRequest represents the form data parameters submitted by a client during a media update/PUT request.
+// See: https://docs.joinmastodon.org/methods/statuses/media/
+type AttachmentUpdateRequest struct {
+	Description *string                `form:"description" json:"description" xml:"description"`
+	Focus       *string                `form:"focus" json:"focus" xml:"focus"`
 }
 
 // Attachment represents the object returned to a client after a successful media upload request.
@@ -57,7 +63,7 @@ type Attachment struct {
 	// See https://docs.joinmastodon.org/methods/statuses/media/#focal-points points for more.
 	Meta MediaMeta `json:"meta,omitempty"`
 	// Alternate text that describes what is in the media attachment, to be used for the visually impaired or when media attachments do not load.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	// A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
 	// See https://github.com/woltapp/blurhash
 	Blurhash string `json:"blurhash,omitempty"`

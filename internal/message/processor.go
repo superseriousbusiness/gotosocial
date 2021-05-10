@@ -74,13 +74,18 @@ type Processor interface {
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
 
+	// FileGet handles the fetching of a media attachment file via the fileserver.
+	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
-	// MediaGet handles the fetching of a media attachment, using the given request form.
-	MediaGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+	// MediaGet handles the GET of a media attachment with the given ID
+	MediaGet(authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, ErrorWithCode)
+	// MediaUpdate handles the PUT of a media attachment with the given ID and form
+	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)

@@ -202,17 +202,17 @@ func TokenToPGToken(tkn *models.Token) *Token {
 	// going to cause all sorts of interesting problems. So check first to make sure that the ExpiresIn is not equal
 	// to the zero value of a time.Duration, which is 0s. If it *is* empty/nil, just leave the ExpiresAt at nil as well.
 
-	var cea time.Time
+	cea := time.Time{}
 	if tkn.CodeExpiresIn != 0*time.Second {
 		cea = now.Add(tkn.CodeExpiresIn)
 	}
 
-	var aea time.Time
+	aea := time.Time{}
 	if tkn.AccessExpiresIn != 0*time.Second {
 		aea = now.Add(tkn.AccessExpiresIn)
 	}
 
-	var rea time.Time
+	rea := time.Time{}
 	if tkn.RefreshExpiresIn != 0*time.Second {
 		rea = now.Add(tkn.RefreshExpiresIn)
 	}
@@ -240,6 +240,21 @@ func TokenToPGToken(tkn *models.Token) *Token {
 func TokenToOauthToken(pgt *Token) *models.Token {
 	now := time.Now()
 
+	var codeExpiresIn time.Duration
+	if !pgt.CodeExpiresAt.IsZero() {
+		codeExpiresIn = pgt.CodeExpiresAt.Sub(now)
+	}
+
+	var accessExpiresIn time.Duration
+	if !pgt.AccessExpiresAt.IsZero() {
+		accessExpiresIn = pgt.AccessExpiresAt.Sub(now)
+	}
+
+	var refreshExpiresIn time.Duration
+	if !pgt.RefreshExpiresAt.IsZero() {
+		refreshExpiresIn = pgt.RefreshExpiresAt.Sub(now)
+	}
+
 	return &models.Token{
 		ClientID:            pgt.ClientID,
 		UserID:              pgt.UserID,
@@ -249,12 +264,12 @@ func TokenToOauthToken(pgt *Token) *models.Token {
 		CodeChallenge:       pgt.CodeChallenge,
 		CodeChallengeMethod: pgt.CodeChallengeMethod,
 		CodeCreateAt:        pgt.CodeCreateAt,
-		CodeExpiresIn:       pgt.CodeExpiresAt.Sub(now),
+		CodeExpiresIn:       codeExpiresIn,
 		Access:              pgt.Access,
 		AccessCreateAt:      pgt.AccessCreateAt,
-		AccessExpiresIn:     pgt.AccessExpiresAt.Sub(now),
+		AccessExpiresIn:     accessExpiresIn,
 		Refresh:             pgt.Refresh,
 		RefreshCreateAt:     pgt.RefreshCreateAt,
-		RefreshExpiresIn:    pgt.RefreshExpiresAt.Sub(now),
+		RefreshExpiresIn:    refreshExpiresIn,
 	}
 }
