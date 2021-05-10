@@ -58,6 +58,7 @@ func New(config *config.Config, processor message.Processor, log *logrus.Logger)
 func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
 	s.AttachHandler(http.MethodGet, BasePathWithID, m.MediaGETHandler)
+	s.AttachHandler(http.MethodPut, BasePathWithID, m.MediaPUTHandler)
 	return nil
 }
 

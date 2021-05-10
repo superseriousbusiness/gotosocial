@@ -88,7 +88,7 @@ type StatusCreateRequest struct {
 	// Text content of the status. If media_ids is provided, this becomes optional. Attaching a poll is optional while status is provided.
 	Status string `form:"status"`
 	// Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
-	MediaIDs []string `form:"media_ids"`
+	MediaIDs []string `form:"media_ids" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
 	Poll *PollRequest `form:"poll"`
 	// ID of the status being replied to, if status is a reply

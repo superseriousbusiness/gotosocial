@@ -49,13 +49,14 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// extract the status create form from the request context
-	l.Tracef("parsing request form: %s", c.Request.Form)
+	l.Debugf("parsing request form: %s", c.Request.Form)
 	form := &model.AdvancedStatusCreateForm{}
 	if err := c.ShouldBind(form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
 		return
 	}
+	l.Debugf("handling status request form: %+v", form)
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)

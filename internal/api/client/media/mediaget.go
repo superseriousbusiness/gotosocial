@@ -27,7 +27,7 @@ import (
 
 // MediaGETHandler allows the owner of an attachment to get information about that attachment before it's used in a status.
 func (m *Module) MediaGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+	l := m.log.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
@@ -35,14 +35,14 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 		return
 	}
 
-	attachmentID := c.GetString(IDKey)
+	attachmentID := c.Param(IDKey)
 	if attachmentID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no attachment ID given in request"})
 		return
 	}
 
 	attachment, errWithCode := m.processor.MediaGet(authed, attachmentID)
-	if err != nil {
+	if errWithCode != nil {
 		c.JSON(errWithCode.Code(),gin.H{"error":  errWithCode.Safe()})
 		return
 	}

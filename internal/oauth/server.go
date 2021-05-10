@@ -72,7 +72,10 @@ func New(database db.DB, log *logrus.Logger) Server {
 	manager := manage.NewDefaultManager()
 	manager.MapTokenStorage(ts)
 	manager.MapClientStorage(cs)
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	manager.SetAuthorizeCodeTokenCfg(&manage.Config{
+		AccessTokenExp:    0,     // access tokens don't expire -- they must be revoked
+		IsGenerateRefresh: false, // don't use refresh tokens
+	})
 	sc := &server.Config{
 		TokenType: "Bearer",
 		// Must follow the spec.

@@ -35,9 +35,10 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 
 	ti, err := m.server.ValidationBearerToken(c.Request)
 	if err != nil {
-		l.Trace("no valid token presented: continuing with unauthenticated request")
+		l.Tracef("could not validate token: %s", err)
 		return
 	}
+	l.Trace("continuing with unauthenticated request")
 	c.Set(oauth.SessionAuthorizedToken, ti)
 	l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedToken, ti)
 

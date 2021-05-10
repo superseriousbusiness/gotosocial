@@ -410,22 +410,25 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	var clean []byte
 	var err error
 
+	var original *imageAndMeta
 	switch contentType {
 	case MIMEJpeg:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
+		original, err = deriveImage(clean, contentType)
 	case MIMEPng:
 		if clean, err = purgeExif(imageBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
+		original, err = deriveImage(clean, contentType)
 	case MIMEGif:
 		clean = imageBytes
+		original, err = deriveGif(clean, contentType)
 	default:
 		return nil, errors.New("media type unrecognized")
 	}
 
-	original, err := deriveImage(clean, contentType)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing image: %s", err)
 	}
