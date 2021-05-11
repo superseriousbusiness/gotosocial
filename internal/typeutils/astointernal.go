@@ -157,3 +157,49 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 
 	return acct, nil
 }
+
+func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error) {
+	status := &gtsmodel.Status{}
+
+	uriProp := statusable.GetJSONLDId()
+	if uriProp == nil || !uriProp.IsIRI() {
+		return nil, errors.New("no id property found, or id was not an iri")
+	}
+	status.URI = uriProp.GetIRI().String()
+
+	cw, err := extractSummary(statusable)
+	if err == nil && cw != "" {
+		status.ContentWarning = cw
+	}
+
+	inReplyToURI, err := extractInReplyToURI(statusable)
+	if err == nil {
+		inReplyToStatus := &gtsmodel.Status{}
+		if err := c.db.GetWhere("uri", inReplyToURI.String(), inReplyToStatus); err == nil {
+			status.InReplyToID = inReplyToStatus.ID
+		}
+	}
+
+	published, err := extractPublished(statusable)
+	if err == nil {
+		status.CreatedAt = published
+	}
+
+	statusURL, err := extractURL(statusable)
+	if err == nil {
+		status.URL = statusURL.String()
+	}
+
+	attributedTo, err := extractAttributedTo(statusable)
+	if err != nil {
+		return nil, errors.New("attributedTo was empty")
+	}
+
+	statusOwner := &gtsmodel.Status{}
+	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err != nil {
+		return nil, fmt.Errorf("cannot attribute %s to an account we know: %s", attributedTo.String(), err)
+	}
+	status.AccountID = statusOwner.ID
+
+	return nil, nil
+}

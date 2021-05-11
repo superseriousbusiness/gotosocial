@@ -90,6 +90,8 @@ type TypeConverter interface {
 
 	// ASPersonToAccount converts a remote account/person/application representation into a gts model account
 	ASRepresentationToAccount(accountable Accountable) (*gtsmodel.Account, error)
+	// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
+	ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

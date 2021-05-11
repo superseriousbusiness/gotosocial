@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package federation
 
 import (
 	"context"
@@ -26,28 +26,33 @@ import (
 	"sync"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
-	locks  *sync.Map
-	db     DB
-	config *config.Config
-	log    *logrus.Logger
+	locks         *sync.Map
+	db            db.DB
+	config        *config.Config
+	log           *logrus.Logger
+	typeConverter typeutils.TypeConverter
 }
 
-func NewFederatingDB(db DB, config *config.Config, log *logrus.Logger) pub.Database {
+func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) pub.Database {
 	return &federatingDB{
-		locks:  new(sync.Map),
-		db:     db,
-		config: config,
-		log:    log,
+		locks:         new(sync.Map),
+		db:            db,
+		config:        config,
+		log:           log,
+		typeConverter: typeutils.NewConverter(config, db),
 	}
 }
 
@@ -107,7 +112,7 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "InboxContains",
-			"id": id.String(),
+			"id":   id.String(),
 		},
 	)
 	l.Debug("entering INBOXCONTAINS function")
@@ -116,25 +121,30 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 		return false, fmt.Errorf("%s is not an inbox URI", inbox.String())
 	}
 
-	if !util.IsStatusesPath(id) {
-		return false, fmt.Errorf("%s is not a status URI", id.String())
+	activityI := c.Value(util.APActivity)
+	if activityI == nil {
+		return false, fmt.Errorf("no activity was set for id %s", id.String())
 	}
-	_, statusID, err := util.ParseStatusesPath(inbox)
-	if err != nil {
-		return false, fmt.Errorf("status URI %s was not parseable: %s", id.String(), err)
-	}
-
-	if err := f.db.GetByID(statusID, &gtsmodel.Status{}); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
-			// we don't have it
-			return false, nil
-		}
-		// actual error
-		return false, fmt.Errorf("error getting status from db: %s", err)
+	activity, ok := activityI.(pub.Activity)
+	if !ok || activity == nil {
+		return false, fmt.Errorf("could not parse contextual activity for id %s", id.String())
 	}
 
-	// we must have it
-	return true, nil
+	l.Debugf("activity type %s for id %s", activity.GetTypeName(), id.String())
+
+	return false, nil
+
+	// if err := f.db.GetByID(statusID, &gtsmodel.Status{}); err != nil {
+	// 	if _, ok := err.(db.ErrNoEntries); ok {
+	// 		// we don't have it
+	// 		return false, nil
+	// 	}
+	// 	// actual error
+	// 	return false, fmt.Errorf("error getting status from db: %s", err)
+	// }
+
+	// // we must have it
+	// return true, nil
 }
 
 // GetInbox returns the first ordered collection page of the outbox at
@@ -142,7 +152,7 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	return nil, nil
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
 // SetInbox saves the inbox value given from GetInbox, with new items
@@ -161,17 +171,18 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Owns",
-			"id": id.String(),
+			"id":   id.String(),
 		},
 	)
 	l.Debug("entering OWNS function")
 
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
+		l.Debugf("we DO NOT own activity because the host is %s not %s", id.Host, f.config.Host)
 		return false, nil
 	}
 
-	// apparently we own it, so what *is* it?
+	// apparently it belongs to this host, so what *is* it?
 
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
 	if util.IsStatusesPath(id) {
@@ -180,13 +191,14 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		if err := f.db.GetWhere("uri", uid, &gtsmodel.Status{}); err != nil {
-			if _, ok := err.(ErrNoEntries); ok {
+			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this status
 				return false, nil
 			}
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
+		l.Debug("we DO own this")
 		return true, nil
 	}
 
@@ -197,13 +209,14 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(ErrNoEntries); ok {
+			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this username
 				return false, nil
 			}
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
+		l.Debug("we DO own this")
 		return true, nil
 	}
 
@@ -216,7 +229,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "ActorForOutbox",
+			"func":     "ActorForOutbox",
 			"inboxIRI": outboxIRI.String(),
 		},
 	)
@@ -227,7 +240,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("outbox_uri", outboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
@@ -241,7 +254,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "ActorForInbox",
+			"func":     "ActorForInbox",
 			"inboxIRI": inboxIRI.String(),
 		},
 	)
@@ -252,7 +265,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
@@ -267,7 +280,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "OutboxForInbox",
+			"func":     "OutboxForInbox",
 			"inboxIRI": inboxIRI.String(),
 		},
 	)
@@ -278,7 +291,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
@@ -294,7 +307,7 @@ func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err 
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Exists",
-			"id": id.String(),
+			"id":   id.String(),
 		},
 	)
 	l.Debug("entering EXISTS function")
@@ -309,10 +322,19 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Get",
-			"id": id.String(),
+			"id":   id.String(),
 		},
 	)
 	l.Debug("entering GET function")
+
+	if util.IsUserPath(id) {
+		acct := &gtsmodel.Account{}
+		if err := f.db.GetWhere("uri", id.String(), acct); err != nil {
+			return nil, err
+		}
+		return f.typeConverter.AccountToAS(acct)
+	}
+
 	return nil, nil
 }
 
@@ -331,11 +353,37 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "Create",
+			"func":   "Create",
 			"asType": asType.GetTypeName(),
 		},
 	)
 	l.Debugf("received CREATE asType %+v", asType)
+
+
+
+
+	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	case gtsmodel.ActivityStreamsCreate:
+		create, ok := asType.(vocab.ActivityStreamsCreate)
+		if !ok {
+			return errors.New("could not convert type to create")
+		}
+
+		object := create.GetActivityStreamsObject()
+		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
+			switch gtsmodel.ActivityStreamsObject(objectIter.GetType().GetTypeName()) {
+			case gtsmodel.ActivityStreamsNote:
+				note := objectIter.GetActivityStreamsNote()
+				status, err := f.typeConverter.ASStatusToStatus(note)
+				if err != nil {
+					return fmt.Errorf("error converting note to status: %s", err)
+				}
+				if err := f.db.Put(status); err != nil {
+					return fmt.Errorf("database error inserting status: %s", err)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -351,7 +399,7 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "Update",
+			"func":   "Update",
 			"asType": asType.GetTypeName(),
 		},
 	)
@@ -369,7 +417,7 @@ func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Delete",
-			"id": id.String(),
+			"id":   id.String(),
 		},
 	)
 	l.Debugf("received DELETE id %s", id.String())
@@ -403,7 +451,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "NewID",
+			"func":   "NewID",
 			"asType": t.GetTypeName(),
 		},
 	)

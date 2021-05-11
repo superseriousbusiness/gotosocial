@@ -43,13 +43,13 @@ type Application struct {
 // And here: https://docs.joinmastodon.org/client/token/
 type ApplicationCreateRequest struct {
 	// A name for your application
-	ClientName string `form:"client_name" binding:"required"`
+	ClientName string `form:"client_name" json:"client_name" xml:"client_name" binding:"required"`
 	// Where the user should be redirected after authorization.
 	// To display the authorization code to the user instead of redirecting
 	// to a web page, use urn:ietf:wg:oauth:2.0:oob in this parameter.
-	RedirectURIs string `form:"redirect_uris" binding:"required"`
+	RedirectURIs string `form:"redirect_uris" json:"redirect_uris" xml:"redirect_uris" binding:"required"`
 	// Space separated list of scopes. If none is provided, defaults to read.
-	Scopes string `form:"scopes"`
+	Scopes string `form:"scopes" json:"scopes" xml:"scopes"`
 	// A URL to the homepage of your app
-	Website string `form:"website"`
+	Website string `form:"website" json:"website" xml:"website"`
 }

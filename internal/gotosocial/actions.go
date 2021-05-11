@@ -41,7 +41,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -78,7 +78,7 @@ var models []interface{} = []interface{}{
 
 // Run creates and starts a gotosocial server
 var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := db.NewPostgresService(ctx, c, log)
+	dbService, err := pg.NewPostgresService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}

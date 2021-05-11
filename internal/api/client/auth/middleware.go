@@ -33,7 +33,7 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 	l := m.log.WithField("func", "OauthTokenMiddleware")
 	l.Trace("entering OauthTokenMiddleware")
 
-	ti, err := m.server.ValidationBearerToken(c.Request)
+	ti, err := m.server.ValidationBearerToken(c.Copy().Request)
 	if err != nil {
 		l.Tracef("could not validate token: %s", err)
 		return
@@ -74,4 +74,5 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 		c.Set(oauth.SessionAuthorizedApplication, app)
 		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedApplication, app)
 	}
+	c.Next()
 }

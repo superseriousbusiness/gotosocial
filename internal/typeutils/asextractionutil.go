@@ -25,6 +25,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/go-fed/activity/pub"
 )
@@ -54,6 +55,79 @@ func extractName(i withDisplayName) (string, error) {
 	}
 
 	return "", errors.New("activityStreamsName not found")
+}
+
+func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
+	inReplyToProp := i.GetActivityStreamsInReplyTo()
+	for i := inReplyToProp.Begin(); i != inReplyToProp.End(); i = i.Next() {
+		if i.IsIRI() {
+			if i.GetIRI() != nil {
+				return i.GetIRI(), nil
+			}
+		}
+	}
+	return nil, errors.New("couldn't find iri for in reply to")
+}
+
+func extractTos(i withTo) ([]*url.URL, error) {
+	to := []*url.URL{}
+	toProp := i.GetActivityStreamsTo()
+	for i := toProp.Begin(); i != toProp.End(); i = i.Next() {
+		if i.IsIRI() {
+			if i.GetIRI() != nil {
+				to = append(to, i.GetIRI())
+			}
+		}
+	}
+	if len(to) == 0 {
+		return nil, errors.New("found no to entries")
+	}
+	return to, nil
+}
+
+func extractCCs(i withCC) ([]*url.URL, error) {
+	cc := []*url.URL{}
+	ccProp := i.GetActivityStreamsCc()
+	for i := ccProp.Begin(); i != ccProp.End(); i = i.Next() {
+		if i.IsIRI() {
+			if i.GetIRI() != nil {
+				cc = append(cc, i.GetIRI())
+			}
+		}
+	}
+	if len(cc) == 0 {
+		return nil, errors.New("found no cc entries")
+	}
+	return cc, nil
+}
+
+func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
+	attributedToProp := i.GetActivityStreamsAttributedTo()
+	for aIter := attributedToProp.Begin(); aIter != attributedToProp.End(); aIter = aIter.Next() {
+		if aIter.IsIRI() {
+			if aIter.GetIRI() != nil {
+				return aIter.GetIRI(), nil
+			}
+		}
+	}
+	return nil, errors.New("couldn't find iri for attributed to")
+}
+
+func extractPublished(i withPublished) (time.Time, error) {
+	publishedProp := i.GetActivityStreamsPublished()
+	if publishedProp == nil {
+		return time.Time{}, errors.New("published prop was nil")
+	}
+
+	if !publishedProp.IsXMLSchemaDateTime() {
+		return time.Time{}, errors.New("published prop was not date time")
+	}
+
+	t := publishedProp.Get()
+	if t.IsZero() {
+		return time.Time{}, errors.New("published time was zero")
+	}
+	return t, nil
 }
 
 // extractIconURL extracts a URL to a supported image file from something like:

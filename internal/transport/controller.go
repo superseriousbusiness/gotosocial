@@ -57,12 +57,12 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (p
 	getHeaders := []string{"(request-target)", "host", "date"}
 	postHeaders := []string{"(request-target)", "host", "date", "digest"}
 
-	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature)
+	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature, 120)
 	if err != nil {
 		return nil, fmt.Errorf("error creating get signer: %s", err)
 	}
 
-	postSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, postHeaders, httpsig.Signature)
+	postSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, postHeaders, httpsig.Signature, 120)
 	if err != nil {
 		return nil, fmt.Errorf("error creating post signer: %s", err)
 	}

@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
@@ -123,6 +124,14 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.Default()
+	engine.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
+	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
 
 	// create a new session store middleware
 	store, err := sessionStore()
@@ -143,10 +152,10 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	// create the actual http server here
 	s := &http.Server{
 		Handler:           engine,
-		ReadTimeout:       1 * time.Second,
-		WriteTimeout:      1 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 2 * time.Second,
+		ReadHeaderTimeout: 30 * time.Second,
 	}
 	var m *autocert.Manager
 

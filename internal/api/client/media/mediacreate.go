@@ -35,30 +35,32 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true) // posting new media is serious business so we want *everything*
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
 	// extract the media create form from the request context
 	l.Tracef("parsing request form: %s", c.Request.Form)
-	var form model.AttachmentRequest
+	form := &model.AttachmentRequest{}
 	if err := c.ShouldBind(&form); err != nil {
-		l.Debugf("could not parse form from request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
+		l.Debugf("error parsing form: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Errorf("could not parse form: %s", err)})
 		return
 	}
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateMedia(&form, m.config.MediaConfig); err != nil {
+	if err := validateCreateMedia(form, m.config.MediaConfig); err != nil {
 		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	mastoAttachment, err := m.processor.MediaCreate(authed, &form)
+	l.Debug("calling processor media create func")
+	mastoAttachment, err := m.processor.MediaCreate(authed, form)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		l.Debugf("error creating attachment: %s", err)
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,7 +69,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 func validateCreateMedia(form *model.AttachmentRequest, config *config.MediaConfig) error {
 	// check there actually is a file attached and it's not size 0
-	if form.File == nil || form.File.Size == 0 {
+	if form.File == nil {
 		return errors.New("no attachment given")
 	}
 

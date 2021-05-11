@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package pg
 
 import (
 	"context"
@@ -37,6 +37,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
@@ -53,7 +55,7 @@ type postgresService struct {
 
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
-func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (DB, error) {
+func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
 	opts, err := derivePGOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
@@ -95,7 +97,7 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		cancel: cancel,
 	}
 
-	federatingDB := NewFederatingDB(ps, c, log)
+	federatingDB := federation.NewFederatingDB(ps, c, log)
 	ps.federationDB = federatingDB
 
 	// we can confidently return this useable postgres service now
@@ -109,8 +111,8 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 // derivePGOptions takes an application config and returns either a ready-to-use *pg.Options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func derivePGOptions(c *config.Config) (*pg.Options, error) {
-	if strings.ToUpper(c.DBConfig.Type) != DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", DBTypePostgres, c.DBConfig.Type)
+	if strings.ToUpper(c.DBConfig.Type) != db.DBTypePostgres {
+		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, c.DBConfig.Type)
 	}
 
 	// validate port
@@ -219,7 +221,7 @@ func (ps *postgresService) CreateSchema(ctx context.Context) error {
 func (ps *postgresService) GetByID(id string, i interface{}) error {
 	if err := ps.conn.Model(i).Where("id = ?", id).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 
@@ -230,7 +232,7 @@ func (ps *postgresService) GetByID(id string, i interface{}) error {
 func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
 	if err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -244,7 +246,7 @@ func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}
 func (ps *postgresService) GetAll(i interface{}) error {
 	if err := ps.conn.Model(i).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -259,7 +261,7 @@ func (ps *postgresService) Put(i interface{}) error {
 func (ps *postgresService) Upsert(i interface{}, conflictColumn string) error {
 	if _, err := ps.conn.Model(i).OnConflict(fmt.Sprintf("(%s) DO UPDATE", conflictColumn)).Insert(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -269,7 +271,7 @@ func (ps *postgresService) Upsert(i interface{}, conflictColumn string) error {
 func (ps *postgresService) UpdateByID(id string, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("id = ?", id).OnConflict("(id) DO UPDATE").Insert(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -284,7 +286,7 @@ func (ps *postgresService) UpdateOneByID(id string, key string, value interface{
 func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -294,7 +296,7 @@ func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Delete(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -365,13 +367,13 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.A
 	}
 	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
 	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -381,7 +383,7 @@ func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.A
 func (ps *postgresService) GetLocalAccountByUsername(username string, account *gtsmodel.Account) error {
 	if err := ps.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -391,7 +393,7 @@ func (ps *postgresService) GetLocalAccountByUsername(username string, account *g
 func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -401,7 +403,7 @@ func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, follo
 func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -411,7 +413,7 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -421,7 +423,7 @@ func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *
 func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error {
 	if err := ps.conn.Model(statuses).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -438,7 +440,7 @@ func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuse
 	}
 	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -448,7 +450,7 @@ func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuse
 func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
 	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -574,18 +576,18 @@ func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachmen
 	acct := &gtsmodel.Account{}
 	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
 
 	if acct.HeaderMediaAttachmentID == "" {
-		return ErrNoEntries{}
+		return db.ErrNoEntries{}
 	}
 
 	if err := ps.conn.Model(header).Where("id = ?", acct.HeaderMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -596,18 +598,18 @@ func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachmen
 	acct := &gtsmodel.Account{}
 	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
 
 	if acct.AvatarMediaAttachmentID == "" {
-		return ErrNoEntries{}
+		return db.ErrNoEntries{}
 	}
 
 	if err := ps.conn.Model(avatar).Where("id = ?", acct.AvatarMediaAttachmentID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return ErrNoEntries{}
+			return db.ErrNoEntries{}
 		}
 		return err
 	}
@@ -645,7 +647,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	if err := ps.conn.Model(targetUser).Where("account_id = ?", targetAccount.ID).Select(); err != nil {
 		l.Debug("target user could not be selected")
 		if err == pg.ErrNoRows {
-			return false, ErrNoEntries{}
+			return false, db.ErrNoEntries{}
 		}
 		return false, err
 	}
