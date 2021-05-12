@@ -167,6 +167,28 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	}
 	status.URI = uriProp.GetIRI().String()
 
+	statusURL, err := extractURL(statusable)
+	if err == nil {
+		status.URL = statusURL.String()
+	}
+
+	if content, err := extractContent(statusable); err == nil {
+		status.Content = content
+	}
+
+	attachments, err := extractAttachments(statusable); if err == nil {
+		status.GTSMediaAttachments = attachments
+	}
+
+	hashtags, err := extractHashtags(statusable)
+	if err == nil {
+		status.GTSTags = hashtags
+	}
+
+	// emojis, err := extractEmojis(statusable)
+
+	// mentions, err := extractMentions(statusable)
+
 	cw, err := extractSummary(statusable)
 	if err == nil && cw != "" {
 		status.ContentWarning = cw
@@ -185,21 +207,82 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 		status.CreatedAt = published
 	}
 
-	statusURL, err := extractURL(statusable)
-	if err == nil {
-		status.URL = statusURL.String()
-	}
-
 	attributedTo, err := extractAttributedTo(statusable)
 	if err != nil {
 		return nil, errors.New("attributedTo was empty")
 	}
 
+	// if we don't know the account yet we can dereference it later
 	statusOwner := &gtsmodel.Status{}
-	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err != nil {
-		return nil, fmt.Errorf("cannot attribute %s to an account we know: %s", attributedTo.String(), err)
+	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err == nil {
+		status.AccountID = statusOwner.ID
 	}
-	status.AccountID = statusOwner.ID
 
-	return nil, nil
+
+	return status, nil
 }
+
+// // id of the status in the database
+// ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+// // uri at which this status is reachable
+// URI string `pg:",unique"`
+// // web url for viewing this status
+// URL string `pg:",unique"`
+// // the html-formatted content of this status
+// Content string
+// // Database IDs of any media attachments associated with this status
+// Attachments []string `pg:",array"`
+// // Database IDs of any tags used in this status
+// Tags []string `pg:",array"`
+// // Database IDs of any accounts mentioned in this status
+// Mentions []string `pg:",array"`
+// // Database IDs of any emojis used in this status
+// Emojis []string `pg:",array"`
+// // when was this status created?
+// CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+// // when was this status updated?
+// UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+// // is this status from a local account?
+// Local bool
+// // which account posted this status?
+// AccountID string
+// // id of the status this status is a reply to
+// InReplyToID string
+// // id of the account that this status replies to
+// InReplyToAccountID string
+// // id of the status this status is a boost of
+// BoostOfID string
+// // cw string for this status
+// ContentWarning string
+// // visibility entry for this status
+// Visibility Visibility `pg:",notnull"`
+// // mark the status as sensitive?
+// Sensitive bool
+// // what language is this status written in?
+// Language string
+// // Which application was used to create this status?
+// CreatedWithApplicationID string
+// // advanced visibility for this status
+// VisibilityAdvanced *VisibilityAdvanced
+// // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
+// // Will probably almost always be Note but who knows!.
+// ActivityStreamsType ActivityStreamsObject
+// // Original text of the status without formatting
+// Text string
+
+// // Mentions created in this status
+// GTSMentions []*Mention `pg:"-"`
+// // Hashtags used in this status
+// GTSTags []*Tag `pg:"-"`
+// // Emojis used in this status
+// GTSEmojis []*Emoji `pg:"-"`
+// // MediaAttachments used in this status
+// GTSMediaAttachments []*MediaAttachment `pg:"-"`
+// // Status being replied to
+// GTSReplyToStatus *Status `pg:"-"`
+// // Account being replied to
+// GTSReplyToAccount *Account `pg:"-"`
+// // Status being boosted
+// GTSBoostedStatus *Status `pg:"-"`
+// // Account of the boosted status
+// GTSBoostedAccount *Account `pg:"-"`

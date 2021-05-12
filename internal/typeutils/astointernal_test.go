@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -36,6 +37,115 @@ type ASToInternalTestSuite struct {
 }
 
 const (
+	statusAsActivityJson = `{
+		"@context": [
+		  "https://www.w3.org/ns/activitystreams",
+		  {
+			"ostatus": "http://ostatus.org#",
+			"atomUri": "ostatus:atomUri",
+			"inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+			"conversation": "ostatus:conversation",
+			"sensitive": "as:sensitive",
+			"toot": "http://joinmastodon.org/ns#",
+			"votersCount": "toot:votersCount",
+			"Hashtag": "as:Hashtag",
+			"Emoji": "toot:Emoji",
+			"focalPoint": {
+			  "@container": "@list",
+			  "@id": "toot:focalPoint"
+			}
+		  }
+		],
+		"id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704/activity",
+		"type": "Create",
+		"actor": "https://ondergrond.org/users/dumpsterqueer",
+		"published": "2021-05-12T09:41:38Z",
+		"to": [
+		  "https://ondergrond.org/users/dumpsterqueer/followers"
+		],
+		"cc": [
+		  "https://www.w3.org/ns/activitystreams#Public"
+		],
+		"object": {
+		  "id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704",
+		  "type": "Note",
+		  "summary": null,
+		  "inReplyTo": null,
+		  "published": "2021-05-12T09:41:38Z",
+		  "url": "https://ondergrond.org/@dumpsterqueer/106221567884565704",
+		  "attributedTo": "https://ondergrond.org/users/dumpsterqueer",
+		  "to": [
+			"https://ondergrond.org/users/dumpsterqueer/followers"
+		  ],
+		  "cc": [
+			"https://www.w3.org/ns/activitystreams#Public"
+		  ],
+		  "sensitive": false,
+		  "atomUri": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704",
+		  "inReplyToAtomUri": null,
+		  "conversation": "tag:ondergrond.org,2021-05-12:objectId=1132361:objectType=Conversation",
+		  "content": "<p>just testing activitypub representations of <a href=\"https://ondergrond.org/tags/tags\" class=\"mention hashtag\" rel=\"tag\">#<span>tags</span></a> and <a href=\"https://ondergrond.org/tags/emoji\" class=\"mention hashtag\" rel=\"tag\">#<span>emoji</span></a>  :party_parrot: :amaze: :blobsunglasses: </p><p>don&apos;t mind me....</p>",
+		  "contentMap": {
+			"en": "<p>just testing activitypub representations of <a href=\"https://ondergrond.org/tags/tags\" class=\"mention hashtag\" rel=\"tag\">#<span>tags</span></a> and <a href=\"https://ondergrond.org/tags/emoji\" class=\"mention hashtag\" rel=\"tag\">#<span>emoji</span></a>  :party_parrot: :amaze: :blobsunglasses: </p><p>don&apos;t mind me....</p>"
+		  },
+		  "attachment": [],
+		  "tag": [
+			{
+			  "type": "Hashtag",
+			  "href": "https://ondergrond.org/tags/tags",
+			  "name": "#tags"
+			},
+			{
+			  "type": "Hashtag",
+			  "href": "https://ondergrond.org/tags/emoji",
+			  "name": "#emoji"
+			},
+			{
+			  "id": "https://ondergrond.org/emojis/2390",
+			  "type": "Emoji",
+			  "name": ":party_parrot:",
+			  "updated": "2020-11-06T13:42:11Z",
+			  "icon": {
+				"type": "Image",
+				"mediaType": "image/gif",
+				"url": "https://ondergrond.org/system/custom_emojis/images/000/002/390/original/ef133aac7ab23341.gif"
+			  }
+			},
+			{
+			  "id": "https://ondergrond.org/emojis/2395",
+			  "type": "Emoji",
+			  "name": ":amaze:",
+			  "updated": "2020-09-26T12:29:56Z",
+			  "icon": {
+				"type": "Image",
+				"mediaType": "image/png",
+				"url": "https://ondergrond.org/system/custom_emojis/images/000/002/395/original/2c7d9345e57367ed.png"
+			  }
+			},
+			{
+			  "id": "https://ondergrond.org/emojis/764",
+			  "type": "Emoji",
+			  "name": ":blobsunglasses:",
+			  "updated": "2020-09-26T12:13:23Z",
+			  "icon": {
+				"type": "Image",
+				"mediaType": "image/png",
+				"url": "https://ondergrond.org/system/custom_emojis/images/000/000/764/original/3f8eef9de773c90d.png"
+			  }
+			}
+		  ],
+		  "replies": {
+			"id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704/replies",
+			"type": "Collection",
+			"first": {
+			  "type": "CollectionPage",
+			  "next": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704/replies?only_other_accounts=true&page=true",
+			  "partOf": "https://ondergrond.org/users/dumpsterqueer/statuses/106221567884565704/replies",
+			  "items": []
+			}
+		  }
+		}
+	  }`
 	gargronAsActivityJson = `{
 		"@context": [
 		  "https://www.w3.org/ns/activitystreams",
@@ -195,6 +305,32 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 
 	fmt.Printf("%+v", acct)
 	// TODO: write assertions here, rn we're just eyeballing the output
+}
+
+func (suite *ASToInternalTestSuite) TestParseStatus() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(statusAsActivityJson), &m)
+	assert.NoError(suite.T(), err)
+
+	t, err := streams.ToType(context.Background(), m)
+	assert.NoError(suite.T(), err)
+
+	create, ok := t.(vocab.ActivityStreamsCreate)
+	assert.True(suite.T(), ok)
+
+	obj := create.GetActivityStreamsObject()
+	assert.NotNil(suite.T(), obj)
+
+	first := obj.Begin()
+	assert.NotNil(suite.T(), first)
+
+	rep, ok := first.GetType().(typeutils.Statusable)
+	assert.True(suite.T(), ok)
+
+	status, err := suite.typeconverter.ASStatusToStatus(rep)
+	assert.NoError(suite.T(), err)
+
+	fmt.Printf("%+v", status)
 }
 
 func (suite *ASToInternalTestSuite) TearDownTest() {

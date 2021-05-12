@@ -24,6 +24,8 @@ import "time"
 type Tag struct {
 	// id of this tag in the database
 	ID string `pg:",unique,type:uuid,default:gen_random_uuid(),pk,notnull"`
+	// Href of this tag, eg https://example.org/tags/somehashtag
+	URL string
 	// name of this tag -- the tag without the hash part
 	Name string `pg:",unique,pk,notnull"`
 	// Which account ID is the first one we saw using this tag?

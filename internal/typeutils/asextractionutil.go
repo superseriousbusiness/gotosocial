@@ -25,9 +25,11 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func extractPreferredUsername(i withPreferredUsername) (string, error) {
@@ -41,16 +43,16 @@ func extractPreferredUsername(i withPreferredUsername) (string, error) {
 	return u.GetXMLSchemaString(), nil
 }
 
-func extractName(i withDisplayName) (string, error) {
+func extractName(i withName) (string, error) {
 	nameProp := i.GetActivityStreamsName()
 	if nameProp == nil {
 		return "", errors.New("activityStreamsName not found")
 	}
 
 	// take the first name string we can find
-	for nameIter := nameProp.Begin(); nameIter != nameProp.End(); nameIter = nameIter.Next() {
-		if nameIter.IsXMLSchemaString() && nameIter.GetXMLSchemaString() != "" {
-			return nameIter.GetXMLSchemaString(), nil
+	for iter := nameProp.Begin(); iter != nameProp.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
 		}
 	}
 
@@ -59,10 +61,10 @@ func extractName(i withDisplayName) (string, error) {
 
 func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
 	inReplyToProp := i.GetActivityStreamsInReplyTo()
-	for i := inReplyToProp.Begin(); i != inReplyToProp.End(); i = i.Next() {
-		if i.IsIRI() {
-			if i.GetIRI() != nil {
-				return i.GetIRI(), nil
+	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				return iter.GetIRI(), nil
 			}
 		}
 	}
@@ -72,10 +74,10 @@ func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
 func extractTos(i withTo) ([]*url.URL, error) {
 	to := []*url.URL{}
 	toProp := i.GetActivityStreamsTo()
-	for i := toProp.Begin(); i != toProp.End(); i = i.Next() {
-		if i.IsIRI() {
-			if i.GetIRI() != nil {
-				to = append(to, i.GetIRI())
+	for iter := toProp.Begin(); iter != toProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				to = append(to, iter.GetIRI())
 			}
 		}
 	}
@@ -88,10 +90,10 @@ func extractTos(i withTo) ([]*url.URL, error) {
 func extractCCs(i withCC) ([]*url.URL, error) {
 	cc := []*url.URL{}
 	ccProp := i.GetActivityStreamsCc()
-	for i := ccProp.Begin(); i != ccProp.End(); i = i.Next() {
-		if i.IsIRI() {
-			if i.GetIRI() != nil {
-				cc = append(cc, i.GetIRI())
+	for iter := ccProp.Begin(); iter != ccProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				cc = append(cc, iter.GetIRI())
 			}
 		}
 	}
@@ -103,10 +105,10 @@ func extractCCs(i withCC) ([]*url.URL, error) {
 
 func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
-	for aIter := attributedToProp.Begin(); aIter != attributedToProp.End(); aIter = aIter.Next() {
-		if aIter.IsIRI() {
-			if aIter.GetIRI() != nil {
-				return aIter.GetIRI(), nil
+	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				return iter.GetIRI(), nil
 			}
 		}
 	}
@@ -146,12 +148,12 @@ func extractIconURL(i withIcon) (*url.URL, error) {
 	// here in order to find the first one that meets these criteria:
 	// 1. is an image
 	// 2. has a URL so we can grab it
-	for iconIter := iconProp.Begin(); iconIter != iconProp.End(); iconIter = iconIter.Next() {
+	for iter := iconProp.Begin(); iter != iconProp.End(); iter = iter.Next() {
 		// 1. is an image
-		if !iconIter.IsActivityStreamsImage() {
+		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := iconIter.GetActivityStreamsImage()
+		imageValue := iter.GetActivityStreamsImage()
 		if imageValue == nil {
 			continue
 		}
@@ -287,4 +289,167 @@ func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKe
 		}
 	}
 	return nil, nil, errors.New("couldn't find public key")
+}
+
+func extractContent(i withContent) (string, error) {
+	contentProperty := i.GetActivityStreamsContent()
+	if contentProperty == nil {
+		return "", errors.New("content property was nil")
+	}
+	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
+		}
+	}
+	return "", errors.New("no content found")
+}
+
+func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	attachmentProp := i.GetActivityStreamsAttachment()
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		attachmentable, ok := iter.(Attachmentable)
+		if !ok {
+			continue
+		}
+		attachment, err := extractAttachment(attachmentable)
+		if err != nil {
+			continue
+		}
+		attachments = append(attachments, attachment)
+	}
+	return attachments, nil
+}
+
+func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
+	attachment := &gtsmodel.MediaAttachment{
+		File: gtsmodel.File{},
+	}
+
+	attachmentURL, err := extractURL(i)
+	if err != nil {
+		return nil, err
+	}
+	attachment.RemoteURL = attachmentURL.String()
+
+	mediaType := i.GetActivityStreamsMediaType()
+	if mediaType == nil {
+		return nil, errors.New("no media type")
+	}
+	if mediaType.Get() == "" {
+		return nil, errors.New("no media type")
+	}
+	attachment.File.ContentType = mediaType.Get()
+	attachment.Type = gtsmodel.FileTypeImage
+
+	name, err := extractName(i)
+	if err == nil {
+		attachment.Description = name
+	}
+
+	blurhash, err := extractBlurhash(i)
+	if err == nil {
+		attachment.Blurhash = blurhash
+	}
+
+	return attachment, nil
+}
+
+func extractBlurhash(i withBlurhash) (string, error) {
+	if i.GetTootBlurhashProperty() == nil {
+		return "", errors.New("blurhash property was nil")
+	}
+	if i.GetTootBlurhashProperty().Get() == "" {
+		return "", errors.New("empty blurhash string")
+	}
+	return i.GetTootBlurhashProperty().Get(), nil
+}
+
+func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
+	tags := []*gtsmodel.Tag{}
+
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Hashtag" {
+			continue
+		}
+
+		hashtaggable, ok := t.(Hashtaggable)
+		if !ok {
+			continue
+		}
+
+		tag, err := extractHashtag(hashtaggable)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
+	tag := &gtsmodel.Tag{}
+
+	hrefProp := i.GetActivityStreamsHref()
+	if hrefProp == nil || !hrefProp.IsIRI() {
+		return nil, errors.New("no href prop")
+	}
+	tag.URL = hrefProp.GetIRI().String()
+
+	name, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+	tag.Name = strings.TrimPrefix(name, "#")
+
+	return tag, nil
+}
+
+func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
+	emojis := []*gtsmodel.Emoji{}
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Emoji" {
+			continue
+		}
+
+		emojiable, ok := t.(Emojiable)
+		if !ok {
+			continue
+		}
+
+		emoji, err := extractEmoji(emojiable)
+		if err != nil {
+			continue
+		}
+
+		emojis = append(emojis, emoji)
+	}
+	return emojis, nil
+}
+
+func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
+	emoji := &gtsmodel.Emoji{}
+
+	idProp := i.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("no id for emoji")
+	}
+	emoji.URI = idProp.GetIRI().String()
+
+	return emoji, nil
 }

@@ -24,11 +24,11 @@ import "github.com/go-fed/activity/streams/vocab"
 // This interface is fulfilled by: Person, Application, Organization, Service, and Group
 type Accountable interface {
 	withJSONLDId
-	withGetTypeName
+	withTypeName
 
 	withPreferredUsername
 	withIcon
-	withDisplayName
+	withName
 	withImage
 	withSummary
 	withDiscoverable
@@ -45,7 +45,7 @@ type Accountable interface {
 // This interface is fulfilled by: Article, Document, Image, Video, Note, Page, Event, Place, Mention, Profile
 type Statusable interface {
 	withJSONLDId
-	withGetTypeName
+	withTypeName
 
 	withSummary
 	withInReplyTo
@@ -62,11 +62,37 @@ type Statusable interface {
 	withReplies
 }
 
+// Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'.
+// This interface is fulfilled by: Audio, Document, Image, Video
+type Attachmentable interface {
+	withTypeName
+	withMediaType
+	withURL
+	withName
+	withBlurhash
+	withFocalPoint
+}
+
+// Hashtaggable represents the minimum activitypub interface for representing a 'hashtag'.
+type Hashtaggable interface {
+	withTypeName
+	withHref
+	withName
+}
+
+type Emojiable interface {
+	withJSONLDId
+	withTypeName
+	withName
+	withUpdated
+	withIcon
+}
+
 type withJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }
 
-type withGetTypeName interface {
+type withTypeName interface {
 	GetTypeName() string
 }
 
@@ -78,7 +104,7 @@ type withIcon interface {
 	GetActivityStreamsIcon() vocab.ActivityStreamsIconProperty
 }
 
-type withDisplayName interface {
+type withName interface {
 	GetActivityStreamsName() vocab.ActivityStreamsNameProperty
 }
 
@@ -164,4 +190,24 @@ type withTag interface {
 
 type withReplies interface {
 	GetActivityStreamsReplies() vocab.ActivityStreamsRepliesProperty
+}
+
+type withMediaType interface {
+	GetActivityStreamsMediaType() vocab.ActivityStreamsMediaTypeProperty
+}
+
+type withBlurhash interface {
+	GetTootBlurhashProperty() vocab.TootBlurhashProperty
+}
+
+type withFocalPoint interface {
+	// TODO
+}
+
+type withHref interface {
+	GetActivityStreamsHref() vocab.ActivityStreamsHrefProperty
+}
+
+type withUpdated interface {
+	GetActivityStreamsUpdated() vocab.ActivityStreamsUpdatedProperty
 }
