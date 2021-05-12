@@ -161,134 +161,108 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error) {
 	status := &gtsmodel.Status{}
 
+	// uri at which this status is reachable
 	uriProp := statusable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
 		return nil, errors.New("no id property found, or id was not an iri")
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	statusURL, err := extractURL(statusable)
-	if err == nil {
+	// web url for viewing this status
+	if statusURL, err := extractURL(statusable); err == nil {
 		status.URL = statusURL.String()
 	}
 
+	// the html-formatted content of this status
 	if content, err := extractContent(statusable); err == nil {
 		status.Content = content
 	}
 
-	attachments, err := extractAttachments(statusable); if err == nil {
+	// attachments to dereference and fetch later on (we don't do that here)
+	if attachments, err := extractAttachments(statusable); err == nil {
 		status.GTSMediaAttachments = attachments
 	}
 
-	hashtags, err := extractHashtags(statusable)
-	if err == nil {
+	// hashtags to dereference later on
+	if hashtags, err := extractHashtags(statusable); err == nil {
 		status.GTSTags = hashtags
 	}
 
-	emojis, err := extractEmojis(statusable)
-	if err == nil {
+	// emojis to dereference and fetch later on
+	if emojis, err := extractEmojis(statusable); err == nil {
 		status.GTSEmojis = emojis
 	}
 
-	mentions, err := extractMentions(statusable)
-	if err == nil {
+	// mentions to dereference later on
+	if mentions, err := extractMentions(statusable); err == nil {
 		status.GTSMentions = mentions
 	}
 
-	cw, err := extractSummary(statusable)
-	if err == nil && cw != "" {
+	// cw string for this status
+	if cw, err := extractSummary(statusable); err == nil {
 		status.ContentWarning = cw
 	}
 
-	inReplyToURI, err := extractInReplyToURI(statusable)
-	if err == nil {
-		inReplyToStatus := &gtsmodel.Status{}
-		if err := c.db.GetWhere("uri", inReplyToURI.String(), inReplyToStatus); err == nil {
-			status.InReplyToID = inReplyToStatus.ID
-		}
-	}
-
+	// when was this status created?
 	published, err := extractPublished(statusable)
 	if err == nil {
 		status.CreatedAt = published
 	}
 
+	// which account posted this status?
+	// if we don't know the account yet we can dereference it later
 	attributedTo, err := extractAttributedTo(statusable)
 	if err != nil {
 		return nil, errors.New("attributedTo was empty")
 	}
+	status.APStatusOwnerURI = attributedTo.String()
 
-	// if we don't know the account yet we can dereference it later
-	statusOwner := &gtsmodel.Status{}
+	statusOwner := &gtsmodel.Account{}
 	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err == nil {
 		status.AccountID = statusOwner.ID
+		status.GTSAccount = statusOwner
 	}
 
+	// check if there's a post that this is a reply to
+	inReplyToURI, err := extractInReplyToURI(statusable)
+	if err == nil {
+		// something is set so we can at least set this field on the
+		// status and dereference using this later if we need to
+		status.APReplyToStatusURI = inReplyToURI.String()
+
+		// now we can check if we have the replied-to status in our db already
+		inReplyToStatus := &gtsmodel.Status{}
+		if err := c.db.GetWhere("uri", inReplyToURI.String(), inReplyToStatus); err == nil {
+			// we have the status in our database already
+			// so we can set these fields here and then...
+			status.InReplyToID = inReplyToStatus.ID
+			status.InReplyToAccountID = inReplyToStatus.AccountID
+			status.GTSReplyToStatus = inReplyToStatus
+
+			// ... check if we've seen the account already
+			inReplyToAccount := &gtsmodel.Account{}
+			if err := c.db.GetByID(inReplyToStatus.AccountID, inReplyToAccount); err == nil {
+				status.GTSReplyToAccount = inReplyToAccount
+			}
+		}
+	}
+
+	// visibility entry for this status
+	// TODO: if it's just got followers in TO and it's not CC'ed to public, it's followers only
+	// TODO: if it's CC'ed to public, it's public or unlocked
+	// TODO: if it's a DM then it's addressed to SPECIFIC ACCOUNTS and not followers or public
+	// TODO: mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
+
+	// advanced visibility for this status
+	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
+
+	// sensitive
+	// TODO: this is a bool
+
+	// language
+	// we might be able to extract this from the contentMap field
+
+	status.ActivityStreamsType = gtsmodel.ActivityStreamsObject(statusable.GetTypeName())
 
 	return status, nil
 }
-
-// // id of the status in the database
-// ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
-// // uri at which this status is reachable
-// URI string `pg:",unique"`
-// // web url for viewing this status
-// URL string `pg:",unique"`
-// // the html-formatted content of this status
-// Content string
-// // Database IDs of any media attachments associated with this status
-// Attachments []string `pg:",array"`
-// // Database IDs of any tags used in this status
-// Tags []string `pg:",array"`
-// // Database IDs of any accounts mentioned in this status
-// Mentions []string `pg:",array"`
-// // Database IDs of any emojis used in this status
-// Emojis []string `pg:",array"`
-// // when was this status created?
-// CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-// // when was this status updated?
-// UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-// // is this status from a local account?
-// Local bool
-// // which account posted this status?
-// AccountID string
-// // id of the status this status is a reply to
-// InReplyToID string
-// // id of the account that this status replies to
-// InReplyToAccountID string
-// // id of the status this status is a boost of
-// BoostOfID string
-// // cw string for this status
-// ContentWarning string
-// // visibility entry for this status
-// Visibility Visibility `pg:",notnull"`
-// // mark the status as sensitive?
-// Sensitive bool
-// // what language is this status written in?
-// Language string
-// // Which application was used to create this status?
-// CreatedWithApplicationID string
-// // advanced visibility for this status
-// VisibilityAdvanced *VisibilityAdvanced
-// // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
-// // Will probably almost always be Note but who knows!.
-// ActivityStreamsType ActivityStreamsObject
-// // Original text of the status without formatting
-// Text string
-
-// // Mentions created in this status
-// GTSMentions []*Mention `pg:"-"`
-// // Hashtags used in this status
-// GTSTags []*Tag `pg:"-"`
-// // Emojis used in this status
-// GTSEmojis []*Emoji `pg:"-"`
-// // MediaAttachments used in this status
-// GTSMediaAttachments []*MediaAttachment `pg:"-"`
-// // Status being replied to
-// GTSReplyToStatus *Status `pg:"-"`
-// // Account being replied to
-// GTSReplyToAccount *Account `pg:"-"`
-// // Status being boosted
-// GTSBoostedStatus *Status `pg:"-"`
-// // Account of the boosted status
-// GTSBoostedAccount *Account `pg:"-"`

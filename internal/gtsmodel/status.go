@@ -71,12 +71,14 @@ type Status struct {
 	Text string
 
 	/*
-		NON-DATABASE FIELDS
+		INTERNAL MODEL NON-DATABASE FIELDS
 
 		These are for convenience while passing the status around internally,
 		but these fields should *never* be put in the db.
 	*/
 
+	// Account that created this status
+	GTSAccount *Account `pg:"-"`
 	// Mentions created in this status
 	GTSMentions []*Mention `pg:"-"`
 	// Hashtags used in this status
@@ -93,6 +95,20 @@ type Status struct {
 	GTSBoostedStatus *Status `pg:"-"`
 	// Account of the boosted status
 	GTSBoostedAccount *Account `pg:"-"`
+
+	/*
+		AP NON-DATABASE FIELDS
+
+		These are for convenience while passing the status around internally,
+		but these fields should *never* be put in the db.
+	*/
+
+	// AP URI of the status being replied to.
+	// Useful when that status doesn't exist in the database yet and we still need to dereference it.
+	APReplyToStatusURI string `pg:"-"`
+	// The AP URI of the owner/creator of the status.
+	// Useful when that account doesn't exist in the database yet and we still need to dereference it.
+	APStatusOwnerURI string `pg:"-"`
 }
 
 // Visibility represents the visibility granularity of a status.

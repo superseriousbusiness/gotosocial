@@ -41,11 +41,11 @@ type Mention struct {
 	// NameString is for putting in the namestring of the mentioned user
 	// before the mention is dereferenced. Should be in a form along the lines of:
 	// @whatever_username@example.org
-	// 
-	// This will not be put in the database, it's just for convenience.
-	NameString string `pg:"-"`
-	// Href is the web URL (not AP uri!) of the user mentioned. 
 	//
 	// This will not be put in the database, it's just for convenience.
-	Href string `pg:"-"`
+	NameString string `pg:"-"`
+	// MentionedAccountURI is the AP ID (uri) of the user mentioned.
+	//
+	// This will not be put in the database, it's just for convenience.
+	MentionedAccountURI string `pg:"-"`
 }

@@ -35,8 +35,10 @@ const (
 )
 
 var (
-	mentionNameRegexString = `@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_\-\.]+)?)`
-	mentionNameRegex = regexp.MustCompile(fmt.Sprintf(`^%s$`, mentionNameRegexString))
+	mentionNameRegexString = `^@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_\-\.]+)?)$`
+	// mention name regex captures the username and domain part from a mention string
+	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
+	mentionNameRegex = regexp.MustCompile(mentionNameRegexString)
 
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
 	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`

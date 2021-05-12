@@ -388,7 +388,6 @@ func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 
 		tag, err := extractHashtag(hashtaggable)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 
@@ -516,13 +515,13 @@ func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	if username == "" || domain == "" {
 		return nil, errors.New("username or domain was empty")
 	}
+	mention.NameString = mentionString
 
-	// the href prop should be the URL of a user we know, eg https://example.org/@whatever_user
+	// the href prop should be the AP URI of a user we know, eg https://example.org/users/whatever_user
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
 		return nil, errors.New("no href prop")
 	}
-	mention.Href = hrefProp.GetIRI().String()
-
+	mention.MentionedAccountURI = hrefProp.GetIRI().String()
 	return mention, nil
 }

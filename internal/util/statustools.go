@@ -62,23 +62,18 @@ func DeriveEmojisFromStatus(status string) []string {
 	return lower(unique(emojis))
 }
 
-// ExtractMentionParts extracts the username @test_user and the domain @example.org
+// ExtractMentionParts extracts the username test_user and the domain example.org
 // from a mention string like @test_user@example.org.
-//
-// If no domain is provided, it will return just the username part.
 //
 // If nothing is matched, it will return an error.
 func ExtractMentionParts(mention string) (username, domain string, err error) {
 	matches := mentionNameRegex.FindStringSubmatch(mention)
-	if matches == nil {
+	if matches == nil || len(matches) != 3 {
 		err = fmt.Errorf("could't match mention %s", mention)
 		return
 	}
-	fmt.Println(matches)
 	username = matches[1]
-	if len(matches) == 2 {
-		domain = matches[2]
-	}
+	domain = matches[2]
 	return
 }
 
