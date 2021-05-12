@@ -73,19 +73,26 @@ type Attachmentable interface {
 	withFocalPoint
 }
 
-// Hashtaggable represents the minimum activitypub interface for representing a 'hashtag'.
+// Hashtaggable represents the minimum activitypub interface for representing a 'hashtag' tag.
 type Hashtaggable interface {
 	withTypeName
 	withHref
 	withName
 }
 
+// Emojiable represents the minimum interface for an 'emoji' tag.
 type Emojiable interface {
 	withJSONLDId
 	withTypeName
 	withName
 	withUpdated
 	withIcon
+}
+
+// Mentionable represents the minimum interface for a 'mention' tag.
+type Mentionable interface {
+	withName
+	withHref
 }
 
 type withJSONLDId interface {

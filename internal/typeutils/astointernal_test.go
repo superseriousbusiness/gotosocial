@@ -37,7 +37,74 @@ type ASToInternalTestSuite struct {
 }
 
 const (
-	statusAsActivityJson = `{
+	statusWithMentionsActivityJson = `{
+		"@context": [
+		  "https://www.w3.org/ns/activitystreams",
+		  {
+			"ostatus": "http://ostatus.org#",
+			"atomUri": "ostatus:atomUri",
+			"inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+			"conversation": "ostatus:conversation",
+			"sensitive": "as:sensitive",
+			"toot": "http://joinmastodon.org/ns#",
+			"votersCount": "toot:votersCount"
+		  }
+		],
+		"id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552/activity",
+		"type": "Create",
+		"actor": "https://ondergrond.org/users/dumpsterqueer",
+		"published": "2021-05-12T09:58:38Z",
+		"to": [
+		  "https://ondergrond.org/users/dumpsterqueer/followers"
+		],
+		"cc": [
+		  "https://www.w3.org/ns/activitystreams#Public",
+		  "https://social.pixie.town/users/f0x"
+		],
+		"object": {
+		  "id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552",
+		  "type": "Note",
+		  "summary": null,
+		  "inReplyTo": "https://social.pixie.town/users/f0x/statuses/106221628567855262",
+		  "published": "2021-05-12T09:58:38Z",
+		  "url": "https://ondergrond.org/@dumpsterqueer/106221634728637552",
+		  "attributedTo": "https://ondergrond.org/users/dumpsterqueer",
+		  "to": [
+			"https://ondergrond.org/users/dumpsterqueer/followers"
+		  ],
+		  "cc": [
+			"https://www.w3.org/ns/activitystreams#Public",
+			"https://social.pixie.town/users/f0x"
+		  ],
+		  "sensitive": false,
+		  "atomUri": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552",
+		  "inReplyToAtomUri": "https://social.pixie.town/users/f0x/statuses/106221628567855262",
+		  "conversation": "tag:ondergrond.org,2021-05-12:objectId=1132361:objectType=Conversation",
+		  "content": "<p><span class=\"h-card\"><a href=\"https://social.pixie.town/@f0x\" class=\"u-url mention\">@<span>f0x</span></a></span> nice there it is:</p><p><a href=\"https://social.pixie.town/users/f0x/statuses/106221628567855262/activity\" rel=\"nofollow noopener noreferrer\" target=\"_blank\"><span class=\"invisible\">https://</span><span class=\"ellipsis\">social.pixie.town/users/f0x/st</span><span class=\"invisible\">atuses/106221628567855262/activity</span></a></p>",
+		  "contentMap": {
+			"en": "<p><span class=\"h-card\"><a href=\"https://social.pixie.town/@f0x\" class=\"u-url mention\">@<span>f0x</span></a></span> nice there it is:</p><p><a href=\"https://social.pixie.town/users/f0x/statuses/106221628567855262/activity\" rel=\"nofollow noopener noreferrer\" target=\"_blank\"><span class=\"invisible\">https://</span><span class=\"ellipsis\">social.pixie.town/users/f0x/st</span><span class=\"invisible\">atuses/106221628567855262/activity</span></a></p>"
+		  },
+		  "attachment": [],
+		  "tag": [
+			{
+			  "type": "Mention",
+			  "href": "https://social.pixie.town/users/f0x",
+			  "name": "@f0x@pixie.town"
+			}
+		  ],
+		  "replies": {
+			"id": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552/replies",
+			"type": "Collection",
+			"first": {
+			  "type": "CollectionPage",
+			  "next": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552/replies?only_other_accounts=true&page=true",
+			  "partOf": "https://ondergrond.org/users/dumpsterqueer/statuses/106221634728637552/replies",
+			  "items": []
+			}
+		  }
+		}
+	  }`
+	statusWithEmojisAndTagsAsActivityJson = `{
 		"@context": [
 		  "https://www.w3.org/ns/activitystreams",
 		  {
@@ -309,7 +376,34 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 
 func (suite *ASToInternalTestSuite) TestParseStatus() {
 	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(statusAsActivityJson), &m)
+	err := json.Unmarshal([]byte(statusWithEmojisAndTagsAsActivityJson), &m)
+	assert.NoError(suite.T(), err)
+
+	t, err := streams.ToType(context.Background(), m)
+	assert.NoError(suite.T(), err)
+
+	create, ok := t.(vocab.ActivityStreamsCreate)
+	assert.True(suite.T(), ok)
+
+	obj := create.GetActivityStreamsObject()
+	assert.NotNil(suite.T(), obj)
+
+	first := obj.Begin()
+	assert.NotNil(suite.T(), first)
+
+	rep, ok := first.GetType().(typeutils.Statusable)
+	assert.True(suite.T(), ok)
+
+	status, err := suite.typeconverter.ASStatusToStatus(rep)
+	assert.NoError(suite.T(), err)
+
+	assert.Len(suite.T(), status.GTSEmojis, 3)
+	// assert.Len(suite.T(), status.GTSTags, 2) TODO: implement this first so that it can pick up tags
+}
+
+func (suite *ASToInternalTestSuite) TestParseStatusWithMention() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(statusWithMentionsActivityJson), &m)
 	assert.NoError(suite.T(), err)
 
 	t, err := streams.ToType(context.Background(), m)
@@ -331,6 +425,9 @@ func (suite *ASToInternalTestSuite) TestParseStatus() {
 	assert.NoError(suite.T(), err)
 
 	fmt.Printf("%+v", status)
+
+	assert.Len(suite.T(), status.GTSMentions, 1)
+	fmt.Println(status.GTSMentions[0])
 }
 
 func (suite *ASToInternalTestSuite) TearDownTest() {

@@ -35,6 +35,9 @@ const (
 )
 
 var (
+	mentionNameRegexString = `@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_\-\.]+)?)`
+	mentionNameRegex = regexp.MustCompile(fmt.Sprintf(`^%s$`, mentionNameRegexString))
+
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
 	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
 	mentionFinderRegex       = regexp.MustCompile(mentionFinderRegexString)

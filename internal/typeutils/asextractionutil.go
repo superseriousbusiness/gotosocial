@@ -30,6 +30,7 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func extractPreferredUsername(i withPreferredUsername) (string, error) {
@@ -184,12 +185,12 @@ func extractImageURL(i withImage) (*url.URL, error) {
 	// here in order to find the first one that meets these criteria:
 	// 1. is an image
 	// 2. has a URL so we can grab it
-	for imageIter := imageProp.Begin(); imageIter != imageProp.End(); imageIter = imageIter.Next() {
+	for iter := imageProp.Begin(); iter != imageProp.End(); iter = iter.Next() {
 		// 1. is an image
-		if !imageIter.IsActivityStreamsImage() {
+		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := imageIter.GetActivityStreamsImage()
+		imageValue := iter.GetActivityStreamsImage()
 		if imageValue == nil {
 			continue
 		}
@@ -210,9 +211,9 @@ func extractSummary(i withSummary) (string, error) {
 		return "", errors.New("summary property was nil")
 	}
 
-	for summaryIter := summaryProp.Begin(); summaryIter != summaryProp.End(); summaryIter = summaryIter.Next() {
-		if summaryIter.IsXMLSchemaString() && summaryIter.GetXMLSchemaString() != "" {
-			return summaryIter.GetXMLSchemaString(), nil
+	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
 		}
 	}
 
@@ -232,9 +233,9 @@ func extractURL(i withURL) (*url.URL, error) {
 		return nil, errors.New("url property was nil")
 	}
 
-	for urlIter := urlProp.Begin(); urlIter != urlProp.End(); urlIter = urlIter.Next() {
-		if urlIter.IsIRI() && urlIter.GetIRI() != nil {
-			return urlIter.GetIRI(), nil
+	for iter := urlProp.Begin(); iter != urlProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
 		}
 	}
 
@@ -247,8 +248,8 @@ func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKe
 		return nil, nil, errors.New("public key property was nil")
 	}
 
-	for publicKeyIter := publicKeyProp.Begin(); publicKeyIter != publicKeyProp.End(); publicKeyIter = publicKeyIter.Next() {
-		pkey := publicKeyIter.Get()
+	for iter := publicKeyProp.Begin(); iter != publicKeyProp.End(); iter = iter.Next() {
+		pkey := iter.Get()
 		if pkey == nil {
 			continue
 		}
@@ -449,7 +450,79 @@ func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id for emoji")
 	}
-	emoji.URI = idProp.GetIRI().String()
+	uri := idProp.GetIRI()
+	emoji.URI = uri.String()
+	emoji.Domain = uri.Host
+
+	name, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+	emoji.Shortcode = strings.Trim(name, ":")
+
+	if i.GetActivityStreamsIcon() == nil {
+		return nil, errors.New("no icon for emoji")
+	}
+	imageURL, err := extractIconURL(i)
+	if err != nil {
+		return nil, errors.New("no url for emoji image")
+	}
+	emoji.ImageRemoteURL = imageURL.String()
 
 	return emoji, nil
+}
+
+func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
+	mentions := []*gtsmodel.Mention{}
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Mention" {
+			continue
+		}
+
+		mentionable, ok := t.(Mentionable)
+		if !ok {
+			continue
+		}
+
+		mention, err := extractMention(mentionable)
+		if err != nil {
+			continue
+		}
+
+		mentions = append(mentions, mention)
+	}
+	return mentions, nil
+}
+
+func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
+	mention := &gtsmodel.Mention{}
+
+	mentionString, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+
+	// just make sure the mention string is valid so we can handle it properly later on...
+	username, domain, err := util.ExtractMentionParts(mentionString)
+	if err != nil {
+		return nil, err
+	}
+	if username == "" || domain == "" {
+		return nil, errors.New("username or domain was empty")
+	}
+
+	// the href prop should be the URL of a user we know, eg https://example.org/@whatever_user
+	hrefProp := i.GetActivityStreamsHref()
+	if hrefProp == nil || !hrefProp.IsIRI() {
+		return nil, errors.New("no href prop")
+	}
+	mention.Href = hrefProp.GetIRI().String()
+
+	return mention, nil
 }

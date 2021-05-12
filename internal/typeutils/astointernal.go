@@ -185,9 +185,15 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 		status.GTSTags = hashtags
 	}
 
-	// emojis, err := extractEmojis(statusable)
+	emojis, err := extractEmojis(statusable)
+	if err == nil {
+		status.GTSEmojis = emojis
+	}
 
-	// mentions, err := extractMentions(statusable)
+	mentions, err := extractMentions(statusable)
+	if err == nil {
+		status.GTSMentions = mentions
+	}
 
 	cw, err := extractSummary(statusable)
 	if err == nil && cw != "" {

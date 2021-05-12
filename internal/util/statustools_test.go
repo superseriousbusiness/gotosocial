@@ -42,7 +42,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 	here is a duplicate mention: @hello@test.lgbt
 	`
 
-	menchies := util.DeriveMentions(statusText)
+	menchies := util.DeriveMentionsFromStatus(statusText)
 	assert.Len(suite.T(), menchies, 4)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
@@ -52,7 +52,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 	statusText := ``
-	menchies := util.DeriveMentions(statusText)
+	menchies := util.DeriveMentionsFromStatus(statusText)
 	assert.Len(suite.T(), menchies, 0)
 }
 
@@ -67,7 +67,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 
 #111111 thisalsoshouldn'twork#### ##`
 
-	tags := util.DeriveHashtags(statusText)
+	tags := util.DeriveHashtagsFromStatus(statusText)
 	assert.Len(suite.T(), tags, 5)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
@@ -90,7 +90,7 @@ Here's some normal text with an :emoji: at the end
 :underscores_ok_too:
 `
 
-	tags := util.DeriveEmojis(statusText)
+	tags := util.DeriveEmojisFromStatus(statusText)
 	assert.Len(suite.T(), tags, 7)
 	assert.Equal(suite.T(), "test", tags[0])
 	assert.Equal(suite.T(), "another", tags[1])
