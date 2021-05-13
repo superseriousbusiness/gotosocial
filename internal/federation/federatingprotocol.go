@@ -72,7 +72,6 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		return nil, err
 	}
 
-
 	ctxWithActivity := context.WithValue(ctx, util.APActivity, activity)
 	return ctxWithActivity, nil
 }
@@ -145,8 +144,9 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		requestingAccount = a
 	}
 
-	contextWithRequestingAccount := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
-	return contextWithRequestingAccount, true, nil
+	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
+	withRequested := context.WithValue(withRequester, util.APAccount, requestedAccount)
+	return withRequested, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by
@@ -163,8 +163,40 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // Finally, if the authentication and authorization succeeds, then
 // blocked must be false and error nil. The request will continue
 // to be processed.
+//
+// TODO: implement domain block checking here as well
 func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
-	// TODO
+	l := f.log.WithFields(logrus.Fields{
+		"func": "Blocked",
+	})
+	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
+
+	requestedAccountI := ctx.Value(util.APAccount)
+	requestedAccount, ok := requestedAccountI.(*gtsmodel.Account)
+	if !ok {
+		f.log.Errorf("requested account not set on request context")
+		return false, errors.New("requested account not set on request context, so couldn't determine blocks")
+	}
+
+	for _, uri := range actorIRIs {
+		a := &gtsmodel.Account{}
+		if err := f.db.GetWhere("uri", uri.String(), a); err != nil {
+			_, ok := err.(db.ErrNoEntries)
+			if ok {
+				// we don't have an entry for this account so it's not blocked
+				// TODO: allow a different default to be set for this behavior
+				continue
+			}
+			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
+		}
+		blocked, err := f.db.Blocked(requestedAccount.ID, a.ID)
+		if err != nil {
+			return false, fmt.Errorf("error checking account blocks: %s", err)
+		}
+		if blocked {
+			return true, nil
+		}
+	}
 	return false, nil
 }
 

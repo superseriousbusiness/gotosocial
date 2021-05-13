@@ -20,7 +20,10 @@ package message
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -194,6 +197,9 @@ func (p *processor) Start() error {
 				p.log.Infof("received message TO client API: %+v", clientMsg)
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
+				if err := p.processFromClientAPI(clientMsg); err != nil {
+					p.log.Error(err)
+				}
 			case federatorMsg := <-p.toFederator:
 				p.log.Infof("received message TO federator: %+v", federatorMsg)
 			case federatorMsg := <-p.fromFederator:
@@ -239,4 +245,55 @@ type FromFederator struct {
 	APObjectType   gtsmodel.ActivityStreamsObject
 	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}
+}
+
+func (p *processor) processFromClientAPI(clientMsg FromClientAPI) error {
+	switch clientMsg.APObjectType {
+	case gtsmodel.ActivityStreamsNote:
+		status, ok := clientMsg.Activity.(*gtsmodel.Status)
+		if !ok {
+			return errors.New("note was not parseable as *gtsmodel.Status")
+		}
+
+		if err := p.notifyStatus(status); err != nil {
+			return err
+		}
+
+		if status.VisibilityAdvanced.Federated {
+			return p.federateStatus(status)
+		}
+		return nil
+	}
+	return fmt.Errorf("message type unprocessable: %+v", clientMsg)
+}
+
+func (p *processor) federateStatus(status *gtsmodel.Status) error {
+	// derive the sending account -- it might be attached to the status already
+	sendingAcct := &gtsmodel.Account{}
+	if status.GTSAccount != nil {
+		sendingAcct = status.GTSAccount
+	} else {
+		// it wasn't attached so get it from the db instead
+		if err := p.db.GetByID(status.AccountID, sendingAcct); err != nil {
+			return err
+		}
+	}
+
+	outboxURI, err := url.Parse(sendingAcct.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// convert the status to AS format Note
+	note, err := p.tc.StatusToAS(status)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxURI, note)
+	return err
+}
+
+func (p *processor) notifyStatus(status *gtsmodel.Status) error {
+	return nil
 }
