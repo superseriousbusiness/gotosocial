@@ -82,9 +82,6 @@ func extractTos(i withTo) ([]*url.URL, error) {
 			}
 		}
 	}
-	if len(to) == 0 {
-		return nil, errors.New("found no to entries")
-	}
 	return to, nil
 }
 
@@ -97,9 +94,6 @@ func extractCCs(i withCC) ([]*url.URL, error) {
 				cc = append(cc, iter.GetIRI())
 			}
 		}
-	}
-	if len(cc) == 0 {
-		return nil, errors.New("found no cc entries")
 	}
 	return cc, nil
 }

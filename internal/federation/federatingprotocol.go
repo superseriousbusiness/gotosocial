@@ -72,8 +72,49 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		return nil, err
 	}
 
-	ctxWithActivity := context.WithValue(ctx, util.APActivity, activity)
-	return ctxWithActivity, nil
+	// derefence the actor of the activity already
+	// var requestingActorIRI *url.URL
+	// actorProp := activity.GetActivityStreamsActor()
+	// if actorProp != nil {
+	// 	for i := actorProp.Begin(); i != actorProp.End(); i = i.Next() {
+	// 		if i.IsIRI() {
+	// 			requestingActorIRI = i.GetIRI()
+	// 			break
+	// 		}
+	// 	}
+	// }
+	// if requestingActorIRI != nil {
+
+	// 	requestedAccountI := ctx.Value(util.APAccount)
+	// 	requestedAccount, ok := requestedAccountI.(*gtsmodel.Account)
+	// 	if !ok {
+	// 		return nil, errors.New("requested account was not set on request context")
+	// 	}
+
+	// 	requestingActor := &gtsmodel.Account{}
+	// 	if err := f.db.GetWhere("uri", requestingActorIRI.String(), requestingActor); err != nil {
+	// 		// there's been a proper error so return it
+	// 		if _, ok := err.(db.ErrNoEntries); !ok {
+	// 			return nil, fmt.Errorf("error getting requesting actor with id %s: %s", requestingActorIRI.String(), err)
+	// 		}
+
+	// 		// we don't know this account (yet) so let's dereference it right now
+	// 		person, err := f.DereferenceRemoteAccount(requestedAccount.Username, publicKeyOwnerURI)
+	// 		if err != nil {
+	// 			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
+	// 		}
+
+	// 		a, err := f.typeConverter.ASRepresentationToAccount(person)
+	// 		if err != nil {
+	// 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
+	// 		}
+	// 		requestingAccount = a
+	// 	}
+	// }
+
+	// set the activity on the context for use later on
+
+	return context.WithValue(ctx, util.APActivity, activity), nil
 }
 
 // AuthenticatePostInbox delegates the authentication of a POST to an
@@ -141,6 +182,11 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		if err != nil {
 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
 		}
+
+		if err := f.db.Put(a); err != nil {
+			l.Errorf("error inserting dereferenced remote account: %s", err)
+		}
+
 		requestingAccount = a
 	}
 

@@ -21,6 +21,8 @@ package typeutils
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -218,10 +220,11 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.APStatusOwnerURI = attributedTo.String()
 
 	statusOwner := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err == nil {
-		status.AccountID = statusOwner.ID
-		status.GTSAccount = statusOwner
+	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err != nil {
+		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
+	status.AccountID = statusOwner.ID
+	status.GTSAccount = statusOwner
 
 	// check if there's a post that this is a reply to
 	inReplyToURI, err := extractInReplyToURI(statusable)
@@ -248,10 +251,45 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	}
 
 	// visibility entry for this status
-	// TODO: if it's just got followers in TO and it's not CC'ed to public, it's followers only
-	// TODO: if it's CC'ed to public, it's public or unlocked
-	// TODO: if it's a DM then it's addressed to SPECIFIC ACCOUNTS and not followers or public
-	// TODO: mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
+	var visibility gtsmodel.Visibility
+
+	to, err := extractTos(statusable)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting TO values: %s", err)
+	}
+
+	cc, err := extractCCs(statusable)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting CC values: %s", err)
+	}
+
+	if len(to) == 0 && len(cc) == 0 {
+		return nil, errors.New("message wasn't TO or CC anyone")
+	}
+
+	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
+
+	// if it's a DM then it's addressed to SPECIFIC ACCOUNTS and not followers or public
+	if len(to) != 0 && len(cc) == 0 {
+		visibility = gtsmodel.VisibilityDirect
+	}
+
+	// if it's just got followers in TO and it's not also CC'ed to public, it's followers only
+	if isFollowers(to, statusOwner.FollowersURI) {
+		visibility = gtsmodel.VisibilityFollowersOnly
+	}
+
+	// if it's CC'ed to public, it's public or unlocked
+	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
+	if isPublic(to) {
+		visibility = gtsmodel.VisibilityPublic
+	}
+
+	// we should have a visibility by now
+	if visibility == "" {
+		return nil, errors.New("couldn't derive visibility")
+	}
+	status.Visibility = visibility
 
 	// advanced visibility for this status
 	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
@@ -262,7 +300,26 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	// language
 	// we might be able to extract this from the contentMap field
 
+	// ActivityStreamsType
 	status.ActivityStreamsType = gtsmodel.ActivityStreamsObject(statusable.GetTypeName())
 
 	return status, nil
+}
+
+func isPublic(tos []*url.URL) bool {
+	for _, entry := range tos {
+		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {
+			return true
+		}
+	}
+	return false
+}
+
+func isFollowers(ccs []*url.URL, followersURI string) bool {
+	for _, entry := range ccs {
+		if strings.EqualFold(entry.String(), followersURI) {
+			return true
+		}
+	}
+	return false
 }

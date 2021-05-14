@@ -359,16 +359,12 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 	)
 	l.Debugf("received CREATE asType %+v", asType)
 
-
-
-
 	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
 	case gtsmodel.ActivityStreamsCreate:
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
 			return errors.New("could not convert type to create")
 		}
-
 		object := create.GetActivityStreamsObject()
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
 			switch gtsmodel.ActivityStreamsObject(objectIter.GetType().GetTypeName()) {
@@ -383,6 +379,12 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 				}
 			}
 		}
+	case gtsmodel.ActivityStreamsFollow:
+		follow, ok := asType.(vocab.ActivityStreamsFollow)
+		if !ok {
+			return errors.New("could not convert type to follow")
+		}
+		
 	}
 	return nil
 }
