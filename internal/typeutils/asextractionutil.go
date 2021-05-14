@@ -519,3 +519,29 @@ func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	mention.MentionedAccountURI = hrefProp.GetIRI().String()
 	return mention, nil
 }
+
+func extractActor(i withActor) (*url.URL, error) {
+	actorProp := i.GetActivityStreamsActor()
+	if actorProp == nil {
+		return nil, errors.New("actor property was nil")
+	}
+	for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
+		}
+	}
+	return nil, errors.New("no iri found for actor prop")
+}
+
+func extractObject(i withObject) (*url.URL, error) {
+	objectProp := i.GetActivityStreamsObject()
+	if objectProp == nil {
+		return nil, errors.New("object property was nil")
+	}
+	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
+		}
+	}
+	return nil, errors.New("no iri found for object prop")
+}

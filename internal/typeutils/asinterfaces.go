@@ -95,6 +95,14 @@ type Mentionable interface {
 	withHref
 }
 
+type Followable interface {
+	withJSONLDId
+	withTypeName
+
+	withActor
+	withObject
+}
+
 type withJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }
@@ -217,4 +225,12 @@ type withHref interface {
 
 type withUpdated interface {
 	GetActivityStreamsUpdated() vocab.ActivityStreamsUpdatedProperty
+}
+
+type withActor interface {
+	GetActivityStreamsActor() vocab.ActivityStreamsActorProperty
+}
+
+type withObject interface {
+	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
 }

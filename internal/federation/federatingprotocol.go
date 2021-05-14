@@ -266,6 +266,37 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 // Applications are not expected to handle every single ActivityStreams
 // type and extension. The unhandled ones are passed to DefaultCallback.
 func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
+	l := f.log.WithFields(logrus.Fields{
+		"func": "FederatingCallbacks",
+	})
+
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		l.Error("target account wasn't set on context")
+	}
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("target account was set on context but couldn't be parsed")
+	}
+
+	var onFollow pub.OnFollowBehavior = pub.OnFollowAutomaticallyAccept
+	if targetAcct.Locked {
+		onFollow = pub.OnFollowDoNothing
+	}
+
+	wrapped = pub.FederatingWrappedCallbacks{
+		// Follow handles additional side effects for the Follow ActivityStreams
+		// type, specific to the application using go-fed.
+		//
+		// The wrapping function can have one of several default behaviors,
+		// depending on the value of the OnFollow setting.
+		Follow: func(context.Context, vocab.ActivityStreamsFollow) error {
+			return nil
+		},
+		// OnFollow determines what action to take for this particular callback
+		// if a Follow Activity is handled.
+		OnFollow: onFollow,
+	}
 
 	return
 }

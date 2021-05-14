@@ -81,6 +81,11 @@ type Processor interface {
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 
+	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
+	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, ErrorWithCode)
+	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
+	FollowRequestAccept(auth *oauth.Auth, accountID string) ErrorWithCode
+
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
 

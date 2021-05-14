@@ -307,6 +307,32 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
+func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) error {
+	fr := &gtsmodel.FollowRequest{}
+	if err := ps.conn.Model(fr).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Select(); err != nil {
+		if err == pg.ErrMultiRows {
+			return db.ErrNoEntries{}
+		}
+		return err
+	}
+
+	follow := &gtsmodel.Follow{
+		AccountID: originAccountID,
+		TargetAccountID: targetAccountID,
+		URI: fr.URI,
+	}
+
+	if _, err := ps.conn.Model(follow).Insert(); err != nil {
+		return err
+	}
+
+	if _, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Delete(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (ps *postgresService) CreateInstanceAccount() error {
 	username := ps.config.Host
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -393,7 +419,7 @@ func (ps *postgresService) GetLocalAccountByUsername(username string, account *g
 func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
 	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return nil
 		}
 		return err
 	}
@@ -403,7 +429,7 @@ func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, follo
 func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return nil
 		}
 		return err
 	}
@@ -413,7 +439,17 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
 	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (ps *postgresService) GetFavesByAccountID(accountID string, faves *[]gtsmodel.StatusFave) error {
+	if err := ps.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return nil
 		}
 		return err
 	}

@@ -306,6 +306,41 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	return status, nil
 }
 
+func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error) {
+
+	idProp := followable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("no id property set on follow, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	origin, err := extractActor(followable)
+	if err != nil {
+		return nil, errors.New("error extracting actor property from follow")
+	}
+	originAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere("uri", origin.String(), originAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	target, err := extractObject(followable)
+	if err != nil {
+		return nil, errors.New("error extracting object property from follow")
+	}
+	targetAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere("uri", target.String(), targetAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	followRequest := &gtsmodel.FollowRequest{
+		URI: uri,
+		AccountID: originAccount.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+
+	return followRequest, nil
+}
+
 func isPublic(tos []*url.URL) bool {
 	for _, entry := range tos {
 		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {

@@ -112,6 +112,8 @@ type DB interface {
 		HANDY SHORTCUTS
 	*/
 
+	AcceptFollowRequest(originAccountID string, targetAccountID string) error
+
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
 	// This is needed for things like serving files that belong to the instance and not an individual user/account.
@@ -147,6 +149,8 @@ type DB interface {
 	// The given slice 'followers' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
 	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error
+
+	GetFavesByAccountID(accountID string, faves *[]gtsmodel.StatusFave) error
 
 	// GetStatusesByAccountID is a shortcut for the common action of fetching a list of statuses produced by accountID.
 	// The given slice 'statuses' will be set to the result of the query, whatever it is.

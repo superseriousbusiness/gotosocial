@@ -28,6 +28,7 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -115,7 +116,7 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 			"id":   id.String(),
 		},
 	)
-	l.Debug("entering INBOXCONTAINS function")
+	l.Debugf("entering INBOXCONTAINS function with for inbox %s and id %s", inbox.String(), id.String())
 
 	if !util.IsInboxPath(inbox) {
 		return false, fmt.Errorf("%s is not an inbox URI", inbox.String())
@@ -152,6 +153,12 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "GetInbox",
+		},
+	)
+	l.Debugf("entering GETINBOX function with inboxIRI %s", inboxIRI.String())
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
@@ -161,6 +168,12 @@ func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox voc
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "SetInbox",
+		},
+	)
+	l.Debug("entering SETINBOX function")
 	return nil
 }
 
@@ -174,7 +187,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			"id":   id.String(),
 		},
 	)
-	l.Debug("entering OWNS function")
+	l.Debugf("entering OWNS function with id %s", id.String())
 
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
@@ -233,7 +246,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 			"inboxIRI": outboxIRI.String(),
 		},
 	)
-	l.Debug("entering ACTORFOROUTBOX function")
+	l.Debugf("entering ACTORFOROUTBOX function with outboxIRI %s", outboxIRI.String())
 
 	if !util.IsOutboxPath(outboxIRI) {
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
@@ -258,7 +271,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 			"inboxIRI": inboxIRI.String(),
 		},
 	)
-	l.Debug("entering ACTORFORINBOX function")
+	l.Debugf("entering ACTORFORINBOX function with inboxIRI %s", inboxIRI.String())
 
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
@@ -284,7 +297,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 			"inboxIRI": inboxIRI.String(),
 		},
 	)
-	l.Debug("entering OUTBOXFORINBOX function")
+	l.Debugf("entering OUTBOXFORINBOX function with inboxIRI %s", inboxIRI.String())
 
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
@@ -310,7 +323,7 @@ func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err 
 			"id":   id.String(),
 		},
 	)
-	l.Debug("entering EXISTS function")
+	l.Debugf("entering EXISTS function with id %s", id.String())
 
 	return false, nil
 }
@@ -384,7 +397,15 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 		if !ok {
 			return errors.New("could not convert type to follow")
 		}
-		
+
+		followRequest, err := f.typeConverter.ASFollowToFollowRequest(follow)
+		if err != nil {
+			return fmt.Errorf("could not convert Follow to follow request: %s", err)
+		}
+
+		if err := f.db.Put(followRequest); err != nil {
+			return fmt.Errorf("database error inserting follow request: %s", err)
+		}
 	}
 	return nil
 }
@@ -431,6 +452,13 @@ func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "GetOutbox",
+		},
+	)
+	l.Debug("entering GETOUTBOX function")
+
 	return nil, nil
 }
 
@@ -440,6 +468,13 @@ func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox v
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "SetOutbox",
+		},
+	)
+	l.Debug("entering SETOUTBOX function")
+
 	return nil
 }
 
@@ -450,7 +485,6 @@ func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreams
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
-
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "NewID",
@@ -458,7 +492,8 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 		},
 	)
 	l.Debugf("received NEWID request for asType %+v", t)
-	return nil, nil
+
+	return url.Parse(fmt.Sprintf("%s://%s/", f.config.Protocol, uuid.NewString()))
 }
 
 // Followers obtains the Followers Collection for an actor with the
@@ -468,7 +503,39 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Followers",
+			"actorIRI":   actorIRI.String(),
+		},
+	)
+	l.Debugf("entering FOLLOWERS function with actorIRI %s", actorIRI.String())
+
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+	}
+
+	acctFollowers := []gtsmodel.Follow{}
+	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers); err != nil {
+		return nil, fmt.Errorf("db error getting followers for account id %s: %s", acct.ID, err)
+	}
+
+	followers = streams.NewActivityStreamsCollection()
+	items := streams.NewActivityStreamsItemsProperty()
+	for _, follow := range acctFollowers {
+		gtsFollower := &gtsmodel.Account{}
+		if err := f.db.GetByID(follow.AccountID, gtsFollower); err != nil {
+			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+		}
+		uri, err := url.Parse(gtsFollower.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollower.URI, err)
+		}
+		items.AppendIRI(uri)
+	}
+	followers.SetActivityStreamsItems(items)
+	return
 }
 
 // Following obtains the Following Collection for an actor with the
@@ -477,8 +544,40 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
+func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Following",
+			"actorIRI":   actorIRI.String(),
+		},
+	)
+	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
+
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+	}
+
+	acctFollowing := []gtsmodel.Follow{}
+	if err := f.db.GetFollowingByAccountID(acct.ID, &acctFollowing); err != nil {
+		return nil, fmt.Errorf("db error getting following for account id %s: %s", acct.ID, err)
+	}
+
+	following = streams.NewActivityStreamsCollection()
+	items := streams.NewActivityStreamsItemsProperty()
+	for _, follow := range acctFollowing {
+		gtsFollowing := &gtsmodel.Account{}
+		if err := f.db.GetByID(follow.AccountID, gtsFollowing); err != nil {
+			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+		}
+		uri, err := url.Parse(gtsFollowing.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollowing.URI, err)
+		}
+		items.AppendIRI(uri)
+	}
+	following.SetActivityStreamsItems(items)
+	return
 }
 
 // Liked obtains the Liked Collection for an actor with the
@@ -487,6 +586,13 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (follower
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.ActivityStreamsCollection, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Liked",
+			"actorIRI":   actorIRI.String(),
+		},
+	)
+	l.Debugf("entering LIKED function with actorIRI %s", actorIRI.String())
 	return nil, nil
 }
