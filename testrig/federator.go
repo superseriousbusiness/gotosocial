@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+// NewTestFederator returns a federator with the given database and (mock!!) transport controller.
 func NewTestFederator(db db.DB, tc transport.Controller) federation.Federator {
 	return federation.NewFederator(db, tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db))
 }

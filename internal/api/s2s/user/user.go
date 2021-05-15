@@ -38,7 +38,8 @@ const (
 	// Use this anywhere you need to know the username of the user being queried.
 	// Eg https://example.org/users/:username
 	UsersBasePathWithUsername = UsersBasePath + "/:" + UsernameKey
-	UsersInboxPath            = UsersBasePathWithUsername + "/" + util.InboxPath
+	// UsersInboxPath is for serving POST requests to a user's inbox with the given username key.
+	UsersInboxPath = UsersBasePathWithUsername + "/" + util.InboxPath
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:

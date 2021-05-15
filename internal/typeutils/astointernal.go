@@ -333,8 +333,8 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 	}
 
 	followRequest := &gtsmodel.FollowRequest{
-		URI: uri,
-		AccountID: originAccount.ID,
+		URI:             uri,
+		AccountID:       originAccount.ID,
 		TargetAccountID: targetAccount.ID,
 	}
 

@@ -28,11 +28,11 @@ type AttachmentRequest struct {
 	Focus       string                `form:"focus"`
 }
 
-// AttachmentRequest represents the form data parameters submitted by a client during a media update/PUT request.
+// AttachmentUpdateRequest represents the form data parameters submitted by a client during a media update/PUT request.
 // See: https://docs.joinmastodon.org/methods/statuses/media/
 type AttachmentUpdateRequest struct {
-	Description *string                `form:"description" json:"description" xml:"description"`
-	Focus       *string                `form:"focus" json:"focus" xml:"focus"`
+	Description *string `form:"description" json:"description" xml:"description"`
+	Focus       *string `form:"focus" json:"focus" xml:"focus"`
 }
 
 // Attachment represents the object returned to a client after a successful media upload request.

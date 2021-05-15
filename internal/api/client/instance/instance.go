@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// InstanceInformationPath
+	// InstanceInformationPath is for serving instance info requests
 	InstanceInformationPath = "api/v1/instance"
 )
 

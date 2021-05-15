@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	// The base path for serving webfinger lookup requests
+	// WebfingerBasePath is the base path for serving webfinger lookup requests
 	WebfingerBasePath = ".well-known/webfinger"
 )
 

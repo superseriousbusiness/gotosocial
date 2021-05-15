@@ -1037,6 +1037,7 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
+// ActivityWithSignature wraps a pub.Activity along with its signature headers, for testing.
 type ActivityWithSignature struct {
 	Activity        pub.Activity
 	SignatureHeader string
@@ -1076,11 +1077,11 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 
 // NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
 func NewTestFediPeople() map[string]typeutils.Accountable {
-	new_person_1priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	newPerson1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
-	new_person_1pub := &new_person_1priv.PublicKey
+	newPerson1Pub := &newPerson1Priv.PublicKey
 
 	return map[string]typeutils.Accountable{
 		"new_person_1": newPerson(
@@ -1096,7 +1097,7 @@ func NewTestFediPeople() map[string]typeutils.Accountable {
 			URLMustParse("https://unknown-instance.com/@brand_new_person"),
 			true,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
-			new_person_1pub,
+			newPerson1Pub,
 			URLMustParse("https://unknown-instance.com/media/some_avatar_filename.jpeg"),
 			"image/jpeg",
 			URLMustParse("https://unknown-instance.com/media/some_header_filename.jpeg"),
@@ -1105,6 +1106,7 @@ func NewTestFediPeople() map[string]typeutils.Accountable {
 	}
 }
 
+// NewTestDereferenceRequests returns a map of incoming dereference requests, with their signatures.
 func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	sig, digest, date := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
 	return map[string]ActivityWithSignature{

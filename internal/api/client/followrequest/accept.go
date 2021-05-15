@@ -25,6 +25,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// FollowRequestAcceptPOSTHandler deals with follow request accepting. It should be served at
+// /api/v1/follow_requests/:id/authorize
 func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

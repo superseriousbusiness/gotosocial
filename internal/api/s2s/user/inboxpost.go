@@ -26,6 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/message"
 )
 
+// InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
+// Eg., POST to https://example.org/users/whatever/inbox.
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func": "InboxPOSTHandler",

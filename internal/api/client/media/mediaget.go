@@ -43,7 +43,7 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 
 	attachment, errWithCode := m.processor.MediaGet(authed, attachmentID)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(),gin.H{"error":  errWithCode.Safe()})
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

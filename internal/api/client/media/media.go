@@ -33,8 +33,10 @@ import (
 
 // BasePath is the base API path for making media requests
 const BasePath = "/api/v1/media"
+
 // IDKey is the key for media attachment IDs
 const IDKey = "id"
+
 // BasePathWithID corresponds to a media attachment with the given ID
 const BasePathWithID = BasePath + "/:" + IDKey
 

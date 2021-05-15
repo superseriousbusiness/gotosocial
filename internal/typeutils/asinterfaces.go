@@ -95,6 +95,7 @@ type Mentionable interface {
 	withHref
 }
 
+// Followable represents the minimum interface for an activitystreams 'follow' activity.
 type Followable interface {
 	withJSONLDId
 	withTypeName

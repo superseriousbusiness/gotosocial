@@ -20,6 +20,8 @@ package followrequest
 
 import "github.com/gin-gonic/gin"
 
+// FollowRequestDenyPOSTHandler deals with follow request rejection. It should be served at
+// /api/v1/follow_requests/:id/reject
 func (m *Module) FollowRequestDenyPOSTHandler(c *gin.Context) {
 
 }

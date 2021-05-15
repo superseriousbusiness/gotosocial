@@ -317,9 +317,9 @@ func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAcc
 	}
 
 	follow := &gtsmodel.Follow{
-		AccountID: originAccountID,
+		AccountID:       originAccountID,
 		TargetAccountID: targetAccountID,
-		URI: fr.URI,
+		URI:             fr.URI,
 	}
 
 	if _, err := ps.conn.Model(follow).Insert(); err != nil {

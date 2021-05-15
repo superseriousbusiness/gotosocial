@@ -47,6 +47,7 @@ type federatingDB struct {
 	typeConverter typeutils.TypeConverter
 }
 
+// NewFederatingDB returns a pub.Database interface using the given database, config, and logger.
 func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) pub.Database {
 	return &federatingDB{
 		locks:         new(sync.Map),
@@ -505,8 +506,8 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "Followers",
-			"actorIRI":   actorIRI.String(),
+			"func":     "Followers",
+			"actorIRI": actorIRI.String(),
 		},
 	)
 	l.Debugf("entering FOLLOWERS function with actorIRI %s", actorIRI.String())
@@ -547,8 +548,8 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "Following",
-			"actorIRI":   actorIRI.String(),
+			"func":     "Following",
+			"actorIRI": actorIRI.String(),
 		},
 	)
 	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
@@ -589,8 +590,8 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func": "Liked",
-			"actorIRI":   actorIRI.String(),
+			"func":     "Liked",
+			"actorIRI": actorIRI.String(),
 		},
 	)
 	l.Debugf("entering LIKED function with actorIRI %s", actorIRI.String())

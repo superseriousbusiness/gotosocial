@@ -26,7 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const DBTypePostgres string = "POSTGRES"
+const (
+	// DBTypePostgres represents an underlying POSTGRES database type.
+	DBTypePostgres string = "POSTGRES"
+)
 
 // ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
@@ -112,6 +115,8 @@ type DB interface {
 		HANDY SHORTCUTS
 	*/
 
+	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
+	// In other words, it should create the follow, and delete the existing follow request.
 	AcceptFollowRequest(originAccountID string, targetAccountID string) error
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
@@ -150,6 +155,9 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error
 
+	// GetFavesByAccountID is a shortcut for the common action of fetching a list of faves made by the given accountID.
+	// The given slice 'faves' will be set to the result of the query, whatever it is.
+	// In case of no entries, a 'no entries' error will be returned
 	GetFavesByAccountID(accountID string, faves *[]gtsmodel.StatusFave) error
 
 	// GetStatusesByAccountID is a shortcut for the common action of fetching a list of statuses produced by accountID.

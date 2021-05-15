@@ -42,7 +42,7 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	form := &tokenBody{}
 	if err := c.ShouldBind(form); err == nil {
-      c.Request.Form = url.Values{}
+		c.Request.Form = url.Values{}
 		if form.ClientID != nil {
 			c.Request.Form.Set("client_id", *form.ClientID)
 		}
