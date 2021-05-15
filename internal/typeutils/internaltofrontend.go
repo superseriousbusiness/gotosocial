@@ -20,6 +20,7 @@ package typeutils
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -195,7 +196,7 @@ func (c *converter) AppToMastoPublic(a *gtsmodel.Application) (*model.Applicatio
 func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (model.Attachment, error) {
 	return model.Attachment{
 		ID:               a.ID,
-		Type:             string(a.Type),
+		Type:             strings.ToLower(string(a.Type)),
 		URL:              a.URL,
 		PreviewURL:       a.Thumbnail.URL,
 		RemoteURL:        a.RemoteURL,

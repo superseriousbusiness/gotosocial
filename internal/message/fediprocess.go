@@ -60,7 +60,7 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 	}
 
 	// put it in our channel to queue it for async processing
-	p.FromFederator() <- FromFederator{
+	p.FromFederator() <- gtsmodel.FromFederator{
 		APObjectType:   gtsmodel.ActivityStreamsProfile,
 		APActivityType: gtsmodel.ActivityStreamsCreate,
 		Activity:       requestingAccount,

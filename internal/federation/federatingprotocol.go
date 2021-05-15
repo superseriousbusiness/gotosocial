@@ -71,49 +71,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		l.Debug(err)
 		return nil, err
 	}
-
-	// derefence the actor of the activity already
-	// var requestingActorIRI *url.URL
-	// actorProp := activity.GetActivityStreamsActor()
-	// if actorProp != nil {
-	// 	for i := actorProp.Begin(); i != actorProp.End(); i = i.Next() {
-	// 		if i.IsIRI() {
-	// 			requestingActorIRI = i.GetIRI()
-	// 			break
-	// 		}
-	// 	}
-	// }
-	// if requestingActorIRI != nil {
-
-	// 	requestedAccountI := ctx.Value(util.APAccount)
-	// 	requestedAccount, ok := requestedAccountI.(*gtsmodel.Account)
-	// 	if !ok {
-	// 		return nil, errors.New("requested account was not set on request context")
-	// 	}
-
-	// 	requestingActor := &gtsmodel.Account{}
-	// 	if err := f.db.GetWhere("uri", requestingActorIRI.String(), requestingActor); err != nil {
-	// 		// there's been a proper error so return it
-	// 		if _, ok := err.(db.ErrNoEntries); !ok {
-	// 			return nil, fmt.Errorf("error getting requesting actor with id %s: %s", requestingActorIRI.String(), err)
-	// 		}
-
-	// 		// we don't know this account (yet) so let's dereference it right now
-	// 		person, err := f.DereferenceRemoteAccount(requestedAccount.Username, publicKeyOwnerURI)
-	// 		if err != nil {
-	// 			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
-	// 		}
-
-	// 		a, err := f.typeConverter.ASRepresentationToAccount(person)
-	// 		if err != nil {
-	// 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
-	// 		}
-	// 		requestingAccount = a
-	// 	}
-	// }
-
 	// set the activity on the context for use later on
-
 	return context.WithValue(ctx, util.APActivity, activity), nil
 }
 
@@ -285,14 +243,6 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 	}
 
 	wrapped = pub.FederatingWrappedCallbacks{
-		// Follow handles additional side effects for the Follow ActivityStreams
-		// type, specific to the application using go-fed.
-		//
-		// The wrapping function can have one of several default behaviors,
-		// depending on the value of the OnFollow setting.
-		Follow: func(context.Context, vocab.ActivityStreamsFollow) error {
-			return nil
-		},
 		// OnFollow determines what action to take for this particular callback
 		// if a Follow Activity is handled.
 		OnFollow: onFollow,

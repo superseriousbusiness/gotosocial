@@ -82,7 +82,7 @@ func (p *processor) StatusCreate(auth *oauth.Auth, form *apimodel.AdvancedStatus
 	}
 
 	// put the new status in the appropriate channel for async processing
-	p.fromClientAPI <- FromClientAPI{
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   newStatus.ActivityStreamsType,
 		APActivityType: gtsmodel.ActivityStreamsCreate,
 		Activity:       newStatus,

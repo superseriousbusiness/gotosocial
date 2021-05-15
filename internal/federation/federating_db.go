@@ -364,7 +364,7 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 //
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
-func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
+func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "Create",
@@ -372,6 +372,24 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 		},
 	)
 	l.Debugf("received CREATE asType %+v", asType)
+
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		l.Error("target account wasn't set on context")
+	}
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("target account was set on context but couldn't be parsed")
+	}
+
+	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	if fromFederatorChanI == nil {
+		l.Error("from federator channel wasn't set on context")
+	}
+	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	if !ok {
+		l.Error("from federator channel was set on context but couldn't be parsed")
+	}
 
 	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
 	case gtsmodel.ActivityStreamsCreate:
@@ -391,6 +409,12 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 				if err := f.db.Put(status); err != nil {
 					return fmt.Errorf("database error inserting status: %s", err)
 				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType: gtsmodel.ActivityStreamsNote,
+					APActivityType: gtsmodel.ActivityStreamsCreate,
+					Activity: status,
+				}
 			}
 		}
 	case gtsmodel.ActivityStreamsFollow:
@@ -406,6 +430,12 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 
 		if err := f.db.Put(followRequest); err != nil {
 			return fmt.Errorf("database error inserting follow request: %s", err)
+		}
+
+		if !targetAcct.Locked {
+			if err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
+				return fmt.Errorf("database error accepting follow request: %s", err)
+			}
 		}
 	}
 	return nil

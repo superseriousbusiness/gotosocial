@@ -32,6 +32,8 @@ import (
 )
 
 const (
+	// LimitKey is for setting the return amount limit for eg., requesting an account's statuses
+	LimitKey = "limit"
 	// IDKey is the key to use for retrieving account ID in requests
 	IDKey = "id"
 	// BasePath is the base API path for this module
@@ -42,6 +44,8 @@ const (
 	VerifyPath = BasePath + "/verify_credentials"
 	// UpdateCredentialsPath is for updating account credentials
 	UpdateCredentialsPath = BasePath + "/update_credentials"
+	// GetStatusesPath is for showing an account's statuses
+	GetStatusesPath = BasePathWithID + "/statuses"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -65,6 +69,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, BasePath, m.AccountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
 	return nil
 }
 

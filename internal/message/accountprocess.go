@@ -166,3 +166,67 @@ func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCrede
 	}
 	return acctSensitive, nil
 }
+
+func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int) ([]apimodel.Status, ErrorWithCode) {
+	targetAccount := &gtsmodel.Account{}
+	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return nil, NewErrorNotFound(fmt.Errorf("no entry found for account id %s", targetAccountID))
+		}
+		return nil, NewErrorInternalError(err)
+	}
+
+	statuses := []gtsmodel.Status{}
+	apiStatuses := []apimodel.Status{}
+	if err := p.db.GetStatusesByTimeDescending(targetAccountID, &statuses, limit); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return apiStatuses, nil
+		}
+		return nil, NewErrorInternalError(err)
+	}
+
+	for _, s := range statuses {
+		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(&s)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+
+		visible, err := p.db.StatusVisible(&s, targetAccount, authed.Account, relevantAccounts)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+		if !visible {
+			continue
+		}
+
+		var boostedStatus *gtsmodel.Status
+		if s.BoostOfID != "" {
+			bs := &gtsmodel.Status{}
+			if err := p.db.GetByID(s.BoostOfID, bs); err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+			boostedRelevantAccounts, err := p.db.PullRelevantAccountsFromStatus(bs)
+			if err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+
+			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
+			if err != nil {
+				return nil, NewErrorInternalError(err)
+			}
+
+			if boostedVisible {
+				boostedStatus = bs
+			}
+		}
+
+		apiStatus, err := p.tc.StatusToMasto(&s, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostedStatus)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+
+		apiStatuses = append(apiStatuses, *apiStatus)
+	}
+
+	return apiStatuses, nil
+}
