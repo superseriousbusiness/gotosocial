@@ -8,7 +8,13 @@ Contributions are welcome at this point, since the API is fairly stable now and 
 
 Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to see if there's anything you fancy jumping in on.
 
+## Communications
+
 Before starting on something, please comment on an issue to say that you're working on it, and send a message to `@dumpsterqueer@ondergrond.org` (Mastodon) to let them know.
+
+You can also drop into the GoToSocial Matrix room [here](https://matrix.to/#/!mdShFtfScQvVSmjIKX:ondergrond.org?via=ondergrond.org).
+
+This is the recommended way of keeping in touch with other developers, asking direct questions about code, and letting everyone know what you're up to.
 
 ## Setting up your development environment
 
@@ -75,6 +81,8 @@ To run the linter, use:
 ```bash
 golint ./...
 ```
+
+
 
 ## Financial Compensation
 
