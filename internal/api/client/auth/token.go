@@ -20,9 +20,18 @@ package auth
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 )
+
+type tokenBody struct {
+	ClientID     *string `form:"client_id" json:"client_id" xml:"client_id"`
+	ClientSecret *string `form:"client_secret" json:"client_secret" xml:"client_secret"`
+	Code         *string `form:"code" json:"code" xml:"code"`
+	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
+	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
+}
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
@@ -30,6 +39,27 @@ import (
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
+
+	form := &tokenBody{}
+	if err := c.ShouldBind(form); err == nil {
+		c.Request.Form = url.Values{}
+		if form.ClientID != nil {
+			c.Request.Form.Set("client_id", *form.ClientID)
+		}
+		if form.ClientSecret != nil {
+			c.Request.Form.Set("client_secret", *form.ClientSecret)
+		}
+		if form.Code != nil {
+			c.Request.Form.Set("code", *form.Code)
+		}
+		if form.GrantType != nil {
+			c.Request.Form.Set("grant_type", *form.GrantType)
+		}
+		if form.RedirectURI != nil {
+			c.Request.Form.Set("redirect_uri", *form.RedirectURI)
+		}
+	}
+
 	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}

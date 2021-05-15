@@ -37,6 +37,7 @@ func (c *Clock) Now() time.Time {
 	return time.Now()
 }
 
+// NewClock returns a simple pub.Clock for use in federation interfaces.
 func NewClock() pub.Clock {
 	return &Clock{}
 }

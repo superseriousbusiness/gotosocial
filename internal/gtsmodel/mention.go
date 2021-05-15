@@ -30,10 +30,22 @@ type Mention struct {
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this mention last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Who created this mention?
+	// What's the internal account ID of the originator of the mention?
 	OriginAccountID string `pg:",notnull"`
-	// Who does this mention target?
+	// What's the AP URI of the originator of the mention?
+	OriginAccountURI string `pg:",notnull"`
+	// What's the internal account ID of the mention target?
 	TargetAccountID string `pg:",notnull"`
 	// Prevent this mention from generating a notification?
 	Silent bool
+	// NameString is for putting in the namestring of the mentioned user
+	// before the mention is dereferenced. Should be in a form along the lines of:
+	// @whatever_username@example.org
+	//
+	// This will not be put in the database, it's just for convenience.
+	NameString string `pg:"-"`
+	// MentionedAccountURI is the AP ID (uri) of the user mentioned.
+	//
+	// This will not be put in the database, it's just for convenience.
+	MentionedAccountURI string `pg:"-"`
 }

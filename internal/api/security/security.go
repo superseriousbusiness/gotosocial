@@ -42,5 +42,6 @@ func New(config *config.Config, log *logrus.Logger) api.ClientModule {
 // Route attaches security middleware to the given router
 func (m *Module) Route(s router.Router) error {
 	s.AttachMiddleware(m.FlocBlock)
+	s.AttachMiddleware(m.ExtraHeaders)
 	return nil
 }

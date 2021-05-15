@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"golang.org/x/crypto/bcrypt"
@@ -103,7 +104,7 @@ func (suite *AuthTestSuite) SetupTest() {
 
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
-	db, err := db.NewPostgresService(context.Background(), suite.config, log)
+	db, err := pg.NewPostgresService(context.Background(), suite.config, log)
 	if err != nil {
 		logrus.Panicf("error creating database connection: %s", err)
 	}

@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
@@ -41,7 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -78,7 +79,7 @@ var models []interface{} = []interface{}{
 
 // Run creates and starts a gotosocial server
 var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := db.NewPostgresService(ctx, c, log)
+	dbService, err := pg.NewPostgresService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -111,6 +112,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	accountModule := account.New(c, processor, log)
 	instanceModule := instance.New(c, processor, log)
 	appsModule := app.New(c, processor, log)
+	followRequestsModule := followrequest.New(c, processor, log)
 	webfingerModule := webfinger.New(c, processor, log)
 	usersModule := user.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)
@@ -128,6 +130,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		accountModule,
 		instanceModule,
 		appsModule,
+		followRequestsModule,
 		mm,
 		fileServerModule,
 		adminModule,

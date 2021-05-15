@@ -19,7 +19,11 @@
 package message
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -77,6 +81,11 @@ type Processor interface {
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 
+	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
+	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, ErrorWithCode)
+	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
+	FollowRequestAccept(auth *oauth.Auth, accountID string) ErrorWithCode
+
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
 
@@ -116,6 +125,18 @@ type Processor interface {
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode)
+
+	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
+	//
+	// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.
+	// If false, the request was not an ActivityPub request and may still be handled by the caller in another way, such as serving a web page.
+	//
+	// If the error is nil, then the ResponseWriter's headers and response has already been written. If a non-nil error is returned, then no response has been written.
+	//
+	// If the Actor was constructed with the Federated Protocol enabled, side effects will occur.
+	//
+	// If the Federated Protocol is not enabled, writes the http.StatusMethodNotAllowed status code in the response. No side effects occur.
+	InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error)
 }
 
 // processor just implements the Processor interface
@@ -181,6 +202,9 @@ func (p *processor) Start() error {
 				p.log.Infof("received message TO client API: %+v", clientMsg)
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
+				if err := p.processFromClientAPI(clientMsg); err != nil {
+					p.log.Error(err)
+				}
 			case federatorMsg := <-p.toFederator:
 				p.log.Infof("received message TO federator: %+v", federatorMsg)
 			case federatorMsg := <-p.fromFederator:
@@ -226,4 +250,55 @@ type FromFederator struct {
 	APObjectType   gtsmodel.ActivityStreamsObject
 	APActivityType gtsmodel.ActivityStreamsActivity
 	Activity       interface{}
+}
+
+func (p *processor) processFromClientAPI(clientMsg FromClientAPI) error {
+	switch clientMsg.APObjectType {
+	case gtsmodel.ActivityStreamsNote:
+		status, ok := clientMsg.Activity.(*gtsmodel.Status)
+		if !ok {
+			return errors.New("note was not parseable as *gtsmodel.Status")
+		}
+
+		if err := p.notifyStatus(status); err != nil {
+			return err
+		}
+
+		if status.VisibilityAdvanced.Federated {
+			return p.federateStatus(status)
+		}
+		return nil
+	}
+	return fmt.Errorf("message type unprocessable: %+v", clientMsg)
+}
+
+func (p *processor) federateStatus(status *gtsmodel.Status) error {
+	// derive the sending account -- it might be attached to the status already
+	sendingAcct := &gtsmodel.Account{}
+	if status.GTSAccount != nil {
+		sendingAcct = status.GTSAccount
+	} else {
+		// it wasn't attached so get it from the db instead
+		if err := p.db.GetByID(status.AccountID, sendingAcct); err != nil {
+			return err
+		}
+	}
+
+	outboxURI, err := url.Parse(sendingAcct.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// convert the status to AS format Note
+	note, err := p.tc.StatusToAS(status)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxURI, note)
+	return err
+}
+
+func (p *processor) notifyStatus(status *gtsmodel.Status) error {
+	return nil
 }

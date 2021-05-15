@@ -58,9 +58,15 @@ const (
 	// APAccount can be used the set and retrieve the account being interacted with
 	APAccount APContextKey = "account"
 	// APRequestingAccount can be used to set and retrieve the account of an incoming federation request.
+	// This will often be the actor of the instance that's posting the request.
 	APRequestingAccount APContextKey = "requestingAccount"
+	// APRequestingActorIRI can be used to set and retrieve the actor of an incoming federation request.
+	// This will usually be the owner of whatever activity is being posted.
+	APRequestingActorIRI APContextKey = "requestingActorIRI"
 	// APRequestingPublicKeyID can be used to set and retrieve the public key ID of an incoming federation request.
 	APRequestingPublicKeyID APContextKey = "requestingPublicKeyID"
+	// APFromFederatorChanKey can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
+	APFromFederatorChanKey APContextKey = "fromFederatorChan"
 )
 
 type ginContextKey struct{}

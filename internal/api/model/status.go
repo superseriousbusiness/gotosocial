@@ -119,11 +119,15 @@ const (
 	VisibilityDirect Visibility = "direct"
 )
 
+// AdvancedStatusCreateForm wraps the mastodon status create form along with the GTS advanced
+// visibility settings.
 type AdvancedStatusCreateForm struct {
 	StatusCreateRequest
 	AdvancedVisibilityFlagsForm
 }
 
+// AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
+// to the standard mastodon-compatible ones.
 type AdvancedVisibilityFlagsForm struct {
 	// The gotosocial visibility model
 	VisibilityAdvanced *string `form:"visibility_advanced"`

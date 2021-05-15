@@ -19,17 +19,18 @@
 package util
 
 import (
+	"fmt"
 	"strings"
 )
 
-// DeriveMentions takes a plaintext (ie., not html-formatted) status,
+// DeriveMentionsFromStatus takes a plaintext (ie., not html-formatted) status,
 // and applies a regex to it to return a deduplicated list of accounts
 // mentioned in that status.
 //
 // It will look for fully-qualified account names in the form "@user@example.org".
 // or the form "@username" for local users.
 // The case of the returned mentions will be lowered, for consistency.
-func DeriveMentions(status string) []string {
+func DeriveMentionsFromStatus(status string) []string {
 	mentionedAccounts := []string{}
 	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
@@ -37,11 +38,11 @@ func DeriveMentions(status string) []string {
 	return lower(unique(mentionedAccounts))
 }
 
-// DeriveHashtags takes a plaintext (ie., not html-formatted) status,
+// DeriveHashtagsFromStatus takes a plaintext (ie., not html-formatted) status,
 // and applies a regex to it to return a deduplicated list of hashtags
 // used in that status, without the leading #. The case of the returned
 // tags will be lowered, for consistency.
-func DeriveHashtags(status string) []string {
+func DeriveHashtagsFromStatus(status string) []string {
 	tags := []string{}
 	for _, m := range hashtagFinderRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, m[1])
@@ -49,16 +50,31 @@ func DeriveHashtags(status string) []string {
 	return lower(unique(tags))
 }
 
-// DeriveEmojis takes a plaintext (ie., not html-formatted) status,
+// DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
 // and applies a regex to it to return a deduplicated list of emojis
 // used in that status, without the surround ::. The case of the returned
 // emojis will be lowered, for consistency.
-func DeriveEmojis(status string) []string {
+func DeriveEmojisFromStatus(status string) []string {
 	emojis := []string{}
 	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
 	return lower(unique(emojis))
+}
+
+// ExtractMentionParts extracts the username test_user and the domain example.org
+// from a mention string like @test_user@example.org.
+//
+// If nothing is matched, it will return an error.
+func ExtractMentionParts(mention string) (username, domain string, err error) {
+	matches := mentionNameRegex.FindStringSubmatch(mention)
+	if matches == nil || len(matches) != 3 {
+		err = fmt.Errorf("could't match mention %s", mention)
+		return
+	}
+	username = matches[1]
+	domain = matches[2]
+	return
 }
 
 // unique returns a deduplicated version of a given string slice.

@@ -1,6 +1,7 @@
 package message
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // authenticateAndDereferenceFediRequest authenticates the HTTP signature of an incoming federation request, using the given
@@ -129,4 +131,10 @@ func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.
 			},
 		},
 	}, nil
+}
+
+func (p *processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
+	contextWithChannel := context.WithValue(ctx, util.APFromFederatorChanKey, p.fromFederator)
+	posted, err := p.federator.FederatingActor().PostInbox(contextWithChannel, w, r)
+	return posted, err
 }

@@ -1,12 +1,3 @@
-package media
-
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-)
-
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
@@ -25,9 +16,18 @@ import (
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// MediaGETHandler allows the owner of an attachment to get information about that attachment before it's used in a status.
-func (m *Module) MediaGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "MediaGETHandler")
+package followrequest
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// FollowRequestGETHandler allows clients to get a list of their incoming follow requests.
+func (m *Module) FollowRequestGETHandler(c *gin.Context) {
+	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
@@ -35,17 +35,17 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 		return
 	}
 
-	attachmentID := c.Param(IDKey)
-	if attachmentID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no attachment ID given in request"})
+	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
+		l.Debugf("couldn't auth: %s", err)
+		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
 		return
 	}
 
-	attachment, errWithCode := m.processor.MediaGet(authed, attachmentID)
+	accts, errWithCode := m.processor.FollowRequestsGet(authed)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, attachment)
+	c.JSON(http.StatusOK, accts)
 }

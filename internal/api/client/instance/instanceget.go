@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// InstanceInformationGETHandler is for serving instance information at /api/v1/instance
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "InstanceInformationGETHandler")
 

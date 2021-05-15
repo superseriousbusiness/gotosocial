@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package db
+package federation
 
 import (
 	"context"
@@ -26,28 +26,35 @@ import (
 	"sync"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
-	locks  *sync.Map
-	db     DB
-	config *config.Config
-	log    *logrus.Logger
+	locks         *sync.Map
+	db            db.DB
+	config        *config.Config
+	log           *logrus.Logger
+	typeConverter typeutils.TypeConverter
 }
 
-func NewFederatingDB(db DB, config *config.Config, log *logrus.Logger) pub.Database {
+// NewFederatingDB returns a pub.Database interface using the given database, config, and logger.
+func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) pub.Database {
 	return &federatingDB{
-		locks:  new(sync.Map),
-		db:     db,
-		config: config,
-		log:    log,
+		locks:         new(sync.Map),
+		db:            db,
+		config:        config,
+		log:           log,
+		typeConverter: typeutils.NewConverter(config, db),
 	}
 }
 
@@ -104,30 +111,42 @@ func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "InboxContains",
+			"id":   id.String(),
+		},
+	)
+	l.Debugf("entering INBOXCONTAINS function with for inbox %s and id %s", inbox.String(), id.String())
 
 	if !util.IsInboxPath(inbox) {
 		return false, fmt.Errorf("%s is not an inbox URI", inbox.String())
 	}
 
-	if !util.IsStatusesPath(id) {
-		return false, fmt.Errorf("%s is not a status URI", id.String())
+	activityI := c.Value(util.APActivity)
+	if activityI == nil {
+		return false, fmt.Errorf("no activity was set for id %s", id.String())
 	}
-	_, statusID, err := util.ParseStatusesPath(inbox)
-	if err != nil {
-		return false, fmt.Errorf("status URI %s was not parseable: %s", id.String(), err)
-	}
-
-	if err := f.db.GetByID(statusID, &gtsmodel.Status{}); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
-			// we don't have it
-			return false, nil
-		}
-		// actual error
-		return false, fmt.Errorf("error getting status from db: %s", err)
+	activity, ok := activityI.(pub.Activity)
+	if !ok || activity == nil {
+		return false, fmt.Errorf("could not parse contextual activity for id %s", id.String())
 	}
 
-	// we must have it
-	return true, nil
+	l.Debugf("activity type %s for id %s", activity.GetTypeName(), id.String())
+
+	return false, nil
+
+	// if err := f.db.GetByID(statusID, &gtsmodel.Status{}); err != nil {
+	// 	if _, ok := err.(db.ErrNoEntries); ok {
+	// 		// we don't have it
+	// 		return false, nil
+	// 	}
+	// 	// actual error
+	// 	return false, fmt.Errorf("error getting status from db: %s", err)
+	// }
+
+	// // we must have it
+	// return true, nil
 }
 
 // GetInbox returns the first ordered collection page of the outbox at
@@ -135,7 +154,13 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	return nil, nil
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "GetInbox",
+		},
+	)
+	l.Debugf("entering GETINBOX function with inboxIRI %s", inboxIRI.String())
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
 // SetInbox saves the inbox value given from GetInbox, with new items
@@ -144,6 +169,12 @@ func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox voc
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "SetInbox",
+		},
+	)
+	l.Debug("entering SETINBOX function")
 	return nil
 }
 
@@ -151,12 +182,21 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Owns",
+			"id":   id.String(),
+		},
+	)
+	l.Debugf("entering OWNS function with id %s", id.String())
+
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
+		l.Debugf("we DO NOT own activity because the host is %s not %s", id.Host, f.config.Host)
 		return false, nil
 	}
 
-	// apparently we own it, so what *is* it?
+	// apparently it belongs to this host, so what *is* it?
 
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
 	if util.IsStatusesPath(id) {
@@ -165,13 +205,14 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		if err := f.db.GetWhere("uri", uid, &gtsmodel.Status{}); err != nil {
-			if _, ok := err.(ErrNoEntries); ok {
+			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this status
 				return false, nil
 			}
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
+		l.Debug("we DO own this")
 		return true, nil
 	}
 
@@ -182,13 +223,14 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
 		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(ErrNoEntries); ok {
+			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this username
 				return false, nil
 			}
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
+		l.Debug("we DO own this")
 		return true, nil
 	}
 
@@ -199,12 +241,20 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "ActorForOutbox",
+			"inboxIRI": outboxIRI.String(),
+		},
+	)
+	l.Debugf("entering ACTORFOROUTBOX function with outboxIRI %s", outboxIRI.String())
+
 	if !util.IsOutboxPath(outboxIRI) {
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("outbox_uri", outboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
@@ -216,12 +266,20 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "ActorForInbox",
+			"inboxIRI": inboxIRI.String(),
+		},
+	)
+	l.Debugf("entering ACTORFORINBOX function with inboxIRI %s", inboxIRI.String())
+
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
@@ -234,12 +292,20 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "OutboxForInbox",
+			"inboxIRI": inboxIRI.String(),
+		},
+	)
+	l.Debugf("entering OUTBOXFORINBOX function with inboxIRI %s", inboxIRI.String())
+
 	if !util.IsInboxPath(inboxIRI) {
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
-		if _, ok := err.(ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
@@ -252,6 +318,14 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Exists",
+			"id":   id.String(),
+		},
+	)
+	l.Debugf("entering EXISTS function with id %s", id.String())
+
 	return false, nil
 }
 
@@ -259,6 +333,22 @@ func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err 
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Get",
+			"id":   id.String(),
+		},
+	)
+	l.Debug("entering GET function")
+
+	if util.IsUserPath(id) {
+		acct := &gtsmodel.Account{}
+		if err := f.db.GetWhere("uri", id.String(), acct); err != nil {
+			return nil, err
+		}
+		return f.typeConverter.AccountToAS(acct)
+	}
+
 	return nil, nil
 }
 
@@ -275,6 +365,49 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "Create",
+			"asType": asType.GetTypeName(),
+		},
+	)
+	l.Debugf("received CREATE asType %+v", asType)
+
+	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	case gtsmodel.ActivityStreamsCreate:
+		create, ok := asType.(vocab.ActivityStreamsCreate)
+		if !ok {
+			return errors.New("could not convert type to create")
+		}
+		object := create.GetActivityStreamsObject()
+		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
+			switch gtsmodel.ActivityStreamsObject(objectIter.GetType().GetTypeName()) {
+			case gtsmodel.ActivityStreamsNote:
+				note := objectIter.GetActivityStreamsNote()
+				status, err := f.typeConverter.ASStatusToStatus(note)
+				if err != nil {
+					return fmt.Errorf("error converting note to status: %s", err)
+				}
+				if err := f.db.Put(status); err != nil {
+					return fmt.Errorf("database error inserting status: %s", err)
+				}
+			}
+		}
+	case gtsmodel.ActivityStreamsFollow:
+		follow, ok := asType.(vocab.ActivityStreamsFollow)
+		if !ok {
+			return errors.New("could not convert type to follow")
+		}
+
+		followRequest, err := f.typeConverter.ASFollowToFollowRequest(follow)
+		if err != nil {
+			return fmt.Errorf("could not convert Follow to follow request: %s", err)
+		}
+
+		if err := f.db.Put(followRequest); err != nil {
+			return fmt.Errorf("database error inserting follow request: %s", err)
+		}
+	}
 	return nil
 }
 
@@ -288,6 +421,13 @@ func (f *federatingDB) Create(c context.Context, asType vocab.Type) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "Update",
+			"asType": asType.GetTypeName(),
+		},
+	)
+	l.Debugf("received UPDATE asType %+v", asType)
 	return nil
 }
 
@@ -298,6 +438,13 @@ func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Delete",
+			"id":   id.String(),
+		},
+	)
+	l.Debugf("received DELETE id %s", id.String())
 	return nil
 }
 
@@ -306,6 +453,13 @@ func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "GetOutbox",
+		},
+	)
+	l.Debug("entering GETOUTBOX function")
+
 	return nil, nil
 }
 
@@ -315,6 +469,13 @@ func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox v
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "SetOutbox",
+		},
+	)
+	l.Debug("entering SETOUTBOX function")
+
 	return nil
 }
 
@@ -325,7 +486,15 @@ func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreams
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
-	return nil, nil
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "NewID",
+			"asType": t.GetTypeName(),
+		},
+	)
+	l.Debugf("received NEWID request for asType %+v", t)
+
+	return url.Parse(fmt.Sprintf("%s://%s/", f.config.Protocol, uuid.NewString()))
 }
 
 // Followers obtains the Followers Collection for an actor with the
@@ -335,7 +504,39 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "Followers",
+			"actorIRI": actorIRI.String(),
+		},
+	)
+	l.Debugf("entering FOLLOWERS function with actorIRI %s", actorIRI.String())
+
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+	}
+
+	acctFollowers := []gtsmodel.Follow{}
+	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers); err != nil {
+		return nil, fmt.Errorf("db error getting followers for account id %s: %s", acct.ID, err)
+	}
+
+	followers = streams.NewActivityStreamsCollection()
+	items := streams.NewActivityStreamsItemsProperty()
+	for _, follow := range acctFollowers {
+		gtsFollower := &gtsmodel.Account{}
+		if err := f.db.GetByID(follow.AccountID, gtsFollower); err != nil {
+			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+		}
+		uri, err := url.Parse(gtsFollower.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollower.URI, err)
+		}
+		items.AppendIRI(uri)
+	}
+	followers.SetActivityStreamsItems(items)
+	return
 }
 
 // Following obtains the Following Collection for an actor with the
@@ -344,8 +545,40 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	return nil, nil
+func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "Following",
+			"actorIRI": actorIRI.String(),
+		},
+	)
+	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
+
+	acct := &gtsmodel.Account{}
+	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+	}
+
+	acctFollowing := []gtsmodel.Follow{}
+	if err := f.db.GetFollowingByAccountID(acct.ID, &acctFollowing); err != nil {
+		return nil, fmt.Errorf("db error getting following for account id %s: %s", acct.ID, err)
+	}
+
+	following = streams.NewActivityStreamsCollection()
+	items := streams.NewActivityStreamsItemsProperty()
+	for _, follow := range acctFollowing {
+		gtsFollowing := &gtsmodel.Account{}
+		if err := f.db.GetByID(follow.AccountID, gtsFollowing); err != nil {
+			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+		}
+		uri, err := url.Parse(gtsFollowing.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollowing.URI, err)
+		}
+		items.AppendIRI(uri)
+	}
+	following.SetActivityStreamsItems(items)
+	return
 }
 
 // Liked obtains the Liked Collection for an actor with the
@@ -354,6 +587,13 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (follower
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.ActivityStreamsCollection, err error) {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":     "Liked",
+			"actorIRI": actorIRI.String(),
+		},
+	)
+	l.Debugf("entering LIKED function with actorIRI %s", actorIRI.String())
 	return nil, nil
 }

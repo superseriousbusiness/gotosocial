@@ -21,6 +21,8 @@ package typeutils
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -156,4 +158,203 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	acct.PublicKeyURI = pkeyURL.String()
 
 	return acct, nil
+}
+
+func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error) {
+	status := &gtsmodel.Status{}
+
+	// uri at which this status is reachable
+	uriProp := statusable.GetJSONLDId()
+	if uriProp == nil || !uriProp.IsIRI() {
+		return nil, errors.New("no id property found, or id was not an iri")
+	}
+	status.URI = uriProp.GetIRI().String()
+
+	// web url for viewing this status
+	if statusURL, err := extractURL(statusable); err == nil {
+		status.URL = statusURL.String()
+	}
+
+	// the html-formatted content of this status
+	if content, err := extractContent(statusable); err == nil {
+		status.Content = content
+	}
+
+	// attachments to dereference and fetch later on (we don't do that here)
+	if attachments, err := extractAttachments(statusable); err == nil {
+		status.GTSMediaAttachments = attachments
+	}
+
+	// hashtags to dereference later on
+	if hashtags, err := extractHashtags(statusable); err == nil {
+		status.GTSTags = hashtags
+	}
+
+	// emojis to dereference and fetch later on
+	if emojis, err := extractEmojis(statusable); err == nil {
+		status.GTSEmojis = emojis
+	}
+
+	// mentions to dereference later on
+	if mentions, err := extractMentions(statusable); err == nil {
+		status.GTSMentions = mentions
+	}
+
+	// cw string for this status
+	if cw, err := extractSummary(statusable); err == nil {
+		status.ContentWarning = cw
+	}
+
+	// when was this status created?
+	published, err := extractPublished(statusable)
+	if err == nil {
+		status.CreatedAt = published
+	}
+
+	// which account posted this status?
+	// if we don't know the account yet we can dereference it later
+	attributedTo, err := extractAttributedTo(statusable)
+	if err != nil {
+		return nil, errors.New("attributedTo was empty")
+	}
+	status.APStatusOwnerURI = attributedTo.String()
+
+	statusOwner := &gtsmodel.Account{}
+	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err != nil {
+		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
+	}
+	status.AccountID = statusOwner.ID
+	status.GTSAccount = statusOwner
+
+	// check if there's a post that this is a reply to
+	inReplyToURI, err := extractInReplyToURI(statusable)
+	if err == nil {
+		// something is set so we can at least set this field on the
+		// status and dereference using this later if we need to
+		status.APReplyToStatusURI = inReplyToURI.String()
+
+		// now we can check if we have the replied-to status in our db already
+		inReplyToStatus := &gtsmodel.Status{}
+		if err := c.db.GetWhere("uri", inReplyToURI.String(), inReplyToStatus); err == nil {
+			// we have the status in our database already
+			// so we can set these fields here and then...
+			status.InReplyToID = inReplyToStatus.ID
+			status.InReplyToAccountID = inReplyToStatus.AccountID
+			status.GTSReplyToStatus = inReplyToStatus
+
+			// ... check if we've seen the account already
+			inReplyToAccount := &gtsmodel.Account{}
+			if err := c.db.GetByID(inReplyToStatus.AccountID, inReplyToAccount); err == nil {
+				status.GTSReplyToAccount = inReplyToAccount
+			}
+		}
+	}
+
+	// visibility entry for this status
+	var visibility gtsmodel.Visibility
+
+	to, err := extractTos(statusable)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting TO values: %s", err)
+	}
+
+	cc, err := extractCCs(statusable)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting CC values: %s", err)
+	}
+
+	if len(to) == 0 && len(cc) == 0 {
+		return nil, errors.New("message wasn't TO or CC anyone")
+	}
+
+	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
+
+	// if it's a DM then it's addressed to SPECIFIC ACCOUNTS and not followers or public
+	if len(to) != 0 && len(cc) == 0 {
+		visibility = gtsmodel.VisibilityDirect
+	}
+
+	// if it's just got followers in TO and it's not also CC'ed to public, it's followers only
+	if isFollowers(to, statusOwner.FollowersURI) {
+		visibility = gtsmodel.VisibilityFollowersOnly
+	}
+
+	// if it's CC'ed to public, it's public or unlocked
+	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
+	if isPublic(to) {
+		visibility = gtsmodel.VisibilityPublic
+	}
+
+	// we should have a visibility by now
+	if visibility == "" {
+		return nil, errors.New("couldn't derive visibility")
+	}
+	status.Visibility = visibility
+
+	// advanced visibility for this status
+	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
+
+	// sensitive
+	// TODO: this is a bool
+
+	// language
+	// we might be able to extract this from the contentMap field
+
+	// ActivityStreamsType
+	status.ActivityStreamsType = gtsmodel.ActivityStreamsObject(statusable.GetTypeName())
+
+	return status, nil
+}
+
+func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error) {
+
+	idProp := followable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("no id property set on follow, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	origin, err := extractActor(followable)
+	if err != nil {
+		return nil, errors.New("error extracting actor property from follow")
+	}
+	originAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere("uri", origin.String(), originAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	target, err := extractObject(followable)
+	if err != nil {
+		return nil, errors.New("error extracting object property from follow")
+	}
+	targetAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere("uri", target.String(), targetAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	followRequest := &gtsmodel.FollowRequest{
+		URI:             uri,
+		AccountID:       originAccount.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+
+	return followRequest, nil
+}
+
+func isPublic(tos []*url.URL) bool {
+	for _, entry := range tos {
+		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {
+			return true
+		}
+	}
+	return false
+}
+
+func isFollowers(ccs []*url.URL, followersURI string) bool {
+	for _, entry := range ccs {
+		if strings.EqualFold(entry.String(), followersURI) {
+			return true
+		}
+	}
+	return false
 }

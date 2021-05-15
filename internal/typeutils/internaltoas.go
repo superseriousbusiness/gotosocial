@@ -200,14 +200,14 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	// icon
 	// Used as profile avatar.
 	if a.AvatarMediaAttachmentID != "" {
-		iconProperty := streams.NewActivityStreamsIconProperty()
-
-		iconImage := streams.NewActivityStreamsImage()
-
 		avatar := &gtsmodel.MediaAttachment{}
 		if err := c.db.GetByID(a.AvatarMediaAttachmentID, avatar); err != nil {
 			return nil, err
 		}
+
+		iconProperty := streams.NewActivityStreamsIconProperty()
+
+		iconImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
 		mediaType.Set(avatar.File.ContentType)
@@ -228,14 +228,14 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	// image
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
-		headerProperty := streams.NewActivityStreamsImageProperty()
-
-		headerImage := streams.NewActivityStreamsImage()
-
 		header := &gtsmodel.MediaAttachment{}
 		if err := c.db.GetByID(a.HeaderMediaAttachmentID, header); err != nil {
 			return nil, err
 		}
+
+		headerProperty := streams.NewActivityStreamsImageProperty()
+
+		headerImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
 		mediaType.Set(header.File.ContentType)

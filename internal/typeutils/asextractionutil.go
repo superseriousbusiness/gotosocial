@@ -25,8 +25,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func extractPreferredUsername(i withPreferredUsername) (string, error) {
@@ -40,20 +44,87 @@ func extractPreferredUsername(i withPreferredUsername) (string, error) {
 	return u.GetXMLSchemaString(), nil
 }
 
-func extractName(i withDisplayName) (string, error) {
+func extractName(i withName) (string, error) {
 	nameProp := i.GetActivityStreamsName()
 	if nameProp == nil {
 		return "", errors.New("activityStreamsName not found")
 	}
 
 	// take the first name string we can find
-	for nameIter := nameProp.Begin(); nameIter != nameProp.End(); nameIter = nameIter.Next() {
-		if nameIter.IsXMLSchemaString() && nameIter.GetXMLSchemaString() != "" {
-			return nameIter.GetXMLSchemaString(), nil
+	for iter := nameProp.Begin(); iter != nameProp.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
 		}
 	}
 
 	return "", errors.New("activityStreamsName not found")
+}
+
+func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
+	inReplyToProp := i.GetActivityStreamsInReplyTo()
+	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				return iter.GetIRI(), nil
+			}
+		}
+	}
+	return nil, errors.New("couldn't find iri for in reply to")
+}
+
+func extractTos(i withTo) ([]*url.URL, error) {
+	to := []*url.URL{}
+	toProp := i.GetActivityStreamsTo()
+	for iter := toProp.Begin(); iter != toProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				to = append(to, iter.GetIRI())
+			}
+		}
+	}
+	return to, nil
+}
+
+func extractCCs(i withCC) ([]*url.URL, error) {
+	cc := []*url.URL{}
+	ccProp := i.GetActivityStreamsCc()
+	for iter := ccProp.Begin(); iter != ccProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				cc = append(cc, iter.GetIRI())
+			}
+		}
+	}
+	return cc, nil
+}
+
+func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
+	attributedToProp := i.GetActivityStreamsAttributedTo()
+	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			if iter.GetIRI() != nil {
+				return iter.GetIRI(), nil
+			}
+		}
+	}
+	return nil, errors.New("couldn't find iri for attributed to")
+}
+
+func extractPublished(i withPublished) (time.Time, error) {
+	publishedProp := i.GetActivityStreamsPublished()
+	if publishedProp == nil {
+		return time.Time{}, errors.New("published prop was nil")
+	}
+
+	if !publishedProp.IsXMLSchemaDateTime() {
+		return time.Time{}, errors.New("published prop was not date time")
+	}
+
+	t := publishedProp.Get()
+	if t.IsZero() {
+		return time.Time{}, errors.New("published time was zero")
+	}
+	return t, nil
 }
 
 // extractIconURL extracts a URL to a supported image file from something like:
@@ -72,12 +143,12 @@ func extractIconURL(i withIcon) (*url.URL, error) {
 	// here in order to find the first one that meets these criteria:
 	// 1. is an image
 	// 2. has a URL so we can grab it
-	for iconIter := iconProp.Begin(); iconIter != iconProp.End(); iconIter = iconIter.Next() {
+	for iter := iconProp.Begin(); iter != iconProp.End(); iter = iter.Next() {
 		// 1. is an image
-		if !iconIter.IsActivityStreamsImage() {
+		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := iconIter.GetActivityStreamsImage()
+		imageValue := iter.GetActivityStreamsImage()
 		if imageValue == nil {
 			continue
 		}
@@ -108,12 +179,12 @@ func extractImageURL(i withImage) (*url.URL, error) {
 	// here in order to find the first one that meets these criteria:
 	// 1. is an image
 	// 2. has a URL so we can grab it
-	for imageIter := imageProp.Begin(); imageIter != imageProp.End(); imageIter = imageIter.Next() {
+	for iter := imageProp.Begin(); iter != imageProp.End(); iter = iter.Next() {
 		// 1. is an image
-		if !imageIter.IsActivityStreamsImage() {
+		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := imageIter.GetActivityStreamsImage()
+		imageValue := iter.GetActivityStreamsImage()
 		if imageValue == nil {
 			continue
 		}
@@ -134,9 +205,9 @@ func extractSummary(i withSummary) (string, error) {
 		return "", errors.New("summary property was nil")
 	}
 
-	for summaryIter := summaryProp.Begin(); summaryIter != summaryProp.End(); summaryIter = summaryIter.Next() {
-		if summaryIter.IsXMLSchemaString() && summaryIter.GetXMLSchemaString() != "" {
-			return summaryIter.GetXMLSchemaString(), nil
+	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
 		}
 	}
 
@@ -156,9 +227,9 @@ func extractURL(i withURL) (*url.URL, error) {
 		return nil, errors.New("url property was nil")
 	}
 
-	for urlIter := urlProp.Begin(); urlIter != urlProp.End(); urlIter = urlIter.Next() {
-		if urlIter.IsIRI() && urlIter.GetIRI() != nil {
-			return urlIter.GetIRI(), nil
+	for iter := urlProp.Begin(); iter != urlProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
 		}
 	}
 
@@ -171,8 +242,8 @@ func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKe
 		return nil, nil, errors.New("public key property was nil")
 	}
 
-	for publicKeyIter := publicKeyProp.Begin(); publicKeyIter != publicKeyProp.End(); publicKeyIter = publicKeyIter.Next() {
-		pkey := publicKeyIter.Get()
+	for iter := publicKeyProp.Begin(); iter != publicKeyProp.End(); iter = iter.Next() {
+		pkey := iter.Get()
 		if pkey == nil {
 			continue
 		}
@@ -213,4 +284,264 @@ func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKe
 		}
 	}
 	return nil, nil, errors.New("couldn't find public key")
+}
+
+func extractContent(i withContent) (string, error) {
+	contentProperty := i.GetActivityStreamsContent()
+	if contentProperty == nil {
+		return "", errors.New("content property was nil")
+	}
+	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+			return iter.GetXMLSchemaString(), nil
+		}
+	}
+	return "", errors.New("no content found")
+}
+
+func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	attachmentProp := i.GetActivityStreamsAttachment()
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		attachmentable, ok := iter.(Attachmentable)
+		if !ok {
+			continue
+		}
+		attachment, err := extractAttachment(attachmentable)
+		if err != nil {
+			continue
+		}
+		attachments = append(attachments, attachment)
+	}
+	return attachments, nil
+}
+
+func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
+	attachment := &gtsmodel.MediaAttachment{
+		File: gtsmodel.File{},
+	}
+
+	attachmentURL, err := extractURL(i)
+	if err != nil {
+		return nil, err
+	}
+	attachment.RemoteURL = attachmentURL.String()
+
+	mediaType := i.GetActivityStreamsMediaType()
+	if mediaType == nil {
+		return nil, errors.New("no media type")
+	}
+	if mediaType.Get() == "" {
+		return nil, errors.New("no media type")
+	}
+	attachment.File.ContentType = mediaType.Get()
+	attachment.Type = gtsmodel.FileTypeImage
+
+	name, err := extractName(i)
+	if err == nil {
+		attachment.Description = name
+	}
+
+	blurhash, err := extractBlurhash(i)
+	if err == nil {
+		attachment.Blurhash = blurhash
+	}
+
+	return attachment, nil
+}
+
+func extractBlurhash(i withBlurhash) (string, error) {
+	if i.GetTootBlurhashProperty() == nil {
+		return "", errors.New("blurhash property was nil")
+	}
+	if i.GetTootBlurhashProperty().Get() == "" {
+		return "", errors.New("empty blurhash string")
+	}
+	return i.GetTootBlurhashProperty().Get(), nil
+}
+
+func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
+	tags := []*gtsmodel.Tag{}
+
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Hashtag" {
+			continue
+		}
+
+		hashtaggable, ok := t.(Hashtaggable)
+		if !ok {
+			continue
+		}
+
+		tag, err := extractHashtag(hashtaggable)
+		if err != nil {
+			continue
+		}
+
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
+	tag := &gtsmodel.Tag{}
+
+	hrefProp := i.GetActivityStreamsHref()
+	if hrefProp == nil || !hrefProp.IsIRI() {
+		return nil, errors.New("no href prop")
+	}
+	tag.URL = hrefProp.GetIRI().String()
+
+	name, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+	tag.Name = strings.TrimPrefix(name, "#")
+
+	return tag, nil
+}
+
+func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
+	emojis := []*gtsmodel.Emoji{}
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Emoji" {
+			continue
+		}
+
+		emojiable, ok := t.(Emojiable)
+		if !ok {
+			continue
+		}
+
+		emoji, err := extractEmoji(emojiable)
+		if err != nil {
+			continue
+		}
+
+		emojis = append(emojis, emoji)
+	}
+	return emojis, nil
+}
+
+func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
+	emoji := &gtsmodel.Emoji{}
+
+	idProp := i.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("no id for emoji")
+	}
+	uri := idProp.GetIRI()
+	emoji.URI = uri.String()
+	emoji.Domain = uri.Host
+
+	name, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+	emoji.Shortcode = strings.Trim(name, ":")
+
+	if i.GetActivityStreamsIcon() == nil {
+		return nil, errors.New("no icon for emoji")
+	}
+	imageURL, err := extractIconURL(i)
+	if err != nil {
+		return nil, errors.New("no url for emoji image")
+	}
+	emoji.ImageRemoteURL = imageURL.String()
+
+	return emoji, nil
+}
+
+func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
+	mentions := []*gtsmodel.Mention{}
+	tagsProp := i.GetActivityStreamsTag()
+	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			continue
+		}
+
+		if t.GetTypeName() != "Mention" {
+			continue
+		}
+
+		mentionable, ok := t.(Mentionable)
+		if !ok {
+			continue
+		}
+
+		mention, err := extractMention(mentionable)
+		if err != nil {
+			continue
+		}
+
+		mentions = append(mentions, mention)
+	}
+	return mentions, nil
+}
+
+func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
+	mention := &gtsmodel.Mention{}
+
+	mentionString, err := extractName(i)
+	if err != nil {
+		return nil, err
+	}
+
+	// just make sure the mention string is valid so we can handle it properly later on...
+	username, domain, err := util.ExtractMentionParts(mentionString)
+	if err != nil {
+		return nil, err
+	}
+	if username == "" || domain == "" {
+		return nil, errors.New("username or domain was empty")
+	}
+	mention.NameString = mentionString
+
+	// the href prop should be the AP URI of a user we know, eg https://example.org/users/whatever_user
+	hrefProp := i.GetActivityStreamsHref()
+	if hrefProp == nil || !hrefProp.IsIRI() {
+		return nil, errors.New("no href prop")
+	}
+	mention.MentionedAccountURI = hrefProp.GetIRI().String()
+	return mention, nil
+}
+
+func extractActor(i withActor) (*url.URL, error) {
+	actorProp := i.GetActivityStreamsActor()
+	if actorProp == nil {
+		return nil, errors.New("actor property was nil")
+	}
+	for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
+		}
+	}
+	return nil, errors.New("no iri found for actor prop")
+}
+
+func extractObject(i withObject) (*url.URL, error) {
+	objectProp := i.GetActivityStreamsObject()
+	if objectProp == nil {
+		return nil, errors.New("object property was nil")
+	}
+	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI(), nil
+		}
+	}
+	return nil, errors.New("no iri found for object prop")
 }

@@ -54,15 +54,15 @@ func NewController(config *config.Config, clock pub.Clock, client pub.HttpClient
 func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (pub.Transport, error) {
 	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256, httpsig.RSA_SHA512}
 	digestAlgo := httpsig.DigestSha256
-	getHeaders := []string{"(request-target)", "date", "accept"}
-	postHeaders := []string{"(request-target)", "date", "accept", "digest"}
+	getHeaders := []string{"(request-target)", "host", "date"}
+	postHeaders := []string{"(request-target)", "host", "date", "digest"}
 
-	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature)
+	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature, 120)
 	if err != nil {
 		return nil, fmt.Errorf("error creating get signer: %s", err)
 	}
 
-	postSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, postHeaders, httpsig.Signature)
+	postSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, postHeaders, httpsig.Signature, 120)
 	if err != nil {
 		return nil, fmt.Errorf("error creating post signer: %s", err)
 	}
