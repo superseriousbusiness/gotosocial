@@ -53,8 +53,8 @@
   * [ ] Reports
     * [ ] /api/v1/reports POST                              (File a report)
   * [ ] Follow Requests
-    * [ ] /api/v1/follow_requests GET                       (View pending follow requests)
-    * [ ] /api/v1/follow_requests/:id/authorize POST        (Accept a follow request)
+    * [x] /api/v1/follow_requests GET                       (View pending follow requests)
+    * [x] /api/v1/follow_requests/:id/authorize POST        (Accept a follow request)
     * [ ] /api/v1/follow_requests/:id/reject POST           (Reject a follow request)
   * [ ] Endorsements
     * [ ] /api/v1/endorsements GET                          (View existing endorsements)
@@ -85,10 +85,10 @@
     * [ ] /api/v1/statuses/:id/unmute POST                  (Unmute notifications on a status)
     * [ ] /api/v1/statuses/:id/pin POST                     (Pin a status to profile)
     * [ ] /api/v1/statuses/:id/unpin POST                   (Unpin a status from profile)
-  * [ ] Media
+  * [x] Media
     * [x] /api/v1/media POST                                (Upload a media attachment)
-    * [ ] /api/v1/media/:id GET                             (Get a media attachment)
-    * [ ] /api/v1/media/:id PUT                             (Update an attachment)
+    * [x] /api/v1/media/:id GET                             (Get a media attachment)
+    * [x] /api/v1/media/:id PUT                             (Update an attachment)
   * [ ] Polls
     * [ ] /api/v1/polls/:id GET                             (Show a poll)
     * [ ] /api/v1/polls/:id/votes POST                      (Vote on a poll)
