@@ -46,6 +46,8 @@ const (
 	UpdateCredentialsPath = BasePath + "/update_credentials"
 	// GetStatusesPath is for showing an account's statuses
 	GetStatusesPath = BasePathWithID + "/statuses"
+	// GetFollowersPath is for showing an account's followers
+	GetFollowersPath = BasePathWithID + "/followers"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -70,6 +72,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
 	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
+	r.AttachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
 	return nil
 }
 

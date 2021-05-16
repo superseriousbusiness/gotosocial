@@ -679,20 +679,23 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	}
 
 	// if the target user doesn't exist (anymore) then the status also shouldn't be visible
-	targetUser := &gtsmodel.User{}
-	if err := ps.conn.Model(targetUser).Where("account_id = ?", targetAccount.ID).Select(); err != nil {
-		l.Debug("target user could not be selected")
-		if err == pg.ErrNoRows {
-			return false, db.ErrNoEntries{}
+	// note: we only do this for local users
+	if targetAccount.Domain == "" {
+		targetUser := &gtsmodel.User{}
+		if err := ps.conn.Model(targetUser).Where("account_id = ?", targetAccount.ID).Select(); err != nil {
+			l.Debug("target user could not be selected")
+			if err == pg.ErrNoRows {
+				return false, db.ErrNoEntries{}
+			}
+			return false, err
 		}
-		return false, err
-	}
 
-	// if target user is disabled, not yet approved, or not confirmed then don't show the status
-	// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
-	if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
-		l.Debug("target user is disabled, not approved, or not confirmed")
-		return false, nil
+		// if target user is disabled, not yet approved, or not confirmed then don't show the status
+		// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
+		if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
+			l.Debug("target user is disabled, not approved, or not confirmed")
+			return false, nil
+		}
 	}
 
 	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
@@ -755,6 +758,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			if blocked, err := ps.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
+				l.Debug("a block exists between requesting account and reply to account")
 				return false, nil
 			}
 		}
@@ -764,6 +768,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			if blocked, err := ps.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
+				l.Debug("a block exists between requesting account and boosted account")
 				return false, nil
 			}
 		}
@@ -773,6 +778,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			if blocked, err := ps.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
+				l.Debug("a block exists between requesting account and boosted reply to account")
 				return false, nil
 			}
 		}
@@ -782,6 +788,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			if blocked, err := ps.Blocked(a.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
+				l.Debug("a block exists between requesting account and a mentioned account")
 				return false, nil
 			}
 		}
@@ -800,6 +807,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			return false, err
 		}
 		if !follows {
+			l.Debug("requested status is followers only but requesting account is not a follower")
 			return false, nil
 		}
 		return true, nil
@@ -810,6 +818,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			return false, err
 		}
 		if !mutuals {
+			l.Debug("requested status is mutuals only but accounts aren't mufos")
 			return false, nil
 		}
 		return true, nil
@@ -820,6 +829,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 				return true, nil // yep it's mentioned!
 			}
 		}
+		l.Debug("requesting account requests a status it's not mentioned in")
 		return false, nil // it's not mentioned -_-
 	}
 

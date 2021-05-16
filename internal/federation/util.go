@@ -33,6 +33,7 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -221,7 +222,7 @@ func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *u
 	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
 }
 
-func (f *federator) GetTransportForUser(username string) (pub.Transport, error) {
+func (f *federator) GetTransportForUser(username string) (transport.Transport, error) {
 	// We need an account to use to create a transport for dereferecing the signature.
 	// If a username has been given, we can fetch the account with that username and use it.
 	// Otherwise, we can take the instance account and use those credentials to make the request.

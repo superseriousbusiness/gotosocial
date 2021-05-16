@@ -16,25 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package message
+package media
 
-import (
-	"fmt"
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
-func (p *processor) InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode) {
-	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere("domain", domain, i); err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
-	}
-
-	ai, err := p.tc.InstanceToMasto(i)
-	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
-	}
-
-	return ai, nil
+func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+	return nil, nil
 }

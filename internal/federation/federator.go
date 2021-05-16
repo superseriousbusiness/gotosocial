@@ -42,7 +42,9 @@ type Federator interface {
 	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
 	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
 	// This can be used for making signed http requests.
-	GetTransportForUser(username string) (pub.Transport, error)
+	//
+	// If username is an empty string, our instance user's credentials will be used instead.
+	GetTransportForUser(username string) (transport.Transport, error)
 	pub.CommonBehavior
 	pub.FederatingProtocol
 }

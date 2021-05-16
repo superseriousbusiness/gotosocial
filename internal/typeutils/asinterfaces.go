@@ -69,8 +69,6 @@ type Attachmentable interface {
 	withMediaType
 	withURL
 	withName
-	withBlurhash
-	withFocalPoint
 }
 
 // Hashtaggable represents the minimum activitypub interface for representing a 'hashtag' tag.

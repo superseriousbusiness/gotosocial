@@ -18,23 +18,8 @@
 
 package message
 
-import (
-	"fmt"
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
-func (p *processor) InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode) {
-	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere("domain", domain, i); err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
-	}
-
-	ai, err := p.tc.InstanceToMasto(i)
-	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
-	}
-
-	return ai, nil
+func (p *processor) notifyStatus(status *gtsmodel.Status) error {
+	return nil
 }

@@ -20,8 +20,6 @@ package message
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -44,11 +42,11 @@ import (
 // for clean distribution of messages without slowing down the client API and harming the user experience.
 type Processor interface {
 	// ToClientAPI returns a channel for putting in messages that need to go to the gts client API.
-	ToClientAPI() chan gtsmodel.ToClientAPI
+	// ToClientAPI() chan gtsmodel.ToClientAPI
 	// FromClientAPI returns a channel for putting messages in that come from the client api going to the processor
 	FromClientAPI() chan gtsmodel.FromClientAPI
 	// ToFederator returns a channel for putting in messages that need to go to the federator (activitypub).
-	ToFederator() chan gtsmodel.ToFederator
+	// ToFederator() chan gtsmodel.ToFederator
 	// FromFederator returns a channel for putting messages in that come from the federator (activitypub) going into the processor
 	FromFederator() chan gtsmodel.FromFederator
 	// Start starts the Processor, reading from its channels and passing messages back and forth.
@@ -70,7 +68,11 @@ type Processor interface {
 	AccountGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
 	// AccountUpdate processes the update of an account with the given form
 	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
+	// the account given in authed.
 	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int) ([]apimodel.Status, ErrorWithCode)
+	// AccountFollowersGet
+	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -142,9 +144,9 @@ type Processor interface {
 // processor just implements the Processor interface
 type processor struct {
 	// federator     pub.FederatingActor
-	toClientAPI   chan gtsmodel.ToClientAPI
+	// toClientAPI   chan gtsmodel.ToClientAPI
 	fromClientAPI chan gtsmodel.FromClientAPI
-	toFederator   chan gtsmodel.ToFederator
+	// toFederator   chan gtsmodel.ToFederator
 	fromFederator chan gtsmodel.FromFederator
 	federator     federation.Federator
 	stop          chan interface{}
@@ -160,9 +162,9 @@ type processor struct {
 // NewProcessor returns a new Processor that uses the given federator and logger
 func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage storage.Storage, db db.DB, log *logrus.Logger) Processor {
 	return &processor{
-		toClientAPI:   make(chan gtsmodel.ToClientAPI, 100),
+		// toClientAPI:   make(chan gtsmodel.ToClientAPI, 100),
 		fromClientAPI: make(chan gtsmodel.FromClientAPI, 100),
-		toFederator:   make(chan gtsmodel.ToFederator, 100),
+		// toFederator:   make(chan gtsmodel.ToFederator, 100),
 		fromFederator: make(chan gtsmodel.FromFederator, 100),
 		federator:     federator,
 		stop:          make(chan interface{}),
@@ -176,17 +178,17 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	}
 }
 
-func (p *processor) ToClientAPI() chan gtsmodel.ToClientAPI {
-	return p.toClientAPI
-}
+// func (p *processor) ToClientAPI() chan gtsmodel.ToClientAPI {
+// 	return p.toClientAPI
+// }
 
 func (p *processor) FromClientAPI() chan gtsmodel.FromClientAPI {
 	return p.fromClientAPI
 }
 
-func (p *processor) ToFederator() chan gtsmodel.ToFederator {
-	return p.toFederator
-}
+// func (p *processor) ToFederator() chan gtsmodel.ToFederator {
+// 	return p.toFederator
+// }
 
 func (p *processor) FromFederator() chan gtsmodel.FromFederator {
 	return p.fromFederator
@@ -198,15 +200,15 @@ func (p *processor) Start() error {
 	DistLoop:
 		for {
 			select {
-			case clientMsg := <-p.toClientAPI:
-				p.log.Infof("received message TO client API: %+v", clientMsg)
+			// case clientMsg := <-p.toClientAPI:
+			// 	p.log.Infof("received message TO client API: %+v", clientMsg)
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
 				if err := p.processFromClientAPI(clientMsg); err != nil {
 					p.log.Error(err)
 				}
-			case federatorMsg := <-p.toFederator:
-				p.log.Infof("received message TO federator: %+v", federatorMsg)
+			// case federatorMsg := <-p.toFederator:
+			// 	p.log.Infof("received message TO federator: %+v", federatorMsg)
 			case federatorMsg := <-p.fromFederator:
 				p.log.Infof("received message FROM federator: %+v", federatorMsg)
 				if err := p.processFromFederator(federatorMsg); err != nil {
@@ -224,60 +226,5 @@ func (p *processor) Start() error {
 // TODO: empty message buffer properly before stopping otherwise we'll lose federating messages.
 func (p *processor) Stop() error {
 	close(p.stop)
-	return nil
-}
-
-func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) error {
-	return nil
-}
-
-func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error {
-	switch clientMsg.APObjectType {
-	case gtsmodel.ActivityStreamsNote:
-		status, ok := clientMsg.Activity.(*gtsmodel.Status)
-		if !ok {
-			return errors.New("note was not parseable as *gtsmodel.Status")
-		}
-
-		if err := p.notifyStatus(status); err != nil {
-			return err
-		}
-
-		if status.VisibilityAdvanced.Federated {
-			return p.federateStatus(status)
-		}
-		return nil
-	}
-	return fmt.Errorf("message type unprocessable: %+v", clientMsg)
-}
-
-func (p *processor) federateStatus(status *gtsmodel.Status) error {
-	// // derive the sending account -- it might be attached to the status already
-	// sendingAcct := &gtsmodel.Account{}
-	// if status.GTSAccount != nil {
-	// 	sendingAcct = status.GTSAccount
-	// } else {
-	// 	// it wasn't attached so get it from the db instead
-	// 	if err := p.db.GetByID(status.AccountID, sendingAcct); err != nil {
-	// 		return err
-	// 	}
-	// }
-
-	// outboxURI, err := url.Parse(sendingAcct.OutboxURI)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// // convert the status to AS format Note
-	// note, err := p.tc.StatusToAS(status)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// _, err = p.federator.FederatingActor().Send(context.Background(), outboxURI, note)
-	return nil
-}
-
-func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 	return nil
 }
