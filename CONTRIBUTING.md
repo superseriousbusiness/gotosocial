@@ -12,7 +12,7 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
 
 Before starting on something, please comment on an issue to say that you're working on it, and send a message to `@dumpsterqueer@ondergrond.org` (Mastodon) to let them know.
 
-You can also drop into the GoToSocial Matrix room [here](https://matrix.to/#/!mdShFtfScQvVSmjIKX:ondergrond.org?via=ondergrond.org).
+You can also drop into the GoToSocial Matrix room [#gotosocial:ondergrond.org](https://matrix.to/#/!mdShFtfScQvVSmjIKX:ondergrond.org?via=ondergrond.org).
 
 This is the recommended way of keeping in touch with other developers, asking direct questions about code, and letting everyone know what you're up to.
 
@@ -53,6 +53,20 @@ docker run -d --user postgres --network host sosedoff/pgweb
 ```
 
 This will launch a pgweb at `http://localhost:8081`.
+
+After spinning the database, you can start the gotosocial testrig using:
+
+```bash
+./gotosocial testrig start
+```
+
+This will launch GTS at `http://localhost:8080` with pre loaded content.
+
+### ⚠️⚠️**WARNING**⚠️⚠️
+
+`testrig` will drop all tables on exit, to ensure the next `testrig` starts with the same values. `testrig` also uses a in-memory storage, so, all attachments are lost on exit.
+
+You should **NEVER** run a testrig on the same database you use for an actual instance, because you will lose all your data on testrig exit.
 
 ## Running tests
 
