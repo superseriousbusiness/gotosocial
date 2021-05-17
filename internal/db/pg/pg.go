@@ -456,23 +456,35 @@ func (ps *postgresService) GetFavesByAccountID(accountID string, faves *[]gtsmod
 	return nil
 }
 
-func (ps *postgresService) GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error {
-	if err := ps.conn.Model(statuses).Where("account_id = ?", accountID).Select(); err != nil {
+func (ps *postgresService) CountStatusesByAccountID(accountID string) (int, error) {
+	count, err := ps.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
+	if err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return 0, nil
 		}
-		return err
+		return 0, err
 	}
-	return nil
+	return count, nil
 }
 
-func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error {
+func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) error {
 	q := ps.conn.Model(statuses).Order("created_at DESC")
+	if accountID != "" {
+		q = q.Where("account_id = ?", accountID)
+	}
 	if limit != 0 {
 		q = q.Limit(limit)
 	}
-	if accountID != "" {
-		q = q.Where("account_id = ?", accountID)
+	if excludeReplies {
+		q = q.Where("? IS NULL", pg.Ident("in_reply_to_id"))
+	}
+	if pinned {
+		q = q.Where("pinned = ?", true)
+	}
+	if mediaOnly {
+		q = q.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			return q.Where("? IS NOT NULL", pg.Ident("attachments")).Where("attachments != '{}'"), nil
+		})
 	}
 	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -824,8 +836,8 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 		return true, nil
 	case gtsmodel.VisibilityDirect:
 		// make sure the requesting account is mentioned in the status
-		for _, menchie := range targetStatus.Mentions {
-			if menchie == requestingAccount.ID {
+		for _, acct := range relevantAccounts.MentionedAccounts {
+			if acct.ID == requestingAccount.ID {
 				return true, nil // yep it's mentioned!
 			}
 		}
@@ -900,10 +912,16 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 	}
 
 	// now get all accounts with IDs that are mentioned in the status
-	for _, mentionedAccountID := range targetStatus.Mentions {
+	for _, mentionID := range targetStatus.Mentions {
+
+		mention := &gtsmodel.Mention{}
+		if err := ps.conn.Model(mention).Where("id = ?", mentionID).Select(); err != nil {
+			return accounts, fmt.Errorf("error getting mention with id %s: %s", mentionID, err)
+		}
+
 		mentionedAccount := &gtsmodel.Account{}
-		if err := ps.conn.Model(mentionedAccount).Where("id = ?", mentionedAccountID).Select(); err != nil {
-			return accounts, err
+		if err := ps.conn.Model(mentionedAccount).Where("id = ?", mention.TargetAccountID).Select(); err != nil {
+			return accounts, fmt.Errorf("error getting mentioned account: %s", err)
 		}
 		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
 	}
@@ -937,10 +955,6 @@ func (ps *postgresService) StatusMutedBy(status *gtsmodel.Status, accountID stri
 
 func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error) {
 	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
-}
-
-func (ps *postgresService) StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusPin{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
 func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {

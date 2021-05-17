@@ -70,7 +70,7 @@ type Processor interface {
 	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int) ([]apimodel.Status, ErrorWithCode)
+	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode)
 	// AccountFollowersGet
 	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
 

@@ -55,7 +55,7 @@ type Status struct {
 	// Have you bookmarked this status?
 	Bookmarked bool `json:"bookmarked"`
 	// Have you pinned this status? Only appears if the status is pinnable.
-	Pinned bool `json:"pinned"`
+	Pinned bool `json:"pinned,omitempty"`
 	// HTML-encoded status content.
 	Content string `json:"content"`
 	// The status being reblogged.

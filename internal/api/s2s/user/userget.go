@@ -56,7 +56,7 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 
 	// make a copy of the context to pass along so we don't break anything
 	cp := c.Copy()
-	user, err := m.processor.GetFediUser(requestedUsername, cp.Request) // GetAPUser handles auth as well
+	user, err := m.processor.GetFediUser(requestedUsername, cp.Request) // GetFediUser handles auth as well
 	if err != nil {
 		l.Info(err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})

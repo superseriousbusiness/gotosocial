@@ -34,7 +34,7 @@ type Status struct {
 	Attachments []string `pg:",array"`
 	// Database IDs of any tags used in this status
 	Tags []string `pg:",array"`
-	// Database IDs of any accounts mentioned in this status
+	// Database IDs of any mentions in this status
 	Mentions []string `pg:",array"`
 	// Database IDs of any emojis used in this status
 	Emojis []string `pg:",array"`
@@ -69,6 +69,8 @@ type Status struct {
 	ActivityStreamsType ActivityStreamsObject
 	// Original text of the status without formatting
 	Text string
+	// Has this status been pinned by its owner?
+	Pinned bool
 
 	/*
 		INTERNAL MODEL NON-DATABASE FIELDS

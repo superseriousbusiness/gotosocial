@@ -68,7 +68,6 @@ var models []interface{} = []interface{}{
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.StatusMute{},
-	&gtsmodel.StatusPin{},
 	&gtsmodel.Tag{},
 	&gtsmodel.User{},
 	&gtsmodel.Emoji{},

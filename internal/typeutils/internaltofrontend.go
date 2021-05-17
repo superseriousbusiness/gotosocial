@@ -87,15 +87,11 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}
 
 	// count statuses
-	statuses := []gtsmodel.Status{}
-	if err := c.db.GetStatusesByAccountID(a.ID, &statuses); err != nil {
+	statusesCount, err := c.db.CountStatusesByAccountID(a.ID)
+	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last statuses: %s", err)
 		}
-	}
-	var statusesCount int
-	if statuses != nil {
-		statusesCount = len(statuses)
 	}
 
 	// check when the last status was
@@ -295,7 +291,6 @@ func (c *converter) StatusToMasto(
 	var faved bool
 	var reblogged bool
 	var bookmarked bool
-	var pinned bool
 	var muted bool
 
 	// requestingAccount will be nil for public requests without auth
@@ -319,11 +314,6 @@ func (c *converter) StatusToMasto(
 		bookmarked, err = c.db.StatusBookmarkedBy(s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
-		}
-
-		pinned, err = c.db.StatusPinnedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has pinned status: %s", err)
 		}
 	}
 
@@ -523,7 +513,7 @@ func (c *converter) StatusToMasto(
 		Reblogged:          reblogged,
 		Muted:              muted,
 		Bookmarked:         bookmarked,
-		Pinned:             pinned,
+		Pinned:             s.Pinned,
 		Content:            s.Content,
 		Reblog:             mastoRebloggedStatus,
 		Application:        mastoApplication,

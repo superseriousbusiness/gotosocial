@@ -34,6 +34,15 @@ import (
 const (
 	// LimitKey is for setting the return amount limit for eg., requesting an account's statuses
 	LimitKey = "limit"
+	// ExcludeRepliesKey is for specifying whether to exclude replies in a list of returned statuses by an account.
+	ExcludeRepliesKey = "exclude_replies"
+	// PinnedKey is for specifying whether to include pinned statuses in a list of returned statuses by an account.
+	PinnedKey = "pinned"
+	// MaxIDKey is for specifying the maximum ID of the status to retrieve.
+	MaxIDKey = "max_id"
+	// MediaOnlyKey is for specifying that only statuses with media should be returned in a list of returned statuses by an account.
+	MediaOnlyKey = "only_media"
+
 	// IDKey is the key to use for retrieving account ID in requests
 	IDKey = "id"
 	// BasePath is the base API path for this module

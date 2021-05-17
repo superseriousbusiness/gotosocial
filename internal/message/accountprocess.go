@@ -185,7 +185,7 @@ func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCrede
 	return acctSensitive, nil
 }
 
-func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int) ([]apimodel.Status, ErrorWithCode) {
+func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode) {
 	targetAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
@@ -196,7 +196,7 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 
 	statuses := []gtsmodel.Status{}
 	apiStatuses := []apimodel.Status{}
-	if err := p.db.GetStatusesByTimeDescending(targetAccountID, &statuses, limit); err != nil {
+	if err := p.db.GetStatusesByTimeDescending(targetAccountID, &statuses, limit, excludeReplies, maxID, pinned, mediaOnly); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return apiStatuses, nil
 		}
@@ -206,12 +206,12 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 	for _, s := range statuses {
 		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(&s)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, NewErrorInternalError(fmt.Errorf("error getting relevant statuses: %s", err))
 		}
 
 		visible, err := p.db.StatusVisible(&s, targetAccount, authed.Account, relevantAccounts)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
 		}
 		if !visible {
 			continue
@@ -221,16 +221,16 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 		if s.BoostOfID != "" {
 			bs := &gtsmodel.Status{}
 			if err := p.db.GetByID(s.BoostOfID, bs); err != nil {
-				return nil, NewErrorInternalError(err)
+				return nil, NewErrorInternalError(fmt.Errorf("error getting boosted status: %s", err))
 			}
 			boostedRelevantAccounts, err := p.db.PullRelevantAccountsFromStatus(bs)
 			if err != nil {
-				return nil, NewErrorInternalError(err)
+				return nil, NewErrorInternalError(fmt.Errorf("error getting relevant accounts from boosted status: %s", err))
 			}
 
 			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
 			if err != nil {
-				return nil, NewErrorInternalError(err)
+				return nil, NewErrorInternalError(fmt.Errorf("error checking boosted status visibility: %s", err))
 			}
 
 			if boostedVisible {
@@ -240,7 +240,7 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 
 		apiStatus, err := p.tc.StatusToMasto(&s, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostedStatus)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
 		}
 
 		apiStatuses = append(apiStatuses, *apiStatus)

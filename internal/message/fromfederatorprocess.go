@@ -21,7 +21,9 @@ package message
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -85,7 +87,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 // that's up the caller to do.
 func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 	l := p.log.WithFields(logrus.Fields{
-		"func": "dereferenceStatusFields",
+		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
 	})
 	l.Debug("entering function")
@@ -97,6 +99,12 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 	t, err = p.federator.GetTransportForUser(username)
 	if err != nil {
 		return fmt.Errorf("error creating transport: %s", err)
+	}
+
+	// the status should have an ID by now, but just in case it doesn't let's generate one here
+	// because we'll need it further down
+	if status.ID == "" {
+		status.ID = uuid.NewString()
 	}
 
 	// 1. Media attachments.
@@ -132,7 +140,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 			continue
 		}
 		l.Debugf("dereferenced attachment: %+v", deferencedAttachment)
-		deferencedAttachment.StatusID = deferencedAttachment.ID
+		deferencedAttachment.StatusID = status.ID
 		if err := p.db.Put(deferencedAttachment); err != nil {
 			return fmt.Errorf("error inserting dereferenced attachment with remote url %s: %s", a.RemoteURL, err)
 		}
@@ -140,6 +148,61 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
 	}
 	status.Attachments = attachmentIDs
+
+	// 2. Hashtags
+
+	// 3. Emojis
+
+	// 4. Mentions
+	// At this point, mentions should have the namestring and mentionedAccountURI set on them.
+	//
+	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
+	mentions := []string{}
+	for _, m := range status.GTSMentions {
+		uri, err := url.Parse(m.MentionedAccountURI)
+		if err != nil {
+			l.Debugf("error parsing mentioned account uri %s: %s", m.MentionedAccountURI, err)
+			continue
+		}
+
+		m.StatusID = status.ID
+		m.OriginAccountID = status.GTSAccount.ID
+		m.OriginAccountURI = status.GTSAccount.URI
+
+		targetAccount := &gtsmodel.Account{}
+		if err := p.db.GetWhere("uri", uri.String(), targetAccount); err != nil {
+			// proper error
+			if _, ok := err.(db.ErrNoEntries); !ok {
+				return fmt.Errorf("db error checking for account with uri %s", uri.String())
+			}
+
+			// we just don't have it yet, so we should go get it....
+			accountable, err := p.federator.DereferenceRemoteAccount(username, uri)
+			if err != nil {
+				// we can't dereference it so just skip it
+				l.Debugf("error dereferencing remote account with uri %s: %s", uri.String(), err)
+				continue
+			}
+
+			targetAccount, err = p.tc.ASRepresentationToAccount(accountable)
+			if err != nil {
+				l.Debugf("error converting remote account with uri %s into gts model: %s", uri.String(), err)
+				continue
+			}
+
+			if err := p.db.Put(targetAccount); err != nil {
+				return fmt.Errorf("db error inserting account with uri %s", uri.String())
+			}
+		}
+
+		// by this point, we know the targetAccount exists in our database with an ID :)
+		m.TargetAccountID = targetAccount.ID
+		if err := p.db.Put(m); err != nil {
+			return fmt.Errorf("error creating mention: %s", err)
+		}
+		mentions = append(mentions, m.ID)
+	}
+	status.Mentions = mentions
 
 	return nil
 }

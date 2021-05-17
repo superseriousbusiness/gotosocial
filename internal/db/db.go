@@ -160,16 +160,14 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetFavesByAccountID(accountID string, faves *[]gtsmodel.StatusFave) error
 
-	// GetStatusesByAccountID is a shortcut for the common action of fetching a list of statuses produced by accountID.
-	// The given slice 'statuses' will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetStatusesByAccountID(accountID string, statuses *[]gtsmodel.Status) error
+	// CountStatusesByAccountID is a shortcut for the common action of counting statuses produced by accountID.
+	CountStatusesByAccountID(accountID string) (int, error)
 
 	// GetStatusesByTimeDescending is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
 	// In case of no entries, a 'no entries' error will be returned
-	GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int) error
+	GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) error
 
 	// GetLastStatusForAccountID simply gets the most recent status by the given account.
 	// The given slice 'status' pointer will be set to the result of the query, whatever it is.
@@ -250,9 +248,6 @@ type DB interface {
 
 	// StatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error)
-
-	// StatusPinnedBy checks if a given status has been pinned by a given account ID
-	StatusPinnedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
 	// FaveStatus faves the given status, using accountID as the faver.
 	// The returned fave will be nil if the status was already faved.
