@@ -179,8 +179,10 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 	}
 
 	// is the status faveable?
-	if !targetStatus.VisibilityAdvanced.Likeable {
-		return nil, errors.New("status is not faveable")
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Likeable {
+			return nil, errors.New("status is not faveable")
+		}
 	}
 
 	// it's visible! it's faveable! so let's fave the FUCK out of it
@@ -236,8 +238,10 @@ func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*api
 		return nil, NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	if !targetStatus.VisibilityAdvanced.Boostable {
-		return nil, NewErrorForbidden(errors.New("status is not boostable"))
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Boostable {
+			return nil, NewErrorForbidden(errors.New("status is not boostable"))
+		}
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
@@ -446,8 +450,10 @@ func (p *processor) StatusUnfave(authed *oauth.Auth, targetStatusID string) (*ap
 	}
 
 	// is the status faveable?
-	if !targetStatus.VisibilityAdvanced.Likeable {
-		return nil, errors.New("status is not faveable")
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Likeable {
+			return nil, errors.New("status is not faveable")
+		}
 	}
 
 	// it's visible! it's faveable! so let's unfave the FUCK out of it

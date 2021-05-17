@@ -804,6 +804,13 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 				return false, nil
 			}
 		}
+
+		// if the requesting account is mentioned in the status it should always be visible
+		for _, acct := range relevantAccounts.MentionedAccounts {
+			if acct.ID == requestingAccount.ID {
+				return true, nil // yep it's mentioned!
+			}
+		}
 	}
 
 	// at this point we know neither account blocks the other, or another account mentioned or otherwise referred to in the status
@@ -835,12 +842,6 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 		}
 		return true, nil
 	case gtsmodel.VisibilityDirect:
-		// make sure the requesting account is mentioned in the status
-		for _, acct := range relevantAccounts.MentionedAccounts {
-			if acct.ID == requestingAccount.ID {
-				return true, nil // yep it's mentioned!
-			}
-		}
 		l.Debug("requesting account requests a status it's not mentioned in")
 		return false, nil // it's not mentioned -_-
 	}
