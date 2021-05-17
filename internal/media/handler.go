@@ -19,8 +19,10 @@
 package media
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -30,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // Size describes the *size* of a piece of media
@@ -68,13 +71,21 @@ type Handler interface {
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
-	// and then returns information to the caller about the attachment.
-	ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error)
+	// and then returns information to the caller about the attachment. It's the caller's responsibility to put the returned struct
+	// in the database.
+	ProcessAttachment(attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
 	// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 	// in the database.
 	ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
+
+	// ProcessRemoteAttachment takes a transport, a bare-bones current attachment, and an accountID that the attachment belongs to.
+	// It then dereferences the attachment (ie., fetches the attachment bytes from the remote server), ensuring that the bytes are
+	// the correct content type. It stores the attachment in whatever storage backend the Handler has been initalized with, and returns
+	// information to the caller about the new attachment. It's the caller's responsibility to put the returned struct
+	// in the database.
+	ProcessRemoteAttachment(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -136,27 +147,24 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	return ma, nil
 }
 
-// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
+// ProcessAttachment takes a new attachment and the owning account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 // and then returns information to the caller about the attachment.
-func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	contentType, err := parseContentType(attachment)
 	if err != nil {
 		return nil, err
 	}
 	mainType := strings.Split(contentType, "/")[0]
 	switch mainType {
-	case MIMEVideo:
-		if !SupportedVideoType(contentType) {
-			return nil, fmt.Errorf("video type %s not supported", contentType)
-		}
-		if len(attachment) == 0 {
-			return nil, errors.New("video was of size 0")
-		}
-		if len(attachment) > mh.config.MediaConfig.MaxVideoSize {
-			return nil, fmt.Errorf("video size %d bytes exceeded max video size of %d bytes", len(attachment), mh.config.MediaConfig.MaxVideoSize)
-		}
-		return mh.processVideoAttachment(attachment, accountID, contentType)
+	// case MIMEVideo:
+	// 	if !SupportedVideoType(contentType) {
+	// 		return nil, fmt.Errorf("video type %s not supported", contentType)
+	// 	}
+	// 	if len(attachment) == 0 {
+	// 		return nil, errors.New("video was of size 0")
+	// 	}
+	// 	return mh.processVideoAttachment(attachment, accountID, contentType, remoteURL)
 	case MIMEImage:
 		if !SupportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
@@ -164,10 +172,7 @@ func (mh *mediaHandler) ProcessLocalAttachment(attachment []byte, accountID stri
 		if len(attachment) == 0 {
 			return nil, errors.New("image was of size 0")
 		}
-		if len(attachment) > mh.config.MediaConfig.MaxImageSize {
-			return nil, fmt.Errorf("image size %d bytes exceeded max image size of %d bytes", len(attachment), mh.config.MediaConfig.MaxImageSize)
-		}
-		return mh.processImageAttachment(attachment, accountID, contentType)
+		return mh.processImageAttachment(attachment, accountID, contentType, remoteURL)
 	default:
 		break
 	}
@@ -287,221 +292,26 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	return e, nil
 }
 
-/*
-	HELPER FUNCTIONS
-*/
-
-func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
-	return nil, nil
-}
-
-func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, contentType string) (*gtsmodel.MediaAttachment, error) {
-	var clean []byte
-	var err error
-	var original *imageAndMeta
-	var small *imageAndMeta
-
-	switch contentType {
-	case MIMEJpeg, MIMEPng:
-		if clean, err = purgeExif(data); err != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", err)
-		}
-		original, err = deriveImage(clean, contentType)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing image: %s", err)
-		}
-	case MIMEGif:
-		clean = data
-		original, err = deriveGif(clean, contentType)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing gif: %s", err)
-		}
-	default:
-		return nil, errors.New("media type unrecognized")
+func (mh *mediaHandler) ProcessRemoteAttachment(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
+	if currentAttachment.RemoteURL == "" {
+		return nil, errors.New("no remote URL on media attachment to dereference")
 	}
-
-	small, err = deriveThumbnail(clean, contentType, 256, 256)
+	remoteIRI, err := url.Parse(currentAttachment.RemoteURL)
 	if err != nil {
-		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
+		return nil, fmt.Errorf("error parsing attachment url %s: %s", currentAttachment.RemoteURL, err)
 	}
 
-	// now put it in storage, take a new uuid for the name of the file so we don't store any unnecessary info about it
-	extension := strings.Split(contentType, "/")[1]
-	newMediaID := uuid.NewString()
-
-	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
-	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, accountID, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, accountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
-
-	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, Attachment, Original, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
+	// for content type, we assume we don't know what to expect...
+	expectedContentType := "*/*"
+	if currentAttachment.File.ContentType != "" {
+		// ... and then narrow it down if we do
+		expectedContentType = currentAttachment.File.ContentType
 	}
 
-	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, accountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
-	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
-	}
-
-	ma := &gtsmodel.MediaAttachment{
-		ID:        newMediaID,
-		StatusID:  "",
-		URL:       originalURL,
-		RemoteURL: "",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Original: gtsmodel.Original{
-				Width:  original.width,
-				Height: original.height,
-				Size:   original.size,
-				Aspect: original.aspect,
-			},
-			Small: gtsmodel.Small{
-				Width:  small.width,
-				Height: small.height,
-				Size:   small.size,
-				Aspect: small.aspect,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          original.blurhash,
-		Processing:        2,
-		File: gtsmodel.File{
-			Path:        originalPath,
-			ContentType: contentType,
-			FileSize:    len(original.image),
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			Path:        smallPath,
-			ContentType: MIMEJpeg, // all thumbnails/smalls are encoded as jpeg
-			FileSize:    len(small.image),
-			UpdatedAt:   time.Now(),
-			URL:         smallURL,
-			RemoteURL:   "",
-		},
-		Avatar: false,
-		Header: false,
-	}
-
-	return ma, nil
-
-}
-
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string) (*gtsmodel.MediaAttachment, error) {
-	var isHeader bool
-	var isAvatar bool
-
-	switch mediaType {
-	case Header:
-		isHeader = true
-	case Avatar:
-		isAvatar = true
-	default:
-		return nil, errors.New("header or avatar not selected")
-	}
-
-	var clean []byte
-	var err error
-
-	var original *imageAndMeta
-	switch contentType {
-	case MIMEJpeg:
-		if clean, err = purgeExif(imageBytes); err != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", err)
-		}
-		original, err = deriveImage(clean, contentType)
-	case MIMEPng:
-		if clean, err = purgeExif(imageBytes); err != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", err)
-		}
-		original, err = deriveImage(clean, contentType)
-	case MIMEGif:
-		clean = imageBytes
-		original, err = deriveGif(clean, contentType)
-	default:
-		return nil, errors.New("media type unrecognized")
-	}
-
+	attachmentBytes, err := t.DereferenceMedia(context.Background(), remoteIRI, expectedContentType)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing image: %s", err)
+		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
 	}
 
-	small, err := deriveThumbnail(clean, contentType, 256, 256)
-	if err != nil {
-		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
-	}
-
-	// now put it in storage, take a new uuid for the name of the file so we don't store any unnecessary info about it
-	extension := strings.Split(contentType, "/")[1]
-	newMediaID := uuid.NewString()
-
-	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
-	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
-
-	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Original, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
-	}
-
-	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Small, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
-	}
-
-	ma := &gtsmodel.MediaAttachment{
-		ID:        newMediaID,
-		StatusID:  "",
-		URL:       originalURL,
-		RemoteURL: "",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Original: gtsmodel.Original{
-				Width:  original.width,
-				Height: original.height,
-				Size:   original.size,
-				Aspect: original.aspect,
-			},
-			Small: gtsmodel.Small{
-				Width:  small.width,
-				Height: small.height,
-				Size:   small.size,
-				Aspect: small.aspect,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          original.blurhash,
-		Processing:        2,
-		File: gtsmodel.File{
-			Path:        originalPath,
-			ContentType: contentType,
-			FileSize:    len(original.image),
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			Path:        smallPath,
-			ContentType: contentType,
-			FileSize:    len(small.image),
-			UpdatedAt:   time.Now(),
-			URL:         smallURL,
-			RemoteURL:   "",
-		},
-		Avatar: isAvatar,
-		Header: isHeader,
-	}
-
-	return ma, nil
+	return mh.ProcessAttachment(attachmentBytes, accountID, currentAttachment.RemoteURL)
 }

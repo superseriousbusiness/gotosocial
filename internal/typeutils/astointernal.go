@@ -281,7 +281,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 
 	// if it's CC'ed to public, it's public or unlocked
 	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
-	if isPublic(to) {
+	if isPublic(cc) || isPublic(to) {
 		visibility = gtsmodel.VisibilityPublic
 	}
 

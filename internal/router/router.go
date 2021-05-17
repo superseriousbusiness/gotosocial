@@ -153,7 +153,7 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	s := &http.Server{
 		Handler:           engine,
 		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      5 * time.Second,
+		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       30 * time.Second,
 		ReadHeaderTimeout: 30 * time.Second,
 	}

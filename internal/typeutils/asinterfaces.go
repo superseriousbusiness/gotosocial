@@ -69,8 +69,6 @@ type Attachmentable interface {
 	withMediaType
 	withURL
 	withName
-	withBlurhash
-	withFocalPoint
 }
 
 // Hashtaggable represents the minimum activitypub interface for representing a 'hashtag' tag.
@@ -212,13 +210,13 @@ type withMediaType interface {
 	GetActivityStreamsMediaType() vocab.ActivityStreamsMediaTypeProperty
 }
 
-type withBlurhash interface {
-	GetTootBlurhashProperty() vocab.TootBlurhashProperty
-}
+// type withBlurhash interface {
+// 	GetTootBlurhashProperty() vocab.TootBlurhashProperty
+// }
 
-type withFocalPoint interface {
-	// TODO
-}
+// type withFocalPoint interface {
+// 	// TODO
+// }
 
 type withHref interface {
 	GetActivityStreamsHref() vocab.ActivityStreamsHrefProperty

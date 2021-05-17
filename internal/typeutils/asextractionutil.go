@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -304,12 +305,24 @@ func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
 
 	attachmentProp := i.GetActivityStreamsAttachment()
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
-		attachmentable, ok := iter.(Attachmentable)
+
+		t := iter.GetType()
+		if t == nil {
+			fmt.Printf("\n\n\nGetType() nil\n\n\n")
+			continue
+		}
+
+		m, _ := streams.Serialize(t)
+		fmt.Printf("\n\n\n%s\n\n\n", m)
+
+		attachmentable, ok := t.(Attachmentable)
 		if !ok {
+			fmt.Printf("\n\n\nnot attachmentable\n\n\n")
 			continue
 		}
 		attachment, err := extractAttachment(attachmentable)
 		if err != nil {
+			fmt.Printf("\n\n\n%s\n\n\n", err)
 			continue
 		}
 		attachments = append(attachments, attachment)
@@ -343,23 +356,20 @@ func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 		attachment.Description = name
 	}
 
-	blurhash, err := extractBlurhash(i)
-	if err == nil {
-		attachment.Blurhash = blurhash
-	}
+	attachment.Processing = gtsmodel.ProcessingStatusReceived
 
 	return attachment, nil
 }
 
-func extractBlurhash(i withBlurhash) (string, error) {
-	if i.GetTootBlurhashProperty() == nil {
-		return "", errors.New("blurhash property was nil")
-	}
-	if i.GetTootBlurhashProperty().Get() == "" {
-		return "", errors.New("empty blurhash string")
-	}
-	return i.GetTootBlurhashProperty().Get(), nil
-}
+// func extractBlurhash(i withBlurhash) (string, error) {
+// 	if i.GetTootBlurhashProperty() == nil {
+// 		return "", errors.New("blurhash property was nil")
+// 	}
+// 	if i.GetTootBlurhashProperty().Get() == "" {
+// 		return "", errors.New("empty blurhash string")
+// 	}
+// 	return i.GetTootBlurhashProperty().Get(), nil
+// }
 
 func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 	tags := []*gtsmodel.Tag{}

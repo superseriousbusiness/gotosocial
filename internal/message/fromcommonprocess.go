@@ -16,18 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package message
 
-import "time"
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-// StatusPin refers to a status 'pinned' to the top of an account
-type StatusPin struct {
-	// id of this pin in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
-	// when was this pin created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// id of the account that created ('did') the pinning (this should always be the same as the author of the status)
-	AccountID string `pg:",notnull"`
-	// database id of the status that has been pinned
-	StatusID string `pg:",notnull"`
+func (p *processor) notifyStatus(status *gtsmodel.Status) error {
+	return nil
 }

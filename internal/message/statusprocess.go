@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package message
 
 import (
@@ -82,10 +100,10 @@ func (p *processor) StatusCreate(auth *oauth.Auth, form *apimodel.AdvancedStatus
 	}
 
 	// put the new status in the appropriate channel for async processing
-	p.fromClientAPI <- FromClientAPI{
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   newStatus.ActivityStreamsType,
 		APActivityType: gtsmodel.ActivityStreamsCreate,
-		Activity:       newStatus,
+		GTSModel:       newStatus,
 	}
 
 	// return the frontend representation of the new status to the submitter
@@ -161,8 +179,10 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 	}
 
 	// is the status faveable?
-	if !targetStatus.VisibilityAdvanced.Likeable {
-		return nil, errors.New("status is not faveable")
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Likeable {
+			return nil, errors.New("status is not faveable")
+		}
 	}
 
 	// it's visible! it's faveable! so let's fave the FUCK out of it
@@ -218,8 +238,10 @@ func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*api
 		return nil, NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	if !targetStatus.VisibilityAdvanced.Boostable {
-		return nil, NewErrorForbidden(errors.New("status is not boostable"))
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Boostable {
+			return nil, NewErrorForbidden(errors.New("status is not boostable"))
+		}
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
@@ -428,8 +450,10 @@ func (p *processor) StatusUnfave(authed *oauth.Auth, targetStatusID string) (*ap
 	}
 
 	// is the status faveable?
-	if !targetStatus.VisibilityAdvanced.Likeable {
-		return nil, errors.New("status is not faveable")
+	if targetStatus.VisibilityAdvanced != nil {
+		if !targetStatus.VisibilityAdvanced.Likeable {
+			return nil, errors.New("status is not faveable")
+		}
 	}
 
 	// it's visible! it's faveable! so let's unfave the FUCK out of it

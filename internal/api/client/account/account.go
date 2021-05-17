@@ -32,6 +32,17 @@ import (
 )
 
 const (
+	// LimitKey is for setting the return amount limit for eg., requesting an account's statuses
+	LimitKey = "limit"
+	// ExcludeRepliesKey is for specifying whether to exclude replies in a list of returned statuses by an account.
+	ExcludeRepliesKey = "exclude_replies"
+	// PinnedKey is for specifying whether to include pinned statuses in a list of returned statuses by an account.
+	PinnedKey = "pinned"
+	// MaxIDKey is for specifying the maximum ID of the status to retrieve.
+	MaxIDKey = "max_id"
+	// MediaOnlyKey is for specifying that only statuses with media should be returned in a list of returned statuses by an account.
+	MediaOnlyKey = "only_media"
+
 	// IDKey is the key to use for retrieving account ID in requests
 	IDKey = "id"
 	// BasePath is the base API path for this module
@@ -42,6 +53,10 @@ const (
 	VerifyPath = BasePath + "/verify_credentials"
 	// UpdateCredentialsPath is for updating account credentials
 	UpdateCredentialsPath = BasePath + "/update_credentials"
+	// GetStatusesPath is for showing an account's statuses
+	GetStatusesPath = BasePathWithID + "/statuses"
+	// GetFollowersPath is for showing an account's followers
+	GetFollowersPath = BasePathWithID + "/followers"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -65,6 +80,8 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, BasePath, m.AccountCreatePOSTHandler)
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
+	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
+	r.AttachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
 	return nil
 }
 

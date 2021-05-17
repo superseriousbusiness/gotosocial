@@ -21,6 +21,7 @@ package transport
 import (
 	"crypto"
 	"fmt"
+	"sync"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
@@ -30,7 +31,7 @@ import (
 
 // Controller generates transports for use in making federation requests to other servers.
 type Controller interface {
-	NewTransport(pubKeyID string, privkey crypto.PrivateKey) (pub.Transport, error)
+	NewTransport(pubKeyID string, privkey crypto.PrivateKey) (Transport, error)
 }
 
 type controller struct {
@@ -51,7 +52,7 @@ func NewController(config *config.Config, clock pub.Clock, client pub.HttpClient
 }
 
 // NewTransport returns a new http signature transport with the given public key id (a URL), and the given private key.
-func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (pub.Transport, error) {
+func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (Transport, error) {
 	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256, httpsig.RSA_SHA512}
 	digestAlgo := httpsig.DigestSha256
 	getHeaders := []string{"(request-target)", "host", "date"}
@@ -67,5 +68,17 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (p
 		return nil, fmt.Errorf("error creating post signer: %s", err)
 	}
 
-	return pub.NewHttpSigTransport(c.client, c.appAgent, c.clock, getSigner, postSigner, pubKeyID, privkey), nil
+	sigTransport := pub.NewHttpSigTransport(c.client, c.appAgent, c.clock, getSigner, postSigner, pubKeyID, privkey)
+
+	return &transport{
+		client:       c.client,
+		appAgent:     c.appAgent,
+		gofedAgent:   "(go-fed/activity v1.0.0)",
+		clock:        c.clock,
+		pubKeyID:     pubKeyID,
+		privkey:      privkey,
+		sigTransport: sigTransport,
+		getSigner:    getSigner,
+		getSignerMu:  &sync.Mutex{},
+	}, nil
 }
