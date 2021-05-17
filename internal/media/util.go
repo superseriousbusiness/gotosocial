@@ -206,7 +206,9 @@ func deriveImage(b []byte, contentType string) (*imageAndMeta, error) {
 	}
 
 	out := &bytes.Buffer{}
-	if err := jpeg.Encode(out, i, nil); err != nil {
+	if err := jpeg.Encode(out, i, &jpeg.Options{
+		Quality: 100,
+	}); err != nil {
 		return nil, err
 	}
 
@@ -256,7 +258,9 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	aspect := float64(width) / float64(height)
 
 	out := &bytes.Buffer{}
-	if err := jpeg.Encode(out, thumb, nil); err != nil {
+	if err := jpeg.Encode(out, thumb, &jpeg.Options{
+		Quality: 100,
+	}); err != nil {
 		return nil, err
 	}
 	return &imageAndMeta{
