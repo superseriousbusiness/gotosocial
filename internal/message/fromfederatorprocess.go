@@ -117,7 +117,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 	// This should be enough to pass along to the media processor.
 	attachmentIDs := []string{}
 	for _, a := range status.GTSMediaAttachments {
-		l.Debug("dereferencing attachment: %+v", a)
+		l.Debugf("dereferencing attachment: %+v", a)
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
 		maybeAttachment := &gtsmodel.MediaAttachment{}

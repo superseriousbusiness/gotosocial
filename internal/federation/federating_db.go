@@ -411,9 +411,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				}
 
 				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType: gtsmodel.ActivityStreamsNote,
+					APObjectType:   gtsmodel.ActivityStreamsNote,
 					APActivityType: gtsmodel.ActivityStreamsCreate,
-					GTSModel: status,
+					GTSModel:       status,
 				}
 			}
 		}

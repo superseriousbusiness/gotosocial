@@ -18,8 +18,6 @@
 
 package media
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-
-func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
-	return nil, nil
-}
+// func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+// 	return nil, nil
+// }

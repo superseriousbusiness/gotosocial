@@ -361,15 +361,15 @@ func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	return attachment, nil
 }
 
-func extractBlurhash(i withBlurhash) (string, error) {
-	if i.GetTootBlurhashProperty() == nil {
-		return "", errors.New("blurhash property was nil")
-	}
-	if i.GetTootBlurhashProperty().Get() == "" {
-		return "", errors.New("empty blurhash string")
-	}
-	return i.GetTootBlurhashProperty().Get(), nil
-}
+// func extractBlurhash(i withBlurhash) (string, error) {
+// 	if i.GetTootBlurhashProperty() == nil {
+// 		return "", errors.New("blurhash property was nil")
+// 	}
+// 	if i.GetTootBlurhashProperty().Get() == "" {
+// 		return "", errors.New("empty blurhash string")
+// 	}
+// 	return i.GetTootBlurhashProperty().Get(), nil
+// }
 
 func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 	tags := []*gtsmodel.Tag{}
