@@ -307,30 +307,34 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
-func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) error {
+func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, error) {
+	// make sure the original follow request exists
 	fr := &gtsmodel.FollowRequest{}
 	if err := ps.conn.Model(fr).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Select(); err != nil {
 		if err == pg.ErrMultiRows {
-			return db.ErrNoEntries{}
+			return nil, db.ErrNoEntries{}
 		}
-		return err
+		return nil, err
 	}
 
+	// create a new follow to 'replace' the request with
 	follow := &gtsmodel.Follow{
 		AccountID:       originAccountID,
 		TargetAccountID: targetAccountID,
 		URI:             fr.URI,
 	}
 
-	if _, err := ps.conn.Model(follow).Insert(); err != nil {
-		return err
+	// if the follow already exists, just update the URI -- we don't need to do anything else
+	if _, err := ps.conn.Model(follow).OnConflict("ON CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).Insert(); err != nil {
+		return nil, err
 	}
 
+	// now remove the follow request
 	if _, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Delete(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return follow, nil
 }
 
 func (ps *postgresService) CreateInstanceAccount() error {
@@ -679,6 +683,60 @@ func (ps *postgresService) Blocked(account1 string, account2 string) (bool, erro
 	}
 	blocked = true
 	return blocked, nil
+}
+
+func (ps *postgresService) GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error) {
+	r := &gtsmodel.Relationship{
+		ID: targetAccount,
+	}
+
+	// check if the requesting account follows the target account
+	follow := &gtsmodel.Follow{}
+	if err := ps.conn.Model(follow).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Select(); err != nil {
+		if err != pg.ErrNoRows {
+			// a proper error
+			return nil, fmt.Errorf("getrelationship: error checking follow existence: %s", err)
+		}
+		// no follow exists so these are all false
+		r.Following = false
+		r.ShowingReblogs = false
+		r.Notifying = false
+	} else {
+		// follow exists so we can fill these fields out...
+		r.Following = true
+		r.ShowingReblogs = follow.ShowReblogs
+		r.Notifying = follow.Notify
+	}
+
+	// check if the target account follows the requesting account
+	followedBy, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking followed_by existence: %s", err)
+	}
+	r.FollowedBy = followedBy
+
+	// check if the requesting account blocks the target account
+	blocking, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocking existence: %s", err)
+	}
+	r.Blocking = blocking
+
+	// check if the target account blocks the requesting account
+	blockedBy, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
+	}
+	r.BlockedBy = blockedBy
+
+	// check if there's a pending following request from requesting account to target account
+	requested, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
+	}
+	r.Requested = requested
+
+	return r, nil
 }
 
 func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {

@@ -38,24 +38,60 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 
 	l.Debug("entering function PROCESS FROM FEDERATOR")
 
-	switch federatorMsg.APObjectType {
-	case gtsmodel.ActivityStreamsNote:
+	switch federatorMsg.APActivityType {
+	case gtsmodel.ActivityStreamsCreate:
+		// CREATE
+		switch federatorMsg.APObjectType {
+		case gtsmodel.ActivityStreamsNote:
+			// CREATE A STATUS
+			incomingStatus, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("note was not parseable as *gtsmodel.Status")
+			}
 
-		incomingStatus, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
-		if !ok {
-			return errors.New("note was not parseable as *gtsmodel.Status")
-		}
+			l.Debug("will now derefence incoming status")
+			if err := p.dereferenceStatusFields(incomingStatus); err != nil {
+				return fmt.Errorf("error dereferencing status from federator: %s", err)
+			}
+			if err := p.db.UpdateByID(incomingStatus.ID, incomingStatus); err != nil {
+				return fmt.Errorf("error updating dereferenced status in the db: %s", err)
+			}
 
-		l.Debug("will now derefence incoming status")
-		if err := p.dereferenceStatusFields(incomingStatus); err != nil {
-			return fmt.Errorf("error dereferencing status from federator: %s", err)
-		}
-		if err := p.db.UpdateByID(incomingStatus.ID, incomingStatus); err != nil {
-			return fmt.Errorf("error updating dereferenced status in the db: %s", err)
-		}
+			if err := p.notifyStatus(incomingStatus); err != nil {
+				return err
+			}
+		case gtsmodel.ActivityStreamsProfile:
+			// CREATE AN ACCOUNT
+			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("profile was not parseable as *gtsmodel.Account")
+			}
 
-		if err := p.notifyStatus(incomingStatus); err != nil {
-			return err
+			l.Debug("will now derefence incoming account")
+			if err := p.dereferenceAccountFields(incomingAccount, ""); err != nil {
+				return fmt.Errorf("error dereferencing account from federator: %s", err)
+			}
+			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
+				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
+			}
+		}
+	case gtsmodel.ActivityStreamsUpdate:
+		// UPDATE
+		switch federatorMsg.APObjectType {
+		case gtsmodel.ActivityStreamsProfile:
+			// UPDATE AN ACCOUNT
+			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("profile was not parseable as *gtsmodel.Account")
+			}
+
+			l.Debug("will now derefence incoming account")
+			if err := p.dereferenceAccountFields(incomingAccount, ""); err != nil {
+				return fmt.Errorf("error dereferencing account from federator: %s", err)
+			}
+			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
+				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
+			}
 		}
 	}
 
@@ -203,6 +239,30 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 		mentions = append(mentions, m.ID)
 	}
 	status.Mentions = mentions
+
+	return nil
+}
+
+func (p *processor) dereferenceAccountFields(account *gtsmodel.Account, requestingUsername string) error {
+	l := p.log.WithFields(logrus.Fields{
+		"func":               "dereferenceAccountFields",
+		"requestingUsername": requestingUsername,
+	})
+
+	t, err := p.federator.GetTransportForUser(requestingUsername)
+	if err != nil {
+		return fmt.Errorf("error getting transport for user: %s", err)
+	}
+
+	// fetch the header and avatar
+	if err := p.fetchHeaderAndAviForAccount(account, t); err != nil {
+		// if this doesn't work, just skip it -- we can do it later
+		l.Debugf("error fetching header/avi for account: %s", err)
+	}
+
+	if err := p.db.UpdateByID(account.ID, account); err != nil {
+		return fmt.Errorf("error updating account in database: %s", err)
+	}
 
 	return nil
 }

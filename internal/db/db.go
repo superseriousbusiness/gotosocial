@@ -117,7 +117,9 @@ type DB interface {
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
-	AcceptFollowRequest(originAccountID string, targetAccountID string) error
+	//
+	// It will return the newly created follow for further processing.
+	AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, error)
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
@@ -203,6 +205,9 @@ type DB interface {
 	// Blocked checks whether a block exists in eiher direction between two accounts.
 	// That is, it returns true if account1 blocks account2, OR if account2 blocks account1.
 	Blocked(account1 string, account2 string) (bool, error)
+
+	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
+	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error)
 
 	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
 	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts

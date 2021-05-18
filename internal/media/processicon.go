@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
@@ -96,7 +96,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		ID:        newMediaID,
 		StatusID:  "",
 		URL:       originalURL,
-		RemoteURL: "",
+		RemoteURL: remoteURL,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Type:      gtsmodel.FileTypeImage,

@@ -19,30 +19,48 @@
 package message
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
+	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error {
-	switch clientMsg.APObjectType {
-	case gtsmodel.ActivityStreamsNote:
-		status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	switch clientMsg.APActivityType {
+	case gtsmodel.ActivityStreamsCreate:
+		// CREATE
+		switch clientMsg.APObjectType {
+		case gtsmodel.ActivityStreamsNote:
+			// CREATE NOTE
+			status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("note was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.notifyStatus(status); err != nil {
+				return err
+			}
+
+			if status.VisibilityAdvanced.Federated {
+				return p.federateStatus(status)
+			}
+			return nil
+		}
+	case gtsmodel.ActivityStreamsUpdate:
+		// UPDATE
+	case gtsmodel.ActivityStreamsAccept:
+		// ACCEPT
+		follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 		if !ok {
-			return errors.New("note was not parseable as *gtsmodel.Status")
+			return errors.New("accept was not parseable as *gtsmodel.Follow")
 		}
-
-		if err := p.notifyStatus(status); err != nil {
-			return err
-		}
-
-		if status.VisibilityAdvanced.Federated {
-			return p.federateStatus(status)
-		}
-		return nil
+		return p.federateAcceptFollowRequest(follow)
 	}
-	return fmt.Errorf("message type unprocessable: %+v", clientMsg)
+	return nil
 }
 
 func (p *processor) federateStatus(status *gtsmodel.Status) error {
@@ -70,4 +88,75 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 
 	// _, err = p.federator.FederatingActor().Send(context.Background(), outboxURI, note)
 	return nil
+}
+
+func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow) error {
+
+	followAccepter := &gtsmodel.Account{}
+	if err := p.db.GetByID(follow.TargetAccountID, followAccepter); err != nil {
+		return fmt.Errorf("error federating follow accept: %s", err)
+	}
+	followAccepterIRI, err := url.Parse(followAccepter.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing URL: %s", err)
+	}
+	followAccepterOutboxIRI, err := url.Parse(followAccepter.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("error parsing URL: %s", err)
+	}
+	me := streams.NewActivityStreamsActorProperty()
+	me.AppendIRI(followAccepterIRI)
+
+	followRequester := &gtsmodel.Account{}
+	if err := p.db.GetByID(follow.AccountID, followRequester); err != nil {
+		return fmt.Errorf("error federating follow accept: %s", err)
+	}
+	requesterIRI, err := url.Parse(followRequester.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing URL: %s", err)
+	}
+	them := streams.NewActivityStreamsActorProperty()
+	them.AppendIRI(requesterIRI)
+
+	// prepare the follow
+	ASFollow := streams.NewActivityStreamsFollow()
+	// set the follow requester as the actor
+	ASFollow.SetActivityStreamsActor(them)
+	// set the ID from the follow
+	ASFollowURI, err := url.Parse(follow.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing URL: %s", err)
+	}
+	ASFollowIDProp := streams.NewJSONLDIdProperty()
+	ASFollowIDProp.SetIRI(ASFollowURI)
+	ASFollow.SetJSONLDId(ASFollowIDProp)
+
+	// set the object as the accepter URI
+	ASFollowObjectProp := streams.NewActivityStreamsObjectProperty()
+	ASFollowObjectProp.AppendIRI(followAccepterIRI)
+
+	// Prepare the response.
+	ASAccept := streams.NewActivityStreamsAccept()
+	// Set us as the 'actor'.
+	ASAccept.SetActivityStreamsActor(me)
+
+	// Set the Follow as the 'object' property.
+	ASAcceptObject := streams.NewActivityStreamsObjectProperty()
+	ASAcceptObject.AppendActivityStreamsFollow(ASFollow)
+	ASAccept.SetActivityStreamsObject(ASAcceptObject)
+
+	// Add all actors on the original Follow to the 'to' property.
+	ASAcceptTo := streams.NewActivityStreamsToProperty()
+	followActors := ASFollow.GetActivityStreamsActor()
+	for iter := followActors.Begin(); iter != followActors.End(); iter = iter.Next() {
+		id, err := pub.ToId(iter)
+		if err != nil {
+			return err
+		}
+		ASAcceptTo.AppendIRI(id)
+	}
+	ASAccept.SetActivityStreamsTo(ASAcceptTo)
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), followAccepterOutboxIRI, ASAccept)
+	return err
 }

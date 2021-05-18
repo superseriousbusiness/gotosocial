@@ -20,6 +20,7 @@ package federation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -371,24 +372,37 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			"asType": asType.GetTypeName(),
 		},
 	)
-	l.Debugf("received CREATE asType %+v", asType)
+	m, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	l.Debugf("received CREATE asType %s", string(b))
 
 	targetAcctI := ctx.Value(util.APAccount)
 	if targetAcctI == nil {
 		l.Error("target account wasn't set on context")
+		return nil
 	}
 	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
 	if !ok {
 		l.Error("target account was set on context but couldn't be parsed")
+		return nil
 	}
 
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
 		l.Error("from federator channel wasn't set on context")
+		return nil
 	}
 	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
 	if !ok {
 		l.Error("from federator channel was set on context but couldn't be parsed")
+		return nil
 	}
 
 	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
@@ -433,7 +447,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 
 		if !targetAcct.Locked {
-			if err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
+			if _, err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
 				return fmt.Errorf("database error accepting follow request: %s", err)
 			}
 		}
@@ -450,14 +464,87 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 // the entire value.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
+func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "Update",
 			"asType": asType.GetTypeName(),
 		},
 	)
-	l.Debugf("received UPDATE asType %+v", asType)
+	m, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	l.Debugf("received UPDATE asType %s", string(b))
+
+	receivingAcctI := ctx.Value(util.APAccount)
+	if receivingAcctI == nil {
+		l.Error("receiving account wasn't set on context")
+	}
+	receivingAcct, ok := receivingAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("receiving account was set on context but couldn't be parsed")
+	}
+
+	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	if fromFederatorChanI == nil {
+		l.Error("from federator channel wasn't set on context")
+	}
+	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	if !ok {
+		l.Error("from federator channel was set on context but couldn't be parsed")
+	}
+
+	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	case gtsmodel.ActivityStreamsUpdate:
+		update, ok := asType.(vocab.ActivityStreamsCreate)
+		if !ok {
+			return errors.New("could not convert type to create")
+		}
+		object := update.GetActivityStreamsObject()
+		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
+			switch objectIter.GetType().GetTypeName() {
+			case string(gtsmodel.ActivityStreamsPerson):
+				person := objectIter.GetActivityStreamsPerson()
+				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(person)
+				if err != nil {
+					return fmt.Errorf("error converting person to account: %s", err)
+				}
+				if err := f.db.Put(updatedAcct); err != nil {
+					return fmt.Errorf("database error inserting updated account: %s", err)
+				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType:     gtsmodel.ActivityStreamsProfile,
+					APActivityType:   gtsmodel.ActivityStreamsUpdate,
+					GTSModel:         updatedAcct,
+					ReceivingAccount: receivingAcct,
+				}
+
+			case string(gtsmodel.ActivityStreamsApplication):
+				application := objectIter.GetActivityStreamsApplication()
+				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(application)
+				if err != nil {
+					return fmt.Errorf("error converting person to account: %s", err)
+				}
+				if err := f.db.Put(updatedAcct); err != nil {
+					return fmt.Errorf("database error inserting updated account: %s", err)
+				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType:     gtsmodel.ActivityStreamsProfile,
+					APActivityType:   gtsmodel.ActivityStreamsUpdate,
+					GTSModel:         updatedAcct,
+					ReceivingAccount: receivingAcct,
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -490,7 +577,7 @@ func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox v
 	)
 	l.Debug("entering GETOUTBOX function")
 
-	return nil, nil
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
 // SetOutbox saves the outbox value given from GetOutbox, with new items
@@ -522,9 +609,18 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 			"asType": t.GetTypeName(),
 		},
 	)
-	l.Debugf("received NEWID request for asType %+v", t)
+	m, err := streams.Serialize(t)
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
 
-	return url.Parse(fmt.Sprintf("%s://%s/", f.config.Protocol, uuid.NewString()))
+	l.Debugf("received NEWID request for asType %s", string(b))
+
+	return url.Parse(fmt.Sprintf("%s://%s/%s", f.config.Protocol, f.config.Host, uuid.NewString()))
 }
 
 // Followers obtains the Followers Collection for an actor with the

@@ -57,6 +57,8 @@ const (
 	GetStatusesPath = BasePathWithID + "/statuses"
 	// GetFollowersPath is for showing an account's followers
 	GetFollowersPath = BasePathWithID + "/followers"
+	// GetRelationshipsPath is for showing an account's relationship with other accounts
+	GetRelationshipsPath = BasePath + "/relationships"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -82,6 +84,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
 	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
 	r.AttachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
+	r.AttachHandler(http.MethodGet, GetRelationshipsPath, m.AccountRelationshipsGETHandler)
 	return nil
 }
 

@@ -20,12 +20,14 @@ package federation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -146,6 +148,22 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 
 		requestingAccount = a
+
+		// send the newly dereferenced account into the processor channel for further async processing
+		fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+		if fromFederatorChanI == nil {
+			l.Error("from federator channel wasn't set on context")
+		}
+		fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+		if !ok {
+			l.Error("from federator channel was set on context but couldn't be parsed")
+		}
+
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:   gtsmodel.ActivityStreamsProfile,
+			APActivityType: gtsmodel.ActivityStreamsCreate,
+			GTSModel:       requestingAccount,
+		}
 	}
 
 	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
@@ -228,17 +246,19 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		"func": "FederatingCallbacks",
 	})
 
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		l.Error("target account wasn't set on context")
+	receivingAcctI := ctx.Value(util.APAccount)
+	if receivingAcctI == nil {
+		l.Error("receiving account wasn't set on context")
+		return
 	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	receivingAcct, ok := receivingAcctI.(*gtsmodel.Account)
 	if !ok {
-		l.Error("target account was set on context but couldn't be parsed")
+		l.Error("receiving account was set on context but couldn't be parsed")
+		return
 	}
 
 	var onFollow pub.OnFollowBehavior = pub.OnFollowAutomaticallyAccept
-	if targetAcct.Locked {
+	if receivingAcct.Locked {
 		onFollow = pub.OnFollowDoNothing
 	}
 
@@ -246,6 +266,13 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		// OnFollow determines what action to take for this particular callback
 		// if a Follow Activity is handled.
 		OnFollow: onFollow,
+	}
+
+	// override default undo behavior
+	other = []interface{}{
+		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
+			return f.typeConverter.
+		},
 	}
 
 	return

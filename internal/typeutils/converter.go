@@ -77,6 +77,9 @@ type TypeConverter interface {
 	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
 	InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error)
 
+	// RelationshipToMasto converts a gts relationship into its mastodon equivalent for serving in various places
+	RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error)
+
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
 	*/

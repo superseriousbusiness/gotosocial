@@ -73,6 +73,8 @@ type Processor interface {
 	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode)
 	// AccountFollowersGet
 	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	// AccountRelationshipGet
+	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -86,7 +88,7 @@ type Processor interface {
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
 	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, ErrorWithCode)
 	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
-	FollowRequestAccept(auth *oauth.Auth, accountID string) ErrorWithCode
+	FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, ErrorWithCode)
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)

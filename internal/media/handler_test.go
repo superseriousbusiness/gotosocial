@@ -147,7 +147,7 @@ func (suite *MediaTestSuite) TestSetHeaderOrAvatarForAccountID() {
 	f, err := ioutil.ReadFile("./test/test-jpeg.jpg")
 	assert.Nil(suite.T(), err)
 
-	ma, err := suite.mediaHandler.ProcessHeaderOrAvatar(f, "weeeeeee", "header")
+	ma, err := suite.mediaHandler.ProcessHeaderOrAvatar(f, "weeeeeee", "header", "")
 	assert.Nil(suite.T(), err)
 	suite.log.Debugf("%+v", ma)
 

@@ -78,6 +78,15 @@ func (p *processor) AccountGet(authed *oauth.Auth, targetAccountID string) (*api
 		return nil, fmt.Errorf("db error: %s", err)
 	}
 
+	// lazily dereference things on the account if it hasn't been done yet
+	var requestingUsername string
+	if authed.Account != nil {
+		requestingUsername = authed.Account.Username
+	}
+	if err := p.dereferenceAccountFields(targetAccount, requestingUsername); err != nil {
+		p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
+	}
+
 	var mastoAccount *apimodel.Account
 	var err error
 	if authed.Account != nil && targetAccount.ID == authed.Account.ID {
@@ -285,6 +294,12 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 			return nil, NewErrorInternalError(err)
 		}
 
+		// derefence account fields in case we haven't done it already
+		if err := p.dereferenceAccountFields(a, authed.Account.Username); err != nil {
+			// don't bail if we can't fetch them, we'll try another time
+			p.log.WithField("func", "AccountFollowersGet").Debugf("error dereferencing account fields: %s", err)
+		}
+
 		account, err := p.tc.AccountToMastoPublic(a)
 		if err != nil {
 			return nil, NewErrorInternalError(err)
@@ -292,4 +307,22 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 		accounts = append(accounts, *account)
 	}
 	return accounts, nil
+}
+
+func (p *processor) AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode) {
+	if authed == nil || authed.Account == nil {
+		return nil, NewErrorForbidden(errors.New("not authed"))
+	}
+
+	gtsR, err := p.db.GetRelationship(authed.Account.ID, targetAccountID)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
+	}
+
+	r, err := p.tc.RelationshipToMasto(gtsR)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error converting relationship: %s", err))
+	}
+
+	return r, nil
 }

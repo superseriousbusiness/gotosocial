@@ -39,6 +39,7 @@ type controller struct {
 	clock    pub.Clock
 	client   pub.HttpClient
 	appAgent string
+	log      *logrus.Logger
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
@@ -48,6 +49,7 @@ func NewController(config *config.Config, clock pub.Clock, client pub.HttpClient
 		clock:    clock,
 		client:   client,
 		appAgent: fmt.Sprintf("%s %s", config.ApplicationName, config.Host),
+		log:      log,
 	}
 }
 
@@ -80,5 +82,6 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (T
 		sigTransport: sigTransport,
 		getSigner:    getSigner,
 		getSignerMu:  &sync.Mutex{},
+		log:          c.log,
 	}, nil
 }
