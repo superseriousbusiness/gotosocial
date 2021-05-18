@@ -9,8 +9,8 @@ package gtsmodel
 
 // FromClientAPI wraps a message that travels from client API into the processor
 type FromClientAPI struct {
-	APObjectType   ActivityStreamsObject
-	APActivityType ActivityStreamsActivity
+	APObjectType   string
+	APActivityType string
 	GTSModel       interface{}
 }
 
@@ -23,8 +23,8 @@ type FromClientAPI struct {
 
 // FromFederator wraps a message that travels from the federator into the processor
 type FromFederator struct {
-	APObjectType     ActivityStreamsObject
-	APActivityType   ActivityStreamsActivity
+	APObjectType     string
+	APActivityType   string
 	GTSModel         interface{}
 	ReceivingAccount *Account
 }

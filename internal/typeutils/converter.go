@@ -97,7 +97,9 @@ type TypeConverter interface {
 	ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
 	ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error)
-
+	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
+	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
+	
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL
 	*/

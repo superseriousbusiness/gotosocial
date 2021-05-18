@@ -20,14 +20,12 @@ package federation
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -271,7 +269,7 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 	// override default undo behavior
 	other = []interface{}{
 		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-			return f.typeConverter.
+			return f.FederatingDB().Undo(ctx, undo)
 		},
 	}
 

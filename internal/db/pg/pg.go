@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -38,7 +37,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
@@ -46,11 +44,11 @@ import (
 
 // postgresService satisfies the DB interface
 type postgresService struct {
-	config       *config.Config
-	conn         *pg.DB
-	log          *logrus.Logger
-	cancel       context.CancelFunc
-	federationDB pub.Database
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+	// federationDB pub.Database
 }
 
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -96,9 +94,6 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		log:    log,
 		cancel: cancel,
 	}
-
-	federatingDB := federation.NewFederatingDB(ps, c, log)
-	ps.federationDB = federatingDB
 
 	// we can confidently return this useable postgres service now
 	return ps, nil
@@ -157,14 +152,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 	}
 
 	return options, nil
-}
-
-/*
-	FEDERATION FUNCTIONALITY
-*/
-
-func (ps *postgresService) Federation() pub.Database {
-	return ps.federationDB
 }
 
 /*
@@ -285,20 +272,22 @@ func (ps *postgresService) UpdateOneByID(id string, key string, value interface{
 
 func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+		// if there are no rows *anyway* then that's fine
+		// just return err if there's an actual error
+		if err != pg.ErrNoRows {
+			return err
 		}
-		return err
 	}
 	return nil
 }
 
 func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Delete(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+		// if there are no rows *anyway* then that's fine
+		// just return err if there's an actual error
+		if err != pg.ErrNoRows {
+			return err
 		}
-		return err
 	}
 	return nil
 }

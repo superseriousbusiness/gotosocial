@@ -38,6 +38,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+type FederatingDB interface {
+	pub.Database
+	Undo(c context.Context, asType vocab.Type) error
+}
+
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
@@ -48,8 +53,8 @@ type federatingDB struct {
 	typeConverter typeutils.TypeConverter
 }
 
-// NewFederatingDB returns a pub.Database interface using the given database, config, and logger.
-func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) pub.Database {
+// NewFederatingDB returns a FederatingDB interface using the given database, config, and logger.
+func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) FederatingDB {
 	return &federatingDB{
 		locks:         new(sync.Map),
 		db:            db,
@@ -405,7 +410,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		return nil
 	}
 
-	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	switch asType.GetTypeName() {
 	case gtsmodel.ActivityStreamsCreate:
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
@@ -413,7 +418,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 		object := create.GetActivityStreamsObject()
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
-			switch gtsmodel.ActivityStreamsObject(objectIter.GetType().GetTypeName()) {
+			switch objectIter.GetType().GetTypeName() {
 			case gtsmodel.ActivityStreamsNote:
 				note := objectIter.GetActivityStreamsNote()
 				status, err := f.typeConverter.ASStatusToStatus(note)
@@ -425,9 +430,10 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				}
 
 				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:   gtsmodel.ActivityStreamsNote,
-					APActivityType: gtsmodel.ActivityStreamsCreate,
-					GTSModel:       status,
+					APObjectType:     gtsmodel.ActivityStreamsNote,
+					APActivityType:   gtsmodel.ActivityStreamsCreate,
+					GTSModel:         status,
+					ReceivingAccount: targetAcct,
 				}
 			}
 		}
@@ -449,6 +455,98 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		if !targetAcct.Locked {
 			if _, err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
 				return fmt.Errorf("database error accepting follow request: %s", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (f *federatingDB) Undo(ctx context.Context, asType vocab.Type) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "Undo",
+			"asType": asType.GetTypeName(),
+		},
+	)
+	m, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	l.Debugf("received UNDO asType %s", string(b))
+
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		l.Error("UNDO: target account wasn't set on context")
+		return nil
+	}
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("UNDO: target account was set on context but couldn't be parsed")
+		return nil
+	}
+
+	// fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	// if fromFederatorChanI == nil {
+	// 	l.Error("from federator channel wasn't set on context")
+	// 	return nil
+	// }
+	// fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	// if !ok {
+	// 	l.Error("from federator channel was set on context but couldn't be parsed")
+	// 	return nil
+	// }
+
+	switch asType.GetTypeName() {
+	// UNDO
+	case gtsmodel.ActivityStreamsUndo:
+		undo, ok := asType.(vocab.ActivityStreamsUndo)
+		if !ok {
+			return errors.New("UNDO: couldn't parse UNDO into vocab.ActivityStreamsUndo")
+		}
+		undoObject := undo.GetActivityStreamsObject()
+		if undoObject == nil {
+			return errors.New("UNDO: no object set on vocab.ActivityStreamsUndo")
+		}
+
+		for iter := undoObject.Begin(); iter != undoObject.End(); iter = iter.Next() {
+			switch iter.GetType().GetTypeName() {
+			case string(gtsmodel.ActivityStreamsFollow):
+				// UNDO FOLLOW
+				ASFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
+				if !ok {
+					return errors.New("UNDO: couldn't parse follow into vocab.ActivityStreamsFollow")
+				}
+				// make sure the actor owns the follow
+				if !sameActor(undo.GetActivityStreamsActor(), ASFollow.GetActivityStreamsActor()) {
+					return errors.New("UNDO: follow actor and activity actor not the same")
+				}
+				// convert the follow to something we can understand
+				gtsFollow, err := f.typeConverter.ASFollowToFollow(ASFollow)
+				if err != nil {
+					return fmt.Errorf("UNDO: error converting asfollow to gtsfollow: %s", err)
+				}
+				// make sure the addressee of the original follow is the same as whatever inbox this landed in
+				if gtsFollow.TargetAccountID != targetAcct.ID {
+					return errors.New("UNDO: follow object account and inbox account were not the same")
+				}
+				// delete any existing FOLLOW
+				if err := f.db.DeleteWhere("uri", gtsFollow.URI, &gtsmodel.Follow{}); err != nil {
+					return fmt.Errorf("UNDO: db error removing follow: %s", err)
+				}
+				// delete any existing FOLLOW REQUEST
+				if err := f.db.DeleteWhere("uri", gtsFollow.URI, &gtsmodel.FollowRequest{}); err != nil {
+					return fmt.Errorf("UNDO: db error removing follow request: %s", err)
+				}
+				l.Debug("follow undone")
+				return nil
+			case string(gtsmodel.ActivityStreamsLike):
+				// UNDO LIKE
+			case string(gtsmodel.ActivityStreamsAnnounce):
+				// UNDO BOOST/REBLOG/ANNOUNCE
 			}
 		}
 	}
@@ -500,7 +598,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Error("from federator channel was set on context but couldn't be parsed")
 	}
 
-	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	switch asType.GetTypeName() {
 	case gtsmodel.ActivityStreamsUpdate:
 		update, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {

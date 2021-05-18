@@ -83,6 +83,8 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	federatingDB := federation.NewFederatingDB(dbService, c, log)
+
 	router, err := router.New(c, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
@@ -100,7 +102,7 @@ var Run action.GTSAction = func(ctx context.Context, c *config.Config, log *logr
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
-	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter)
 	processor := message.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)

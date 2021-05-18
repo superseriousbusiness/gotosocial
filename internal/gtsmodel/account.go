@@ -107,7 +107,7 @@ type Account struct {
 	// URL for getting the featured collection list of this account
 	FeaturedCollectionURI string `pg:",unique"`
 	// What type of activitypub actor is this account?
-	ActorType ActivityStreamsActor
+	ActorType string
 	// This account is associated with x account id
 	AlsoKnownAs string
 

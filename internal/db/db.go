@@ -22,7 +22,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -44,7 +43,7 @@ func (e ErrNoEntries) Error() string {
 type DB interface {
 	// Federation returns an interface that's compatible with go-fed, for performing federation storage/retrieval functions.
 	// See: https://pkg.go.dev/github.com/go-fed/activity@v1.0.0/pub?utm_source=gopls#Database
-	Federation() pub.Database
+	// Federation() federatingdb.FederatingDB
 
 	/*
 		BASIC DB FUNCTIONALITY

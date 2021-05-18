@@ -30,7 +30,7 @@
     * [ ] /api/v1/accounts/:id/pin POST                     (Feature this account on profile)
     * [ ] /api/v1/accounts/:id/unpin POST                   (Remove this account from profile)
     * [ ] /api/v1/accounts/:id/note POST                    (Make a personal note about this account)
-    * [ ] /api/v1/accounts/relationships GET                (Check relationships with accounts)
+    * [x] /api/v1/accounts/relationships GET                (Check relationships with accounts)
     * [ ] /api/v1/accounts/search GET                       (Search for an account)
   * [ ] Bookmarks
     * [ ] /api/v1/bookmarks GET                             (See bookmarked statuses)
@@ -177,6 +177,7 @@
     * [ ] 'Greedy' federation
     * [ ] No federation (insulate this instance from the Fediverse)
       * [ ] Allowlist
+  * [x] Secure HTTP signatures (creation and validation)
 * [ ] Storage
   * [x] Internal/statuses/preferences etc
     * [x] Postgres interface
