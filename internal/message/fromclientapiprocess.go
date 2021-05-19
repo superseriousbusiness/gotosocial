@@ -49,6 +49,18 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return p.federateStatus(status)
 			}
 			return nil
+		case gtsmodel.ActivityStreamsFollow:
+			// CREATE FOLLOW (request)
+			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+			if !ok {
+				return errors.New("follow was not parseable as *gtsmodel.Follow")
+			}
+
+			if err := p.notifyFollow(follow); err != nil {
+				return err
+			}
+
+			return p.federateFollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -90,7 +102,25 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 	return nil
 }
 
+func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	if err != nil {
+		return fmt.Errorf("federateFollow: error converting follow to as format: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateFollow: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asFollow)
+	return err
+}
+
 func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow) error {
+
+	// TODO: tidy up this whole function -- move most of the logic for the conversion to the type converter because this is just a mess! Shame on me!
+
 
 	followAccepter := &gtsmodel.Account{}
 	if err := p.db.GetByID(follow.TargetAccountID, followAccepter); err != nil {

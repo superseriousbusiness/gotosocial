@@ -32,10 +32,16 @@ const (
 
 // ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
-
 func (e ErrNoEntries) Error() string {
 	return "no entries"
 }
+
+// ErrAlreadyExists is to be returned from the DB interface when an entry already exists for a given query or its constraints.
+type ErrAlreadyExists struct{}
+func (e ErrAlreadyExists) Error() string {
+	return "already exists"
+}
+
 
 // DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
 // Note that in all of the functions below, the passed interface should be a pointer or a slice, which will then be populated
@@ -225,6 +231,9 @@ type DB interface {
 
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
+
+	// FollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
+	FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
 
 	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
 	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error)

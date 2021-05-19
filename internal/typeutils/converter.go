@@ -99,7 +99,7 @@ type TypeConverter interface {
 	ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
 	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
-	
+
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL
 	*/
@@ -109,6 +109,9 @@ type TypeConverter interface {
 
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
+
+	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
+	FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
 }
 
 type converter struct {

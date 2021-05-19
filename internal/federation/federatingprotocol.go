@@ -266,10 +266,14 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		OnFollow: onFollow,
 	}
 
-	// override default undo behavior
 	other = []interface{}{
+		// override default undo behavior
 		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
 			return f.FederatingDB().Undo(ctx, undo)
+		},
+		// override default accept behavior
+		func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+			return f.FederatingDB().Accept(ctx, accept)
 		},
 	}
 

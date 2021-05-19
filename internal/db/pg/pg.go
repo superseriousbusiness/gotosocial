@@ -242,6 +242,9 @@ func (ps *postgresService) GetAll(i interface{}) error {
 
 func (ps *postgresService) Put(i interface{}) error {
 	_, err := ps.conn.Model(i).Insert(i)
+	if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		return db.ErrAlreadyExists{}
+	}
 	return err
 }
 
@@ -898,6 +901,10 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 
 func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
 	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
+}
+
+func (ps *postgresService) FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
+	return ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
 func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error) {

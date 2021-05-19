@@ -12,6 +12,8 @@ type FromClientAPI struct {
 	APObjectType   string
 	APActivityType string
 	GTSModel       interface{}
+	OriginAccount  *Account
+	TargetAccount  *Account
 }
 
 // // ToFederator wraps a message that travels from the processor into the federator

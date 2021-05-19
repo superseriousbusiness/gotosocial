@@ -130,7 +130,18 @@ type UpdateSource struct {
 // By default, max 4 fields and 255 characters per property/value.
 type UpdateField struct {
 	// Name of the field
-	Name *string `form:"name"`
+	Name *string `form:"name" json:"name" xml:"name"`
 	// Value of the field
-	Value *string `form:"value"`
+	Value *string `form:"value" json:"value" xml:"value"`
+}
+
+// AccountFollowRequest is for parsing requests at /api/v1/accounts/:id/follow
+type AccountFollowRequest struct {
+	// ID of the account to follow request
+	// This should be a URL parameter not a form field
+	TargetAccountID string `form:"-"`
+	// Show reblogs for this account?
+	Reblogs *bool `form:"reblogs" json:"reblogs" xml:"reblogs"`
+	// Notify when this account posts?
+	Notify *bool `form:"notify" json:"notify" xml:"notify"`
 }

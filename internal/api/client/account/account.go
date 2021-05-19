@@ -59,6 +59,8 @@ const (
 	GetFollowersPath = BasePathWithID + "/followers"
 	// GetRelationshipsPath is for showing an account's relationship with other accounts
 	GetRelationshipsPath = BasePath + "/relationships"
+	// FollowPath is for POSTing new follows to, and updating existing follows
+	PostFollowPath = BasePathWithID + "/follow"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -85,6 +87,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
 	r.AttachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
 	r.AttachHandler(http.MethodGet, GetRelationshipsPath, m.AccountRelationshipsGETHandler)
+	r.AttachHandler(http.MethodPost, PostFollowPath, m.AccountFollowPOSTHandler)
 	return nil
 }
 

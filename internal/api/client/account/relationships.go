@@ -21,9 +21,14 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 
 	targetAccountIDs := c.QueryArray("id[]")
 	if len(targetAccountIDs) == 0 {
-		l.Debug("no account id specified in query")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
-		return
+		// check fallback -- let's be generous and see if maybe it's just set as 'id'?
+		id := c.Query("id")
+		if id == "" {
+			l.Debug("no account id specified in query")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
+			return
+		}
+		targetAccountIDs = append(targetAccountIDs, id)
 	}
 
 	relationships := []model.Relationship{}

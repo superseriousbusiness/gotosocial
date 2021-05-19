@@ -21,6 +21,7 @@ package typeutils
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
@@ -257,4 +258,50 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 
 func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
 	return nil, nil
+}
+
+func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
+	// parse out the various URIs we need for this
+	// origin account (who's doing the follow)
+	originAccountURI, err := url.Parse(originAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing origin account uri: %s", err)
+	}
+	originActor := streams.NewActivityStreamsActorProperty()
+	originActor.AppendIRI(originAccountURI)
+
+	// target account (who's being followed)
+	targetAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing target account uri: %s", err)
+	}
+
+	// uri of the folow activity itself
+	followURI, err := url.Parse(f.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing follow uri: %s", err)
+	}
+
+	// start preparing the follow activity
+	follow := streams.NewActivityStreamsFollow()
+
+	// set the actor
+	follow.SetActivityStreamsActor(originActor)
+
+	// set the id
+	followIDProp := streams.NewJSONLDIdProperty()
+	followIDProp.SetIRI(followURI)
+	follow.SetJSONLDId(followIDProp)
+
+	// set the object
+	followObjectProp := streams.NewActivityStreamsObjectProperty()
+	followObjectProp.AppendIRI(targetAccountURI)
+	follow.SetActivityStreamsObject(followObjectProp)
+
+	// set the To property
+	followToProp := streams.NewActivityStreamsToProperty()
+	followToProp.AppendIRI(targetAccountURI)
+	follow.SetActivityStreamsTo(followToProp)
+
+	return follow, nil
 }
