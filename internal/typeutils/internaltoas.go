@@ -276,7 +276,7 @@ func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Accou
 		return nil, fmt.Errorf("followtoasfollow: error parsing target account uri: %s", err)
 	}
 
-	// uri of the folow activity itself
+	// uri of the follow activity itself
 	followURI, err := url.Parse(f.URI)
 	if err != nil {
 		return nil, fmt.Errorf("followtoasfollow: error parsing follow uri: %s", err)
