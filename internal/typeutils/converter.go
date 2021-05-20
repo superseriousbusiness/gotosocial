@@ -26,6 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+const (
+	asPublicURI = "https://www.w3.org/ns/activitystreams#Public"
+)
+
 // TypeConverter is an interface for the common action of converting between apimodule (frontend, serializable) models,
 // internal gts models used in the database, and activitypub models used in federation.
 //
@@ -112,6 +116,8 @@ type TypeConverter interface {
 
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
 	FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
+
+	MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) 
 }
 
 type converter struct {

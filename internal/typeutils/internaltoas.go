@@ -257,6 +257,134 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 }
 
 func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
+	// ensure prerequisites here before we get stuck in
+
+	// check if author account is already attached to status and attach it if not
+	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
+	if s.GTSAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(s.AccountID, a); err != nil {
+			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
+		}
+		s.GTSAccount = a
+	}
+
+	// create the Note!
+	status := streams.NewActivityStreamsNote()
+
+	// id
+	statusURI, err := url.Parse(s.URI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URI, err)
+	}
+	statusIDProp := streams.NewJSONLDIdProperty()
+	statusIDProp.SetIRI(statusURI)
+	status.SetJSONLDId(statusIDProp)
+
+	// type
+	// will be set automatically by go-fed
+
+	// summary aka cw
+	statusSummaryProp := streams.NewActivityStreamsSummaryProperty()
+	statusSummaryProp.AppendXMLSchemaString(s.ContentWarning)
+	status.SetActivityStreamsSummary(statusSummaryProp)
+
+	// inReplyTo
+	if s.InReplyToID != "" {
+		// fetch the replied status if we don't have it on hand already
+		if s.GTSReplyToStatus == nil {
+			rs := &gtsmodel.Status{}
+			if err := c.db.GetByID(s.InReplyToID, rs); err != nil {
+				return nil, fmt.Errorf("StatusToAS: error retrieving replied-to status from db: %s", err)
+			}
+			s.GTSReplyToStatus = rs
+		}
+		rURI, err := url.Parse(s.GTSReplyToStatus.URI)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSReplyToStatus.URI, err)
+		}
+
+		inReplyToProp := streams.NewActivityStreamsInReplyToProperty()
+		inReplyToProp.AppendIRI(rURI)
+		status.SetActivityStreamsInReplyTo(inReplyToProp)
+	}
+
+	// published
+	publishedProp := streams.NewActivityStreamsPublishedProperty()
+	publishedProp.Set(s.CreatedAt)
+	status.SetActivityStreamsPublished(publishedProp)
+
+	// url
+	if s.URL != "" {
+		sURL, err := url.Parse(s.URL)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URL, err)
+		}
+
+		urlProp := streams.NewActivityStreamsUrlProperty()
+		urlProp.AppendIRI(sURL)
+		status.SetActivityStreamsUrl(urlProp)
+	}
+
+	// attributedTo
+	authorAccountURI, err := url.Parse(s.GTSAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.URI, err)
+	}
+	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
+	attributedToProp.AppendIRI(authorAccountURI)
+	status.SetActivityStreamsAttributedTo(attributedToProp)
+
+	// tags
+	tagProp := streams.NewActivityStreamsTagProperty()
+
+	// tag -- mentions
+	for _, m := range s.GTSMentions {
+		asMention, err := c.MentionToAS(m)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error converting mention to AS mention: %s", err)
+		}
+		tagProp.AppendActivityStreamsMention(asMention)
+	}
+
+	// tag -- emojis
+
+	// tag -- hashtags
+
+
+	status.SetActivityStreamsTag(tagProp)
+
+	// parse out some URIs we need here
+	authorFollowersURI, err := url.Parse(s.GTSAccount.FollowersURI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.FollowersURI, err)
+	}
+
+	publicURI, err := url.Parse(asPublicURI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", asPublicURI, err)
+	}
+
+	// to
+	switch s.Visibility {
+	case gtsmodel.VisibilityDirect:
+	}
+
+	// cc
+
+	// conversation
+
+	// content
+
+	// attachment
+
+
+
+
+
+	// replies
+
+
 	return nil, nil
 }
 
@@ -304,4 +432,14 @@ func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Accou
 	follow.SetActivityStreamsTo(followToProp)
 
 	return follow, nil
+}
+
+func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
+	mention := streams.NewActivityStreamsMention()
+
+	if m.NameString == "" {
+		m.NameString = 
+	}
+
+
 }

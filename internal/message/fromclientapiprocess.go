@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -66,16 +65,20 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 		// UPDATE
 	case gtsmodel.ActivityStreamsAccept:
 		// ACCEPT
-		follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
-		if !ok {
-			return errors.New("accept was not parseable as *gtsmodel.Follow")
+		switch clientMsg.APObjectType {
+		case gtsmodel.ActivityStreamsFollow:
+			// ACCEPT FOLLOW
+			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+			if !ok {
+				return errors.New("accept was not parseable as *gtsmodel.Follow")
+			}
+			return p.federateAcceptFollowRequest(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
-		return p.federateAcceptFollowRequest(follow)
 	case gtsmodel.ActivityStreamsUndo:
 		// UNDO
 		switch clientMsg.APObjectType {
-		// UNDO FOLLOW
 		case gtsmodel.ActivityStreamsFollow:
+			// UNDO FOLLOW
 			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
@@ -114,6 +117,11 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 }
 
 func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
 	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateFollow: error converting follow to as format: %s", err)
@@ -129,6 +137,11 @@ func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmo
 }
 
 func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
 	// recreate the follow
 	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
 	if err != nil {
@@ -164,75 +177,52 @@ func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gts
 	return err
 }
 
-func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow) error {
-
-	// TODO: tidy up this whole function -- move most of the logic for the conversion to the type converter because this is just a mess! Shame on me!
-
-	followAccepter := &gtsmodel.Account{}
-	if err := p.db.GetByID(follow.TargetAccountID, followAccepter); err != nil {
-		return fmt.Errorf("error federating follow accept: %s", err)
+func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
 	}
-	followAccepterIRI, err := url.Parse(followAccepter.URI)
+
+	// recreate the AS follow
+	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
 	if err != nil {
-		return fmt.Errorf("error parsing URL: %s", err)
+		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
 	}
-	followAccepterOutboxIRI, err := url.Parse(followAccepter.OutboxURI)
+
+	acceptingAccountURI, err := url.Parse(targetAccount.URI)
 	if err != nil {
-		return fmt.Errorf("error parsing URL: %s", err)
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
 	}
-	me := streams.NewActivityStreamsActorProperty()
-	me.AppendIRI(followAccepterIRI)
 
-	followRequester := &gtsmodel.Account{}
-	if err := p.db.GetByID(follow.AccountID, followRequester); err != nil {
-		return fmt.Errorf("error federating follow accept: %s", err)
-	}
-	requesterIRI, err := url.Parse(followRequester.URI)
+	requestingAccountURI, err := url.Parse(originAccount.URI)
 	if err != nil {
-		return fmt.Errorf("error parsing URL: %s", err)
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
 	}
-	them := streams.NewActivityStreamsActorProperty()
-	them.AppendIRI(requesterIRI)
 
-	// prepare the follow
-	ASFollow := streams.NewActivityStreamsFollow()
-	// set the follow requester as the actor
-	ASFollow.SetActivityStreamsActor(them)
-	// set the ID from the follow
-	ASFollowURI, err := url.Parse(follow.URI)
+	// create an Accept
+	accept := streams.NewActivityStreamsAccept()
+
+	// set the accepting actor on it
+	acceptActorProp := streams.NewActivityStreamsActorProperty()
+	acceptActorProp.AppendIRI(acceptingAccountURI)
+	accept.SetActivityStreamsActor(acceptActorProp)
+
+	// Set the recreated follow as the 'object' property.
+	acceptObject := streams.NewActivityStreamsObjectProperty()
+	acceptObject.AppendActivityStreamsFollow(asFollow)
+	accept.SetActivityStreamsObject(acceptObject)
+
+	// Set the To of the accept as the originator of the follow
+	acceptTo := streams.NewActivityStreamsToProperty()
+	acceptTo.AppendIRI(requestingAccountURI)
+	accept.SetActivityStreamsTo(acceptTo)
+
+	outboxIRI, err := url.Parse(targetAccount.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("error parsing URL: %s", err)
+		return fmt.Errorf("federateAcceptFollowRequest: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
-	ASFollowIDProp := streams.NewJSONLDIdProperty()
-	ASFollowIDProp.SetIRI(ASFollowURI)
-	ASFollow.SetJSONLDId(ASFollowIDProp)
 
-	// set the object as the accepter URI
-	ASFollowObjectProp := streams.NewActivityStreamsObjectProperty()
-	ASFollowObjectProp.AppendIRI(followAccepterIRI)
-
-	// Prepare the response.
-	ASAccept := streams.NewActivityStreamsAccept()
-	// Set us as the 'actor'.
-	ASAccept.SetActivityStreamsActor(me)
-
-	// Set the Follow as the 'object' property.
-	ASAcceptObject := streams.NewActivityStreamsObjectProperty()
-	ASAcceptObject.AppendActivityStreamsFollow(ASFollow)
-	ASAccept.SetActivityStreamsObject(ASAcceptObject)
-
-	// Add all actors on the original Follow to the 'to' property.
-	ASAcceptTo := streams.NewActivityStreamsToProperty()
-	followActors := ASFollow.GetActivityStreamsActor()
-	for iter := followActors.Begin(); iter != followActors.End(); iter = iter.Next() {
-		id, err := pub.ToId(iter)
-		if err != nil {
-			return err
-		}
-		ASAcceptTo.AppendIRI(id)
-	}
-	ASAccept.SetActivityStreamsTo(ASAcceptTo)
-
-	_, err = p.federator.FederatingActor().Send(context.Background(), followAccepterOutboxIRI, ASAccept)
+	// send off the accept using the accepter's outbox
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, accept)
 	return err
 }
