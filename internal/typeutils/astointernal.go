@@ -37,7 +37,7 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	uri := uriProp.GetIRI()
 
 	acct := &gtsmodel.Account{}
-	err := c.db.GetWhere("uri", uri.String(), acct)
+	err := c.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, acct)
 	if err == nil {
 		// we already know this account so we can skip generating it
 		return acct, nil
@@ -220,7 +220,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.APStatusOwnerURI = attributedTo.String()
 
 	statusOwner := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", attributedTo.String(), statusOwner); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String()}}, statusOwner); err != nil {
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID
@@ -235,7 +235,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 
 		// now we can check if we have the replied-to status in our db already
 		inReplyToStatus := &gtsmodel.Status{}
-		if err := c.db.GetWhere("uri", inReplyToURI.String(), inReplyToStatus); err == nil {
+		if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: inReplyToURI.String()}}, inReplyToStatus); err == nil {
 			// we have the status in our database already
 			// so we can set these fields here and then...
 			status.InReplyToID = inReplyToStatus.ID
@@ -322,7 +322,7 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 		return nil, errors.New("error extracting actor property from follow")
 	}
 	originAccount := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", origin.String(), originAccount); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: origin.String()}}, originAccount); err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
@@ -331,7 +331,7 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 		return nil, errors.New("error extracting object property from follow")
 	}
 	targetAccount := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", target.String(), targetAccount); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: target.String()}}, targetAccount); err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
@@ -356,7 +356,7 @@ func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, e
 		return nil, errors.New("error extracting actor property from follow")
 	}
 	originAccount := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", origin.String(), originAccount); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: origin.String()}}, originAccount); err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
@@ -365,7 +365,7 @@ func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, e
 		return nil, errors.New("error extracting object property from follow")
 	}
 	targetAccount := &gtsmodel.Account{}
-	if err := c.db.GetWhere("uri", target.String(), targetAccount); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: target.String()}}, targetAccount); err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 

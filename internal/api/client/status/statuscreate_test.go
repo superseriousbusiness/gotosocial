@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -118,7 +119,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	}, statusReply.Tags[0])
 
 	gtsTag := &gtsmodel.Tag{}
-	err = suite.db.GetWhere("name", "helloworld", gtsTag)
+	err = suite.db.GetWhere([]db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
 }

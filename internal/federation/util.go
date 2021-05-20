@@ -217,6 +217,12 @@ func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *u
 			return nil, errors.New("error resolving type as activitystreams application")
 		}
 		return p, nil
+	case string(gtsmodel.ActivityStreamsService):
+		p, ok := t.(vocab.ActivityStreamsService)
+		if !ok {
+			return nil, errors.New("error resolving type as activitystreams service")
+		}
+		return p, nil
 	}
 
 	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())

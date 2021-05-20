@@ -46,7 +46,7 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 	// we might already have an entry for this account so check that first
 	requestingAccount := &gtsmodel.Account{}
 
-	err = p.db.GetWhere("uri", requestingAccountURI.String(), requestingAccount)
+	err = p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
 	if err == nil {
 		// we do have it yay, return it
 		return requestingAccount, nil

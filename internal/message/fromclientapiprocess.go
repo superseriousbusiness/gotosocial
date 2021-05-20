@@ -71,6 +71,17 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			return errors.New("accept was not parseable as *gtsmodel.Follow")
 		}
 		return p.federateAcceptFollowRequest(follow)
+	case gtsmodel.ActivityStreamsUndo:
+		// UNDO
+		switch clientMsg.APObjectType {
+		// UNDO FOLLOW
+		case gtsmodel.ActivityStreamsFollow:
+			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+			if !ok {
+				return errors.New("undo was not parseable as *gtsmodel.Follow")
+			}
+			return p.federateUnfollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		}
 	}
 	return nil
 }
@@ -117,10 +128,45 @@ func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmo
 	return err
 }
 
+func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// recreate the follow
+	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	if err != nil {
+		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
+	}
+
+	targetAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
+	}
+
+	// create an Undo and set the appropriate actor on it
+	undo := streams.NewActivityStreamsUndo()
+	undo.SetActivityStreamsActor(asFollow.GetActivityStreamsActor())
+
+	// Set the recreated follow as the 'object' property.
+	undoObject := streams.NewActivityStreamsObjectProperty()
+	undoObject.AppendActivityStreamsFollow(asFollow)
+	undo.SetActivityStreamsObject(undoObject)
+
+	// Set the To of the undo as the target of the recreated follow
+	undoTo := streams.NewActivityStreamsToProperty()
+	undoTo.AppendIRI(targetAccountURI)
+	undo.SetActivityStreamsTo(undoTo)
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateUnfollow: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	// send off the Undo
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	return err
+}
+
 func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow) error {
 
 	// TODO: tidy up this whole function -- move most of the logic for the conversion to the type converter because this is just a mess! Shame on me!
-
 
 	followAccepter := &gtsmodel.Account{}
 	if err := p.db.GetByID(follow.TargetAccountID, followAccepter); err != nil {

@@ -216,8 +216,17 @@ func (ps *postgresService) GetByID(id string, i interface{}) error {
 	return nil
 }
 
-func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
-	if err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Select(); err != nil {
+func (ps *postgresService) GetWhere(where []db.Where, i interface{}) error {
+	if len(where) == 0 {
+		return errors.New("no queries provided")
+	}
+
+	q := ps.conn.Model(i)
+	for _, w := range where {
+		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+	}
+
+	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries{}
 		}
@@ -284,8 +293,18 @@ func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 	return nil
 }
 
-func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
-	if _, err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Delete(); err != nil {
+func (ps *postgresService) DeleteWhere(where []db.Where, i interface{}) error {
+	if len(where) == 0 {
+		return errors.New("no queries provided")
+	}
+
+	q := ps.conn.Model(i)
+	for _, w := range where {
+		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+	}
+
+
+	if _, err := q.Delete(); err != nil {
 		// if there are no rows *anyway* then that's fine
 		// just return err if there's an actual error
 		if err != pg.ErrNoRows {

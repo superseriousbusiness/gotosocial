@@ -73,10 +73,14 @@ type Processor interface {
 	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
 	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	// AccountFollowingGet fetches a list of the accounts that target account is following.
+	AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
 	// AccountRelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
 	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
 	// AccountFollowCreate handles a follow request to an account, either remote or local.
 	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, ErrorWithCode)
+	// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
+	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -204,15 +208,11 @@ func (p *processor) Start() error {
 	DistLoop:
 		for {
 			select {
-			// case clientMsg := <-p.toClientAPI:
-			// 	p.log.Infof("received message TO client API: %+v", clientMsg)
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
 				if err := p.processFromClientAPI(clientMsg); err != nil {
 					p.log.Error(err)
 				}
-			// case federatorMsg := <-p.toFederator:
-			// 	p.log.Infof("received message TO federator: %+v", federatorMsg)
 			case federatorMsg := <-p.fromFederator:
 				p.log.Infof("received message FROM federator: %+v", federatorMsg)
 				if err := p.processFromFederator(federatorMsg); err != nil {

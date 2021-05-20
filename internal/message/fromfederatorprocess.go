@@ -157,7 +157,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
 		maybeAttachment := &gtsmodel.MediaAttachment{}
-		err := p.db.GetWhere("remote_url", a.RemoteURL, maybeAttachment)
+		err := p.db.GetWhere([]db.Where{{Key: "remote_url", Value: a.RemoteURL}}, maybeAttachment)
 		if err == nil {
 			// we already have it in the db, dereferenced, no need to do it again
 			l.Debugf("attachment already exists with id %s", maybeAttachment.ID)
@@ -206,7 +206,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 		m.OriginAccountURI = status.GTSAccount.URI
 
 		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetWhere("uri", uri.String(), targetAccount); err != nil {
+		if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, targetAccount); err != nil {
 			// proper error
 			if _, ok := err.(db.ErrNoEntries); !ok {
 				return fmt.Errorf("db error checking for account with uri %s", uri.String())

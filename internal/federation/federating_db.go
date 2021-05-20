@@ -211,7 +211,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetWhere("uri", uid, &gtsmodel.Status{}); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uid}}, &gtsmodel.Status{}); err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this status
 				return false, nil
@@ -260,7 +260,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("outbox_uri", outboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
@@ -285,7 +285,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
@@ -311,7 +311,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
@@ -350,7 +350,7 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 
 	if util.IsUserPath(id) {
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere("uri", id.String(), acct); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: id.String()}}, acct); err != nil {
 			return nil, err
 		}
 		l.Debug("is user path! returning account")
@@ -651,7 +651,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 				// take the IRI of the first actor we can find (there should only be one)
 				if iter.IsIRI() {
 					actorAccount := &gtsmodel.Account{}
-					if err := f.db.GetWhere("uri", iter.GetIRI().String(), actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
+					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
 						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host))
 					}
 				}
@@ -679,7 +679,7 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	l.Debugf("entering FOLLOWERS function with actorIRI %s", actorIRI.String())
 
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
 		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
 	}
 
@@ -721,7 +721,7 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
 
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
 		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
 	}
 
@@ -823,11 +823,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: follow object account and inbox account were not the same")
 			}
 			// delete any existing FOLLOW
-			if err := f.db.DeleteWhere("uri", gtsFollow.URI, &gtsmodel.Follow{}); err != nil {
+			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow: %s", err)
 			}
 			// delete any existing FOLLOW REQUEST
-			if err := f.db.DeleteWhere("uri", gtsFollow.URI, &gtsmodel.FollowRequest{}); err != nil {
+			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
 			}
 			l.Debug("follow undone")

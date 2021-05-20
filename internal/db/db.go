@@ -42,6 +42,10 @@ func (e ErrAlreadyExists) Error() string {
 	return "already exists"
 }
 
+type Where struct {
+	Key string
+	Value interface{}
+}
 
 // DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
 // Note that in all of the functions below, the passed interface should be a pointer or a slice, which will then be populated
@@ -80,7 +84,7 @@ type DB interface {
 	// name of the key to select from.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetWhere(key string, value interface{}, i interface{}) error
+	GetWhere(where []Where, i interface{}) error
 
 	// // GetWhereMany gets one entry where key = value for *ALL* parameters passed as "where".
 	// // That is, if you pass 2 'where' entries, with 1 being Key username and Value test, and the second
@@ -114,7 +118,7 @@ type DB interface {
 
 	// DeleteWhere deletes i where key = value
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteWhere(key string, value interface{}, i interface{}) error
+	DeleteWhere(where []Where, i interface{}) error
 
 	/*
 		HANDY SHORTCUTS

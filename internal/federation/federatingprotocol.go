@@ -124,7 +124,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 
 	requestingAccount := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", publicKeyOwnerURI.String(), requestingAccount); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: publicKeyOwnerURI.String()}}, requestingAccount); err != nil {
 		// there's been a proper error so return it
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
@@ -200,7 +200,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 
 	for _, uri := range actorIRIs {
 		a := &gtsmodel.Account{}
-		if err := f.db.GetWhere("uri", uri.String(), a); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, a); err != nil {
 			_, ok := err.(db.ErrNoEntries)
 			if ok {
 				// we don't have an entry for this account so it's not blocked
