@@ -26,6 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+const (
+	asPublicURI = "https://www.w3.org/ns/activitystreams#Public"
+)
+
 // TypeConverter is an interface for the common action of converting between apimodule (frontend, serializable) models,
 // internal gts models used in the database, and activitypub models used in federation.
 //
@@ -77,6 +81,9 @@ type TypeConverter interface {
 	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
 	InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error)
 
+	// RelationshipToMasto converts a gts relationship into its mastodon equivalent for serving in various places
+	RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error)
+
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
 	*/
@@ -94,6 +101,8 @@ type TypeConverter interface {
 	ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
 	ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error)
+	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
+	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL
@@ -104,6 +113,15 @@ type TypeConverter interface {
 
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
+
+	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
+	FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
+
+	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
+	MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
+
+	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
+	AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
 }
 
 type converter struct {

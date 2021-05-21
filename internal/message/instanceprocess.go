@@ -22,12 +22,13 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (p *processor) InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode) {
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere("domain", domain, i); err != nil {
+	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain}}, i); err != nil {
 		return nil, NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
 	}
 

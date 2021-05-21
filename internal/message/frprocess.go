@@ -48,11 +48,28 @@ func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, Err
 	return accts, nil
 }
 
-func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) ErrorWithCode {
-	if err := p.db.AcceptFollowRequest(accountID, auth.Account.ID); err != nil {
-		return NewErrorNotFound(err)
+func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, ErrorWithCode) {
+	follow, err := p.db.AcceptFollowRequest(accountID, auth.Account.ID)
+	if err != nil {
+		return nil, NewErrorNotFound(err)
 	}
-	return nil
+
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APActivityType: gtsmodel.ActivityStreamsAccept,
+		GTSModel: follow,
+	}
+
+	gtsR, err := p.db.GetRelationship(auth.Account.ID, accountID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	r, err := p.tc.RelationshipToMasto(gtsR)
+	if  err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	return r, nil
 }
 
 func (p *processor) FollowRequestDeny(auth *oauth.Auth) ErrorWithCode {

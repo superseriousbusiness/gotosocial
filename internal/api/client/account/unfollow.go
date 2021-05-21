@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package followrequest
+package account
 
 import (
 	"net/http"
@@ -25,34 +25,29 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FollowRequestAcceptPOSTHandler deals with follow request accepting. It should be served at
-// /api/v1/follow_requests/:id/authorize
-func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+// AccountUnfollowPOSTHandler is the endpoint for removing a follow and/or follow request to the target account
+func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
+	l := m.log.WithField("func", "AccountUnfollowPOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		l.Debug(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
+	targetAcctID := c.Param(IDKey)
+	if targetAcctID == "" {
+		l.Debug(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
 		return
 	}
 
-	originAccountID := c.Param(IDKey)
-	if originAccountID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no follow request origin account id provided"})
-		return
-	}
-
-	r, errWithCode := m.processor.FollowRequestAccept(authed, originAccountID)
+	relationship, errWithCode := m.processor.AccountFollowRemove(authed, targetAcctID)
 	if errWithCode != nil {
 		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
-	c.JSON(http.StatusOK, r)
+
+	c.JSON(http.StatusOK, relationship)
 }

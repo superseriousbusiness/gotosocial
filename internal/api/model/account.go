@@ -77,18 +77,18 @@ type Account struct {
 // See https://docs.joinmastodon.org/methods/accounts/
 type AccountCreateRequest struct {
 	// Text that will be reviewed by moderators if registrations require manual approval.
-	Reason string `form:"reason"`
+	Reason string `form:"reason" json:"reason" xml:"reason"`
 	// The desired username for the account
-	Username string `form:"username" binding:"required"`
+	Username string `form:"username" json:"username" xml:"username" binding:"required"`
 	// The email address to be used for login
-	Email string `form:"email" binding:"required"`
+	Email string `form:"email" json:"email" xml:"email" binding:"required"`
 	// The password to be used for login
-	Password string `form:"password" binding:"required"`
+	Password string `form:"password" json:"password" xml:"password" binding:"required"`
 	// Whether the user agrees to the local rules, terms, and policies.
 	// These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
-	Agreement bool `form:"agreement" binding:"required"`
+	Agreement bool `form:"agreement"  json:"agreement" xml:"agreement" binding:"required"`
 	// The language of the confirmation email that will be sent
-	Locale string `form:"locale" binding:"required"`
+	Locale string `form:"locale" json:"locale" xml:"locale" binding:"required"`
 	// The IP of the sign up request, will not be parsed from the form but must be added manually
 	IP net.IP `form:"-"`
 }
@@ -97,40 +97,51 @@ type AccountCreateRequest struct {
 // See https://docs.joinmastodon.org/methods/accounts/
 type UpdateCredentialsRequest struct {
 	// Whether the account should be shown in the profile directory.
-	Discoverable *bool `form:"discoverable"`
+	Discoverable *bool `form:"discoverable" json:"discoverable" xml:"discoverable"`
 	// Whether the account has a bot flag.
-	Bot *bool `form:"bot"`
+	Bot *bool `form:"bot" json:"bot" xml:"bot"`
 	// The display name to use for the profile.
-	DisplayName *string `form:"display_name"`
+	DisplayName *string `form:"display_name" json:"display_name" xml:"display_name"`
 	// The account bio.
-	Note *string `form:"note"`
+	Note *string `form:"note" json:"note" xml:"note"`
 	// Avatar image encoded using multipart/form-data
-	Avatar *multipart.FileHeader `form:"avatar"`
+	Avatar *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
 	// Header image encoded using multipart/form-data
-	Header *multipart.FileHeader `form:"header"`
+	Header *multipart.FileHeader `form:"header" json:"header" xml:"header"`
 	// Whether manual approval of follow requests is required.
-	Locked *bool `form:"locked"`
+	Locked *bool `form:"locked" json:"locked" xml:"locked"`
 	// New Source values for this account
-	Source *UpdateSource `form:"source"`
+	Source *UpdateSource `form:"source" json:"source" xml:"source"`
 	// Profile metadata name and value
-	FieldsAttributes *[]UpdateField `form:"fields_attributes"`
+	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"fields_attributes" xml:"fields_attributes"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
 type UpdateSource struct {
 	// Default post privacy for authored statuses.
-	Privacy *string `form:"privacy"`
+	Privacy *string `form:"privacy" json:"privacy" xml:"privacy"`
 	// Whether to mark authored statuses as sensitive by default.
-	Sensitive *bool `form:"sensitive"`
+	Sensitive *bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
 	// Default language to use for authored statuses. (ISO 6391)
-	Language *string `form:"language"`
+	Language *string `form:"language" json:"language" xml:"language"`
 }
 
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.
 // By default, max 4 fields and 255 characters per property/value.
 type UpdateField struct {
 	// Name of the field
-	Name *string `form:"name"`
+	Name *string `form:"name" json:"name" xml:"name"`
 	// Value of the field
-	Value *string `form:"value"`
+	Value *string `form:"value" json:"value" xml:"value"`
+}
+
+// AccountFollowRequest is for parsing requests at /api/v1/accounts/:id/follow
+type AccountFollowRequest struct {
+	// ID of the account to follow request
+	// This should be a URL parameter not a form field
+	TargetAccountID string `form:"-"`
+	// Show reblogs for this account?
+	Reblogs *bool `form:"reblogs" json:"reblogs" xml:"reblogs"`
+	// Notify when this account posts?
+	Notify *bool `form:"notify" json:"notify" xml:"notify"`
 }

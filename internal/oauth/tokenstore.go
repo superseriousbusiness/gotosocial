@@ -106,17 +106,17 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (pts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
-	return pts.db.DeleteWhere("code", code, &Token{})
+	return pts.db.DeleteWhere([]db.Where{{Key: "code", Value: code}}, &Token{})
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (pts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return pts.db.DeleteWhere("access", access, &Token{})
+	return pts.db.DeleteWhere([]db.Where{{Key: "access", Value: access}}, &Token{})
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (pts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return pts.db.DeleteWhere("refresh", refresh, &Token{})
+	return pts.db.DeleteWhere([]db.Where{{Key: "refresh", Value: refresh}}, &Token{})
 }
 
 // GetByCode selects a token from the DB based on the Code field
@@ -127,7 +127,7 @@ func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.Token
 	pgt := &Token{
 		Code: code,
 	}
-	if err := pts.db.GetWhere("code", code, pgt); err != nil {
+	if err := pts.db.GetWhere([]db.Where{{Key: "code", Value: code}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil
@@ -141,7 +141,7 @@ func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.T
 	pgt := &Token{
 		Access: access,
 	}
-	if err := pts.db.GetWhere("access", access, pgt); err != nil {
+	if err := pts.db.GetWhere([]db.Where{{Key: "access", Value: access}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil
@@ -155,7 +155,7 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 	pgt := &Token{
 		Refresh: refresh,
 	}
-	if err := pts.db.GetWhere("refresh", refresh, pgt); err != nil {
+	if err := pts.db.GetWhere([]db.Where{{Key: "refresh", Value: refresh}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil

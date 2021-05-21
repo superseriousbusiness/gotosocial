@@ -48,6 +48,7 @@ import (
 var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
 	c := NewTestConfig()
 	dbService := NewTestDB()
+	federatingDB := NewTestFederatingDB(dbService)
 	router := NewTestRouter()
 	storageBackend := NewTestStorage()
 
@@ -59,7 +60,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 			Body:       r,
 		}, nil
 	}))
-	federator := federation.NewFederator(dbService, transportController, c, log, typeConverter)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter)
 	processor := NewTestProcessor(dbService, storageBackend, federator)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)

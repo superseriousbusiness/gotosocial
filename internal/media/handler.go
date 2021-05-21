@@ -67,7 +67,7 @@ type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(img []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
@@ -86,6 +86,8 @@ type Handler interface {
 	// information to the caller about the new attachment. It's the caller's responsibility to put the returned struct
 	// in the database.
 	ProcessRemoteAttachment(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
+
+	ProcessRemoteHeaderOrAvatar(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -112,7 +114,7 @@ func New(config *config.Config, database db.DB, storage storage.Storage, log *lo
 // ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if mediaType != Header && mediaType != Avatar {
@@ -134,7 +136,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	l.Tracef("read %d bytes of file", len(attachment))
 
 	// process it
-	ma, err := mh.processHeaderOrAvi(attachment, contentType, mediaType, accountID)
+	ma, err := mh.processHeaderOrAvi(attachment, contentType, mediaType, accountID, remoteURL)
 	if err != nil {
 		return nil, fmt.Errorf("error processing %s: %s", mediaType, err)
 	}
@@ -314,4 +316,44 @@ func (mh *mediaHandler) ProcessRemoteAttachment(t transport.Transport, currentAt
 	}
 
 	return mh.ProcessAttachment(attachmentBytes, accountID, currentAttachment.RemoteURL)
+}
+
+func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
+
+	if !currentAttachment.Header && !currentAttachment.Avatar {
+		return nil, errors.New("provided attachment was set to neither header nor avatar")
+	}
+
+	if currentAttachment.Header && currentAttachment.Avatar {
+		return nil, errors.New("provided attachment was set to both header and avatar")
+	}
+
+	var headerOrAvi Type
+	if currentAttachment.Header {
+		headerOrAvi = Header
+	} else if currentAttachment.Avatar {
+		headerOrAvi = Avatar
+	}
+
+	if currentAttachment.RemoteURL == "" {
+		return nil, errors.New("no remote URL on media attachment to dereference")
+	}
+	remoteIRI, err := url.Parse(currentAttachment.RemoteURL)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing attachment url %s: %s", currentAttachment.RemoteURL, err)
+	}
+
+	// for content type, we assume we don't know what to expect...
+	expectedContentType := "*/*"
+	if currentAttachment.File.ContentType != "" {
+		// ... and then narrow it down if we do
+		expectedContentType = currentAttachment.File.ContentType
+	}
+
+	attachmentBytes, err := t.DereferenceMedia(context.Background(), remoteIRI, expectedContentType)
+	if err != nil {
+		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
+	}
+
+	return mh.ProcessHeaderOrAvatar(attachmentBytes, accountID, headerOrAvi, currentAttachment.RemoteURL)
 }

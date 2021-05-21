@@ -28,6 +28,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -60,7 +61,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	app := &gtsmodel.Application{
 		ClientID: clientID,
 	}
-	if err := m.db.GetWhere("client_id", app.ClientID, app); err != nil {
+	if err := m.db.GetWhere([]db.Where{{Key: "client_id", Value: app.ClientID}}, app); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
 		return
 	}

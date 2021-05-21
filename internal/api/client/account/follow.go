@@ -16,43 +16,41 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package followrequest
+package account
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FollowRequestAcceptPOSTHandler deals with follow request accepting. It should be served at
-// /api/v1/follow_requests/:id/authorize
-func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+// AccountFollowPOSTHandler is the endpoint for creating a new follow request to the target account
+func (m *Module) AccountFollowPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
+	targetAcctID := c.Param(IDKey)
+	if targetAcctID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
 		return
 	}
-
-	originAccountID := c.Param(IDKey)
-	if originAccountID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no follow request origin account id provided"})
+	form := &model.AccountFollowRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	form.TargetAccountID = targetAcctID
 
-	r, errWithCode := m.processor.FollowRequestAccept(authed, originAccountID)
+	relationship, errWithCode := m.processor.AccountFollowCreate(authed, form)
 	if errWithCode != nil {
-		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
-	c.JSON(http.StatusOK, r)
+
+	c.JSON(http.StatusOK, relationship)
 }

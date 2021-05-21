@@ -38,6 +38,14 @@ type Mention struct {
 	TargetAccountID string `pg:",notnull"`
 	// Prevent this mention from generating a notification?
 	Silent bool
+
+	/*
+		NON-DATABASE CONVENIENCE FIELDS
+		These fields are just for convenience while passing the mention
+		around internally, to make fewer database calls and whatnot. They're
+		not meant to be put in the database!
+	*/
+
 	// NameString is for putting in the namestring of the mentioned user
 	// before the mention is dereferenced. Should be in a form along the lines of:
 	// @whatever_username@example.org
@@ -48,4 +56,6 @@ type Mention struct {
 	//
 	// This will not be put in the database, it's just for convenience.
 	MentionedAccountURI string `pg:"-"`
+	// A pointer to the gtsmodel account of the mentioned account.
+	GTSAccount *Account `pg:"-"`
 }

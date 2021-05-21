@@ -124,7 +124,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 
 	requestingAccount := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", publicKeyOwnerURI.String(), requestingAccount); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: publicKeyOwnerURI.String()}}, requestingAccount); err != nil {
 		// there's been a proper error so return it
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
@@ -146,6 +146,22 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 
 		requestingAccount = a
+
+		// send the newly dereferenced account into the processor channel for further async processing
+		fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+		if fromFederatorChanI == nil {
+			l.Error("from federator channel wasn't set on context")
+		}
+		fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+		if !ok {
+			l.Error("from federator channel was set on context but couldn't be parsed")
+		}
+
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:   gtsmodel.ActivityStreamsProfile,
+			APActivityType: gtsmodel.ActivityStreamsCreate,
+			GTSModel:       requestingAccount,
+		}
 	}
 
 	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
@@ -184,7 +200,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 
 	for _, uri := range actorIRIs {
 		a := &gtsmodel.Account{}
-		if err := f.db.GetWhere("uri", uri.String(), a); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, a); err != nil {
 			_, ok := err.(db.ErrNoEntries)
 			if ok {
 				// we don't have an entry for this account so it's not blocked
@@ -228,17 +244,19 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		"func": "FederatingCallbacks",
 	})
 
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		l.Error("target account wasn't set on context")
+	receivingAcctI := ctx.Value(util.APAccount)
+	if receivingAcctI == nil {
+		l.Error("receiving account wasn't set on context")
+		return
 	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	receivingAcct, ok := receivingAcctI.(*gtsmodel.Account)
 	if !ok {
-		l.Error("target account was set on context but couldn't be parsed")
+		l.Error("receiving account was set on context but couldn't be parsed")
+		return
 	}
 
 	var onFollow pub.OnFollowBehavior = pub.OnFollowAutomaticallyAccept
-	if targetAcct.Locked {
+	if receivingAcct.Locked {
 		onFollow = pub.OnFollowDoNothing
 	}
 
@@ -246,6 +264,17 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		// OnFollow determines what action to take for this particular callback
 		// if a Follow Activity is handled.
 		OnFollow: onFollow,
+	}
+
+	other = []interface{}{
+		// override default undo behavior
+		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
+			return f.FederatingDB().Undo(ctx, undo)
+		},
+		// override default accept behavior
+		func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+			return f.FederatingDB().Accept(ctx, accept)
+		},
 	}
 
 	return

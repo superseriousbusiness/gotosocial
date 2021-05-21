@@ -76,13 +76,13 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool `pg:",default:'true'"`
+	Locked bool
 	// Should this account be shown in the instance's profile directory?
 	Discoverable bool
 	// Default post privacy for this account
 	Privacy Visibility
 	// Set posts from this account to sensitive by default?
-	Sensitive bool `pg:",default:'false'"`
+	Sensitive bool
 	// What language does this account post in?
 	Language string `pg:",default:'en'"`
 
@@ -107,7 +107,7 @@ type Account struct {
 	// URL for getting the featured collection list of this account
 	FeaturedCollectionURI string `pg:",unique"`
 	// What type of activitypub actor is this account?
-	ActorType ActivityStreamsActor
+	ActorType string
 	// This account is associated with x account id
 	AlsoKnownAs string
 

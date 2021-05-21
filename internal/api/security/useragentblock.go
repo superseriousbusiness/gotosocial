@@ -19,30 +19,25 @@
 package security
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"net/http"
+	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
-// Module implements the ClientAPIModule interface for security middleware
-type Module struct {
-	config *config.Config
-	log    *logrus.Logger
-}
+// UserAgentBlock is a middleware that prevents google chrome cohort tracking by
+// writing the Permissions-Policy header after all other parts of the request have been completed.
+// See: https://plausible.io/blog/google-floc
+func (m *Module) UserAgentBlock(c *gin.Context) {
 
-// New returns a new security module
-func New(config *config.Config, log *logrus.Logger) api.ClientModule {
-	return &Module{
-		config: config,
-		log:    log,
+	ua := c.Request.UserAgent()
+	if ua == "" {
+		c.AbortWithStatus(http.StatusTeapot)
+		return
 	}
-}
 
-// Route attaches security middleware to the given router
-func (m *Module) Route(s router.Router) error {
-	s.AttachMiddleware(m.FlocBlock)
-	s.AttachMiddleware(m.ExtraHeaders)
-	s.AttachMiddleware(m.UserAgentBlock)
-	return nil
+	if strings.Contains(strings.ToLower(c.Request.UserAgent()), strings.ToLower("friendica")) {
+		c.AbortWithStatus(http.StatusTeapot)
+		return
+	}
 }

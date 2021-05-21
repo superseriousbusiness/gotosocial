@@ -78,6 +78,15 @@ func (p *processor) AccountGet(authed *oauth.Auth, targetAccountID string) (*api
 		return nil, fmt.Errorf("db error: %s", err)
 	}
 
+	// lazily dereference things on the account if it hasn't been done yet
+	var requestingUsername string
+	if authed.Account != nil {
+		requestingUsername = authed.Account.Username
+	}
+	if err := p.dereferenceAccountFields(targetAccount, requestingUsername); err != nil {
+		p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
+	}
+
 	var mastoAccount *apimodel.Account
 	var err error
 	if authed.Account != nil && targetAccount.ID == authed.Account.ID {
@@ -285,6 +294,12 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 			return nil, NewErrorInternalError(err)
 		}
 
+		// derefence account fields in case we haven't done it already
+		if err := p.dereferenceAccountFields(a, authed.Account.Username); err != nil {
+			// don't bail if we can't fetch them, we'll try another time
+			p.log.WithField("func", "AccountFollowersGet").Debugf("error dereferencing account fields: %s", err)
+		}
+
 		account, err := p.tc.AccountToMastoPublic(a)
 		if err != nil {
 			return nil, NewErrorInternalError(err)
@@ -292,4 +307,239 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 		accounts = append(accounts, *account)
 	}
 	return accounts, nil
+}
+
+func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode) {
+	blocked, err := p.db.Blocked(authed.Account.ID, targetAccountID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	if blocked {
+		return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+	}
+
+	following := []gtsmodel.Follow{}
+	accounts := []apimodel.Account{}
+	if err := p.db.GetFollowingByAccountID(targetAccountID, &following); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return accounts, nil
+		}
+		return nil, NewErrorInternalError(err)
+	}
+
+	for _, f := range following {
+		blocked, err := p.db.Blocked(authed.Account.ID, f.AccountID)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+		if blocked {
+			continue
+		}
+
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(f.TargetAccountID, a); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				continue
+			}
+			return nil, NewErrorInternalError(err)
+		}
+
+		// derefence account fields in case we haven't done it already
+		if err := p.dereferenceAccountFields(a, authed.Account.Username); err != nil {
+			// don't bail if we can't fetch them, we'll try another time
+			p.log.WithField("func", "AccountFollowingGet").Debugf("error dereferencing account fields: %s", err)
+		}
+
+		account, err := p.tc.AccountToMastoPublic(a)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+		accounts = append(accounts, *account)
+	}
+	return accounts, nil
+}
+
+func (p *processor) AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode) {
+	if authed == nil || authed.Account == nil {
+		return nil, NewErrorForbidden(errors.New("not authed"))
+	}
+
+	gtsR, err := p.db.GetRelationship(authed.Account.ID, targetAccountID)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
+	}
+
+	r, err := p.tc.RelationshipToMasto(gtsR)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error converting relationship: %s", err))
+	}
+
+	return r, nil
+}
+
+func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, ErrorWithCode) {
+	// if there's a block between the accounts we shouldn't create the request ofc
+	blocked, err := p.db.Blocked(authed.Account.ID, form.TargetAccountID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+	if blocked {
+		return nil, NewErrorNotFound(fmt.Errorf("accountfollowcreate: block exists between accounts"))
+	}
+
+	// make sure the target account actually exists in our db
+	targetAcct := &gtsmodel.Account{}
+	if err := p.db.GetByID(form.TargetAccountID, targetAcct); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return nil, NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.TargetAccountID, err))
+		}
+	}
+
+	// check if a follow exists already
+	follows, err := p.db.Follows(authed.Account, targetAcct)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
+	}
+	if follows {
+		// already follows so just return the relationship
+		return p.AccountRelationshipGet(authed, form.TargetAccountID)
+	}
+
+	// check if a follow exists already
+	followRequested, err := p.db.FollowRequested(authed.Account, targetAcct)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
+	}
+	if followRequested {
+		// already follow requested so just return the relationship
+		return p.AccountRelationshipGet(authed, form.TargetAccountID)
+	}
+
+	// make the follow request
+	fr := &gtsmodel.FollowRequest{
+		AccountID:       authed.Account.ID,
+		TargetAccountID: form.TargetAccountID,
+		ShowReblogs:     true,
+		URI:             util.GenerateURIForFollow(authed.Account.Username, p.config.Protocol, p.config.Host),
+		Notify:          false,
+	}
+	if form.Reblogs != nil {
+		fr.ShowReblogs = *form.Reblogs
+	}
+	if form.Notify != nil {
+		fr.Notify = *form.Notify
+	}
+
+	// whack it in the database
+	if err := p.db.Put(fr); err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error creating follow request in db: %s", err))
+	}
+
+	// if it's a local account that's not locked we can just straight up accept the follow request
+	if !targetAcct.Locked && targetAcct.Domain == "" {
+		if _, err := p.db.AcceptFollowRequest(authed.Account.ID, form.TargetAccountID); err != nil {
+			return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
+		}
+		// return the new relationship
+		return p.AccountRelationshipGet(authed, form.TargetAccountID)
+	}
+
+	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APObjectType:   gtsmodel.ActivityStreamsFollow,
+		APActivityType: gtsmodel.ActivityStreamsCreate,
+		GTSModel: &gtsmodel.Follow{
+			AccountID:       authed.Account.ID,
+			TargetAccountID: form.TargetAccountID,
+			URI:             fr.URI,
+		},
+		OriginAccount: authed.Account,
+		TargetAccount: targetAcct,
+	}
+
+	// return whatever relationship results from this
+	return p.AccountRelationshipGet(authed, form.TargetAccountID)
+}
+
+func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode) {
+	// if there's a block between the accounts we shouldn't do anything
+	blocked, err := p.db.Blocked(authed.Account.ID, targetAccountID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+	if blocked {
+		return nil, NewErrorNotFound(fmt.Errorf("AccountFollowRemove: block exists between accounts"))
+	}
+
+	// make sure the target account actually exists in our db
+	targetAcct := &gtsmodel.Account{}
+	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			return nil, NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
+		}
+	}
+
+	// check if a follow request exists, and remove it if it does (storing the URI for later)
+	var frChanged bool
+	var frURI string
+	fr := &gtsmodel.FollowRequest{}
+	if err := p.db.GetWhere([]db.Where{
+		{Key: "account_id", Value: authed.Account.ID},
+		{Key: "target_account_id", Value: targetAccountID},
+	}, fr); err == nil {
+		frURI = fr.URI
+		if err := p.db.DeleteByID(fr.ID, fr); err != nil {
+			return nil, NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow request from db: %s", err))
+		}
+		frChanged = true
+	}
+
+	// now do the same thing for any existing follow
+	var fChanged bool
+	var fURI string
+	f := &gtsmodel.Follow{}
+	if err := p.db.GetWhere([]db.Where{
+		{Key: "account_id", Value: authed.Account.ID},
+		{Key: "target_account_id", Value: targetAccountID},
+	}, f); err == nil {
+		fURI = f.URI
+		if err := p.db.DeleteByID(f.ID, f); err != nil {
+			return nil, NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow from db: %s", err))
+		}
+		fChanged = true
+	}
+
+	// follow request status changed so send the UNDO activity to the channel for async processing
+	if frChanged {
+		p.fromClientAPI <- gtsmodel.FromClientAPI{
+			APObjectType:   gtsmodel.ActivityStreamsFollow,
+			APActivityType: gtsmodel.ActivityStreamsUndo,
+			GTSModel: &gtsmodel.Follow{
+				AccountID:       authed.Account.ID,
+				TargetAccountID: targetAccountID,
+				URI:             frURI,
+			},
+			OriginAccount: authed.Account,
+			TargetAccount: targetAcct,
+		}
+	}
+
+	// follow status changed so send the UNDO activity to the channel for async processing
+	if fChanged {
+		p.fromClientAPI <- gtsmodel.FromClientAPI{
+			APObjectType:   gtsmodel.ActivityStreamsFollow,
+			APActivityType: gtsmodel.ActivityStreamsUndo,
+			GTSModel: &gtsmodel.Follow{
+				AccountID:       authed.Account.ID,
+				TargetAccountID: targetAccountID,
+				URI:             fURI,
+			},
+			OriginAccount: authed.Account,
+			TargetAccount: targetAcct,
+		}
+	}
+
+	// return whatever relationship results from all this
+	return p.AccountRelationshipGet(authed, targetAccountID)
 }

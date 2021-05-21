@@ -20,6 +20,7 @@ package federation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -37,6 +38,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+type FederatingDB interface {
+	pub.Database
+	Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error
+	Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error
+}
+
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
@@ -47,8 +54,8 @@ type federatingDB struct {
 	typeConverter typeutils.TypeConverter
 }
 
-// NewFederatingDB returns a pub.Database interface using the given database, config, and logger.
-func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) pub.Database {
+// NewFederatingDB returns a FederatingDB interface using the given database, config, and logger.
+func NewFederatingDB(db db.DB, config *config.Config, log *logrus.Logger) FederatingDB {
 	return &federatingDB{
 		locks:         new(sync.Map),
 		db:            db,
@@ -204,7 +211,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetWhere("uri", uid, &gtsmodel.Status{}); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uid}}, &gtsmodel.Status{}); err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				// there are no entries for this status
 				return false, nil
@@ -253,7 +260,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("outbox_uri", outboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
@@ -278,7 +285,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
@@ -304,7 +311,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("inbox_uri", inboxIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
@@ -343,9 +350,10 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 
 	if util.IsUserPath(id) {
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere("uri", id.String(), acct); err != nil {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: id.String()}}, acct); err != nil {
 			return nil, err
 		}
+		l.Debug("is user path! returning account")
 		return f.typeConverter.AccountToAS(acct)
 	}
 
@@ -371,27 +379,40 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			"asType": asType.GetTypeName(),
 		},
 	)
-	l.Debugf("received CREATE asType %+v", asType)
+	m, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	l.Debugf("received CREATE asType %s", string(b))
 
 	targetAcctI := ctx.Value(util.APAccount)
 	if targetAcctI == nil {
 		l.Error("target account wasn't set on context")
+		return nil
 	}
 	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
 	if !ok {
 		l.Error("target account was set on context but couldn't be parsed")
+		return nil
 	}
 
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
 		l.Error("from federator channel wasn't set on context")
+		return nil
 	}
 	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
 	if !ok {
 		l.Error("from federator channel was set on context but couldn't be parsed")
+		return nil
 	}
 
-	switch gtsmodel.ActivityStreamsActivity(asType.GetTypeName()) {
+	switch asType.GetTypeName() {
 	case gtsmodel.ActivityStreamsCreate:
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
@@ -399,7 +420,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 		object := create.GetActivityStreamsObject()
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
-			switch gtsmodel.ActivityStreamsObject(objectIter.GetType().GetTypeName()) {
+			switch objectIter.GetType().GetTypeName() {
 			case gtsmodel.ActivityStreamsNote:
 				note := objectIter.GetActivityStreamsNote()
 				status, err := f.typeConverter.ASStatusToStatus(note)
@@ -407,13 +428,17 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 					return fmt.Errorf("error converting note to status: %s", err)
 				}
 				if err := f.db.Put(status); err != nil {
+					if _, ok := err.(db.ErrAlreadyExists); ok {
+						return nil
+					}
 					return fmt.Errorf("database error inserting status: %s", err)
 				}
 
 				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:   gtsmodel.ActivityStreamsNote,
-					APActivityType: gtsmodel.ActivityStreamsCreate,
-					GTSModel:       status,
+					APObjectType:     gtsmodel.ActivityStreamsNote,
+					APActivityType:   gtsmodel.ActivityStreamsCreate,
+					GTSModel:         status,
+					ReceivingAccount: targetAcct,
 				}
 			}
 		}
@@ -433,7 +458,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 
 		if !targetAcct.Locked {
-			if err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
+			if _, err := f.db.AcceptFollowRequest(followRequest.AccountID, followRequest.TargetAccountID); err != nil {
 				return fmt.Errorf("database error accepting follow request: %s", err)
 			}
 		}
@@ -450,14 +475,87 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 // the entire value.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Update(c context.Context, asType vocab.Type) error {
+func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "Update",
 			"asType": asType.GetTypeName(),
 		},
 	)
-	l.Debugf("received UPDATE asType %+v", asType)
+	m, err := streams.Serialize(asType)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	l.Debugf("received UPDATE asType %s", string(b))
+
+	receivingAcctI := ctx.Value(util.APAccount)
+	if receivingAcctI == nil {
+		l.Error("receiving account wasn't set on context")
+	}
+	receivingAcct, ok := receivingAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("receiving account was set on context but couldn't be parsed")
+	}
+
+	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	if fromFederatorChanI == nil {
+		l.Error("from federator channel wasn't set on context")
+	}
+	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	if !ok {
+		l.Error("from federator channel was set on context but couldn't be parsed")
+	}
+
+	switch asType.GetTypeName() {
+	case gtsmodel.ActivityStreamsUpdate:
+		update, ok := asType.(vocab.ActivityStreamsCreate)
+		if !ok {
+			return errors.New("could not convert type to create")
+		}
+		object := update.GetActivityStreamsObject()
+		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
+			switch objectIter.GetType().GetTypeName() {
+			case string(gtsmodel.ActivityStreamsPerson):
+				person := objectIter.GetActivityStreamsPerson()
+				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(person)
+				if err != nil {
+					return fmt.Errorf("error converting person to account: %s", err)
+				}
+				if err := f.db.Put(updatedAcct); err != nil {
+					return fmt.Errorf("database error inserting updated account: %s", err)
+				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType:     gtsmodel.ActivityStreamsProfile,
+					APActivityType:   gtsmodel.ActivityStreamsUpdate,
+					GTSModel:         updatedAcct,
+					ReceivingAccount: receivingAcct,
+				}
+
+			case string(gtsmodel.ActivityStreamsApplication):
+				application := objectIter.GetActivityStreamsApplication()
+				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(application)
+				if err != nil {
+					return fmt.Errorf("error converting person to account: %s", err)
+				}
+				if err := f.db.Put(updatedAcct); err != nil {
+					return fmt.Errorf("database error inserting updated account: %s", err)
+				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType:     gtsmodel.ActivityStreamsProfile,
+					APActivityType:   gtsmodel.ActivityStreamsUpdate,
+					GTSModel:         updatedAcct,
+					ReceivingAccount: receivingAcct,
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -490,7 +588,7 @@ func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox v
 	)
 	l.Debug("entering GETOUTBOX function")
 
-	return nil, nil
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
 // SetOutbox saves the outbox value given from GetOutbox, with new items
@@ -522,9 +620,60 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 			"asType": t.GetTypeName(),
 		},
 	)
-	l.Debugf("received NEWID request for asType %+v", t)
+	m, err := streams.Serialize(t)
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	l.Debugf("received NEWID request for asType %s", string(b))
 
-	return url.Parse(fmt.Sprintf("%s://%s/", f.config.Protocol, uuid.NewString()))
+	switch t.GetTypeName() {
+	case gtsmodel.ActivityStreamsFollow:
+		// FOLLOW
+		// ID might already be set on a follow we've created, so check it here and return it if it is
+		follow, ok := t.(vocab.ActivityStreamsFollow)
+		if !ok {
+			return nil, errors.New("newid: follow couldn't be parsed into vocab.ActivityStreamsFollow")
+		}
+		idProp := follow.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
+		// it's not set so create one based on the actor set on the follow (ie., the followER not the followEE)
+		actorProp := follow.GetActivityStreamsActor()
+		if actorProp != nil {
+			for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
+				// take the IRI of the first actor we can find (there should only be one)
+				if iter.IsIRI() {
+					actorAccount := &gtsmodel.Account{}
+					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
+						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host))
+					}
+				}
+			}
+		}
+	case gtsmodel.ActivityStreamsNote:
+		// NOTE aka STATUS
+		// ID might already be set on a note we've created, so check it here and return it if it is
+		note, ok := t.(vocab.ActivityStreamsNote)
+		if !ok {
+			return nil, errors.New("newid: follow couldn't be parsed into vocab.ActivityStreamsNote")
+		}
+		idProp := note.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
+	}
+
+	// fallback default behavior: just return a random UUID after our protocol and host
+	return url.Parse(fmt.Sprintf("%s://%s/%s", f.config.Protocol, f.config.Host, uuid.NewString()))
 }
 
 // Followers obtains the Followers Collection for an actor with the
@@ -543,7 +692,7 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	l.Debugf("entering FOLLOWERS function with actorIRI %s", actorIRI.String())
 
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
 		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
 	}
 
@@ -585,7 +734,7 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
 
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere("uri", actorIRI.String(), acct); err != nil {
+	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
 		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
 	}
 
@@ -626,4 +775,140 @@ func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.
 	)
 	l.Debugf("entering LIKED function with actorIRI %s", actorIRI.String())
 	return nil, nil
+}
+
+/*
+	CUSTOM FUNCTIONALITY FOR GTS
+*/
+
+func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "Undo",
+			"asType": undo.GetTypeName(),
+		},
+	)
+	m, err := streams.Serialize(undo)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	l.Debugf("received UNDO asType %s", string(b))
+
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		l.Error("UNDO: target account wasn't set on context")
+		return nil
+	}
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("UNDO: target account was set on context but couldn't be parsed")
+		return nil
+	}
+
+	undoObject := undo.GetActivityStreamsObject()
+	if undoObject == nil {
+		return errors.New("UNDO: no object set on vocab.ActivityStreamsUndo")
+	}
+
+	for iter := undoObject.Begin(); iter != undoObject.End(); iter = iter.Next() {
+		switch iter.GetType().GetTypeName() {
+		case string(gtsmodel.ActivityStreamsFollow):
+			// UNDO FOLLOW
+			ASFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
+			if !ok {
+				return errors.New("UNDO: couldn't parse follow into vocab.ActivityStreamsFollow")
+			}
+			// make sure the actor owns the follow
+			if !sameActor(undo.GetActivityStreamsActor(), ASFollow.GetActivityStreamsActor()) {
+				return errors.New("UNDO: follow actor and activity actor not the same")
+			}
+			// convert the follow to something we can understand
+			gtsFollow, err := f.typeConverter.ASFollowToFollow(ASFollow)
+			if err != nil {
+				return fmt.Errorf("UNDO: error converting asfollow to gtsfollow: %s", err)
+			}
+			// make sure the addressee of the original follow is the same as whatever inbox this landed in
+			if gtsFollow.TargetAccountID != targetAcct.ID {
+				return errors.New("UNDO: follow object account and inbox account were not the same")
+			}
+			// delete any existing FOLLOW
+			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
+				return fmt.Errorf("UNDO: db error removing follow: %s", err)
+			}
+			// delete any existing FOLLOW REQUEST
+			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
+				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
+			}
+			l.Debug("follow undone")
+			return nil
+		case string(gtsmodel.ActivityStreamsLike):
+			// UNDO LIKE
+		case string(gtsmodel.ActivityStreamsAnnounce):
+			// UNDO BOOST/REBLOG/ANNOUNCE
+		}
+	}
+
+	return nil
+}
+
+func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func":   "Accept",
+			"asType": accept.GetTypeName(),
+		},
+	)
+	m, err := streams.Serialize(accept)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	l.Debugf("received ACCEPT asType %s", string(b))
+
+	inboxAcctI := ctx.Value(util.APAccount)
+	if inboxAcctI == nil {
+		l.Error("ACCEPT: inbox account wasn't set on context")
+		return nil
+	}
+	inboxAcct, ok := inboxAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("ACCEPT: inbox account was set on context but couldn't be parsed")
+		return nil
+	}
+
+	acceptObject := accept.GetActivityStreamsObject()
+	if acceptObject == nil {
+		return errors.New("ACCEPT: no object set on vocab.ActivityStreamsUndo")
+	}
+
+	for iter := acceptObject.Begin(); iter != acceptObject.End(); iter = iter.Next() {
+		switch iter.GetType().GetTypeName() {
+		case string(gtsmodel.ActivityStreamsFollow):
+			// ACCEPT FOLLOW
+			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
+			if !ok {
+				return errors.New("ACCEPT: couldn't parse follow into vocab.ActivityStreamsFollow")
+			}
+			// convert the follow to something we can understand
+			gtsFollow, err := f.typeConverter.ASFollowToFollow(asFollow)
+			if err != nil {
+				return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
+			}
+			// make sure the addressee of the original follow is the same as whatever inbox this landed in
+			if gtsFollow.AccountID != inboxAcct.ID {
+				return errors.New("ACCEPT: follow object account and inbox account were not the same")
+			}
+			_, err = f.db.AcceptFollowRequest(gtsFollow.AccountID, gtsFollow.TargetAccountID)
+			return err
+		}
+	}
+
+	return nil
 }

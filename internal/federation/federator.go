@@ -34,6 +34,8 @@ import (
 type Federator interface {
 	// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
 	FederatingActor() pub.FederatingActor
+	// FederatingDB returns the underlying FederatingDB interface.
+	FederatingDB() FederatingDB
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
@@ -52,6 +54,7 @@ type Federator interface {
 type federator struct {
 	config              *config.Config
 	db                  db.DB
+	federatingDB        FederatingDB
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
@@ -60,22 +63,27 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
+func NewFederator(db db.DB, federatingDB FederatingDB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
 
 	clock := &Clock{}
 	f := &federator{
 		config:              config,
 		db:                  db,
+		federatingDB:        federatingDB,
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		log:                 log,
 	}
-	actor := newFederatingActor(f, f, db.Federation(), clock)
+	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor
 	return f
 }
 
 func (f *federator) FederatingActor() pub.FederatingActor {
 	return f.actor
+}
+
+func (f *federator) FederatingDB() FederatingDB {
+	return f.federatingDB
 }

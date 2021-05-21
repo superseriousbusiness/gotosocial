@@ -17,12 +17,12 @@
     * [x] /api/v1/accounts/:id GET                          (Get account information)
     * [x] /api/v1/accounts/:id/statuses GET                 (Get an account's statuses)
     * [x] /api/v1/accounts/:id/followers GET                (Get an account's followers)
-    * [ ] /api/v1/accounts/:id/following GET                (Get an account's following)
+    * [x] /api/v1/accounts/:id/following GET                (Get an account's following)
     * [ ] /api/v1/accounts/:id/featured_tags GET            (Get an account's featured tags)
     * [ ] /api/v1/accounts/:id/lists GET                    (Get lists containing this account)
     * [ ] /api/v1/accounts/:id/identity_proofs GET          (Get identity proofs for this account)
-    * [ ] /api/v1/accounts/:id/follow POST                  (Follow this account)
-    * [ ] /api/v1/accounts/:id/unfollow POST                (Unfollow this account)
+    * [x] /api/v1/accounts/:id/follow POST                  (Follow this account)
+    * [x] /api/v1/accounts/:id/unfollow POST                (Unfollow this account)
     * [ ] /api/v1/accounts/:id/block POST                   (Block this account)
     * [ ] /api/v1/accounts/:id/unblock POST                 (Unblock this account)
     * [ ] /api/v1/accounts/:id/mute POST                    (Mute this account)
@@ -30,7 +30,7 @@
     * [ ] /api/v1/accounts/:id/pin POST                     (Feature this account on profile)
     * [ ] /api/v1/accounts/:id/unpin POST                   (Remove this account from profile)
     * [ ] /api/v1/accounts/:id/note POST                    (Make a personal note about this account)
-    * [ ] /api/v1/accounts/relationships GET                (Check relationships with accounts)
+    * [x] /api/v1/accounts/relationships GET                (Check relationships with accounts)
     * [ ] /api/v1/accounts/search GET                       (Search for an account)
   * [ ] Bookmarks
     * [ ] /api/v1/bookmarks GET                             (See bookmarked statuses)
@@ -177,6 +177,7 @@
     * [ ] 'Greedy' federation
     * [ ] No federation (insulate this instance from the Fediverse)
       * [ ] Allowlist
+  * [x] Secure HTTP signatures (creation and validation)
 * [ ] Storage
   * [x] Internal/statuses/preferences etc
     * [x] Postgres interface

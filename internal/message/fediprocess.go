@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/go-fed/activity/streams"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -46,7 +47,7 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 	// we might already have an entry for this account so check that first
 	requestingAccount := &gtsmodel.Account{}
 
-	err = p.db.GetWhere("uri", requestingAccountURI.String(), requestingAccount)
+	err = p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
 	if err == nil {
 		// we do have it yay, return it
 		return requestingAccount, nil
@@ -120,6 +121,89 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 	}
 
 	return data, nil
+}
+
+func (p *processor) GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode) {
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
+
+	// authenticate the request
+	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	if err != nil {
+		return nil, NewErrorNotAuthorized(err)
+	}
+
+	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	if blocked {
+		return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
+
+	requestedAccountURI, err := url.Parse(requestedAccount.URI)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
+	}
+
+	requestedFollowers, err := p.federator.FederatingDB().Followers(context.Background(), requestedAccountURI)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error fetching followers for uri %s: %s", requestedAccountURI.String(), err))
+	}
+
+	data, err := streams.Serialize(requestedFollowers)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	return data, nil
+}
+
+func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, ErrorWithCode) {
+		// get the account the request is referring to
+		requestedAccount := &gtsmodel.Account{}
+		if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+			return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+		}
+
+		// authenticate the request
+		requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+		if err != nil {
+			return nil, NewErrorNotAuthorized(err)
+		}
+
+		blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+
+		if blocked {
+			return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+		}
+
+		s := &gtsmodel.Status{}
+		if err := p.db.GetWhere([]db.Where{
+			{Key: "id", Value: requestedStatusID},
+			{Key: "account_id", Value: requestedAccount.ID},
+		}, s); err != nil {
+			return nil, NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
+		}
+
+		asStatus, err := p.tc.StatusToAS(s)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+
+		data, err := streams.Serialize(asStatus)
+		if err != nil {
+			return nil, NewErrorInternalError(err)
+		}
+
+		return data, nil
 }
 
 func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode) {

@@ -26,5 +26,5 @@ import (
 
 // NewTestFederator returns a federator with the given database and (mock!!) transport controller.
 func NewTestFederator(db db.DB, tc transport.Controller) federation.Federator {
-	return federation.NewFederator(db, tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db))
+	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db))
 }

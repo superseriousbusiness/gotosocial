@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
+	"github.com/sirupsen/logrus"
 )
 
 // Transport wraps the pub.Transport interface with some additional
@@ -31,6 +32,7 @@ type transport struct {
 	sigTransport *pub.HttpSigTransport
 	getSigner    httpsig.Signer
 	getSignerMu  *sync.Mutex
+	log          *logrus.Logger
 }
 
 func (t *transport) BatchDeliver(c context.Context, b []byte, recipients []*url.URL) error {
@@ -38,14 +40,20 @@ func (t *transport) BatchDeliver(c context.Context, b []byte, recipients []*url.
 }
 
 func (t *transport) Deliver(c context.Context, b []byte, to *url.URL) error {
+	l := t.log.WithField("func", "Deliver")
+	l.Debugf("performing POST to %s", to.String())
 	return t.sigTransport.Deliver(c, b, to)
 }
 
 func (t *transport) Dereference(c context.Context, iri *url.URL) ([]byte, error) {
+	l := t.log.WithField("func", "Dereference")
+	l.Debugf("performing GET to %s", iri.String())
 	return t.sigTransport.Dereference(c, iri)
 }
 
 func (t *transport) DereferenceMedia(c context.Context, iri *url.URL, expectedContentType string) ([]byte, error) {
+	l := t.log.WithField("func", "DereferenceMedia")
+	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequest("GET", iri.String(), nil)
 	if err != nil {
 		return nil, err

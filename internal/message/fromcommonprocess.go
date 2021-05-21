@@ -23,3 +23,7 @@ import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 	return nil
 }
+
+func (p *processor) notifyFollow(follow *gtsmodel.Follow) error {
+   return nil
+}

@@ -89,7 +89,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}))
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.typeConverter)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()
@@ -155,7 +155,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	}))
 
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, tc, suite.config, suite.log, suite.typeConverter)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter)
 
 	// setup request
 	ctx := context.Background()

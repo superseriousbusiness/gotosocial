@@ -572,3 +572,21 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 
 	return mi, nil
 }
+
+func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error) {
+	return &model.Relationship{
+		ID: r.ID,
+		Following: r.Following,
+		ShowingReblogs: r.ShowingReblogs,
+		Notifying: r.Notifying,
+		FollowedBy: r.FollowedBy,
+		Blocking: r.Blocking,
+		BlockedBy: r.BlockedBy,
+		Muting: r.Muting,
+		MutingNotifications: r.MutingNotifications,
+		Requested: r.Requested,
+		DomainBlocking: r.DomainBlocking,
+		Endorsed: r.Endorsed,
+		Note: r.Note,
+	}, nil
+}

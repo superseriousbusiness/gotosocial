@@ -21,10 +21,12 @@ package typeutils
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -256,5 +258,304 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 }
 
 func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
-	return nil, nil
+	// ensure prerequisites here before we get stuck in
+
+	// check if author account is already attached to status and attach it if not
+	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
+	if s.GTSAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(s.AccountID, a); err != nil {
+			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
+		}
+		s.GTSAccount = a
+	}
+
+	// create the Note!
+	status := streams.NewActivityStreamsNote()
+
+	// id
+	statusURI, err := url.Parse(s.URI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URI, err)
+	}
+	statusIDProp := streams.NewJSONLDIdProperty()
+	statusIDProp.SetIRI(statusURI)
+	status.SetJSONLDId(statusIDProp)
+
+	// type
+	// will be set automatically by go-fed
+
+	// summary aka cw
+	statusSummaryProp := streams.NewActivityStreamsSummaryProperty()
+	statusSummaryProp.AppendXMLSchemaString(s.ContentWarning)
+	status.SetActivityStreamsSummary(statusSummaryProp)
+
+	// inReplyTo
+	if s.InReplyToID != "" {
+		// fetch the replied status if we don't have it on hand already
+		if s.GTSReplyToStatus == nil {
+			rs := &gtsmodel.Status{}
+			if err := c.db.GetByID(s.InReplyToID, rs); err != nil {
+				return nil, fmt.Errorf("StatusToAS: error retrieving replied-to status from db: %s", err)
+			}
+			s.GTSReplyToStatus = rs
+		}
+		rURI, err := url.Parse(s.GTSReplyToStatus.URI)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSReplyToStatus.URI, err)
+		}
+
+		inReplyToProp := streams.NewActivityStreamsInReplyToProperty()
+		inReplyToProp.AppendIRI(rURI)
+		status.SetActivityStreamsInReplyTo(inReplyToProp)
+	}
+
+	// published
+	publishedProp := streams.NewActivityStreamsPublishedProperty()
+	publishedProp.Set(s.CreatedAt)
+	status.SetActivityStreamsPublished(publishedProp)
+
+	// url
+	if s.URL != "" {
+		sURL, err := url.Parse(s.URL)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URL, err)
+		}
+
+		urlProp := streams.NewActivityStreamsUrlProperty()
+		urlProp.AppendIRI(sURL)
+		status.SetActivityStreamsUrl(urlProp)
+	}
+
+	// attributedTo
+	authorAccountURI, err := url.Parse(s.GTSAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.URI, err)
+	}
+	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
+	attributedToProp.AppendIRI(authorAccountURI)
+	status.SetActivityStreamsAttributedTo(attributedToProp)
+
+	// tags
+	tagProp := streams.NewActivityStreamsTagProperty()
+
+	// tag -- mentions
+	for _, m := range s.GTSMentions {
+		asMention, err := c.MentionToAS(m)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error converting mention to AS mention: %s", err)
+		}
+		tagProp.AppendActivityStreamsMention(asMention)
+	}
+
+	// tag -- emojis
+	// TODO
+
+	// tag -- hashtags
+	// TODO
+
+	status.SetActivityStreamsTag(tagProp)
+
+	// parse out some URIs we need here
+	authorFollowersURI, err := url.Parse(s.GTSAccount.FollowersURI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.FollowersURI, err)
+	}
+
+	publicURI, err := url.Parse(asPublicURI)
+	if err != nil {
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", asPublicURI, err)
+	}
+
+	// to and cc
+	toProp := streams.NewActivityStreamsToProperty()
+	ccProp := streams.NewActivityStreamsCcProperty()
+	switch s.Visibility {
+	case gtsmodel.VisibilityDirect:
+		// if DIRECT, then only mentioned users should be added to TO, and nothing to CC
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			toProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityMutualsOnly:
+		// TODO
+	case gtsmodel.VisibilityFollowersOnly:
+		// if FOLLOWERS ONLY then we want to add followers to TO, and mentions to CC
+		toProp.AppendIRI(authorFollowersURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityUnlocked:
+		// if UNLOCKED, we want to add followers to TO, and public and mentions to CC
+		toProp.AppendIRI(authorFollowersURI)
+		ccProp.AppendIRI(publicURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityPublic:
+		// if PUBLIC, we want to add public to TO, and followers and mentions to CC
+		toProp.AppendIRI(publicURI)
+		ccProp.AppendIRI(authorFollowersURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
+	}
+	status.SetActivityStreamsTo(toProp)
+	status.SetActivityStreamsCc(ccProp)
+
+	// conversation
+	// TODO
+
+	// content -- the actual post itself
+	contentProp := streams.NewActivityStreamsContentProperty()
+	contentProp.AppendXMLSchemaString(s.Content)
+	status.SetActivityStreamsContent(contentProp)
+
+	// attachment
+	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
+	for _, a := range s.GTSMediaAttachments {
+		doc, err := c.AttachmentToAS(a)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error converting attachment: %s", err)
+		}
+		attachmentProp.AppendActivityStreamsDocument(doc)
+	}
+	status.SetActivityStreamsAttachment(attachmentProp)
+
+	// replies
+	// TODO
+	
+	return status, nil
+}
+
+func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
+	// parse out the various URIs we need for this
+	// origin account (who's doing the follow)
+	originAccountURI, err := url.Parse(originAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing origin account uri: %s", err)
+	}
+	originActor := streams.NewActivityStreamsActorProperty()
+	originActor.AppendIRI(originAccountURI)
+
+	// target account (who's being followed)
+	targetAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing target account uri: %s", err)
+	}
+
+	// uri of the follow activity itself
+	followURI, err := url.Parse(f.URI)
+	if err != nil {
+		return nil, fmt.Errorf("followtoasfollow: error parsing follow uri: %s", err)
+	}
+
+	// start preparing the follow activity
+	follow := streams.NewActivityStreamsFollow()
+
+	// set the actor
+	follow.SetActivityStreamsActor(originActor)
+
+	// set the id
+	followIDProp := streams.NewJSONLDIdProperty()
+	followIDProp.SetIRI(followURI)
+	follow.SetJSONLDId(followIDProp)
+
+	// set the object
+	followObjectProp := streams.NewActivityStreamsObjectProperty()
+	followObjectProp.AppendIRI(targetAccountURI)
+	follow.SetActivityStreamsObject(followObjectProp)
+
+	// set the To property
+	followToProp := streams.NewActivityStreamsToProperty()
+	followToProp.AppendIRI(targetAccountURI)
+	follow.SetActivityStreamsTo(followToProp)
+
+	return follow, nil
+}
+
+func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
+	if m.GTSAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetWhere([]db.Where{{Key: "target_account_id", Value: m.TargetAccountID}}, a); err != nil {
+			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
+		}
+		m.GTSAccount = a
+	}
+
+	// create the mention
+	mention := streams.NewActivityStreamsMention()
+
+	// href -- this should be the URI of the mentioned user
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	hrefURI, err := url.Parse(m.GTSAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+	}
+	hrefProp.SetIRI(hrefURI)
+	mention.SetActivityStreamsHref(hrefProp)
+
+	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
+	var domain string
+	if m.GTSAccount.Domain == "" {
+		domain = c.config.Host
+	} else {
+		domain = m.GTSAccount.Domain
+	}
+	username := m.GTSAccount.Username
+	nameString := fmt.Sprintf("@%s@%s", username, domain)
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(nameString)
+	mention.SetActivityStreamsName(nameProp)
+
+	return mention, nil
+}
+
+func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
+	// type -- Document
+	doc := streams.NewActivityStreamsDocument()
+
+	// mediaType aka mime content type
+	mediaTypeProp := streams.NewActivityStreamsMediaTypeProperty()
+	mediaTypeProp.Set(a.File.ContentType)
+	doc.SetActivityStreamsMediaType(mediaTypeProp)
+
+	// url -- for the original image not the thumbnail
+	urlProp := streams.NewActivityStreamsUrlProperty()
+	imageURL, err := url.Parse(a.URL)
+	if err != nil {
+		return nil, fmt.Errorf("AttachmentToAS: error parsing uri %s: %s", a.URL, err)
+	}
+	urlProp.AppendIRI(imageURL)
+	doc.SetActivityStreamsUrl(urlProp)
+
+	// name -- aka image description
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(a.Description)
+	doc.SetActivityStreamsName(nameProp)
+
+	// blurhash
+	blurProp := streams.NewTootBlurhashProperty()
+	blurProp.Set(a.Blurhash)
+	doc.SetTootBlurhash(blurProp)
+
+	// focalpoint
+	// TODO
+
+	return doc, nil
 }

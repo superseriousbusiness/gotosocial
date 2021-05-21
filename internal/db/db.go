@@ -22,7 +22,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -33,9 +32,19 @@ const (
 
 // ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
-
 func (e ErrNoEntries) Error() string {
 	return "no entries"
+}
+
+// ErrAlreadyExists is to be returned from the DB interface when an entry already exists for a given query or its constraints.
+type ErrAlreadyExists struct{}
+func (e ErrAlreadyExists) Error() string {
+	return "already exists"
+}
+
+type Where struct {
+	Key string
+	Value interface{}
 }
 
 // DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
@@ -44,7 +53,7 @@ func (e ErrNoEntries) Error() string {
 type DB interface {
 	// Federation returns an interface that's compatible with go-fed, for performing federation storage/retrieval functions.
 	// See: https://pkg.go.dev/github.com/go-fed/activity@v1.0.0/pub?utm_source=gopls#Database
-	Federation() pub.Database
+	// Federation() federatingdb.FederatingDB
 
 	/*
 		BASIC DB FUNCTIONALITY
@@ -75,7 +84,7 @@ type DB interface {
 	// name of the key to select from.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetWhere(key string, value interface{}, i interface{}) error
+	GetWhere(where []Where, i interface{}) error
 
 	// // GetWhereMany gets one entry where key = value for *ALL* parameters passed as "where".
 	// // That is, if you pass 2 'where' entries, with 1 being Key username and Value test, and the second
@@ -109,7 +118,7 @@ type DB interface {
 
 	// DeleteWhere deletes i where key = value
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteWhere(key string, value interface{}, i interface{}) error
+	DeleteWhere(where []Where, i interface{}) error
 
 	/*
 		HANDY SHORTCUTS
@@ -117,7 +126,9 @@ type DB interface {
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
-	AcceptFollowRequest(originAccountID string, targetAccountID string) error
+	//
+	// It will return the newly created follow for further processing.
+	AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, error)
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
@@ -204,6 +215,9 @@ type DB interface {
 	// That is, it returns true if account1 blocks account2, OR if account2 blocks account1.
 	Blocked(account1 string, account2 string) (bool, error)
 
+	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
+	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error)
+
 	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
 	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts
 	// or account domains.
@@ -221,6 +235,9 @@ type DB interface {
 
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
+
+	// FollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
+	FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
 
 	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
 	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error)

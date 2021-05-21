@@ -71,8 +71,16 @@ type Processor interface {
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
 	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode)
-	// AccountFollowersGet
+	// AccountFollowersGet fetches a list of the target account's followers.
 	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	// AccountFollowingGet fetches a list of the accounts that target account is following.
+	AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	// AccountRelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
+	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
+	// AccountFollowCreate handles a follow request to an account, either remote or local.
+	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, ErrorWithCode)
+	// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
+	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -86,7 +94,7 @@ type Processor interface {
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
 	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, ErrorWithCode)
 	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
-	FollowRequestAccept(auth *oauth.Auth, accountID string) ErrorWithCode
+	FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, ErrorWithCode)
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
@@ -124,6 +132,14 @@ type Processor interface {
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetFediUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+
+	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
+	// authentication before returning a JSON serializable interface to the caller.
+	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+
+	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
+	// authentication before returning a JSON serializable interface to the caller.
+	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, ErrorWithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode)
@@ -200,15 +216,11 @@ func (p *processor) Start() error {
 	DistLoop:
 		for {
 			select {
-			// case clientMsg := <-p.toClientAPI:
-			// 	p.log.Infof("received message TO client API: %+v", clientMsg)
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
 				if err := p.processFromClientAPI(clientMsg); err != nil {
 					p.log.Error(err)
 				}
-			// case federatorMsg := <-p.toFederator:
-			// 	p.log.Infof("received message TO federator: %+v", federatorMsg)
 			case federatorMsg := <-p.fromFederator:
 				p.log.Infof("received message FROM federator: %+v", federatorMsg)
 				if err := p.processFromFederator(federatorMsg); err != nil {

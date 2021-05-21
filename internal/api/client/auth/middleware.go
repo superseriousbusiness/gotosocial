@@ -20,6 +20,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -68,7 +69,7 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 	if cid := ti.GetClientID(); cid != "" {
 		l.Tracef("authenticated client %s with bearer token, scope is %s", cid, ti.GetScope())
 		app := &gtsmodel.Application{}
-		if err := m.db.GetWhere("client_id", cid, app); err != nil {
+		if err := m.db.GetWhere([]db.Where{{Key: "client_id",Value: cid}}, app); err != nil {
 			l.Tracef("no app found for client %s", cid)
 		}
 		c.Set(oauth.SessionAuthorizedApplication, app)

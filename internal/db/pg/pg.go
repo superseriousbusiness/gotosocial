@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -38,7 +37,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
@@ -46,11 +44,11 @@ import (
 
 // postgresService satisfies the DB interface
 type postgresService struct {
-	config       *config.Config
-	conn         *pg.DB
-	log          *logrus.Logger
-	cancel       context.CancelFunc
-	federationDB pub.Database
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+	// federationDB pub.Database
 }
 
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -96,9 +94,6 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		log:    log,
 		cancel: cancel,
 	}
-
-	federatingDB := federation.NewFederatingDB(ps, c, log)
-	ps.federationDB = federatingDB
 
 	// we can confidently return this useable postgres service now
 	return ps, nil
@@ -157,14 +152,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 	}
 
 	return options, nil
-}
-
-/*
-	FEDERATION FUNCTIONALITY
-*/
-
-func (ps *postgresService) Federation() pub.Database {
-	return ps.federationDB
 }
 
 /*
@@ -229,8 +216,17 @@ func (ps *postgresService) GetByID(id string, i interface{}) error {
 	return nil
 }
 
-func (ps *postgresService) GetWhere(key string, value interface{}, i interface{}) error {
-	if err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Select(); err != nil {
+func (ps *postgresService) GetWhere(where []db.Where, i interface{}) error {
+	if len(where) == 0 {
+		return errors.New("no queries provided")
+	}
+
+	q := ps.conn.Model(i)
+	for _, w := range where {
+		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+	}
+
+	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries{}
 		}
@@ -255,6 +251,9 @@ func (ps *postgresService) GetAll(i interface{}) error {
 
 func (ps *postgresService) Put(i interface{}) error {
 	_, err := ps.conn.Model(i).Insert(i)
+	if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		return db.ErrAlreadyExists{}
+	}
 	return err
 }
 
@@ -285,20 +284,31 @@ func (ps *postgresService) UpdateOneByID(id string, key string, value interface{
 
 func (ps *postgresService) DeleteByID(id string, i interface{}) error {
 	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+		// if there are no rows *anyway* then that's fine
+		// just return err if there's an actual error
+		if err != pg.ErrNoRows {
+			return err
 		}
-		return err
 	}
 	return nil
 }
 
-func (ps *postgresService) DeleteWhere(key string, value interface{}, i interface{}) error {
-	if _, err := ps.conn.Model(i).Where("? = ?", pg.Safe(key), value).Delete(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+func (ps *postgresService) DeleteWhere(where []db.Where, i interface{}) error {
+	if len(where) == 0 {
+		return errors.New("no queries provided")
+	}
+
+	q := ps.conn.Model(i)
+	for _, w := range where {
+		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+	}
+
+	if _, err := q.Delete(); err != nil {
+		// if there are no rows *anyway* then that's fine
+		// just return err if there's an actual error
+		if err != pg.ErrNoRows {
+			return err
 		}
-		return err
 	}
 	return nil
 }
@@ -307,30 +317,34 @@ func (ps *postgresService) DeleteWhere(key string, value interface{}, i interfac
 	HANDY SHORTCUTS
 */
 
-func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) error {
+func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, error) {
+	// make sure the original follow request exists
 	fr := &gtsmodel.FollowRequest{}
 	if err := ps.conn.Model(fr).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Select(); err != nil {
 		if err == pg.ErrMultiRows {
-			return db.ErrNoEntries{}
+			return nil, db.ErrNoEntries{}
 		}
-		return err
+		return nil, err
 	}
 
+	// create a new follow to 'replace' the request with
 	follow := &gtsmodel.Follow{
 		AccountID:       originAccountID,
 		TargetAccountID: targetAccountID,
 		URI:             fr.URI,
 	}
 
-	if _, err := ps.conn.Model(follow).Insert(); err != nil {
-		return err
+	// if the follow already exists, just update the URI -- we don't need to do anything else
+	if _, err := ps.conn.Model(follow).OnConflict("ON CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).Insert(); err != nil {
+		return nil, err
 	}
 
+	// now remove the follow request
 	if _, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Delete(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return follow, nil
 }
 
 func (ps *postgresService) CreateInstanceAccount() error {
@@ -681,6 +695,60 @@ func (ps *postgresService) Blocked(account1 string, account2 string) (bool, erro
 	return blocked, nil
 }
 
+func (ps *postgresService) GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error) {
+	r := &gtsmodel.Relationship{
+		ID: targetAccount,
+	}
+
+	// check if the requesting account follows the target account
+	follow := &gtsmodel.Follow{}
+	if err := ps.conn.Model(follow).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Select(); err != nil {
+		if err != pg.ErrNoRows {
+			// a proper error
+			return nil, fmt.Errorf("getrelationship: error checking follow existence: %s", err)
+		}
+		// no follow exists so these are all false
+		r.Following = false
+		r.ShowingReblogs = false
+		r.Notifying = false
+	} else {
+		// follow exists so we can fill these fields out...
+		r.Following = true
+		r.ShowingReblogs = follow.ShowReblogs
+		r.Notifying = follow.Notify
+	}
+
+	// check if the target account follows the requesting account
+	followedBy, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking followed_by existence: %s", err)
+	}
+	r.FollowedBy = followedBy
+
+	// check if the requesting account blocks the target account
+	blocking, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocking existence: %s", err)
+	}
+	r.Blocking = blocking
+
+	// check if the target account blocks the requesting account
+	blockedBy, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
+	}
+	r.BlockedBy = blockedBy
+
+	// check if there's a pending following request from requesting account to target account
+	requested, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
+	if err != nil {
+		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
+	}
+	r.Requested = requested
+
+	return r, nil
+}
+
 func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {
 	l := ps.log.WithField("func", "StatusVisible")
 
@@ -851,6 +919,10 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 
 func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
 	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
+}
+
+func (ps *postgresService) FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
+	return ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
 func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error) {
@@ -1036,6 +1108,11 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 */
 
 func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+	ogAccount := &gtsmodel.Account{}
+	if err := ps.conn.Model(ogAccount).Where("id = ?", originAccountID).Select(); err != nil {
+		return nil, err
+	}
+
 	menchies := []*gtsmodel.Mention{}
 	for _, a := range targetAccounts {
 		// A mentioned account looks like "@test@example.org" or just "@test" for a local account
@@ -1093,9 +1170,13 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &gtsmodel.Mention{
-			StatusID:        statusID,
-			OriginAccountID: originAccountID,
-			TargetAccountID: mentionedAccount.ID,
+			StatusID:            statusID,
+			OriginAccountID:     ogAccount.ID,
+			OriginAccountURI:    ogAccount.URI,
+			TargetAccountID:     mentionedAccount.ID,
+			NameString:          a,
+			MentionedAccountURI: mentionedAccount.URI,
+			GTSAccount:          mentionedAccount,
 		})
 	}
 	return menchies, nil

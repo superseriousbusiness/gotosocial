@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -205,7 +206,7 @@ func (p *processor) processMentions(form *apimodel.AdvancedStatusCreateForm, acc
 		if err := p.db.Put(menchie); err != nil {
 			return fmt.Errorf("error putting mentions in db: %s", err)
 		}
-		menchies = append(menchies, menchie.TargetAccountID)
+		menchies = append(menchies, menchie.ID)
 	}
 	// add full populated gts menchies to the status for passing them around conveniently
 	status.GTSMentions = gtsMenchies
@@ -280,7 +281,7 @@ func (p *processor) updateAccountAvatar(avatar *multipart.FileHeader, accountID 
 	}
 
 	// do the setting
-	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Avatar)
+	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Avatar, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -313,10 +314,42 @@ func (p *processor) updateAccountHeader(header *multipart.FileHeader, accountID 
 	}
 
 	// do the setting
-	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Header)
+	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Header, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}
 
 	return headerInfo, f.Close()
+}
+
+// fetchHeaderAndAviForAccount fetches the header and avatar for a remote account, using a transport
+// on behalf of requestingUsername.
+//
+// targetAccount's AvatarMediaAttachmentID and HeaderMediaAttachmentID will be updated as necessary.
+//
+// SIDE EFFECTS: remote header and avatar will be stored in local storage, and the database will be updated
+// to reflect the creation of these new attachments.
+func (p *processor) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t transport.Transport) error {
+	if targetAccount.AvatarRemoteURL != "" && targetAccount.AvatarMediaAttachmentID == "" {
+		a, err := p.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+			RemoteURL: targetAccount.AvatarRemoteURL,
+			Avatar:    true,
+		}, targetAccount.ID)
+		if err != nil {
+			return fmt.Errorf("error processing avatar for user: %s", err)
+		}
+		targetAccount.AvatarMediaAttachmentID = a.ID
+	}
+
+	if targetAccount.HeaderRemoteURL != "" && targetAccount.HeaderMediaAttachmentID == "" {
+		a, err := p.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+			RemoteURL: targetAccount.HeaderRemoteURL,
+			Header:    true,
+		}, targetAccount.ID)
+		if err != nil {
+			return fmt.Errorf("error processing header for user: %s", err)
+		}
+		targetAccount.HeaderMediaAttachmentID = a.ID
+	}
+	return nil
 }

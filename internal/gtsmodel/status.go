@@ -66,7 +66,7 @@ type Status struct {
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 	// Will probably almost always be Note but who knows!.
-	ActivityStreamsType ActivityStreamsObject
+	ActivityStreamsType string
 	// Original text of the status without formatting
 	Text string
 	// Has this status been pinned by its owner?
