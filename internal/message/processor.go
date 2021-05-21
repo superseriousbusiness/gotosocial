@@ -121,6 +121,9 @@ type Processor interface {
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 
+	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
+	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode)
+
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
 		These functions are intended to be called when the federating client needs an immediate (ie., synchronous) reply
