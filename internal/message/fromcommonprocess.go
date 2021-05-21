@@ -25,5 +25,5 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 }
 
 func (p *processor) notifyFollow(follow *gtsmodel.Follow) error {
-   return nil
+	return nil
 }

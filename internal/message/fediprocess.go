@@ -164,46 +164,46 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 }
 
 func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, ErrorWithCode) {
-		// get the account the request is referring to
-		requestedAccount := &gtsmodel.Account{}
-		if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
-			return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
-		}
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
 
-		// authenticate the request
-		requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
-		if err != nil {
-			return nil, NewErrorNotAuthorized(err)
-		}
+	// authenticate the request
+	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	if err != nil {
+		return nil, NewErrorNotAuthorized(err)
+	}
 
-		blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
-		if err != nil {
-			return nil, NewErrorInternalError(err)
-		}
+	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-		if blocked {
-			return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-		}
+	if blocked {
+		return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
 
-		s := &gtsmodel.Status{}
-		if err := p.db.GetWhere([]db.Where{
-			{Key: "id", Value: requestedStatusID},
-			{Key: "account_id", Value: requestedAccount.ID},
-		}, s); err != nil {
-			return nil, NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
-		}
+	s := &gtsmodel.Status{}
+	if err := p.db.GetWhere([]db.Where{
+		{Key: "id", Value: requestedStatusID},
+		{Key: "account_id", Value: requestedAccount.ID},
+	}, s); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
+	}
 
-		asStatus, err := p.tc.StatusToAS(s)
-		if err != nil {
-			return nil, NewErrorInternalError(err)
-		}
+	asStatus, err := p.tc.StatusToAS(s)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-		data, err := streams.Serialize(asStatus)
-		if err != nil {
-			return nil, NewErrorInternalError(err)
-		}
+	data, err := streams.Serialize(asStatus)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
 
-		return data, nil
+	return data, nil
 }
 
 func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode) {
