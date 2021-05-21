@@ -121,7 +121,7 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	acct.URL = url.String()
 
 	// InboxURI
-	if accountable.GetActivityStreamsInbox() != nil || accountable.GetActivityStreamsInbox().GetIRI() != nil {
+	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
 	}
 

@@ -32,18 +32,20 @@ const (
 
 // ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
 type ErrNoEntries struct{}
+
 func (e ErrNoEntries) Error() string {
 	return "no entries"
 }
 
 // ErrAlreadyExists is to be returned from the DB interface when an entry already exists for a given query or its constraints.
 type ErrAlreadyExists struct{}
+
 func (e ErrAlreadyExists) Error() string {
 	return "already exists"
 }
 
 type Where struct {
-	Key string
+	Key   string
 	Value interface{}
 }
 
@@ -277,6 +279,10 @@ type DB interface {
 	// WhoFavedStatus returns a slice of accounts who faved the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
+
+	// GetHomeTimelineForAccount fetches the account's HOME timeline -- ie., posts and replies from people they *follow*.
+	// It will use the given filters and try to return as many statuses up to the limit as possible.
+	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

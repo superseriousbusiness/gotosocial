@@ -1103,6 +1103,26 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 	return accounts, nil
 }
 
+func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
+	statuses := []*gtsmodel.Status{}
+
+	q := ps.conn.Model(&statuses).
+		ColumnExpr("status.*").
+		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
+		Where("f.account_id = ?", accountID).
+		Limit(limit).
+		Order("status.created_at DESC")
+
+	err := q.Select()
+	if err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
+		}
+	}
+
+	return statuses, nil
+}
+
 /*
 	CONVERSION FUNCTIONS
 */

@@ -56,7 +56,7 @@ func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*ap
 
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APActivityType: gtsmodel.ActivityStreamsAccept,
-		GTSModel: follow,
+		GTSModel:       follow,
 	}
 
 	gtsR, err := p.db.GetRelationship(auth.Account.ID, accountID)
@@ -65,7 +65,7 @@ func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*ap
 	}
 
 	r, err := p.tc.RelationshipToMasto(gtsR)
-	if  err != nil {
+	if err != nil {
 		return nil, NewErrorInternalError(err)
 	}
 

@@ -439,7 +439,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 
 	// replies
 	// TODO
-	
+
 	return status, nil
 }
 

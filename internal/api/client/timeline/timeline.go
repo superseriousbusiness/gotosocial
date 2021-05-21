@@ -1,0 +1,68 @@
+package timeline
+
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+import (
+	"net/http"
+
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
+
+const (
+	// BasePath is the base URI path for serving timelines
+	BasePath = "/api/v1/timelines"
+	// HomeTimeline is the path for the home timeline
+	HomeTimeline = BasePath + "/home"
+	// MaxIDKey is the url query for setting a max status ID to return
+	MaxIDKey = "max_id"
+	// SinceIDKey is the url query for returning results newer than the given ID
+	SinceIDKey = "since_id"
+	// MinIDKey is the url query for returning results immediately newer than the given ID
+	MinIDKey = "min_id"
+	// Limit key is for specifying maximum number of results to return.
+	LimitKey = "limit"
+	// LocalKey is for specifying whether only local statuses should be returned
+	LocalKey = "local"
+)
+
+// Module implements the ClientAPIModule interface for everything relating to viewing timelines
+type Module struct {
+	config    *config.Config
+	processor message.Processor
+	log       *logrus.Logger
+}
+
+// New returns a new timeline module
+func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+	return &Module{
+		config:    config,
+		processor: processor,
+		log:       log,
+	}
+}
+
+// Route attaches all routes from this module to the given router
+func (m *Module) Route(r router.Router) error {
+	r.AttachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
+	return nil
+}
