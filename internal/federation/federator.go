@@ -34,6 +34,8 @@ import (
 type Federator interface {
 	// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
 	FederatingActor() pub.FederatingActor
+	// FederatingDB returns the underlying FederatingDB interface.
+	FederatingDB() FederatingDB
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)

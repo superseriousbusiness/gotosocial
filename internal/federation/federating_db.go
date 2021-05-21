@@ -657,6 +657,19 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 				}
 			}
 		}
+	case gtsmodel.ActivityStreamsNote:
+		// NOTE aka STATUS
+		// ID might already be set on a note we've created, so check it here and return it if it is
+		note, ok := t.(vocab.ActivityStreamsNote)
+		if !ok {
+			return nil, errors.New("newid: follow couldn't be parsed into vocab.ActivityStreamsNote")
+		}
+		idProp := note.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
 	}
 
 	// fallback default behavior: just return a random UUID after our protocol and host

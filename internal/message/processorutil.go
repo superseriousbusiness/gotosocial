@@ -206,7 +206,7 @@ func (p *processor) processMentions(form *apimodel.AdvancedStatusCreateForm, acc
 		if err := p.db.Put(menchie); err != nil {
 			return fmt.Errorf("error putting mentions in db: %s", err)
 		}
-		menchies = append(menchies, menchie.TargetAccountID)
+		menchies = append(menchies, menchie.ID)
 	}
 	// add full populated gts menchies to the status for passing them around conveniently
 	status.GTSMentions = gtsMenchies

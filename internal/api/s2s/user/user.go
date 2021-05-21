@@ -32,6 +32,8 @@ import (
 const (
 	// UsernameKey is for account usernames.
 	UsernameKey = "username"
+	// StatusIDKey is for status IDs
+	StatusIDKey = "status"
 	// UsersBasePath is the base path for serving information about Users eg https://example.org/users
 	UsersBasePath = "/" + util.UsersPath
 	// UsersBasePathWithUsername is just the users base path with the Username key in it.
@@ -40,6 +42,10 @@ const (
 	UsersBasePathWithUsername = UsersBasePath + "/:" + UsernameKey
 	// UsersInboxPath is for serving POST requests to a user's inbox with the given username key.
 	UsersInboxPath = UsersBasePathWithUsername + "/" + util.InboxPath
+	// UsersFollowersPath is for serving GET request's to a user's followers list, with the given username key.
+	UsersFollowersPath = UsersBasePathWithUsername + "/" + util.FollowersPath
+	// UsersStatusPath is for serving GET requests to a particular status by a user, with the given username key and status ID
+	UsersStatusPath = UsersBasePathWithUsername + "/" + util.StatusesPath + "/:" + StatusIDKey
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
@@ -69,5 +75,7 @@ func New(config *config.Config, processor message.Processor, log *logrus.Logger)
 func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, UsersBasePathWithUsername, m.UsersGETHandler)
 	s.AttachHandler(http.MethodPost, UsersInboxPath, m.InboxPOSTHandler)
+	s.AttachHandler(http.MethodGet, UsersFollowersPath, m.FollowersGETHandler)
+	s.AttachHandler(http.MethodGet, UsersStatusPath, m.StatusGETHandler)
 	return nil
 }

@@ -303,7 +303,6 @@ func (ps *postgresService) DeleteWhere(where []db.Where, i interface{}) error {
 		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
 	}
 
-
 	if _, err := q.Delete(); err != nil {
 		// if there are no rows *anyway* then that's fine
 		// just return err if there's an actual error
@@ -1109,6 +1108,11 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 */
 
 func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+	ogAccount := &gtsmodel.Account{}
+	if err := ps.conn.Model(ogAccount).Where("id = ?", originAccountID).Select(); err != nil {
+		return nil, err
+	}
+
 	menchies := []*gtsmodel.Mention{}
 	for _, a := range targetAccounts {
 		// A mentioned account looks like "@test@example.org" or just "@test" for a local account
@@ -1166,9 +1170,13 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &gtsmodel.Mention{
-			StatusID:        statusID,
-			OriginAccountID: originAccountID,
-			TargetAccountID: mentionedAccount.ID,
+			StatusID:            statusID,
+			OriginAccountID:     ogAccount.ID,
+			OriginAccountURI:    ogAccount.URI,
+			TargetAccountID:     mentionedAccount.ID,
+			NameString:          a,
+			MentionedAccountURI: mentionedAccount.URI,
+			GTSAccount:          mentionedAccount,
 		})
 	}
 	return menchies, nil

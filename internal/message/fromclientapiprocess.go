@@ -90,30 +90,18 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 }
 
 func (p *processor) federateStatus(status *gtsmodel.Status) error {
-	// // derive the sending account -- it might be attached to the status already
-	// sendingAcct := &gtsmodel.Account{}
-	// if status.GTSAccount != nil {
-	// 	sendingAcct = status.GTSAccount
-	// } else {
-	// 	// it wasn't attached so get it from the db instead
-	// 	if err := p.db.GetByID(status.AccountID, sendingAcct); err != nil {
-	// 		return err
-	// 	}
-	// }
+	asStatus, err := p.tc.StatusToAS(status)
+	if err != nil {
+		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
+	}
 
-	// outboxURI, err := url.Parse(sendingAcct.OutboxURI)
-	// if err != nil {
-	// 	return err
-	// }
+	outboxIRI, err := url.Parse(status.GTSAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.GTSAccount.OutboxURI, err)
+	}
 
-	// // convert the status to AS format Note
-	// note, err := p.tc.StatusToAS(status)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// _, err = p.federator.FederatingActor().Send(context.Background(), outboxURI, note)
-	return nil
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)
+	return err
 }
 
 func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {

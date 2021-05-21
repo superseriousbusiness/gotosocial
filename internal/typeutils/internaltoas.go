@@ -26,6 +26,7 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -348,9 +349,10 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	}
 
 	// tag -- emojis
+	// TODO
 
 	// tag -- hashtags
-
+	// TODO
 
 	status.SetActivityStreamsTag(tagProp)
 
@@ -365,27 +367,80 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", asPublicURI, err)
 	}
 
-	// to
+	// to and cc
+	toProp := streams.NewActivityStreamsToProperty()
+	ccProp := streams.NewActivityStreamsCcProperty()
 	switch s.Visibility {
 	case gtsmodel.VisibilityDirect:
+		// if DIRECT, then only mentioned users should be added to TO, and nothing to CC
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			toProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityMutualsOnly:
+		// TODO
+	case gtsmodel.VisibilityFollowersOnly:
+		// if FOLLOWERS ONLY then we want to add followers to TO, and mentions to CC
+		toProp.AppendIRI(authorFollowersURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityUnlocked:
+		// if UNLOCKED, we want to add followers to TO, and public and mentions to CC
+		toProp.AppendIRI(authorFollowersURI)
+		ccProp.AppendIRI(publicURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
+	case gtsmodel.VisibilityPublic:
+		// if PUBLIC, we want to add public to TO, and followers and mentions to CC
+		toProp.AppendIRI(publicURI)
+		ccProp.AppendIRI(authorFollowersURI)
+		for _, m := range s.GTSMentions {
+			iri, err := url.Parse(m.GTSAccount.URI)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+			}
+			ccProp.AppendIRI(iri)
+		}
 	}
-
-	// cc
+	status.SetActivityStreamsTo(toProp)
+	status.SetActivityStreamsCc(ccProp)
 
 	// conversation
+	// TODO
 
-	// content
+	// content -- the actual post itself
+	contentProp := streams.NewActivityStreamsContentProperty()
+	contentProp.AppendXMLSchemaString(s.Content)
+	status.SetActivityStreamsContent(contentProp)
 
 	// attachment
-
-
-
-
+	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
+	for _, a := range s.GTSMediaAttachments {
+		doc, err := c.AttachmentToAS(a)
+		if err != nil {
+			return nil, fmt.Errorf("StatusToAS: error converting attachment: %s", err)
+		}
+		attachmentProp.AppendActivityStreamsDocument(doc)
+	}
+	status.SetActivityStreamsAttachment(attachmentProp)
 
 	// replies
-
-
-	return nil, nil
+	// TODO
+	
+	return status, nil
 }
 
 func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
@@ -435,11 +490,72 @@ func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Accou
 }
 
 func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
-	mention := streams.NewActivityStreamsMention()
-
-	if m.NameString == "" {
-		m.NameString = 
+	if m.GTSAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetWhere([]db.Where{{Key: "target_account_id", Value: m.TargetAccountID}}, a); err != nil {
+			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
+		}
+		m.GTSAccount = a
 	}
 
+	// create the mention
+	mention := streams.NewActivityStreamsMention()
 
+	// href -- this should be the URI of the mentioned user
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	hrefURI, err := url.Parse(m.GTSAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.GTSAccount.URI, err)
+	}
+	hrefProp.SetIRI(hrefURI)
+	mention.SetActivityStreamsHref(hrefProp)
+
+	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
+	var domain string
+	if m.GTSAccount.Domain == "" {
+		domain = c.config.Host
+	} else {
+		domain = m.GTSAccount.Domain
+	}
+	username := m.GTSAccount.Username
+	nameString := fmt.Sprintf("@%s@%s", username, domain)
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(nameString)
+	mention.SetActivityStreamsName(nameProp)
+
+	return mention, nil
+}
+
+func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
+	// type -- Document
+	doc := streams.NewActivityStreamsDocument()
+
+	// mediaType aka mime content type
+	mediaTypeProp := streams.NewActivityStreamsMediaTypeProperty()
+	mediaTypeProp.Set(a.File.ContentType)
+	doc.SetActivityStreamsMediaType(mediaTypeProp)
+
+	// url -- for the original image not the thumbnail
+	urlProp := streams.NewActivityStreamsUrlProperty()
+	imageURL, err := url.Parse(a.URL)
+	if err != nil {
+		return nil, fmt.Errorf("AttachmentToAS: error parsing uri %s: %s", a.URL, err)
+	}
+	urlProp.AppendIRI(imageURL)
+	doc.SetActivityStreamsUrl(urlProp)
+
+	// name -- aka image description
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(a.Description)
+	doc.SetActivityStreamsName(nameProp)
+
+	// blurhash
+	blurProp := streams.NewTootBlurhashProperty()
+	blurProp.Set(a.Blurhash)
+	doc.SetTootBlurhash(blurProp)
+
+	// focalpoint
+	// TODO
+
+	return doc, nil
 }

@@ -117,7 +117,11 @@ type TypeConverter interface {
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
 	FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
 
-	MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) 
+	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
+	MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
+
+	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
+	AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
 }
 
 type converter struct {
