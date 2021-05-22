@@ -19,14 +19,31 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	UsernameFlag  = "username"
+	UsernameUsage = "the username to create/delete/etc"
+
+	EmailFlag  = "email"
+	EmailUsage = "the email address of this account"
+
+	PasswordFlag  = "password"
+	PasswordUsage = "the password to set for this account"
+)
+
 // Config pulls together all the configuration needed to run gotosocial
 type Config struct {
+	/*
+		Parseable from .yaml configuration file.
+		For long-running commands (server start etc).
+	*/
+
 	LogLevel          string             `yaml:"logLevel"`
 	ApplicationName   string             `yaml:"applicationName"`
 	Host              string             `yaml:"host"`
@@ -38,6 +55,12 @@ type Config struct {
 	StorageConfig     *StorageConfig     `yaml:"storage"`
 	StatusesConfig    *StatusesConfig    `yaml:"statuses"`
 	LetsEncryptConfig *LetsEncryptConfig `yaml:"letsEncrypt"`
+
+	/*
+		Not parsed from .yaml configuration file.
+		For short running commands (admin CLI tools etc).
+	*/
+	AccountCLIFlags map[string]string
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -62,6 +85,7 @@ func Empty() *Config {
 		StorageConfig:     &StorageConfig{},
 		StatusesConfig:    &StatusesConfig{},
 		LetsEncryptConfig: &LetsEncryptConfig{},
+		AccountCLIFlags:   make(map[string]string),
 	}
 }
 
@@ -81,7 +105,7 @@ func loadFromFile(path string) (*Config, error) {
 }
 
 // ParseCLIFlags sets flags on the config using the provided Flags object
-func (c *Config) ParseCLIFlags(f KeyedFlags) {
+func (c *Config) ParseCLIFlags(f KeyedFlags) error {
 	fn := GetFlagNames()
 
 	// For all of these flags, we only want to set them on the config if:
@@ -104,9 +128,15 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.Host == "" || f.IsSet(fn.Host) {
 		c.Host = f.String(fn.Host)
 	}
+	if c.Host == "" {
+		return errors.New("host was not set")
+	}
 
 	if c.Protocol == "" || f.IsSet(fn.Protocol) {
 		c.Protocol = f.String(fn.Protocol)
+	}
+	if c.Protocol == "" {
+		return errors.New("protocol was not set")
 	}
 
 	// db flags
@@ -215,6 +245,15 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) {
 	if c.LetsEncryptConfig.EmailAddress == "" || f.IsSet(fn.LetsEncryptEmailAddress) {
 		c.LetsEncryptConfig.EmailAddress = f.String(fn.LetsEncryptEmailAddress)
 	}
+
+	// command-specific flags
+
+	// admin account CLI flags
+	c.AccountCLIFlags[UsernameFlag] = f.String(UsernameFlag)
+	c.AccountCLIFlags[EmailFlag] = f.String(EmailFlag)
+	c.AccountCLIFlags[PasswordFlag] = f.String(PasswordFlag)
+
+	return nil
 }
 
 // KeyedFlags is a wrapper for any type that can store keyed flags and give them back.
