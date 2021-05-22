@@ -30,4 +30,6 @@ type Instance struct {
 	ContactAccountID string
 	// Reputation score of this instance
 	Reputation int64 `pg:",notnull,default:0"`
+	// Version of the software used on this instance
+	Version string
 }

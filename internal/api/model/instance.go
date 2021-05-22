@@ -33,7 +33,7 @@ type Instance struct {
 	// An email that may be contacted for any inquiries.
 	Email string `json:"email"`
 	// The version of Mastodon installed on the instance.
-	Version string `json:"version,omitempty"`
+	Version string `json:"version"`
 	// Primary langauges of the website and its staff.
 	Languages []string `json:"languages,omitempty"`
 	// Whether registrations are enabled.

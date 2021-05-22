@@ -550,6 +550,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		Description:      i.Description,
 		ShortDescription: i.ShortDescription,
 		Email:            i.ContactEmail,
+		Version:          i.Version,
 	}
 
 	if i.Domain == c.config.Host {
@@ -557,13 +558,16 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		mi.ApprovalRequired = c.config.AccountsConfig.RequireApproval
 		mi.InvitesEnabled = false // TODO
 		mi.MaxTootChars = uint(c.config.StatusesConfig.MaxChars)
+		mi.URLS = &model.InstanceURLs{
+			StreamingAPI: fmt.Sprintf("wss://%s", c.config.Host),
+		}
 	}
 
 	// contact account is optional but let's try to get it
 	if i.ContactAccountID != "" {
 		ia := &gtsmodel.Account{}
 		if err := c.db.GetByID(i.ContactAccountID, ia); err == nil {
-			ma, err := c.AccountToMastoPublic(ia)
+			ma, err := c.AccountToMastoPublic(ia) 
 			if err == nil {
 				mi.ContactAccount = ma
 			}

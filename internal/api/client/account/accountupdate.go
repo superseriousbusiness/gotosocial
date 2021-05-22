@@ -44,9 +44,9 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 	l.Tracef("retrieved account %+v", authed.Account.ID)
 
-	l.Trace("parsing request form")
+	l.Debugf("parsing request form %s", c.Request.Form)
 	form := &model.UpdateCredentialsRequest{}
-	if err := c.ShouldBind(form); err != nil || form == nil {
+	if err := c.ShouldBind(&form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
