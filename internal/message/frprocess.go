@@ -54,9 +54,22 @@ func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*ap
 		return nil, NewErrorNotFound(err)
 	}
 
+	originAccount := &gtsmodel.Account{}
+	if err := p.db.GetByID(follow.AccountID, originAccount); err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	targetAccount := &gtsmodel.Account{}
+	if err := p.db.GetByID(follow.TargetAccountID, targetAccount); err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APObjectType:   gtsmodel.ActivityStreamsFollow,
 		APActivityType: gtsmodel.ActivityStreamsAccept,
 		GTSModel:       follow,
+		OriginAccount: originAccount,
+		TargetAccount: targetAccount,
 	}
 
 	gtsR, err := p.db.GetRelationship(auth.Account.ID, accountID)
