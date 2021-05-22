@@ -24,6 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/action"
+	"github.com/superseriousbusiness/gotosocial/internal/clitools/admin/account"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
@@ -264,6 +265,104 @@ func main() {
 				},
 			},
 			{
+				Name:  "admin",
+				Usage: "gotosocial admin-related tasks",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "account",
+						Usage: "admin commands related to accounts",
+						Subcommands: []*cli.Command{
+							{
+								Name:  "create",
+								Usage: "create a new account",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+									&cli.StringFlag{
+										Name:    config.EmailFlag,
+										Usage:   config.EmailUsage,
+									},
+									&cli.StringFlag{
+										Name:    config.PasswordFlag,
+										Usage:   config.PasswordUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Create)
+								},
+							},
+							{
+								Name:  "confirm",
+								Usage: "confirm an existing account manually, thereby skipping email confirmation",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Confirm)
+								},
+							},
+							{
+								Name:  "promote",
+								Usage: "promote an account to admin",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Promote)
+								},
+							},
+							{
+								Name:  "demote",
+								Usage: "demote an account from admin to normal user",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Demote)
+								},
+							},
+							{
+								Name:  "disable",
+								Usage: "prevent an account from signing in or posting etc, but don't delete anything",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Disable)
+								},
+							},
+							{
+								Name:  "suspend",
+								Usage: "completely remove an account and all of its posts, media, etc",
+								Flags: []cli.Flag{
+									&cli.StringFlag{
+										Name:    config.UsernameFlag,
+										Usage:   config.UsernameUsage,
+									},
+								},
+								Action: func(c *cli.Context) error {
+									return runAction(c, account.Suspend)
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				Name:  "db",
 				Usage: "database-related tasks and utils",
 				Subcommands: []*cli.Command{
@@ -308,7 +407,9 @@ func runAction(c *cli.Context, a action.GTSAction) error {
 		return fmt.Errorf("error creating config: %s", err)
 	}
 	// ... and the flags set on the *cli.Context by urfave
-	conf.ParseCLIFlags(c)
+	if err := conf.ParseCLIFlags(c); err != nil {
+		return fmt.Errorf("error parsing config: %s", err)
+	}
 
 	// create a logger with the log level, formatting, and output splitter already set
 	log, err := log.New(conf.LogLevel)
