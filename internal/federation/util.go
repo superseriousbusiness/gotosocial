@@ -132,9 +132,11 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 
 	var publicKey interface{}
 	var pkOwnerURI *url.URL
+	requestingRemoteAccount := &gtsmodel.Account{}
+	requestingLocalAccount := &gtsmodel.Account{}
 	if strings.EqualFold(requestingPublicKeyID.Host, f.config.Host) {
+		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
-		requestingLocalAccount := &gtsmodel.Account{}
 		if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
 			return nil, fmt.Errorf("couldn't get local account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err)
 		}
@@ -143,8 +145,18 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 		if err != nil {
 			return nil, fmt.Errorf("error parsing url %s: %s", requestingLocalAccount.URI, err)
 		}
+	} else if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
+		// REMOTE ACCOUNT REQUEST WITH KEY CACHED LOCALLY
+		// this is a remote account and we already have the public key for it so use that
+		publicKey = requestingRemoteAccount.PublicKey
+		pkOwnerURI, err = url.Parse(requestingRemoteAccount.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing url %s: %s", requestingRemoteAccount.URI, err)
+		}
 	} else {
-		// the request is remote, so we need to authenticate the request properly by dereferencing the remote key
+		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
+		// the request is remote and we don't have the public key yet,
+		// so we need to authenticate the request properly by dereferencing the remote key
 		transport, err := f.GetTransportForUser(username)
 		if err != nil {
 			return nil, fmt.Errorf("transport err: %s", err)

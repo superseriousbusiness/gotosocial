@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(accountable Accountable, update bool) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
@@ -37,17 +37,19 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable) (*gtsmode
 	uri := uriProp.GetIRI()
 
 	acct := &gtsmodel.Account{}
-	err := c.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, acct)
-	if err == nil {
-		// we already know this account so we can skip generating it
-		return acct, nil
-	}
-	if _, ok := err.(db.ErrNoEntries); !ok {
-		// we don't know the account and there's been a real error
-		return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
+	if !update {
+		err := c.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, acct)
+		if err == nil {
+			// we already know this account so we can skip generating it
+			return acct, nil
+		}
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			// we don't know the account and there's been a real error
+			return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
+		}
 	}
 
-	// we don't know the account so we need to generate it from the person -- at least we already have the URI!
+	// we don't know the account, or we're being told to update it, so we need to generate it from the person -- at least we already have the URI!
 	acct = &gtsmodel.Account{}
 	acct.URI = uri.String()
 

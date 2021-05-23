@@ -232,3 +232,25 @@ func ParseOutboxPath(id *url.URL) (username string, err error) {
 	username = matches[1]
 	return
 }
+
+// ParseFollowersPath returns the username from a path such as /users/example_username/followers
+func ParseFollowersPath(id *url.URL) (username string, err error) {
+	matches := followersPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
+}
+
+// ParseFollowingPath returns the username from a path such as /users/example_username/following
+func ParseFollowingPath(id *url.URL) (username string, err error) {
+	matches := followingPathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
+}

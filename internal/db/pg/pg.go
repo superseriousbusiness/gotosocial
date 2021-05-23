@@ -500,6 +500,13 @@ func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuse
 			return q.Where("? IS NOT NULL", pg.Ident("attachments")).Where("attachments != '{}'"), nil
 		})
 	}
+	if maxID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
+			return err
+		}
+		q = q.Where("status.created_at < ?", s.CreatedAt)
+	}
 	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries{}
@@ -1112,6 +1119,14 @@ func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID str
 		Where("f.account_id = ?", accountID).
 		Limit(limit).
 		Order("status.created_at DESC")
+
+	if maxID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("status.created_at < ?", s.CreatedAt)
+	}
 
 	err := q.Select()
 	if err != nil {

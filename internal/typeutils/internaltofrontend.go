@@ -233,9 +233,9 @@ func (c *converter) MentionToMasto(m *gtsmodel.Mention) (model.Mention, error) {
 
 	var acct string
 	if local {
-		acct = fmt.Sprintf("@%s", target.Username)
+		acct = target.Username
 	} else {
-		acct = fmt.Sprintf("@%s@%s", target.Username, target.Domain)
+		acct = fmt.Sprintf("%s@%s", target.Username, target.Domain)
 	}
 
 	return model.Mention{
@@ -567,7 +567,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 	if i.ContactAccountID != "" {
 		ia := &gtsmodel.Account{}
 		if err := c.db.GetByID(i.ContactAccountID, ia); err == nil {
-			ma, err := c.AccountToMastoPublic(ia) 
+			ma, err := c.AccountToMastoPublic(ia)
 			if err == nil {
 				mi.ContactAccount = ma
 			}

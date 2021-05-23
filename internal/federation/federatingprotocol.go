@@ -136,7 +136,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
 
-		a, err := f.typeConverter.ASRepresentationToAccount(person)
+		a, err := f.typeConverter.ASRepresentationToAccount(person, false)
 		if err != nil {
 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
 		}

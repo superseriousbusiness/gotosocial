@@ -68,7 +68,7 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 	}
 
 	// convert it to our internal account representation
-	requestingAccount, err = p.tc.ASRepresentationToAccount(requestingPerson)
+	requestingAccount, err = p.tc.ASRepresentationToAccount(requestingPerson, false)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't convert dereferenced uri %s to gtsmodel account: %s", requestingAccountURI.String(), err)
 	}
@@ -156,6 +156,46 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 	}
 
 	data, err := streams.Serialize(requestedFollowers)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	return data, nil
+}
+
+func (p *processor) GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode) {
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
+
+	// authenticate the request
+	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	if err != nil {
+		return nil, NewErrorNotAuthorized(err)
+	}
+
+	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	if blocked {
+		return nil, NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
+
+	requestedAccountURI, err := url.Parse(requestedAccount.URI)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
+	}
+
+	requestedFollowing, err := p.federator.FederatingDB().Following(context.Background(), requestedAccountURI)
+	if err != nil {
+		return nil, NewErrorInternalError(fmt.Errorf("error fetching following for uri %s: %s", requestedAccountURI.String(), err))
+	}
+
+	data, err := streams.Serialize(requestedFollowing)
 	if err != nil {
 		return nil, NewErrorInternalError(err)
 	}

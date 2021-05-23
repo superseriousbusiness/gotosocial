@@ -95,8 +95,12 @@ type TypeConverter interface {
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL
 	*/
 
-	// ASPersonToAccount converts a remote account/person/application representation into a gts model account
-	ASRepresentationToAccount(accountable Accountable) (*gtsmodel.Account, error)
+	// ASPersonToAccount converts a remote account/person/application representation into a gts model account.
+	//
+	// If update is false, and the account is already known in the database, then the existing account entry will be returned.
+	// If update is true, then even if the account is already known, all fields in the accountable will be parsed and a new *gtsmodel.Account
+	// will be generated. This is useful when one needs to force refresh of an account, eg., during an Update of a Profile.
+	ASRepresentationToAccount(accountable Accountable, update bool) (*gtsmodel.Account, error)
 	// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 	ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
