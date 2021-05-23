@@ -68,8 +68,8 @@ func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*ap
 		APObjectType:   gtsmodel.ActivityStreamsFollow,
 		APActivityType: gtsmodel.ActivityStreamsAccept,
 		GTSModel:       follow,
-		OriginAccount: originAccount,
-		TargetAccount: targetAccount,
+		OriginAccount:  originAccount,
+		TargetAccount:  targetAccount,
 	}
 
 	gtsR, err := p.db.GetRelationship(auth.Account.ID, accountID)

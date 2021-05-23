@@ -29,7 +29,6 @@ import (
 	"time"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -63,6 +62,9 @@ func extractName(i withName) (string, error) {
 
 func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
 	inReplyToProp := i.GetActivityStreamsInReplyTo()
+	if inReplyToProp == nil {
+		return nil, errors.New("in reply to prop was nil")
+	}
 	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
@@ -76,6 +78,9 @@ func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
 func extractTos(i withTo) ([]*url.URL, error) {
 	to := []*url.URL{}
 	toProp := i.GetActivityStreamsTo()
+	if toProp == nil {
+		return nil, errors.New("toProp was nil")
+	}
 	for iter := toProp.Begin(); iter != toProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
@@ -89,6 +94,9 @@ func extractTos(i withTo) ([]*url.URL, error) {
 func extractCCs(i withCC) ([]*url.URL, error) {
 	cc := []*url.URL{}
 	ccProp := i.GetActivityStreamsCc()
+	if ccProp == nil {
+		return cc, nil
+	}
 	for iter := ccProp.Begin(); iter != ccProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
@@ -101,6 +109,9 @@ func extractCCs(i withCC) ([]*url.URL, error) {
 
 func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
+	if attributedToProp == nil {
+		return nil, errors.New("attributedToProp was nil")
+	}
 	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
@@ -302,27 +313,21 @@ func extractContent(i withContent) (string, error) {
 
 func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	attachments := []*gtsmodel.MediaAttachment{}
-
 	attachmentProp := i.GetActivityStreamsAttachment()
+	if attachmentProp == nil {
+		return attachments, nil
+	}
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
-
 		t := iter.GetType()
 		if t == nil {
-			fmt.Printf("\n\n\nGetType() nil\n\n\n")
 			continue
 		}
-
-		m, _ := streams.Serialize(t)
-		fmt.Printf("\n\n\n%s\n\n\n", m)
-
 		attachmentable, ok := t.(Attachmentable)
 		if !ok {
-			fmt.Printf("\n\n\nnot attachmentable\n\n\n")
 			continue
 		}
 		attachment, err := extractAttachment(attachmentable)
 		if err != nil {
-			fmt.Printf("\n\n\n%s\n\n\n", err)
 			continue
 		}
 		attachments = append(attachments, attachment)
@@ -373,8 +378,10 @@ func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 
 func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 	tags := []*gtsmodel.Tag{}
-
 	tagsProp := i.GetActivityStreamsTag()
+	if tagsProp == nil {
+		return tags, nil
+	}
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
@@ -421,6 +428,9 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
 	emojis := []*gtsmodel.Emoji{}
 	tagsProp := i.GetActivityStreamsTag()
+	if tagsProp == nil {
+		return emojis, nil
+	}
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
@@ -478,6 +488,9 @@ func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
 	mentions := []*gtsmodel.Mention{}
 	tagsProp := i.GetActivityStreamsTag()
+	if tagsProp == nil {
+		return mentions, nil
+	}
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {

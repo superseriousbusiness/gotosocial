@@ -130,8 +130,10 @@ func (p *processor) processReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 
-	if !repliedStatus.VisibilityAdvanced.Replyable {
-		return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
+	if repliedStatus.VisibilityAdvanced != nil {
+		if !repliedStatus.VisibilityAdvanced.Replyable {
+			return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
+		}
 	}
 
 	// check replied account is known to us
@@ -329,8 +331,8 @@ func (p *processor) updateAccountHeader(header *multipart.FileHeader, accountID 
 //
 // SIDE EFFECTS: remote header and avatar will be stored in local storage, and the database will be updated
 // to reflect the creation of these new attachments.
-func (p *processor) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t transport.Transport) error {
-	if targetAccount.AvatarRemoteURL != "" && targetAccount.AvatarMediaAttachmentID == "" {
+func (p *processor) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t transport.Transport, refresh bool) error {
+	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
 		a, err := p.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.AvatarRemoteURL,
 			Avatar:    true,
@@ -341,7 +343,7 @@ func (p *processor) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account,
 		targetAccount.AvatarMediaAttachmentID = a.ID
 	}
 
-	if targetAccount.HeaderRemoteURL != "" && targetAccount.HeaderMediaAttachmentID == "" {
+	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
 		a, err := p.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.HeaderRemoteURL,
 			Header:    true,

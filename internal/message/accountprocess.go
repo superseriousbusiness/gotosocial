@@ -83,7 +83,7 @@ func (p *processor) AccountGet(authed *oauth.Auth, targetAccountID string) (*api
 	if authed.Account != nil {
 		requestingUsername = authed.Account.Username
 	}
-	if err := p.dereferenceAccountFields(targetAccount, requestingUsername); err != nil {
+	if err := p.dereferenceAccountFields(targetAccount, requestingUsername, false); err != nil {
 		p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
 	}
 
@@ -295,7 +295,7 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 		}
 
 		// derefence account fields in case we haven't done it already
-		if err := p.dereferenceAccountFields(a, authed.Account.Username); err != nil {
+		if err := p.dereferenceAccountFields(a, authed.Account.Username, false); err != nil {
 			// don't bail if we can't fetch them, we'll try another time
 			p.log.WithField("func", "AccountFollowersGet").Debugf("error dereferencing account fields: %s", err)
 		}
@@ -346,7 +346,7 @@ func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID stri
 		}
 
 		// derefence account fields in case we haven't done it already
-		if err := p.dereferenceAccountFields(a, authed.Account.Username); err != nil {
+		if err := p.dereferenceAccountFields(a, authed.Account.Username, false); err != nil {
 			// don't bail if we can't fetch them, we'll try another time
 			p.log.WithField("func", "AccountFollowingGet").Debugf("error dereferencing account fields: %s", err)
 		}

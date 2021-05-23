@@ -349,7 +349,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 
 	testPerson := suite.people["new_person_1"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(testPerson)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(testPerson, false)
 	assert.NoError(suite.T(), err)
 
 	fmt.Printf("%+v", acct)
@@ -367,7 +367,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	rep, ok := t.(typeutils.Accountable)
 	assert.True(suite.T(), ok)
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(rep)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(rep, false)
 	assert.NoError(suite.T(), err)
 
 	fmt.Printf("%+v", acct)

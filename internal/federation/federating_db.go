@@ -241,6 +241,40 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		return true, nil
 	}
 
+	if util.IsFollowersPath(id) {
+		username, err := util.ParseFollowersPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
+		}
+		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		l.Debug("we DO own this")
+		return true, nil
+	}
+
+	if util.IsFollowingPath(id) {
+		username, err := util.ParseFollowingPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
+		}
+		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		l.Debug("we DO own this")
+		return true, nil
+	}
+
 	return false, fmt.Errorf("could not match activityID: %s", id.String())
 }
 
@@ -502,6 +536,15 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Error("receiving account was set on context but couldn't be parsed")
 	}
 
+	requestingAcctI := ctx.Value(util.APRequestingAccount)
+	if receivingAcctI == nil {
+		l.Error("requesting account wasn't set on context")
+	}
+	requestingAcct, ok := requestingAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("requesting account was set on context but couldn't be parsed")
+	}
+
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
 		l.Error("from federator channel wasn't set on context")
@@ -511,51 +554,76 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Error("from federator channel was set on context but couldn't be parsed")
 	}
 
-	switch asType.GetTypeName() {
-	case gtsmodel.ActivityStreamsUpdate:
-		update, ok := asType.(vocab.ActivityStreamsCreate)
-		if !ok {
-			return errors.New("could not convert type to create")
-		}
-		object := update.GetActivityStreamsObject()
-		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
-			switch objectIter.GetType().GetTypeName() {
-			case string(gtsmodel.ActivityStreamsPerson):
-				person := objectIter.GetActivityStreamsPerson()
-				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(person)
-				if err != nil {
-					return fmt.Errorf("error converting person to account: %s", err)
-				}
-				if err := f.db.Put(updatedAcct); err != nil {
-					return fmt.Errorf("database error inserting updated account: %s", err)
-				}
+	typeName := asType.GetTypeName()
+	if typeName == gtsmodel.ActivityStreamsApplication ||
+		typeName == gtsmodel.ActivityStreamsGroup ||
+		typeName == gtsmodel.ActivityStreamsOrganization ||
+		typeName == gtsmodel.ActivityStreamsPerson ||
+		typeName == gtsmodel.ActivityStreamsService {
+		// it's an UPDATE to some kind of account
+		var accountable typeutils.Accountable
 
-				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:     gtsmodel.ActivityStreamsProfile,
-					APActivityType:   gtsmodel.ActivityStreamsUpdate,
-					GTSModel:         updatedAcct,
-					ReceivingAccount: receivingAcct,
-				}
-
-			case string(gtsmodel.ActivityStreamsApplication):
-				application := objectIter.GetActivityStreamsApplication()
-				updatedAcct, err := f.typeConverter.ASRepresentationToAccount(application)
-				if err != nil {
-					return fmt.Errorf("error converting person to account: %s", err)
-				}
-				if err := f.db.Put(updatedAcct); err != nil {
-					return fmt.Errorf("database error inserting updated account: %s", err)
-				}
-
-				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:     gtsmodel.ActivityStreamsProfile,
-					APActivityType:   gtsmodel.ActivityStreamsUpdate,
-					GTSModel:         updatedAcct,
-					ReceivingAccount: receivingAcct,
-				}
+		switch asType.GetTypeName() {
+		case gtsmodel.ActivityStreamsApplication:
+			l.Debug("got update for APPLICATION")
+			i, ok := asType.(vocab.ActivityStreamsApplication)
+			if !ok {
+				return errors.New("could not convert type to application")
 			}
+			accountable = i
+		case gtsmodel.ActivityStreamsGroup:
+			l.Debug("got update for GROUP")
+			i, ok := asType.(vocab.ActivityStreamsGroup)
+			if !ok {
+				return errors.New("could not convert type to group")
+			}
+			accountable = i
+		case gtsmodel.ActivityStreamsOrganization:
+			l.Debug("got update for ORGANIZATION")
+			i, ok := asType.(vocab.ActivityStreamsOrganization)
+			if !ok {
+				return errors.New("could not convert type to organization")
+			}
+			accountable = i
+		case gtsmodel.ActivityStreamsPerson:
+			l.Debug("got update for PERSON")
+			i, ok := asType.(vocab.ActivityStreamsPerson)
+			if !ok {
+				return errors.New("could not convert type to person")
+			}
+			accountable = i
+		case gtsmodel.ActivityStreamsService:
+			l.Debug("got update for SERVICE")
+			i, ok := asType.(vocab.ActivityStreamsService)
+			if !ok {
+				return errors.New("could not convert type to service")
+			}
+			accountable = i
 		}
+
+		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(accountable, true)
+		if err != nil {
+			return fmt.Errorf("error converting to account: %s", err)
+		}
+
+		if requestingAcct.URI != updatedAcct.URI {
+			return fmt.Errorf("update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
+		}
+
+		updatedAcct.ID = requestingAcct.ID // set this here so the db will update properly instead of trying to PUT this and getting constraint issues
+		if err := f.db.UpdateByID(requestingAcct.ID, updatedAcct); err != nil {
+			return fmt.Errorf("database error inserting updated account: %s", err)
+		}
+
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:     gtsmodel.ActivityStreamsProfile,
+			APActivityType:   gtsmodel.ActivityStreamsUpdate,
+			GTSModel:         updatedAcct,
+			ReceivingAccount: receivingAcct,
+		}
+
 	}
+
 	return nil
 }
 
@@ -565,7 +633,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 // Protocol instead call Update to create a Tombstone.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
+func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Delete",
@@ -573,6 +641,63 @@ func (f *federatingDB) Delete(c context.Context, id *url.URL) error {
 		},
 	)
 	l.Debugf("received DELETE id %s", id.String())
+
+	inboxAcctI := ctx.Value(util.APAccount)
+	if inboxAcctI == nil {
+		l.Error("inbox account wasn't set on context")
+		return nil
+	}
+	inboxAcct, ok := inboxAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("inbox account was set on context but couldn't be parsed")
+		return nil
+	}
+
+	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	if fromFederatorChanI == nil {
+		l.Error("from federator channel wasn't set on context")
+		return nil
+	}
+	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	if !ok {
+		l.Error("from federator channel was set on context but couldn't be parsed")
+		return nil
+	}
+
+	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
+	// so we have to try a few different things...
+	where := []db.Where{{Key: "uri", Value: id.String()}}
+
+	s := &gtsmodel.Status{}
+	if err := f.db.GetWhere(where, s); err == nil {
+		// it's a status
+		l.Debugf("uri is for status with id: %s", s.ID)
+		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
+			return fmt.Errorf("Delete: err deleting status: %s", err)
+		}
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:     gtsmodel.ActivityStreamsNote,
+			APActivityType:   gtsmodel.ActivityStreamsDelete,
+			GTSModel:         s,
+			ReceivingAccount: inboxAcct,
+		}
+	}
+
+	a := &gtsmodel.Account{}
+	if err := f.db.GetWhere(where, a); err == nil {
+		// it's an account
+		l.Debugf("uri is for an account with id: %s", s.ID)
+		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {
+			return fmt.Errorf("Delete: err deleting account: %s", err)
+		}
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:     gtsmodel.ActivityStreamsProfile,
+			APActivityType:   gtsmodel.ActivityStreamsDelete,
+			GTSModel:         a,
+			ReceivingAccount: inboxAcct,
+		}
+	}
+
 	return nil
 }
 

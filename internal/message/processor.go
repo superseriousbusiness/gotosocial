@@ -140,6 +140,10 @@ type Processor interface {
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
 
+	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
+	// authentication before returning a JSON serializable interface to the caller.
+	GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, ErrorWithCode)

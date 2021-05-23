@@ -68,7 +68,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 
 			l.Debug("will now derefence incoming account")
-			if err := p.dereferenceAccountFields(incomingAccount, ""); err != nil {
+			if err := p.dereferenceAccountFields(incomingAccount, "", false); err != nil {
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
 			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
@@ -86,12 +86,25 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 
 			l.Debug("will now derefence incoming account")
-			if err := p.dereferenceAccountFields(incomingAccount, ""); err != nil {
+			if err := p.dereferenceAccountFields(incomingAccount, federatorMsg.ReceivingAccount.Username, true); err != nil {
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
 			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
 				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
 			}
+		}
+	case gtsmodel.ActivityStreamsDelete:
+		// DELETE
+		switch federatorMsg.APObjectType {
+		case gtsmodel.ActivityStreamsNote:
+			// DELETE A STATUS
+			// TODO: handle side effects of status deletion here:
+			// 1. delete all media associated with status
+			// 2. delete boosts of status
+			// 3. etc etc etc
+		case gtsmodel.ActivityStreamsProfile:
+			// DELETE A PROFILE/ACCOUNT
+			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account
 		}
 	}
 
@@ -220,7 +233,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 				continue
 			}
 
-			targetAccount, err = p.tc.ASRepresentationToAccount(accountable)
+			targetAccount, err = p.tc.ASRepresentationToAccount(accountable, false)
 			if err != nil {
 				l.Debugf("error converting remote account with uri %s into gts model: %s", uri.String(), err)
 				continue
@@ -243,7 +256,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 	return nil
 }
 
-func (p *processor) dereferenceAccountFields(account *gtsmodel.Account, requestingUsername string) error {
+func (p *processor) dereferenceAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":               "dereferenceAccountFields",
 		"requestingUsername": requestingUsername,
@@ -255,7 +268,7 @@ func (p *processor) dereferenceAccountFields(account *gtsmodel.Account, requesti
 	}
 
 	// fetch the header and avatar
-	if err := p.fetchHeaderAndAviForAccount(account, t); err != nil {
+	if err := p.fetchHeaderAndAviForAccount(account, t, refresh); err != nil {
 		// if this doesn't work, just skip it -- we can do it later
 		l.Debugf("error fetching header/avi for account: %s", err)
 	}
