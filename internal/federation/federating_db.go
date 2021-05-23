@@ -560,7 +560,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		typeName == gtsmodel.ActivityStreamsOrganization ||
 		typeName == gtsmodel.ActivityStreamsPerson ||
 		typeName == gtsmodel.ActivityStreamsService {
-			// it's an UPDATE to some kind of account
+		// it's an UPDATE to some kind of account
 		var accountable typeutils.Accountable
 
 		switch asType.GetTypeName() {
@@ -671,7 +671,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	s := &gtsmodel.Status{}
 	if err := f.db.GetWhere(where, s); err == nil {
 		// it's a status
-		l.Debug("uri is for status with id: %s", s.ID)
+		l.Debugf("uri is for status with id: %s", s.ID)
 		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
 			return fmt.Errorf("Delete: err deleting status: %s", err)
 		}
@@ -686,7 +686,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	a := &gtsmodel.Account{}
 	if err := f.db.GetWhere(where, a); err == nil {
 		// it's an account
-		l.Debug("uri is for an account with id: %s", s.ID)
+		l.Debugf("uri is for an account with id: %s", s.ID)
 		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {
 			return fmt.Errorf("Delete: err deleting account: %s", err)
 		}

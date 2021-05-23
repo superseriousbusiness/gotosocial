@@ -277,16 +277,16 @@ func main() {
 								Usage: "create a new account",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 									&cli.StringFlag{
-										Name:    config.EmailFlag,
-										Usage:   config.EmailUsage,
+										Name:  config.EmailFlag,
+										Usage: config.EmailUsage,
 									},
 									&cli.StringFlag{
-										Name:    config.PasswordFlag,
-										Usage:   config.PasswordUsage,
+										Name:  config.PasswordFlag,
+										Usage: config.PasswordUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
@@ -298,8 +298,8 @@ func main() {
 								Usage: "confirm an existing account manually, thereby skipping email confirmation",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
@@ -311,8 +311,8 @@ func main() {
 								Usage: "promote an account to admin",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
@@ -324,8 +324,8 @@ func main() {
 								Usage: "demote an account from admin to normal user",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
@@ -337,8 +337,8 @@ func main() {
 								Usage: "prevent an account from signing in or posting etc, but don't delete anything",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
@@ -350,8 +350,8 @@ func main() {
 								Usage: "completely remove an account and all of its posts, media, etc",
 								Flags: []cli.Flag{
 									&cli.StringFlag{
-										Name:    config.UsernameFlag,
-										Usage:   config.UsernameUsage,
+										Name:  config.UsernameFlag,
+										Usage: config.UsernameUsage,
 									},
 								},
 								Action: func(c *cli.Context) error {
