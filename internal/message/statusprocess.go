@@ -25,6 +25,7 @@ import (
 
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -168,6 +169,14 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 		return nil, fmt.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err)
 	}
 
+	var boostOfStatus *gtsmodel.Status
+	if targetStatus.BoostOfID != "" {
+		boostOfStatus = &gtsmodel.Status{}
+		if err := p.db.GetByID(targetStatus.BoostOfID, boostOfStatus); err != nil {
+			return nil, fmt.Errorf("error fetching boosted status %s: %s", targetStatus.BoostOfID, err)
+		}
+	}
+
 	l.Trace("going to see if status is visible")
 	visible, err := p.db.StatusVisible(targetStatus, targetAccount, authed.Account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
 	if err != nil {
@@ -185,20 +194,44 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 		}
 	}
 
-	// it's visible! it's faveable! so let's fave the FUCK out of it
-	_, err = p.db.FaveStatus(targetStatus, authed.Account.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error faveing status: %s", err)
+	// first check if the status is already faved, if so we don't need to do anything
+	newFave := true
+	gtsFave := &gtsmodel.Status{}
+	if err := p.db.GetWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: authed.Account.ID}}, gtsFave); err == nil {
+		// we already have a fave for this status
+		newFave = false
 	}
 
-	var boostOfStatus *gtsmodel.Status
-	if targetStatus.BoostOfID != "" {
-		boostOfStatus = &gtsmodel.Status{}
-		if err := p.db.GetByID(targetStatus.BoostOfID, boostOfStatus); err != nil {
-			return nil, fmt.Errorf("error fetching boosted status %s: %s", targetStatus.BoostOfID, err)
+	if newFave {
+		thisFaveID := uuid.NewString()
+
+		// we need to create a new fave in the database
+		gtsFave := &gtsmodel.StatusFave{
+			ID:               thisFaveID,
+			AccountID:        authed.Account.ID,
+			TargetAccountID:  targetAccount.ID,
+			StatusID:         targetStatus.ID,
+			URI:              util.GenerateURIForLike(authed.Account.Username, p.config.Protocol, p.config.Host, thisFaveID),
+			GTSStatus:        targetStatus,
+			GTSTargetAccount: targetAccount,
+			GTSFavingAccount: authed.Account,
+		}
+
+		if err := p.db.Put(gtsFave); err != nil {
+			return nil, err
+		}
+
+		// send the new fave through the processor channel for federation etc
+		p.fromClientAPI <- gtsmodel.FromClientAPI{
+			APObjectType:   gtsmodel.ActivityStreamsLike,
+			APActivityType: gtsmodel.ActivityStreamsCreate,
+			GTSModel:       gtsFave,
+			OriginAccount:  authed.Account,
+			TargetAccount:  targetAccount,
 		}
 	}
 
+	// return the mastodon representation of the target status
 	mastoStatus, err := p.tc.StatusToMasto(targetStatus, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
 	if err != nil {
 		return nil, fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err)

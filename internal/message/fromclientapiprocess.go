@@ -44,7 +44,7 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return err
 			}
 
-			if status.VisibilityAdvanced.Federated {
+			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
 				return p.federateStatus(status)
 			}
 			return nil
@@ -60,6 +60,18 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 
 			return p.federateFollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsLike:
+			// CREATE LIKE/FAVE
+			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+			if !ok {
+				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
+			}
+
+			if err := p.notifyFave(fave); err != nil {
+				return err
+			}
+
+			return p.federateFave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -212,5 +224,25 @@ func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow, originA
 
 	// send off the accept using the accepter's outbox
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, accept)
+	return err
+}
+
+func (p *processor) federateFave(fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
+	// create the AS fave
+	asFave, err := p.tc.FaveToAS(fave)
+	if err != nil {
+		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asFave)
 	return err
 }

@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -417,11 +418,15 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	}
 
 	// make the follow request
+
+	newFollowID := uuid.NewString()
+
 	fr := &gtsmodel.FollowRequest{
+		ID:              newFollowID,
 		AccountID:       authed.Account.ID,
 		TargetAccountID: form.TargetAccountID,
 		ShowReblogs:     true,
-		URI:             util.GenerateURIForFollow(authed.Account.Username, p.config.Protocol, p.config.Host),
+		URI:             util.GenerateURIForFollow(authed.Account.Username, p.config.Protocol, p.config.Host, newFollowID),
 		Notify:          false,
 	}
 	if form.Reblogs != nil {

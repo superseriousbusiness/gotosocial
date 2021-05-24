@@ -559,3 +559,84 @@ func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityS
 
 	return doc, nil
 }
+
+/*
+	We want to end up with something like this:
+
+	{
+	"@context": "https://www.w3.org/ns/activitystreams",
+	"actor": "https://ondergrond.org/users/dumpsterqueer",
+	"id": "https://ondergrond.org/users/dumpsterqueer#likes/44584",
+	"object": "https://testingtesting123.xyz/users/gotosocial_test_account/statuses/771aea80-a33d-4d6d-8dfd-57d4d2bfcbd4",
+	"type": "Like"
+	}
+*/
+func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
+	// check if targetStatus is already pinned to this fave, and fetch it if not
+	if f.GTSStatus == nil {
+		s := &gtsmodel.Status{}
+		if err := c.db.GetByID(f.StatusID, s); err != nil {
+			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
+		}
+		f.GTSStatus = s
+	}
+
+	// check if the targetAccount is already pinned to this fave, and fetch it if not
+	if f.GTSTargetAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(f.TargetAccountID, a); err != nil {
+			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
+		}
+		f.GTSTargetAccount = a
+	}
+
+	// check if the faving account is already pinned to this fave, and fetch it if not
+	if f.GTSFavingAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(f.AccountID, a); err != nil {
+			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
+		}
+		f.GTSFavingAccount = a
+	}
+
+	// create the like
+	like := streams.NewActivityStreamsLike()
+
+	// set the actor property to the fave-ing account's URI
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorIRI, err := url.Parse(f.GTSFavingAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSFavingAccount.URI, err)
+	}
+	actorProp.AppendIRI(actorIRI)
+	like.SetActivityStreamsActor(actorProp)
+
+	// set the ID property to the fave's URI
+	idProp := streams.NewJSONLDIdProperty()
+	idIRI, err := url.Parse(f.URI)
+	if err != nil {
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.URI, err)
+	}
+	idProp.Set(idIRI)
+	like.SetJSONLDId(idProp)
+
+	// set the object property to the target status's URI
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	statusIRI, err := url.Parse(f.GTSStatus.URI)
+	if err != nil {
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSStatus.URI, err)
+	}
+	objectProp.AppendIRI(statusIRI)
+	like.SetActivityStreamsObject(objectProp)
+
+	// set the TO property to the target account's IRI
+	toProp := streams.NewActivityStreamsToProperty()
+	toIRI, err := url.Parse(f.GTSTargetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSTargetAccount.URI, err)
+	}
+	toProp.AppendIRI(toIRI)
+	like.SetActivityStreamsTo(toProp)
+
+	return like, nil
+}

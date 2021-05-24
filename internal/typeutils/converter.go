@@ -126,6 +126,9 @@ type TypeConverter interface {
 
 	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
 	AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
+
+	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
+	FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error)
 }
 
 type converter struct {
