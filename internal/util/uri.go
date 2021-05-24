@@ -113,6 +113,12 @@ func GenerateURIForFollow(username string, protocol string, host string) string 
 	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, FollowPath, uuid.NewString())
 }
 
+// GenerateURIForFollow returns the AP URI for a new like/fave -- something like:
+// https://example.org/users/whatever_user/liked/41c7f33f-1060-48d9-84df-38dcb13cf0d8
+func GenerateURIForLike(username string, protocol string, host string) string {
+	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, LikedPath, uuid.NewString())
+}
+
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
 func GenerateURIsForAccount(username string, protocol string, host string) *UserURIs {
 	// The below URLs are used for serving web requests
@@ -181,6 +187,11 @@ func IsFollowingPath(id *url.URL) bool {
 // IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
 func IsLikedPath(id *url.URL) bool {
 	return likedPathRegex.MatchString(strings.ToLower(id.Path))
+}
+
+// IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_UUID_OF_A_STATUS
+func IsLikePath(id *url.URL) bool {
+	return likePathRegex.MatchString(strings.ToLower(id.Path))
 }
 
 // IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
@@ -252,5 +263,17 @@ func ParseFollowingPath(id *url.URL) (username string, err error) {
 		return
 	}
 	username = matches[1]
+	return
+}
+
+// ParseLikedPath returns the username and uuid from a path such as /users/example_username/liked/SOME_UUID_OF_A_STATUS
+func ParseLikedPath(id *url.URL) (username string, uuid string, err error) {
+	matches := likePathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 3 {
+		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	uuid = matches[2]
 	return
 }

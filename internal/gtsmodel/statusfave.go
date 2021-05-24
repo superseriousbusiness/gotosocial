@@ -32,6 +32,8 @@ type StatusFave struct {
 	TargetAccountID string `pg:",notnull"`
 	// database id of the status that has been 'faved'
 	StatusID string `pg:",notnull"`
+	// ActivityPub URI of this fave
+	URI string `pg:",notnull"`
 
 	// FavedStatus is the status being interacted with. It won't be put or retrieved from the db, it's just for conveniently passing a pointer around.
 	FavedStatus *Status `pg:"-"`

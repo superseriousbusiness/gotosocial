@@ -186,9 +186,19 @@ func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apim
 	}
 
 	// it's visible! it's faveable! so let's fave the FUCK out of it
-	_, err = p.db.FaveStatus(targetStatus, authed.Account.ID)
+	gtsFave, err := p.db.FaveStatus(targetStatus, authed.Account.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error faveing status: %s", err)
+	}
+	gtsFave.FavedStatus = targetStatus // pin a pointer to the target status to the fave for convenience later on
+
+	// send the new fave through the processor channel for federation etc
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APObjectType:   gtsmodel.ActivityStreamsLike,
+		APActivityType: gtsmodel.ActivityStreamsCreate,
+		GTSModel:       gtsFave,
+		OriginAccount:  authed.Account,
+		TargetAccount:  targetAccount,
 	}
 
 	var boostOfStatus *gtsmodel.Status
