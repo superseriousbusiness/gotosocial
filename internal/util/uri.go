@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -109,14 +107,14 @@ type UserURIs struct {
 
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
 // https://example.org/users/whatever_user/follow/41c7f33f-1060-48d9-84df-38dcb13cf0d8
-func GenerateURIForFollow(username string, protocol string, host string) string {
-	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, FollowPath, uuid.NewString())
+func GenerateURIForFollow(username string, protocol string, host string, thisFollowID string) string {
+	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, FollowPath, thisFollowID)
 }
 
 // GenerateURIForFollow returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/41c7f33f-1060-48d9-84df-38dcb13cf0d8
-func GenerateURIForLike(username string, protocol string, host string) string {
-	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, LikedPath, uuid.NewString())
+func GenerateURIForLike(username string, protocol string, host string, thisFavedID string) string {
+	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, LikedPath, thisFavedID)
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.

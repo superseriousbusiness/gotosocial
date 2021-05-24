@@ -27,3 +27,7 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 func (p *processor) notifyFollow(follow *gtsmodel.Follow) error {
 	return nil
 }
+
+func (p *processor) notifyFave(fave *gtsmodel.StatusFave) error {
+   return nil
+}

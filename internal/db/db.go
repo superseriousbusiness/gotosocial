@@ -270,7 +270,7 @@ type DB interface {
 
 	// FaveStatus faves the given status, using accountID as the faver.
 	// The returned fave will be nil if the status was already faved.
-	FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
+	// FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
 
 	// UnfaveStatus unfaves the given status, using accountID as the unfaver (sure, that's a word).
 	// The returned fave will be nil if the status was already not faved.

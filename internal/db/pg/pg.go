@@ -1037,32 +1037,32 @@ func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID
 	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
-	// first check if a fave already exists, we can just return if so
-	existingFave := &gtsmodel.StatusFave{}
-	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
-	if err == nil {
-		// fave already exists so just return nothing at all
-		return nil, nil
-	}
+// func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
+// 	// first check if a fave already exists, we can just return if so
+// 	existingFave := &gtsmodel.StatusFave{}
+// 	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
+// 	if err == nil {
+// 		// fave already exists so just return nothing at all
+// 		return nil, nil
+// 	}
 
-	// an error occurred so it might exist or not, we don't know
-	if err != pg.ErrNoRows {
-		return nil, err
-	}
+// 	// an error occurred so it might exist or not, we don't know
+// 	if err != pg.ErrNoRows {
+// 		return nil, err
+// 	}
 
-	// it doesn't exist so create it
-	newFave := &gtsmodel.StatusFave{
-		AccountID:       accountID,
-		TargetAccountID: status.AccountID,
-		StatusID:        status.ID,
-	}
-	if _, err = ps.conn.Model(newFave).Insert(); err != nil {
-		return nil, err
-	}
+// 	// it doesn't exist so create it
+// 	newFave := &gtsmodel.StatusFave{
+// 		AccountID:       accountID,
+// 		TargetAccountID: status.AccountID,
+// 		StatusID:        status.ID,
+// 	}
+// 	if _, err = ps.conn.Model(newFave).Insert(); err != nil {
+// 		return nil, err
+// 	}
 
-	return newFave, nil
-}
+// 	return newFave, nil
+// }
 
 func (ps *postgresService) UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
 	// if a fave doesn't exist, we don't need to do anything

@@ -777,7 +777,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 				if iter.IsIRI() {
 					actorAccount := &gtsmodel.Account{}
 					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
-						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host))
+						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host, uuid.NewString()))
 					}
 				}
 			}
@@ -787,9 +787,22 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 		// ID might already be set on a note we've created, so check it here and return it if it is
 		note, ok := t.(vocab.ActivityStreamsNote)
 		if !ok {
-			return nil, errors.New("newid: follow couldn't be parsed into vocab.ActivityStreamsNote")
+			return nil, errors.New("newid: note couldn't be parsed into vocab.ActivityStreamsNote")
 		}
 		idProp := note.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
+	case gtsmodel.ActivityStreamsLike:
+		// LIKE aka FAVE
+		// ID might already be set on a fave we've created, so check it here and return it if it is
+		fave, ok := t.(vocab.ActivityStreamsLike)
+		if !ok {
+			return nil, errors.New("newid: fave couldn't be parsed into vocab.ActivityStreamsLike")
+		}
+		idProp := fave.GetJSONLDId()
 		if idProp != nil {
 			if idProp.IsIRI() {
 				return idProp.GetIRI(), nil
