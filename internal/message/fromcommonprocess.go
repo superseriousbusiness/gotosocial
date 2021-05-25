@@ -18,7 +18,11 @@
 
 package message
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
 func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 	return nil
@@ -29,5 +33,17 @@ func (p *processor) notifyFollow(follow *gtsmodel.Follow) error {
 }
 
 func (p *processor) notifyFave(fave *gtsmodel.StatusFave) error {
-   return nil
+
+	notif := &gtsmodel.Notification{
+		NotificationType: gtsmodel.NotificationFave,
+		TargetAccountID:  fave.TargetAccountID,
+		OriginAccountID:  fave.AccountID,
+		StatusID:         fave.StatusID,
+	}
+
+	if err := p.db.Put(notif); err != nil {
+		return fmt.Errorf("notifyFave: error putting fave in database: %s", err)
+	}
+
+	return nil
 }

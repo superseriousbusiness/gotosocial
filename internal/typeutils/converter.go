@@ -84,6 +84,8 @@ type TypeConverter interface {
 	// RelationshipToMasto converts a gts relationship into its mastodon equivalent for serving in various places
 	RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error)
 
+	NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error)
+
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
 	*/
@@ -107,6 +109,8 @@ type TypeConverter interface {
 	ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
 	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
+	// ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
+	ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

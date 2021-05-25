@@ -106,6 +106,9 @@ type Processor interface {
 	// MediaUpdate handles the PUT of a media attachment with the given ID and form
 	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode)
 
+	// NotificationsGet
+	NotificationsGet(authed *oauth.Auth, limit int, maxID string) ([]*apimodel.Notification, ErrorWithCode)
+
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
 	// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.

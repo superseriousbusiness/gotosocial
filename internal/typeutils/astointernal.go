@@ -380,6 +380,48 @@ func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, e
 	return follow, nil
 }
 
+func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error) {
+	idProp := likeable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("no id property set on like, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	origin, err := extractActor(likeable)
+	if err != nil {
+		return nil, errors.New("error extracting actor property from like")
+	}
+	originAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: origin.String()}}, originAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	target, err := extractObject(likeable)
+	if err != nil {
+		return nil, errors.New("error extracting object property from like")
+	}
+
+	targetStatus := &gtsmodel.Status{}
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: target.String()}}, targetStatus); err != nil {
+		return nil, fmt.Errorf("error extracting status with uri %s from the database: %s", target.String(), err)
+	}
+
+	targetAccount := &gtsmodel.Account{}
+	if err := c.db.GetByID(targetStatus.AccountID, targetAccount); err != nil {
+		return nil, fmt.Errorf("error extracting account with id %s from the database: %s", targetStatus.AccountID, err)
+	}
+
+	return &gtsmodel.StatusFave{
+		TargetAccountID:  targetAccount.ID,
+		StatusID:         targetStatus.ID,
+		AccountID:        originAccount.ID,
+		URI:              uri,
+		GTSStatus:        targetStatus,
+		GTSTargetAccount: targetAccount,
+		GTSFavingAccount: originAccount,
+	}, nil
+}
+
 func isPublic(tos []*url.URL) bool {
 	for _, entry := range tos {
 		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {

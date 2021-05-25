@@ -496,6 +496,27 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				return fmt.Errorf("database error accepting follow request: %s", err)
 			}
 		}
+	case gtsmodel.ActivityStreamsLike:
+		like, ok := asType.(vocab.ActivityStreamsLike)
+		if !ok {
+			return errors.New("could not convert type to like")
+		}
+
+		fave, err := f.typeConverter.ASLikeToFave(like)
+		if err != nil {
+			return fmt.Errorf("could not convert Like to fave: %s", err)
+		}
+
+		if err := f.db.Put(fave); err != nil {
+			return fmt.Errorf("database error inserting fave: %s", err)
+		}
+
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:     gtsmodel.ActivityStreamsLike,
+			APActivityType:   gtsmodel.ActivityStreamsCreate,
+			GTSModel:         fave,
+			ReceivingAccount: targetAcct,
+		}
 	}
 	return nil
 }

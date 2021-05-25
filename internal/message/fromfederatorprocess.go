@@ -74,6 +74,16 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
 				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
 			}
+		case gtsmodel.ActivityStreamsLike:
+			// CREATE A FAVE
+			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
+			if !ok {
+				return errors.New("like was not parseable as *gtsmodel.StatusFave")
+			}
+
+			if err := p.notifyFave(incomingFave); err != nil {
+				return err
+			}
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
