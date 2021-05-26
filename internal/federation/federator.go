@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -35,7 +36,7 @@ type Federator interface {
 	// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
 	FederatingActor() pub.FederatingActor
 	// FederatingDB returns the underlying FederatingDB interface.
-	FederatingDB() FederatingDB
+	FederatingDB() federatingdb.DB
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
@@ -54,7 +55,7 @@ type Federator interface {
 type federator struct {
 	config              *config.Config
 	db                  db.DB
-	federatingDB        FederatingDB
+	federatingDB        federatingdb.DB
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
@@ -63,7 +64,7 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB FederatingDB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
 
 	clock := &Clock{}
 	f := &federator{
@@ -84,6 +85,6 @@ func (f *federator) FederatingActor() pub.FederatingActor {
 	return f.actor
 }
 
-func (f *federator) FederatingDB() FederatingDB {
+func (f *federator) FederatingDB() federatingdb.DB {
 	return f.federatingDB
 }

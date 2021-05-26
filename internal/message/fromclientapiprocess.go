@@ -49,17 +49,17 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 			return nil
 		case gtsmodel.ActivityStreamsFollow:
-			// CREATE FOLLOW (request)
-			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+			// CREATE FOLLOW REQUEST
+			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
 			if !ok {
-				return errors.New("follow was not parseable as *gtsmodel.Follow")
+				return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
-			if err := p.notifyFollow(follow); err != nil {
+			if err := p.notifyFollowRequest(followRequest, clientMsg.TargetAccount); err != nil {
 				return err
 			}
 
-			return p.federateFollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateFollow(followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsLike:
 			// CREATE LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
@@ -67,7 +67,7 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(fave); err != nil {
+			if err := p.notifyFave(fave, clientMsg.TargetAccount); err != nil {
 				return err
 			}
 
@@ -84,6 +84,11 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			if !ok {
 				return errors.New("accept was not parseable as *gtsmodel.Follow")
 			}
+
+			if err := p.notifyFollow(follow, clientMsg.TargetAccount); err != nil {
+				return err
+			}
+
 			return p.federateAcceptFollowRequest(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsUndo:
@@ -116,11 +121,13 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 	return err
 }
 
-func (p *processor) federateFollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateFollow(followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
+
+	follow := p.tc.FollowRequestToFollow(followRequest)
 
 	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
 	if err != nil {

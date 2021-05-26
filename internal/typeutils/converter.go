@@ -44,46 +44,35 @@ type TypeConverter interface {
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
 	AccountToMastoSensitive(account *gtsmodel.Account) (*model.Account, error)
-
 	// AccountToMastoPublic takes a db model account as a param, and returns a populated mastotype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
 	AccountToMastoPublic(account *gtsmodel.Account) (*model.Account, error)
-
 	// AppToMastoSensitive takes a db model application as a param, and returns a populated mastotype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 	// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
 	AppToMastoSensitive(application *gtsmodel.Application) (*model.Application, error)
-
 	// AppToMastoPublic takes a db model application as a param, and returns a populated mastotype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
 	AppToMastoPublic(application *gtsmodel.Application) (*model.Application, error)
-
 	// AttachmentToMasto converts a gts model media attacahment into its mastodon representation for serialization on the API.
 	AttachmentToMasto(attachment *gtsmodel.MediaAttachment) (model.Attachment, error)
-
 	// MentionToMasto converts a gts model mention into its mastodon (frontend) representation for serialization on the API.
 	MentionToMasto(m *gtsmodel.Mention) (model.Mention, error)
-
 	// EmojiToMasto converts a gts model emoji into its mastodon (frontend) representation for serialization on the API.
 	EmojiToMasto(e *gtsmodel.Emoji) (model.Emoji, error)
-
 	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
 	TagToMasto(t *gtsmodel.Tag) (model.Tag, error)
-
 	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
 	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*model.Status, error)
-
 	// VisToMasto converts a gts visibility into its mastodon equivalent
 	VisToMasto(m gtsmodel.Visibility) model.Visibility
-
 	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
 	InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error)
-
 	// RelationshipToMasto converts a gts relationship into its mastodon equivalent for serving in various places
 	RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error)
-
+	// NotificationToMasto converts a gts notification into a mastodon notification
 	NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error)
 
 	/*
@@ -118,21 +107,25 @@ type TypeConverter interface {
 
 	// AccountToAS converts a gts model account into an activity streams person, suitable for federation
 	AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
-
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
-
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
 	FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
-
 	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
 	MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
-
 	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
 	AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
-
 	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
 	FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error)
+
+	/*
+		INTERNAL (gts) MODEL TO INTERNAL MODEL
+	*/
+
+	// FollowRequestToFollow just converts a follow request into a follow, that's it! No bells and whistles.
+	FollowRequestToFollow(f *gtsmodel.FollowRequest) *gtsmodel.Follow
+	// StatusToBoost wraps the given status into a boosting status.
+	StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error)
 }
 
 type converter struct {
