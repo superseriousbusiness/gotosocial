@@ -226,7 +226,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID
-	status.GTSAccount = statusOwner
+	status.GTSAuthorAccount = statusOwner
 
 	// check if there's a post that this is a reply to
 	inReplyToURI, err := extractInReplyToURI(statusable)

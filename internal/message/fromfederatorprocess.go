@@ -249,8 +249,8 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 		}
 
 		m.StatusID = status.ID
-		m.OriginAccountID = status.GTSAccount.ID
-		m.OriginAccountURI = status.GTSAccount.URI
+		m.OriginAccountID = status.GTSAuthorAccount.ID
+		m.OriginAccountURI = status.GTSAuthorAccount.URI
 
 		targetAccount := &gtsmodel.Account{}
 		if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, targetAccount); err != nil {

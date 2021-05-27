@@ -270,7 +270,7 @@ func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
 
 func (c *converter) StatusToMasto(
 	s *gtsmodel.Status,
-	targetAccount *gtsmodel.Account,
+	statusAuthor *gtsmodel.Account,
 	requestingAccount *gtsmodel.Account,
 	boostOfAccount *gtsmodel.Account,
 	replyToAccount *gtsmodel.Account,
@@ -382,7 +382,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoTargetAccount, err := c.AccountToMastoPublic(targetAccount)
+	mastoAuthorAccount, err := c.AccountToMastoPublic(statusAuthor)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
@@ -520,7 +520,7 @@ func (c *converter) StatusToMasto(
 		Content:            s.Content,
 		Reblog:             mastoRebloggedStatus,
 		Application:        mastoApplication,
-		Account:            mastoTargetAccount,
+		Account:            mastoAuthorAccount,
 		MediaAttachments:   mastoAttachments,
 		Mentions:           mastoMentions,
 		Tags:               mastoTags,
@@ -639,8 +639,16 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 			replyToAccount = r
 		}
 
+		if n.GTSStatus.GTSAuthorAccount == nil {
+			if n.GTSStatus.AccountID == n.GTSTargetAccount.ID {
+				n.GTSStatus.GTSAuthorAccount = n.GTSTargetAccount
+			} else if n.GTSStatus.AccountID == n.GTSOriginAccount.ID {
+				n.GTSStatus.GTSAuthorAccount = n.GTSOriginAccount
+			}
+		}
+
 		var err error
-		mastoStatus, err = c.StatusToMasto(n.GTSStatus, n.GTSTargetAccount, n.GTSTargetAccount, nil, replyToAccount, nil)
+		mastoStatus, err = c.StatusToMasto(n.GTSStatus, n.GTSStatus.GTSAuthorAccount, n.GTSTargetAccount, nil, replyToAccount, nil)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error converting status to masto: %s", err)
 		}

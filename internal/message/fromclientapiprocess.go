@@ -112,9 +112,9 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
 	}
 
-	outboxIRI, err := url.Parse(status.GTSAccount.OutboxURI)
+	outboxIRI, err := url.Parse(status.GTSAuthorAccount.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.GTSAccount.OutboxURI, err)
+		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.GTSAuthorAccount.OutboxURI, err)
 	}
 
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)

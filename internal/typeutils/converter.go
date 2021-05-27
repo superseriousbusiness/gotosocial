@@ -65,7 +65,7 @@ type TypeConverter interface {
 	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
 	TagToMasto(t *gtsmodel.Tag) (model.Tag, error)
 	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
-	StatusToMasto(s *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*model.Status, error)
+	StatusToMasto(s *gtsmodel.Status, statusAuthor *gtsmodel.Account, requestingAccount *gtsmodel.Account, boostOfAccount *gtsmodel.Account, replyToAccount *gtsmodel.Account, reblogOfStatus *gtsmodel.Status) (*model.Status, error)
 	// VisToMasto converts a gts visibility into its mastodon equivalent
 	VisToMasto(m gtsmodel.Visibility) model.Visibility
 	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
