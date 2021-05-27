@@ -262,12 +262,12 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 
 	// check if author account is already attached to status and attach it if not
 	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
-	if s.GTSAccount == nil {
+	if s.GTSAuthorAccount == nil {
 		a := &gtsmodel.Account{}
 		if err := c.db.GetByID(s.AccountID, a); err != nil {
 			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
 		}
-		s.GTSAccount = a
+		s.GTSAuthorAccount = a
 	}
 
 	// create the Note!
@@ -328,9 +328,9 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	}
 
 	// attributedTo
-	authorAccountURI, err := url.Parse(s.GTSAccount.URI)
+	authorAccountURI, err := url.Parse(s.GTSAuthorAccount.URI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.URI, err)
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAuthorAccount.URI, err)
 	}
 	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
 	attributedToProp.AppendIRI(authorAccountURI)
@@ -357,9 +357,9 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	status.SetActivityStreamsTag(tagProp)
 
 	// parse out some URIs we need here
-	authorFollowersURI, err := url.Parse(s.GTSAccount.FollowersURI)
+	authorFollowersURI, err := url.Parse(s.GTSAuthorAccount.FollowersURI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAccount.FollowersURI, err)
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAuthorAccount.FollowersURI, err)
 	}
 
 	publicURI, err := url.Parse(asPublicURI)

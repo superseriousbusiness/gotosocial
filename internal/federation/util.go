@@ -280,22 +280,4 @@ func (f *federator) GetTransportForUser(username string) (transport.Transport, e
 	return transport, nil
 }
 
-func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor vocab.ActivityStreamsActorProperty) bool {
-	if activityActor == nil || followActor == nil {
-		return false
-	}
-	for aIter := activityActor.Begin(); aIter != activityActor.End(); aIter = aIter.Next() {
-		for fIter := followActor.Begin(); fIter != followActor.End(); fIter = fIter.Next() {
-			if aIter.GetIRI() == nil {
-				return false
-			}
-			if fIter.GetIRI() == nil {
-				return false
-			}
-			if aIter.GetIRI().String() == fIter.GetIRI().String() {
-				return true
-			}
-		}
-	}
-	return false
-}
+

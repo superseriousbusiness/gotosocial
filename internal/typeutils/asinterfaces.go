@@ -102,6 +102,15 @@ type Followable interface {
 	withObject
 }
 
+// Likeable represents the minimum interface for an activitystreams 'like' activity.
+type Likeable interface {
+	withJSONLDId
+	withTypeName
+
+	withActor
+	withObject
+}
+
 type withJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }

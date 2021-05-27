@@ -41,5 +41,5 @@ type Notification struct {
 	// OPTIONAL
 
 	// Status that was the object of the notification, e.g. in mentions, reblogs, favourites, or polls.
-	Status *Status `json:"status"`
+	Status *Status `json:"status,omitempty"`
 }

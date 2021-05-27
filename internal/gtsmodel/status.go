@@ -80,7 +80,7 @@ type Status struct {
 	*/
 
 	// Account that created this status
-	GTSAccount *Account `pg:"-"`
+	GTSAuthorAccount *Account `pg:"-"`
 	// Mentions created in this status
 	GTSMentions []*Mention `pg:"-"`
 	// Hashtags used in this status

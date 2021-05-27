@@ -1138,6 +1138,35 @@ func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID str
 	return statuses, nil
 }
 
+func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string) ([]*gtsmodel.Notification, error) {
+	notifications := []*gtsmodel.Notification{}
+
+	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
+
+
+	if maxID != "" {
+		n := &gtsmodel.Notification{}
+		if err := ps.conn.Model(n).Where("id = ?", maxID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("created_at < ?", n.CreatedAt)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	q = q.Order("created_at DESC")
+
+	if err := q.Select(); err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
+		}
+
+	}
+	return notifications, nil
+}
+
 /*
 	CONVERSION FUNCTIONS
 */

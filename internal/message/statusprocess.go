@@ -278,53 +278,13 @@ func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*api
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
-	// first we create a new status and add some basic info to it -- this will be the wrapper for the boosted status
-
-	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
-	uris := util.GenerateURIsForAccount(authed.Account.Username, p.config.Protocol, p.config.Host)
-	boostWrapperStatusID := uuid.NewString()
-	boostWrapperStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, boostWrapperStatusID)
-	boostWrapperStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, boostWrapperStatusID)
-
-	boostWrapperStatus := &gtsmodel.Status{
-		ID:  boostWrapperStatusID,
-		URI: boostWrapperStatusURI,
-		URL: boostWrapperStatusURL,
-
-		// the boosted status is not created now, but the boost certainly is
-		CreatedAt:                time.Now(),
-		UpdatedAt:                time.Now(),
-		Local:                    true, // always local since this is being done through the client API
-		AccountID:                authed.Account.ID,
-		CreatedWithApplicationID: authed.Application.ID,
-
-		// replies can be boosted, but boosts are never replies
-		InReplyToID:        "",
-		InReplyToAccountID: "",
-
-		// these will all be wrapped in the boosted status so set them empty here
-		Attachments: []string{},
-		Tags:        []string{},
-		Mentions:    []string{},
-		Emojis:      []string{},
-
-		// the below fields will be taken from the target status
-		Content:             util.HTMLFormat(targetStatus.Content),
-		ContentWarning:      targetStatus.ContentWarning,
-		ActivityStreamsType: targetStatus.ActivityStreamsType,
-		Sensitive:           targetStatus.Sensitive,
-		Language:            targetStatus.Language,
-		Text:                targetStatus.Text,
-		BoostOfID:           targetStatus.ID,
-		Visibility:          targetStatus.Visibility,
-		VisibilityAdvanced:  targetStatus.VisibilityAdvanced,
-
-		// attach these here for convenience -- the boosted status/account won't go in the DB
-		// but they're needed in the processor and for the frontend. Since we have them, we can
-		// attach them so we don't need to fetch them again later (save some DB calls)
-		GTSBoostedStatus:  targetStatus,
-		GTSBoostedAccount: targetAccount,
+	boostWrapperStatus, err := p.tc.StatusToBoost(targetStatus, authed.Account)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
 	}
+
+	boostWrapperStatus.CreatedWithApplicationID = authed.Application.ID
+	boostWrapperStatus.GTSBoostedAccount = targetAccount
 
 	// put the boost in the database
 	if err := p.db.Put(boostWrapperStatus); err != nil {

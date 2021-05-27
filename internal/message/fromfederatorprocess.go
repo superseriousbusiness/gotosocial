@@ -74,6 +74,26 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
 				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
 			}
+		case gtsmodel.ActivityStreamsLike:
+			// CREATE A FAVE
+			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
+			if !ok {
+				return errors.New("like was not parseable as *gtsmodel.StatusFave")
+			}
+
+			if err := p.notifyFave(incomingFave, federatorMsg.ReceivingAccount); err != nil {
+				return err
+			}
+		case gtsmodel.ActivityStreamsFollow:
+			// CREATE A FOLLOW REQUEST
+			incomingFollowRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
+			if !ok {
+				return errors.New("like was not parseable as *gtsmodel.FollowRequest")
+			}
+
+			if err := p.notifyFollowRequest(incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
+				return err
+			}
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -105,6 +125,20 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 		case gtsmodel.ActivityStreamsProfile:
 			// DELETE A PROFILE/ACCOUNT
 			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account
+		}
+	case gtsmodel.ActivityStreamsAccept:
+		// ACCEPT
+		switch federatorMsg.APObjectType {
+		case gtsmodel.ActivityStreamsFollow:
+			// ACCEPT A FOLLOW
+			follow, ok := federatorMsg.GTSModel.(*gtsmodel.Follow)
+			if !ok {
+				return errors.New("follow was not parseable as *gtsmodel.Follow")
+			}
+
+			if err := p.notifyFollow(follow, federatorMsg.ReceivingAccount); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -215,8 +249,8 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 		}
 
 		m.StatusID = status.ID
-		m.OriginAccountID = status.GTSAccount.ID
-		m.OriginAccountURI = status.GTSAccount.URI
+		m.OriginAccountID = status.GTSAuthorAccount.ID
+		m.OriginAccountURI = status.GTSAuthorAccount.URI
 
 		targetAccount := &gtsmodel.Account{}
 		if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, targetAccount); err != nil {

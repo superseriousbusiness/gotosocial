@@ -284,6 +284,8 @@ type DB interface {
 	// It will use the given filters and try to return as many statuses up to the limit as possible.
 	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
+	GetNotificationsForAccount(accountID string, limit int, maxID string) ([]*gtsmodel.Notification, error)
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/

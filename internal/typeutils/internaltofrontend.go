@@ -138,6 +138,9 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		fields = append(fields, mField)
 	}
 
+	emojis := []model.Emoji{}
+	// TODO: account emojis
+
 	var acct string
 	if a.Domain != "" {
 		// this is a remote user
@@ -165,7 +168,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		FollowingCount: followingCount,
 		StatusesCount:  statusesCount,
 		LastStatusAt:   lastStatusAt,
-		Emojis:         nil, // TODO: implement this
+		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
 	}, nil
 }
@@ -267,7 +270,7 @@ func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
 
 func (c *converter) StatusToMasto(
 	s *gtsmodel.Status,
-	targetAccount *gtsmodel.Account,
+	statusAuthor *gtsmodel.Account,
 	requestingAccount *gtsmodel.Account,
 	boostOfAccount *gtsmodel.Account,
 	replyToAccount *gtsmodel.Account,
@@ -379,7 +382,7 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoTargetAccount, err := c.AccountToMastoPublic(targetAccount)
+	mastoAuthorAccount, err := c.AccountToMastoPublic(statusAuthor)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
@@ -517,7 +520,7 @@ func (c *converter) StatusToMasto(
 		Content:            s.Content,
 		Reblog:             mastoRebloggedStatus,
 		Application:        mastoApplication,
-		Account:            mastoTargetAccount,
+		Account:            mastoAuthorAccount,
 		MediaAttachments:   mastoAttachments,
 		Mentions:           mastoMentions,
 		Tags:               mastoTags,
@@ -592,5 +595,70 @@ func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relati
 		DomainBlocking:      r.DomainBlocking,
 		Endorsed:            r.Endorsed,
 		Note:                r.Note,
+	}, nil
+}
+
+func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error) {
+
+	if n.GTSTargetAccount == nil {
+		tAccount := &gtsmodel.Account{}
+		if err := c.db.GetByID(n.TargetAccountID, tAccount); err != nil {
+			return nil, fmt.Errorf("NotificationToMasto: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
+		}
+		n.GTSTargetAccount = tAccount
+	}
+
+	if n.GTSOriginAccount == nil {
+		ogAccount := &gtsmodel.Account{}
+		if err := c.db.GetByID(n.OriginAccountID, ogAccount); err != nil {
+			return nil, fmt.Errorf("NotificationToMasto: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
+		}
+		n.GTSOriginAccount = ogAccount
+	}
+	mastoAccount, err := c.AccountToMastoPublic(n.GTSOriginAccount)
+	if err != nil {
+		return nil, fmt.Errorf("NotificationToMasto: error converting account to masto: %s", err)
+	}
+
+	var mastoStatus *model.Status
+	if n.StatusID != "" {
+		if n.GTSStatus == nil {
+			status := &gtsmodel.Status{}
+			if err := c.db.GetByID(n.StatusID, status); err != nil {
+				return nil, fmt.Errorf("NotificationToMasto: error getting status with id %s from the db: %s", n.StatusID, err)
+			}
+			n.GTSStatus = status
+		}
+
+		var replyToAccount *gtsmodel.Account
+		if n.GTSStatus.InReplyToAccountID != "" {
+			r := &gtsmodel.Account{}
+			if err := c.db.GetByID(n.GTSStatus.InReplyToAccountID, r); err != nil {
+				return nil, fmt.Errorf("NotificationToMasto: error getting replied to account with id %s from the db: %s", n.GTSStatus.InReplyToAccountID, err)
+			}
+			replyToAccount = r
+		}
+
+		if n.GTSStatus.GTSAuthorAccount == nil {
+			if n.GTSStatus.AccountID == n.GTSTargetAccount.ID {
+				n.GTSStatus.GTSAuthorAccount = n.GTSTargetAccount
+			} else if n.GTSStatus.AccountID == n.GTSOriginAccount.ID {
+				n.GTSStatus.GTSAuthorAccount = n.GTSOriginAccount
+			}
+		}
+
+		var err error
+		mastoStatus, err = c.StatusToMasto(n.GTSStatus, n.GTSStatus.GTSAuthorAccount, n.GTSTargetAccount, nil, replyToAccount, nil)
+		if err != nil {
+			return nil, fmt.Errorf("NotificationToMasto: error converting status to masto: %s", err)
+		}
+	}
+
+	return &model.Notification{
+		ID:        n.ID,
+		Type:      string(n.NotificationType),
+		CreatedAt: n.CreatedAt.Format(time.RFC3339),
+		Account:   mastoAccount,
+		Status:    mastoStatus,
 	}, nil
 }

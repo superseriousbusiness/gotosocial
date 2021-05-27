@@ -31,7 +31,7 @@ type Status struct {
 	// Is this status marked as sensitive content?
 	Sensitive bool `json:"sensitive"`
 	// Subject or summary line, below which status content is collapsed until expanded.
-	SpoilerText string `json:"spoiler_text,omitempty"`
+	SpoilerText string `json:"spoiler_text"`
 	// Visibility of this status.
 	Visibility Visibility `json:"visibility"`
 	// Primary language of this status. (ISO 639 Part 1 two-letter language code)
