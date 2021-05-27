@@ -237,10 +237,10 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status, requestingU
 		}
 		l.Debugf("dereferenced attachment: %+v", deferencedAttachment)
 		deferencedAttachment.StatusID = status.ID
+		deferencedAttachment.Description = a.Description
 		if err := p.db.Put(deferencedAttachment); err != nil {
 			return fmt.Errorf("error inserting dereferenced attachment with remote url %s: %s", a.RemoteURL, err)
 		}
-		deferencedAttachment.Description = a.Description
 		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
 	}
 	status.Attachments = attachmentIDs
