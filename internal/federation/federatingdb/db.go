@@ -35,6 +35,7 @@ type DB interface {
 	pub.Database
 	Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error
 	Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error
+	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
 }
 
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.

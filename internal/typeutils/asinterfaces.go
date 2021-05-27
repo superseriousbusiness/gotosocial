@@ -111,6 +111,18 @@ type Likeable interface {
 	withObject
 }
 
+// Announceable represents the minimum interface for an activitystreams 'announce' activity.
+type Announceable interface {
+	withJSONLDId
+	withTypeName
+
+	withActor
+	withObject
+	withPublished
+	withTo
+	withCC
+}
+
 type withJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }

@@ -257,6 +257,10 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
 			return f.FederatingDB().Accept(ctx, accept)
 		},
+		// override default announce behavior and trigger our own side effects
+		func(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
+			return f.FederatingDB().Announce(ctx, announce)
+		},
 	}
 
 	return

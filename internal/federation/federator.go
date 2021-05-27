@@ -43,6 +43,9 @@ type Federator interface {
 	// DereferenceRemoteAccount can be used to get the representation of a remote account, based on the account ID (which is a URI).
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
+	// DereferenceRemoteStatus can be used to get the representation of a remote status, based on its ID (which is a URI).
+	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
+	DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error)
 	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
 	// This can be used for making signed http requests.
 	//

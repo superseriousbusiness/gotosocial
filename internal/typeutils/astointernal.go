@@ -422,6 +422,99 @@ func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error
 	}, nil
 }
 
+func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Status, bool, error) {
+	status := &gtsmodel.Status{}
+	isNew := true
+
+	// check if we already have the boost in the database
+	idProp := announceable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, isNew, errors.New("no id property set on announce, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: uri}}, status); err == nil {
+		// we already have it, great, just return it as-is :)
+		isNew = false
+		return status, isNew, nil
+	}
+	status.URI = uri
+
+	// get the URI of the announced/boosted status
+	boostedStatusURI, err := extractObject(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error getting object from announce: %s", err)
+	}
+
+	// set the URI on the new status for dereferencing later
+	status.GTSBoostedStatus = &gtsmodel.Status{
+		URI: boostedStatusURI.String(),
+	}
+
+	// get the published time for the announce
+	published, err := extractPublished(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting published time: %s", err)
+	}
+	status.CreatedAt = published
+	status.UpdatedAt = published
+
+	// get the actor's IRI (ie., the person who boosted the status)
+	actor, err := extractActor(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting actor: %s", err)
+	}
+
+	// get the boosting account based on the URI
+	// this should have been dereferenced already before we hit this point so we can confidently error out if we don't have it
+	boostingAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: actor.String()}}, boostingAccount); err != nil {
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error in db fetching account with uri %s: %s", actor.String(), err)
+	}
+	status.AccountID = boostingAccount.ID
+
+	// these will all be wrapped in the boosted status so set them empty here
+	status.Attachments = []string{}
+	status.Tags = []string{}
+	status.Mentions = []string{}
+	status.Emojis = []string{}
+
+	// parse the visibility from the To and CC entries
+	var visibility gtsmodel.Visibility
+
+	to, err := extractTos(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("error extracting TO values: %s", err)
+	}
+
+	cc, err := extractCCs(announceable)
+	if err != nil {
+		return nil, isNew, fmt.Errorf("error extracting CC values: %s", err)
+	}
+
+	if len(to) == 0 && len(cc) == 0 {
+		return nil, isNew, errors.New("message wasn't TO or CC anyone")
+	}
+
+	// if it's CC'ed to public, it's public or unlocked
+	if isPublic(cc) {
+		visibility = gtsmodel.VisibilityUnlocked
+	}
+	if isPublic(to) {
+		visibility = gtsmodel.VisibilityPublic
+	}
+
+	// we should have a visibility by now
+	if visibility == "" {
+		return nil, isNew, errors.New("couldn't derive visibility")
+	}
+	status.Visibility = visibility
+
+	// the rest of the fields will be taken from the target status, but it's not our job to do the dereferencing here
+
+	return status, isNew, nil
+}
+
 func isPublic(tos []*url.URL) bool {
 	for _, entry := range tos {
 		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {

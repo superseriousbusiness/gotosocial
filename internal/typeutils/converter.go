@@ -100,6 +100,19 @@ type TypeConverter interface {
 	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
 	// ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
 	ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error)
+	// ASAnnounceToStatus converts an activitystreams 'announce' into a status.
+	//
+	// The returned bool indicates whether this status is new (true) or not new (false).
+	//
+	// In other words, if the status is already in the database with the ID set on the announceable, then that will be returned,
+	// the returned bool will be false, and no further processing is necessary. If the returned bool is true, indicating
+	// that this is a new announce, then further processing will be necessary, because the returned status will be bareboned and
+	// require further dereferencing.
+	//
+	// This is useful when multiple users on an instance might receive the same boost, and we only want to process the boost once.
+	//
+	// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
+	ASAnnounceToStatus(announceable Announceable) (status *gtsmodel.Status, new bool, err error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

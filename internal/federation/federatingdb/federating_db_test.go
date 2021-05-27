@@ -16,6 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package federation
+package federatingdb_test
 
 // TODO: write tests for pgfed

@@ -27,7 +27,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) error {
@@ -50,7 +49,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 
 			l.Debug("will now derefence incoming status")
-			if err := p.dereferenceStatusFields(incomingStatus); err != nil {
+			if err := p.dereferenceStatusFields(incomingStatus, federatorMsg.ReceivingAccount.Username); err != nil {
 				return fmt.Errorf("error dereferencing status from federator: %s", err)
 			}
 			if err := p.db.UpdateByID(incomingStatus.ID, incomingStatus); err != nil {
@@ -92,6 +91,24 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 
 			if err := p.notifyFollowRequest(incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
+				return err
+			}
+		case gtsmodel.ActivityStreamsAnnounce:
+			// CREATE AN ANNOUNCE
+			incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("announce was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.dereferenceAnnounce(incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
+				return fmt.Errorf("error dereferencing announce from federator: %s", err)
+			}
+
+			if err := p.db.Put(incomingAnnounce); err != nil {
+				return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
+			}
+
+			if err := p.notifyAnnounce(incomingAnnounce); err != nil {
 				return err
 			}
 		}
@@ -168,18 +185,14 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 // This function will deference all of the above, insert them in the database as necessary,
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
-func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
+func (p *processor) dereferenceStatusFields(status *gtsmodel.Status, requestingUsername string) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
 	})
 	l.Debug("entering function")
 
-	var t transport.Transport
-	var err error
-	var username string
-	// TODO: dereference with a user that's addressed by the status
-	t, err = p.federator.GetTransportForUser(username)
+	t, err := p.federator.GetTransportForUser(requestingUsername)
 	if err != nil {
 		return fmt.Errorf("error creating transport: %s", err)
 	}
@@ -260,7 +273,7 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status) error {
 			}
 
 			// we just don't have it yet, so we should go get it....
-			accountable, err := p.federator.DereferenceRemoteAccount(username, uri)
+			accountable, err := p.federator.DereferenceRemoteAccount(requestingUsername, uri)
 			if err != nil {
 				// we can't dereference it so just skip it
 				l.Debugf("error dereferencing remote account with uri %s: %s", uri.String(), err)
@@ -311,5 +324,108 @@ func (p *processor) dereferenceAccountFields(account *gtsmodel.Account, requesti
 		return fmt.Errorf("error updating account in database: %s", err)
 	}
 
+	return nil
+}
+
+func (p *processor) dereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error {
+	if announce.GTSBoostedStatus == nil || announce.GTSBoostedStatus.URI == "" {
+		// we can't do anything unfortunately
+		return errors.New("dereferenceAnnounce: no URI to dereference")
+	}
+
+	// check if we already have the boosted status in the database
+	boostedStatus := &gtsmodel.Status{}
+	err := p.db.GetWhere([]db.Where{{Key: "uri", Value: announce.GTSBoostedStatus.URI}}, boostedStatus)
+	if err == nil {
+		// nice, we already have it so we don't actually need to dereference it from remote
+		announce.Content = boostedStatus.Content
+		announce.ContentWarning = boostedStatus.ContentWarning
+		announce.ActivityStreamsType = boostedStatus.ActivityStreamsType
+		announce.Sensitive = boostedStatus.Sensitive
+		announce.Language = boostedStatus.Language
+		announce.Text = boostedStatus.Text
+		announce.BoostOfID = boostedStatus.ID
+		announce.Visibility = boostedStatus.Visibility
+		announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
+		announce.GTSBoostedStatus = boostedStatus
+		return nil
+	}
+
+	// we don't have it so we need to dereference it
+	remoteStatusID, err := url.Parse(announce.GTSBoostedStatus.URI)
+	if err != nil {
+		return fmt.Errorf("dereferenceAnnounce: error parsing url %s: %s", announce.GTSBoostedStatus.URI, err)
+	}
+
+	statusable, err := p.federator.DereferenceRemoteStatus(requestingUsername, remoteStatusID)
+	if err != nil {
+		return fmt.Errorf("dereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.GTSBoostedStatus.URI, err)
+	}
+
+	// make sure we have the author account in the db
+	attributedToProp := statusable.GetActivityStreamsAttributedTo()
+	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
+		accountURI := iter.GetIRI()
+		if accountURI == nil {
+			continue
+		}
+
+		if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: accountURI.String()}}, &gtsmodel.Account{}); err == nil {
+			// we already have it, fine
+			continue
+		}
+
+		// we don't have the boosted status author account yet so dereference it
+		accountable, err := p.federator.DereferenceRemoteAccount(requestingUsername, accountURI)
+		if err != nil {
+			return fmt.Errorf("dereferenceAnnounce: error dereferencing remote account with id %s: %s", accountURI.String(), err)
+		}
+		account, err := p.tc.ASRepresentationToAccount(accountable, false)
+		if err != nil {
+			return fmt.Errorf("dereferenceAnnounce: error converting dereferenced account with id %s into account : %s", accountURI.String(), err)
+		}
+
+		// insert the dereferenced account so it gets an ID etc
+		if err := p.db.Put(account); err != nil {
+			return fmt.Errorf("dereferenceAnnounce: error putting dereferenced account with id %s into database : %s", accountURI.String(), err)
+		}
+
+		if err := p.dereferenceAccountFields(account, requestingUsername, false); err != nil {
+			return fmt.Errorf("dereferenceAnnounce: error dereferencing fields on account with id %s : %s", accountURI.String(), err)
+		}
+	}
+
+	// now convert the statusable into something we can understand
+	boostedStatus, err = p.tc.ASStatusToStatus(statusable)
+	if err != nil {
+		return fmt.Errorf("dereferenceAnnounce: error converting dereferenced statusable with id %s into status : %s", announce.GTSBoostedStatus.URI, err)
+	}
+
+	// put it in the db already so it gets an ID generated for it
+	if err := p.db.Put(boostedStatus); err != nil {
+		return fmt.Errorf("dereferenceAnnounce: error putting dereferenced status with id %s into the db: %s", announce.GTSBoostedStatus.URI, err)
+	}
+
+	// now dereference additional fields straight away (we're already async here so we have time)
+	if err := p.dereferenceStatusFields(boostedStatus, requestingUsername); err !=  nil {
+		return fmt.Errorf("dereferenceAnnounce: error dereferencing status fields for status with id %s: %s", announce.GTSBoostedStatus.URI, err)
+	}
+
+	// update with the newly dereferenced fields
+	if err := p.db.UpdateByID(boostedStatus.ID, boostedStatus); err != nil {
+		return fmt.Errorf("dereferenceAnnounce: error updating dereferenced status in the db: %s", err)
+	}
+
+	// we have everything we need!
+	announce.Content = boostedStatus.Content
+	announce.ContentWarning = boostedStatus.ContentWarning
+	announce.ActivityStreamsType = boostedStatus.ActivityStreamsType
+	announce.Sensitive = boostedStatus.Sensitive
+	announce.Language = boostedStatus.Language
+	announce.Text = boostedStatus.Text
+	announce.BoostOfID = boostedStatus.ID
+	announce.Visibility = boostedStatus.Visibility
+	announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
+	announce.GTSBoostedStatus = boostedStatus
 	return nil
 }
