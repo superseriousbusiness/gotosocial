@@ -49,6 +49,8 @@ const (
 	PublicKeyPath = "main-key"
 	// FollowPath used to generate the URI for an individual follow or follow request
 	FollowPath = "follow"
+	// UpdatePath is used to generate the URI for an account update
+	UpdatePath = "updates"
 )
 
 // APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
@@ -108,13 +110,19 @@ type UserURIs struct {
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
 // https://example.org/users/whatever_user/follow/41c7f33f-1060-48d9-84df-38dcb13cf0d8
 func GenerateURIForFollow(username string, protocol string, host string, thisFollowID string) string {
-	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, FollowPath, thisFollowID)
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
 }
 
 // GenerateURIForFollow returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/41c7f33f-1060-48d9-84df-38dcb13cf0d8
 func GenerateURIForLike(username string, protocol string, host string, thisFavedID string) string {
-	return fmt.Sprintf("%s://%s/%s/%s/%s", protocol, host, UsersPath, LikedPath, thisFavedID)
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
+}
+
+// GenerateURIForUpdate returns the AP URI for a new update activity -- something like:
+// https://example.org/users/whatever_user#updates/41c7f33f-1060-48d9-84df-38dcb13cf0d8
+func GenerateURIForUpdate(username string, protocol string, host string, thisUpdateID string) string {
+	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.

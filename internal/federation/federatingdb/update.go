@@ -120,6 +120,12 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("error converting to account: %s", err)
 		}
 
+		if updatedAcct.Domain == f.config.Host {
+			// no need to update local accounts
+			// in fact, if we do this will break the shit out of things so do NOT
+			return nil
+		}
+
 		if requestingAcct.URI != updatedAcct.URI {
 			return fmt.Errorf("update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
 		}

@@ -188,6 +188,13 @@ func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCrede
 		return nil, fmt.Errorf("could not fetch updated account %s: %s", authed.Account.ID, err)
 	}
 
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APObjectType:   gtsmodel.ActivityStreamsProfile,
+		APActivityType: gtsmodel.ActivityStreamsUpdate,
+		GTSModel:       updatedAccount,
+		OriginAccount:  updatedAccount,
+	}
+
 	acctSensitive, err := p.tc.AccountToMastoSensitive(updatedAccount)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert account into mastosensitive account: %s", err)

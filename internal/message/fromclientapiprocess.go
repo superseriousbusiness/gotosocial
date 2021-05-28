@@ -88,6 +88,16 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
+		switch clientMsg.APObjectType {
+		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
+			// UPDATE ACCOUNT/PROFILE
+			account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("account was not parseable as *gtsmodel.Account")
+			}
+
+			return p.federateAccountUpdate(account, clientMsg.OriginAccount)
+		}
 	case gtsmodel.ActivityStreamsAccept:
 		// ACCEPT
 		switch clientMsg.APObjectType {
@@ -277,7 +287,27 @@ func (p *processor) federateAnnounce(boostWrapperStatus *gtsmodel.Status, boosti
 	if err != nil {
 		return fmt.Errorf("federateAnnounce: error parsing outboxURI %s: %s", boostingAccount.OutboxURI, err)
 	}
-	
+
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, announce)
+	return err
+}
+
+func (p *processor) federateAccountUpdate(updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
+	person, err := p.tc.AccountToAS(updatedAccount)
+	if err != nil {
+		return fmt.Errorf("federateAccountUpdate: error converting account to person: %s", err)
+	}
+
+	update, err := p.tc.WrapPersonInUpdate(person, originAccount)
+	if err != nil {
+		return fmt.Errorf("federateAccountUpdate: error wrapping person in update: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateAnnounce: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, update)
 	return err
 }

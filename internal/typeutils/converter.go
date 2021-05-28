@@ -141,6 +141,13 @@ type TypeConverter interface {
 	FollowRequestToFollow(f *gtsmodel.FollowRequest) *gtsmodel.Follow
 	// StatusToBoost wraps the given status into a boosting status.
 	StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error)
+
+	/*
+		WRAPPER CONVENIENCE FUNCTIONS
+	*/
+	
+	// WrapPersonInUpdate
+	WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error)
 }
 
 type converter struct {
