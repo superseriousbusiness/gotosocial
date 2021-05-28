@@ -24,7 +24,7 @@ const (
 	// ActivityStreamsAudio https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
 	ActivityStreamsAudio = "Audio"
 	// ActivityStreamsDocument https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
-	ActivityStreamsDocument = "Event"
+	ActivityStreamsDocument = "Document"
 	// ActivityStreamsEvent https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
 	ActivityStreamsEvent = "Event"
 	// ActivityStreamsImage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image

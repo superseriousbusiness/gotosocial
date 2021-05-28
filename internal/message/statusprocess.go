@@ -291,6 +291,15 @@ func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*api
 		return nil, NewErrorInternalError(err)
 	}
 
+	// send it to the processor for async processing
+	p.fromClientAPI <- gtsmodel.FromClientAPI{
+		APObjectType:   gtsmodel.ActivityStreamsAnnounce,
+		APActivityType: gtsmodel.ActivityStreamsCreate,
+		GTSModel:       boostWrapperStatus,
+		OriginAccount:  authed.Account,
+		TargetAccount:  targetAccount,
+	}
+
 	// return the frontend representation of the new status to the submitter
 	mastoStatus, err := p.tc.StatusToMasto(boostWrapperStatus, authed.Account, authed.Account, targetAccount, nil, targetStatus)
 	if err != nil {

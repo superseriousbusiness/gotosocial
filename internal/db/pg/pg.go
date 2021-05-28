@@ -963,7 +963,7 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 	if targetStatus.InReplyToAccountID != "" {
 		repliedToAccount := &gtsmodel.Account{}
 		if err := ps.conn.Model(repliedToAccount).Where("id = ?", targetStatus.InReplyToAccountID).Select(); err != nil {
-			return accounts, err
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting repliedToAcount with id %s: %s", targetStatus.InReplyToAccountID, err)
 		}
 		accounts.ReplyToAccount = repliedToAccount
 	}
@@ -973,11 +973,11 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 		// retrieve the boosted status first
 		boostedStatus := &gtsmodel.Status{}
 		if err := ps.conn.Model(boostedStatus).Where("id = ?", targetStatus.BoostOfID).Select(); err != nil {
-			return accounts, err
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatus with id %s: %s", targetStatus.BoostOfID, err)
 		}
 		boostedAccount := &gtsmodel.Account{}
 		if err := ps.conn.Model(boostedAccount).Where("id = ?", boostedStatus.AccountID).Select(); err != nil {
-			return accounts, err
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedAccount with id %s: %s", boostedStatus.AccountID, err)
 		}
 		accounts.BoostedAccount = boostedAccount
 
@@ -985,7 +985,7 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 		if boostedStatus.InReplyToAccountID != "" {
 			boostedStatusRepliedToAccount := &gtsmodel.Account{}
 			if err := ps.conn.Model(boostedStatusRepliedToAccount).Where("id = ?", boostedStatus.InReplyToAccountID).Select(); err != nil {
-				return accounts, err
+				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatusRepliedToAccount with id %s: %s", boostedStatus.InReplyToAccountID, err)
 			}
 			accounts.BoostedReplyToAccount = boostedStatusRepliedToAccount
 		}
@@ -996,12 +996,12 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 
 		mention := &gtsmodel.Mention{}
 		if err := ps.conn.Model(mention).Where("id = ?", mentionID).Select(); err != nil {
-			return accounts, fmt.Errorf("error getting mention with id %s: %s", mentionID, err)
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mention with id %s: %s", mentionID, err)
 		}
 
 		mentionedAccount := &gtsmodel.Account{}
 		if err := ps.conn.Model(mentionedAccount).Where("id = ?", mention.TargetAccountID).Select(); err != nil {
-			return accounts, fmt.Errorf("error getting mentioned account: %s", err)
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentioned account: %s", err)
 		}
 		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
 	}

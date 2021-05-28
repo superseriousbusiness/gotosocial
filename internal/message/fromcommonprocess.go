@@ -158,3 +158,7 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 
 	return nil
 }
+
+func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
+	return nil
+}
