@@ -454,13 +454,9 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsFollow,
 		APActivityType: gtsmodel.ActivityStreamsCreate,
-		GTSModel: &gtsmodel.Follow{
-			AccountID:       authed.Account.ID,
-			TargetAccountID: form.TargetAccountID,
-			URI:             fr.URI,
-		},
-		OriginAccount: authed.Account,
-		TargetAccount: targetAcct,
+		GTSModel:       fr,
+		OriginAccount:  authed.Account,
+		TargetAccount:  targetAcct,
 	}
 
 	// return whatever relationship results from this

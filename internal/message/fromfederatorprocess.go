@@ -87,7 +87,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			// CREATE A FOLLOW REQUEST
 			incomingFollowRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
 			if !ok {
-				return errors.New("like was not parseable as *gtsmodel.FollowRequest")
+				return errors.New("incomingFollowRequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
 			if err := p.notifyFollowRequest(incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {

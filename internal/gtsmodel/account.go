@@ -76,13 +76,13 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool
+	Locked bool `pg:",default:false"`
 	// Should this account be shown in the instance's profile directory?
-	Discoverable bool
+	Discoverable bool `pg:",default:false"`
 	// Default post privacy for this account
-	Privacy Visibility
+	Privacy Visibility `pg:",default:'public'"`
 	// Set posts from this account to sensitive by default?
-	Sensitive bool
+	Sensitive bool `pg:",default:false"`
 	// What language does this account post in?
 	Language string `pg:",default:'en'"`
 
