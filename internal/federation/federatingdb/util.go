@@ -130,6 +130,19 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 				return idProp.GetIRI(), nil
 			}
 		}
+	case gtsmodel.ActivityStreamsAnnounce:
+		// ANNOUNCE aka BOOST
+		// ID might already be set on an announce we've created, so check it here and return it if it is
+		announce, ok := t.(vocab.ActivityStreamsAnnounce)
+		if !ok {
+			return nil, errors.New("newid: fave couldn't be parsed into vocab.ActivityStreamsAnnounce")
+		}
+		idProp := announce.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
 	}
 
 	// fallback default behavior: just return a random UUID after our protocol and host

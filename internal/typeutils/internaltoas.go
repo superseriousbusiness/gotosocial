@@ -640,3 +640,76 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 
 	return like, nil
 }
+
+func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
+	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
+	if boostWrapperStatus.GTSBoostedStatus == nil {
+		b := &gtsmodel.Status{}
+		if err := c.db.GetByID(boostWrapperStatus.BoostOfID, b); err != nil {
+			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
+		}
+		boostWrapperStatus = b
+	}
+
+	// create the announce
+	announce := streams.NewActivityStreamsAnnounce()
+
+	// set the actor
+	boosterURI, err := url.Parse(boostingAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostingAccount.URI, err)
+	}
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorProp.AppendIRI(boosterURI)
+	announce.SetActivityStreamsActor(actorProp)
+
+	// set the ID
+	boostIDURI, err := url.Parse(boostWrapperStatus.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.URI, err)
+	}
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(boostIDURI)
+	announce.SetJSONLDId(idProp)
+
+	// set the object
+	boostedStatusURI, err := url.Parse(boostWrapperStatus.GTSBoostedStatus.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.GTSBoostedStatus.URI, err)
+	}
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	objectProp.AppendIRI(boostedStatusURI)
+	announce.SetActivityStreamsObject(objectProp)
+
+	// set the published time
+	publishedProp := streams.NewActivityStreamsPublishedProperty()
+	publishedProp.Set(boostWrapperStatus.CreatedAt)
+	announce.SetActivityStreamsPublished(publishedProp)
+
+	// set the to
+	followersURI, err := url.Parse(boostingAccount.FollowersURI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostingAccount.FollowersURI, err)
+	}
+	toProp := streams.NewActivityStreamsToProperty()
+	toProp.AppendIRI(followersURI)
+	announce.SetActivityStreamsTo(toProp)
+
+	// set the cc
+	boostedURI, err := url.Parse(boostedAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostedAccount.URI, err)
+	}
+
+	publicURI, err := url.Parse(asPublicURI)
+	if err != nil {
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", asPublicURI, err)
+	}
+
+	ccProp := streams.NewActivityStreamsCcProperty()
+	ccProp.AppendIRI(boostedURI)
+	ccProp.AppendIRI(publicURI)
+	announce.SetActivityStreamsCc(ccProp)
+
+	return announce, nil
+}

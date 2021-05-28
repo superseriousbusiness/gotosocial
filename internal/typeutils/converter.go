@@ -130,6 +130,8 @@ type TypeConverter interface {
 	AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
 	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.
 	FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error)
+	// BoostToAS converts a gts model boost into an activityStreams ANNOUNCE, suitable for federation
+	BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error)
 
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL

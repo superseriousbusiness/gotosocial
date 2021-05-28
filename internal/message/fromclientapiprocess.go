@@ -72,6 +72,19 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 
 			return p.federateFave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+
+		case gtsmodel.ActivityStreamsAnnounce:
+			// CREATE BOOST/ANNOUNCE
+			boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("boost was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.notifyAnnounce(boostWrapperStatus); err != nil {
+				return err
+			}
+
+			return p.federateAnnounce(boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -251,5 +264,20 @@ func (p *processor) federateFave(fave *gtsmodel.StatusFave, originAccount *gtsmo
 		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asFave)
+	return err
+}
+
+func (p *processor) federateAnnounce(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
+	announce, err := p.tc.BoostToAS(boostWrapperStatus, boostingAccount, boostedAccount)
+	if err != nil {
+		return fmt.Errorf("federateAnnounce: error converting status to announce: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(boostingAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateAnnounce: error parsing outboxURI %s: %s", boostingAccount.OutboxURI, err)
+	}
+	
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, announce)
 	return err
 }
