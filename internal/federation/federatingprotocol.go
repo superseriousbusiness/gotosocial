@@ -26,6 +26,7 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -310,7 +311,7 @@ func (f *federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
 // logic to be used, but the implementation must not modify it.
 func (f *federator) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
 	// TODO
-	return nil, nil
+	return []*url.URL{}, nil
 }
 
 // GetInbox returns the OrderedCollection inbox of the actor for this
@@ -324,5 +325,5 @@ func (f *federator) FilterForwarding(ctx context.Context, potentialRecipients []
 func (f *federator) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
-	return nil, nil
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }

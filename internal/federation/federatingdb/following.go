@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -28,8 +29,16 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
 
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
-		return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+	if util.IsUserPath(actorIRI) {
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
+			return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+		}
+	} else if util.IsFollowingPath(actorIRI) {
+		if err := f.db.GetWhere([]db.Where{{Key: "following_uri", Value: actorIRI.String()}}, acct); err != nil {
+			return nil, fmt.Errorf("db error getting account with following uri %s: %s", actorIRI.String(), err)
+		}
+	} else {
+		return nil, fmt.Errorf("could not parse actor IRI %s as users or following path", actorIRI.String())
 	}
 
 	acctFollowing := []gtsmodel.Follow{}

@@ -100,7 +100,7 @@
   * [ ] Timelines
     * [ ] /api/v1/timelines/public GET                      (See the public/federated timeline)
     * [ ] /api/v1/timelines/tag/:hashtag GET                (Get public statuses that use hashtag)
-    * [ ] /api/v1/timelines/home GET                        (View statuses from followed users)
+    * [x] /api/v1/timelines/home GET                        (View statuses from followed users)
     * [ ] /api/v1/timelines/list/:list_id GET               (Get statuses in given list)
   * [ ] Conversations
     * [ ] /api/v1/conversations GET                         (Get a list of direct message convos)
@@ -121,8 +121,8 @@
   * [ ] Streaming
     * [ ] /api/v1/streaming WEBSOCKETS                      (Stream live events to user via websockets)
   * [ ] Notifications
-    * [ ] /api/v1/notifications GET                         (Get list of notifications)
-    * [ ] /api/v1/notifications/:id GET                     (Get a single notification)
+    * [x] /api/v1/notifications GET                         (Get list of notifications)
+    * [x] /api/v1/notifications/:id GET                     (Get a single notification)
     * [ ] /api/v1/notifications/clear POST                  (Clear all notifications)
     * [ ] /api/v1/notifications/:id POST                    (Clear a single notification)
   * [ ] Push
@@ -130,8 +130,8 @@
     * [ ] /api/v1/push/subscription GET                     (Get current subscription)
     * [ ] /api/v1/push/subscription PUT                     (Change notification types)
     * [ ] /api/v1/push/subscription DELETE                  (Delete current subscription)
-  * [ ] Search
-    * [ ] /api/v2/search GET                                (Get search query results)
+  * [x] Search
+    * [x] /api/v2/search GET                                (Get search query results)
   * [ ] Instance
     * [x] /api/v1/instance GET                              (Get instance information)
     * [ ] /api/v1/instance PATCH                            (Update instance information)
@@ -174,7 +174,7 @@
   * [ ] Federation modes
     * [ ] 'Slow' federation
       * [ ] Reputation scoring system for instances
-    * [ ] 'Greedy' federation
+    * [x] 'Greedy' federation
     * [ ] No federation (insulate this instance from the Fediverse)
       * [ ] Allowlist
   * [x] Secure HTTP signatures (creation and validation)

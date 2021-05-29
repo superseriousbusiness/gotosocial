@@ -109,6 +109,9 @@ type Processor interface {
 	// NotificationsGet
 	NotificationsGet(authed *oauth.Auth, limit int, maxID string) ([]*apimodel.Notification, ErrorWithCode)
 
+	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
+	SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, ErrorWithCode)
+
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
 	// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.

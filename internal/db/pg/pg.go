@@ -223,7 +223,12 @@ func (ps *postgresService) GetWhere(where []db.Where, i interface{}) error {
 
 	q := ps.conn.Model(i)
 	for _, w := range where {
-		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+		if w.CaseInsensitive {
+			q = q.Where("LOWER(?) = LOWER(?)", pg.Safe(w.Key), w.Value)
+		} else {
+			q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+		}
+
 	}
 
 	if err := q.Select(); err != nil {

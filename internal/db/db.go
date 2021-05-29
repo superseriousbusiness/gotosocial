@@ -45,8 +45,9 @@ func (e ErrAlreadyExists) Error() string {
 }
 
 type Where struct {
-	Key   string
-	Value interface{}
+	Key             string
+	Value           interface{}
+	CaseInsensitive bool
 }
 
 // DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).

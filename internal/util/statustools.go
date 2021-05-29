@@ -77,6 +77,11 @@ func ExtractMentionParts(mention string) (username, domain string, err error) {
 	return
 }
 
+// IsMention returns true if the passed string looks like @whatever@example.org
+func IsMention(mention string) bool {
+	return mentionNameRegex.MatchString(strings.ToLower(mention))
+}
+
 // unique returns a deduplicated version of a given string slice.
 func unique(s []string) []string {
 	keys := make(map[string]bool)

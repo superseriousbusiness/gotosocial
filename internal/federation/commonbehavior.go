@@ -25,6 +25,7 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -59,7 +60,7 @@ import (
 func (f *federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
-	return nil, false, nil
+	return ctx, false, nil
 }
 
 // AuthenticateGetOutbox delegates the authentication of a GET to an
@@ -84,7 +85,7 @@ func (f *federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWri
 func (f *federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
-	return nil, false, nil
+	return ctx, false, nil
 }
 
 // GetOutbox returns the OrderedCollection inbox of the actor for this
@@ -98,7 +99,7 @@ func (f *federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWr
 func (f *federator) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
-	return nil, nil
+	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
 // NewTransport returns a new Transport on behalf of a specific actor.

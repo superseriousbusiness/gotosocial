@@ -42,6 +42,10 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 
 	// Strategy: create a new lock, if stored, continue. Otherwise, lock the
 	// existing mutex.
+	if id == nil {
+		return errors.New("Lock: id was nil")
+	}
+
 	mu := &sync.Mutex{}
 	mu.Lock() // Optimistically lock if we do store it.
 	i, loaded := f.locks.LoadOrStore(id.String(), mu)
@@ -59,6 +63,9 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 	// Once Go-Fed is done calling Database methods, the relevant `id`
 	// entries are unlocked.
+	if id == nil {
+		return errors.New("Unlock: id was nil")
+	}
 
 	i, ok := f.locks.Load(id.String())
 	if !ok {
