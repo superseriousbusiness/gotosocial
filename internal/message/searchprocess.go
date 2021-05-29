@@ -228,7 +228,7 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
 	if domain == p.config.Host {
-		if p.db.GetLocalAccountByUsername(username, maybeAcct); err != nil {
+		if err = p.db.GetLocalAccountByUsername(username, maybeAcct); err != nil {
 			return
 		}
 		foundAccount = maybeAcct

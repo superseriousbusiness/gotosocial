@@ -409,7 +409,7 @@ func (p *processor) dereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 	}
 
 	// now dereference additional fields straight away (we're already async here so we have time)
-	if err := p.dereferenceStatusFields(boostedStatus, requestingUsername); err !=  nil {
+	if err := p.dereferenceStatusFields(boostedStatus, requestingUsername); err != nil {
 		return fmt.Errorf("dereferenceAnnounce: error dereferencing status fields for status with id %s: %s", announce.GTSBoostedStatus.URI, err)
 	}
 
