@@ -145,7 +145,7 @@ type TypeConverter interface {
 	/*
 		WRAPPER CONVENIENCE FUNCTIONS
 	*/
-	
+
 	// WrapPersonInUpdate
 	WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error)
 }

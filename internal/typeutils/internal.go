@@ -40,10 +40,10 @@ func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.
 		URL: boostWrapperStatusURL,
 
 		// the boosted status is not created now, but the boost certainly is
-		CreatedAt:                time.Now(),
-		UpdatedAt:                time.Now(),
-		Local:                    local,
-		AccountID:                boostingAccount.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Local:     local,
+		AccountID: boostingAccount.ID,
 
 		// replies can be boosted, but boosts are never replies
 		InReplyToID:        "",

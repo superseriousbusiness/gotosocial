@@ -40,6 +40,9 @@ type Federator interface {
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
+	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
+	// account, or an error if it doesn't exist or can't be retrieved.
+	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
 	// DereferenceRemoteAccount can be used to get the representation of a remote account, based on the account ID (which is a URI).
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)

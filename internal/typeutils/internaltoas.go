@@ -252,6 +252,7 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 		headerImage.SetActivityStreamsUrl(headerURLProperty)
 
 		headerProperty.AppendActivityStreamsImage(headerImage)
+		person.SetActivityStreamsImage(headerProperty)
 	}
 
 	return person, nil
