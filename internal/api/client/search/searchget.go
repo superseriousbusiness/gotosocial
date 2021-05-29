@@ -128,16 +128,16 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 	}
 
 	searchQuery := &model.SearchQuery{
-		AccountID: accountID,
-		MaxID: maxID,
-		MinID: minID,
-		Type: searchType,
+		AccountID:         accountID,
+		MaxID:             maxID,
+		MinID:             minID,
+		Type:              searchType,
 		ExcludeUnreviewed: excludeUnreviewed,
-		Query: query,
-		Resolve: resolve,
-		Limit: limit,
-		Offset: offset,
-		Following: following,
+		Query:             query,
+		Resolve:           resolve,
+		Limit:             limit,
+		Offset:            offset,
+		Following:         following,
 	}
 
 	results, errWithCode := m.processor.SearchGet(authed, searchQuery)

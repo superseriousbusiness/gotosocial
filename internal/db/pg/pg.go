@@ -1148,7 +1148,6 @@ func (ps *postgresService) GetNotificationsForAccount(accountID string, limit in
 
 	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
 
-
 	if maxID != "" {
 		n := &gtsmodel.Notification{}
 		if err := ps.conn.Model(n).Where("id = ?", maxID).Select(); err != nil {
