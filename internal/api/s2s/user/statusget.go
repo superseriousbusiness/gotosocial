@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// StatusGETHandler serves the target status as an activitystreams NOTE so that other AP servers can parse it.
 func (m *Module) StatusGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func": "StatusGETHandler",

@@ -19,13 +19,13 @@
 package testrig
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage storage.Storage, federator federation.Federator) message.Processor {
-	return message.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, NewTestLog())
+func NewTestProcessor(db db.DB, storage blob.Storage, federator federation.Federator) processing.Processor {
+	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, NewTestLog())
 }

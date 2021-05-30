@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
 func (m *Module) FollowingGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func": "FollowingGETHandler",

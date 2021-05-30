@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
@@ -42,7 +42,7 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 
 	posted, err := m.processor.InboxPost(c.Request.Context(), c.Writer, c.Request)
 	if err != nil {
-		if withCode, ok := err.(message.ErrorWithCode); ok {
+		if withCode, ok := err.(processing.ErrorWithCode); ok {
 			l.Debug(withCode.Error())
 			c.JSON(withCode.Code(), withCode.Safe())
 			return

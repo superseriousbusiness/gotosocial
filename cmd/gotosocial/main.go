@@ -23,11 +23,10 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/action"
-	"github.com/superseriousbusiness/gotosocial/internal/clitools/admin/account"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/account"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 
@@ -259,7 +258,7 @@ func main() {
 						Name:  "start",
 						Usage: "start the gotosocial server",
 						Action: func(c *cli.Context) error {
-							return runAction(c, gotosocial.Run)
+							return runAction(c, server.Start)
 						},
 					},
 				},
@@ -362,19 +361,19 @@ func main() {
 					},
 				},
 			},
-			{
-				Name:  "db",
-				Usage: "database-related tasks and utils",
-				Subcommands: []*cli.Command{
-					{
-						Name:  "init",
-						Usage: "initialize a database with the required schema for gotosocial; has no effect & is safe to run on an already-initialized db",
-						Action: func(c *cli.Context) error {
-							return runAction(c, db.Initialize)
-						},
-					},
-				},
-			},
+			// {
+			// 	Name:  "db",
+			// 	Usage: "database-related tasks and utils",
+			// 	Subcommands: []*cli.Command{
+			// 		{
+			// 			Name:  "init",
+			// 			Usage: "initialize a database with the required schema for gotosocial; has no effect & is safe to run on an already-initialized db",
+			// 			Action: func(c *cli.Context) error {
+			// 				return runAction(c, db.Initialize)
+			// 			},
+			// 		},
+			// 	},
+			// },
 			{
 				Name:  "testrig",
 				Usage: "gotosocial testrig tasks",
@@ -399,7 +398,7 @@ func main() {
 
 // runAction builds up the config and logger necessary for any
 // gotosocial action, and then executes the action.
-func runAction(c *cli.Context, a action.GTSAction) error {
+func runAction(c *cli.Context, a cliactions.GTSAction) error {
 
 	// create a new *config.Config based on the config path provided...
 	conf, err := config.FromFile(c.String(config.GetFlagNames().ConfigPath))

@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -43,12 +43,12 @@ const BasePathWithID = BasePath + "/:" + IDKey
 // Module implements the ClientAPIModule interface for media
 type Module struct {
 	config    *config.Config
-	processor message.Processor
+	processor processing.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new auth module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,

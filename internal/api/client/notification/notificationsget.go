@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
 func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "NotificationsGETHandler",

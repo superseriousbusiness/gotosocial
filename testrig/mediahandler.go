@@ -19,13 +19,13 @@
 package testrig
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // NewTestMediaHandler returns a media handler with the default test config, the default test logger,
 // and the given db and storage.
-func NewTestMediaHandler(db db.DB, storage storage.Storage) media.Handler {
+func NewTestMediaHandler(db db.DB, storage blob.Storage) media.Handler {
 	return media.New(NewTestConfig(), db, storage, NewTestLog())
 }

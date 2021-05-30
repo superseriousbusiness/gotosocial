@@ -26,6 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Flags and usage strings for configuration.
 const (
 	UsernameFlag  = "username"
 	UsernameUsage = "the username to create/delete/etc"

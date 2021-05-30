@@ -24,7 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -39,7 +39,7 @@ const (
 	SinceIDKey = "since_id"
 	// MinIDKey is the url query for returning results immediately newer than the given ID
 	MinIDKey = "min_id"
-	// Limit key is for specifying maximum number of results to return.
+	// LimitKey is for specifying maximum number of results to return.
 	LimitKey = "limit"
 	// LocalKey is for specifying whether only local statuses should be returned
 	LocalKey = "local"
@@ -48,12 +48,12 @@ const (
 // Module implements the ClientAPIModule interface for everything relating to viewing timelines
 type Module struct {
 	config    *config.Config
-	processor message.Processor
+	processor processing.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new timeline module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,

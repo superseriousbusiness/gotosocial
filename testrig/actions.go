@@ -29,7 +29,6 @@ import (
 	"syscall"
 
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
@@ -39,13 +38,14 @@ import (
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 )
 
 // Run creates and starts a gotosocial testrig server
-var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
+var Run cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
 	c := NewTestConfig()
 	dbService := NewTestDB()
 	federatingDB := NewTestFederatingDB(dbService)
@@ -99,7 +99,7 @@ var Run action.GTSAction = func(ctx context.Context, _ *config.Config, log *logr
 		}
 	}
 
-	gts, err := gotosocial.New(dbService, router, federator, c)
+	gts, err := gotosocial.NewServer(dbService, router, federator, c)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountFollowersGETHandler serves the followers of the requested account, if they're visible to the requester.
+// AccountFollowingGETHandler serves the following of the requested account, if they're visible to the requester.
 func (m *Module) AccountFollowingGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

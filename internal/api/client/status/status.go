@@ -26,7 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -75,12 +75,12 @@ const (
 // Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with statuses
 type Module struct {
 	config    *config.Config
-	processor message.Processor
+	processor processing.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,
