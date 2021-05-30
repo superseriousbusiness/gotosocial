@@ -107,7 +107,7 @@ type Processor interface {
 	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode)
 
 	// NotificationsGet
-	NotificationsGet(authed *oauth.Auth, limit int, maxID string) ([]*apimodel.Notification, ErrorWithCode)
+	NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, ErrorWithCode)
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
 	SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, ErrorWithCode)
@@ -126,9 +126,13 @@ type Processor interface {
 	StatusGet(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	// StatusGetContext returns the context (previous and following posts) from the given status ID
+	StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, ErrorWithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
 	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode)
+	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
+	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS

@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package notification
+package emoji
 
 import (
 	"net/http"
@@ -29,30 +29,18 @@ import (
 )
 
 const (
-	// IDKey is for notification UUIDs
-	IDKey = "id"
-	// BasePath is the base path for serving the notification API
-	BasePath = "/api/v1/notifications"
-	// BasePathWithID is just the base path with the ID key in it.
-	// Use this anywhere you need to know the ID of the notification being queried.
-	BasePathWithID = BasePath + "/:" + IDKey
-
-	// MaxIDKey is the url query for setting a max notification ID to return
-	MaxIDKey = "max_id"
-	// LimitKey is for specifying maximum number of notifications to return.
-	LimitKey = "limit"
-	// SinceIDKey
-	SinceIDKey = "since_id"
+	// BasePath is the base path for serving the emoji API
+	BasePath = "/api/v1/custom_emojis"
 )
 
-// Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with notifications
+// Module implements the ClientAPIModule interface for everything related to emoji
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
 	log       *logrus.Logger
 }
 
-// New returns a new notification module
+// New returns a new emoji module
 func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
@@ -63,6 +51,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, BasePath, m.NotificationsGETHandler)
+	r.AttachHandler(http.MethodGet, BasePath, m.EmojisGETHandler)
 	return nil
 }

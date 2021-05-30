@@ -98,6 +98,8 @@ func (m *Module) Route(r router.Router) error {
 
 	r.AttachHandler(http.MethodPost, ReblogPath, m.StatusBoostPOSTHandler)
 
+	r.AttachHandler(http.MethodGet, ContextPath, m.StatusContextGETHandler)
+
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
 	return nil
 }

@@ -28,12 +28,35 @@ import (
 )
 
 func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode) {
-	l := p.log.WithField("func", "HomeTimelineGet")
-
 	statuses, err := p.db.GetHomeTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, NewErrorInternalError(err)
 	}
+
+	s, err := p.filterStatuses(authed, statuses)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	return s, nil
+}
+
+func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode) {
+	statuses, err := p.db.GetPublicTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	s, err := p.filterStatuses(authed, statuses)
+	if err != nil {
+		return nil, NewErrorInternalError(err)
+	}
+
+	return s, nil
+}
+
+func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Status) ([]apimodel.Status, error) {
+	l := p.log.WithField("func", "filterStatuses")
 
 	apiStatuses := []apimodel.Status{}
 	for _, s := range statuses {

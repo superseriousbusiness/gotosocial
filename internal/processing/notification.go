@@ -23,10 +23,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string) ([]*apimodel.Notification, ErrorWithCode) {
+func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, ErrorWithCode) {
 	l := p.log.WithField("func", "NotificationsGet")
 
-	notifs, err := p.db.GetNotificationsForAccount(authed.Account.ID, limit, maxID)
+	notifs, err := p.db.GetNotificationsForAccount(authed.Account.ID, limit, maxID, sinceID)
 	if err != nil {
 		return nil, NewErrorInternalError(err)
 	}

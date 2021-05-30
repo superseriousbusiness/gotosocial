@@ -479,3 +479,7 @@ func (p *processor) StatusUnfave(authed *oauth.Auth, targetStatusID string) (*ap
 
 	return mastoStatus, nil
 }
+
+func (p *processor) StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, ErrorWithCode) {
+	return &apimodel.Context{}, nil
+}

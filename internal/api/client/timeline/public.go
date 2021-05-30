@@ -26,17 +26,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// HomeTimelineGETHandler serves status from the HOME timeline.
-//
-// Several different filters might be passed into this function in the query:
-//
-// 	max_id -- the maximum ID of the status to show
-//  since_id -- Return results newer than id
-// 	min_id -- Return results immediately newer than id
-// 	limit -- show only limit number of statuses
-// 	local -- Return only local statuses?
-func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "HomeTimelineGETHandler")
+// PublicTimelineGETHandler handles PUBLIC timeline requests.
+// This includes requests to local, which are actually just public
+// requests with a filter.
+func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
+	l := m.log.WithField("func", "PublicTimelineGETHandler")
 
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -87,7 +81,7 @@ func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
 		local = i
 	}
 
-	statuses, errWithCode := m.processor.HomeTimelineGet(authed, maxID, sinceID, minID, limit, local)
+	statuses, errWithCode := m.processor.PublicTimelineGet(authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
 		l.Debugf("error from processor account statuses get: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

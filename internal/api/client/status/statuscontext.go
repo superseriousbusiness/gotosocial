@@ -16,64 +16,45 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package notification
+package status
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
-func (m *Module) NotificationsGETHandler(c *gin.Context) {
+// StatusContextGetHandler returns the context around the given status ID.
+func (m *Module) StatusContextGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
-		"func":        "NotificationsGETHandler",
+		"func":        "StatusContextGETHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),
 		"origin_ip":   c.ClientIP(),
 	})
 	l.Debugf("entering function")
 
-	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Errorf("error authing status faved by request: %s", err)
+		l.Errorf("error authing status context request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 64)
-		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
-			return
-		}
-		limit = int(i)
+	targetStatusID := c.Param(IDKey)
+	if targetStatusID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id provided"})
+		return
 	}
 
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
-	}
-
-	notifs, errWithCode := m.processor.NotificationsGet(authed, limit, maxID, sinceID)
+	statusContext, errWithCode := m.processor.StatusGetContext(authed, targetStatusID)
 	if errWithCode != nil {
-		l.Debugf("error processing notifications get: %s", errWithCode.Error())
+		l.Debugf("error getting status context: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, notifs)
+	c.JSON(http.StatusOK, statusContext)
 }

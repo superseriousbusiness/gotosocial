@@ -1,5 +1,3 @@
-package timeline
-
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
@@ -18,6 +16,8 @@ package timeline
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+package timeline
+
 import (
 	"net/http"
 
@@ -33,6 +33,8 @@ const (
 	BasePath = "/api/v1/timelines"
 	// HomeTimeline is the path for the home timeline
 	HomeTimeline = BasePath + "/home"
+	// PublicTimeline is the path for the public (and public local) timeline
+	PublicTimeline = BasePath + "/public"
 	// MaxIDKey is the url query for setting a max status ID to return
 	MaxIDKey = "max_id"
 	// SinceIDKey is the url query for returning results newer than the given ID
@@ -64,5 +66,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
+	r.AttachHandler(http.MethodGet, PublicTimeline, m.PublicTimelineGETHandler)
 	return nil
 }

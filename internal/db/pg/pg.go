@@ -1133,6 +1133,22 @@ func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID str
 		q = q.Where("status.created_at < ?", s.CreatedAt)
 	}
 
+	if minID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("status.created_at > ?", s.CreatedAt)
+	}
+
+	if sinceID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("status.created_at > ?", s.CreatedAt)
+	}
+
 	err := q.Select()
 	if err != nil {
 		if err != pg.ErrNoRows {
@@ -1143,7 +1159,53 @@ func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID str
 	return statuses, nil
 }
 
-func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string) ([]*gtsmodel.Notification, error) {
+func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
+	statuses := []*gtsmodel.Status{}
+
+	q := ps.conn.Model(&statuses).
+		Where("visibility = ?", gtsmodel.VisibilityPublic).
+		Limit(limit).
+		Order("created_at DESC")
+
+	if maxID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("created_at < ?", s.CreatedAt)
+	}
+
+	if minID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("created_at > ?", s.CreatedAt)
+	}
+
+	if sinceID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("created_at > ?", s.CreatedAt)
+	}
+
+	if local {
+		q = q.Where("local = ?", local)
+	}
+
+	err := q.Select()
+	if err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
+		}
+	}
+
+	return statuses, nil
+}
+
+func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error) {
 	notifications := []*gtsmodel.Notification{}
 
 	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
@@ -1154,6 +1216,14 @@ func (ps *postgresService) GetNotificationsForAccount(accountID string, limit in
 			return nil, err
 		}
 		q = q.Where("created_at < ?", n.CreatedAt)
+	}
+
+	if sinceID != "" {
+		n := &gtsmodel.Notification{}
+		if err := ps.conn.Model(n).Where("id = ?", sinceID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("created_at > ?", n.CreatedAt)
 	}
 
 	if limit != 0 {
