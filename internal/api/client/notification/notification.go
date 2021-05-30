@@ -24,7 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -39,19 +39,19 @@ const (
 
 	// MaxIDKey is the url query for setting a max notification ID to return
 	MaxIDKey = "max_id"
-	// Limit key is for specifying maximum number of notifications to return.
+	// LimitKey is for specifying maximum number of notifications to return.
 	LimitKey = "limit"
 )
 
 // Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with notifications
 type Module struct {
 	config    *config.Config
-	processor message.Processor
+	processor processing.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new notification module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,

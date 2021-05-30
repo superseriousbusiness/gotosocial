@@ -22,12 +22,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 )
 
 // NewTestStorage returns a new in memory storage with the default test config
-func NewTestStorage() storage.Storage {
-	s, err := storage.NewInMem(NewTestConfig(), NewTestLog())
+func NewTestStorage() blob.Storage {
+	s, err := blob.NewInMem(NewTestConfig(), NewTestLog())
 	if err != nil {
 		panic(err)
 	}
@@ -35,7 +35,7 @@ func NewTestStorage() storage.Storage {
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
-func StandardStorageSetup(s storage.Storage, relativePath string) {
+func StandardStorageSetup(s blob.Storage, relativePath string) {
 	storedA := newTestStoredAttachments()
 	a := NewTestAttachments()
 	for k, paths := range storedA {
@@ -92,7 +92,7 @@ func StandardStorageSetup(s storage.Storage, relativePath string) {
 }
 
 // StandardStorageTeardown deletes everything in storage so that it's clean for the next test
-func StandardStorageTeardown(s storage.Storage) {
+func StandardStorageTeardown(s blob.Storage) {
 	keys, err := s.ListKeys()
 	if err != nil {
 		panic(err)

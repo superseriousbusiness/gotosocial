@@ -61,7 +61,7 @@ const (
 	NotificationMention NotificationType = "mention"
 	// NotificationReblog -- someone boosted one of your statuses
 	NotificationReblog NotificationType = "reblog"
-	// NotifiationFave -- someone faved/liked one of your statuses
+	// NotificationFave -- someone faved/liked one of your statuses
 	NotificationFave NotificationType = "favourite"
 	// NotificationPoll -- a poll you voted in or created has ended
 	NotificationPoll NotificationType = "poll"

@@ -113,7 +113,7 @@ func GenerateURIForFollow(username string, protocol string, host string, thisFol
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
 }
 
-// GenerateURIForFollow returns the AP URI for a new like/fave -- something like:
+// GenerateURIForLike returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/41c7f33f-1060-48d9-84df-38dcb13cf0d8
 func GenerateURIForLike(username string, protocol string, host string, thisFavedID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
@@ -195,7 +195,7 @@ func IsLikedPath(id *url.URL) bool {
 	return likedPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
-// IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_UUID_OF_A_STATUS
+// IsLikePath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_UUID_OF_A_STATUS
 func IsLikePath(id *url.URL) bool {
 	return likePathRegex.MatchString(strings.ToLower(id.Path))
 }

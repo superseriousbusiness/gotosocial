@@ -27,17 +27,22 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-// Gotosocial is the 'main' function of the gotosocial server, and the place where everything hangs together.
+// Server is the 'main' function of the gotosocial server, and the place where everything hangs together.
 // The logic of stopping and starting the entire server is contained here.
-type Gotosocial interface {
+type Server interface {
+	// Start starts up the gotosocial server. If something goes wrong
+	// while starting the server, then an error will be returned.
 	Start(context.Context) error
+	// Stop closes down the gotosocial server, first closing the router
+	// then the database. If something goes wrong while stopping, an
+	// error will be returned.
 	Stop(context.Context) error
 }
 
-// New returns a new gotosocial server, initialized with the given configuration.
+// NewServer returns a new gotosocial server, initialized with the given configuration.
 // An error will be returned the caller if something goes wrong during initialization
 // eg., no db or storage connection, port for router already in use, etc.
-func New(db db.DB, apiRouter router.Router, federator federation.Federator, config *config.Config) (Gotosocial, error) {
+func NewServer(db db.DB, apiRouter router.Router, federator federation.Federator, config *config.Config) (Server, error) {
 	return &gotosocial{
 		db:        db,
 		apiRouter: apiRouter,
@@ -61,6 +66,9 @@ func (gts *gotosocial) Start(ctx context.Context) error {
 	return nil
 }
 
+// Stop closes down the gotosocial server, first closing the router
+// then the database. If something goes wrong while stopping, an
+// error will be returned.
 func (gts *gotosocial) Stop(ctx context.Context) error {
 	if err := gts.apiRouter.Stop(ctx); err != nil {
 		return err

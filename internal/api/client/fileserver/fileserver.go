@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -46,13 +46,13 @@ const (
 // The goal here is to serve requested media files if the gotosocial server is configured to use local storage.
 type FileServer struct {
 	config      *config.Config
-	processor   message.Processor
+	processor   processing.Processor
 	log         *logrus.Logger
 	storageBase string
 }
 
 // New returns a new fileServer module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &FileServer{
 		config:      config,
 		processor:   processor,

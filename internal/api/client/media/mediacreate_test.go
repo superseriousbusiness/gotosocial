@@ -34,14 +34,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -52,12 +52,12 @@ type MediaCreateTestSuite struct {
 	config       *config.Config
 	db           db.DB
 	log          *logrus.Logger
-	storage      storage.Storage
+	storage      blob.Storage
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	mediaHandler media.Handler
 	oauthServer  oauth.Server
-	processor    message.Processor
+	processor    processing.Processor
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token

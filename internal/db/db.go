@@ -30,34 +30,10 @@ const (
 	DBTypePostgres string = "POSTGRES"
 )
 
-// ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
-type ErrNoEntries struct{}
-
-func (e ErrNoEntries) Error() string {
-	return "no entries"
-}
-
-// ErrAlreadyExists is to be returned from the DB interface when an entry already exists for a given query or its constraints.
-type ErrAlreadyExists struct{}
-
-func (e ErrAlreadyExists) Error() string {
-	return "already exists"
-}
-
-type Where struct {
-	Key             string
-	Value           interface{}
-	CaseInsensitive bool
-}
-
 // DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
 // Note that in all of the functions below, the passed interface should be a pointer or a slice, which will then be populated
 // by whatever is returned from the database.
 type DB interface {
-	// Federation returns an interface that's compatible with go-fed, for performing federation storage/retrieval functions.
-	// See: https://pkg.go.dev/github.com/go-fed/activity@v1.0.0/pub?utm_source=gopls#Database
-	// Federation() federatingdb.FederatingDB
-
 	/*
 		BASIC DB FUNCTIONALITY
 	*/
@@ -269,10 +245,6 @@ type DB interface {
 	// StatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
-	// FaveStatus faves the given status, using accountID as the faver.
-	// The returned fave will be nil if the status was already faved.
-	// FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
-
 	// UnfaveStatus unfaves the given status, using accountID as the unfaver (sure, that's a word).
 	// The returned fave will be nil if the status was already not faved.
 	UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
@@ -285,6 +257,7 @@ type DB interface {
 	// It will use the given filters and try to return as many statuses up to the limit as possible.
 	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
+	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
 	GetNotificationsForAccount(accountID string, limit int, maxID string) ([]*gtsmodel.Notification, error)
 
 	/*

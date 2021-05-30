@@ -35,11 +35,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -50,7 +50,7 @@ type ProtocolTestSuite struct {
 	config        *config.Config
 	db            db.DB
 	log           *logrus.Logger
-	storage       storage.Storage
+	storage       blob.Storage
 	typeConverter typeutils.TypeConverter
 	accounts      map[string]*gtsmodel.Account
 	activities    map[string]testrig.ActivityWithSignature

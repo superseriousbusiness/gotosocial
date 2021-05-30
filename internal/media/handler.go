@@ -28,10 +28,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
@@ -93,12 +93,12 @@ type Handler interface {
 type mediaHandler struct {
 	config  *config.Config
 	db      db.DB
-	storage storage.Storage
+	storage blob.Storage
 	log     *logrus.Logger
 }
 
 // New returns a new handler with the given config, db, storage, and logger
-func New(config *config.Config, database db.DB, storage storage.Storage, log *logrus.Logger) Handler {
+func New(config *config.Config, database db.DB, storage blob.Storage, log *logrus.Logger) Handler {
 	return &mediaHandler{
 		config:  config,
 		db:      database,

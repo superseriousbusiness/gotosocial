@@ -24,12 +24,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/message"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 const (
-	// BasePath is the base path for serving v1 of the search API
+	// BasePathV1 is the base path for serving v1 of the search API
 	BasePathV1 = "/api/v1/search"
 
 	// BasePathV2 is the base path for serving v2 of the search API
@@ -67,12 +67,12 @@ const (
 // Module implements the ClientAPIModule interface for everything related to searching
 type Module struct {
 	config    *config.Config
-	processor message.Processor
+	processor processing.Processor
 	log       *logrus.Logger
 }
 
 // New returns a new search module
-func New(config *config.Config, processor message.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,
