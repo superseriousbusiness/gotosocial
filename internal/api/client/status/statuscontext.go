@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusContextGetHandler returns the context around the given status ID.
+// StatusContextGETHandler returns the context around the given status ID.
 func (m *Module) StatusContextGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusContextGETHandler",
