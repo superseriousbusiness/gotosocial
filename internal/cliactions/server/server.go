@@ -14,9 +14,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/app"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/emoji"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/filter"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/list"
 	mediaModule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notification"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
@@ -107,6 +110,9 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	timelineModule := timeline.New(c, processor, log)
 	notificationModule := notification.New(c, processor, log)
 	searchModule := search.New(c, processor, log)
+	filtersModule := filter.New(c, processor, log)
+	emojiModule := emoji.New(c, processor, log)
+	listsModule := list.New(c, processor, log)
 	mm := mediaModule.New(c, processor, log)
 	fileServerModule := fileserver.New(c, processor, log)
 	adminModule := admin.New(c, processor, log)
@@ -132,6 +138,9 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		timelineModule,
 		notificationModule,
 		searchModule,
+		filtersModule,
+		emojiModule,
+		listsModule,
 	}
 
 	for _, m := range apis {

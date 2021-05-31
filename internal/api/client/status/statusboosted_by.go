@@ -16,21 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package notification
+package status
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
-func (m *Module) NotificationsGETHandler(c *gin.Context) {
+// StatusBoostedByGETHandler is for serving a list of accounts that have boosted/reblogged a given status
+func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
-		"func":        "NotificationsGETHandler",
+		"func":        "StatusBoostedByGETHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),
 		"origin_ip":   c.ClientIP(),
@@ -39,41 +38,23 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 
 	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else
 	if err != nil {
-		l.Errorf("error authing status faved by request: %s", err)
+		l.Errorf("error authing status boosted by request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 64)
-		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
-			return
-		}
-		limit = int(i)
-	}
-
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
-	}
-
-	notifs, errWithCode := m.processor.NotificationsGet(authed, limit, maxID, sinceID)
-	if errWithCode != nil {
-		l.Debugf("error processing notifications get: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+	targetStatusID := c.Param(IDKey)
+	if targetStatusID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id provided"})
 		return
 	}
 
-	c.JSON(http.StatusOK, notifs)
+	mastoAccounts, err := m.processor.StatusBoostedBy(authed, targetStatusID)
+	if err != nil {
+		l.Debugf("error processing status boosted by request: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		return
+	}
+
+	c.JSON(http.StatusOK, mastoAccounts)
 }

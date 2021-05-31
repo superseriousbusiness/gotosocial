@@ -73,7 +73,7 @@
     * [x] /api/v1/statuses/:id GET                          (View an existing status)
     * [x] /api/v1/statuses/:id DELETE                       (Delete a status)
     * [ ] /api/v1/statuses/:id/context GET                  (View statuses above and below status ID)
-    * [ ] /api/v1/statuses/:id/reblogged_by GET             (See who has reblogged a status)
+    * [x] /api/v1/statuses/:id/reblogged_by GET             (See who has reblogged a status)
     * [x] /api/v1/statuses/:id/favourited_by GET            (See who has faved a status)
     * [x] /api/v1/statuses/:id/favourite POST               (Fave a status)
     * [x] /api/v1/statuses/:id/unfavourite POST             (Unfave a status)
@@ -98,7 +98,7 @@
     * [ ] /api/v1/scheduled_statuses/:id PUT                (Schedule a status)
     * [ ] /api/v1/scheduled_statuses/:id DELETE             (Cancel a scheduled status)
   * [ ] Timelines
-    * [ ] /api/v1/timelines/public GET                      (See the public/federated timeline)
+    * [x] /api/v1/timelines/public GET                      (See the public/federated timeline)
     * [ ] /api/v1/timelines/tag/:hashtag GET                (Get public statuses that use hashtag)
     * [x] /api/v1/timelines/home GET                        (View statuses from followed users)
     * [ ] /api/v1/timelines/list/:list_id GET               (Get statuses in given list)

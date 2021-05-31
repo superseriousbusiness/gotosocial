@@ -160,5 +160,54 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 }
 
 func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
+	if status.BoostOfID == "" {
+		// not a boost, nothing to do
+		return nil
+	}
+
+	boostedStatus := &gtsmodel.Status{}
+	if err := p.db.GetByID(status.BoostOfID, boostedStatus); err != nil {
+		return fmt.Errorf("notifyAnnounce: error getting status with id %s: %s", status.BoostOfID, err)
+	}
+
+	boostedAcct := &gtsmodel.Account{}
+	if err := p.db.GetByID(boostedStatus.AccountID, boostedAcct); err != nil {
+		return fmt.Errorf("notifyAnnounce: error getting account with id %s: %s", boostedStatus.AccountID, err)
+	}
+
+	if boostedAcct.Domain != "" {
+		// remote account, nothing to do
+		return nil
+	}
+
+	if boostedStatus.AccountID == status.AccountID {
+		// it's a self boost, nothing to do
+		return nil
+	}
+
+	// make sure a notif doesn't already exist for this announce
+	err := p.db.GetWhere([]db.Where{
+		{Key: "notification_type", Value: gtsmodel.NotificationReblog},
+		{Key: "target_account_id", Value: boostedAcct.ID},
+		{Key: "origin_account_id", Value: status.AccountID},
+		{Key: "status_id", Value: status.ID},
+	}, &gtsmodel.Notification{})
+	if err == nil {
+		// notification exists already so just bail
+		return nil
+	}
+
+	// now create the new reblog notification
+	notif := &gtsmodel.Notification{
+		NotificationType: gtsmodel.NotificationReblog,
+		TargetAccountID:  boostedAcct.ID,
+		OriginAccountID:  status.AccountID,
+		StatusID:         status.ID,
+	}
+
+	if err := p.db.Put(notif); err != nil {
+		return fmt.Errorf("notifyAnnounce: error putting notification in database: %s", err)
+	}
+
 	return nil
 }

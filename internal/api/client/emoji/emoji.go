@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package timeline
+package emoji
 
 import (
 	"net/http"
@@ -29,32 +29,18 @@ import (
 )
 
 const (
-	// BasePath is the base URI path for serving timelines
-	BasePath = "/api/v1/timelines"
-	// HomeTimeline is the path for the home timeline
-	HomeTimeline = BasePath + "/home"
-	// PublicTimeline is the path for the public (and public local) timeline
-	PublicTimeline = BasePath + "/public"
-	// MaxIDKey is the url query for setting a max status ID to return
-	MaxIDKey = "max_id"
-	// SinceIDKey is the url query for returning results newer than the given ID
-	SinceIDKey = "since_id"
-	// MinIDKey is the url query for returning results immediately newer than the given ID
-	MinIDKey = "min_id"
-	// LimitKey is for specifying maximum number of results to return.
-	LimitKey = "limit"
-	// LocalKey is for specifying whether only local statuses should be returned
-	LocalKey = "local"
+	// BasePath is the base path for serving the emoji API
+	BasePath = "/api/v1/custom_emojis"
 )
 
-// Module implements the ClientAPIModule interface for everything relating to viewing timelines
+// Module implements the ClientAPIModule interface for everything related to emoji
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
 	log       *logrus.Logger
 }
 
-// New returns a new timeline module
+// New returns a new emoji module
 func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
@@ -65,7 +51,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
-	r.AttachHandler(http.MethodGet, PublicTimeline, m.PublicTimelineGETHandler)
+	r.AttachHandler(http.MethodGet, BasePath, m.EmojisGETHandler)
 	return nil
 }

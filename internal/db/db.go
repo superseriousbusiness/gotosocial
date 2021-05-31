@@ -253,12 +253,20 @@ type DB interface {
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
+	// WhoBoostedStatus returns a slice of accounts who boosted the given status.
+	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
+	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
+
 	// GetHomeTimelineForAccount fetches the account's HOME timeline -- ie., posts and replies from people they *follow*.
 	// It will use the given filters and try to return as many statuses up to the limit as possible.
 	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
+	// GetPublicTimelineForAccount fetches the account's PUBLIC timline -- ie., posts and replies that are public.
+	// It will use the given filters and try to return as many statuses as possible up to the limit.
+	GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+
 	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
-	GetNotificationsForAccount(accountID string, limit int, maxID string) ([]*gtsmodel.Notification, error)
+	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error)
 
 	/*
 		USEFUL CONVERSION FUNCTIONS

@@ -41,6 +41,8 @@ const (
 	MaxIDKey = "max_id"
 	// LimitKey is for specifying maximum number of notifications to return.
 	LimitKey = "limit"
+	// SinceIDKey is for specifying the minimum notification ID to return.
+	SinceIDKey = "since_id"
 )
 
 // Module implements the ClientAPIModule interface for every related to posting/deleting/interacting with notifications
