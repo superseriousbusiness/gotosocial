@@ -120,6 +120,8 @@ type Processor interface {
 	StatusFave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
 	StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, ErrorWithCode)
+	// StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
+	StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, ErrorWithCode)
 	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 	StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
 	// StatusGet gets the given status, taking account of privacy settings and blocks etc.

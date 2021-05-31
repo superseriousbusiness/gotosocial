@@ -1115,11 +1115,36 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 	return accounts, nil
 }
 
+func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
+	accounts := []*gtsmodel.Account{}
+
+	boosts := []*gtsmodel.Status{}
+	if err := ps.conn.Model(&boosts).Where("boost_of_id = ?", status.ID).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return accounts, nil // no rows just means nobody has boosted this status, so that's fine
+		}
+		return nil, err // an actual error has occurred
+	}
+
+	for _, f := range boosts {
+		acc := &gtsmodel.Account{}
+		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
+			if err == pg.ErrNoRows {
+				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
+			}
+			return nil, err // an actual error has occurred
+		}
+		accounts = append(accounts, acc)
+	}
+	return accounts, nil
+}
+
 func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
 
-	q := ps.conn.Model(&statuses).
-		ColumnExpr("status.*").
+	q := ps.conn.Model(&statuses)
+
+	q = q.ColumnExpr("status.*").
 		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
 		Where("f.account_id = ?", accountID).
 		Limit(limit).
