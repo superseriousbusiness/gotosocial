@@ -29,12 +29,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
-const fromLatest = "FROM_LATEST"
+const (
+	fromLatest             = "FROM_LATEST"
+	postIndexMinLength     = 200
+	postIndexMaxLength     = 400
+	preparedPostsMaxLength = 400
+	preparedPostsMinLength = 80
+)
 
 type timeline struct {
+	// 
 	postIndex     *list.List
 	preparedPosts *list.List
-	sharedCache   *list.List
 	accountID     string
 	db            db.DB
 	*sync.Mutex
@@ -44,8 +50,8 @@ func newTimeline(accountID string, db db.DB, sharedCache *list.List) *timeline {
 	return &timeline{
 		postIndex:     list.New(),
 		preparedPosts: list.New(),
-		sharedCache:   sharedCache,
 		accountID:     accountID,
+		db:            db,
 	}
 }
 
@@ -97,7 +103,7 @@ func (t *timeline) getXFromTop(amount int) ([]*apimodel.Status, error) {
 }
 
 // getXFromID gets x amount of posts in chronological order from the given ID onwards, NOT including the given id.
-// The posts will be taken from the readyToGo pile, unless nothing is ready to go.
+// The posts will be taken from the preparedPosts pile, unless nothing is ready to go.
 func (t *timeline) getXFromID(amount int, fromID string) ([]*apimodel.Status, error) {
 	statuses := []*apimodel.Status{}
 	if amount == 0 || fromID == "" {
@@ -159,8 +165,13 @@ func (t *timeline) insert(status *apimodel.Status) error {
 	return nil
 }
 
-type post struct {
+type preparedPostsEntry struct {
 	createdAt  time.Time
 	statusID   string
 	serialized *apimodel.Status
+}
+
+type postIndexEntry struct {
+	createdAt  time.Time
+	statusID   string
 }
