@@ -153,6 +153,7 @@ type VisibilityAdvanced struct {
 
 // RelevantAccounts denotes accounts that are replied to, boosted by, or mentioned in a status.
 type RelevantAccounts struct {
+	StatusAuthor          *Account
 	ReplyToAccount        *Account
 	BoostedAccount        *Account
 	BoostedReplyToAccount *Account

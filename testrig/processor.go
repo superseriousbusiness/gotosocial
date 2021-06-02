@@ -27,5 +27,5 @@ import (
 
 // NewTestProcessor returns a Processor suitable for testing purposes
 func NewTestProcessor(db db.DB, storage blob.Storage, federator federation.Federator) processing.Processor {
-	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, NewTestLog())
+	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, NewTestTimelineManager(db), db, NewTestLog())
 }

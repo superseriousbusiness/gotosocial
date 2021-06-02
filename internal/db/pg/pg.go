@@ -223,12 +223,16 @@ func (ps *postgresService) GetWhere(where []db.Where, i interface{}) error {
 
 	q := ps.conn.Model(i)
 	for _, w := range where {
-		if w.CaseInsensitive {
-			q = q.Where("LOWER(?) = LOWER(?)", pg.Safe(w.Key), w.Value)
-		} else {
-			q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
-		}
 
+		if w.Value == nil {
+			q = q.Where("? IS NULL", pg.Ident(w.Key))
+		} else {
+			if w.CaseInsensitive {
+				q = q.Where("LOWER(?) = LOWER(?)", pg.Safe(w.Key), w.Value)
+			} else {
+				q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
+			}
+		}
 	}
 
 	if err := q.Select(); err != nil {
@@ -964,6 +968,16 @@ func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel
 		MentionedAccounts: []*gtsmodel.Account{},
 	}
 
+	// get the author account
+	if targetStatus.GTSAuthorAccount == nil {
+		statusAuthor := &gtsmodel.Account{}
+		if err := ps.conn.Model(statusAuthor).Where("id = ?", targetStatus.AccountID).Select(); err != nil {
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting statusAuthor with id %s: %s", targetStatus.AccountID, err)
+		}
+		targetStatus.GTSAuthorAccount = statusAuthor
+	}
+	accounts.StatusAuthor = targetStatus.GTSAuthorAccount
+
 	// get the replied to account from the status and add it to the pile
 	if targetStatus.InReplyToAccountID != "" {
 		repliedToAccount := &gtsmodel.Account{}
@@ -1137,6 +1151,38 @@ func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmode
 		accounts = append(accounts, acc)
 	}
 	return accounts, nil
+}
+
+func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string) ([]*gtsmodel.Status, error) {
+	statuses := []*gtsmodel.Status{}
+
+	q := ps.conn.Model(&statuses)
+
+	q = q.ColumnExpr("status.*").
+		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
+		Where("f.account_id = ?", accountID).
+		Order("status.created_at DESC")
+
+	if offsetStatusID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", offsetStatusID).Select(); err != nil {
+			return nil, err
+		}
+		q = q.Where("status.created_at < ?", s.CreatedAt)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+
+	err := q.Select()
+	if err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
+		}
+	}
+
+	return statuses, nil
 }
 
 func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {

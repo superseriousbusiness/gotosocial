@@ -257,6 +257,8 @@ type DB interface {
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
+	GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string) ([]*gtsmodel.Status, error)
+
 	// GetHomeTimelineForAccount fetches the account's HOME timeline -- ie., posts and replies from people they *follow*.
 	// It will use the given filters and try to return as many statuses up to the limit as possible.
 	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)

@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -132,9 +133,9 @@ type Processor interface {
 	StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, ErrorWithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
-	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode)
+	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]apimodel.Status, ErrorWithCode)
+	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
@@ -182,34 +183,36 @@ type processor struct {
 	// toClientAPI   chan gtsmodel.ToClientAPI
 	fromClientAPI chan gtsmodel.FromClientAPI
 	// toFederator   chan gtsmodel.ToFederator
-	fromFederator chan gtsmodel.FromFederator
-	federator     federation.Federator
-	stop          chan interface{}
-	log           *logrus.Logger
-	config        *config.Config
-	tc            typeutils.TypeConverter
-	oauthServer   oauth.Server
-	mediaHandler  media.Handler
-	storage       blob.Storage
-	db            db.DB
+	fromFederator   chan gtsmodel.FromFederator
+	federator       federation.Federator
+	stop            chan interface{}
+	log             *logrus.Logger
+	config          *config.Config
+	tc              typeutils.TypeConverter
+	oauthServer     oauth.Server
+	mediaHandler    media.Handler
+	storage         blob.Storage
+	timelineManager timeline.Manager
+	db              db.DB
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, db db.DB, log *logrus.Logger) Processor {
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
 	return &processor{
 		// toClientAPI:   make(chan gtsmodel.ToClientAPI, 100),
 		fromClientAPI: make(chan gtsmodel.FromClientAPI, 100),
 		// toFederator:   make(chan gtsmodel.ToFederator, 100),
-		fromFederator: make(chan gtsmodel.FromFederator, 100),
-		federator:     federator,
-		stop:          make(chan interface{}),
-		log:           log,
-		config:        config,
-		tc:            tc,
-		oauthServer:   oauthServer,
-		mediaHandler:  mediaHandler,
-		storage:       storage,
-		db:            db,
+		fromFederator:   make(chan gtsmodel.FromFederator, 100),
+		federator:       federator,
+		stop:            make(chan interface{}),
+		log:             log,
+		config:          config,
+		tc:              tc,
+		oauthServer:     oauthServer,
+		mediaHandler:    mediaHandler,
+		storage:         storage,
+		timelineManager: timelineManager,
+		db:              db,
 	}
 }
 
@@ -250,7 +253,7 @@ func (p *processor) Start() error {
 			}
 		}
 	}()
-	return nil
+	return p.initTimelines()
 }
 
 // Stop stops the processor cleanly, finishing handling any remaining messages before closing down.

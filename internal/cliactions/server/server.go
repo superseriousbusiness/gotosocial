@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/timeline"
+	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
@@ -88,13 +89,14 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 
 	// build converters and util
 	typeConverter := typeutils.NewConverter(c, dbService)
+	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c, log)
 
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter)
-	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, dbService, log)
+	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, timelineManager, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
