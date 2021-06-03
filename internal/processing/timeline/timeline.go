@@ -38,12 +38,19 @@ const (
 type Timeline interface {
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
-	// GetXFromID returns x amount of posts from the given id onwards, from newest to oldest.
+	// GetXFromIDOnwards returns x amount of posts from the given id onwards, from newest to oldest.
 	// This will include the status with the given ID.
-	GetXFromID(amount int, fromID string) ([]*apimodel.Status, error)
+	GetXFromIDOnwards(amount int, fromID string) ([]*apimodel.Status, error)
+
+	// GetXBeforeID returns x amount of posts up to the given id, from newest to oldest.
+	// This will NOT include the status with the given ID.
+	GetXBeforeID(amount int, sinceID string) ([]*apimodel.Status, error)
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
 	IndexOne(statusCreatedAt time.Time, statusID string) error
+	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
+	// and then immediately prepares it.
+	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
 	// Remove removes a status from the timeline.
 	Remove(statusID string) error
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
@@ -177,7 +184,7 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 	return statuses, nil
 }
 
-func (t *timeline) GetXFromID(amount int, fromID string) ([]*apimodel.Status, error) {
+func (t *timeline) GetXFromIDOnwards(amount int, fromID string) ([]*apimodel.Status, error) {
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -235,6 +242,40 @@ func (t *timeline) GetXFromID(amount int, fromID string) ([]*apimodel.Status, er
 	return statuses, nil
 }
 
+func (t *timeline) GetXBeforeID(amount int, beforeID string) ([]*apimodel.Status, error) {
+	// make a slice of statuses with the length we need to return
+	statuses := make([]*apimodel.Status, 0, amount)
+
+	// if there are no prepared posts, just return the empty slice
+	if t.preparedPosts.data == nil {
+		t.preparedPosts.data = &list.List{}
+	}
+
+	// iterate through the modified list until we hit the fromID again
+	var served int
+servloop:
+	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*preparedPostsEntry)
+		if !ok {
+			return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
+		}
+
+		if entry.statusID == beforeID {
+			// we're good
+			break servloop
+		}
+
+		// serve up to the amount requested
+		statuses = append(statuses, entry.prepared)
+		served = served + 1
+		if served >= amount {
+			break
+		}
+	}
+
+	return statuses, nil
+}
+
 func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
 	t.Lock()
 	defer t.Unlock()
@@ -245,6 +286,26 @@ func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
 	}
 
 	return t.postIndex.insertIndexed(postIndexEntry)
+}
+
+func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error {
+	t.Lock()
+	defer t.Unlock()
+
+	postIndexEntry := &postIndexEntry{
+		createdAt: statusCreatedAt,
+		statusID:  statusID,
+	}
+
+	if err := t.postIndex.insertIndexed(postIndexEntry); err != nil {
+		return fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %s", err)
+	}
+
+	if err := t.prepare(statusID); err != nil {
+		return fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
+	}
+
+	return nil
 }
 
 func (t *timeline) Remove(statusID string) error {

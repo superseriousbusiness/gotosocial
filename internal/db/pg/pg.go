@@ -461,11 +461,18 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 
 func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error {
 
-	q := ps.conn.Model(followers).Where("target_account_id = ?", accountID)
+	q := ps.conn.Model(followers)
 
+	if localOnly {
+		q = q.ColumnExpr("follow.*").
+			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
+			Where("follow.target_account_id = ?", accountID).
+			Where("? IS NULL", pg.Ident("a.domain"))
+	} else {
+		q = q.Where("target_account_id = ?", accountID)
+	}
 
-
-	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
+	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
 		}
@@ -802,7 +809,6 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
 	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
 	if requestingAccount == nil {
-
 		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
 			return true, nil
 		}
@@ -861,6 +867,18 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 			} else if blocked {
 				l.Debug("a block exists between requesting account and reply to account")
 				return false, nil
+			}
+
+			// check reply to ID
+			if targetStatus.InReplyToID != "" {
+				followsRepliedAccount, err := ps.Follows(requestingAccount, relevantAccounts.ReplyToAccount)
+				if err != nil {
+					return false, err
+				}
+				if !followsRepliedAccount {
+					l.Debug("target status is a followers-only reply to an account that is not followed by the requesting account")
+					return false, nil
+				}
 			}
 		}
 

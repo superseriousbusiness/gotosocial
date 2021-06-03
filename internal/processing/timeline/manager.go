@@ -51,6 +51,10 @@ type Manager interface {
 	//
 	// It should already be established before calling this function that the status/post actually belongs in the timeline!
 	Ingest(status *gtsmodel.Status, timelineAccountID string) error
+	// IngestAndPrepare takes one status and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
+	//
+	// It should already be established before calling this function that the status/post actually belongs in the timeline!
+	IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error
 	// HomeTimeline returns limit n amount of entries from the home timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return entries from that maxID onwards, inclusive.
 	HomeTimeline(timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
@@ -96,6 +100,19 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) erro
 	return t.IndexOne(status.CreatedAt, status.ID)
 }
 
+func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error {
+	l := m.log.WithFields(logrus.Fields{
+		"func":              "IngestAndPrepare",
+		"timelineAccountID": timelineAccountID,
+		"statusID":          status.ID,
+	})
+
+	t := m.getOrCreateTimeline(timelineAccountID)
+
+	l.Trace("ingesting status")
+	return t.IndexAndPrepareOne(status.CreatedAt, status.ID)
+}
+
 func (m *manager) Remove(statusID string, timelineAccountID string) error {
 	l := m.log.WithFields(logrus.Fields{
 		"func":              "Remove",
@@ -120,7 +137,9 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 	var err error
 	var statuses []*apimodel.Status
 	if maxID != "" {
-		statuses, err = t.GetXFromID(limit, maxID)
+		statuses, err = t.GetXFromIDOnwards(limit, maxID)
+	} else if sinceID != "" {
+		statuses, err = t.GetXBeforeID(limit, sinceID)
 	} else {
 		statuses, err = t.GetXFromTop(limit)
 	}

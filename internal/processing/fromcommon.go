@@ -20,6 +20,8 @@ package processing
 
 import (
 	"fmt"
+	"strings"
+	"sync"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -213,11 +215,88 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 }
 
 func (p *processor) timelineStatus(status *gtsmodel.Status) error {
-	followers := &[]gtsmodel.Follow{}
-	if err := p.db.GetFollowersByAccountID(status.AccountID, followers); err != nil {
-
+	// make sure the author account is pinned onto the status
+	if status.GTSAuthorAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(status.AccountID, a); err != nil {
+			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
+		}
+		status.GTSAuthorAccount = a
 	}
 
-	// filter out so we only have the local ones
-	localFollowers := &[]gtsmodel.Account{}
+	// get all relevant accounts here once
+	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(status)
+	if err != nil {
+		return fmt.Errorf("timelineStatus: error getting relevant accounts from status: %s", err)
+	}
+
+	// get local followers of the account that posted the status
+	followers := []gtsmodel.Follow{}
+	if err := p.db.GetFollowersByAccountID(status.AccountID, &followers, true); err != nil {
+		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
+	}
+
+	// if the poster is local, add a fake entry for them to the followers list so they can see their own status in their timeline
+	if status.GTSAuthorAccount.Domain == "" {
+		followers = append(followers, gtsmodel.Follow{
+			AccountID: status.AccountID,
+		})
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(len(followers))
+	errors := make(chan error, len(followers))
+
+	for _, f := range followers {
+		go p.timelineStatusForAccount(status, f.AccountID, relevantAccounts, errors, &wg)
+	}
+
+	// read any errors that come in from the async functions
+	errs := []string{}
+	go func() {
+		for range errors {
+			e := <-errors
+			if e != nil {
+				errs = append(errs, e.Error())
+			}
+		}
+	}()
+
+	// wait til all functions have returned and then close the error channel
+	wg.Wait()
+	close(errors)
+
+	if len(errs) != 0 {
+		// we have some errors
+		return fmt.Errorf("timelineStatus: one or more errors timelining statuses: %s", strings.Join(errs, ";"))
+	}
+
+	// no errors, nice
+	return nil
+}
+
+func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID string, relevantAccounts *gtsmodel.RelevantAccounts, errors chan error, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// get the targetAccount
+	timelineAccount := &gtsmodel.Account{}
+	if err := p.db.GetByID(accountID, timelineAccount); err != nil {
+		errors <- fmt.Errorf("timelineStatus: error getting account for timeline with id %s: %s", accountID, err)
+		return
+	}
+
+	// make sure the status is visible
+	visible, err := p.db.StatusVisible(status, status.GTSAuthorAccount, timelineAccount, relevantAccounts)
+	if err != nil {
+		errors <- fmt.Errorf("timelineStatus: error getting visibility for status for timeline with id %s: %s", accountID, err)
+		return
+	}
+
+	if !visible {
+		return
+	}
+
+	if err := p.timelineManager.IngestAndPrepare(status, timelineAccount.ID); err != nil {
+		errors <- fmt.Errorf("initTimelineFor: error ingesting status %s: %s", status.ID, err)
+	}
 }

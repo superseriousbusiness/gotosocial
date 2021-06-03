@@ -278,7 +278,7 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 
 	followers := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
-	if err := p.db.GetFollowersByAccountID(targetAccountID, &followers); err != nil {
+	if err := p.db.GetFollowersByAccountID(targetAccountID, &followers, false); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return accounts, nil
 		}

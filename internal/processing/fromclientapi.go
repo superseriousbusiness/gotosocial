@@ -40,6 +40,10 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
+			if err := p.timelineStatus(status); err != nil {
+				return err
+			}
+
 			if err := p.notifyStatus(status); err != nil {
 				return err
 			}
@@ -47,7 +51,6 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
 				return p.federateStatus(status)
 			}
-			return nil
 		case gtsmodel.ActivityStreamsFollow:
 			// CREATE FOLLOW REQUEST
 			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
