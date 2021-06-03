@@ -56,9 +56,14 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return fmt.Errorf("error updating dereferenced status in the db: %s", err)
 			}
 
+			if err := p.timelineStatus(incomingStatus); err != nil {
+				return err
+			}
+
 			if err := p.notifyStatus(incomingStatus); err != nil {
 				return err
 			}
+
 		case gtsmodel.ActivityStreamsProfile:
 			// CREATE AN ACCOUNT
 			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)

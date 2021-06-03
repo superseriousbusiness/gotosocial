@@ -15,7 +15,7 @@ type postIndexEntry struct {
 	statusID  string
 }
 
-func (p *postIndex) index(i *postIndexEntry) error {
+func (p *postIndex) insertIndexed(i *postIndexEntry) error {
 
 	if p.data == nil {
 		p.data = &list.List{}

@@ -32,20 +32,18 @@ import (
 )
 
 const (
-	fromLatest             = "FROM_LATEST"
 	preparedPostsMaxLength = desiredPostIndexLength
 )
 
 type Timeline interface {
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
-	// GetXFromTop returns x amount of posts from the given id onwards, from newest to oldest.
-	GetXBehindID(amount int, fromID string) ([]*apimodel.Status, error)
+	// GetXFromID returns x amount of posts from the given id onwards, from newest to oldest.
+	// This will include the status with the given ID.
+	GetXFromID(amount int, fromID string) ([]*apimodel.Status, error)
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
 	IndexOne(statusCreatedAt time.Time, statusID string) error
-	// IndexMany instructs the timeline to index all the given posts.
-	IndexMany([]*apimodel.Status) error
 	// Remove removes a status from the timeline.
 	Remove(statusID string) error
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
@@ -111,7 +109,6 @@ func (t *timeline) PrepareXFromIndex(amount int, index int) error {
 			prepared = prepared + 1
 			if prepared >= amount {
 				// we're done
-				fmt.Printf("\n\n\nprepared %d entries\n\n\n", prepared)
 				break
 			}
 		}
@@ -180,7 +177,7 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 	return statuses, nil
 }
 
-func (t *timeline) GetXBehindID(amount int, fromID string) ([]*apimodel.Status, error) {
+func (t *timeline) GetXFromID(amount int, fromID string) ([]*apimodel.Status, error) {
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -197,15 +194,13 @@ func (t *timeline) GetXBehindID(amount int, fromID string) ([]*apimodel.Status, 
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 		if entry.statusID == fromID {
-			fmt.Printf("\n\n\nfromid %s is at position %d\n\n\n", fromID, position)
 			break
 		}
 		position = position + 1
 	}
 
-	// make sure we have enough posts prepared to return
+	// make sure we have enough posts prepared behind it to return what we're being asked for
 	if t.preparedPosts.data.Len() < amount+position {
-
 		if err := t.PrepareXFromIndex(amount, position); err != nil {
 			return nil, err
 		}
@@ -221,14 +216,14 @@ func (t *timeline) GetXBehindID(amount int, fromID string) ([]*apimodel.Status, 
 		}
 
 		if !serving {
-			// we're not serving yet but we might on the next time round if we hit our from id
+			// start serving if we've hit the id we're looking for
 			if entry.statusID == fromID {
-				fmt.Printf("\n\n\nwe've hit fromid %s at position %d, will now serve\n\n\n", fromID, position)
 				serving = true
-				continue
 			}
-		} else {
-			// we're serving now!
+		}
+
+		if serving {
+			// serve up to the amount requested
 			statuses = append(statuses, entry.prepared)
 			served = served + 1
 			if served >= amount {
@@ -248,7 +243,8 @@ func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
 		createdAt: statusCreatedAt,
 		statusID:  statusID,
 	}
-	return t.postIndex.index(postIndexEntry)
+
+	return t.postIndex.insertIndexed(postIndexEntry)
 }
 
 func (t *timeline) Remove(statusID string) error {
@@ -263,7 +259,7 @@ func (t *timeline) Remove(statusID string) error {
 		}
 		if entry.statusID == statusID {
 			t.postIndex.data.Remove(e)
-			break // bail once we found it
+			break // bail once we found and removed it
 		}
 	}
 
@@ -275,31 +271,10 @@ func (t *timeline) Remove(statusID string) error {
 		}
 		if entry.statusID == statusID {
 			t.preparedPosts.data.Remove(e)
-			break // bail once we found it
+			break // bail once we found and removed it
 		}
 	}
 
-	return nil
-}
-
-func (t *timeline) IndexMany(statuses []*apimodel.Status) error {
-	t.Lock()
-	defer t.Unlock()
-
-	// add statuses to the index
-	for _, s := range statuses {
-		createdAt, err := time.Parse(s.CreatedAt, time.RFC3339)
-		if err != nil {
-			return fmt.Errorf("IndexMany: could not parse time %s on status id %s: %s", s.CreatedAt, s.ID, err)
-		}
-		postIndexEntry := &postIndexEntry{
-			createdAt: createdAt,
-			statusID:  s.ID,
-		}
-		if err := t.postIndex.index(postIndexEntry); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -318,11 +293,14 @@ func (t *timeline) PostIndexLength() int {
 func (t *timeline) OldestIndexedPostID() (string, error) {
 	var id string
 	if t.postIndex == nil || t.postIndex.data == nil {
+		// return an empty string if postindex hasn't been initialized yet
 		return id, nil
 	}
+
 	e := t.postIndex.data.Back()
 
 	if e == nil {
+		// return an empty string if there's no back entry (ie., the index list hasn't been initialized yet)
 		return id, nil
 	}
 
@@ -330,16 +308,18 @@ func (t *timeline) OldestIndexedPostID() (string, error) {
 	if !ok {
 		return id, errors.New("OldestIndexedPostID: could not parse e as a postIndexEntry")
 	}
-
 	return entry.statusID, nil
 }
 
 func (t *timeline) prepare(statusID string) error {
+
+	// start by getting the status out of the database according to its indexed ID
 	gtsStatus := &gtsmodel.Status{}
 	if err := t.db.GetByID(statusID, gtsStatus); err != nil {
 		return err
 	}
 
+	// if the account pointer hasn't been set on this timeline already, set it lazily here
 	if t.account == nil {
 		timelineOwnerAccount := &gtsmodel.Account{}
 		if err := t.db.GetByID(t.accountID, timelineOwnerAccount); err != nil {
@@ -348,11 +328,13 @@ func (t *timeline) prepare(statusID string) error {
 		t.account = timelineOwnerAccount
 	}
 
+	// to convert the status we need relevant accounts from it, so pull them out here
 	relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(gtsStatus)
 	if err != nil {
 		return err
 	}
 
+	// check if this is a boost...
 	var reblogOfStatus *gtsmodel.Status
 	if gtsStatus.BoostOfID != "" {
 		s := &gtsmodel.Status{}
@@ -362,11 +344,13 @@ func (t *timeline) prepare(statusID string) error {
 		reblogOfStatus = s
 	}
 
+	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
 	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, t.account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
 	if err != nil {
 		return err
 	}
 
+	// shove it in prepared posts as a prepared posts entry
 	preparedPostsEntry := &preparedPostsEntry{
 		createdAt: gtsStatus.CreatedAt,
 		statusID:  statusID,

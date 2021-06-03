@@ -143,7 +143,7 @@ type DB interface {
 	// GetFollowersByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is followed by.
 	// The given slice 'followers' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error
+	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error
 
 	// GetFavesByAccountID is a shortcut for the common action of fetching a list of faves made by the given accountID.
 	// The given slice 'faves' will be set to the result of the query, whatever it is.

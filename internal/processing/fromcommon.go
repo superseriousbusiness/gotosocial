@@ -211,3 +211,13 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 
 	return nil
 }
+
+func (p *processor) timelineStatus(status *gtsmodel.Status) error {
+	followers := &[]gtsmodel.Follow{}
+	if err := p.db.GetFollowersByAccountID(status.AccountID, followers); err != nil {
+
+	}
+
+	// filter out so we only have the local ones
+	localFollowers := &[]gtsmodel.Account{}
+}

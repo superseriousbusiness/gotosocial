@@ -25,8 +25,8 @@ type FromClientAPI struct {
 
 // FromFederator wraps a message that travels from the federator into the processor
 type FromFederator struct {
-	APObjectType     string
-	APActivityType   string
-	GTSModel         interface{}
-	ReceivingAccount *Account
+	APObjectType       string
+	APActivityType     string
+	GTSModel           interface{}
+	ReceivingAccount   *Account
 }

@@ -459,7 +459,12 @@ func (ps *postgresService) GetFollowingByAccountID(accountID string, following *
 	return nil
 }
 
-func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error {
+func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error {
+
+	q := ps.conn.Model(followers).Where("target_account_id = ?", accountID)
+
+
+
 	if err := ps.conn.Model(followers).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil

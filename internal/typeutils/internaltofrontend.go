@@ -64,7 +64,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
 	// count followers
 	followers := []gtsmodel.Follow{}
-	if err := c.db.GetFollowersByAccountID(a.ID, &followers); err != nil {
+	if err := c.db.GetFollowersByAccountID(a.ID, &followers, false); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting followers: %s", err)
 		}

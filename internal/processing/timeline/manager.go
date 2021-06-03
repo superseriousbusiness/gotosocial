@@ -34,15 +34,37 @@ const (
 	desiredPostIndexLength = 400
 )
 
+// Manager abstracts functions for creating timelines for multiple accounts, and adding, removing, and fetching entries from those timelines.
+//
+// By the time a status hits the manager interface, it should already have been filtered and it should be established that the status indeed
+// belongs in the home timeline of the given account ID.
+//
+// The manager makes a distinction between *indexed* posts and *prepared* posts.
+//
+// Indexed posts consist of just that post's ID (in the database) and the time it was created. An indexed post takes up very little memory, so
+// it's not a huge priority to keep trimming the indexed posts list.
+//
+// Prepared posts consist of the post's database ID, the time it was created, AND the apimodel representation of that post, for quick serialization.
+// Prepared posts of course take up more memory than indexed posts, so they should be regularly pruned if they're not being actively served.
 type Manager interface {
+	// Ingest takes one status and indexes it into the timeline for the given account ID.
+	//
+	// It should already be established before calling this function that the status/post actually belongs in the timeline!
 	Ingest(status *gtsmodel.Status, timelineAccountID string) error
+	// HomeTimeline returns limit n amount of entries from the home timeline of the given account ID, in descending chronological order.
+	// If maxID is provided, it will return entries from that maxID onwards, inclusive.
 	HomeTimeline(timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
+	// GetIndexedLength returns the amount of posts/statuses that have been *indexed* for the given account ID.
 	GetIndexedLength(timelineAccountID string) int
+	// GetDesiredIndexLength returns the amount of posts that we, ideally, index for each user.
 	GetDesiredIndexLength() int
+	// GetOldestIndexedID returns the status ID for the oldest post that we have indexed for the given account.
 	GetOldestIndexedID(timelineAccountID string) (string, error)
+	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(timelineAccountID string, limit int) error
 }
 
+// NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
 func NewManager(db db.DB, tc typeutils.TypeConverter, config *config.Config, log *logrus.Logger) Manager {
 	return &manager{
 		accountTimelines: sync.Map{},
@@ -68,17 +90,9 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) erro
 		"statusID":          status.ID,
 	})
 
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t = i.(Timeline)
-	}
+	t := m.getOrCreateTimeline(timelineAccountID)
 
 	l.Trace("ingesting status")
-
 	return t.IndexOne(status.CreatedAt, status.ID)
 }
 
@@ -89,17 +103,9 @@ func (m *manager) Remove(statusID string, timelineAccountID string) error {
 		"statusID":          statusID,
 	})
 
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t = i.(Timeline)
-	}
+	t := m.getOrCreateTimeline(timelineAccountID)
 
 	l.Trace("removing status")
-
 	return t.Remove(statusID)
 }
 
@@ -109,19 +115,12 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 		"timelineAccountID": timelineAccountID,
 	})
 
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t = i.(Timeline)
-	}
+	t := m.getOrCreateTimeline(timelineAccountID)
 
 	var err error
 	var statuses []*apimodel.Status
 	if maxID != "" {
-		statuses, err = t.GetXBehindID(limit, maxID)
+		statuses, err = t.GetXFromID(limit, maxID)
 	} else {
 		statuses, err = t.GetXFromTop(limit)
 	}
@@ -133,14 +132,7 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 }
 
 func (m *manager) GetIndexedLength(timelineAccountID string) int {
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t = i.(Timeline)
-	}
+	t := m.getOrCreateTimeline(timelineAccountID)
 
 	return t.PostIndexLength()
 }
@@ -150,27 +142,29 @@ func (m *manager) GetDesiredIndexLength() int {
 }
 
 func (m *manager) GetOldestIndexedID(timelineAccountID string) (string, error) {
-	var t Timeline
-	i, ok := m.accountTimelines.Load(timelineAccountID)
-	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
-		m.accountTimelines.Store(timelineAccountID, t)
-	} else {
-		t = i.(Timeline)
-	}
+	t := m.getOrCreateTimeline(timelineAccountID)
 
 	return t.OldestIndexedPostID()
 }
 
 func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
+	t := m.getOrCreateTimeline(timelineAccountID)
+
+	return t.PrepareXFromTop(limit)
+}
+
+func (m *manager) getOrCreateTimeline(timelineAccountID string) Timeline {
 	var t Timeline
 	i, ok := m.accountTimelines.Load(timelineAccountID)
 	if !ok {
 		t = NewTimeline(timelineAccountID, m.db, m.tc)
 		m.accountTimelines.Store(timelineAccountID, t)
 	} else {
-		t = i.(Timeline)
+		t, ok = i.(Timeline)
+		if !ok {
+			panic("couldn't parse entry as Timeline, this should never happen so panic")
+		}
 	}
 
-	return t.PrepareXFromTop(limit)
+	return t
 }

@@ -101,16 +101,19 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				}
 				if err := f.db.Put(status); err != nil {
 					if _, ok := err.(db.ErrAlreadyExists); ok {
+						// the status already exists in the database, which means we've already handled everything else,
+						// so we can just return nil here and be done with it.
 						return nil
 					}
+					// an actual error has happened
 					return fmt.Errorf("database error inserting status: %s", err)
 				}
 
 				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:     gtsmodel.ActivityStreamsNote,
-					APActivityType:   gtsmodel.ActivityStreamsCreate,
-					GTSModel:         status,
-					ReceivingAccount: targetAcct,
+					APObjectType:       gtsmodel.ActivityStreamsNote,
+					APActivityType:     gtsmodel.ActivityStreamsCreate,
+					GTSModel:           status,
+					ReceivingAccount:   targetAcct,
 				}
 			}
 		}
