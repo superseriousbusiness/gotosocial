@@ -179,7 +179,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 		}
 
 		if rearmostStatusID != "" {
-			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength / 2, rearmostStatusID)
+			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength/2, rearmostStatusID)
 			if err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error getting more statuses: %s", err))
 				return

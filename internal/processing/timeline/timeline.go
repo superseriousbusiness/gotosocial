@@ -35,40 +35,61 @@ const (
 	preparedPostsMaxLength = desiredPostIndexLength
 )
 
+// Timeline represents a timeline for one account, and contains indexed and prepared posts.
 type Timeline interface {
+	/*
+		RETRIEVAL FUNCTIONS
+	*/
+
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
 	// GetXFromIDOnwards returns x amount of posts from the given id onwards, from newest to oldest.
 	// This will include the status with the given ID.
 	GetXFromIDOnwards(amount int, fromID string) ([]*apimodel.Status, error)
-
 	// GetXBeforeID returns x amount of posts up to the given id, from newest to oldest.
 	// This will NOT include the status with the given ID.
 	GetXBeforeID(amount int, sinceID string) ([]*apimodel.Status, error)
 
+	/*
+		INDEXING FUNCTIONS
+	*/
+
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
 	IndexOne(statusCreatedAt time.Time, statusID string) error
-	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
-	// and then immediately prepares it.
-	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
 	// Remove removes a status from the timeline.
 	Remove(statusID string) error
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestIndexedPostID() (string, error)
 
+	/*
+		PREPARATION FUNCTIONS
+	*/
+
 	// PrepareXFromTop instructs the timeline to prepare x amount of posts from the top of the timeline.
 	PrepareXFromTop(amount int) error
 	// PrepareXFromIndex instrucst the timeline to prepare the next amount of entries for serialization, from index onwards.
 	PrepareXFromIndex(amount int, index int) error
+	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
+	// and then immediately prepares it.
+	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
+
+	/*
+		INFO FUNCTIONS
+	*/
 
 	// ActualPostIndexLength returns the actual length of the post index at this point in time.
 	PostIndexLength() int
+
+	/*
+		UTILITY FUNCTIONS
+	*/
 
 	// Reset instructs the timeline to reset to its base state -- cache only the minimum amount of posts.
 	Reset() error
 }
 
+// timeline fulfils the Timeline interface
 type timeline struct {
 	postIndex     *postIndex
 	preparedPosts *preparedPosts
@@ -79,6 +100,7 @@ type timeline struct {
 	sync.Mutex
 }
 
+// NewTimeline returns a new Timeline for the given account ID
 func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConverter) Timeline {
 	return &timeline{
 		postIndex:     &postIndex{},

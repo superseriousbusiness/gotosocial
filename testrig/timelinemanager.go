@@ -5,6 +5,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 )
 
+// NewTestTimelineManager retuts a new timeline.Manager, suitable for testing, using the given db.
 func NewTestTimelineManager(db db.DB) timeline.Manager {
 	return timeline.NewManager(db, NewTestTypeConverter(db), NewTestConfig(), NewTestLog())
 }
