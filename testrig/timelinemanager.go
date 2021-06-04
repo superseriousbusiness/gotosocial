@@ -2,7 +2,7 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 )
 
 // NewTestTimelineManager retuts a new timeline.Manager, suitable for testing, using the given db.

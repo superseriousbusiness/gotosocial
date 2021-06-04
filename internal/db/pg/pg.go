@@ -467,8 +467,8 @@ func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *
 		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
 		whereGroup := func(q *pg.Query) (*pg.Query, error) {
 			q = q.
-			WhereOr("? IS NULL", pg.Ident("a.domain")).
-			WhereOr("a.domain = ?", "")
+				WhereOr("? IS NULL", pg.Ident("a.domain")).
+				WhereOr("a.domain = ?", "")
 			return q, nil
 		}
 

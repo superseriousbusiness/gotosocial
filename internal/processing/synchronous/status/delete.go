@@ -43,7 +43,8 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 	if err := p.db.DeleteByID(targetStatus.ID, targetStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error deleting status from the database: %s", err))
 	}
-
+	
+	// send it back to the processor for async processing
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsNote,
 		APActivityType: gtsmodel.ActivityStreamsDelete,

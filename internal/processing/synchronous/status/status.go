@@ -47,6 +47,6 @@ func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClient
 		config:        config,
 		db:            db,
 		fromClientAPI: fromClientAPI,
-		log: log,
+		log:           log,
 	}
 }

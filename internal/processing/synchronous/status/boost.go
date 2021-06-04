@@ -60,7 +60,7 @@ func (p *processor) Boost(account *gtsmodel.Account, application *gtsmodel.Appli
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// send it to the processor for async processing
+	// send it back to the processor for async processing
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsAnnounce,
 		APActivityType: gtsmodel.ActivityStreamsCreate,

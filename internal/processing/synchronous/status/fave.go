@@ -84,7 +84,7 @@ func (p *processor) Fave(account *gtsmodel.Account, targetStatusID string) (*api
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error putting fave in database: %s", err))
 		}
 
-		// send the new fave through the processor channel for federation etc
+		// send it back to the processor for async processing
 		p.fromClientAPI <- gtsmodel.FromClientAPI{
 			APObjectType:   gtsmodel.ActivityStreamsLike,
 			APActivityType: gtsmodel.ActivityStreamsCreate,

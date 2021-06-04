@@ -65,7 +65,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
 		}
 
-		// send the unfave through the processor channel for federation etc
+		// send it back to the processor for async processing
 		p.fromClientAPI <- gtsmodel.FromClientAPI{
 			APObjectType:   gtsmodel.ActivityStreamsLike,
 			APActivityType: gtsmodel.ActivityStreamsUndo,

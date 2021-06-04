@@ -32,8 +32,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/status"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -44,14 +44,6 @@ import (
 // fire messages into the processor and not wait for a reply before proceeding with other work. This allows
 // for clean distribution of messages without slowing down the client API and harming the user experience.
 type Processor interface {
-	// ToClientAPI returns a channel for putting in messages that need to go to the gts client API.
-	// ToClientAPI() chan gtsmodel.ToClientAPI
-	// FromClientAPI returns a channel for putting messages in that come from the client api going to the processor
-	FromClientAPI() chan gtsmodel.FromClientAPI
-	// ToFederator returns a channel for putting in messages that need to go to the federator (activitypub).
-	// ToFederator() chan gtsmodel.ToFederator
-	// FromFederator returns a channel for putting messages in that come from the federator (activitypub) going into the processor
-	FromFederator() chan gtsmodel.FromFederator
 	// Start starts the Processor, reading from its channels and passing messages back and forth.
 	Start() error
 	// Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
@@ -225,22 +217,6 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 
 		statusProcessor: statusProcessor,
 	}
-}
-
-// func (p *processor) ToClientAPI() chan gtsmodel.ToClientAPI {
-// 	return p.toClientAPI
-// }
-
-func (p *processor) FromClientAPI() chan gtsmodel.FromClientAPI {
-	return p.fromClientAPI
-}
-
-// func (p *processor) ToFederator() chan gtsmodel.ToFederator {
-// 	return p.toFederator
-// }
-
-func (p *processor) FromFederator() chan gtsmodel.FromFederator {
-	return p.fromFederator
 }
 
 // Start starts the Processor, reading from its channels and passing messages back and forth.

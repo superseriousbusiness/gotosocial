@@ -80,7 +80,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		}
 	}
 
-	// put the new status in the appropriate channel for async processing
+	// send it back to the processor for async processing
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsNote,
 		APActivityType: gtsmodel.ActivityStreamsCreate,

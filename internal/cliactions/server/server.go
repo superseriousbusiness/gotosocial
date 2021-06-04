@@ -39,8 +39,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
