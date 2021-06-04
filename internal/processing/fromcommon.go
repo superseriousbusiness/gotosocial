@@ -300,3 +300,7 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 		errors <- fmt.Errorf("initTimelineFor: error ingesting status %s: %s", status.ID, err)
 	}
 }
+
+func (p *processor) fullyDeleteStatus(status *gtsmodel.Status, accountID string) error {
+	return nil
+}

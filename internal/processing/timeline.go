@@ -25,29 +25,30 @@ import (
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode) {
+func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
 
 	statuses, err := p.timelineManager.HomeTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return statuses, nil
 }
 
-func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode) {
+func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
 	statuses, err := p.db.GetPublicTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	s, err := p.filterStatuses(authed, statuses)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return s, nil
@@ -64,7 +65,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 				l.Debugf("skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
-			return nil, NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting status author: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting status author: %s", err))
 		}
 
 		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(s)
@@ -75,7 +76,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 
 		visible, err := p.db.StatusVisible(s, targetAccount, authed.Account, relevantAccounts)
 		if err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking status visibility: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking status visibility: %s", err))
 		}
 		if !visible {
 			continue
@@ -89,7 +90,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 					l.Debugf("skipping status %s because status %s can't be found in the db", s.ID, s.BoostOfID)
 					continue
 				}
-				return nil, NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting boosted status: %s", err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting boosted status: %s", err))
 			}
 			boostedRelevantAccounts, err := p.db.PullRelevantAccountsFromStatus(bs)
 			if err != nil {
@@ -99,7 +100,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 
 			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
 			if err != nil {
-				return nil, NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking boosted status visibility: %s", err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking boosted status visibility: %s", err))
 			}
 
 			if boostedVisible {

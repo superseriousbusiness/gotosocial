@@ -28,9 +28,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -71,17 +73,17 @@ type Processor interface {
 	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode)
+	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
-	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountFollowingGet fetches a list of the accounts that target account is following.
-	AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode)
+	AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountRelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
-	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
+	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountFollowCreate handles a follow request to an account, either remote or local.
-	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, ErrorWithCode)
+	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
-	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode)
+	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -93,25 +95,25 @@ type Processor interface {
 	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
-	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, ErrorWithCode)
+	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode)
 	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
-	FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, ErrorWithCode)
+	FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
-	InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode)
+	InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
 	// MediaGet handles the GET of a media attachment with the given ID
-	MediaGet(authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, ErrorWithCode)
+	MediaGet(authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, gtserror.WithCode)
 	// MediaUpdate handles the PUT of a media attachment with the given ID and form
-	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode)
+	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 
 	// NotificationsGet
-	NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, ErrorWithCode)
+	NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode)
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
-	SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, ErrorWithCode)
+	SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
 	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
@@ -120,9 +122,9 @@ type Processor interface {
 	// StatusFave processes the faving of a given status, returning the updated status if the fave goes through.
 	StatusFave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
-	StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, ErrorWithCode)
+	StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
-	StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, ErrorWithCode)
+	StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
 	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 	StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
 	// StatusGet gets the given status, taking account of privacy settings and blocks etc.
@@ -130,12 +132,12 @@ type Processor interface {
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID
-	StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, ErrorWithCode)
+	StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
-	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode)
+	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, ErrorWithCode)
+	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
@@ -147,22 +149,22 @@ type Processor interface {
 
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
-	GetFediUser(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+	GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, ErrorWithCode)
+	GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
 
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, ErrorWithCode)
+	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, gtserror.WithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
-	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, ErrorWithCode)
+	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, gtserror.WithCode)
 
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
@@ -179,10 +181,7 @@ type Processor interface {
 
 // processor just implements the Processor interface
 type processor struct {
-	// federator     pub.FederatingActor
-	// toClientAPI   chan gtsmodel.ToClientAPI
-	fromClientAPI chan gtsmodel.FromClientAPI
-	// toFederator   chan gtsmodel.ToFederator
+	fromClientAPI   chan gtsmodel.FromClientAPI
 	fromFederator   chan gtsmodel.FromFederator
 	federator       federation.Federator
 	stop            chan interface{}
@@ -194,15 +193,25 @@ type processor struct {
 	storage         blob.Storage
 	timelineManager timeline.Manager
 	db              db.DB
+
+	/*
+		SUB-PROCESSORS
+	*/
+
+	statusProcessor status.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
 func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
+
+	fromClientAPI := make(chan gtsmodel.FromClientAPI, 1000)
+	fromFederator := make(chan gtsmodel.FromFederator, 1000)
+
+	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
+
 	return &processor{
-		// toClientAPI:   make(chan gtsmodel.ToClientAPI, 100),
-		fromClientAPI: make(chan gtsmodel.FromClientAPI, 100),
-		// toFederator:   make(chan gtsmodel.ToFederator, 100),
-		fromFederator:   make(chan gtsmodel.FromFederator, 100),
+		fromClientAPI:   fromClientAPI,
+		fromFederator:   fromFederator,
 		federator:       federator,
 		stop:            make(chan interface{}),
 		log:             log,
@@ -213,6 +222,8 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		storage:         storage,
 		timelineManager: timelineManager,
 		db:              db,
+
+		statusProcessor: statusProcessor,
 	}
 }
 

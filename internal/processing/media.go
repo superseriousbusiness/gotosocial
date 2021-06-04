@@ -28,6 +28,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -92,64 +93,64 @@ func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentReq
 	return &mastoAttachment, nil
 }
 
-func (p *processor) MediaGet(authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, ErrorWithCode) {
+func (p *processor) MediaGet(authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment := &gtsmodel.MediaAttachment{}
 	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			// attachment doesn't exist
-			return nil, NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
+			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
 		}
-		return nil, NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
 	}
 
 	if attachment.AccountID != authed.Account.ID {
-		return nil, NewErrorNotFound(errors.New("attachment not owned by requesting account"))
+		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
 	a, err := p.tc.AttachmentToMasto(attachment)
 	if err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}
 
 	return &a, nil
 }
 
-func (p *processor) MediaUpdate(authed *oauth.Auth, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, ErrorWithCode) {
+func (p *processor) MediaUpdate(authed *oauth.Auth, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment := &gtsmodel.MediaAttachment{}
 	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			// attachment doesn't exist
-			return nil, NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
+			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
 		}
-		return nil, NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("db error getting attachment: %s", err))
 	}
 
 	if attachment.AccountID != authed.Account.ID {
-		return nil, NewErrorNotFound(errors.New("attachment not owned by requesting account"))
+		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
 	if form.Description != nil {
 		attachment.Description = *form.Description
 		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
 		}
 	}
 
 	if form.Focus != nil {
 		focusx, focusy, err := parseFocus(*form.Focus)
 		if err != nil {
-			return nil, NewErrorBadRequest(err)
+			return nil, gtserror.NewErrorBadRequest(err)
 		}
 		attachment.FileMeta.Focus.X = focusx
 		attachment.FileMeta.Focus.Y = focusy
 		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
 		}
 	}
 
 	a, err := p.tc.AttachmentToMasto(attachment)
 	if err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}
 
 	return &a, nil
@@ -159,37 +160,37 @@ func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequest
 	// parse the form fields
 	mediaSize, err := media.ParseMediaSize(form.MediaSize)
 	if err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("media size %s not valid", form.MediaSize))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not valid", form.MediaSize))
 	}
 
 	mediaType, err := media.ParseMediaType(form.MediaType)
 	if err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("media type %s not valid", form.MediaType))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not valid", form.MediaType))
 	}
 
 	spl := strings.Split(form.FileName, ".")
 	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
-		return nil, NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
 	}
 	wantedMediaID := spl[0]
 
 	// get the account that owns the media and make sure it's not suspended
 	acct := &gtsmodel.Account{}
 	if err := p.db.GetByID(form.AccountID, acct); err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", form.AccountID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", form.AccountID, err))
 	}
 	if !acct.SuspendedAt.IsZero() {
-		return nil, NewErrorNotFound(fmt.Errorf("account with id %s is suspended", form.AccountID))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", form.AccountID))
 	}
 
 	// make sure the requesting account and the media account don't block each other
 	if authed.Account != nil {
 		blocked, err := p.db.Blocked(authed.Account.ID, form.AccountID)
 		if err != nil {
-			return nil, NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, authed.Account.ID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, authed.Account.ID, err))
 		}
 		if blocked {
-			return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", form.AccountID, authed.Account.ID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", form.AccountID, authed.Account.ID))
 		}
 	}
 
@@ -201,10 +202,10 @@ func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequest
 	case media.Emoji:
 		e := &gtsmodel.Emoji{}
 		if err := p.db.GetByID(wantedMediaID, e); err != nil {
-			return nil, NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
 		}
 		if e.Disabled {
-			return nil, NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedMediaID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedMediaID))
 		}
 		switch mediaSize {
 		case media.Original:
@@ -214,15 +215,15 @@ func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequest
 			content.ContentType = e.ImageStaticContentType
 			storagePath = e.ImageStaticPath
 		default:
-			return nil, NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
 		}
 	case media.Attachment, media.Header, media.Avatar:
 		a := &gtsmodel.MediaAttachment{}
 		if err := p.db.GetByID(wantedMediaID, a); err != nil {
-			return nil, NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
 		}
 		if a.AccountID != form.AccountID {
-			return nil, NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, form.AccountID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, form.AccountID))
 		}
 		switch mediaSize {
 		case media.Original:
@@ -232,13 +233,13 @@ func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequest
 			content.ContentType = a.Thumbnail.ContentType
 			storagePath = a.Thumbnail.Path
 		default:
-			return nil, NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
 		}
 	}
 
 	bytes, err := p.storage.RetrieveFileFrom(storagePath)
 	if err != nil {
-		return nil, NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}
 
 	content.ContentLength = int64(len(bytes))

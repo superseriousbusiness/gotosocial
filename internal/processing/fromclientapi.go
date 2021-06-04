@@ -127,6 +127,13 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
 			}
 			return p.federateUnfollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsLike:
+			// UNDO LIKE/FAVE
+			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+			if !ok {
+				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
+			}
+			return p.federateUnfave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	}
 	return nil
@@ -206,6 +213,45 @@ func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gts
 	}
 
 	// send off the Undo
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	return err
+}
+
+func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
+	// create the AS fave
+	asFave, err := p.tc.FaveToAS(fave)
+	if err != nil {
+		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
+	}
+
+	targetAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
+	}
+
+	// create an Undo and set the appropriate actor on it
+	undo := streams.NewActivityStreamsUndo()
+	undo.SetActivityStreamsActor(asFave.GetActivityStreamsActor())
+
+	// Set the fave as the 'object' property.
+	undoObject := streams.NewActivityStreamsObjectProperty()
+	undoObject.AppendActivityStreamsLike(asFave)
+	undo.SetActivityStreamsObject(undoObject)
+
+	// Set the To of the undo as the target of the fave
+	undoTo := streams.NewActivityStreamsToProperty()
+	undoTo.AppendIRI(targetAccountURI)
+	undo.SetActivityStreamsTo(undoTo)
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
 	return err
 }

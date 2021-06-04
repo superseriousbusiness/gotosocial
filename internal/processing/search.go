@@ -27,12 +27,13 @@ import (
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, ErrorWithCode) {
+func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":  "SearchGet",
 		"query": searchQuery.Query,
@@ -164,7 +165,7 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 			// first turn it into a gtsmodel.Status
 			status, err := p.tc.ASStatusToStatus(statusable)
 			if err != nil {
-				return nil, NewErrorInternalError(err)
+				return nil, gtserror.NewErrorInternalError(err)
 			}
 
 			// put it in the DB so it gets a UUID

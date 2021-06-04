@@ -23,18 +23,19 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) InstanceGet(domain string) (*apimodel.Instance, ErrorWithCode) {
+func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode) {
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain}}, i); err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
 	}
 
 	ai, err := p.tc.InstanceToMasto(i)
 	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
 
 	return ai, nil
