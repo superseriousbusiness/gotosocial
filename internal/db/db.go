@@ -212,7 +212,7 @@ type DB interface {
 	// 3. Accounts boosted by the target status
 	//
 	// Will return an error if something goes wrong while pulling stuff out of the database.
-	StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
+	StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
 
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
@@ -247,10 +247,6 @@ type DB interface {
 	// StatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
-	// UnfaveStatus unfaves the given status, using accountID as the unfaver (sure, that's a word).
-	// The returned fave will be nil if the status was already not faved.
-	UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
-
 	// WhoFavedStatus returns a slice of accounts who faved the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
@@ -260,10 +256,6 @@ type DB interface {
 	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
 	GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string) ([]*gtsmodel.Status, error)
-
-	// GetHomeTimelineForAccount fetches the account's HOME timeline -- ie., posts and replies from people they *follow*.
-	// It will use the given filters and try to return as many statuses up to the limit as possible.
-	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimelineForAccount fetches the account's PUBLIC timline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.

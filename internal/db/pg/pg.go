@@ -785,8 +785,10 @@ func (ps *postgresService) GetRelationship(requestingAccount string, targetAccou
 	return r, nil
 }
 
-func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {
+func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {
 	l := ps.log.WithField("func", "StatusVisible")
+
+	targetAccount := relevantAccounts.StatusAuthor
 
 	// if target account is suspended then don't show the status
 	if !targetAccount.SuspendedAt.IsZero() {
@@ -869,7 +871,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, targetAc
 	// check other accounts mentioned/boosted by/replied to by the status, if they exist
 	if relevantAccounts != nil {
 		// status replies to account id
-		if relevantAccounts.ReplyToAccount != nil {
+		if relevantAccounts.ReplyToAccount != nil && relevantAccounts.ReplyToAccount.ID != requestingAccount.ID {
 			if blocked, err := ps.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
@@ -1087,55 +1089,6 @@ func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID
 	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-// func (ps *postgresService) FaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
-// 	// first check if a fave already exists, we can just return if so
-// 	existingFave := &gtsmodel.StatusFave{}
-// 	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
-// 	if err == nil {
-// 		// fave already exists so just return nothing at all
-// 		return nil, nil
-// 	}
-
-// 	// an error occurred so it might exist or not, we don't know
-// 	if err != pg.ErrNoRows {
-// 		return nil, err
-// 	}
-
-// 	// it doesn't exist so create it
-// 	newFave := &gtsmodel.StatusFave{
-// 		AccountID:       accountID,
-// 		TargetAccountID: status.AccountID,
-// 		StatusID:        status.ID,
-// 	}
-// 	if _, err = ps.conn.Model(newFave).Insert(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return newFave, nil
-// }
-
-func (ps *postgresService) UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error) {
-	// if a fave doesn't exist, we don't need to do anything
-	existingFave := &gtsmodel.StatusFave{}
-	err := ps.conn.Model(existingFave).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Select()
-	// the fave doesn't exist so return nothing at all
-	if err == pg.ErrNoRows {
-		return nil, nil
-	}
-
-	// an error occurred so it might exist or not, we don't know
-	if err != nil && err != pg.ErrNoRows {
-		return nil, err
-	}
-
-	// the fave exists so remove it
-	if _, err = ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Delete(); err != nil {
-		return nil, err
-	}
-
-	return existingFave, nil
-}
-
 func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
 	accounts := []*gtsmodel.Account{}
 
@@ -1216,56 +1169,13 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int
 	return statuses, nil
 }
 
-func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
-	statuses := []*gtsmodel.Status{}
-
-	q := ps.conn.Model(&statuses)
-
-	q = q.ColumnExpr("status.*").
-		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
-		Where("f.account_id = ?", accountID).
-		Limit(limit).
-		Order("status.created_at DESC")
-
-	if maxID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("status.created_at < ?", s.CreatedAt)
-	}
-
-	if minID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("status.created_at > ?", s.CreatedAt)
-	}
-
-	if sinceID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("status.created_at > ?", s.CreatedAt)
-	}
-
-	err := q.Select()
-	if err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-	}
-
-	return statuses, nil
-}
-
 func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := ps.conn.Model(&statuses).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
+		Where("? IS NULL", pg.Ident("in_reply_to_id")).
+		Where("? IS NULL", pg.Ident("boost_of_id")).
 		Limit(limit).
 		Order("created_at DESC")
 

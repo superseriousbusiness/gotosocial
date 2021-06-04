@@ -286,7 +286,7 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 	}
 
 	// make sure the status is visible
-	visible, err := p.db.StatusVisible(status, status.GTSAuthorAccount, timelineAccount, relevantAccounts)
+	visible, err := p.db.StatusVisible(status, timelineAccount, relevantAccounts)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatus: error getting visibility for status for timeline with id %s: %s", accountID, err)
 		return
@@ -301,6 +301,6 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 	}
 }
 
-func (p *processor) fullyDeleteStatus(status *gtsmodel.Status, accountID string) error {
-	return nil
+func (p *processor) deleteStatusFromTimelines(status *gtsmodel.Status) error {
+	return p.timelineManager.WipeStatusFromAllTimelines(status.ID)
 }

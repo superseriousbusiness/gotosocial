@@ -56,5 +56,11 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		return
 	}
 
+	// the status was already gone/never existed
+	if mastoStatus == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
+		return
+	}
+
 	c.JSON(http.StatusOK, mastoStatus)
 }

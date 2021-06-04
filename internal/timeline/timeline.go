@@ -334,27 +334,31 @@ func (t *timeline) Remove(statusID string) error {
 	t.Lock()
 	defer t.Unlock()
 
-	// remove the entry from the post index
-	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*postIndexEntry)
-		if !ok {
-			return errors.New("Remove: could not parse e as a postIndexEntry")
-		}
-		if entry.statusID == statusID {
-			t.postIndex.data.Remove(e)
-			break // bail once we found and removed it
+	if t.postIndex != nil && t.postIndex.data != nil {
+		// remove the entry from the post index
+		for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*postIndexEntry)
+			if !ok {
+				return errors.New("Remove: could not parse e as a postIndexEntry")
+			}
+			if entry.statusID == statusID {
+				t.postIndex.data.Remove(e)
+				break // bail once we found and removed it
+			}
 		}
 	}
 
 	// remove the entry from prepared posts
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
-		if !ok {
-			return errors.New("Remove: could not parse e as a preparedPostsEntry")
-		}
-		if entry.statusID == statusID {
-			t.preparedPosts.data.Remove(e)
-			break // bail once we found and removed it
+	if t.preparedPosts != nil && t.preparedPosts.data != nil {
+		for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*preparedPostsEntry)
+			if !ok {
+				return errors.New("Remove: could not parse e as a preparedPostsEntry")
+			}
+			if entry.statusID == statusID {
+				t.preparedPosts.data.Remove(e)
+				break // bail once we found and removed it
+			}
 		}
 	}
 

@@ -146,6 +146,11 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			// 1. delete all media associated with status
 			// 2. delete boosts of status
 			// 3. etc etc etc
+			statusToDelete, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("note was not parseable as *gtsmodel.Status")
+			}
+			return p.deleteStatusFromTimelines(statusToDelete)
 		case gtsmodel.ActivityStreamsProfile:
 			// DELETE A PROFILE/ACCOUNT
 			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account

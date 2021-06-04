@@ -135,6 +135,22 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 			return p.federateUnfave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
+	case gtsmodel.ActivityStreamsDelete:
+		// DELETE
+		switch clientMsg.APObjectType {
+		case gtsmodel.ActivityStreamsNote:
+			// DELETE STATUS/NOTE
+			statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("note was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
+				return err
+			}
+
+			return p.federateStatusDelete(statusToDelete, clientMsg.OriginAccount)
+		}
 	}
 	return nil
 }
@@ -151,6 +167,43 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 	}
 
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)
+	return err
+}
+
+func (p *processor) federateStatusDelete(status *gtsmodel.Status, originAccount *gtsmodel.Account) error {
+	asStatus, err := p.tc.StatusToAS(status)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	actorIRI, err := url.Parse(originAccount.URI)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", originAccount.URI, err)
+	}
+
+	// create a delete and set the appropriate actor on it
+	delete := streams.NewActivityStreamsDelete()
+
+	// set the actor for the delete
+	deleteActor := streams.NewActivityStreamsActorProperty()
+	deleteActor.AppendIRI(actorIRI)
+	delete.SetActivityStreamsActor(deleteActor)
+
+	// Set the status as the 'object' property.
+	deleteObject := streams.NewActivityStreamsObjectProperty()
+	deleteObject.AppendActivityStreamsNote(asStatus)
+	delete.SetActivityStreamsObject(deleteObject)
+
+	// set the to and cc as the original to/cc of the original status
+	delete.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
+	delete.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, delete)
 	return err
 }
 

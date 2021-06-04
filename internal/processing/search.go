@@ -109,7 +109,7 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 		if err != nil {
 			continue
 		}
-		if visible, err := p.db.StatusVisible(foundStatus, statusOwner, authed.Account, relevantAccounts); !visible || err != nil {
+		if visible, err := p.db.StatusVisible(foundStatus, authed.Account, relevantAccounts); !visible || err != nil {
 			continue
 		}
 

@@ -227,7 +227,7 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relevant statuses: %s", err))
 		}
 
-		visible, err := p.db.StatusVisible(&s, targetAccount, authed.Account, relevantAccounts)
+		visible, err := p.db.StatusVisible(&s, authed.Account, relevantAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
 		}
@@ -246,7 +246,7 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relevant accounts from boosted status: %s", err))
 			}
 
-			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
+			boostedVisible, err := p.db.StatusVisible(bs, authed.Account, boostedRelevantAccounts)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking boosted status visibility: %s", err))
 			}

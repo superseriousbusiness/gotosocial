@@ -74,7 +74,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 			continue
 		}
 
-		visible, err := p.db.StatusVisible(s, targetAccount, authed.Account, relevantAccounts)
+		visible, err := p.db.StatusVisible(s, authed.Account, relevantAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking status visibility: %s", err))
 		}
@@ -98,7 +98,7 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 				continue
 			}
 
-			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
+			boostedVisible, err := p.db.StatusVisible(bs, authed.Account, boostedRelevantAccounts)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking boosted status visibility: %s", err))
 			}
@@ -204,7 +204,7 @@ func (p *processor) indexAndIngest(statuses []*gtsmodel.Status, timelineAccount 
 			l.Error(fmt.Errorf("initTimelineFor: error getting relevant accounts from status %s: %s", s.ID, err))
 			continue
 		}
-		visible, err := p.db.StatusVisible(s, relevantAccounts.StatusAuthor, timelineAccount, relevantAccounts)
+		visible, err := p.db.StatusVisible(s, timelineAccount, relevantAccounts)
 		if err != nil {
 			l.Error(fmt.Errorf("initTimelineFor: error checking visibility of status %s: %s", s.ID, err))
 			continue

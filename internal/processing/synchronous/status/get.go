@@ -31,7 +31,7 @@ func (p *processor) Get(account *gtsmodel.Account, targetStatusID string) (*apim
 	}
 
 	l.Trace("going to see if status is visible")
-	visible, err := p.db.StatusVisible(targetStatus, targetAccount, account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
+	visible, err := p.db.StatusVisible(targetStatus, account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}

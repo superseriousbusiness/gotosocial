@@ -31,7 +31,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 	}
 
 	l.Trace("going to see if status is visible")
-	visible, err := p.db.StatusVisible(targetStatus, targetAccount, account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
+	visible, err := p.db.StatusVisible(targetStatus, account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -60,8 +60,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 
 	if toUnfave {
 		// we had a fave, so take some action to get rid of it
-		_, err = p.db.UnfaveStatus(targetStatus, account.ID)
-		if err != nil {
+		if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: account.ID}}, gtsFave); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
 		}
 

@@ -222,7 +222,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.APStatusOwnerURI = attributedTo.String()
 
 	statusOwner := &gtsmodel.Account{}
-	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String()}}, statusOwner); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String(), CaseInsensitive: true}}, statusOwner); err != nil {
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID

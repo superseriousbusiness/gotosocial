@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -14,7 +15,11 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 	l.Tracef("going to search for target status %s", targetStatusID)
 	targetStatus := &gtsmodel.Status{}
 	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+		}
+		// status is already gone
+		return nil, nil
 	}
 
 	if targetStatus.AccountID != account.ID {
@@ -40,10 +45,10 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
 
-	if err := p.db.DeleteByID(targetStatus.ID, targetStatus); err != nil {
+	if err := p.db.DeleteByID(targetStatus.ID, &gtsmodel.Status{}); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error deleting status from the database: %s", err))
 	}
-	
+
 	// send it back to the processor for async processing
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsNote,

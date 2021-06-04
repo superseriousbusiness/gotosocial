@@ -19,6 +19,8 @@
 package timeline
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -66,6 +68,10 @@ type Manager interface {
 	GetOldestIndexedID(timelineAccountID string) (string, error)
 	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(timelineAccountID string, limit int) error
+	// WipeStatusFromTimeline completely removes a status and from the index and prepared posts of the given account ID
+	WipeStatusFromTimeline(timelineAccountID string, statusID string) error
+	// WipeStatusFromAllTimelines removes the status from the index and prepared posts of all timelines
+	WipeStatusFromAllTimelines(statusID string) error
 }
 
 // NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
@@ -170,6 +176,37 @@ func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
 	t := m.getOrCreateTimeline(timelineAccountID)
 
 	return t.PrepareXFromTop(limit)
+}
+
+func (m *manager) WipeStatusFromTimeline(timelineAccountID string, statusID string) error {
+	t := m.getOrCreateTimeline(timelineAccountID)
+
+	return t.Remove(statusID)
+}
+
+func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
+
+	errors := []string{}
+
+	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
+		t, ok := i.(Timeline)
+		if !ok {
+			panic("couldn't parse entry as Timeline, this should never happen so panic")
+		}
+
+		if err := t.Remove(statusID); err != nil {
+			errors = append(errors, err.Error())
+		}
+
+		return false
+	})
+
+	var err error
+	if len(errors) > 0 {
+		err = fmt.Errorf("one or more errors removing status %s from all timelines: %s", statusID, strings.Join(errors, ";"))
+	}
+
+	return err
 }
 
 func (m *manager) getOrCreateTimeline(timelineAccountID string) Timeline {
