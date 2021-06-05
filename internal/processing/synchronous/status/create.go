@@ -16,6 +16,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 	thisStatusID := uuid.NewString()
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
+
 	newStatus := &gtsmodel.Status{
 		ID:                       thisStatusID,
 		URI:                      thisStatusURI,
@@ -63,6 +64,10 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 	}
 
 	if err := p.processEmojis(form, account.ID, newStatus); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.processContent(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

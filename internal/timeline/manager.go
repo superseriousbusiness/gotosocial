@@ -54,6 +54,7 @@ type Manager interface {
 	// It should already be established before calling this function that the status/post actually belongs in the timeline!
 	Ingest(status *gtsmodel.Status, timelineAccountID string) error
 	// IngestAndPrepare takes one status and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
+	// This is useful in cases where we know the status will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
 	// It should already be established before calling this function that the status/post actually belongs in the timeline!
 	IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error

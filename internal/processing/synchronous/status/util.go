@@ -3,6 +3,7 @@ package status
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -226,5 +227,30 @@ func (p *processor) processEmojis(form *apimodel.AdvancedStatusCreateForm, accou
 	status.GTSEmojis = gtsEmojis
 	// add just the ids of the used emojis to the status for putting in the db
 	status.Emojis = emojis
+	return nil
+}
+
+func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+	if form.Status == "" {
+		status.Content = ""
+		return nil
+	}
+
+	// surround the whole status in '<p>'
+	content := fmt.Sprintf(`<p>%s</p>`, form.Status)
+
+	// format mentions nicely
+	for _, menchie := range status.GTSMentions {
+		targetAccount := &gtsmodel.Account{}
+		if err := p.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
+			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
+			content = strings.ReplaceAll(content, menchie.NameString, mentionContent)
+		}
+	}
+
+	// replace newlines with breaks
+	content = strings.ReplaceAll(content, "\n", "<br />")
+
+	status.Content = content
 	return nil
 }

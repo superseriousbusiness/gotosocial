@@ -68,8 +68,8 @@ type Timeline interface {
 
 	// PrepareXFromTop instructs the timeline to prepare x amount of posts from the top of the timeline.
 	PrepareXFromTop(amount int) error
-	// PrepareXFromIndex instrucst the timeline to prepare the next amount of entries for serialization, from index onwards.
-	PrepareXFromIndex(amount int, index int) error
+	// PrepareXFromPosition instrucst the timeline to prepare the next amount of entries for serialization, from position onwards.
+	PrepareXFromPosition(amount int, position int) error
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
 	// and then immediately prepares it.
 	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
@@ -111,11 +111,11 @@ func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConvert
 	}
 }
 
-func (t *timeline) PrepareXFromIndex(amount int, index int) error {
+func (t *timeline) PrepareXFromPosition(amount int, desiredPosition int) error {
 	t.Lock()
 	defer t.Unlock()
 
-	var indexed int
+	var position int
 	var prepared int
 	var preparing bool
 	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
@@ -125,12 +125,11 @@ func (t *timeline) PrepareXFromIndex(amount int, index int) error {
 		}
 
 		if !preparing {
-			// we haven't hit the index we need to prepare from yet
-			if indexed == index {
+			// we haven't hit the position we need to prepare from yet
+			if position == desiredPosition {
 				preparing = true
 			}
-			indexed = indexed + 1
-			continue
+			position = position + 1
 		} else {
 			if err := t.prepare(entry.statusID); err != nil {
 				return fmt.Errorf("PrepareXFromTop: error preparing status with id %s: %s", entry.statusID, err)
@@ -230,7 +229,7 @@ func (t *timeline) GetXFromIDOnwards(amount int, fromID string) ([]*apimodel.Sta
 
 	// make sure we have enough posts prepared behind it to return what we're being asked for
 	if t.preparedPosts.data.Len() < amount+position {
-		if err := t.PrepareXFromIndex(amount, position); err != nil {
+		if err := t.PrepareXFromPosition(amount, position); err != nil {
 			return nil, err
 		}
 	}

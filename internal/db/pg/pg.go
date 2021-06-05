@@ -1300,12 +1300,14 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 		// okay we're good now, we can start pulling accounts out of the database
 		mentionedAccount := &gtsmodel.Account{}
 		var err error
+
+		// match username + account, case insensitive
 		if local {
 			// local user -- should have a null domain
-			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
+			err = ps.conn.Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", pg.Ident("username"), username).Where("? IS NULL", pg.Ident("domain")).Select()
 		} else {
 			// remote user -- should have domain defined
-			err = ps.conn.Model(mentionedAccount).Where("username = ?", username).Where("? = ?", pg.Ident("domain"), domain).Select()
+			err = ps.conn.Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", pg.Ident("username"), username).Where("LOWER(?) = LOWER(?)", pg.Ident("domain"), domain).Select()
 		}
 
 		if err != nil {
@@ -1326,6 +1328,7 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 			TargetAccountID:     mentionedAccount.ID,
 			NameString:          a,
 			MentionedAccountURI: mentionedAccount.URI,
+			MentionedAccountURL: mentionedAccount.URL,
 			GTSAccount:          mentionedAccount,
 		})
 	}

@@ -56,6 +56,10 @@ type Mention struct {
 	//
 	// This will not be put in the database, it's just for convenience.
 	MentionedAccountURI string `pg:"-"`
+	// MentionedAccountURL is the web url of the user mentioned.
+	//
+	// This will not be put in the database, it's just for convenience.
+	MentionedAccountURL string `pg:"-"`
 	// A pointer to the gtsmodel account of the mentioned account.
 	GTSAccount *Account `pg:"-"`
 }
