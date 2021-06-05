@@ -35,7 +35,7 @@ func DeriveMentionsFromStatus(status string) []string {
 	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
-	return lower(unique(mentionedAccounts))
+	return unique(mentionedAccounts)
 }
 
 // DeriveHashtagsFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -47,7 +47,7 @@ func DeriveHashtagsFromStatus(status string) []string {
 	for _, m := range hashtagFinderRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, m[1])
 	}
-	return lower(unique(tags))
+	return unique(tags)
 }
 
 // DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -59,7 +59,7 @@ func DeriveEmojisFromStatus(status string) []string {
 	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
-	return lower(unique(emojis))
+	return unique(emojis)
 }
 
 // ExtractMentionParts extracts the username test_user and the domain example.org
@@ -93,25 +93,4 @@ func unique(s []string) []string {
 		}
 	}
 	return list
-}
-
-// lower lowercases all strings in a given string slice
-func lower(s []string) []string {
-	new := []string{}
-	for _, i := range s {
-		new = append(new, strings.ToLower(i))
-	}
-	return new
-}
-
-// HTMLFormat takes a plaintext formatted status string, and converts it into
-// a nice HTML-formatted string.
-//
-// This includes:
-// - Replacing line-breaks with <p>
-// - Replacing URLs with hrefs.
-// - Replacing mentions with links to that account's URL as stored in the database.
-func HTMLFormat(status string) string {
-	// TODO: write proper HTML formatting logic for a status
-	return status
 }

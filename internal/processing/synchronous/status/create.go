@@ -21,7 +21,6 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		ID:                       thisStatusID,
 		URI:                      thisStatusURI,
 		URL:                      thisStatusURL,
-		Content:                  util.HTMLFormat(form.Status),
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
 		Local:                    true,

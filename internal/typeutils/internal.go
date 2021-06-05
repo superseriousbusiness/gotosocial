@@ -56,7 +56,7 @@ func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.
 		Emojis:      []string{},
 
 		// the below fields will be taken from the target status
-		Content:             util.HTMLFormat(s.Content),
+		Content:             s.Content,
 		ContentWarning:      s.ContentWarning,
 		ActivityStreamsType: s.ActivityStreamsType,
 		Sensitive:           s.Sensitive,

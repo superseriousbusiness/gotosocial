@@ -244,10 +244,6 @@ func (ps *postgresService) GetWhere(where []db.Where, i interface{}) error {
 	return nil
 }
 
-// func (ps *postgresService) GetWhereMany(i interface{}, where ...model.Where) error {
-// 	return nil
-// }
-
 func (ps *postgresService) GetAll(i interface{}) error {
 	if err := ps.conn.Model(i).Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -1257,6 +1253,8 @@ func (ps *postgresService) GetNotificationsForAccount(accountID string, limit in
 	CONVERSION FUNCTIONS
 */
 
+// TODO: move these to the type converter, it's bananas that they're here and not there
+
 func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
 	ogAccount := &gtsmodel.Account{}
 	if err := ps.conn.Model(ogAccount).Where("id = ?", originAccountID).Select(); err != nil {
@@ -1341,10 +1339,11 @@ func (ps *postgresService) TagStringsToTags(tags []string, originAccountID strin
 		tag := &gtsmodel.Tag{}
 		// we can use selectorinsert here to create the new tag if it doesn't exist already
 		// inserted will be true if this is a new tag we just created
-		if err := ps.conn.Model(tag).Where("name = ?", t).Select(); err != nil {
+		if err := ps.conn.Model(tag).Where("LOWER(?) = LOWER(?)", pg.Ident("name"), t).Select(); err != nil {
 			if err == pg.ErrNoRows {
 				// tag doesn't exist yet so populate it
 				tag.ID = uuid.NewString()
+				tag.URL = fmt.Sprintf("%s://%s/tags/%s", ps.config.Protocol, ps.config.Host, t)
 				tag.Name = t
 				tag.FirstSeenFromAccountID = originAccountID
 				tag.CreatedAt = time.Now()

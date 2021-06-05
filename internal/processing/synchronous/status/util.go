@@ -248,6 +248,12 @@ func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, acco
 		}
 	}
 
+	// format tags nicely
+	for _, tag := range status.GTSTags {
+		tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
+		content = strings.ReplaceAll(content, fmt.Sprintf("#%s", tag.Name), tagContent)
+	}
+
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")
 

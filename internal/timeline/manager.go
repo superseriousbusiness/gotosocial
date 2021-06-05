@@ -143,8 +143,10 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 
 	var err error
 	var statuses []*apimodel.Status
-	if maxID != "" {
-		statuses, err = t.GetXFromIDOnwards(limit, maxID)
+	if maxID != "" && sinceID != "" {
+		statuses, err = t.GetXBetweenID(limit, maxID, sinceID)
+	} else if maxID != "" {
+		statuses, err = t.GetXBehindID(limit, maxID)
 	} else if sinceID != "" {
 		statuses, err = t.GetXBeforeID(limit, sinceID)
 	} else {
