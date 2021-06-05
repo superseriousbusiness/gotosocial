@@ -41,7 +41,7 @@ var (
 	mentionNameRegex = regexp.MustCompile(mentionNameRegexString)
 
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?:[^a-zA-Z0-9]|\W)`
+	mentionFinderRegexString = `(?: |^|\W)?(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?:[^a-zA-Z0-9]|\W)`
 	mentionFinderRegex       = regexp.MustCompile(mentionFinderRegexString)
 
 	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
