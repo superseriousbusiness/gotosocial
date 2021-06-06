@@ -1,0 +1,180 @@
+package timeline
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
+
+func (t *timeline) PrepareBehind(statusID string, include bool, amount int) error {
+	t.Lock()
+	defer t.Unlock()
+
+	var prepared int
+	var preparing bool
+prepareloop:
+	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*postIndexEntry)
+		if !ok {
+			return errors.New("PrepareBehind: could not parse e as a postIndexEntry")
+		}
+
+		if !preparing {
+			// we haven't hit the position we need to prepare from yet
+			if entry.statusID == statusID {
+				preparing = true
+				if !include {
+					continue
+				}
+			}
+		}
+
+		if preparing {
+			if err := t.prepare(entry.statusID); err != nil {
+				// there's been an error
+				if _, ok := err.(db.ErrNoEntries); !ok {
+					// it's a real error
+					return fmt.Errorf("PrepareBehind: error preparing status with id %s: %s", entry.statusID, err)
+				}
+				// the status just doesn't exist (anymore) so continue to the next one
+				continue
+			}
+			if prepared == amount {
+				// we're done
+				break prepareloop
+			}
+			prepared = prepared + 1
+		}
+	}
+
+	return nil
+}
+
+func (t *timeline) PrepareBefore(statusID string, include bool, amount int) error {
+	t.Lock()
+	defer t.Unlock()
+
+	var prepared int
+	var preparing bool
+prepareloop:
+	for e := t.postIndex.data.Back(); e != nil; e = e.Prev() {
+		entry, ok := e.Value.(*postIndexEntry)
+		if !ok {
+			return errors.New("PrepareBefore: could not parse e as a postIndexEntry")
+		}
+
+		if !preparing {
+			// we haven't hit the position we need to prepare from yet
+			if entry.statusID == statusID {
+				preparing = true
+				if !include {
+					continue
+				}
+			}
+		}
+
+		if preparing {
+			if err := t.prepare(entry.statusID); err != nil {
+				// there's been an error
+				if _, ok := err.(db.ErrNoEntries); !ok {
+					// it's a real error
+					return fmt.Errorf("PrepareBefore: error preparing status with id %s: %s", entry.statusID, err)
+				}
+				// the status just doesn't exist (anymore) so continue to the next one
+				continue
+			}
+			if prepared == amount {
+				// we're done
+				break prepareloop
+			}
+			prepared = prepared + 1
+		}
+	}
+
+	return nil
+}
+
+func (t *timeline) PrepareFromTop(amount int) error {
+	t.Lock()
+	defer t.Unlock()
+
+	t.preparedPosts.data.Init()
+
+	var prepared int
+prepareloop:
+	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*postIndexEntry)
+		if !ok {
+			return errors.New("PrepareFromTop: could not parse e as a postIndexEntry")
+		}
+
+		if err := t.prepare(entry.statusID); err != nil {
+			// there's been an error
+			if _, ok := err.(db.ErrNoEntries); !ok {
+				// it's a real error
+				return fmt.Errorf("PrepareFromTop: error preparing status with id %s: %s", entry.statusID, err)
+			}
+			// the status just doesn't exist (anymore) so continue to the next one
+			continue
+		}
+
+		prepared = prepared + 1
+		if prepared == amount {
+			// we're done
+			break prepareloop
+		}
+	}
+
+	return nil
+}
+
+func (t *timeline) prepare(statusID string) error {
+
+	// start by getting the status out of the database according to its indexed ID
+	gtsStatus := &gtsmodel.Status{}
+	if err := t.db.GetByID(statusID, gtsStatus); err != nil {
+		return err
+	}
+
+	// if the account pointer hasn't been set on this timeline already, set it lazily here
+	if t.account == nil {
+		timelineOwnerAccount := &gtsmodel.Account{}
+		if err := t.db.GetByID(t.accountID, timelineOwnerAccount); err != nil {
+			return err
+		}
+		t.account = timelineOwnerAccount
+	}
+
+	// to convert the status we need relevant accounts from it, so pull them out here
+	relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(gtsStatus)
+	if err != nil {
+		return err
+	}
+
+	// check if this is a boost...
+	var reblogOfStatus *gtsmodel.Status
+	if gtsStatus.BoostOfID != "" {
+		s := &gtsmodel.Status{}
+		if err := t.db.GetByID(gtsStatus.BoostOfID, s); err != nil {
+			return err
+		}
+		reblogOfStatus = s
+	}
+
+	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
+	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, t.account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
+	if err != nil {
+		return err
+	}
+
+	// shove it in prepared posts as a prepared posts entry
+	preparedPostsEntry := &preparedPostsEntry{
+		createdAt: gtsStatus.CreatedAt,
+		statusID:  statusID,
+		prepared:  apiModelStatus,
+	}
+
+	return t.preparedPosts.insertPrepared(preparedPostsEntry)
+}

@@ -32,9 +32,53 @@ import (
 
 func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
 
-	statuses, err := p.timelineManager.HomeTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	statuses := []*apimodel.Status{}
+
+grabloop:
+	for len(statuses) < limit {
+		gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, limit, maxID, false, false)
+
+		if err != nil {
+			if _, ok := err.(db.ErrNoEntries); !ok {
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting statuses from db: %s", err))
+			}
+			break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
+		}
+
+		for _, s := range gtsStatuses {
+			relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(s)
+			if err != nil {
+				continue
+			}
+			visible, err := p.db.StatusVisible(s, authed.Account, relevantAccounts)
+			if err != nil {
+				continue
+			}
+
+			if visible {
+				// check if this is a boost...
+				var reblogOfStatus *gtsmodel.Status
+				if s.BoostOfID != "" {
+					s := &gtsmodel.Status{}
+					if err := p.db.GetByID(s.BoostOfID, s); err != nil {
+						continue
+					}
+					reblogOfStatus = s
+				}
+
+				// serialize the status (or, at least, convert it to a form that's ready to be serialized)
+				apiModelStatus, err := p.tc.StatusToMasto(s, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
+				if err != nil {
+					continue
+				}
+
+				statuses = append(statuses, apiModelStatus)
+				if len(statuses) == limit {
+					// we have enough
+					break grabloop
+				}
+			}
+		}
 	}
 
 	return statuses, nil
@@ -163,7 +207,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 
 	desiredIndexLength := p.timelineManager.GetDesiredIndexLength()
 
-	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength, "")
+	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength, "", false, false)
 	if err != nil {
 		l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
 		return
@@ -180,7 +224,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 		}
 
 		if rearmostStatusID != "" {
-			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength/2, rearmostStatusID)
+			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength/2, rearmostStatusID, false, false)
 			if err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error getting more statuses: %s", err))
 				return

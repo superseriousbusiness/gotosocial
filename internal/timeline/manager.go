@@ -150,7 +150,7 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 	} else if maxID != "" {
 		statuses, err = t.GetXBehindID(limit, maxID)
 	} else if sinceID != "" {
-		statuses, err = t.GetXBeforeID(limit, sinceID)
+		statuses, err = t.GetXBeforeID(limit, sinceID, true)
 	} else {
 		statuses, err = t.GetXFromTop(limit)
 	}
@@ -180,7 +180,7 @@ func (m *manager) GetOldestIndexedID(timelineAccountID string) (string, error) {
 func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
 	t := m.getOrCreateTimeline(timelineAccountID)
 
-	return t.PrepareXFromTop(limit)
+	return t.PrepareFromTop(limit)
 }
 
 func (m *manager) WipeStatusFromTimeline(timelineAccountID string, statusID string) (int, error) {

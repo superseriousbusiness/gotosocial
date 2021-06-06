@@ -19,9 +19,7 @@
 package timeline
 
 import (
-	"container/list"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -52,7 +50,7 @@ type Timeline interface {
 	// This will NOT include the status with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER
-	GetXBeforeID(amount int, sinceID string) ([]*apimodel.Status, error)
+	GetXBeforeID(amount int, sinceID string, startFromTop bool) ([]*apimodel.Status, error)
 	// GetXBetweenID returns x amount of posts from the given maxID, up to the given id, from newest to oldest.
 	// This will NOT include the status with the given IDs.
 	//
@@ -80,9 +78,10 @@ type Timeline interface {
 	*/
 
 	// PrepareXFromTop instructs the timeline to prepare x amount of posts from the top of the timeline.
-	PrepareXFromTop(amount int) error
-	// PrepareXFromPosition instrucst the timeline to prepare the next amount of entries for serialization, from position onwards.
-	PrepareXFromPosition(amount int, position int) error
+	PrepareFromTop(amount int) error
+	// PrepareBehind instructs the timeline to prepare the next amount of entries for serialization, from position onwards.
+	// If include is true, then the given status ID will also be prepared, otherwise only entries behind it will be prepared.
+	PrepareBehind(statusID string, include bool, amount int) error
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
 	// and then immediately prepares it.
 	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
@@ -124,280 +123,6 @@ func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConvert
 	}
 }
 
-func (t *timeline) PrepareXFromPosition(amount int, desiredPosition int) error {
-	t.Lock()
-	defer t.Unlock()
-
-	var position int
-	var prepared int
-	var preparing bool
-	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*postIndexEntry)
-		if !ok {
-			return errors.New("PrepareXFromTop: could not parse e as a postIndexEntry")
-		}
-
-		if !preparing {
-			// we haven't hit the position we need to prepare from yet
-			position = position + 1
-			if position == desiredPosition {
-				preparing = true
-				continue
-			}
-		} else {
-			if err := t.prepare(entry.statusID); err != nil {
-				return fmt.Errorf("PrepareXFromTop: error preparing status with id %s: %s", entry.statusID, err)
-			}
-			prepared = prepared + 1
-			if prepared >= amount {
-				// we're done
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-func (t *timeline) PrepareXFromTop(amount int) error {
-	t.Lock()
-	defer t.Unlock()
-
-	t.preparedPosts.data.Init()
-
-	var prepared int
-	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*postIndexEntry)
-		if !ok {
-			return errors.New("PrepareXFromTop: could not parse e as a postIndexEntry")
-		}
-
-		if err := t.prepare(entry.statusID); err != nil {
-			return fmt.Errorf("PrepareXFromTop: error preparing status with id %s: %s", entry.statusID, err)
-		}
-
-		prepared = prepared + 1
-		if prepared >= amount {
-			// we're done
-			break
-		}
-	}
-
-	return nil
-}
-
-func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
-
-	// if there are no prepared posts, just return the empty slice
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
-	}
-
-	// make sure we have enough posts prepared to return
-	if t.preparedPosts.data.Len() < amount {
-		if err := t.PrepareXFromTop(amount); err != nil {
-			return nil, err
-		}
-	}
-
-	// work through the prepared posts from the top and return
-	var served int
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
-		if !ok {
-			return nil, errors.New("GetXFromTop: could not parse e as a preparedPostsEntry")
-		}
-		statuses = append(statuses, entry.prepared)
-		served = served + 1
-		if served >= amount {
-			break
-		}
-	}
-
-	return statuses, nil
-}
-
-func (t *timeline) GetXBehindID(amount int, behindID string) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
-
-	// if there are no prepared posts, just return the empty slice
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
-	}
-
-	// find the position of id
-	var position int
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
-		if !ok {
-			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
-		}
-		if entry.statusID == behindID {
-			break
-		}
-		position = position + 1
-	}
-
-	// make sure we have enough posts prepared behind it to return what we're being asked for
-	if t.preparedPosts.data.Len() < amount+position {
-		if err := t.PrepareXFromPosition(amount, position); err != nil {
-			return nil, err
-		}
-	}
-
-	// iterate through the modified list until we hit the fromID again
-	var serving bool
-	var served int
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
-		if !ok {
-			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
-		}
-
-		if !serving {
-			// start serving if we've hit the id we're looking for
-			if entry.statusID == behindID {
-				serving = true
-				continue
-			}
-		} else {
-			// serve up to the amount requested
-			statuses = append(statuses, entry.prepared)
-			served = served + 1
-			if served >= amount {
-				break
-			}
-		}
-	}
-
-	return statuses, nil
-}
-
-func (t *timeline) GetXBeforeID(amount int, beforeID string) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
-
-	// if there are no prepared posts, just return the empty slice
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
-	}
-
-	// iterate through the modified list until we hit the fromID again
-	var served int
-serveloop:
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
-		if !ok {
-			return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
-		}
-
-		if entry.statusID == beforeID {
-			// we're good
-			break serveloop
-		}
-
-		// serve up to the amount requested
-		statuses = append(statuses, entry.prepared)
-		served = served + 1
-		if served >= amount {
-			break
-		}
-	}
-
-	return statuses, nil
-}
-
-func (t *timeline) GetXBetweenID(amount int, maxID string, sinceID string) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
-
-	// if there are no prepared posts, just return the empty slice
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
-	}
-
-	return statuses, nil
-}
-
-func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
-	t.Lock()
-	defer t.Unlock()
-
-	postIndexEntry := &postIndexEntry{
-		createdAt: statusCreatedAt,
-		statusID:  statusID,
-	}
-
-	return t.postIndex.insertIndexed(postIndexEntry)
-}
-
-func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error {
-	t.Lock()
-	defer t.Unlock()
-
-	postIndexEntry := &postIndexEntry{
-		createdAt: statusCreatedAt,
-		statusID:  statusID,
-	}
-
-	if err := t.postIndex.insertIndexed(postIndexEntry); err != nil {
-		return fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %s", err)
-	}
-
-	if err := t.prepare(statusID); err != nil {
-		return fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
-	}
-
-	return nil
-}
-
-func (t *timeline) Remove(statusID string) (int, error) {
-	t.Lock()
-	defer t.Unlock()
-	var removed int
-
-	// remove entr(ies) from the post index
-	removeIndexes := []*list.Element{}
-	if t.postIndex != nil && t.postIndex.data != nil {
-		for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*postIndexEntry)
-			if !ok {
-				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
-			}
-			if entry.statusID == statusID {
-				removeIndexes = append(removeIndexes, e)
-			}
-		}
-	}
-	for _, e := range removeIndexes {
-		t.postIndex.data.Remove(e)
-		removed = removed + 1
-	}
-
-	// remove entr(ies) from prepared posts
-	removePrepared := []*list.Element{}
-	if t.preparedPosts != nil && t.preparedPosts.data != nil {
-		for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*preparedPostsEntry)
-			if !ok {
-				return removed, errors.New("Remove: could not parse e as a preparedPostsEntry")
-			}
-			if entry.statusID == statusID {
-				removePrepared = append(removePrepared, e)
-			}
-		}
-	}
-	for _, e := range removePrepared {
-		t.preparedPosts.data.Remove(e)
-		removed = removed + 1
-	}
-
-	return removed, nil
-}
-
 func (t *timeline) Reset() error {
 	return nil
 }
@@ -429,53 +154,4 @@ func (t *timeline) OldestIndexedPostID() (string, error) {
 		return id, errors.New("OldestIndexedPostID: could not parse e as a postIndexEntry")
 	}
 	return entry.statusID, nil
-}
-
-func (t *timeline) prepare(statusID string) error {
-
-	// start by getting the status out of the database according to its indexed ID
-	gtsStatus := &gtsmodel.Status{}
-	if err := t.db.GetByID(statusID, gtsStatus); err != nil {
-		return err
-	}
-
-	// if the account pointer hasn't been set on this timeline already, set it lazily here
-	if t.account == nil {
-		timelineOwnerAccount := &gtsmodel.Account{}
-		if err := t.db.GetByID(t.accountID, timelineOwnerAccount); err != nil {
-			return err
-		}
-		t.account = timelineOwnerAccount
-	}
-
-	// to convert the status we need relevant accounts from it, so pull them out here
-	relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(gtsStatus)
-	if err != nil {
-		return err
-	}
-
-	// check if this is a boost...
-	var reblogOfStatus *gtsmodel.Status
-	if gtsStatus.BoostOfID != "" {
-		s := &gtsmodel.Status{}
-		if err := t.db.GetByID(gtsStatus.BoostOfID, s); err != nil {
-			return err
-		}
-		reblogOfStatus = s
-	}
-
-	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, t.account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
-	if err != nil {
-		return err
-	}
-
-	// shove it in prepared posts as a prepared posts entry
-	preparedPostsEntry := &preparedPostsEntry{
-		createdAt: gtsStatus.CreatedAt,
-		statusID:  statusID,
-		prepared:  apiModelStatus,
-	}
-
-	return t.preparedPosts.insertPrepared(preparedPostsEntry)
 }

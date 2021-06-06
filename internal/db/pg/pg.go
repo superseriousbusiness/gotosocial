@@ -788,7 +788,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 
 	// if target account is suspended then don't show the status
 	if !targetAccount.SuspendedAt.IsZero() {
-		l.Debug("target account suspended at is not zero")
+		l.Trace("target account suspended at is not zero")
 		return false, nil
 	}
 
@@ -807,7 +807,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 		// if target user is disabled, not yet approved, or not confirmed then don't show the status
 		// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
 		if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
-			l.Debug("target user is disabled, not approved, or not confirmed")
+			l.Trace("target user is disabled, not approved, or not confirmed")
 			return false, nil
 		}
 	}
@@ -818,14 +818,14 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
 			return true, nil
 		}
-		l.Debug("requesting account is nil but the target status isn't public")
+		l.Trace("requesting account is nil but the target status isn't public")
 		return false, nil
 	}
 
 	// if requesting account is suspended then don't show the status -- although they probably shouldn't have gotten
 	// this far (ie., been authed) in the first place: this is just for safety.
 	if !requestingAccount.SuspendedAt.IsZero() {
-		l.Debug("requesting account is suspended")
+		l.Trace("requesting account is suspended")
 		return false, nil
 	}
 
@@ -843,7 +843,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 		}
 		// okay, user exists, so make sure it has full privileges/is confirmed/approved
 		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
-			l.Debug("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
+			l.Trace("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
 			return false, nil
 		}
 	}
@@ -860,7 +860,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 		return false, err
 	} else if blocked {
 		// don't allow the status to be viewed if a block exists in *either* direction between these two accounts, no creepy stalking please
-		l.Debug("a block exists between requesting account and target account")
+		l.Trace("a block exists between requesting account and target account")
 		return false, nil
 	}
 
@@ -871,7 +871,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			if blocked, err := ps.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
-				l.Debug("a block exists between requesting account and reply to account")
+				l.Trace("a block exists between requesting account and reply to account")
 				return false, nil
 			}
 
@@ -882,7 +882,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 					return false, err
 				}
 				if !followsRepliedAccount {
-					l.Debug("target status is a followers-only reply to an account that is not followed by the requesting account")
+					l.Trace("target status is a followers-only reply to an account that is not followed by the requesting account")
 					return false, nil
 				}
 			}
@@ -893,7 +893,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			if blocked, err := ps.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
-				l.Debug("a block exists between requesting account and boosted account")
+				l.Trace("a block exists between requesting account and boosted account")
 				return false, nil
 			}
 		}
@@ -903,7 +903,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			if blocked, err := ps.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
-				l.Debug("a block exists between requesting account and boosted reply to account")
+				l.Trace("a block exists between requesting account and boosted reply to account")
 				return false, nil
 			}
 		}
@@ -913,7 +913,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			if blocked, err := ps.Blocked(a.ID, requestingAccount.ID); err != nil {
 				return false, err
 			} else if blocked {
-				l.Debug("a block exists between requesting account and a mentioned account")
+				l.Trace("a block exists between requesting account and a mentioned account")
 				return false, nil
 			}
 		}
@@ -939,7 +939,7 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			return false, err
 		}
 		if !follows {
-			l.Debug("requested status is followers only but requesting account is not a follower")
+			l.Trace("requested status is followers only but requesting account is not a follower")
 			return false, nil
 		}
 		return true, nil
@@ -950,12 +950,12 @@ func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requesti
 			return false, err
 		}
 		if !mutuals {
-			l.Debug("requested status is mutuals only but accounts aren't mufos")
+			l.Trace("requested status is mutuals only but accounts aren't mufos")
 			return false, nil
 		}
 		return true, nil
 	case gtsmodel.VisibilityDirect:
-		l.Debug("requesting account requests a status it's not mentioned in")
+		l.Trace("requesting account requests a status it's not mentioned in")
 		return false, nil // it's not mentioned -_-
 	}
 
@@ -1133,22 +1133,32 @@ func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmode
 	return accounts, nil
 }
 
-func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string) ([]*gtsmodel.Status, error) {
+func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string, includeOffsetStatus bool, ascending bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := ps.conn.Model(&statuses)
 
 	q = q.ColumnExpr("status.*").
 		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
-		Where("f.account_id = ?", accountID).
-		Order("status.created_at DESC")
+		Where("f.account_id = ?", accountID)
 
+	if ascending {
+		q = q.Order("status.created_at")
+	} else {
+		q = q.Order("status.created_at DESC")
+	}
+
+	s := &gtsmodel.Status{}
 	if offsetStatusID != "" {
-		s := &gtsmodel.Status{}
 		if err := ps.conn.Model(s).Where("id = ?", offsetStatusID).Select(); err != nil {
 			return nil, err
 		}
-		q = q.Where("status.created_at < ?", s.CreatedAt)
+
+		if ascending {
+			q = q.Where("status.created_at > ?", s.CreatedAt)
+		} else {
+			q = q.Where("status.created_at < ?", s.CreatedAt)
+		}
 	}
 
 	if limit > 0 {
@@ -1159,6 +1169,14 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int
 	if err != nil {
 		if err != pg.ErrNoRows {
 			return nil, err
+		}
+	}
+
+	if includeOffsetStatus {
+		if ascending {
+			statuses = append([]*gtsmodel.Status{s}, statuses...)
+		} else {
+			statuses = append(statuses, s)
 		}
 	}
 
