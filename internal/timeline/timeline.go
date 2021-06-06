@@ -65,8 +65,12 @@ type Timeline interface {
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
 	IndexOne(statusCreatedAt time.Time, statusID string) error
-	// Remove removes a status from the timeline.
-	Remove(statusID string) error
+	// Remove removes a status from both the index and prepared posts.
+	//
+	// If a status has multiple entries in a timeline, they will all be removed.
+	//
+	// The returned int indicates the amount of entries that were removed.
+	Remove(statusID string) (int, error)
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestIndexedPostID() (string, error)
@@ -283,7 +287,7 @@ func (t *timeline) GetXBeforeID(amount int, beforeID string) ([]*apimodel.Status
 
 	// iterate through the modified list until we hit the fromID again
 	var served int
-servloop:
+serveloop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*preparedPostsEntry)
 		if !ok {
@@ -292,7 +296,7 @@ servloop:
 
 		if entry.statusID == beforeID {
 			// we're good
-			break servloop
+			break serveloop
 		}
 
 		// serve up to the amount requested
@@ -314,6 +318,8 @@ func (t *timeline) GetXBetweenID(amount int, maxID string, sinceID string) ([]*a
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 	}
+
+	return statuses, nil
 }
 
 func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
@@ -348,39 +354,48 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 	return nil
 }
 
-func (t *timeline) Remove(statusID string) error {
+func (t *timeline) Remove(statusID string) (int, error) {
 	t.Lock()
 	defer t.Unlock()
+	var removed int
 
+	// remove entr(ies) from the post index
+	removeIndexes := []*list.Element{}
 	if t.postIndex != nil && t.postIndex.data != nil {
-		// remove the entry from the post index
 		for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*postIndexEntry)
 			if !ok {
-				return errors.New("Remove: could not parse e as a postIndexEntry")
+				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
 			}
 			if entry.statusID == statusID {
-				t.postIndex.data.Remove(e)
-				break // bail once we found and removed it
+				removeIndexes = append(removeIndexes, e)
 			}
 		}
 	}
+	for _, e := range removeIndexes {
+		t.postIndex.data.Remove(e)
+		removed = removed + 1
+	}
 
-	// remove the entry from prepared posts
+	// remove entr(ies) from prepared posts
+	removePrepared := []*list.Element{}
 	if t.preparedPosts != nil && t.preparedPosts.data != nil {
 		for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
 			entry, ok := e.Value.(*preparedPostsEntry)
 			if !ok {
-				return errors.New("Remove: could not parse e as a preparedPostsEntry")
+				return removed, errors.New("Remove: could not parse e as a preparedPostsEntry")
 			}
 			if entry.statusID == statusID {
-				t.preparedPosts.data.Remove(e)
-				break // bail once we found and removed it
+				removePrepared = append(removePrepared, e)
 			}
 		}
 	}
+	for _, e := range removePrepared {
+		t.preparedPosts.data.Remove(e)
+		removed = removed + 1
+	}
 
-	return nil
+	return removed, nil
 }
 
 func (t *timeline) Reset() error {

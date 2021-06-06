@@ -70,7 +70,9 @@ type Manager interface {
 	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(timelineAccountID string, limit int) error
 	// WipeStatusFromTimeline completely removes a status and from the index and prepared posts of the given account ID
-	WipeStatusFromTimeline(timelineAccountID string, statusID string) error
+	//
+	// The returned int indicates how many entries were removed.
+	WipeStatusFromTimeline(timelineAccountID string, statusID string) (int, error)
 	// WipeStatusFromAllTimelines removes the status from the index and prepared posts of all timelines
 	WipeStatusFromAllTimelines(statusID string) error
 }
@@ -120,7 +122,7 @@ func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID st
 	return t.IndexAndPrepareOne(status.CreatedAt, status.ID)
 }
 
-func (m *manager) Remove(statusID string, timelineAccountID string) error {
+func (m *manager) Remove(statusID string, timelineAccountID string) (int, error) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":              "Remove",
 		"timelineAccountID": timelineAccountID,
@@ -181,23 +183,21 @@ func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
 	return t.PrepareXFromTop(limit)
 }
 
-func (m *manager) WipeStatusFromTimeline(timelineAccountID string, statusID string) error {
+func (m *manager) WipeStatusFromTimeline(timelineAccountID string, statusID string) (int, error) {
 	t := m.getOrCreateTimeline(timelineAccountID)
 
 	return t.Remove(statusID)
 }
 
 func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
-
 	errors := []string{}
-
 	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
 		t, ok := i.(Timeline)
 		if !ok {
 			panic("couldn't parse entry as Timeline, this should never happen so panic")
 		}
 
-		if err := t.Remove(statusID); err != nil {
+		if _, err := t.Remove(statusID); err != nil {
 			errors = append(errors, err.Error())
 		}
 

@@ -7,5 +7,8 @@ import (
 )
 
 func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
-	return &apimodel.Context{}, nil
+	return &apimodel.Context{
+		Ancestors: []apimodel.Status{},
+		Descendants: []apimodel.Status{},
+	}, nil
 }
