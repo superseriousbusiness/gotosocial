@@ -256,7 +256,7 @@ type DB interface {
 	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
 	// GetStatusesWhereFollowing returns a slice of statuses from accounts that are followed by the given account id.
-	GetStatusesWhereFollowing(accountID string, limit int, maxID string, minID string, sinceID string) ([]*gtsmodel.Status, error)
+	GetStatusesWhereFollowing(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimelineForAccount fetches the account's PUBLIC timline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.

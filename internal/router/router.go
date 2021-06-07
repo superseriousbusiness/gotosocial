@@ -125,11 +125,13 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.Default()
 	engine.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		AllowCredentials: false,
-		MaxAge:           12 * time.Hour,
+		AllowAllOrigins:        true,
+		AllowBrowserExtensions: true,
+		AllowMethods:           []string{"POST", "PUT", "DELETE", "GET", "PATCH", "OPTIONS"},
+		AllowHeaders:           []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowWebSockets:        true,
+		ExposeHeaders:          []string{"Link", "X-RateLimit-Reset", "X-RateLimit-Limit", " X-RateLimit-Remaining", "X-Request-Id"},
+		MaxAge:                 2 * time.Minute,
 	}))
 	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
 

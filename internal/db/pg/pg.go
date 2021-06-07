@@ -1133,7 +1133,7 @@ func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmode
 	return accounts, nil
 }
 
-func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int, offsetStatusID string, includeOffsetStatus bool, ascending bool) ([]*gtsmodel.Status, error) {
+func (ps *postgresService) GetStatusesWhereFollowing(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := ps.conn.Model(&statuses)
@@ -1142,23 +1142,35 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int
 		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
 		Where("f.account_id = ?", accountID)
 
-	if ascending {
+	if maxID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err == nil {
+			q = q.Where("status.created_at < ?", s.CreatedAt)
+		}
+	}
+
+	if sinceID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err == nil {
+			q = q.Where("status.created_at > ?", s.CreatedAt)
+		}
+	}
+
+	if minID != "" {
+		s := &gtsmodel.Status{}
+		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err == nil {
+			q = q.Where("status.created_at > ?", s.CreatedAt)
+		}
+	}
+
+	if minID != "" {
 		q = q.Order("status.created_at")
 	} else {
 		q = q.Order("status.created_at DESC")
 	}
 
-	s := &gtsmodel.Status{}
-	if offsetStatusID != "" {
-		if err := ps.conn.Model(s).Where("id = ?", offsetStatusID).Select(); err != nil {
-			return nil, err
-		}
-
-		if ascending {
-			q = q.Where("status.created_at > ?", s.CreatedAt)
-		} else {
-			q = q.Where("status.created_at < ?", s.CreatedAt)
-		}
+	if local {
+		q = q.Where("status.local = ?", local)
 	}
 
 	if limit > 0 {
@@ -1169,14 +1181,6 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, limit int
 	if err != nil {
 		if err != pg.ErrNoRows {
 			return nil, err
-		}
-	}
-
-	if includeOffsetStatus {
-		if ascending {
-			statuses = append([]*gtsmodel.Status{s}, statuses...)
-		} else {
-			statuses = append(statuses, s)
 		}
 	}
 

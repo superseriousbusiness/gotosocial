@@ -20,7 +20,10 @@ package processing
 
 import (
 	"fmt"
+	"net/url"
+	"sort"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -30,27 +33,58 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
+func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+	l := p.log.WithFields(logrus.Fields{
+		"func": "HomeTimelineGet",
+		"maxID": maxID,
+		"sinceID": sinceID,
+		"minID": minID,
+		"limit": limit,
+		"local": local,
+	})
 
-	statuses := []*apimodel.Status{}
+	resp := &apimodel.StatusTimelineResponse{
+		Statuses: []*apimodel.Status{},
+	}
 
+	apiStatuses := []*apimodel.Status{}
+
+	maxIDMarker := maxID
+	sinceIDMarker := sinceID
+	minIDMarker := minID
+
+l.Debugf("\n entering grabloop \n")
 grabloop:
-	for len(statuses) < limit {
-		gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, limit, maxID, false, false)
-
+	for len(apiStatuses) < limit {
+		l.Debugf("\n querying the db \n")
+		gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, maxIDMarker, sinceIDMarker, minIDMarker, limit, local)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); !ok {
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting statuses from db: %s", err))
 			}
+			l.Debug("\n breaking from grabloop because no statuses were returned \n")
 			break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
 		}
 
-		for _, s := range gtsStatuses {
-			relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(s)
+		for _, gtsStatus := range gtsStatuses {
+			// haveAlready := false
+			// for _, apiStatus := range apiStatuses {
+			// 	if apiStatus.ID == gtsStatus.ID {
+			// 		haveAlready = true
+			// 		break
+			// 	}
+			// }
+			// if haveAlready {
+			// 	l.Debugf("\n we have status with id %d already so continuing past this iteration of the loop \n", gtsStatus.ID)
+			// 	continue
+			// }
+
+			// pull relevant accounts from the status -- we need this both for checking visibility and for serializing
+			relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(gtsStatus)
 			if err != nil {
 				continue
 			}
-			visible, err := p.db.StatusVisible(s, authed.Account, relevantAccounts)
+			visible, err := p.db.StatusVisible(gtsStatus, authed.Account, relevantAccounts)
 			if err != nil {
 				continue
 			}
@@ -58,7 +92,7 @@ grabloop:
 			if visible {
 				// check if this is a boost...
 				var reblogOfStatus *gtsmodel.Status
-				if s.BoostOfID != "" {
+				if gtsStatus.BoostOfID != "" {
 					s := &gtsmodel.Status{}
 					if err := p.db.GetByID(s.BoostOfID, s); err != nil {
 						continue
@@ -67,21 +101,67 @@ grabloop:
 				}
 
 				// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-				apiModelStatus, err := p.tc.StatusToMasto(s, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
+				apiStatus, err := p.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
 				if err != nil {
 					continue
 				}
 
-				statuses = append(statuses, apiModelStatus)
-				if len(statuses) == limit {
+				l.Debug("\n appending to the statuses slice \n")
+				apiStatuses = append(apiStatuses, apiStatus)
+				sort.Slice(apiStatuses, func(i int, j int) bool {
+					is, err := time.Parse(time.RFC3339, apiStatuses[i].CreatedAt)
+					if err != nil {
+						panic(err)
+					}
+
+					js, err := time.Parse(time.RFC3339, apiStatuses[j].CreatedAt)
+					if err != nil {
+						panic(err)
+					}
+
+					return is.After(js)
+				})
+
+				if len(apiStatuses) == limit {
+					l.Debugf("\n we have enough statuses, returning \n")
 					// we have enough
 					break grabloop
+				}
+			}
+			if len(apiStatuses) != 0 {
+				if maxIDMarker != "" {
+					maxIDMarker = apiStatuses[len(apiStatuses)-1].ID
+				}
+				if minIDMarker != "" {
+					minIDMarker = apiStatuses[0].ID
 				}
 			}
 		}
 	}
 
-	return statuses, nil
+	resp.Statuses = apiStatuses
+
+	if len(resp.Statuses) != 0 {
+		nextLink := &url.URL{
+			Scheme:   p.config.Protocol,
+			Host:     p.config.Host,
+			Path:     "/api/v1/timelines/home",
+			RawPath:  url.PathEscape("api/v1/timelines/home"),
+			RawQuery: url.QueryEscape(fmt.Sprintf("limit=%d&max_id=%s", limit, apiStatuses[len(apiStatuses)-1].ID)),
+		}
+		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
+
+		prevLink := &url.URL{
+			Scheme:   p.config.Protocol,
+			Host:     p.config.Host,
+			Path:     "/api/v1/timelines/home",
+			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, apiStatuses[0].ID),
+		}
+		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLink.String())
+		resp.LinkHeader = fmt.Sprintf("%s, %s", next, prev)
+	}
+
+	return resp, nil
 }
 
 func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
@@ -207,7 +287,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 
 	desiredIndexLength := p.timelineManager.GetDesiredIndexLength()
 
-	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength, "", false, false)
+	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, "", "", "", desiredIndexLength, false)
 	if err != nil {
 		l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
 		return
@@ -224,7 +304,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 		}
 
 		if rearmostStatusID != "" {
-			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, desiredIndexLength/2, rearmostStatusID, false, false)
+			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, rearmostStatusID, "", "", desiredIndexLength/2, false)
 			if err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error getting more statuses: %s", err))
 				return
