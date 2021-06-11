@@ -75,6 +75,20 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	for _, m := range models {
+		if err := dbService.CreateTable(m); err != nil {
+			return fmt.Errorf("table creation error: %s", err)
+		}
+	}
+
+	if err := dbService.CreateInstanceAccount(); err != nil {
+		return fmt.Errorf("error creating instance account: %s", err)
+	}
+
+	if err := dbService.CreateInstanceInstance(); err != nil {
+		return fmt.Errorf("error creating instance instance: %s", err)
+	}
+
 	federatingDB := federatingdb.New(dbService, c, log)
 
 	router, err := router.New(c, log)
@@ -149,20 +163,6 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
 		}
-	}
-
-	for _, m := range models {
-		if err := dbService.CreateTable(m); err != nil {
-			return fmt.Errorf("table creation error: %s", err)
-		}
-	}
-
-	if err := dbService.CreateInstanceAccount(); err != nil {
-		return fmt.Errorf("error creating instance account: %s", err)
-	}
-
-	if err := dbService.CreateInstanceInstance(); err != nil {
-		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, c)

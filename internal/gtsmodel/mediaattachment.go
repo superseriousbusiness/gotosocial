@@ -26,9 +26,9 @@ import (
 // somewhere in storage and that can be retrieved and served by the router.
 type MediaAttachment struct {
 	// ID of the attachment in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status to which this is attached
-	StatusID string
+	StatusID string `pg:"type:CHAR(26)"`
 	// Where can the attachment be retrieved on *this* server
 	URL string
 	// Where can the attachment be retrieved on a remote server (empty for local media)
@@ -42,11 +42,11 @@ type MediaAttachment struct {
 	// Metadata about the file
 	FileMeta FileMeta
 	// To which account does this attachment belong
-	AccountID string `pg:",notnull"`
+	AccountID string `pg:"type:CHAR(26),notnull"`
 	// Description of the attachment (for screenreaders)
 	Description string
 	// To which scheduled status does this attachment belong
-	ScheduledStatusID string
+	ScheduledStatusID string `pg:"type:CHAR(26)"`
 	// What is the generated blurhash of this attachment
 	Blurhash string
 	// What is the processing status of this attachment

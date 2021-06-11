@@ -8,6 +8,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -183,6 +184,12 @@ func (p *processor) processMentions(form *apimodel.AdvancedStatusCreateForm, acc
 		return fmt.Errorf("error generating mentions from status: %s", err)
 	}
 	for _, menchie := range gtsMenchies {
+		menchieID, err := id.NewRandomULID()
+		if err != nil {
+			return err
+		}
+		menchie.ID = menchieID
+
 		if err := p.db.Put(menchie); err != nil {
 			return fmt.Errorf("error putting mentions in db: %s", err)
 		}

@@ -23,13 +23,13 @@ import "time"
 // StatusBookmark refers to one account having a 'bookmark' of the status of another account
 type StatusBookmark struct {
 	// id of this bookmark in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// when was this bookmark created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the bookmarking
-	AccountID string `pg:",notnull"`
+	AccountID string `pg:"type:CHAR(26),notnull"`
 	// id the account owning the bookmarked status
-	TargetAccountID string `pg:",notnull"`
+	TargetAccountID string `pg:"type:CHAR(26),notnull"`
 	// database id of the status that has been bookmarked
-	StatusID string `pg:",notnull"`
+	StatusID string `pg:"type:CHAR(26),notnull"`
 }

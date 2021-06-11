@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
@@ -72,9 +72,12 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
 
-	// now put it in storage, take a new uuid for the name of the file so we don't store any unnecessary info about it
+	// now put it in storage, take a new id for the name of the file so we don't store any unnecessary info about it
 	extension := strings.Split(contentType, "/")[1]
-	newMediaID := uuid.NewString()
+	newMediaID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
 
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
 	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)

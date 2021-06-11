@@ -23,10 +23,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) error {
@@ -108,6 +108,12 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if err := p.dereferenceAnnounce(incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
 				return fmt.Errorf("error dereferencing announce from federator: %s", err)
 			}
+
+			incomingAnnounceID, err := id.NewULIDFromTime(incomingAnnounce.CreatedAt)
+			if err != nil {
+				return err
+			}
+			incomingAnnounce.ID = incomingAnnounceID
 
 			if err := p.db.Put(incomingAnnounce); err != nil {
 				if _, ok := err.(db.ErrAlreadyExists); !ok {
@@ -212,7 +218,11 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status, requestingU
 	// the status should have an ID by now, but just in case it doesn't let's generate one here
 	// because we'll need it further down
 	if status.ID == "" {
-		status.ID = uuid.NewString()
+		newID, err := id.NewULIDFromTime(status.CreatedAt)
+		if err != nil {
+			return err
+		}
+		status.ID = newID
 	}
 
 	// 1. Media attachments.
@@ -364,12 +374,12 @@ func (p *processor) dereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 	}
 
 	// we don't have it so we need to dereference it
-	remoteStatusID, err := url.Parse(announce.GTSBoostedStatus.URI)
+	remoteStatusURI, err := url.Parse(announce.GTSBoostedStatus.URI)
 	if err != nil {
 		return fmt.Errorf("dereferenceAnnounce: error parsing url %s: %s", announce.GTSBoostedStatus.URI, err)
 	}
 
-	statusable, err := p.federator.DereferenceRemoteStatus(requestingUsername, remoteStatusID)
+	statusable, err := p.federator.DereferenceRemoteStatus(requestingUsername, remoteStatusURI)
 	if err != nil {
 		return fmt.Errorf("dereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.GTSBoostedStatus.URI, err)
 	}
@@ -397,7 +407,12 @@ func (p *processor) dereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 			return fmt.Errorf("dereferenceAnnounce: error converting dereferenced account with id %s into account : %s", accountURI.String(), err)
 		}
 
-		// insert the dereferenced account so it gets an ID etc
+		accountID, err := id.NewRandomULID()
+		if err != nil {
+			return err
+		}
+		account.ID = accountID
+
 		if err := p.db.Put(account); err != nil {
 			return fmt.Errorf("dereferenceAnnounce: error putting dereferenced account with id %s into database : %s", accountURI.String(), err)
 		}
@@ -413,7 +428,12 @@ func (p *processor) dereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 		return fmt.Errorf("dereferenceAnnounce: error converting dereferenced statusable with id %s into status : %s", announce.GTSBoostedStatus.URI, err)
 	}
 
-	// put it in the db already so it gets an ID generated for it
+	boostedStatusID, err := id.NewULIDFromTime(boostedStatus.CreatedAt)
+	if err != nil {
+		return nil
+	}
+	boostedStatus.ID = boostedStatusID
+
 	if err := p.db.Put(boostedStatus); err != nil {
 		return fmt.Errorf("dereferenceAnnounce: error putting dereferenced status with id %s into the db: %s", announce.GTSBoostedStatus.URI, err)
 	}

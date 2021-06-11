@@ -22,7 +22,7 @@ package gtsmodel
 // It is used to authorize tokens etc, and is associated with an oauth client id in the database.
 type Application struct {
 	// id of this application in the db
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID string `pg:"type:CHAR(26),pk,notnull"`
 	// name of the application given when it was created (eg., 'tusky')
 	Name string
 	// website for the application given when it was created (eg., 'https://tusky.app')
@@ -30,7 +30,7 @@ type Application struct {
 	// redirect uri requested by the application for oauth2 flow
 	RedirectURI string
 	// id of the associated oauth client entity in the db
-	ClientID string
+	ClientID string `pg:"type:CHAR(26)"`
 	// secret of the associated oauth client entity in the db
 	ClientSecret string
 	// scopes requested when this app was created

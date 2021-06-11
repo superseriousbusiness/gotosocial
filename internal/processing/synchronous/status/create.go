@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	uris := util.GenerateURIsForAccount(account.Username, p.config.Protocol, p.config.Host)
-	thisStatusID := uuid.NewString()
+	thisStatusID, err := id.NewULID()
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
 	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
 

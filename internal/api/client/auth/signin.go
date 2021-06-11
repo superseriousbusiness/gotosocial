@@ -74,7 +74,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 
 // ValidatePassword takes an email address and a password.
 // The goal is to authenticate the password against the one for that email
-// address stored in the database. If OK, we return the userid (a uuid) for that user,
+// address stored in the database. If OK, we return the userid (a ulid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
 func (m *Module) ValidatePassword(email string, password string) (userid string, err error) {
 	l := m.log.WithField("func", "ValidatePassword")

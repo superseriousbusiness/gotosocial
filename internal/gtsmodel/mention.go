@@ -23,19 +23,19 @@ import "time"
 // Mention refers to the 'tagging' or 'mention' of a user within a status.
 type Mention struct {
 	// ID of this mention in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status this mention originates from
-	StatusID string `pg:",notnull"`
+	StatusID string `pg:"type:CHAR(26),notnull"`
 	// When was this mention created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this mention last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// What's the internal account ID of the originator of the mention?
-	OriginAccountID string `pg:",notnull"`
+	OriginAccountID string `pg:"type:CHAR(26),notnull"`
 	// What's the AP URI of the originator of the mention?
 	OriginAccountURI string `pg:",notnull"`
 	// What's the internal account ID of the mention target?
-	TargetAccountID string `pg:",notnull"`
+	TargetAccountID string `pg:"type:CHAR(26),notnull"`
 	// Prevent this mention from generating a notification?
 	Silent bool
 

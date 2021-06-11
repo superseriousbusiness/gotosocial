@@ -27,10 +27,10 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -60,7 +60,7 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 //
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
-func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err error) {
+func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "NewID",
@@ -99,7 +99,11 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 				if iter.IsIRI() {
 					actorAccount := &gtsmodel.Account{}
 					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
-						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host, uuid.NewString()))
+						newID, err := id.NewRandomULID()
+						if err != nil {
+							return nil, err
+						}
+						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host, newID))
 					}
 				}
 			}
@@ -158,8 +162,12 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (id *url.URL, err 
 		}
 	}
 
-	// fallback default behavior: just return a random UUID after our protocol and host
-	return url.Parse(fmt.Sprintf("%s://%s/%s", f.config.Protocol, f.config.Host, uuid.NewString()))
+	// fallback default behavior: just return a random ULID after our protocol and host
+	newID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+	return url.Parse(fmt.Sprintf("%s://%s/%s", f.config.Protocol, f.config.Host, newID))
 }
 
 // ActorForOutbox fetches the actor's IRI for the given outbox IRI.

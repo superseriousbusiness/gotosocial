@@ -1,6 +1,6 @@
 package model
 
 type StatusTimelineResponse struct {
-	Statuses []*Status
+	Statuses   []*Status
 	LinkHeader string
 }

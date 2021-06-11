@@ -23,15 +23,15 @@ import "time"
 // Follow represents one account following another, and the metadata around that follow.
 type Follow struct {
 	// id of this follow in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// When was this follow created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this follow last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Who does this follow belong to?
-	AccountID string `pg:",unique:srctarget,notnull"`
+	AccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
 	// Who does AccountID follow?
-	TargetAccountID string `pg:",unique:srctarget,notnull"`
+	TargetAccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `pg:"default:true"`
 	// What is the activitypub URI of this follow?

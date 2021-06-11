@@ -22,11 +22,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -426,8 +426,10 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	}
 
 	// make the follow request
-
-	newFollowID := uuid.NewString()
+	newFollowID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
 	fr := &gtsmodel.FollowRequest{
 		ID:              newFollowID,

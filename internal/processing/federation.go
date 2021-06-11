@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -74,7 +75,12 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 		return nil, fmt.Errorf("couldn't convert dereferenced uri %s to gtsmodel account: %s", requestingAccountURI.String(), err)
 	}
 
-	// shove it in the database for later
+	requestingAccountID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+	requestingAccount.ID = requestingAccountID
+
 	if err := p.db.Put(requestingAccount); err != nil {
 		return nil, fmt.Errorf("database error inserting account with uri %s: %s", requestingAccountURI.String(), err)
 	}

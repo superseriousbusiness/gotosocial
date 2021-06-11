@@ -31,11 +31,11 @@ type User struct {
 	*/
 
 	// id of this user in the local database; the end-user will never need to know this, it's strictly internal
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
 	Email string `pg:"default:null,unique"`
 	// The id of the local gtsmodel.Account entry for this user, if it exists (unconfirmed users don't have an account yet)
-	AccountID string `pg:"default:'',notnull,unique"`
+	AccountID string `pg:"type:CHAR(26),unique"`
 	// The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables
 	EncryptedPassword string `pg:",notnull"`
 
@@ -60,7 +60,7 @@ type User struct {
 	// How many times has this user signed in?
 	SignInCount int
 	// id of the user who invited this user (who let this guy in?)
-	InviteID string
+	InviteID string `pg:"type:CHAR(26)"`
 	// What languages does this user want to see?
 	ChosenLanguages []string
 	// What languages does this user not want to see?
@@ -68,7 +68,7 @@ type User struct {
 	// In what timezone/locale is this user located?
 	Locale string
 	// Which application id created this user? See gtsmodel.Application
-	CreatedByApplicationID string
+	CreatedByApplicationID string `pg:"type:CHAR(26)"`
 	// When did we last contact this user
 	LastEmailedAt time.Time `pg:"type:timestamp"`
 

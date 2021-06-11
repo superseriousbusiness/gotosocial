@@ -23,7 +23,7 @@ import "time"
 // DomainBlock represents a federation block against a particular domain, of varying severity.
 type DomainBlock struct {
 	// ID of this block in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// Domain to block. If ANY PART of the candidate domain contains this string, it will be blocked.
 	// For example: 'example.org' also blocks 'gts.example.org'. '.com' blocks *any* '.com' domains.
 	// TODO: implement wildcards here
@@ -33,7 +33,7 @@ type DomainBlock struct {
 	// When was this block updated
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Account ID of the creator of this block
-	CreatedByAccountID string `pg:",notnull"`
+	CreatedByAccountID string `pg:"type:CHAR(26),notnull"`
 	// TODO: define this
 	Severity int
 	// Reject media from this domain?

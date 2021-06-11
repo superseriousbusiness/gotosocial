@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -25,7 +25,10 @@ func (c *converter) FollowRequestToFollow(f *gtsmodel.FollowRequest) *gtsmodel.F
 func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
 	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
 	uris := util.GenerateURIsForAccount(boostingAccount.Username, c.config.Protocol, c.config.Host)
-	boostWrapperStatusID := uuid.NewString()
+	boostWrapperStatusID, err := id.NewULID()
+	if err != nil {
+		return nil, err
+	}
 	boostWrapperStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, boostWrapperStatusID)
 	boostWrapperStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, boostWrapperStatusID)
 

@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	// AccountIDKey is the url key for account id (an account uuid)
+	// AccountIDKey is the url key for account id (an account ulid)
 	AccountIDKey = "account_id"
 	// MediaTypeKey is the url key for media type (usually something like attachment or header etc)
 	MediaTypeKey = "media_type"

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -66,7 +66,10 @@ func (p *processor) Fave(account *gtsmodel.Account, targetStatusID string) (*api
 	}
 
 	if newFave {
-		thisFaveID := uuid.NewString()
+		thisFaveID, err := id.NewRandomULID()
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 
 		// we need to create a new fave in the database
 		gtsFave := &gtsmodel.StatusFave{

@@ -22,6 +22,7 @@ import (
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -35,12 +36,21 @@ func (p *processor) AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCrea
 	}
 
 	// generate new IDs for this application and its associated client
-	clientID := uuid.NewString()
+	clientID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
 	clientSecret := uuid.NewString()
 	vapidKey := uuid.NewString()
 
+	appID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
 	// generate the application to put in the database
 	app := &gtsmodel.Application{
+		ID:           appID,
 		Name:         form.ClientName,
 		Website:      form.Website,
 		RedirectURI:  form.RedirectURIs,

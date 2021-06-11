@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -25,7 +25,13 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 	update.SetActivityStreamsActor(actorProp)
 
 	// set the ID
-	idString := util.GenerateURIForUpdate(originAccount.Username, c.config.Protocol, c.config.Host, uuid.NewString())
+
+	newID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
+	idString := util.GenerateURIForUpdate(originAccount.Username, c.config.Protocol, c.config.Host, newID)
 	idURI, err := url.Parse(idString)
 	if err != nil {
 		return nil, fmt.Errorf("WrapPersonInUpdate: error parsing url %s: %s", idString, err)

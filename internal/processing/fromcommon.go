@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 func (p *processor) notifyStatus(status *gtsmodel.Status) error {
@@ -79,7 +80,13 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 		}
 
 		// if we've reached this point we know the mention is for a local account, and the notification doesn't exist, so create it
+		notifID, err := id.NewULID()
+		if err != nil {
+			return err
+		}
+
 		notif := &gtsmodel.Notification{
+			ID:               notifID,
 			NotificationType: gtsmodel.NotificationMention,
 			TargetAccountID:  m.TargetAccountID,
 			OriginAccountID:  status.AccountID,
@@ -100,7 +107,13 @@ func (p *processor) notifyFollowRequest(followRequest *gtsmodel.FollowRequest, r
 		return nil
 	}
 
+	notifID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+
 	notif := &gtsmodel.Notification{
+		ID:               notifID,
 		NotificationType: gtsmodel.NotificationFollowRequest,
 		TargetAccountID:  followRequest.TargetAccountID,
 		OriginAccountID:  followRequest.AccountID,
@@ -129,7 +142,13 @@ func (p *processor) notifyFollow(follow *gtsmodel.Follow, receivingAccount *gtsm
 	}
 
 	// now create the new follow notification
+	notifID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+
 	notif := &gtsmodel.Notification{
+		ID:               notifID,
 		NotificationType: gtsmodel.NotificationFollow,
 		TargetAccountID:  follow.TargetAccountID,
 		OriginAccountID:  follow.AccountID,
@@ -147,7 +166,13 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 		return nil
 	}
 
+	notifID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+
 	notif := &gtsmodel.Notification{
+		ID:               notifID,
 		NotificationType: gtsmodel.NotificationFave,
 		TargetAccountID:  fave.TargetAccountID,
 		OriginAccountID:  fave.AccountID,
@@ -200,7 +225,13 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 	}
 
 	// now create the new reblog notification
+	notifID, err := id.NewULID()
+	if err != nil {
+		return err
+	}
+
 	notif := &gtsmodel.Notification{
+		ID:               notifID,
 		NotificationType: gtsmodel.NotificationReblog,
 		TargetAccountID:  boostedAcct.ID,
 		OriginAccountID:  status.AccountID,

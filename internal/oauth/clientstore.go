@@ -67,7 +67,7 @@ func (cs *clientStore) Delete(ctx context.Context, id string) error {
 
 // Client is a handy little wrapper for typical oauth client details
 type Client struct {
-	ID     string
+	ID     string `pg:"type:CHAR(26),pk,notnull"`
 	Secret string
 	Domain string
 	UserID string

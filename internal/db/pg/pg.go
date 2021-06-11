@@ -33,11 +33,11 @@ import (
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -334,6 +334,7 @@ func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAcc
 
 	// create a new follow to 'replace' the request with
 	follow := &gtsmodel.Follow{
+		ID:              fr.ID,
 		AccountID:       originAccountID,
 		TargetAccountID: targetAccountID,
 		URI:             fr.URI,
@@ -360,8 +361,14 @@ func (ps *postgresService) CreateInstanceAccount() error {
 		return err
 	}
 
+	aID, err := id.NewRandomULID()
+	if err != nil {
+		return err
+	}
+
 	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
 	a := &gtsmodel.Account{
+		ID:                    aID,
 		Username:              ps.config.Host,
 		DisplayName:           username,
 		URL:                   newAccountURIs.UserURL,
@@ -389,7 +396,13 @@ func (ps *postgresService) CreateInstanceAccount() error {
 }
 
 func (ps *postgresService) CreateInstanceInstance() error {
+	iID, err := id.NewRandomULID()
+	if err != nil {
+		return err
+	}
+
 	i := &gtsmodel.Instance{
+		ID:     iID,
 		Domain: ps.config.Host,
 		Title:  ps.config.Host,
 		URI:    fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
@@ -600,8 +613,13 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	}
 
 	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
+	newAccountID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
 
 	a := &gtsmodel.Account{
+		ID:                    newAccountID,
 		Username:              username,
 		DisplayName:           username,
 		Reason:                reason,
@@ -625,8 +643,15 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %s", err)
 	}
+
+	newUserID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
 	u := &gtsmodel.User{
-		AccountID:              a.ID,
+		ID:                     newUserID,
+		AccountID:              newAccountID,
 		EncryptedPassword:      string(pw),
 		SignUpIP:               signUpIP,
 		Locale:                 locale,
@@ -1364,7 +1389,11 @@ func (ps *postgresService) TagStringsToTags(tags []string, originAccountID strin
 		if err := ps.conn.Model(tag).Where("LOWER(?) = LOWER(?)", pg.Ident("name"), t).Select(); err != nil {
 			if err == pg.ErrNoRows {
 				// tag doesn't exist yet so populate it
-				tag.ID = uuid.NewString()
+				newID, err := id.NewRandomULID()
+				if err != nil {
+					return nil, err
+				}
+				tag.ID = newID
 				tag.URL = fmt.Sprintf("%s://%s/tags/%s", ps.config.Protocol, ps.config.Host, t)
 				tag.Name = t
 				tag.FirstSeenFromAccountID = originAccountID

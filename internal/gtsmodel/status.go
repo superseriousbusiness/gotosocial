@@ -23,7 +23,7 @@ import "time"
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	// id of the status in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID string `pg:"type:CHAR(26),pk,notnull"`
 	// uri at which this status is reachable
 	URI string `pg:",unique"`
 	// web url for viewing this status
@@ -45,13 +45,13 @@ type Status struct {
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
-	AccountID string
+	AccountID string `pg:"type:CHAR(26),notnull"`
 	// id of the status this status is a reply to
-	InReplyToID string
+	InReplyToID string `pg:"type:CHAR(26)"`
 	// id of the account that this status replies to
-	InReplyToAccountID string
+	InReplyToAccountID string `pg:"type:CHAR(26)"`
 	// id of the status this status is a boost of
-	BoostOfID string
+	BoostOfID string `pg:"type:CHAR(26)"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -61,7 +61,7 @@ type Status struct {
 	// what language is this status written in?
 	Language string
 	// Which application was used to create this status?
-	CreatedWithApplicationID string
+	CreatedWithApplicationID string `pg:"type:CHAR(26)"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types

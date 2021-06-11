@@ -108,19 +108,19 @@ type UserURIs struct {
 }
 
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
-// https://example.org/users/whatever_user/follow/41c7f33f-1060-48d9-84df-38dcb13cf0d8
+// https://example.org/users/whatever_user/follow/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForFollow(username string, protocol string, host string, thisFollowID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
 }
 
 // GenerateURIForLike returns the AP URI for a new like/fave -- something like:
-// https://example.org/users/whatever_user/liked/41c7f33f-1060-48d9-84df-38dcb13cf0d8
+// https://example.org/users/whatever_user/liked/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForLike(username string, protocol string, host string, thisFavedID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
 }
 
 // GenerateURIForUpdate returns the AP URI for a new update activity -- something like:
-// https://example.org/users/whatever_user#updates/41c7f33f-1060-48d9-84df-38dcb13cf0d8
+// https://example.org/users/whatever_user#updates/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForUpdate(username string, protocol string, host string, thisUpdateID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
 }
@@ -195,25 +195,25 @@ func IsLikedPath(id *url.URL) bool {
 	return likedPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
-// IsLikePath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_UUID_OF_A_STATUS
+// IsLikePath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_ULID_OF_A_STATUS
 func IsLikePath(id *url.URL) bool {
 	return likePathRegex.MatchString(strings.ToLower(id.Path))
 }
 
-// IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
+// IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func IsStatusesPath(id *url.URL) bool {
 	return statusesPathRegex.MatchString(strings.ToLower(id.Path))
 }
 
-// ParseStatusesPath returns the username and uuid from a path such as /users/example_username/statuses/SOME_UUID_OF_A_STATUS
-func ParseStatusesPath(id *url.URL) (username string, uuid string, err error) {
+// ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS
+func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
 	matches := statusesPathRegex.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return
 	}
 	username = matches[1]
-	uuid = matches[2]
+	ulid = matches[2]
 	return
 }
 
@@ -272,14 +272,14 @@ func ParseFollowingPath(id *url.URL) (username string, err error) {
 	return
 }
 
-// ParseLikedPath returns the username and uuid from a path such as /users/example_username/liked/SOME_UUID_OF_A_STATUS
-func ParseLikedPath(id *url.URL) (username string, uuid string, err error) {
+// ParseLikedPath returns the username and ulid from a path such as /users/example_username/liked/SOME_ULID_OF_A_STATUS
+func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
 	matches := likePathRegex.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return
 	}
 	username = matches[1]
-	uuid = matches[2]
+	ulid = matches[2]
 	return
 }

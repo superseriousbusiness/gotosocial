@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -99,6 +100,14 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				if err != nil {
 					return fmt.Errorf("error converting note to status: %s", err)
 				}
+
+				// id the status based on the time it was created
+				statusID, err := id.NewULIDFromTime(status.CreatedAt)
+				if err != nil {
+					return err
+				}
+				status.ID = statusID
+
 				if err := f.db.Put(status); err != nil {
 					if _, ok := err.(db.ErrAlreadyExists); ok {
 						// the status already exists in the database, which means we've already handled everything else,
@@ -128,6 +137,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("could not convert Follow to follow request: %s", err)
 		}
 
+		newID, err := id.NewULIDFromTime(followRequest.CreatedAt)
+		if err != nil {
+			return err
+		}
+		followRequest.ID = newID
+
 		if err := f.db.Put(followRequest); err != nil {
 			return fmt.Errorf("database error inserting follow request: %s", err)
 		}
@@ -148,6 +163,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		if err != nil {
 			return fmt.Errorf("could not convert Like to fave: %s", err)
 		}
+
+		newID, err := id.NewULIDFromTime(fave.CreatedAt)
+		if err != nil {
+			return err
+		}
+		fave.ID = newID
 
 		if err := f.db.Put(fave); err != nil {
 			return fmt.Errorf("database error inserting fave: %s", err)

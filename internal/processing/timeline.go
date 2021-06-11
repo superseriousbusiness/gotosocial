@@ -35,12 +35,12 @@ import (
 
 func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
 	l := p.log.WithFields(logrus.Fields{
-		"func": "HomeTimelineGet",
-		"maxID": maxID,
+		"func":    "HomeTimelineGet",
+		"maxID":   maxID,
 		"sinceID": sinceID,
-		"minID": minID,
-		"limit": limit,
-		"local": local,
+		"minID":   minID,
+		"limit":   limit,
+		"local":   local,
 	})
 
 	resp := &apimodel.StatusTimelineResponse{
@@ -53,7 +53,7 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 	sinceIDMarker := sinceID
 	minIDMarker := minID
 
-l.Debugf("\n entering grabloop \n")
+	l.Debugf("\n entering grabloop \n")
 grabloop:
 	for len(apiStatuses) < limit {
 		l.Debugf("\n querying the db \n")
