@@ -277,6 +277,14 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status, requestingU
 	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
 	mentions := []string{}
 	for _, m := range status.GTSMentions {
+		if m.ID == "" {
+			mID, err := id.NewRandomULID()
+			if err != nil {
+				return err
+			}
+			m.ID = mID
+		}
+
 		uri, err := url.Parse(m.MentionedAccountURI)
 		if err != nil {
 			l.Debugf("error parsing mentioned account uri %s: %s", m.MentionedAccountURI, err)
@@ -307,6 +315,12 @@ func (p *processor) dereferenceStatusFields(status *gtsmodel.Status, requestingU
 				l.Debugf("error converting remote account with uri %s into gts model: %s", uri.String(), err)
 				continue
 			}
+
+			targetAccountID, err := id.NewRandomULID()
+			if err != nil {
+				return err
+			}
+			targetAccount.ID = targetAccountID
 
 			if err := p.db.Put(targetAccount); err != nil {
 				return fmt.Errorf("db error inserting account with uri %s", uri.String())

@@ -21,7 +21,6 @@ package util
 import (
 	"fmt"
 	"net/url"
-	"strings"
 )
 
 const (
@@ -162,47 +161,47 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 
 // IsUserPath returns true if the given URL path corresponds to eg /users/example_username
 func IsUserPath(id *url.URL) bool {
-	return userPathRegex.MatchString(strings.ToLower(id.Path))
+	return userPathRegex.MatchString(id.Path)
 }
 
 // IsInboxPath returns true if the given URL path corresponds to eg /users/example_username/inbox
 func IsInboxPath(id *url.URL) bool {
-	return inboxPathRegex.MatchString(strings.ToLower(id.Path))
+	return inboxPathRegex.MatchString(id.Path)
 }
 
 // IsOutboxPath returns true if the given URL path corresponds to eg /users/example_username/outbox
 func IsOutboxPath(id *url.URL) bool {
-	return outboxPathRegex.MatchString(strings.ToLower(id.Path))
+	return outboxPathRegex.MatchString(id.Path)
 }
 
 // IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
 func IsInstanceActorPath(id *url.URL) bool {
-	return actorPathRegex.MatchString(strings.ToLower(id.Path))
+	return actorPathRegex.MatchString(id.Path)
 }
 
 // IsFollowersPath returns true if the given URL path corresponds to eg /users/example_username/followers
 func IsFollowersPath(id *url.URL) bool {
-	return followersPathRegex.MatchString(strings.ToLower(id.Path))
+	return followersPathRegex.MatchString(id.Path)
 }
 
 // IsFollowingPath returns true if the given URL path corresponds to eg /users/example_username/following
 func IsFollowingPath(id *url.URL) bool {
-	return followingPathRegex.MatchString(strings.ToLower(id.Path))
+	return followingPathRegex.MatchString(id.Path)
 }
 
 // IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
 func IsLikedPath(id *url.URL) bool {
-	return likedPathRegex.MatchString(strings.ToLower(id.Path))
+	return likedPathRegex.MatchString(id.Path)
 }
 
 // IsLikePath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_ULID_OF_A_STATUS
 func IsLikePath(id *url.URL) bool {
-	return likePathRegex.MatchString(strings.ToLower(id.Path))
+	return likePathRegex.MatchString(id.Path)
 }
 
 // IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func IsStatusesPath(id *url.URL) bool {
-	return statusesPathRegex.MatchString(strings.ToLower(id.Path))
+	return statusesPathRegex.MatchString(id.Path)
 }
 
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS

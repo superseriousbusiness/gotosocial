@@ -54,87 +54,83 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 	minIDMarker := minID
 
 	l.Debugf("\n entering grabloop \n")
-grabloop:
-	for len(apiStatuses) < limit {
-		l.Debugf("\n querying the db \n")
-		gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, maxIDMarker, sinceIDMarker, minIDMarker, limit, local)
+
+	l.Debugf("\n querying the db \n")
+	gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, maxIDMarker, sinceIDMarker, minIDMarker, limit, local)
+	if err != nil {
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting statuses from db: %s", err))
+		}
+	}
+
+	for _, gtsStatus := range gtsStatuses {
+		// haveAlready := false
+		// for _, apiStatus := range apiStatuses {
+		// 	if apiStatus.ID == gtsStatus.ID {
+		// 		haveAlready = true
+		// 		break
+		// 	}
+		// }
+		// if haveAlready {
+		// 	l.Debugf("\n we have status with id %d already so continuing past this iteration of the loop \n", gtsStatus.ID)
+		// 	continue
+		// }
+
+		// pull relevant accounts from the status -- we need this both for checking visibility and for serializing
+		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(gtsStatus)
 		if err != nil {
-			if _, ok := err.(db.ErrNoEntries); !ok {
-				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting statuses from db: %s", err))
-			}
-			l.Debug("\n breaking from grabloop because no statuses were returned \n")
-			break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
+			continue
+		}
+		visible, err := p.db.StatusVisible(gtsStatus, authed.Account, relevantAccounts)
+		if err != nil {
+			continue
 		}
 
-		for _, gtsStatus := range gtsStatuses {
-			// haveAlready := false
-			// for _, apiStatus := range apiStatuses {
-			// 	if apiStatus.ID == gtsStatus.ID {
-			// 		haveAlready = true
-			// 		break
-			// 	}
-			// }
-			// if haveAlready {
-			// 	l.Debugf("\n we have status with id %d already so continuing past this iteration of the loop \n", gtsStatus.ID)
-			// 	continue
-			// }
-
-			// pull relevant accounts from the status -- we need this both for checking visibility and for serializing
-			relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(gtsStatus)
-			if err != nil {
-				continue
-			}
-			visible, err := p.db.StatusVisible(gtsStatus, authed.Account, relevantAccounts)
-			if err != nil {
-				continue
-			}
-
-			if visible {
-				// check if this is a boost...
-				var reblogOfStatus *gtsmodel.Status
-				if gtsStatus.BoostOfID != "" {
-					s := &gtsmodel.Status{}
-					if err := p.db.GetByID(s.BoostOfID, s); err != nil {
-						continue
-					}
-					reblogOfStatus = s
-				}
-
-				// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-				apiStatus, err := p.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
-				if err != nil {
+		if visible {
+			// check if this is a boost...
+			var reblogOfStatus *gtsmodel.Status
+			if gtsStatus.BoostOfID != "" {
+				s := &gtsmodel.Status{}
+				if err := p.db.GetByID(s.BoostOfID, s); err != nil {
 					continue
 				}
-
-				l.Debug("\n appending to the statuses slice \n")
-				apiStatuses = append(apiStatuses, apiStatus)
-				sort.Slice(apiStatuses, func(i int, j int) bool {
-					is, err := time.Parse(time.RFC3339, apiStatuses[i].CreatedAt)
-					if err != nil {
-						panic(err)
-					}
-
-					js, err := time.Parse(time.RFC3339, apiStatuses[j].CreatedAt)
-					if err != nil {
-						panic(err)
-					}
-
-					return is.After(js)
-				})
-
-				if len(apiStatuses) == limit {
-					l.Debugf("\n we have enough statuses, returning \n")
-					// we have enough
-					break grabloop
-				}
+				reblogOfStatus = s
 			}
-			if len(apiStatuses) != 0 {
-				if maxIDMarker != "" {
-					maxIDMarker = apiStatuses[len(apiStatuses)-1].ID
+
+			// serialize the status (or, at least, convert it to a form that's ready to be serialized)
+			apiStatus, err := p.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
+			if err != nil {
+				continue
+			}
+
+			l.Debug("\n appending to the statuses slice \n")
+			apiStatuses = append(apiStatuses, apiStatus)
+			sort.Slice(apiStatuses, func(i int, j int) bool {
+				is, err := time.Parse(time.RFC3339, apiStatuses[i].CreatedAt)
+				if err != nil {
+					panic(err)
 				}
-				if minIDMarker != "" {
-					minIDMarker = apiStatuses[0].ID
+
+				js, err := time.Parse(time.RFC3339, apiStatuses[j].CreatedAt)
+				if err != nil {
+					panic(err)
 				}
+
+				return is.After(js)
+			})
+
+			if len(apiStatuses) == limit {
+				l.Debugf("\n we have enough statuses, returning \n")
+				// we have enough
+				break
+			}
+		}
+		if len(apiStatuses) != 0 {
+			if maxIDMarker != "" {
+				maxIDMarker = apiStatuses[len(apiStatuses)-1].ID
+			}
+			if minIDMarker != "" {
+				minIDMarker = apiStatuses[0].ID
 			}
 		}
 	}

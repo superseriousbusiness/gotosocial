@@ -137,7 +137,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("could not convert Follow to follow request: %s", err)
 		}
 
-		newID, err := id.NewULIDFromTime(followRequest.CreatedAt)
+		newID, err := id.NewULID()
 		if err != nil {
 			return err
 		}
