@@ -47,12 +47,13 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 			c.JSON(withCode.Code(), withCode.Safe())
 			return
 		}
-		l.Debug(err)
+		l.Debugf("InboxPOSTHandler: error processing request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
 		return
 	}
 
 	if !posted {
+		l.Debugf("request could not be handled as an AP request; headers were: %+v", c.Request.Header)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
 	}
 }

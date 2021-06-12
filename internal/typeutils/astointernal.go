@@ -117,10 +117,14 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 
 	// url property
 	url, err := extractURL(accountable)
-	if err != nil {
-		return nil, fmt.Errorf("could not extract url for person with id %s: %s", uri.String(), err)
+	if err == nil {
+		// take the URL if we can find it
+		acct.URL = url.String()
+	} else {
+		// otherwise just take the account URI as the URL
+		acct.URL = uri.String()
 	}
-	acct.URL = url.String()
+
 
 	// InboxURI
 	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {

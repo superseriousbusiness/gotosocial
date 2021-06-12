@@ -48,6 +48,9 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 	}
 
 	for iter := undoObject.Begin(); iter != undoObject.End(); iter = iter.Next() {
+		if iter.GetType() == nil {
+			continue
+		}
 		switch iter.GetType().GetTypeName() {
 		case string(gtsmodel.ActivityStreamsFollow):
 			// UNDO FOLLOW

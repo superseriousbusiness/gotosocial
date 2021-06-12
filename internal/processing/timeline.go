@@ -34,15 +34,6 @@ import (
 )
 
 func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
-	l := p.log.WithFields(logrus.Fields{
-		"func":    "HomeTimelineGet",
-		"maxID":   maxID,
-		"sinceID": sinceID,
-		"minID":   minID,
-		"limit":   limit,
-		"local":   local,
-	})
-
 	resp := &apimodel.StatusTimelineResponse{
 		Statuses: []*apimodel.Status{},
 	}
@@ -53,9 +44,6 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 	sinceIDMarker := sinceID
 	minIDMarker := minID
 
-	l.Debugf("\n entering grabloop \n")
-
-	l.Debugf("\n querying the db \n")
 	gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, maxIDMarker, sinceIDMarker, minIDMarker, limit, local)
 	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
@@ -64,18 +52,6 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 	}
 
 	for _, gtsStatus := range gtsStatuses {
-		// haveAlready := false
-		// for _, apiStatus := range apiStatuses {
-		// 	if apiStatus.ID == gtsStatus.ID {
-		// 		haveAlready = true
-		// 		break
-		// 	}
-		// }
-		// if haveAlready {
-		// 	l.Debugf("\n we have status with id %d already so continuing past this iteration of the loop \n", gtsStatus.ID)
-		// 	continue
-		// }
-
 		// pull relevant accounts from the status -- we need this both for checking visibility and for serializing
 		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(gtsStatus)
 		if err != nil {
@@ -103,7 +79,6 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 				continue
 			}
 
-			l.Debug("\n appending to the statuses slice \n")
 			apiStatuses = append(apiStatuses, apiStatus)
 			sort.Slice(apiStatuses, func(i int, j int) bool {
 				is, err := time.Parse(time.RFC3339, apiStatuses[i].CreatedAt)
@@ -120,7 +95,6 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 			})
 
 			if len(apiStatuses) == limit {
-				l.Debugf("\n we have enough statuses, returning \n")
 				// we have enough
 				break
 			}
@@ -143,7 +117,7 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 			Host:     p.config.Host,
 			Path:     "/api/v1/timelines/home",
 			RawPath:  url.PathEscape("api/v1/timelines/home"),
-			RawQuery: url.QueryEscape(fmt.Sprintf("limit=%d&max_id=%s", limit, apiStatuses[len(apiStatuses)-1].ID)),
+			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, apiStatuses[len(apiStatuses)-1].ID),
 		}
 		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
 

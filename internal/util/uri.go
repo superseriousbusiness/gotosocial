@@ -189,6 +189,11 @@ func IsFollowingPath(id *url.URL) bool {
 	return followingPathRegex.MatchString(id.Path)
 }
 
+// IsFollowPath returns true if the given URL path corresponds to eg /users/example_username/follow/SOME_ULID_OF_A_FOLLOW
+func IsFollowPath(id *url.URL) bool {
+	return followPathRegex.MatchString(id.Path)
+}
+
 // IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
 func IsLikedPath(id *url.URL) bool {
 	return likedPathRegex.MatchString(id.Path)

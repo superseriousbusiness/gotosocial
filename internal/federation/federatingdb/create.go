@@ -164,7 +164,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("could not convert Like to fave: %s", err)
 		}
 
-		newID, err := id.NewULIDFromTime(fave.CreatedAt)
+		newID, err := id.NewULID()
 		if err != nil {
 			return err
 		}
