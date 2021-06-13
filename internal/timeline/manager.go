@@ -32,7 +32,6 @@ import (
 )
 
 const (
-	preparedPostsMinLength = 80
 	desiredPostIndexLength = 400
 )
 
@@ -205,7 +204,7 @@ func (m *manager) getOrCreateTimeline(timelineAccountID string) Timeline {
 	var t Timeline
 	i, ok := m.accountTimelines.Load(timelineAccountID)
 	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc)
+		t = NewTimeline(timelineAccountID, m.db, m.tc, m.log)
 		m.accountTimelines.Store(timelineAccountID, t)
 	} else {
 		t, ok = i.(Timeline)

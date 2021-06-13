@@ -5,10 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error) {
+	l := t.log.WithFields(logrus.Fields{
+		"func":      "Get",
+		"accountID": t.accountID,
+	})
+
 	var statuses []*apimodel.Status
 	var err error
 
@@ -18,7 +24,11 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			go t.prepareNextQuery(amount, nextMaxID, "", "")
+			go func() {
+				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+					l.Errorf("error preparing next query: %s", err)
+				}
+			}()
 		}
 	}
 
@@ -28,7 +38,11 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			go t.prepareNextQuery(amount, nextMaxID, "", "")
+			go func() {
+				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+					l.Errorf("error preparing next query: %s", err)
+				}
+			}()
 		}
 	}
 

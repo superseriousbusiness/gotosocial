@@ -52,7 +52,6 @@ func (t *timeline) IndexBehind(statusID string, amount int) error {
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
 
-	fmt.Println("\n\n\nENTERING GRABLOOP\n\n\n")
 grabloop:
 	for len(filtered) < amount {
 		statuses, err := t.db.GetStatusesWhereFollowing(t.accountID, offsetStatus, "", "", amount, false)
@@ -78,7 +77,6 @@ grabloop:
 			offsetStatus = s.ID
 		}
 	}
-	fmt.Println("\n\n\nLEAVING GRABLOOP\n\n\n")
 
 	for _, s := range filtered {
 		if err := t.IndexOne(s.CreatedAt, s.ID); err != nil {

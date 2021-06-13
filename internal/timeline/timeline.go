@@ -22,14 +22,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-)
-
-const (
-	preparedPostsMaxLength = desiredPostIndexLength
 )
 
 // Timeline represents a timeline for one account, and contains indexed and prepared posts.
@@ -113,17 +110,19 @@ type timeline struct {
 	account       *gtsmodel.Account
 	db            db.DB
 	tc            typeutils.TypeConverter
+	log           *logrus.Logger
 	sync.Mutex
 }
 
 // NewTimeline returns a new Timeline for the given account ID
-func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConverter) Timeline {
+func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConverter, log *logrus.Logger) Timeline {
 	return &timeline{
 		postIndex:     &postIndex{},
 		preparedPosts: &preparedPosts{},
 		accountID:     accountID,
 		db:            db,
 		tc:            typeConverter,
+		log:           log,
 	}
 }
 
