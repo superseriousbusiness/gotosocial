@@ -31,6 +31,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -141,6 +142,12 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		if err != nil {
 			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
 		}
+
+		aID, err := id.NewRandomULID()
+		if err != nil {
+			return ctx, false, err
+		}
+		a.ID = aID
 
 		if err := f.db.Put(a); err != nil {
 			l.Errorf("error inserting dereferenced remote account: %s", err)

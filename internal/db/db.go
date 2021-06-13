@@ -143,7 +143,9 @@ type DB interface {
 	// GetFollowersByAccountID is a shortcut for the common action of fetching a list of accounts that accountID is followed by.
 	// The given slice 'followers' will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow) error
+	//
+	// If localOnly is set to true, then only followers from *this instance* will be returned.
+	GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error
 
 	// GetFavesByAccountID is a shortcut for the common action of fetching a list of faves made by the given accountID.
 	// The given slice 'faves' will be set to the result of the query, whatever it is.
@@ -210,7 +212,7 @@ type DB interface {
 	// 3. Accounts boosted by the target status
 	//
 	// Will return an error if something goes wrong while pulling stuff out of the database.
-	StatusVisible(targetStatus *gtsmodel.Status, targetAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
+	StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
 
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
@@ -245,10 +247,6 @@ type DB interface {
 	// StatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
-	// UnfaveStatus unfaves the given status, using accountID as the unfaver (sure, that's a word).
-	// The returned fave will be nil if the status was already not faved.
-	UnfaveStatus(status *gtsmodel.Status, accountID string) (*gtsmodel.StatusFave, error)
-
 	// WhoFavedStatus returns a slice of accounts who faved the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
@@ -257,9 +255,8 @@ type DB interface {
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
-	// GetHomeTimelineForAccount fetches the account's HOME timeline -- ie., posts and replies from people they *follow*.
-	// It will use the given filters and try to return as many statuses up to the limit as possible.
-	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+	// GetStatusesWhereFollowing returns a slice of statuses from accounts that are followed by the given account id.
+	GetStatusesWhereFollowing(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimelineForAccount fetches the account's PUBLIC timline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.

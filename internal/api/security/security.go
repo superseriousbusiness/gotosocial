@@ -19,11 +19,15 @@
 package security
 
 import (
+	"net/http"
+
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
+
+const robotsPath = "/robots.txt"
 
 // Module implements the ClientAPIModule interface for security middleware
 type Module struct {
@@ -44,5 +48,6 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachMiddleware(m.FlocBlock)
 	s.AttachMiddleware(m.ExtraHeaders)
 	s.AttachMiddleware(m.UserAgentBlock)
+	s.AttachHandler(http.MethodGet, robotsPath, m.RobotsGETHandler)
 	return nil
 }

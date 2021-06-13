@@ -27,12 +27,14 @@ import (
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, ErrorWithCode) {
+func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":  "SearchGet",
 		"query": searchQuery.Query,
@@ -108,7 +110,7 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 		if err != nil {
 			continue
 		}
-		if visible, err := p.db.StatusVisible(foundStatus, statusOwner, authed.Account, relevantAccounts); !visible || err != nil {
+		if visible, err := p.db.StatusVisible(foundStatus, authed.Account, relevantAccounts); !visible || err != nil {
 			continue
 		}
 
@@ -164,10 +166,15 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 			// first turn it into a gtsmodel.Status
 			status, err := p.tc.ASStatusToStatus(statusable)
 			if err != nil {
-				return nil, NewErrorInternalError(err)
+				return nil, gtserror.NewErrorInternalError(err)
 			}
 
-			// put it in the DB so it gets a UUID
+			statusID, err := id.NewULIDFromTime(status.CreatedAt)
+			if err != nil {
+				return nil, err
+			}
+			status.ID = statusID
+
 			if err := p.db.Put(status); err != nil {
 				return nil, fmt.Errorf("error putting status in the db: %s", err)
 			}
@@ -209,6 +216,12 @@ func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
 		}
+
+		accountID, err := id.NewRandomULID()
+		if err != nil {
+			return nil, err
+		}
+		account.ID = accountID
 
 		if err := p.db.Put(account); err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error inserting account with uri %s: %s", uri.String(), err)
@@ -279,6 +292,12 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 			// something went wrong doing the conversion to a gtsmodel.Account so we can't process the request
 			return nil, fmt.Errorf("searchAccountByMention: error converting account with uri %s: %s", acctURI.String(), err)
 		}
+
+		foundAccountID, err := id.NewULID()
+		if err != nil {
+			return nil, err
+		}
+		foundAccount.ID = foundAccountID
 
 		// put this new account in our database
 		if err := p.db.Put(foundAccount); err != nil {

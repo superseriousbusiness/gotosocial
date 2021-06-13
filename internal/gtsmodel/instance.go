@@ -5,7 +5,7 @@ import "time"
 // Instance represents a federated instance, either local or remote.
 type Instance struct {
 	// ID of this instance in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// Instance domain eg example.org
 	Domain string `pg:",notnull,unique"`
 	// Title of this instance as it would like to be displayed.
@@ -19,7 +19,7 @@ type Instance struct {
 	// When was this instance suspended, if at all?
 	SuspendedAt time.Time
 	// ID of any existing domain block for this instance in the database
-	DomainBlockID string
+	DomainBlockID string `pg:"type:CHAR(26)"`
 	// Short description of this instance
 	ShortDescription string
 	// Longer description of this instance
@@ -27,7 +27,7 @@ type Instance struct {
 	// Contact email address for this instance
 	ContactEmail string
 	// Contact account ID in the database for this instance
-	ContactAccountID string
+	ContactAccountID string `pg:"type:CHAR(26)"`
 	// Reputation score of this instance
 	Reputation int64 `pg:",notnull,default:0"`
 	// Version of the software used on this instance

@@ -43,7 +43,7 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	}
 
 	acctFollowers := []gtsmodel.Follow{}
-	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers); err != nil {
+	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers, false); err != nil {
 		return nil, fmt.Errorf("db error getting followers for account id %s: %s", acct.ID, err)
 	}
 

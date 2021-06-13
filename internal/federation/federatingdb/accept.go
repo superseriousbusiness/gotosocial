@@ -9,6 +9,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -58,7 +59,43 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	}
 
 	for iter := acceptObject.Begin(); iter != acceptObject.End(); iter = iter.Next() {
+		// check if the object is an IRI
+		if iter.IsIRI() {
+			// we have just the URI of whatever is being accepted, so we need to find out what it is
+			acceptedObjectIRI := iter.GetIRI()
+			if util.IsFollowPath(acceptedObjectIRI) {
+				// ACCEPT FOLLOW
+				gtsFollowRequest := &gtsmodel.FollowRequest{}
+				if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+					return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", acceptedObjectIRI.String(), err)
+				}
+
+				// make sure the addressee of the original follow is the same as whatever inbox this landed in
+				if gtsFollowRequest.AccountID != inboxAcct.ID {
+					return errors.New("ACCEPT: follow object account and inbox account were not the same")
+				}
+				follow, err := f.db.AcceptFollowRequest(gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
+				if err != nil {
+					return err
+				}
+
+				fromFederatorChan <- gtsmodel.FromFederator{
+					APObjectType:     gtsmodel.ActivityStreamsFollow,
+					APActivityType:   gtsmodel.ActivityStreamsAccept,
+					GTSModel:         follow,
+					ReceivingAccount: inboxAcct,
+				}
+
+				return nil
+			}
+		}
+
+		// check if iter is an AP object / type
+		if iter.GetType() == nil {
+			continue
+		}
 		switch iter.GetType().GetTypeName() {
+		// we have the whole object so we can figure out what we're accepting
 		case string(gtsmodel.ActivityStreamsFollow):
 			// ACCEPT FOLLOW
 			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)

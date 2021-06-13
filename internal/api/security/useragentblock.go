@@ -23,20 +23,24 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-// UserAgentBlock is a middleware that prevents google chrome cohort tracking by
-// writing the Permissions-Policy header after all other parts of the request have been completed.
-// See: https://plausible.io/blog/google-floc
+// UserAgentBlock blocks requests with undesired, empty, or invalid user-agent strings.
 func (m *Module) UserAgentBlock(c *gin.Context) {
+	l := m.log.WithFields(logrus.Fields{
+		"func": "UserAgentBlock",
+	})
 
 	ua := c.Request.UserAgent()
 	if ua == "" {
+		l.Debug("aborting request because there's no user-agent set")
 		c.AbortWithStatus(http.StatusTeapot)
 		return
 	}
 
-	if strings.Contains(strings.ToLower(c.Request.UserAgent()), strings.ToLower("friendica")) {
+	if strings.Contains(strings.ToLower(ua), strings.ToLower("friendica")) {
+		l.Debugf("aborting request with user-agent %s because it contains 'friendica'", ua)
 		c.AbortWithStatus(http.StatusTeapot)
 		return
 	}

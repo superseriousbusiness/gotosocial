@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -74,6 +75,20 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	for _, m := range models {
+		if err := dbService.CreateTable(m); err != nil {
+			return fmt.Errorf("table creation error: %s", err)
+		}
+	}
+
+	if err := dbService.CreateInstanceAccount(); err != nil {
+		return fmt.Errorf("error creating instance account: %s", err)
+	}
+
+	if err := dbService.CreateInstanceInstance(); err != nil {
+		return fmt.Errorf("error creating instance instance: %s", err)
+	}
+
 	federatingDB := federatingdb.New(dbService, c, log)
 
 	router, err := router.New(c, log)
@@ -88,13 +103,14 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 
 	// build converters and util
 	typeConverter := typeutils.NewConverter(c, dbService)
+	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c, log)
 
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter)
-	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, dbService, log)
+	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, timelineManager, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
@@ -147,20 +163,6 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		if err := m.Route(router); err != nil {
 			return fmt.Errorf("routing error: %s", err)
 		}
-	}
-
-	for _, m := range models {
-		if err := dbService.CreateTable(m); err != nil {
-			return fmt.Errorf("table creation error: %s", err)
-		}
-	}
-
-	if err := dbService.CreateInstanceAccount(); err != nil {
-		return fmt.Errorf("error creating instance account: %s", err)
-	}
-
-	if err := dbService.CreateInstanceInstance(); err != nil {
-		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
 	gts, err := gotosocial.NewServer(dbService, router, federator, c)

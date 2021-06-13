@@ -23,7 +23,7 @@ import "time"
 // Emoji represents a custom emoji that's been uploaded through the admin UI, and is useable by instance denizens.
 type Emoji struct {
 	// database ID of this emoji
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID string `pg:"type:CHAR(26),pk,notnull"`
 	// String shortcode for this emoji -- the part that's between colons. This should be lowercase a-z_
 	// eg., 'blob_hug' 'purple_heart' Must be unique with domain.
 	Shortcode string `pg:",notnull,unique:shortcodedomain"`
@@ -73,5 +73,5 @@ type Emoji struct {
 	// Is this emoji visible in the admin emoji picker?
 	VisibleInPicker bool `pg:",notnull,default:true"`
 	// In which emoji category is this emoji visible?
-	CategoryID string
+	CategoryID string `pg:"type:CHAR(26)"`
 }

@@ -41,11 +41,11 @@ var (
 	mentionNameRegex = regexp.MustCompile(mentionNameRegexString)
 
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?: |\n)`
+	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?:[^a-zA-Z0-9]|\W|$)?`
 	mentionFinderRegex       = regexp.MustCompile(mentionFinderRegexString)
 
 	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
-	hashtagFinderRegexString = fmt.Sprintf(`(?: |^|\W)?#([a-zA-Z0-9]{1,%d})(?:\b|\r)`, maximumHashtagLength)
+	hashtagFinderRegexString = fmt.Sprintf(`(?:\b)?#(\w{1,%d})(?:\b)`, maximumHashtagLength)
 	hashtagFinderRegex       = regexp.MustCompile(hashtagFinderRegexString)
 
 	// emoji shortcode regex can be played with here: https://regex101.com/r/zMDRaG/1
@@ -85,21 +85,25 @@ var (
 	// followingPathRegex parses a path that validates and captures the username part from eg /users/example_username/following
 	followingPathRegex = regexp.MustCompile(followingPathRegexString)
 
-	// see https://ihateregex.io/expr/uuid/
-	uuidRegexString = `[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}`
+	followPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, FollowPath, ulidRegexString)
+	// followPathRegex parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/follow/01F7XT5JZW1WMVSW1KADS8PVDH
+	followPathRegex = regexp.MustCompile(followPathRegexString)
+
+	ulidRegexString = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`
 
 	likedPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, LikedPath)
 	// likedPathRegex parses a path that validates and captures the username part from eg /users/example_username/liked
 	likedPathRegex = regexp.MustCompile(likedPathRegexString)
 
-	likePathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, LikedPath, uuidRegexString)
-	// likePathRegex parses a path that validates and captures the username part and the uuid part
-	// from eg /users/example_username/liked/123e4567-e89b-12d3-a456-426655440000.
+	likePathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, LikedPath, ulidRegexString)
+	// likePathRegex parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/like/01F7XT5JZW1WMVSW1KADS8PVDH
 	likePathRegex = regexp.MustCompile(likePathRegexString)
 
-	statusesPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, StatusesPath, uuidRegexString)
-	// statusesPathRegex parses a path that validates and captures the username part and the uuid part
-	// from eg /users/example_username/statuses/123e4567-e89b-12d3-a456-426655440000.
+	statusesPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, StatusesPath, ulidRegexString)
+	// statusesPathRegex parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/statuses/01F7XT5JZW1WMVSW1KADS8PVDH
 	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
 	statusesPathRegex = regexp.MustCompile(statusesPathRegexString)
 )

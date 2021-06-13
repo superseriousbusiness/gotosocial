@@ -20,15 +20,16 @@ package processing
 
 import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, ErrorWithCode) {
+func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
 	l := p.log.WithField("func", "NotificationsGet")
 
 	notifs, err := p.db.GetNotificationsForAccount(authed.Account.ID, limit, maxID, sinceID)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	mastoNotifs := []*apimodel.Notification{}

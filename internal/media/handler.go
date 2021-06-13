@@ -26,12 +26,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
@@ -242,9 +242,11 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	// create the urls and storage paths
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
 
-	// generate a uuid for the new emoji -- normally we could let the database do this for us,
-	// but we need it below so we should create it here instead.
-	newEmojiID := uuid.NewString()
+	// generate a id for the new emoji
+	newEmojiID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
 
 	// webfinger uri for the emoji -- unrelated to actually serving the image
 	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c

@@ -22,10 +22,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -202,13 +203,13 @@ func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCrede
 	return acctSensitive, nil
 }
 
-func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, ErrorWithCode) {
+func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
 	targetAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil, NewErrorNotFound(fmt.Errorf("no entry found for account id %s", targetAccountID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("no entry found for account id %s", targetAccountID))
 		}
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	statuses := []gtsmodel.Status{}
@@ -217,18 +218,18 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return apiStatuses, nil
 		}
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	for _, s := range statuses {
 		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(&s)
 		if err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("error getting relevant statuses: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relevant statuses: %s", err))
 		}
 
-		visible, err := p.db.StatusVisible(&s, targetAccount, authed.Account, relevantAccounts)
+		visible, err := p.db.StatusVisible(&s, authed.Account, relevantAccounts)
 		if err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
 		}
 		if !visible {
 			continue
@@ -238,16 +239,16 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 		if s.BoostOfID != "" {
 			bs := &gtsmodel.Status{}
 			if err := p.db.GetByID(s.BoostOfID, bs); err != nil {
-				return nil, NewErrorInternalError(fmt.Errorf("error getting boosted status: %s", err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting boosted status: %s", err))
 			}
 			boostedRelevantAccounts, err := p.db.PullRelevantAccountsFromStatus(bs)
 			if err != nil {
-				return nil, NewErrorInternalError(fmt.Errorf("error getting relevant accounts from boosted status: %s", err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relevant accounts from boosted status: %s", err))
 			}
 
-			boostedVisible, err := p.db.StatusVisible(bs, relevantAccounts.BoostedAccount, authed.Account, boostedRelevantAccounts)
+			boostedVisible, err := p.db.StatusVisible(bs, authed.Account, boostedRelevantAccounts)
 			if err != nil {
-				return nil, NewErrorInternalError(fmt.Errorf("error checking boosted status visibility: %s", err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking boosted status visibility: %s", err))
 			}
 
 			if boostedVisible {
@@ -257,7 +258,7 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 
 		apiStatus, err := p.tc.StatusToMasto(&s, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostedStatus)
 		if err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
 		}
 
 		apiStatuses = append(apiStatuses, *apiStatus)
@@ -266,29 +267,29 @@ func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID strin
 	return apiStatuses, nil
 }
 
-func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode) {
+func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	blocked, err := p.db.Blocked(authed.Account.ID, targetAccountID)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if blocked {
-		return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	followers := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
-	if err := p.db.GetFollowersByAccountID(targetAccountID, &followers); err != nil {
+	if err := p.db.GetFollowersByAccountID(targetAccountID, &followers, false); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return accounts, nil
 		}
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	for _, f := range followers {
 		blocked, err := p.db.Blocked(authed.Account.ID, f.AccountID)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		if blocked {
 			continue
@@ -299,7 +300,7 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 			if _, ok := err.(db.ErrNoEntries); ok {
 				continue
 			}
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		// derefence account fields in case we haven't done it already
@@ -310,21 +311,21 @@ func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID stri
 
 		account, err := p.tc.AccountToMastoPublic(a)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		accounts = append(accounts, *account)
 	}
 	return accounts, nil
 }
 
-func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, ErrorWithCode) {
+func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
 	blocked, err := p.db.Blocked(authed.Account.ID, targetAccountID)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if blocked {
-		return nil, NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	following := []gtsmodel.Follow{}
@@ -333,13 +334,13 @@ func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID stri
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return accounts, nil
 		}
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	for _, f := range following {
 		blocked, err := p.db.Blocked(authed.Account.ID, f.AccountID)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		if blocked {
 			continue
@@ -350,7 +351,7 @@ func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID stri
 			if _, ok := err.(db.ErrNoEntries); ok {
 				continue
 			}
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		// derefence account fields in case we haven't done it already
@@ -361,53 +362,53 @@ func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID stri
 
 		account, err := p.tc.AccountToMastoPublic(a)
 		if err != nil {
-			return nil, NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		accounts = append(accounts, *account)
 	}
 	return accounts, nil
 }
 
-func (p *processor) AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode) {
+func (p *processor) AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	if authed == nil || authed.Account == nil {
-		return nil, NewErrorForbidden(errors.New("not authed"))
+		return nil, gtserror.NewErrorForbidden(errors.New("not authed"))
 	}
 
 	gtsR, err := p.db.GetRelationship(authed.Account.ID, targetAccountID)
 	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
 	}
 
 	r, err := p.tc.RelationshipToMasto(gtsR)
 	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("error converting relationship: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting relationship: %s", err))
 	}
 
 	return r, nil
 }
 
-func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, ErrorWithCode) {
+func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
 	blocked, err := p.db.Blocked(authed.Account.ID, form.TargetAccountID)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if blocked {
-		return nil, NewErrorNotFound(fmt.Errorf("accountfollowcreate: block exists between accounts"))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: block exists between accounts"))
 	}
 
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
 	if err := p.db.GetByID(form.TargetAccountID, targetAcct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil, NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.TargetAccountID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.TargetAccountID, err))
 		}
 	}
 
 	// check if a follow exists already
 	follows, err := p.db.Follows(authed.Account, targetAcct)
 	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
 	}
 	if follows {
 		// already follows so just return the relationship
@@ -417,7 +418,7 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	// check if a follow exists already
 	followRequested, err := p.db.FollowRequested(authed.Account, targetAcct)
 	if err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
 	}
 	if followRequested {
 		// already follow requested so just return the relationship
@@ -425,8 +426,10 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	}
 
 	// make the follow request
-
-	newFollowID := uuid.NewString()
+	newFollowID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
 	fr := &gtsmodel.FollowRequest{
 		ID:              newFollowID,
@@ -445,13 +448,13 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 
 	// whack it in the database
 	if err := p.db.Put(fr); err != nil {
-		return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error creating follow request in db: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error creating follow request in db: %s", err))
 	}
 
 	// if it's a local account that's not locked we can just straight up accept the follow request
 	if !targetAcct.Locked && targetAcct.Domain == "" {
 		if _, err := p.db.AcceptFollowRequest(authed.Account.ID, form.TargetAccountID); err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}
 		// return the new relationship
 		return p.AccountRelationshipGet(authed, form.TargetAccountID)
@@ -470,21 +473,21 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 	return p.AccountRelationshipGet(authed, form.TargetAccountID)
 }
 
-func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, ErrorWithCode) {
+func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't do anything
 	blocked, err := p.db.Blocked(authed.Account.ID, targetAccountID)
 	if err != nil {
-		return nil, NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if blocked {
-		return nil, NewErrorNotFound(fmt.Errorf("AccountFollowRemove: block exists between accounts"))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("AccountFollowRemove: block exists between accounts"))
 	}
 
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil, NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
 		}
 	}
 
@@ -498,7 +501,7 @@ func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID stri
 	}, fr); err == nil {
 		frURI = fr.URI
 		if err := p.db.DeleteByID(fr.ID, fr); err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow request from db: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow request from db: %s", err))
 		}
 		frChanged = true
 	}
@@ -513,7 +516,7 @@ func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID stri
 	}, f); err == nil {
 		fURI = f.URI
 		if err := p.db.DeleteByID(f.ID, f); err != nil {
-			return nil, NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow from db: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow from db: %s", err))
 		}
 		fChanged = true
 	}

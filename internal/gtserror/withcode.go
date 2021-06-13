@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package processing
+package gtserror
 
 import (
 	"errors"
@@ -24,12 +24,12 @@ import (
 	"strings"
 )
 
-// ErrorWithCode wraps an internal error with an http code, and a 'safe' version of
+// WithCode wraps an internal error with an http code, and a 'safe' version of
 // the error that can be served to clients without revealing internal business logic.
 //
 // A typical use of this error would be to first log the Original error, then return
 // the Safe error and the StatusCode to an API caller.
-type ErrorWithCode interface {
+type WithCode interface {
 	// Error returns the original internal error for debugging within the GoToSocial logs.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Error() string
@@ -40,31 +40,31 @@ type ErrorWithCode interface {
 	Code() int
 }
 
-type errorWithCode struct {
+type withCode struct {
 	original error
 	safe     error
 	code     int
 }
 
-func (e errorWithCode) Error() string {
+func (e withCode) Error() string {
 	return e.original.Error()
 }
 
-func (e errorWithCode) Safe() string {
+func (e withCode) Safe() string {
 	return e.safe.Error()
 }
 
-func (e errorWithCode) Code() int {
+func (e withCode) Code() int {
 	return e.code
 }
 
 // NewErrorBadRequest returns an ErrorWithCode 400 with the given original error and optional help text.
-func NewErrorBadRequest(original error, helpText ...string) ErrorWithCode {
+func NewErrorBadRequest(original error, helpText ...string) WithCode {
 	safe := "bad request"
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return errorWithCode{
+	return withCode{
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusBadRequest,
@@ -72,12 +72,12 @@ func NewErrorBadRequest(original error, helpText ...string) ErrorWithCode {
 }
 
 // NewErrorNotAuthorized returns an ErrorWithCode 401 with the given original error and optional help text.
-func NewErrorNotAuthorized(original error, helpText ...string) ErrorWithCode {
+func NewErrorNotAuthorized(original error, helpText ...string) WithCode {
 	safe := "not authorized"
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return errorWithCode{
+	return withCode{
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusUnauthorized,
@@ -85,12 +85,12 @@ func NewErrorNotAuthorized(original error, helpText ...string) ErrorWithCode {
 }
 
 // NewErrorForbidden returns an ErrorWithCode 403 with the given original error and optional help text.
-func NewErrorForbidden(original error, helpText ...string) ErrorWithCode {
+func NewErrorForbidden(original error, helpText ...string) WithCode {
 	safe := "forbidden"
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return errorWithCode{
+	return withCode{
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusForbidden,
@@ -98,12 +98,12 @@ func NewErrorForbidden(original error, helpText ...string) ErrorWithCode {
 }
 
 // NewErrorNotFound returns an ErrorWithCode 404 with the given original error and optional help text.
-func NewErrorNotFound(original error, helpText ...string) ErrorWithCode {
+func NewErrorNotFound(original error, helpText ...string) WithCode {
 	safe := "404 not found"
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return errorWithCode{
+	return withCode{
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusNotFound,
@@ -111,12 +111,12 @@ func NewErrorNotFound(original error, helpText ...string) ErrorWithCode {
 }
 
 // NewErrorInternalError returns an ErrorWithCode 500 with the given original error and optional help text.
-func NewErrorInternalError(original error, helpText ...string) ErrorWithCode {
+func NewErrorInternalError(original error, helpText ...string) WithCode {
 	safe := "internal server error"
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return errorWithCode{
+	return withCode{
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusInternalServerError,

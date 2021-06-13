@@ -25,6 +25,7 @@ import (
 	"io"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -52,6 +53,12 @@ func (p *processor) AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCre
 	if err != nil {
 		return nil, fmt.Errorf("error reading emoji: %s", err)
 	}
+
+	emojiID, err := id.NewULID()
+	if err != nil {
+		return nil, err
+	}
+	emoji.ID = emojiID
 
 	mastoEmoji, err := p.tc.EmojiToMasto(emoji)
 	if err != nil {

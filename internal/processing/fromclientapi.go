@@ -40,6 +40,10 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
+			if err := p.timelineStatus(status); err != nil {
+				return err
+			}
+
 			if err := p.notifyStatus(status); err != nil {
 				return err
 			}
@@ -47,7 +51,6 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
 				return p.federateStatus(status)
 			}
-			return nil
 		case gtsmodel.ActivityStreamsFollow:
 			// CREATE FOLLOW REQUEST
 			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
@@ -124,6 +127,29 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
 			}
 			return p.federateUnfollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsLike:
+			// UNDO LIKE/FAVE
+			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+			if !ok {
+				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
+			}
+			return p.federateUnfave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		}
+	case gtsmodel.ActivityStreamsDelete:
+		// DELETE
+		switch clientMsg.APObjectType {
+		case gtsmodel.ActivityStreamsNote:
+			// DELETE STATUS/NOTE
+			statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("note was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
+				return err
+			}
+
+			return p.federateStatusDelete(statusToDelete, clientMsg.OriginAccount)
 		}
 	}
 	return nil
@@ -141,6 +167,43 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 	}
 
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)
+	return err
+}
+
+func (p *processor) federateStatusDelete(status *gtsmodel.Status, originAccount *gtsmodel.Account) error {
+	asStatus, err := p.tc.StatusToAS(status)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	actorIRI, err := url.Parse(originAccount.URI)
+	if err != nil {
+		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", originAccount.URI, err)
+	}
+
+	// create a delete and set the appropriate actor on it
+	delete := streams.NewActivityStreamsDelete()
+
+	// set the actor for the delete
+	deleteActor := streams.NewActivityStreamsActorProperty()
+	deleteActor.AppendIRI(actorIRI)
+	delete.SetActivityStreamsActor(deleteActor)
+
+	// Set the status as the 'object' property.
+	deleteObject := streams.NewActivityStreamsObjectProperty()
+	deleteObject.AppendActivityStreamsNote(asStatus)
+	delete.SetActivityStreamsObject(deleteObject)
+
+	// set the to and cc as the original to/cc of the original status
+	delete.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
+	delete.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, delete)
 	return err
 }
 
@@ -203,6 +266,45 @@ func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gts
 	}
 
 	// send off the Undo
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	return err
+}
+
+func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
+	// create the AS fave
+	asFave, err := p.tc.FaveToAS(fave)
+	if err != nil {
+		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
+	}
+
+	targetAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
+	}
+
+	// create an Undo and set the appropriate actor on it
+	undo := streams.NewActivityStreamsUndo()
+	undo.SetActivityStreamsActor(asFave.GetActivityStreamsActor())
+
+	// Set the fave as the 'object' property.
+	undoObject := streams.NewActivityStreamsObjectProperty()
+	undoObject.AppendActivityStreamsLike(asFave)
+	undo.SetActivityStreamsObject(undoObject)
+
+	// Set the To of the undo as the target of the fave
+	undoTo := streams.NewActivityStreamsToProperty()
+	undoTo.AppendIRI(targetAccountURI)
+	undo.SetActivityStreamsTo(undoTo)
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
 	return err
 }

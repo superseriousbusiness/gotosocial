@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
@@ -42,17 +42,18 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 
 	posted, err := m.processor.InboxPost(c.Request.Context(), c.Writer, c.Request)
 	if err != nil {
-		if withCode, ok := err.(processing.ErrorWithCode); ok {
+		if withCode, ok := err.(gtserror.WithCode); ok {
 			l.Debug(withCode.Error())
 			c.JSON(withCode.Code(), withCode.Safe())
 			return
 		}
-		l.Debug(err)
+		l.Debugf("InboxPOSTHandler: error processing request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
 		return
 	}
 
 	if !posted {
+		l.Debugf("request could not be handled as an AP request; headers were: %+v", c.Request.Header)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
 	}
 }

@@ -117,10 +117,13 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 
 	// url property
 	url, err := extractURL(accountable)
-	if err != nil {
-		return nil, fmt.Errorf("could not extract url for person with id %s: %s", uri.String(), err)
+	if err == nil {
+		// take the URL if we can find it
+		acct.URL = url.String()
+	} else {
+		// otherwise just take the account URI as the URL
+		acct.URL = uri.String()
 	}
-	acct.URL = url.String()
 
 	// InboxURI
 	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {
@@ -222,7 +225,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.APStatusOwnerURI = attributedTo.String()
 
 	statusOwner := &gtsmodel.Account{}
-	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String()}}, statusOwner); err != nil {
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String(), CaseInsensitive: true}}, statusOwner); err != nil {
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID

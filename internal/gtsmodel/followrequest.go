@@ -23,15 +23,15 @@ import "time"
 // FollowRequest represents one account requesting to follow another, and the metadata around that request.
 type FollowRequest struct {
 	// id of this follow request in the database
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// When was this follow request created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this follow request last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Who does this follow request originate from?
-	AccountID string `pg:",unique:srctarget,notnull"`
+	AccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
 	// Who is the target of this follow request?
-	TargetAccountID string `pg:",unique:srctarget,notnull"`
+	TargetAccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `pg:"default:true"`
 	// What is the activitypub URI of this follow request?

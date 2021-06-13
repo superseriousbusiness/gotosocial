@@ -23,13 +23,13 @@ import "time"
 // Tag represents a hashtag for gathering public statuses together
 type Tag struct {
 	// id of this tag in the database
-	ID string `pg:",unique,type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID string `pg:",unique,type:CHAR(26),pk,notnull"`
 	// Href of this tag, eg https://example.org/tags/somehashtag
 	URL string
 	// name of this tag -- the tag without the hash part
 	Name string `pg:",unique,pk,notnull"`
 	// Which account ID is the first one we saw using this tag?
-	FirstSeenFromAccountID string
+	FirstSeenFromAccountID string `pg:"type:CHAR(26)"`
 	// when was this tag created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this tag last updated

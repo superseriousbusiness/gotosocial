@@ -33,8 +33,8 @@ type Account struct {
 		BASIC INFO
 	*/
 
-	// id of this account in the local database; the end-user will never need to know this, it's strictly internal
-	ID string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull,unique"`
+	// id of this account in the local database
+	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
 	Username string `pg:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
 	// Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
@@ -45,11 +45,11 @@ type Account struct {
 	*/
 
 	// ID of the avatar as a media attachment
-	AvatarMediaAttachmentID string
+	AvatarMediaAttachmentID string `pg:"type:CHAR(26)"`
 	// For a non-local account, where can the header be fetched?
 	AvatarRemoteURL string
 	// ID of the header as a media attachment
-	HeaderMediaAttachmentID string
+	HeaderMediaAttachmentID string `pg:"type:CHAR(26)"`
 	// For a non-local account, where can the header be fetched?
 	HeaderRemoteURL string
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
@@ -61,7 +61,7 @@ type Account struct {
 	// Is this a memorial account, ie., has the user passed away?
 	Memorial bool
 	// This account has moved this account id in the database
-	MovedToAccountID string
+	MovedToAccountID string `pg:"type:CHAR(26)"`
 	// When was this account created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this account last updated?

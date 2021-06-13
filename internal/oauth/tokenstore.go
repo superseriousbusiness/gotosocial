@@ -26,6 +26,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
@@ -98,7 +99,17 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 	if !ok {
 		return errors.New("info param was not a models.Token")
 	}
-	if err := pts.db.Put(TokenToPGToken(t)); err != nil {
+
+	pgt := TokenToPGToken(t)
+	if pgt.ID == "" {
+		pgtID, err := id.NewRandomULID()
+		if err != nil {
+			return err
+		}
+		pgt.ID = pgtID
+	}
+
+	if err := pts.db.Put(pgt); err != nil {
 		return fmt.Errorf("error in tokenstore create: %s", err)
 	}
 	return nil
@@ -176,7 +187,7 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 // As such, manual translation is always required between Token and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
 // and pgTokenToOauthToken can be used for that.
 type Token struct {
-	ID                  string `pg:"type:uuid,default:gen_random_uuid(),pk,notnull"`
+	ID                  string `pg:"type:CHAR(26),pk,notnull"`
 	ClientID            string
 	UserID              string
 	RedirectURI         string
