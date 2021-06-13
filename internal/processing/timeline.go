@@ -21,9 +21,7 @@ package processing
 import (
 	"fmt"
 	"net/url"
-	"sort"
 	"sync"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -38,80 +36,14 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 		Statuses: []*apimodel.Status{},
 	}
 
-	apiStatuses := []*apimodel.Status{}
-
-	maxIDMarker := maxID
-	sinceIDMarker := sinceID
-	minIDMarker := minID
-
-	gtsStatuses, err := p.db.GetStatusesWhereFollowing(authed.Account.ID, maxIDMarker, sinceIDMarker, minIDMarker, limit, local)
+	apiStatuses, err := p.timelineManager.HomeTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting statuses from db: %s", err))
-		}
+		return nil, gtserror.NewErrorInternalError(err)
 	}
-
-	for _, gtsStatus := range gtsStatuses {
-		// pull relevant accounts from the status -- we need this both for checking visibility and for serializing
-		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(gtsStatus)
-		if err != nil {
-			continue
-		}
-		visible, err := p.db.StatusVisible(gtsStatus, authed.Account, relevantAccounts)
-		if err != nil {
-			continue
-		}
-
-		if visible {
-			// check if this is a boost...
-			var reblogOfStatus *gtsmodel.Status
-			if gtsStatus.BoostOfID != "" {
-				s := &gtsmodel.Status{}
-				if err := p.db.GetByID(s.BoostOfID, s); err != nil {
-					continue
-				}
-				reblogOfStatus = s
-			}
-
-			// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-			apiStatus, err := p.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
-			if err != nil {
-				continue
-			}
-
-			apiStatuses = append(apiStatuses, apiStatus)
-			sort.Slice(apiStatuses, func(i int, j int) bool {
-				is, err := time.Parse(time.RFC3339, apiStatuses[i].CreatedAt)
-				if err != nil {
-					panic(err)
-				}
-
-				js, err := time.Parse(time.RFC3339, apiStatuses[j].CreatedAt)
-				if err != nil {
-					panic(err)
-				}
-
-				return is.After(js)
-			})
-
-			if len(apiStatuses) == limit {
-				// we have enough
-				break
-			}
-		}
-		if len(apiStatuses) != 0 {
-			if maxIDMarker != "" {
-				maxIDMarker = apiStatuses[len(apiStatuses)-1].ID
-			}
-			if minIDMarker != "" {
-				minIDMarker = apiStatuses[0].ID
-			}
-		}
-	}
-
 	resp.Statuses = apiStatuses
 
-	if len(resp.Statuses) != 0 {
+	// prepare the next and previous links
+	if len(apiStatuses) != 0 {
 		nextLink := &url.URL{
 			Scheme:   p.config.Protocol,
 			Host:     p.config.Host,
@@ -259,7 +191,9 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 
 	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, "", "", "", desiredIndexLength, false)
 	if err != nil {
-		l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
+		if _, ok := err.(db.ErrNoEntries); !ok {
+			l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
+		}
 		return
 	}
 	p.indexAndIngest(statuses, account, desiredIndexLength)

@@ -19,7 +19,6 @@
 package timeline
 
 import (
-	"errors"
 	"sync"
 	"time"
 
@@ -39,6 +38,7 @@ type Timeline interface {
 		RETRIEVAL FUNCTIONS
 	*/
 
+	Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error)
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
 	// GetXBehindID returns x amount of posts from the given id onwards, from newest to oldest.
@@ -63,12 +63,7 @@ type Timeline interface {
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
 	IndexOne(statusCreatedAt time.Time, statusID string) error
-	// Remove removes a status from both the index and prepared posts.
-	//
-	// If a status has multiple entries in a timeline, they will all be removed.
-	//
-	// The returned int indicates the amount of entries that were removed.
-	Remove(statusID string) (int, error)
+
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestIndexedPostID() (string, error)
@@ -81,10 +76,13 @@ type Timeline interface {
 	PrepareFromTop(amount int) error
 	// PrepareBehind instructs the timeline to prepare the next amount of entries for serialization, from position onwards.
 	// If include is true, then the given status ID will also be prepared, otherwise only entries behind it will be prepared.
-	PrepareBehind(statusID string, include bool, amount int) error
+	PrepareBehind(statusID string, amount int) error
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
 	// and then immediately prepares it.
 	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
+	// OldestPreparedPostID returns the id of the rearmost (ie., the oldest) prepared post, or an error if something goes wrong.
+	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
+	OldestPreparedPostID() (string, error)
 
 	/*
 		INFO FUNCTIONS
@@ -99,6 +97,12 @@ type Timeline interface {
 
 	// Reset instructs the timeline to reset to its base state -- cache only the minimum amount of posts.
 	Reset() error
+	// Remove removes a status from both the index and prepared posts.
+	//
+	// If a status has multiple entries in a timeline, they will all be removed.
+	//
+	// The returned int indicates the amount of entries that were removed.
+	Remove(statusID string) (int, error)
 }
 
 // timeline fulfils the Timeline interface
@@ -133,25 +137,4 @@ func (t *timeline) PostIndexLength() int {
 	}
 
 	return t.postIndex.data.Len()
-}
-
-func (t *timeline) OldestIndexedPostID() (string, error) {
-	var id string
-	if t.postIndex == nil || t.postIndex.data == nil {
-		// return an empty string if postindex hasn't been initialized yet
-		return id, nil
-	}
-
-	e := t.postIndex.data.Back()
-
-	if e == nil {
-		// return an empty string if there's no back entry (ie., the index list hasn't been initialized yet)
-		return id, nil
-	}
-
-	entry, ok := e.Value.(*postIndexEntry)
-	if !ok {
-		return id, errors.New("OldestIndexedPostID: could not parse e as a postIndexEntry")
-	}
-	return entry.statusID, nil
 }

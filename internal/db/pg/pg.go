@@ -1165,33 +1165,19 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, maxID str
 
 	q = q.ColumnExpr("status.*").
 		Join("JOIN follows AS f ON f.target_account_id = status.account_id").
-		Where("f.account_id = ?", accountID)
+		Where("f.account_id = ?", accountID).
+		Order("status.id DESC")
 
 	if maxID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err == nil {
-			q = q.Where("status.created_at < ?", s.CreatedAt)
-		}
+		q = q.Where("status.id < ?", maxID)
 	}
 
 	if sinceID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err == nil {
-			q = q.Where("status.created_at > ?", s.CreatedAt)
-		}
+		q = q.Where("status.id > ?", sinceID)
 	}
 
 	if minID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err == nil {
-			q = q.Where("status.created_at > ?", s.CreatedAt)
-		}
-	}
-
-	if minID != "" {
-		q = q.Order("status.created_at")
-	} else {
-		q = q.Order("status.created_at DESC")
+		q = q.Where("status.id > ?", minID)
 	}
 
 	if local {
@@ -1204,9 +1190,14 @@ func (ps *postgresService) GetStatusesWhereFollowing(accountID string, maxID str
 
 	err := q.Select()
 	if err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
+		if err == pg.ErrNoRows {
+			return nil, db.ErrNoEntries{}
 		}
+		return nil, err
+	}
+
+	if len(statuses) == 0 {
+		return nil, db.ErrNoEntries{}
 	}
 
 	return statuses, nil
@@ -1219,42 +1210,34 @@ func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID s
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
 		Where("? IS NULL", pg.Ident("in_reply_to_id")).
 		Where("? IS NULL", pg.Ident("boost_of_id")).
-		Limit(limit).
-		Order("created_at DESC")
+		Order("status.id DESC")
 
 	if maxID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("created_at < ?", s.CreatedAt)
-	}
-
-	if minID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", minID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("created_at > ?", s.CreatedAt)
+		q = q.Where("status.id < ?", maxID)
 	}
 
 	if sinceID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", sinceID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("created_at > ?", s.CreatedAt)
+		q = q.Where("status.id > ?", sinceID)
+	}
+
+	if minID != "" {
+		q = q.Where("status.id > ?", minID)
 	}
 
 	if local {
-		q = q.Where("local = ?", local)
+		q = q.Where("status.local = ?", local)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
 	}
 
 	err := q.Select()
 	if err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
+		if err == pg.ErrNoRows {
+			return nil, db.ErrNoEntries{}
 		}
+		return nil, err
 	}
 
 	return statuses, nil
@@ -1266,19 +1249,11 @@ func (ps *postgresService) GetNotificationsForAccount(accountID string, limit in
 	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
 
 	if maxID != "" {
-		n := &gtsmodel.Notification{}
-		if err := ps.conn.Model(n).Where("id = ?", maxID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("created_at < ?", n.CreatedAt)
+		q = q.Where("id < ?", maxID)
 	}
 
 	if sinceID != "" {
-		n := &gtsmodel.Notification{}
-		if err := ps.conn.Model(n).Where("id = ?", sinceID).Select(); err != nil {
-			return nil, err
-		}
-		q = q.Where("created_at > ?", n.CreatedAt)
+		q = q.Where("id > ?", sinceID)
 	}
 
 	if limit != 0 {

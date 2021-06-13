@@ -8,7 +8,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (t *timeline) PrepareBehind(statusID string, include bool, amount int) error {
+func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, minID string) error {
+	var err error
+
+	// maxID is defined but sinceID isn't so take from behind
+	if maxID != "" && sinceID == "" {
+		err = t.PrepareBehind(maxID, amount)
+	}
+
+	// maxID isn't defined, but sinceID || minID are, so take x before
+	if maxID == "" && sinceID != "" {
+		err = t.PrepareBefore(sinceID, false, amount)
+	}
+	if maxID == "" && minID != "" {
+		err = t.PrepareBefore(minID, false, amount)
+	}
+
+	return err
+}
+
+func (t *timeline) PrepareBehind(statusID string, amount int) error {
 	t.Lock()
 	defer t.Unlock()
 
@@ -25,9 +44,6 @@ prepareloop:
 			// we haven't hit the position we need to prepare from yet
 			if entry.statusID == statusID {
 				preparing = true
-				if !include {
-					continue
-				}
 			}
 		}
 
@@ -171,10 +187,29 @@ func (t *timeline) prepare(statusID string) error {
 
 	// shove it in prepared posts as a prepared posts entry
 	preparedPostsEntry := &preparedPostsEntry{
-		createdAt: gtsStatus.CreatedAt,
-		statusID:  statusID,
-		prepared:  apiModelStatus,
+		statusID: statusID,
+		prepared: apiModelStatus,
 	}
 
 	return t.preparedPosts.insertPrepared(preparedPostsEntry)
+}
+
+func (t *timeline) OldestPreparedPostID() (string, error) {
+	var id string
+	if t.preparedPosts == nil || t.preparedPosts.data == nil {
+		// return an empty string if prepared posts hasn't been initialized yet
+		return id, nil
+	}
+
+	e := t.preparedPosts.data.Back()
+	if e == nil {
+		// return an empty string if there's no back entry (ie., the index list hasn't been initialized yet)
+		return id, nil
+	}
+
+	entry, ok := e.Value.(*preparedPostsEntry)
+	if !ok {
+		return id, errors.New("OldestPreparedPostID: could not parse e as a preparedPostsEntry")
+	}
+	return entry.statusID, nil
 }

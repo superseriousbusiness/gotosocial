@@ -125,7 +125,6 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 		acct.URL = uri.String()
 	}
 
-
 	// InboxURI
 	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {
 		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()

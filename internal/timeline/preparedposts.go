@@ -3,7 +3,6 @@ package timeline
 import (
 	"container/list"
 	"errors"
-	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
@@ -13,9 +12,8 @@ type preparedPosts struct {
 }
 
 type preparedPostsEntry struct {
-	createdAt time.Time
-	statusID  string
-	prepared  *apimodel.Status
+	statusID string
+	prepared *apimodel.Status
 }
 
 func (p *preparedPosts) insertPrepared(i *preparedPostsEntry) error {
@@ -40,7 +38,7 @@ func (p *preparedPosts) insertPrepared(i *preparedPostsEntry) error {
 
 		// if the post to index is newer than e, insert it before e in the list
 		if insertMark == nil {
-			if i.createdAt.After(entry.createdAt) {
+			if i.statusID > entry.statusID {
 				insertMark = e
 			}
 		}

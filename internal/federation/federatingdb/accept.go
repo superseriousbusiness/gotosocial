@@ -95,7 +95,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			continue
 		}
 		switch iter.GetType().GetTypeName() {
-			// we have the whole object so we can figure out what we're accepting
+		// we have the whole object so we can figure out what we're accepting
 		case string(gtsmodel.ActivityStreamsFollow):
 			// ACCEPT FOLLOW
 			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)

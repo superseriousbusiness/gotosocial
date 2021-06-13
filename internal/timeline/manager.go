@@ -60,7 +60,7 @@ type Manager interface {
 	IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error
 	// HomeTimeline returns limit n amount of entries from the home timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return entries from that maxID onwards, inclusive.
-	HomeTimeline(timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
+	HomeTimeline(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
 	// GetIndexedLength returns the amount of posts/statuses that have been *indexed* for the given account ID.
 	GetIndexedLength(timelineAccountID string) int
 	// GetDesiredIndexLength returns the amount of posts that we, ideally, index for each user.
@@ -143,18 +143,7 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 
 	t := m.getOrCreateTimeline(timelineAccountID)
 
-	var err error
-	var statuses []*apimodel.Status
-	if maxID != "" && sinceID != "" {
-		statuses, err = t.GetXBetweenID(limit, maxID, sinceID)
-	} else if maxID != "" {
-		statuses, err = t.GetXBehindID(limit, maxID)
-	} else if sinceID != "" {
-		statuses, err = t.GetXBeforeID(limit, sinceID, true)
-	} else {
-		statuses, err = t.GetXFromTop(limit)
-	}
-
+	statuses, err := t.Get(limit, maxID, sinceID, minID)
 	if err != nil {
 		l.Errorf("error getting statuses: %s", err)
 	}

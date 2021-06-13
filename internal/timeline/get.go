@@ -8,11 +8,53 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
+func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error) {
+	var statuses []*apimodel.Status
+	var err error
+
+	// no params are defined to just fetch from the top
+	if maxID == "" && sinceID == "" && minID == "" {
+		statuses, err = t.GetXFromTop(amount)
+		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
+		if len(statuses) != 0 {
+			nextMaxID := statuses[len(statuses)-1].ID
+			go t.prepareNextQuery(amount, nextMaxID, "", "")
+		}
+	}
+
+	// maxID is defined but sinceID isn't so take from behind
+	if maxID != "" && sinceID == "" {
+		statuses, err = t.GetXBehindID(amount, maxID)
+		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
+		if len(statuses) != 0 {
+			nextMaxID := statuses[len(statuses)-1].ID
+			go t.prepareNextQuery(amount, nextMaxID, "", "")
+		}
+	}
+
+	// maxID is defined and sinceID || minID are as well, so take a slice between them
+	if maxID != "" && sinceID != "" {
+		statuses, err = t.GetXBetweenID(amount, maxID, minID)
+	}
+	if maxID != "" && minID != "" {
+		statuses, err = t.GetXBetweenID(amount, maxID, minID)
+	}
+
+	// maxID isn't defined, but sinceID || minID are, so take x before
+	if maxID == "" && sinceID != "" {
+		statuses, err = t.GetXBeforeID(amount, sinceID, true)
+	}
+	if maxID == "" && minID != "" {
+		statuses, err = t.GetXBeforeID(amount, minID, true)
+	}
+
+	return statuses, err
+}
+
 func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
-	// if there are no prepared posts, just return the empty slice
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 	}
@@ -45,7 +87,6 @@ func (t *timeline) GetXBehindID(amount int, behindID string) ([]*apimodel.Status
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
-	// if there are no prepared posts, just return the empty slice
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 	}
@@ -53,6 +94,7 @@ func (t *timeline) GetXBehindID(amount int, behindID string) ([]*apimodel.Status
 	// iterate through the modified list until we hit the mark we're looking for
 	var position int
 	var behindIDMark *list.Element
+
 findMarkLoop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
 		position = position + 1
@@ -62,7 +104,6 @@ findMarkLoop:
 		}
 
 		if entry.statusID == behindID {
-			fmt.Printf("\n\n\n GETXBEHINDID: FOUND BEHINDID %s WITH POSITION %d AND CREATEDAT %s \n\n\n", behindID, position, entry.createdAt.String())
 			behindIDMark = e
 			break findMarkLoop
 		}
@@ -70,22 +111,29 @@ findMarkLoop:
 
 	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
 	if behindIDMark == nil {
-		if err := t.IndexBehind(behindID, true, amount); err != nil {
+		if err := t.IndexBehind(behindID, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error indexing behind and including ID %s", behindID)
 		}
-		if err := t.PrepareBehind(behindID, true, amount); err != nil {
+		if err := t.PrepareBehind(behindID, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error preparing behind and including ID %s", behindID)
+		}
+		oldestID, err := t.OldestPreparedPostID()
+		if err != nil {
+			return nil, err
+		}
+		if oldestID == "" || oldestID == behindID {
+			// there is no oldest prepared post, or the oldest prepared post is still the post we're looking for entries after
+			// this means we should just return the empty statuses slice since we don't have any more posts to offer
+			return statuses, nil
 		}
 		return t.GetXBehindID(amount, behindID)
 	}
 
 	// make sure we have enough posts prepared behind it to return what we're being asked for
 	if t.preparedPosts.data.Len() < amount+position {
-		fmt.Printf("\n\n\n GETXBEHINDID: PREPARED POSTS LENGTH %d WAS LESS THAN AMOUNT %d PLUS POSITION %d", t.preparedPosts.data.Len(), amount, position)
-		if err := t.PrepareBehind(behindID, false, amount); err != nil {
+		if err := t.PrepareBehind(behindID, amount); err != nil {
 			return nil, err
 		}
-		fmt.Printf("\n\n\n GETXBEHINDID: PREPARED POSTS LENGTH IS NOW %d", t.preparedPosts.data.Len())
 	}
 
 	// start serving from the entry right after the mark
@@ -97,7 +145,6 @@ serveloop:
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 
-		fmt.Printf("\n\n\n GETXBEHINDID: SERVING STATUS ID %s WITH CREATEDAT %s \n\n\n", entry.statusID, entry.createdAt.String())
 		// serve up to the amount requested
 		statuses = append(statuses, entry.prepared)
 		served = served + 1
@@ -165,8 +212,7 @@ findMarkLoop:
 				break serveloopFromTop
 			}
 		}
-
-	} else if startFromTop {
+	} else if !startFromTop {
 		// start serving from the entry right before the mark
 	serveloopFromBottom:
 		for e := beforeIDMark.Prev(); e != nil; e = e.Prev() {
@@ -191,7 +237,6 @@ func (t *timeline) GetXBetweenID(amount int, behindID string, beforeID string) (
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
-	// if there are no prepared posts, just return the empty slice
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 	}
@@ -220,7 +265,7 @@ findMarkLoop:
 
 	// make sure we have enough posts prepared behind it to return what we're being asked for
 	if t.preparedPosts.data.Len() < amount+position {
-		if err := t.PrepareBehind(behindID, false, amount); err != nil {
+		if err := t.PrepareBehind(behindID, amount); err != nil {
 			return nil, err
 		}
 	}
