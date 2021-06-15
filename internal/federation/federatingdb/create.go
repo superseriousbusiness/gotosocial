@@ -87,6 +87,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 
 	switch asType.GetTypeName() {
 	case gtsmodel.ActivityStreamsCreate:
+		// CREATE SOMETHING
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
 			return errors.New("could not convert type to create")
@@ -95,6 +96,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
 			switch objectIter.GetType().GetTypeName() {
 			case gtsmodel.ActivityStreamsNote:
+				// CREATE A NOTE
 				note := objectIter.GetActivityStreamsNote()
 				status, err := f.typeConverter.ASStatusToStatus(note)
 				if err != nil {

@@ -223,6 +223,8 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
+	// authorize the request:
+	// 1. check if a block exists between the requester and the requestee
 	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -232,6 +234,7 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
 	}
 
+	// get the status out of the database here
 	s := &gtsmodel.Status{}
 	if err := p.db.GetWhere([]db.Where{
 		{Key: "id", Value: requestedStatusID},
@@ -240,6 +243,15 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
 
+	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", s.ID, requestingAccount.ID))
+	}
+
+	// requester is authorized to view the status, so convert it to AP representation and serialize it
 	asStatus, err := p.tc.StatusToAS(s)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)

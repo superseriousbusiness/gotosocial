@@ -105,7 +105,7 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) erro
 	t := m.getOrCreateTimeline(timelineAccountID)
 
 	l.Trace("ingesting status")
-	return t.IndexOne(status.CreatedAt, status.ID)
+	return t.IndexOne(status.CreatedAt, status.ID, status.BoostOfID)
 }
 
 func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error {

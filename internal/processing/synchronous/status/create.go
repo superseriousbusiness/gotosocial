@@ -28,6 +28,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		UpdatedAt:                time.Now(),
 		Local:                    true,
 		AccountID:                account.ID,
+		AccountURI:               account.URI,
 		ContentWarning:           form.SpoilerText,
 		ActivityStreamsType:      gtsmodel.ActivityStreamsNote,
 		Sensitive:                form.Sensitive,
@@ -96,7 +97,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := p.tc.StatusToMasto(newStatus, account, account, nil, newStatus.GTSReplyToAccount, nil)
+	mastoStatus, err := p.tc.StatusToMasto(newStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", newStatus.ID, err))
 	}

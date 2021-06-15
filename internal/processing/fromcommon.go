@@ -255,12 +255,6 @@ func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 		status.GTSAuthorAccount = a
 	}
 
-	// get all relevant accounts here once
-	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(status)
-	if err != nil {
-		return fmt.Errorf("timelineStatus: error getting relevant accounts from status: %s", err)
-	}
-
 	// get local followers of the account that posted the status
 	followers := []gtsmodel.Follow{}
 	if err := p.db.GetFollowersByAccountID(status.AccountID, &followers, true); err != nil {
@@ -279,7 +273,7 @@ func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 	errors := make(chan error, len(followers))
 
 	for _, f := range followers {
-		go p.timelineStatusForAccount(status, f.AccountID, relevantAccounts, errors, &wg)
+		go p.timelineStatusForAccount(status, f.AccountID, errors, &wg)
 	}
 
 	// read any errors that come in from the async functions
@@ -306,29 +300,29 @@ func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 	return nil
 }
 
-func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID string, relevantAccounts *gtsmodel.RelevantAccounts, errors chan error, wg *sync.WaitGroup) {
+func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID string, errors chan error, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// get the targetAccount
+	// get the timeline owner account
 	timelineAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(accountID, timelineAccount); err != nil {
-		errors <- fmt.Errorf("timelineStatus: error getting account for timeline with id %s: %s", accountID, err)
+		errors <- fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %s", accountID, err)
 		return
 	}
 
-	// make sure the status is visible
-	visible, err := p.db.StatusVisible(status, timelineAccount, relevantAccounts)
+	// make sure the status is timelineable
+	timelineable, err := p.filter.StatusHometimelineable(status, timelineAccount)
 	if err != nil {
-		errors <- fmt.Errorf("timelineStatus: error getting visibility for status for timeline with id %s: %s", accountID, err)
+		errors <- fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %s", accountID, err)
 		return
 	}
 
-	if !visible {
+	if !timelineable {
 		return
 	}
 
 	if err := p.timelineManager.IngestAndPrepare(status, timelineAccount.ID); err != nil {
-		errors <- fmt.Errorf("initTimelineFor: error ingesting status %s: %s", status.ID, err)
+		errors <- fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %s", status.ID, err)
 	}
 }
 

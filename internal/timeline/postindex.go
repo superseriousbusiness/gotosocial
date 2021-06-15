@@ -10,7 +10,8 @@ type postIndex struct {
 }
 
 type postIndexEntry struct {
-	statusID string
+	statusID  string
+	boostOfID string
 }
 
 func (p *postIndex) insertIndexed(i *postIndexEntry) error {
@@ -25,12 +26,24 @@ func (p *postIndex) insertIndexed(i *postIndexEntry) error {
 	}
 
 	var insertMark *list.Element
+	var position int
 	// We need to iterate through the index to make sure we put this post in the appropriate place according to when it was created.
 	// We also need to make sure we're not inserting a duplicate post -- this can happen sometimes and it's not nice UX (*shudder*).
 	for e := p.data.Front(); e != nil; e = e.Next() {
+		position = position + 1
+
 		entry, ok := e.Value.(*postIndexEntry)
 		if !ok {
 			return errors.New("index: could not parse e as a postIndexEntry")
+		}
+
+		// don't insert this if it's a boost of a status we've seen recently
+		if i.boostOfID != "" {
+			if i.boostOfID == entry.boostOfID || i.boostOfID == entry.statusID {
+				if position < boostReinsertionDepth {
+					return nil
+				}
+			}
 		}
 
 		// if the post to index is newer than e, insert it before e in the list

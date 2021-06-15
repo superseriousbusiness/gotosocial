@@ -46,8 +46,12 @@ type Status struct {
 	Local bool
 	// which account posted this status?
 	AccountID string `pg:"type:CHAR(26),notnull"`
+	// AP uri of the owner of this status
+	AccountURI string
 	// id of the status this status is a reply to
 	InReplyToID string `pg:"type:CHAR(26)"`
+	// AP uri of the status this status is a reply to
+	InReplyToURI string
 	// id of the account that this status replies to
 	InReplyToAccountID string `pg:"type:CHAR(26)"`
 	// id of the status this status is a boost of
@@ -97,20 +101,6 @@ type Status struct {
 	GTSBoostedStatus *Status `pg:"-"`
 	// Account of the boosted status
 	GTSBoostedAccount *Account `pg:"-"`
-
-	/*
-		AP NON-DATABASE FIELDS
-
-		These are for convenience while passing the status around internally,
-		but these fields should *never* be put in the db.
-	*/
-
-	// AP URI of the status being replied to.
-	// Useful when that status doesn't exist in the database yet and we still need to dereference it.
-	APReplyToStatusURI string `pg:"-"`
-	// The AP URI of the owner/creator of the status.
-	// Useful when that account doesn't exist in the database yet and we still need to dereference it.
-	APStatusOwnerURI string `pg:"-"`
 }
 
 // Visibility represents the visibility granularity of a status.
@@ -158,4 +148,12 @@ type RelevantAccounts struct {
 	BoostedAccount        *Account
 	BoostedReplyToAccount *Account
 	MentionedAccounts     []*Account
+}
+
+// StatusInteractions denotes interactions with a status on behalf of an account.
+type StatusInteractions struct {
+	Faved      bool
+	Muted      bool
+	Bookmarked bool
+	Reblogged  bool
 }

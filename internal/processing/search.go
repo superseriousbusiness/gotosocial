@@ -106,15 +106,11 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 			continue
 		}
 
-		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(foundStatus)
-		if err != nil {
-			continue
-		}
-		if visible, err := p.db.StatusVisible(foundStatus, authed.Account, relevantAccounts); !visible || err != nil {
+		if visible, err := p.filter.StatusVisible(foundStatus, authed.Account); !visible || err != nil {
 			continue
 		}
 
-		statusMasto, err := p.tc.StatusToMasto(foundStatus, statusOwner, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, nil)
+		statusMasto, err := p.tc.StatusToMasto(foundStatus, authed.Account)
 		if err != nil {
 			continue
 		}

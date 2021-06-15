@@ -94,47 +94,15 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting status author: %s", err))
 		}
 
-		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(s)
-		if err != nil {
-			l.Debugf("skipping status %s because we couldn't pull relevant accounts from the db", s.ID)
-			continue
-		}
-
-		visible, err := p.db.StatusVisible(s, authed.Account, relevantAccounts)
+		timelineable, err := p.filter.StatusHometimelineable(s, authed.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking status visibility: %s", err))
 		}
-		if !visible {
+		if !timelineable {
 			continue
 		}
 
-		var boostedStatus *gtsmodel.Status
-		if s.BoostOfID != "" {
-			bs := &gtsmodel.Status{}
-			if err := p.db.GetByID(s.BoostOfID, bs); err != nil {
-				if _, ok := err.(db.ErrNoEntries); ok {
-					l.Debugf("skipping status %s because status %s can't be found in the db", s.ID, s.BoostOfID)
-					continue
-				}
-				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting boosted status: %s", err))
-			}
-			boostedRelevantAccounts, err := p.db.PullRelevantAccountsFromStatus(bs)
-			if err != nil {
-				l.Debugf("skipping status %s because we couldn't pull relevant accounts from the db", s.ID)
-				continue
-			}
-
-			boostedVisible, err := p.db.StatusVisible(bs, authed.Account, boostedRelevantAccounts)
-			if err != nil {
-				return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking boosted status visibility: %s", err))
-			}
-
-			if boostedVisible {
-				boostedStatus = bs
-			}
-		}
-
-		apiStatus, err := p.tc.StatusToMasto(s, targetAccount, authed.Account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostedStatus)
+		apiStatus, err := p.tc.StatusToMasto(s, authed.Account)
 		if err != nil {
 			l.Debugf("skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
 			continue
@@ -227,17 +195,12 @@ func (p *processor) indexAndIngest(statuses []*gtsmodel.Status, timelineAccount 
 	})
 
 	for _, s := range statuses {
-		relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(s)
+		timelineable, err := p.filter.StatusHometimelineable(s, timelineAccount)
 		if err != nil {
-			l.Error(fmt.Errorf("initTimelineFor: error getting relevant accounts from status %s: %s", s.ID, err))
+			l.Error(fmt.Errorf("initTimelineFor: error checking home timelineability of status %s: %s", s.ID, err))
 			continue
 		}
-		visible, err := p.db.StatusVisible(s, timelineAccount, relevantAccounts)
-		if err != nil {
-			l.Error(fmt.Errorf("initTimelineFor: error checking visibility of status %s: %s", s.ID, err))
-			continue
-		}
-		if visible {
+		if timelineable {
 			if err := p.timelineManager.Ingest(s, timelineAccount.ID); err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error ingesting status %s: %s", s.ID, err))
 				continue

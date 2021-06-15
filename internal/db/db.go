@@ -199,21 +199,6 @@ type DB interface {
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
 	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error)
 
-	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
-	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts
-	// or account domains.
-	//
-	// StatusVisible will also check through the given slice of 'otherRelevantAccounts', which should include:
-	//
-	// 1. Accounts mentioned in the targetStatus
-	//
-	// 2. Accounts replied to by the target status
-	//
-	// 3. Accounts boosted by the target status
-	//
-	// Will return an error if something goes wrong while pulling stuff out of the database.
-	StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
-
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
 

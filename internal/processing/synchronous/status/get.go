@@ -24,14 +24,8 @@ func (p *processor) Get(account *gtsmodel.Account, targetStatusID string) (*apim
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err))
 	}
 
-	l.Trace("going to get relevant accounts")
-	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err))
-	}
-
 	l.Trace("going to see if status is visible")
-	visible, err := p.db.StatusVisible(targetStatus, account, relevantAccounts) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
+	visible, err := p.filter.StatusVisible(targetStatus, account) // requestingAccount might well be nil here, but StatusVisible knows how to take care of that
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -48,7 +42,7 @@ func (p *processor) Get(account *gtsmodel.Account, targetStatusID string) (*apim
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, targetAccount, account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
+	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
