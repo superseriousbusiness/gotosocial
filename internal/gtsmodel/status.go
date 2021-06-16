@@ -140,20 +140,3 @@ type VisibilityAdvanced struct {
 	// This status can be liked/faved
 	Likeable bool `pg:"default:true"`
 }
-
-// RelevantAccounts denotes accounts that are replied to, boosted by, or mentioned in a status.
-type RelevantAccounts struct {
-	StatusAuthor          *Account
-	ReplyToAccount        *Account
-	BoostedAccount        *Account
-	BoostedReplyToAccount *Account
-	MentionedAccounts     []*Account
-}
-
-// StatusInteractions denotes interactions with a status on behalf of an account.
-type StatusInteractions struct {
-	Faved      bool
-	Muted      bool
-	Bookmarked bool
-	Reblogged  bool
-}

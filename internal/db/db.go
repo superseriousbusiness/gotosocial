@@ -208,9 +208,6 @@ type DB interface {
 	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
 	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error)
 
-	// PullRelevantAccountsFromStatus returns all accounts mentioned in a status, replied to by a status, or boosted by a status
-	PullRelevantAccountsFromStatus(status *gtsmodel.Status) (*gtsmodel.RelevantAccounts, error)
-
 	// GetReplyCountForStatus returns the amount of replies recorded for a status, or an error if something goes wrong
 	GetReplyCountForStatus(status *gtsmodel.Status) (int, error)
 

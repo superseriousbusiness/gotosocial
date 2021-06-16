@@ -17,7 +17,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		"requestingAccountID": requestingAccount.ID,
 	})
 
-	relevantAccounts, err := f.db.PullRelevantAccountsFromStatus(targetStatus)
+	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
@@ -194,8 +194,4 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	return false, errors.New("reached the end of StatusVisible with no result")
-}
-
-func StatusVisibleInHomeTimeline() {
-
 }

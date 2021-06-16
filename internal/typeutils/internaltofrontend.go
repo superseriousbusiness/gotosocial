@@ -449,7 +449,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	var mastoCard *model.Card
 	var mastoPoll *model.Poll
 
-	statusInteractions := &gtsmodel.StatusInteractions{}
+	statusInteractions := &statusInteractions{}
 	si, err := c.interactionsWithStatusForAccount(s, requestingAccount)
 	if err == nil {
 		statusInteractions = si
@@ -609,35 +609,4 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 		Account:   mastoAccount,
 		Status:    mastoStatus,
 	}, nil
-}
-
-func (c *converter) interactionsWithStatusForAccount(s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*gtsmodel.StatusInteractions, error) {
-	si := &gtsmodel.StatusInteractions{}
-
-	if requestingAccount != nil {
-		faved, err := c.db.StatusFavedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
-		}
-		si.Faved = faved
-
-		reblogged, err := c.db.StatusRebloggedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
-		}
-		si.Reblogged = reblogged
-
-		muted, err := c.db.StatusMutedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
-		}
-		si.Muted = muted
-
-		bookmarked, err := c.db.StatusBookmarkedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
-		}
-		si.Bookmarked = bookmarked
-	}
-	return si, nil
 }

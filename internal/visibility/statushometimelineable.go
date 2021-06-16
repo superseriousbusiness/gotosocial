@@ -14,6 +14,11 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, requestin
 		"requestingAccountID": requestingAccount.ID,
 	})
 
+	// status owner should always be able to see their status in their timeline so we can return early if this is the case
+	if targetStatus.AccountID == requestingAccount.ID {
+		return true, nil
+	}
+
 	v, err := f.StatusVisible(targetStatus, requestingAccount)
 	if err != nil {
 		return false, fmt.Errorf("StatusHometimelineable: error checking visibility of status with id %s: %s", targetStatus.ID, err)
