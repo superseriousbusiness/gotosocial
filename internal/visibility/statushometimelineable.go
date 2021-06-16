@@ -11,11 +11,10 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, requestin
 	l := f.log.WithFields(logrus.Fields{
 		"func":                "StatusHometimelineable",
 		"statusID":            targetStatus.ID,
-		"requestingAccountID": requestingAccount.ID,
 	})
 
 	// status owner should always be able to see their status in their timeline so we can return early if this is the case
-	if targetStatus.AccountID == requestingAccount.ID {
+	if requestingAccount != nil && targetStatus.AccountID == requestingAccount.ID {
 		return true, nil
 	}
 

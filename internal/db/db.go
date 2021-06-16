@@ -217,6 +217,12 @@ type DB interface {
 	// GetFaveCountForStatus returns the amount of faves/likes recorded for a status, or an error if something goes wrong
 	GetFaveCountForStatus(status *gtsmodel.Status) (int, error)
 
+	// StatusParents get the parent statuses of a given status.
+	StatusParents(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
+
+	// StatusChildren gets the child statuses of a given status.
+	StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
+
 	// StatusFavedBy checks if a given status has been faved by a given account ID
 	StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error)
 
