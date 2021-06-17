@@ -10,6 +10,8 @@ import (
 )
 
 func (m *Module) StreamGETHandler(c *gin.Context) {
+	l := m.log.WithField("func", "StreamGETHandler")
+
 	streamType := c.Query(StreamQueryKey)
 	if streamType == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("no stream type provided under query key %s", StreamQueryKey)})
@@ -33,14 +35,18 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		ReadBufferSize:   1024,
 		WriteBufferSize:  1024,
 		Subprotocols:     []string{"wss"},
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
 	}
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
+		l.Infof("error upgrading websocket connection: %s", err)
 		return
 	}
 
-	if errWithCode := m.processor.StreamForAccount(conn, account, streamType); errWithCode != nil {
+	if errWithCode := m.processor.OpenStreamForAccount(conn, account, streamType); errWithCode != nil {
 		c.JSON(errWithCode.Code(), errWithCode.Safe())
 	}
 }

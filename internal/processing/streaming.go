@@ -10,6 +10,6 @@ func (p *processor) AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Acc
 	return p.streamingProcessor.AuthorizeStreamingRequest(accessToken)
 }
 
-func (p *processor) StreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode {
-	return p.streamingProcessor.StreamForAccount(c, account, streamType)
+func (p *processor) OpenStreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode {
+	return p.streamingProcessor.OpenStreamForAccount(c, account, streamType)
 }

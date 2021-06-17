@@ -12,13 +12,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 // Processor wraps a bunch of functions for processing streaming.
 type Processor interface {
 	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
-	StreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode
+	OpenStreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode
+	StreamStatusForAccount(s *apimodel.Status, account *gtsmodel.Account) error
 }
 
 type processor struct {
