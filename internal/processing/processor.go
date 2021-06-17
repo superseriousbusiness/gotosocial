@@ -136,8 +136,8 @@ type Processor interface {
 
 	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
-	// StreamForAccount streams to websocket connection c for an account, with the given streamType.
-	StreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode
+	// OpenStreamForAccount streams to websocket connection c for an account, with the given streamType.
+	OpenStreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
