@@ -1,8 +1,10 @@
 package pg
 
 import (
+	"container/list"
+	"errors"
+
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"sync"
 )
 
 func (ps *postgresService) StatusParents(status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
@@ -26,25 +28,48 @@ func (ps *postgresService) statusParent(status *gtsmodel.Status, foundStatuses *
 }
 
 func (ps *postgresService) StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
+	foundStatuses := &list.List{}
+	foundStatuses.PushFront(status)
+	ps.statusChildren(status, foundStatuses)
+
 	children := []*gtsmodel.Status{}
-	// ps.statusChildren(status, &children)
-	
+	for e := foundStatuses.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*gtsmodel.Status)
+		if !ok {
+			panic(errors.New("entry in foundStatuses was not a *gtsmodel.Status"))
+		}
+
+		// only append children, not the overall parent status
+		if entry.ID != status.ID {
+			children = append(children, entry)
+		}
+	}
+
 	return children, nil
 }
 
-func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses *sync.Map) {
-	// immediateChildren := []*gtsmodel.Status{}
-	
-	// foundStatuses.Store()
+func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses *list.List) {
+	immediateChildren := []*gtsmodel.Status{}
 
-	// err := ps.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID).Select()
-	// if err != nil {
-	// 	return
-	// }
+	err := ps.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID).Select()
+	if err != nil {
+		return
+	}
 
-	// for _, child := range immediateChildren {
-	// 	f[""][0] = child
-	// }
+	for _, child := range immediateChildren {
+	insertLoop:
+		for e := foundStatuses.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*gtsmodel.Status)
+			if !ok {
+				panic(errors.New("entry in foundStatuses was not a *gtsmodel.Status"))
+			}
 
-	return
+			if child.InReplyToAccountID != "" && entry.ID == child.InReplyToID {
+				foundStatuses.InsertAfter(child, e)
+				break insertLoop
+			}
+		}
+
+		ps.statusChildren(child, foundStatuses)
+	}
 }

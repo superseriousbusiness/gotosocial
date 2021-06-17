@@ -47,6 +47,10 @@ func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*
 		}
 	}
 
+	sort.Slice(context.Ancestors, func(i int, j int) bool {
+		return context.Ancestors[i].ID < context.Ancestors[j].ID
+	})
+
 	children, err := p.db.StatusChildren(targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -56,18 +60,10 @@ func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*
 		if v, err := p.filter.StatusVisible(status, account); err == nil && v {
 			mastoStatus, err := p.tc.StatusToMasto(status, account)
 			if err == nil {
-				context.Ancestors = append(context.Ancestors, *mastoStatus)
+				context.Descendants = append(context.Descendants, *mastoStatus)
 			}
 		}
 	}
-
-	sort.Slice(context.Ancestors, func(i int, j int) bool {
-		return context.Ancestors[i].ID < context.Ancestors[j].ID
-	})
-
-	sort.Slice(context.Descendants, func(i int, j int) bool {
-		return context.Descendants[i].ID < context.Descendants[j].ID
-	})
 
 	return context, nil
 }

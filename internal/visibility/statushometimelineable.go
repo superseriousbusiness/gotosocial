@@ -7,18 +7,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
+func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
 	l := f.log.WithFields(logrus.Fields{
-		"func":                "StatusHometimelineable",
-		"statusID":            targetStatus.ID,
+		"func":     "StatusHometimelineable",
+		"statusID": targetStatus.ID,
 	})
 
-	// status owner should always be able to see their status in their timeline so we can return early if this is the case
-	if requestingAccount != nil && targetStatus.AccountID == requestingAccount.ID {
+	// status owner should always be able to see their own status in their timeline so we can return early if this is the case
+	if timelineOwnerAccount != nil && targetStatus.AccountID == timelineOwnerAccount.ID {
 		return true, nil
 	}
 
-	v, err := f.StatusVisible(targetStatus, requestingAccount)
+	v, err := f.StatusVisible(targetStatus, timelineOwnerAccount)
 	if err != nil {
 		return false, fmt.Errorf("StatusHometimelineable: error checking visibility of status with id %s: %s", targetStatus.ID, err)
 	}
@@ -48,10 +48,15 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, requestin
 			targetStatus.GTSReplyToAccount = ra
 		}
 
-		// make sure the requesting account follows the replied-to account
-		follows, err := f.db.Follows(requestingAccount, targetStatus.GTSReplyToAccount)
+		// if it's a reply to the timelineOwnerAccount, we don't need to check if the timelineOwnerAccount follows itself, just return true, they can see it
+		if targetStatus.AccountID == timelineOwnerAccount.ID {
+			return true, nil
+		}
+
+		// the replied-to account != timelineOwnerAccount, so make sure the timelineOwnerAccount follows the replied-to account
+		follows, err := f.db.Follows(timelineOwnerAccount, targetStatus.GTSReplyToAccount)
 		if err != nil {
-			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", requestingAccount.ID, targetStatus.InReplyToAccountID, err)
+			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", timelineOwnerAccount.ID, targetStatus.InReplyToAccountID, err)
 		}
 
 		if !follows {
