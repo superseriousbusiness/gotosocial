@@ -806,196 +806,27 @@ func (ps *postgresService) GetRelationship(requestingAccount string, targetAccou
 	return r, nil
 }
 
-func (ps *postgresService) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error) {
-	l := ps.log.WithField("func", "StatusVisible")
-
-	targetAccount := relevantAccounts.StatusAuthor
-
-	// if target account is suspended then don't show the status
-	if !targetAccount.SuspendedAt.IsZero() {
-		l.Trace("target account suspended at is not zero")
-		return false, nil
-	}
-
-	// if the target user doesn't exist (anymore) then the status also shouldn't be visible
-	// note: we only do this for local users
-	if targetAccount.Domain == "" {
-		targetUser := &gtsmodel.User{}
-		if err := ps.conn.Model(targetUser).Where("account_id = ?", targetAccount.ID).Select(); err != nil {
-			l.Debug("target user could not be selected")
-			if err == pg.ErrNoRows {
-				return false, db.ErrNoEntries{}
-			}
-			return false, err
-		}
-
-		// if target user is disabled, not yet approved, or not confirmed then don't show the status
-		// (although in the latter two cases it's unlikely they posted a status yet anyway, but you never know!)
-		if targetUser.Disabled || !targetUser.Approved || targetUser.ConfirmedAt.IsZero() {
-			l.Trace("target user is disabled, not approved, or not confirmed")
-			return false, nil
-		}
-	}
-
-	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
-	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
-	if requestingAccount == nil {
-		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
-			return true, nil
-		}
-		l.Trace("requesting account is nil but the target status isn't public")
-		return false, nil
-	}
-
-	// if requesting account is suspended then don't show the status -- although they probably shouldn't have gotten
-	// this far (ie., been authed) in the first place: this is just for safety.
-	if !requestingAccount.SuspendedAt.IsZero() {
-		l.Trace("requesting account is suspended")
-		return false, nil
-	}
-
-	// check if we have a local account -- if so we can check the user for that account in the DB
-	if requestingAccount.Domain == "" {
-		requestingUser := &gtsmodel.User{}
-		if err := ps.conn.Model(requestingUser).Where("account_id = ?", requestingAccount.ID).Select(); err != nil {
-			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
-			if err == pg.ErrNoRows {
-				l.Debug("requesting account is local but there's no corresponding user")
-				return false, nil
-			}
-			l.Debugf("requesting account is local but there was an error getting the corresponding user: %s", err)
-			return false, err
-		}
-		// okay, user exists, so make sure it has full privileges/is confirmed/approved
-		if requestingUser.Disabled || !requestingUser.Approved || requestingUser.ConfirmedAt.IsZero() {
-			l.Trace("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
-			return false, nil
-		}
-	}
-
-	// if the target status belongs to the requesting account, they should always be able to view it at this point
-	if targetStatus.AccountID == requestingAccount.ID {
-		return true, nil
-	}
-
-	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
-	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
-	if blocked, err := ps.Blocked(targetAccount.ID, requestingAccount.ID); err != nil {
-		l.Debugf("something went wrong figuring out if the accounts have a block: %s", err)
-		return false, err
-	} else if blocked {
-		// don't allow the status to be viewed if a block exists in *either* direction between these two accounts, no creepy stalking please
-		l.Trace("a block exists between requesting account and target account")
-		return false, nil
-	}
-
-	// check other accounts mentioned/boosted by/replied to by the status, if they exist
-	if relevantAccounts != nil {
-		// status replies to account id
-		if relevantAccounts.ReplyToAccount != nil && relevantAccounts.ReplyToAccount.ID != requestingAccount.ID {
-			if blocked, err := ps.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
-				return false, err
-			} else if blocked {
-				l.Trace("a block exists between requesting account and reply to account")
-				return false, nil
-			}
-
-			// check reply to ID
-			if targetStatus.InReplyToID != "" {
-				followsRepliedAccount, err := ps.Follows(requestingAccount, relevantAccounts.ReplyToAccount)
-				if err != nil {
-					return false, err
-				}
-				if !followsRepliedAccount {
-					l.Trace("target status is a followers-only reply to an account that is not followed by the requesting account")
-					return false, nil
-				}
-			}
-		}
-
-		// status boosts accounts id
-		if relevantAccounts.BoostedAccount != nil {
-			if blocked, err := ps.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID); err != nil {
-				return false, err
-			} else if blocked {
-				l.Trace("a block exists between requesting account and boosted account")
-				return false, nil
-			}
-		}
-
-		// status boosts a reply to account id
-		if relevantAccounts.BoostedReplyToAccount != nil {
-			if blocked, err := ps.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID); err != nil {
-				return false, err
-			} else if blocked {
-				l.Trace("a block exists between requesting account and boosted reply to account")
-				return false, nil
-			}
-		}
-
-		// status mentions accounts
-		for _, a := range relevantAccounts.MentionedAccounts {
-			if blocked, err := ps.Blocked(a.ID, requestingAccount.ID); err != nil {
-				return false, err
-			} else if blocked {
-				l.Trace("a block exists between requesting account and a mentioned account")
-				return false, nil
-			}
-		}
-
-		// if the requesting account is mentioned in the status it should always be visible
-		for _, acct := range relevantAccounts.MentionedAccounts {
-			if acct.ID == requestingAccount.ID {
-				return true, nil // yep it's mentioned!
-			}
-		}
-	}
-
-	// at this point we know neither account blocks the other, or another account mentioned or otherwise referred to in the status
-	// that means it's now just a matter of checking the visibility settings of the status itself
-	switch targetStatus.Visibility {
-	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
-		// no problem here, just return OK
-		return true, nil
-	case gtsmodel.VisibilityFollowersOnly:
-		// check one-way follow
-		follows, err := ps.Follows(requestingAccount, targetAccount)
-		if err != nil {
-			return false, err
-		}
-		if !follows {
-			l.Trace("requested status is followers only but requesting account is not a follower")
-			return false, nil
-		}
-		return true, nil
-	case gtsmodel.VisibilityMutualsOnly:
-		// check mutual follow
-		mutuals, err := ps.Mutuals(requestingAccount, targetAccount)
-		if err != nil {
-			return false, err
-		}
-		if !mutuals {
-			l.Trace("requested status is mutuals only but accounts aren't mufos")
-			return false, nil
-		}
-		return true, nil
-	case gtsmodel.VisibilityDirect:
-		l.Trace("requesting account requests a status it's not mentioned in")
-		return false, nil // it's not mentioned -_-
-	}
-
-	return false, errors.New("reached the end of StatusVisible with no result")
-}
-
 func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
+	if sourceAccount == nil || targetAccount == nil {
+		return false, nil
+	}
+	
 	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
 func (ps *postgresService) FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
+	if sourceAccount == nil || targetAccount == nil {
+		return false, nil
+	}
+	
 	return ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
 func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error) {
+	if account1 == nil || account2 == nil {
+		return false, nil
+	}
+	
 	// make sure account 1 follows account 2
 	f1, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account1.ID).Where("target_account_id = ?", account2.ID).Exists()
 	if err != nil {
@@ -1015,71 +846,6 @@ func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmode
 	}
 
 	return f1 && f2, nil
-}
-
-func (ps *postgresService) PullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (*gtsmodel.RelevantAccounts, error) {
-	accounts := &gtsmodel.RelevantAccounts{
-		MentionedAccounts: []*gtsmodel.Account{},
-	}
-
-	// get the author account
-	if targetStatus.GTSAuthorAccount == nil {
-		statusAuthor := &gtsmodel.Account{}
-		if err := ps.conn.Model(statusAuthor).Where("id = ?", targetStatus.AccountID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting statusAuthor with id %s: %s", targetStatus.AccountID, err)
-		}
-		targetStatus.GTSAuthorAccount = statusAuthor
-	}
-	accounts.StatusAuthor = targetStatus.GTSAuthorAccount
-
-	// get the replied to account from the status and add it to the pile
-	if targetStatus.InReplyToAccountID != "" {
-		repliedToAccount := &gtsmodel.Account{}
-		if err := ps.conn.Model(repliedToAccount).Where("id = ?", targetStatus.InReplyToAccountID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting repliedToAcount with id %s: %s", targetStatus.InReplyToAccountID, err)
-		}
-		accounts.ReplyToAccount = repliedToAccount
-	}
-
-	// get the boosted account from the status and add it to the pile
-	if targetStatus.BoostOfID != "" {
-		// retrieve the boosted status first
-		boostedStatus := &gtsmodel.Status{}
-		if err := ps.conn.Model(boostedStatus).Where("id = ?", targetStatus.BoostOfID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatus with id %s: %s", targetStatus.BoostOfID, err)
-		}
-		boostedAccount := &gtsmodel.Account{}
-		if err := ps.conn.Model(boostedAccount).Where("id = ?", boostedStatus.AccountID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedAccount with id %s: %s", boostedStatus.AccountID, err)
-		}
-		accounts.BoostedAccount = boostedAccount
-
-		// the boosted status might be a reply to another account so we should get that too
-		if boostedStatus.InReplyToAccountID != "" {
-			boostedStatusRepliedToAccount := &gtsmodel.Account{}
-			if err := ps.conn.Model(boostedStatusRepliedToAccount).Where("id = ?", boostedStatus.InReplyToAccountID).Select(); err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatusRepliedToAccount with id %s: %s", boostedStatus.InReplyToAccountID, err)
-			}
-			accounts.BoostedReplyToAccount = boostedStatusRepliedToAccount
-		}
-	}
-
-	// now get all accounts with IDs that are mentioned in the status
-	for _, mentionID := range targetStatus.Mentions {
-
-		mention := &gtsmodel.Mention{}
-		if err := ps.conn.Model(mention).Where("id = ?", mentionID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mention with id %s: %s", mentionID, err)
-		}
-
-		mentionedAccount := &gtsmodel.Account{}
-		if err := ps.conn.Model(mentionedAccount).Where("id = ?", mention.TargetAccountID).Select(); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentioned account: %s", err)
-		}
-		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
-	}
-
-	return accounts, nil
 }
 
 func (ps *postgresService) GetReplyCountForStatus(status *gtsmodel.Status) (int, error) {

@@ -27,7 +27,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
+
+const boostReinsertionDepth = 50
 
 // Timeline represents a timeline for one account, and contains indexed and prepared posts.
 type Timeline interface {
@@ -59,7 +62,7 @@ type Timeline interface {
 	*/
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
-	IndexOne(statusCreatedAt time.Time, statusID string) error
+	IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) error
 
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
@@ -109,6 +112,7 @@ type timeline struct {
 	accountID     string
 	account       *gtsmodel.Account
 	db            db.DB
+	filter        visibility.Filter
 	tc            typeutils.TypeConverter
 	log           *logrus.Logger
 	sync.Mutex
@@ -121,6 +125,7 @@ func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConvert
 		preparedPosts: &preparedPosts{},
 		accountID:     accountID,
 		db:            db,
+		filter:        visibility.NewFilter(db, log),
 		tc:            typeConverter,
 		log:           log,
 	}

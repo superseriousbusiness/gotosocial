@@ -268,14 +268,7 @@ func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
 	}, nil
 }
 
-func (c *converter) StatusToMasto(
-	s *gtsmodel.Status,
-	statusAuthor *gtsmodel.Account,
-	requestingAccount *gtsmodel.Account,
-	boostOfAccount *gtsmodel.Account,
-	replyToAccount *gtsmodel.Account,
-	reblogOfStatus *gtsmodel.Status) (*model.Status, error) {
-
+func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
 	repliesCount, err := c.db.GetReplyCountForStatus(s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %s", err)
@@ -291,82 +284,32 @@ func (c *converter) StatusToMasto(
 		return nil, fmt.Errorf("error counting faves: %s", err)
 	}
 
-	var faved bool
-	var reblogged bool
-	var bookmarked bool
-	var muted bool
-
-	// requestingAccount will be nil for public requests without auth
-	// But if it's not nil, we can also get information about the requestingAccount's interaction with this status
-	if requestingAccount != nil {
-		faved, err = c.db.StatusFavedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
-		}
-
-		reblogged, err = c.db.StatusRebloggedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
-		}
-
-		muted, err = c.db.StatusMutedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
-		}
-
-		bookmarked, err = c.db.StatusBookmarkedBy(s, requestingAccount.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
-		}
-	}
-
 	var mastoRebloggedStatus *model.Status
 	if s.BoostOfID != "" {
 		// the boosted status might have been set on this struct already so check first before doing db calls
-		var gtsBoostedStatus *gtsmodel.Status
-		if s.GTSBoostedStatus != nil {
-			// it's set, great!
-			gtsBoostedStatus = s.GTSBoostedStatus
-		} else {
+		if s.GTSBoostedStatus == nil {
 			// it's not set so fetch it from the db
-			gtsBoostedStatus = &gtsmodel.Status{}
-			if err := c.db.GetByID(s.BoostOfID, gtsBoostedStatus); err != nil {
+			bs := &gtsmodel.Status{}
+			if err := c.db.GetByID(s.BoostOfID, bs); err != nil {
 				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
 			}
+			s.GTSBoostedStatus = bs
 		}
 
 		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
-		var gtsBoostedAccount *gtsmodel.Account
-		if s.GTSBoostedAccount != nil {
-			// it's set, great!
-			gtsBoostedAccount = s.GTSBoostedAccount
-		} else if boostOfAccount != nil {
-			// it's been given as a param, great!
-			gtsBoostedAccount = boostOfAccount
-		} else if boostOfAccount == nil && s.GTSBoostedAccount == nil {
+		if s.GTSBoostedAccount == nil {
 			// it's not set so fetch it from the db
-			gtsBoostedAccount = &gtsmodel.Account{}
-			if err := c.db.GetByID(gtsBoostedStatus.AccountID, gtsBoostedAccount); err != nil {
-				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", gtsBoostedStatus.AccountID, s.BoostOfID, err)
+			ba := &gtsmodel.Account{}
+			if err := c.db.GetByID(s.GTSBoostedStatus.AccountID, ba); err != nil {
+				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.GTSBoostedStatus.AccountID, s.BoostOfID, err)
 			}
+			s.GTSBoostedAccount = ba
+			s.GTSBoostedStatus.GTSAuthorAccount = ba
 		}
 
-		// the boosted status might be a reply so check this
-		var gtsBoostedReplyToAccount *gtsmodel.Account
-		if gtsBoostedStatus.InReplyToAccountID != "" {
-			gtsBoostedReplyToAccount = &gtsmodel.Account{}
-			if err := c.db.GetByID(gtsBoostedStatus.InReplyToAccountID, gtsBoostedReplyToAccount); err != nil {
-				return nil, fmt.Errorf("error getting account that boosted status was a reply to: %s", err)
-			}
-		}
-
-		if gtsBoostedStatus != nil || gtsBoostedAccount != nil {
-			mastoRebloggedStatus, err = c.StatusToMasto(gtsBoostedStatus, gtsBoostedAccount, requestingAccount, nil, gtsBoostedReplyToAccount, nil)
-			if err != nil {
-				return nil, fmt.Errorf("error converting boosted status to mastotype: %s", err)
-			}
-		} else {
-			return nil, fmt.Errorf("boost of id was set to %s but that status or account was nil", s.BoostOfID)
+		mastoRebloggedStatus, err = c.StatusToMasto(s.GTSBoostedStatus, requestingAccount)
+		if err != nil {
+			return nil, fmt.Errorf("error converting boosted status to mastotype: %s", err)
 		}
 	}
 
@@ -382,7 +325,15 @@ func (c *converter) StatusToMasto(
 		}
 	}
 
-	mastoAuthorAccount, err := c.AccountToMastoPublic(statusAuthor)
+	if s.GTSAuthorAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(s.AccountID, a); err != nil {
+			return nil, fmt.Errorf("error getting status author: %s", err)
+		}
+		s.GTSAuthorAccount = a
+	}
+
+	mastoAuthorAccount, err := c.AccountToMastoPublic(s.GTSAuthorAccount)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
@@ -498,6 +449,12 @@ func (c *converter) StatusToMasto(
 	var mastoCard *model.Card
 	var mastoPoll *model.Poll
 
+	statusInteractions := &statusInteractions{}
+	si, err := c.interactionsWithStatusForAccount(s, requestingAccount)
+	if err == nil {
+		statusInteractions = si
+	}
+
 	return &model.Status{
 		ID:                 s.ID,
 		CreatedAt:          s.CreatedAt.Format(time.RFC3339),
@@ -512,10 +469,10 @@ func (c *converter) StatusToMasto(
 		RepliesCount:       repliesCount,
 		ReblogsCount:       reblogsCount,
 		FavouritesCount:    favesCount,
-		Favourited:         faved,
-		Reblogged:          reblogged,
-		Muted:              muted,
-		Bookmarked:         bookmarked,
+		Favourited:         statusInteractions.Faved,
+		Bookmarked:         statusInteractions.Bookmarked,
+		Muted:              statusInteractions.Muted,
+		Reblogged:          statusInteractions.Reblogged,
 		Pinned:             s.Pinned,
 		Content:            s.Content,
 		Reblog:             mastoRebloggedStatus,
@@ -630,15 +587,6 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 			n.GTSStatus = status
 		}
 
-		var replyToAccount *gtsmodel.Account
-		if n.GTSStatus.InReplyToAccountID != "" {
-			r := &gtsmodel.Account{}
-			if err := c.db.GetByID(n.GTSStatus.InReplyToAccountID, r); err != nil {
-				return nil, fmt.Errorf("NotificationToMasto: error getting replied to account with id %s from the db: %s", n.GTSStatus.InReplyToAccountID, err)
-			}
-			replyToAccount = r
-		}
-
 		if n.GTSStatus.GTSAuthorAccount == nil {
 			if n.GTSStatus.AccountID == n.GTSTargetAccount.ID {
 				n.GTSStatus.GTSAuthorAccount = n.GTSTargetAccount
@@ -648,7 +596,7 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 		}
 
 		var err error
-		mastoStatus, err = c.StatusToMasto(n.GTSStatus, n.GTSStatus.GTSAuthorAccount, n.GTSTargetAccount, nil, replyToAccount, nil)
+		mastoStatus, err = c.StatusToMasto(n.GTSStatus, nil)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error converting status to masto: %s", err)
 		}

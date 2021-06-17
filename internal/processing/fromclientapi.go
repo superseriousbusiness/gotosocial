@@ -83,6 +83,10 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("boost was not parseable as *gtsmodel.Status")
 			}
 
+			if err := p.timelineStatus(boostWrapperStatus); err != nil {
+				return err
+			}
+
 			if err := p.notifyAnnounce(boostWrapperStatus); err != nil {
 				return err
 			}

@@ -24,14 +24,8 @@ func (p *processor) BoostedBy(account *gtsmodel.Account, targetStatusID string) 
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error fetching target account %s: %s", targetStatus.AccountID, err))
 	}
 
-	l.Trace("going to get relevant accounts")
-	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error fetching related accounts for status %s: %s", targetStatusID, err))
-	}
-
 	l.Trace("going to see if status is visible")
-	visible, err := p.db.StatusVisible(targetStatus, account, relevantAccounts)
+	visible, err := p.filter.StatusVisible(targetStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}

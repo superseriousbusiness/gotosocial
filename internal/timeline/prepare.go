@@ -163,24 +163,8 @@ func (t *timeline) prepare(statusID string) error {
 		t.account = timelineOwnerAccount
 	}
 
-	// to convert the status we need relevant accounts from it, so pull them out here
-	relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(gtsStatus)
-	if err != nil {
-		return err
-	}
-
-	// check if this is a boost...
-	var reblogOfStatus *gtsmodel.Status
-	if gtsStatus.BoostOfID != "" {
-		s := &gtsmodel.Status{}
-		if err := t.db.GetByID(gtsStatus.BoostOfID, s); err != nil {
-			return err
-		}
-		reblogOfStatus = s
-	}
-
 	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, relevantAccounts.StatusAuthor, t.account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, reblogOfStatus)
+	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, t.account)
 	if err != nil {
 		return err
 	}

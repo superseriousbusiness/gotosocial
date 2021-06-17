@@ -199,21 +199,6 @@ type DB interface {
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
 	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error)
 
-	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
-	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts
-	// or account domains.
-	//
-	// StatusVisible will also check through the given slice of 'otherRelevantAccounts', which should include:
-	//
-	// 1. Accounts mentioned in the targetStatus
-	//
-	// 2. Accounts replied to by the target status
-	//
-	// 3. Accounts boosted by the target status
-	//
-	// Will return an error if something goes wrong while pulling stuff out of the database.
-	StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account, relevantAccounts *gtsmodel.RelevantAccounts) (bool, error)
-
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error)
 
@@ -223,9 +208,6 @@ type DB interface {
 	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
 	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error)
 
-	// PullRelevantAccountsFromStatus returns all accounts mentioned in a status, replied to by a status, or boosted by a status
-	PullRelevantAccountsFromStatus(status *gtsmodel.Status) (*gtsmodel.RelevantAccounts, error)
-
 	// GetReplyCountForStatus returns the amount of replies recorded for a status, or an error if something goes wrong
 	GetReplyCountForStatus(status *gtsmodel.Status) (int, error)
 
@@ -234,6 +216,12 @@ type DB interface {
 
 	// GetFaveCountForStatus returns the amount of faves/likes recorded for a status, or an error if something goes wrong
 	GetFaveCountForStatus(status *gtsmodel.Status) (int, error)
+
+	// StatusParents get the parent statuses of a given status.
+	StatusParents(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
+
+	// StatusChildren gets the child statuses of a given status.
+	StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
 
 	// StatusFavedBy checks if a given status has been faved by a given account ID
 	StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error)

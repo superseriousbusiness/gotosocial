@@ -8,6 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Processor wraps a bunch of functions for processing statuses.
@@ -36,6 +37,7 @@ type processor struct {
 	tc            typeutils.TypeConverter
 	config        *config.Config
 	db            db.DB
+	filter        visibility.Filter
 	fromClientAPI chan gtsmodel.FromClientAPI
 	log           *logrus.Logger
 }
@@ -46,6 +48,7 @@ func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClient
 		tc:            tc,
 		config:        config,
 		db:            db,
+		filter:        visibility.NewFilter(db, log),
 		fromClientAPI: fromClientAPI,
 		log:           log,
 	}

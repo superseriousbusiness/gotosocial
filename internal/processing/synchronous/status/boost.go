@@ -24,14 +24,8 @@ func (p *processor) Boost(account *gtsmodel.Account, application *gtsmodel.Appli
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err))
 	}
 
-	l.Trace("going to get relevant accounts")
-	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err))
-	}
-
 	l.Trace("going to see if status is visible")
-	visible, err := p.db.StatusVisible(targetStatus, account, relevantAccounts)
+	visible, err := p.filter.StatusVisible(targetStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -70,7 +64,7 @@ func (p *processor) Boost(account *gtsmodel.Account, application *gtsmodel.Appli
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := p.tc.StatusToMasto(boostWrapperStatus, account, account, targetAccount, nil, targetStatus)
+	mastoStatus, err := p.tc.StatusToMasto(boostWrapperStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

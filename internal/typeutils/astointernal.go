@@ -222,13 +222,14 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	if err != nil {
 		return nil, errors.New("attributedTo was empty")
 	}
-	status.APStatusOwnerURI = attributedTo.String()
+	status.AccountURI = attributedTo.String()
 
 	statusOwner := &gtsmodel.Account{}
 	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: attributedTo.String(), CaseInsensitive: true}}, statusOwner); err != nil {
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID
+	status.AccountURI = statusOwner.URI
 	status.GTSAuthorAccount = statusOwner
 
 	// check if there's a post that this is a reply to
@@ -236,7 +237,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	if err == nil {
 		// something is set so we can at least set this field on the
 		// status and dereference using this later if we need to
-		status.APReplyToStatusURI = inReplyToURI.String()
+		status.InReplyToURI = inReplyToURI.String()
 
 		// now we can check if we have the replied-to status in our db already
 		inReplyToStatus := &gtsmodel.Status{}
@@ -475,6 +476,7 @@ func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Sta
 		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error in db fetching account with uri %s: %s", actor.String(), err)
 	}
 	status.AccountID = boostingAccount.ID
+	status.AccountURI = boostingAccount.URI
 
 	// these will all be wrapped in the boosted status so set them empty here
 	status.Attachments = []string{}

@@ -10,41 +10,6 @@ import (
 )
 
 func (t *timeline) IndexBefore(statusID string, include bool, amount int) error {
-	// 	filtered := []*gtsmodel.Status{}
-	// 	offsetStatus := statusID
-
-	// grabloop:
-	// 	for len(filtered) < amount {
-	// 		statuses, err := t.db.GetStatusesWhereFollowing(t.accountID, amount, offsetStatus, include, true)
-	// 		if err != nil {
-	// 			if _, ok := err.(db.ErrNoEntries); !ok {
-	// 				return fmt.Errorf("IndexBeforeAndIncluding: error getting statuses from db: %s", err)
-	// 			}
-	// 			break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
-	// 		}
-
-	// 		for _, s := range statuses {
-	// 			relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(s)
-	// 			if err != nil {
-	// 				continue
-	// 			}
-	// 			visible, err := t.db.StatusVisible(s, t.account, relevantAccounts)
-	// 			if err != nil {
-	// 				continue
-	// 			}
-	// 			if visible {
-	// 				filtered = append(filtered, s)
-	// 			}
-	// 			offsetStatus = s.ID
-	// 		}
-	// 	}
-
-	// 	for _, s := range filtered {
-	// 		if err := t.IndexOne(s.CreatedAt, s.ID); err != nil {
-	// 			return fmt.Errorf("IndexBeforeAndIncluding: error indexing status with id %s: %s", s.ID, err)
-	// 		}
-	// 	}
-
 	return nil
 }
 
@@ -63,15 +28,11 @@ grabloop:
 		}
 
 		for _, s := range statuses {
-			relevantAccounts, err := t.db.PullRelevantAccountsFromStatus(s)
+			timelineable, err := t.filter.StatusHometimelineable(s, t.account)
 			if err != nil {
 				continue
 			}
-			visible, err := t.db.StatusVisible(s, t.account, relevantAccounts)
-			if err != nil {
-				continue
-			}
-			if visible {
+			if timelineable {
 				filtered = append(filtered, s)
 			}
 			offsetStatus = s.ID
@@ -79,7 +40,7 @@ grabloop:
 	}
 
 	for _, s := range filtered {
-		if err := t.IndexOne(s.CreatedAt, s.ID); err != nil {
+		if err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID); err != nil {
 			return fmt.Errorf("IndexBehindAndIncluding: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -91,12 +52,13 @@ func (t *timeline) IndexOneByID(statusID string) error {
 	return nil
 }
 
-func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string) error {
+func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) error {
 	t.Lock()
 	defer t.Unlock()
 
 	postIndexEntry := &postIndexEntry{
-		statusID: statusID,
+		statusID:  statusID,
+		boostOfID: boostOfID,
 	}
 
 	return t.postIndex.insertIndexed(postIndexEntry)

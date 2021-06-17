@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/status"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Processor should be passed to api modules (see internal/apimodule/...). It is used for
@@ -185,6 +186,7 @@ type processor struct {
 	storage         blob.Storage
 	timelineManager timeline.Manager
 	db              db.DB
+	filter          visibility.Filter
 
 	/*
 		SUB-PROCESSORS
@@ -214,6 +216,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		storage:         storage,
 		timelineManager: timelineManager,
 		db:              db,
+		filter:          visibility.NewFilter(db, log),
 
 		statusProcessor: statusProcessor,
 	}

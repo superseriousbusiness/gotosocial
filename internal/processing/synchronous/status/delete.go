@@ -26,12 +26,6 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 		return nil, gtserror.NewErrorForbidden(errors.New("status doesn't belong to requesting account"))
 	}
 
-	l.Trace("going to get relevant accounts")
-	relevantAccounts, err := p.db.PullRelevantAccountsFromStatus(targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching related accounts for status %s: %s", targetStatusID, err))
-	}
-
 	var boostOfStatus *gtsmodel.Status
 	if targetStatus.BoostOfID != "" {
 		boostOfStatus = &gtsmodel.Status{}
@@ -40,7 +34,7 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account, account, relevantAccounts.BoostedAccount, relevantAccounts.ReplyToAccount, boostOfStatus)
+	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

@@ -121,6 +121,10 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				}
 			}
 
+			if err := p.timelineStatus(incomingAnnounce); err != nil {
+				return err
+			}
+
 			if err := p.notifyAnnounce(incomingAnnounce); err != nil {
 				return err
 			}
