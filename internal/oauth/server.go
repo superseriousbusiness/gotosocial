@@ -56,6 +56,7 @@ type Server interface {
 	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 	GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
+	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
 }
 
 // s fulfils the Server interface using the underlying oauth2 server
@@ -170,4 +171,8 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 	}
 	s.log.Tracef("obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
+}
+
+func (s *s) LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error) {
+	return s.server.Manager.LoadAccessToken(ctx, access)
 }
