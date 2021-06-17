@@ -72,7 +72,7 @@
     * [x] /api/v1/statuses POST                             (Create a new status)
     * [x] /api/v1/statuses/:id GET                          (View an existing status)
     * [x] /api/v1/statuses/:id DELETE                       (Delete a status)
-    * [ ] /api/v1/statuses/:id/context GET                  (View statuses above and below status ID)
+    * [x] /api/v1/statuses/:id/context GET                  (View statuses above and below status ID)
     * [x] /api/v1/statuses/:id/reblogged_by GET             (See who has reblogged a status)
     * [x] /api/v1/statuses/:id/favourited_by GET            (See who has faved a status)
     * [x] /api/v1/statuses/:id/favourite POST               (Fave a status)

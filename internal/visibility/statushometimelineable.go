@@ -28,7 +28,13 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineO
 		return false, nil
 	}
 
-	// we don't want to timeline a reply to a status whose owner isn't followed by the requesting account
+	// Don't timeline a status whose parent hasn't been dereferenced yet or can't be dereferenced.
+	// If we have the reply to URI but don't have an ID for the replied-to account or the replied-to status in our database, we haven't dereferenced it yet.
+	if targetStatus.InReplyToURI != "" && (targetStatus.InReplyToID == "" || targetStatus.InReplyToAccountID == "") {
+		return false, nil
+	}
+
+	// if a status replies to an ID we know in the database, we need to make sure we also follow the replied-to status owner account
 	if targetStatus.InReplyToID != "" {
 		// pin the reply to status on to this status if it hasn't been done already
 		if targetStatus.GTSReplyToStatus == nil {
@@ -59,6 +65,7 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineO
 			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", timelineOwnerAccount.ID, targetStatus.InReplyToAccountID, err)
 		}
 
+		// we don't want to timeline a reply to a status whose owner isn't followed by the requesting account
 		if !follows {
 			return false, nil
 		}
