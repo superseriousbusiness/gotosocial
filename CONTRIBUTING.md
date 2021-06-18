@@ -34,6 +34,8 @@ Once that's done, you can try building the project: `go build ./cmd/gotosocial`.
 
 If there are no errors, great, you're good to go!
 
+To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/source/`. Recompiling the bundle.css is `node build.js` but can be automated with [nodemon](https://www.npmjs.com/package/nodemon) on file change: `nodemon -w style.css build.js`.
+
 ## Setting up your test environment
 
 GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig) with a bunch of mock packages you can use in integration tests.
@@ -90,7 +92,7 @@ To run the linter, use:
 golint ./...
 ```
 
-
+Then make sure to run `go fmt ./...` to update whitespace and other opinionated formatting.
 
 ## Financial Compensation
 
