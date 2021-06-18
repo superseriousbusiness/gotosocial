@@ -22,7 +22,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
@@ -134,10 +133,10 @@ type Processor interface {
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
 	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
 
-	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
+	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
-	// OpenStreamForAccount streams to websocket connection c for an account, with the given streamType.
-	OpenStreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode
+	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
+	OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS

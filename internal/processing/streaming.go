@@ -1,7 +1,6 @@
 package processing
 
 import (
-	"github.com/gorilla/websocket"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -10,6 +9,6 @@ func (p *processor) AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Acc
 	return p.streamingProcessor.AuthorizeStreamingRequest(accessToken)
 }
 
-func (p *processor) OpenStreamForAccount(c *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode {
-	return p.streamingProcessor.OpenStreamForAccount(c, account, streamType)
+func (p *processor) OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode) {
+	return p.streamingProcessor.OpenStreamForAccount(account, streamType)
 }

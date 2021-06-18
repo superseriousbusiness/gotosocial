@@ -3,17 +3,14 @@ package streaming
 import (
 	"errors"
 	"fmt"
-	"sync"
-	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) OpenStreamForAccount(conn *websocket.Conn, account *gtsmodel.Account, streamType string) gtserror.WithCode {
+func (p *processor) OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":       "OpenStreamForAccount",
 		"account":    account.ID,
@@ -21,88 +18,83 @@ func (p *processor) OpenStreamForAccount(conn *websocket.Conn, account *gtsmodel
 	})
 	l.Debug("received open stream request")
 
+	// each stream needs a unique ID so we know to close it
 	streamID, err := id.NewRandomULID()
 	if err != nil {
-		return gtserror.NewErrorInternalError(fmt.Errorf("error generating stream id: %s", err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error generating stream id: %s", err))
 	}
 
-	thisStream := &stream{
-		streamID:   streamID,
-		streamType: streamType,
-		conn:       conn,
+	thisStream := &gtsmodel.Stream{
+		ID:        streamID,
+		Type:      streamType,
+		Messages:  make(chan *gtsmodel.Message, 100),
+		Hangup:    make(chan interface{}, 1),
+		Connected: true,
 	}
+	go p.waitToCloseStream(account, thisStream)
 
 	v, ok := p.streamMap.Load(account.ID)
 	if !ok || v == nil {
 		// there is no entry in the streamMap for this account yet, so make one and store it
-		streams := &streamsForAccount{
-			s: []*stream{
+		streamsForAccount := &gtsmodel.StreamsForAccount{
+			Streams: []*gtsmodel.Stream{
 				thisStream,
 			},
 		}
-		p.streamMap.Store(account.ID, streams)
+		p.streamMap.Store(account.ID, streamsForAccount)
 	} else {
 		// there is an entry in the streamMap for this account
 		// parse the interface as a streamsForAccount
-		streams, ok := v.(*streamsForAccount)
+		streamsForAccount, ok := v.(*gtsmodel.StreamsForAccount)
 		if !ok {
-			return gtserror.NewErrorInternalError(errors.New("stream map error"))
+			return nil, gtserror.NewErrorInternalError(errors.New("stream map error"))
 		}
 
 		// append this stream to it
-		streams.Lock()
-		streams.s = append(streams.s, thisStream)
-		streams.Unlock()
+		streamsForAccount.Lock()
+		streamsForAccount.Streams = append(streamsForAccount.Streams, thisStream)
+		streamsForAccount.Unlock()
 	}
 
-	// set the close handler to remove the given stream from the stream map so that messages stop getting put into it
-	conn.SetCloseHandler(func(code int, text string) error {
-		l.Debug("closing stream")
-		v, ok := p.streamMap.Load(account.ID)
-		if !ok || v == nil {
-			// the map doesn't contain an entry for the account anyway, so we can just return
-			// this probably should never happen but let's check anyway
-			return nil
-		}
+	return thisStream, nil
+}
 
-		// parse the interface as a streamsForAccount
-		streams, ok := v.(*streamsForAccount)
-		if !ok {
-			return gtserror.NewErrorInternalError(errors.New("stream map error"))
-		}
+// waitToCloseStream waits until the hangup channel is closed for the given stream.
+// It then iterates through the map of streams stored by the processor, removes the stream from it,
+// and then closes the messages channel of the stream to indicate that the channel should no longer be read from.
+func (p *processor) waitToCloseStream(account *gtsmodel.Account, thisStream *gtsmodel.Stream) {
+	<-thisStream.Hangup // wait for a hangup message
 
-		// remove thisStream from the slice of streams stored in streamsForAccount
-		streams.Lock()
-		newStreamSlice := []*stream{}
-		for _, s := range streams.s {
-			if s.streamID != thisStream.streamID {
-				newStreamSlice = append(newStreamSlice, s)
-			}
-		}
-		streams.s = newStreamSlice
-		streams.Unlock()
-		l.Debug("stream closed")
-		return nil
-	})
+	// lock the stream to prevent more messages being put in it while we work
+	thisStream.Lock()
+	defer thisStream.Unlock()
 
-	defer conn.Close()
-	t := time.NewTicker(60 * time.Second)
-	for range t.C {
-		if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-			return gtserror.NewErrorInternalError(err)
-		}
+	// indicate the stream is no longer connected
+	thisStream.Connected = false
+
+	// load and parse the entry for this account from the stream map
+	v, ok := p.streamMap.Load(account.ID)
+	if !ok || v == nil {
+		return
+	}
+	streamsForAccount, ok := v.(*gtsmodel.StreamsForAccount)
+	if !ok {
+		return
 	}
 
-	return nil
-}
+	// lock the streams for account while we remove this stream from its slice
+	streamsForAccount.Lock()
+	defer streamsForAccount.Unlock()
 
-type streamsForAccount struct {
-	s []*stream
-	sync.Mutex
-}
+	// put everything into modified streams *except* the stream we're removing
+	modifiedStreams := []*gtsmodel.Stream{}
+	for _, s := range streamsForAccount.Streams {
+		if s.ID != thisStream.ID {
+			modifiedStreams = append(modifiedStreams, s)
+		}
+	}
+	streamsForAccount.Streams = modifiedStreams
 
-type stream struct {
-	streamID   string
-	streamType string
-	conn       *websocket.Conn
+	// finally close the messages channel so no more messages can be read from it
+	close(thisStream.Messages)
 }
