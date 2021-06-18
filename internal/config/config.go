@@ -170,6 +170,11 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) error {
 		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
 	}
 
+	// template flags
+	if c.TemplateConfig.AssetBaseDir == "" || f.IsSet(fn.AssetBaseDir) {
+		c.TemplateConfig.AssetBaseDir = f.String(fn.AssetBaseDir)
+	}
+
 	// accounts flags
 	if f.IsSet(fn.AccountsOpenRegistration) {
 		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
@@ -283,6 +288,7 @@ type Flags struct {
 	DbDatabase string
 
 	TemplateBaseDir string
+	AssetBaseDir string
 
 	AccountsOpenRegistration string
 	AccountsApprovalRequired string
@@ -326,6 +332,7 @@ type Defaults struct {
 	DbDatabase string
 
 	TemplateBaseDir string
+	AssetBaseDir string
 
 	AccountsOpenRegistration bool
 	AccountsRequireApproval  bool
@@ -371,6 +378,7 @@ func GetFlagNames() Flags {
 		DbDatabase: "db-database",
 
 		TemplateBaseDir: "template-basedir",
+		AssetBaseDir: "asset-basedir",
 
 		AccountsOpenRegistration: "accounts-open-registration",
 		AccountsApprovalRequired: "accounts-approval-required",
@@ -417,6 +425,7 @@ func GetEnvNames() Flags {
 		DbDatabase: "GTS_DB_DATABASE",
 
 		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
+		AssetBaseDir: "GTS_ASSET_BASEDIR",
 
 		AccountsOpenRegistration: "GTS_ACCOUNTS_OPEN_REGISTRATION",
 		AccountsApprovalRequired: "GTS_ACCOUNTS_APPROVAL_REQUIRED",

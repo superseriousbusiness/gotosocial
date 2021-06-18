@@ -151,6 +151,22 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 	logger.Debugf("loading templates from %s", tmPath)
 	engine.LoadHTMLGlob(tmPath)
 
+	// serve static files from /assets
+	// FIXME: why doesn't this config var work??
+	// assetPath := filepath.Join(cwd, config.TemplateConfig.AssetBaseDir);
+	engine.Static("/assets", "./web/assets");
+
+	// FIXME: actual variables
+	engine.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+			"instancename": "GoToSocial Test Instance",
+			"countUsers": 3,
+			"countStatuses": 42069,
+			"version": "1.0.0",
+			"adminUsername": "@admin",
+		})
+	});
+
 	// create the actual http server here
 	s := &http.Server{
 		Handler:           engine,

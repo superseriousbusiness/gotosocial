@@ -4,7 +4,7 @@
 
 Federated social media software.
 
-![Sloth logo made by Freepik from www.flaticon.com](./assets/sloth.png)
+![Sloth logo made by Freepik from www.flaticon.com](./web/assets/sloth.png)
 
 GoToSocial is a Fediverse server project, written in Golang. It provides an alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
 
