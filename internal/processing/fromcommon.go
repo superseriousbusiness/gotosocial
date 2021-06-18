@@ -329,7 +329,7 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 	} else {
-		if err := p.streamingProcessor.StreamStatusForAccount(mastoStatus, timelineAccount); err != nil {
+		if err := p.streamingProcessor.StreamStatusToAccount(mastoStatus, timelineAccount); err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}

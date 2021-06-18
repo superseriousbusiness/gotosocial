@@ -35,7 +35,7 @@ const (
 	// StreamQueryKey is the query key for the type of stream being requested
 	StreamQueryKey = "stream"
 
-	// AccessTokenQueryKey
+	// AccessTokenQueryKey is the query key for an oauth access token that should be passed in streaming requests.
 	AccessTokenQueryKey = "access_token"
 )
 

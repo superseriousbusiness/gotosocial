@@ -128,9 +128,9 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 		AllowAllOrigins:        true,
 		AllowBrowserExtensions: true,
 		AllowMethods:           []string{"POST", "PUT", "DELETE", "GET", "PATCH", "OPTIONS"},
-		AllowHeaders:           []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowHeaders:           []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Upgrade", "Sec-WebSocket-Extensions", "Sec-WebSocket-Key", "Sec-WebSocket-Protocol", "Sec-WebSocket-Version", "Connection"},
 		AllowWebSockets:        true,
-		ExposeHeaders:          []string{"Link", "X-RateLimit-Reset", "X-RateLimit-Limit", " X-RateLimit-Remaining", "X-Request-Id"},
+		ExposeHeaders:          []string{"Link", "X-RateLimit-Reset", "X-RateLimit-Limit", " X-RateLimit-Remaining", "X-Request-Id", "Connection", "Sec-WebSocket-Accept", "Upgrade"},
 		MaxAge:                 2 * time.Minute,
 	}))
 	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
