@@ -810,7 +810,7 @@ func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccoun
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
-	
+
 	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
@@ -818,7 +818,7 @@ func (ps *postgresService) FollowRequested(sourceAccount *gtsmodel.Account, targ
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
-	
+
 	return ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
@@ -826,7 +826,7 @@ func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmode
 	if account1 == nil || account2 == nil {
 		return false, nil
 	}
-	
+
 	// make sure account 1 follows account 2
 	f1, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account1.ID).Where("target_account_id = ?", account2.ID).Exists()
 	if err != nil {
