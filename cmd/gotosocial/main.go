@@ -118,6 +118,12 @@ func main() {
 				Value:   defaults.TemplateBaseDir,
 				EnvVars: []string{envNames.TemplateBaseDir},
 			},
+			&cli.StringFlag{
+				Name:    flagNames.AssetBaseDir,
+				Usage:   "Directory to serve static assets from, accessible at example.com/assets/",
+				Value:   defaults.AssetBaseDir,
+				EnvVars: []string{envNames.AssetBaseDir},
+			},
 
 			// ACCOUNTS FLAGS
 			&cli.BoolFlag{
