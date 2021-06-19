@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/status"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -132,6 +133,11 @@ type Processor interface {
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
 	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
 
+	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
+	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
+	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
+	OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
 		These functions are intended to be called when the federating client needs an immediate (ie., synchronous) reply
@@ -192,7 +198,8 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
-	statusProcessor status.Processor
+	statusProcessor    status.Processor
+	streamingProcessor streaming.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
@@ -202,6 +209,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	fromFederator := make(chan gtsmodel.FromFederator, 1000)
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
+	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -218,7 +226,8 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db, log),
 
-		statusProcessor: statusProcessor,
+		statusProcessor:    statusProcessor,
+		streamingProcessor: streamingProcessor,
 	}
 }
 

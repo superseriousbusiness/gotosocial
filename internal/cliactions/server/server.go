@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notification"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
@@ -134,6 +135,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	adminModule := admin.New(c, processor, log)
 	statusModule := status.New(c, processor, log)
 	securityModule := security.New(c, log)
+	streamingModule := streaming.New(c, processor, log)
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
@@ -157,6 +159,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		filtersModule,
 		emojiModule,
 		listsModule,
+		streamingModule,
 	}
 
 	for _, m := range apis {

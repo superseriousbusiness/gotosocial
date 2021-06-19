@@ -201,7 +201,7 @@ func (p *processor) indexAndIngest(statuses []*gtsmodel.Status, timelineAccount 
 			continue
 		}
 		if timelineable {
-			if err := p.timelineManager.Ingest(s, timelineAccount.ID); err != nil {
+			if _, err := p.timelineManager.Ingest(s, timelineAccount.ID); err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error ingesting status %s: %s", s.ID, err))
 				continue
 			}

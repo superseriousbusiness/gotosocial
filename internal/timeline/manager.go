@@ -51,12 +51,18 @@ type Manager interface {
 	// Ingest takes one status and indexes it into the timeline for the given account ID.
 	//
 	// It should already be established before calling this function that the status/post actually belongs in the timeline!
-	Ingest(status *gtsmodel.Status, timelineAccountID string) error
+	//
+	// The returned bool indicates whether the status was actually put in the timeline. This could be false in cases where
+	// the status is a boost, but a boost of the original post or the post itself already exists recently in the timeline.
+	Ingest(status *gtsmodel.Status, timelineAccountID string) (bool, error)
 	// IngestAndPrepare takes one status and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
 	// This is useful in cases where we know the status will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
 	// It should already be established before calling this function that the status/post actually belongs in the timeline!
-	IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error
+	//
+	// The returned bool indicates whether the status was actually put in the timeline. This could be false in cases where
+	// the status is a boost, but a boost of the original post or the post itself already exists recently in the timeline.
+	IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) (bool, error)
 	// HomeTimeline returns limit n amount of entries from the home timeline of the given account ID, in descending chronological order.
 	// If maxID is provided, it will return entries from that maxID onwards, inclusive.
 	HomeTimeline(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
@@ -95,7 +101,7 @@ type manager struct {
 	log              *logrus.Logger
 }
 
-func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) error {
+func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) (bool, error) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":              "Ingest",
 		"timelineAccountID": timelineAccountID,
@@ -108,7 +114,7 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) erro
 	return t.IndexOne(status.CreatedAt, status.ID, status.BoostOfID)
 }
 
-func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) error {
+func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) (bool, error) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":              "IngestAndPrepare",
 		"timelineAccountID": timelineAccountID,

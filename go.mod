@@ -26,6 +26,7 @@ require (
 	github.com/golang/mock v1.5.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/sessions v1.2.1 // indirect
+	github.com/gorilla/websocket v1.4.2
 	github.com/h2non/filetype v1.1.1
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect

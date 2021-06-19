@@ -96,6 +96,16 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 		if err := p.db.Put(notif); err != nil {
 			return fmt.Errorf("notifyStatus: error putting notification in database: %s", err)
 		}
+
+		// now stream the notification to the user
+		mastoNotif, err := p.tc.NotificationToMasto(notif)
+		if err != nil {
+			return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+		}
+
+		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.GTSAccount); err != nil {
+			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
+		}
 	}
 
 	return nil
@@ -121,6 +131,16 @@ func (p *processor) notifyFollowRequest(followRequest *gtsmodel.FollowRequest, r
 
 	if err := p.db.Put(notif); err != nil {
 		return fmt.Errorf("notifyFollowRequest: error putting notification in database: %s", err)
+	}
+
+	// now stream the notification to the user
+	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	if err != nil {
+		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+	}
+
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
@@ -157,6 +177,16 @@ func (p *processor) notifyFollow(follow *gtsmodel.Follow, receivingAccount *gtsm
 		return fmt.Errorf("notifyFollow: error putting notification in database: %s", err)
 	}
 
+	// now stream the notification to the user
+	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	if err != nil {
+		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+	}
+
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
+	}
+
 	return nil
 }
 
@@ -181,6 +211,16 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 
 	if err := p.db.Put(notif); err != nil {
 		return fmt.Errorf("notifyFave: error putting notification in database: %s", err)
+	}
+
+	// now stream the notification to the user
+	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	if err != nil {
+		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+	}
+
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
@@ -240,6 +280,16 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 
 	if err := p.db.Put(notif); err != nil {
 		return fmt.Errorf("notifyAnnounce: error putting notification in database: %s", err)
+	}
+
+	// now stream the notification to the user
+	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	if err != nil {
+		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+	}
+
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, boostedAcct); err != nil {
+		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
@@ -321,8 +371,32 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 		return
 	}
 
-	if err := p.timelineManager.IngestAndPrepare(status, timelineAccount.ID); err != nil {
+	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
+	inserted, err := p.timelineManager.IngestAndPrepare(status, timelineAccount.ID)
+	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %s", status.ID, err)
+		return
+	}
+
+	// the status was inserted to stream it to the user
+	if inserted {
+		mastoStatus, err := p.tc.StatusToMasto(status, timelineAccount)
+		if err != nil {
+			errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
+		} else {
+			if err := p.streamingProcessor.StreamStatusToAccount(mastoStatus, timelineAccount); err != nil {
+				errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
+			}
+		}
+	}
+
+	mastoStatus, err := p.tc.StatusToMasto(status, timelineAccount)
+	if err != nil {
+		errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
+	} else {
+		if err := p.streamingProcessor.StreamStatusToAccount(mastoStatus, timelineAccount); err != nil {
+			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
+		}
 	}
 }
 

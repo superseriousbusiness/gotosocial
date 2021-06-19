@@ -14,7 +14,7 @@ type postIndexEntry struct {
 	boostOfID string
 }
 
-func (p *postIndex) insertIndexed(i *postIndexEntry) error {
+func (p *postIndex) insertIndexed(i *postIndexEntry) (bool, error) {
 	if p.data == nil {
 		p.data = &list.List{}
 	}
@@ -22,7 +22,7 @@ func (p *postIndex) insertIndexed(i *postIndexEntry) error {
 	// if we have no entries yet, this is both the newest and oldest entry, so just put it in the front
 	if p.data.Len() == 0 {
 		p.data.PushFront(i)
-		return nil
+		return true, nil
 	}
 
 	var insertMark *list.Element
@@ -34,14 +34,14 @@ func (p *postIndex) insertIndexed(i *postIndexEntry) error {
 
 		entry, ok := e.Value.(*postIndexEntry)
 		if !ok {
-			return errors.New("index: could not parse e as a postIndexEntry")
+			return false, errors.New("index: could not parse e as a postIndexEntry")
 		}
 
 		// don't insert this if it's a boost of a status we've seen recently
 		if i.boostOfID != "" {
 			if i.boostOfID == entry.boostOfID || i.boostOfID == entry.statusID {
 				if position < boostReinsertionDepth {
-					return nil
+					return false, nil
 				}
 			}
 		}
@@ -55,16 +55,16 @@ func (p *postIndex) insertIndexed(i *postIndexEntry) error {
 
 		// make sure we don't insert a duplicate
 		if entry.statusID == i.statusID {
-			return nil
+			return false, nil
 		}
 	}
 
 	if insertMark != nil {
 		p.data.InsertBefore(i, insertMark)
-		return nil
+		return true, nil
 	}
 
 	// if we reach this point it's the oldest post we've seen so put it at the back
 	p.data.PushBack(i)
-	return nil
+	return true, nil
 }
