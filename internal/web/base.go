@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-type Module sruct {
+type Module struct {
 	config *config.Config
 	log    *logrus.Logger
 }
@@ -34,7 +34,7 @@ type Module sruct {
 func New(config *config.Config, log *logrus.Logger) {
 	return &Module{
 		config: config,
-		log: log
+		log:    log,
 	}
 }
 
@@ -43,12 +43,12 @@ func (m *Module) Route(s router.Router) error {
 	l := m.log.WithField("func", "BaseGETHandler")
 
 	// serve static files from /assets
-	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir);
-	s.Static("/assets", assetPath);
+	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir)
+	s.Static("/assets", assetPath)
 
 	// serve front-page
 	s.GET("/", func(c *gin.Context) {
-		l.Trace("serving index html");
+		l.Trace("serving index html")
 		// FIXME: actual variables
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"instancename":  "GoToSocial Test Instance",
@@ -56,7 +56,7 @@ func (m *Module) Route(s router.Router) error {
 			"countStatuses": 42069,
 			"version":       "1.0.0",
 			"adminUsername": "@admin",
-		});
+		})
 	})
 	return nil
 }
