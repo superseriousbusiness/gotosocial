@@ -975,6 +975,7 @@ func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID s
 	q := ps.conn.Model(&statuses).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
 		Where("? IS NULL", pg.Ident("in_reply_to_id")).
+		Where("? IS NULL", pg.Ident("in_reply_to_uri")).
 		Where("? IS NULL", pg.Ident("boost_of_id")).
 		Order("status.id DESC")
 

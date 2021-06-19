@@ -62,7 +62,10 @@ type Timeline interface {
 	*/
 
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
-	IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) error
+	//
+	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
+	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
+	IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) (bool, error)
 
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
@@ -79,7 +82,10 @@ type Timeline interface {
 	PrepareBehind(statusID string, amount int) error
 	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
 	// and then immediately prepares it.
-	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error
+	//
+	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
+	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
+	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) (bool, error)
 	// OldestPreparedPostID returns the id of the rearmost (ie., the oldest) prepared post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestPreparedPostID() (string, error)

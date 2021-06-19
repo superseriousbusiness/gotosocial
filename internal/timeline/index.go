@@ -40,7 +40,7 @@ grabloop:
 	}
 
 	for _, s := range filtered {
-		if err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID); err != nil {
+		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID); err != nil {
 			return fmt.Errorf("IndexBehindAndIncluding: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -52,7 +52,7 @@ func (t *timeline) IndexOneByID(statusID string) error {
 	return nil
 }
 
-func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) error {
+func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -64,7 +64,7 @@ func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfI
 	return t.postIndex.insertIndexed(postIndexEntry)
 }
 
-func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) error {
+func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -72,15 +72,18 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 		statusID: statusID,
 	}
 
-	if err := t.postIndex.insertIndexed(postIndexEntry); err != nil {
-		return fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %s", err)
+	inserted, err := t.postIndex.insertIndexed(postIndexEntry)
+	if err != nil {
+		return inserted, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %s", err)
 	}
 
-	if err := t.prepare(statusID); err != nil {
-		return fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
+	if inserted {
+		if err := t.prepare(statusID); err != nil {
+			return inserted, fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
+		}
 	}
 
-	return nil
+	return inserted, nil
 }
 
 func (t *timeline) OldestIndexedPostID() (string, error) {

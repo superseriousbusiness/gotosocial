@@ -20,6 +20,7 @@ type Processor interface {
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
 	OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
 	StreamStatusToAccount(s *apimodel.Status, account *gtsmodel.Account) error
+	StreamNotificationToAccount(n *apimodel.Notification, account *gtsmodel.Account) error
 }
 
 type processor struct {
