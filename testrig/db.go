@@ -45,6 +45,8 @@ var testModels []interface{} = []interface{}{
 	&gtsmodel.Tag{},
 	&gtsmodel.User{},
 	&gtsmodel.Emoji{},
+	&gtsmodel.Instance{},
+	&gtsmodel.Notification{},
 	&oauth.Token{},
 	&oauth.Client{},
 }
@@ -130,6 +132,10 @@ func StandardDBSetup(db db.DB) {
 	}
 
 	if err := db.CreateInstanceAccount(); err != nil {
+		panic(err)
+	}
+
+	if err := db.CreateInstanceInstance(); err != nil {
 		panic(err)
 	}
 }
