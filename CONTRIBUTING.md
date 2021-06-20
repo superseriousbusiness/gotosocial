@@ -89,6 +89,7 @@ At the login screen, enter the email address `zork@example.org` and password `pa
 Note the following constraints:
 
 - The testrig data will be destroyed when the testrig is destroyed. It does this by dropping all tables in Postgres on shutdown. As such, you should **NEVER RUN THE TESTRIG AGAINST A DATABASE WITH REAL DATA IN IT** because it will be destroyed. Be especially careful if you're forwarding database ports from a remote instance to your local machine, because you can easily and irreversibly nuke that data if you run the testrig against it.
+- If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
 - The testrig does not make any actual external http calls, so federation will (obviously) not work from a testrig.
 
 ## Running tests
