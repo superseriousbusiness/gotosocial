@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -69,6 +70,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	appsModule := app.New(c, processor, log)
 	followRequestsModule := followrequest.New(c, processor, log)
 	webfingerModule := webfinger.New(c, processor, log)
+	webBaseModule := web.New(c, processor, log)
 	usersModule := user.New(c, processor, log)
 	timelineModule := timeline.New(c, processor, log)
 	notificationModule := notification.New(c, processor, log)
@@ -89,6 +91,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		authModule,
 
 		// now everything else
+		webBaseModule,
 		accountModule,
 		instanceModule,
 		appsModule,
