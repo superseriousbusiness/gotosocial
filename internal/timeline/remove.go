@@ -3,9 +3,16 @@ package timeline
 import (
 	"container/list"
 	"errors"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (t *timeline) Remove(statusID string) (int, error) {
+	l := t.log.WithFields(logrus.Fields{
+		"func":            "Remove",
+		"accountTimeline": t.accountID,
+		"statusID":        statusID,
+	})
 	t.Lock()
 	defer t.Unlock()
 	var removed int
@@ -19,6 +26,7 @@ func (t *timeline) Remove(statusID string) (int, error) {
 				return removed, errors.New("Remove: could not parse e as a postIndexEntry")
 			}
 			if entry.statusID == statusID {
+				l.Debug("found status in postIndex")
 				removeIndexes = append(removeIndexes, e)
 			}
 		}
@@ -37,6 +45,7 @@ func (t *timeline) Remove(statusID string) (int, error) {
 				return removed, errors.New("Remove: could not parse e as a preparedPostsEntry")
 			}
 			if entry.statusID == statusID {
+				l.Debug("found status in preparedPosts")
 				removePrepared = append(removePrepared, e)
 			}
 		}
@@ -46,5 +55,6 @@ func (t *timeline) Remove(statusID string) (int, error) {
 		removed = removed + 1
 	}
 
+	l.Debugf("removed %d entries", removed)
 	return removed, nil
 }

@@ -98,6 +98,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, FavouritedPath, m.StatusFavedByGETHandler)
 
 	r.AttachHandler(http.MethodPost, ReblogPath, m.StatusBoostPOSTHandler)
+	r.AttachHandler(http.MethodPost, UnreblogPath, m.StatusUnboostPOSTHandler)
 	r.AttachHandler(http.MethodGet, RebloggedPath, m.StatusBoostedByGETHandler)
 
 	r.AttachHandler(http.MethodGet, ContextPath, m.StatusContextGETHandler)

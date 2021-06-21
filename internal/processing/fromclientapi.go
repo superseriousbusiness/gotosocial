@@ -138,6 +138,18 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
 			}
 			return p.federateUnfave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsAnnounce:
+			// UNDO ANNOUNCE/BOOST
+			boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+			if !ok {
+				return errors.New("undo was not parseable as *gtsmodel.Status")
+			}
+
+			if err := p.deleteStatusFromTimelines(boost); err != nil {
+				return err
+			}
+
+			return p.federateUnannounce(boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsDelete:
 		// DELETE
@@ -309,6 +321,36 @@ func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gts
 	if err != nil {
 		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	return err
+}
+
+func (p *processor) federateUnannounce(boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	asAnnounce, err := p.tc.BoostToAS(boost, originAccount, targetAccount)
+	if err != nil {
+		return fmt.Errorf("federateUnannounce: error converting status to announce: %s", err)
+	}
+
+	// create an Undo and set the appropriate actor on it
+	undo := streams.NewActivityStreamsUndo()
+	undo.SetActivityStreamsActor(asAnnounce.GetActivityStreamsActor())
+
+	// Set the boost as the 'object' property.
+	undoObject := streams.NewActivityStreamsObjectProperty()
+	undoObject.AppendActivityStreamsAnnounce(asAnnounce)
+	undo.SetActivityStreamsObject(undoObject)
+
+	// set the to
+	undo.SetActivityStreamsTo(asAnnounce.GetActivityStreamsTo())
+
+	// set the cc
+	undo.SetActivityStreamsCc(asAnnounce.GetActivityStreamsCc())
+
+	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateUnannounce: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
 	return err
 }

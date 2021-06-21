@@ -401,5 +401,9 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 }
 
 func (p *processor) deleteStatusFromTimelines(status *gtsmodel.Status) error {
-	return p.timelineManager.WipeStatusFromAllTimelines(status.ID)
+	if err := p.timelineManager.WipeStatusFromAllTimelines(status.ID); err != nil {
+		return err
+	}
+
+	return p.streamingProcessor.StreamDelete(status.ID)
 }

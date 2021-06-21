@@ -40,6 +40,10 @@ func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*api
 	return p.statusProcessor.Boost(authed.Account, authed.Application, targetStatusID)
 }
 
+func (p *processor) StatusUnboost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Unboost(authed.Account, authed.Application, targetStatusID)
+}
+
 func (p *processor) StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
 	return p.statusProcessor.BoostedBy(authed.Account, targetStatusID)
 }

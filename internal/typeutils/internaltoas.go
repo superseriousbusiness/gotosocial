@@ -649,7 +649,7 @@ func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccou
 		if err := c.db.GetByID(boostWrapperStatus.BoostOfID, b); err != nil {
 			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
 		}
-		boostWrapperStatus = b
+		boostWrapperStatus.GTSBoostedStatus = b
 	}
 
 	// create the announce

@@ -21,6 +21,8 @@ type Processor interface {
 	Fave(account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// Boost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
 	Boost(account *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	// Unboost processes the unboost/unreblog of a given status, returning the status if all is well.
+	Unboost(account *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// BoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
 	BoostedBy(account *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
 	// FavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
