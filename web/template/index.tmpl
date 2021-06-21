@@ -3,7 +3,12 @@
 	<img src="/assets/sloth.png" alt="Clipart styled sloth logo">
 </aside>
 <section>
-	<h1>Home to <span class="count">{{.countUsers}}</span> users who posted <span class="count">{{.countStatuses}}</span> statuses.</h1>
+	<!-- <h1>Home to <span class="count">{ {.instance.Stats.UserCount}}</span> users
+		who posted <span class="count">{ {.instance.Stats.StatusCount}}</span> statuses,
+		federating with  <span class="count">{ {.instance.Stats.DomainCount}}</span> other instances.</h1> -->
+	<h1>Home to <span class="count">3</span> users
+		who posted <span class="count">42069</span> statuses,
+		federating with  <span class="count">9001</span> other instances.</h1>
 
 	<h3>This is the default landing page, you can edit it from <span class="accent">./web/template/index.tmpl</span></h1>
 	<ul>

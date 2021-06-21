@@ -43,7 +43,7 @@ import (
 	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/web/base"
+	"github.com/superseriousbusiness/gotosocial/internal/web"
 )
 
 var models []interface{} = []interface{}{
@@ -123,7 +123,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	appsModule := app.New(c, processor, log)
 	followRequestsModule := followrequest.New(c, processor, log)
 	webfingerModule := webfinger.New(c, processor, log)
-	webBaseModule := webBase.new(c, log)
+	webBaseModule := web.New(c, processor, log)
 	usersModule := user.New(c, processor, log)
 	timelineModule := timeline.New(c, processor, log)
 	notificationModule := notification.New(c, processor, log)

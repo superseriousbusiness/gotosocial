@@ -15,6 +15,7 @@ require (
 	github.com/dsoprea/go-utility v0.0.0-20200717064901-2fccff4aa15e // indirect
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.3
+	github.com/gin-contrib/static v0.0.1 // indirect
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-fed/activity v1.0.1-0.20210426194615-e0de0863dcc1

@@ -1,12 +1,12 @@
 	<!-- footer.tmpl -->
 	<footer>
 		<div id="version">
-			Running GoToSocial version: <span class="accent">{{.version}}</span><br>
+			Running GoToSocial version: <span class="accent">{{.instance.Version}}</span><br>
 			<a href="https://github.com/superseriousbusiness/gotosocial">Source Code</a>
 		</div>
 		<div id="contact">
-			Administrated by: <a href="/{{.adminUsername}}" class="nounderline">{{.adminUsername}}</a><br>
-			<a href="/moderation">Moderation team</a>
+			Contact: <a href="/{{.instance.ContactAccount}}" class="nounderline">{{.instance.ContactAccount}}</a><br>
+			<!-- <a href="/moderation">Moderation team</a> -->
 		</div>
 	</footer>
 </body>

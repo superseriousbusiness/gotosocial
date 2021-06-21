@@ -16,47 +16,70 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package base
+package web
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 
+	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type Module struct {
-	config *config.Config
-	log    *logrus.Logger
+	config    *config.Config
+	processor processing.Processor
+	log       *logrus.Logger
 }
 
-func New(config *config.Config, log *logrus.Logger) {
+func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
-		config: config,
-		log:    log,
+		config:    config,
+		log:       log,
+		processor: processor,
 	}
+}
+
+func (m *Module) baseHandler(c *gin.Context) {
+	l := m.log.WithField("func", "BaseGETHandler")
+	l.Trace("serving index html")
+
+	instance, err := m.processor.InstanceGet(m.config.Host)
+	if err != nil {
+		l.Debugf("error getting instance from processor: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	// FIXME: fill in more variables?
+	c.HTML(http.StatusOK, "index.tmpl", gin.H{
+		"instance":      instance,
+		"countUsers":    3,
+		"countStatuses": 42069,
+		"version":       "1.0.0",
+		"adminUsername": "@admin",
+	})
 }
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
-	l := m.log.WithField("func", "BaseGETHandler")
 
 	// serve static files from /assets
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting current working directory: %s", err)
+	}
 	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir)
-	s.Static("/assets", assetPath)
+	s.AttachMiddleware(static.Serve("/assets", static.LocalFile(assetPath, false)))
 
 	// serve front-page
-	s.GET("/", func(c *gin.Context) {
-		l.Trace("serving index html")
-		// FIXME: actual variables
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"instancename":  "GoToSocial Test Instance",
-			"countUsers":    3,
-			"countStatuses": 42069,
-			"version":       "1.0.0",
-			"adminUsername": "@admin",
-		})
-	})
+	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 	return nil
 }
