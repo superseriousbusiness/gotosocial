@@ -172,6 +172,7 @@ func GetTestDefaults() Defaults {
 		DbDatabase: "postgres",
 
 		TemplateBaseDir: "./web/template/",
+		AssetBaseDir:    "./web/assets/",
 
 		AccountsOpenRegistration: true,
 		AccountsRequireApproval:  true,
