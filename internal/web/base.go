@@ -68,6 +68,22 @@ func (m *Module) baseHandler(c *gin.Context) {
 	})
 }
 
+func (m *Module) NotFoundHandler(c *gin.Context) {
+	l := m.log.WithField("func", "404")
+	l.Trace("serving 404 html")
+
+	instance, err := m.processor.InstanceGet(m.config.Host)
+	if err != nil {
+		l.Debugf("error getting instance from processor: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.HTML(404, "404.tmpl", gin.H{
+		"instance": instance,
+	})
+}
+
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 
@@ -81,5 +97,9 @@ func (m *Module) Route(s router.Router) error {
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+
+	// 404 handler
+	s.AttachNoRouteHandler(m.NotFoundHandler)
+
 	return nil
 }
