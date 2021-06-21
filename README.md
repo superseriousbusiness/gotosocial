@@ -8,31 +8,46 @@ Federated social media software.
 
 GoToSocial is a Fediverse server project, written in Golang. It provides an alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
 
-One of the key differences between GoToSocial and those other projects is that GoToSocial doesn't include an integrated front-end (ie., a webapp). Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation and a well-documented API. On this API, developers are free to build any front-end implementation or mobile application that they wish.
+One of the key differences between GoToSocial and those other projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp). Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static web pages for profiles and posts, and a well-documented API. On this API, developers are free to build any front-end implementation or mobile application that they wish.
 
 Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
 
-## Goals
+## Features Wishlist
 
-The first goal of the project is to implement a feature set comparable to Mastodon: server logic, federation logic, and a client API that's a superset of the Mastodon API described [here](https://docs.joinmastodon.org/).
+A grab-bag of things that are already included or will be included in the project if time allows:
 
-Once the client API is implemented, it should allow existing Mastodon apps like [Tusky](https://tusky.app/) and [Whalebird](https://whalebird.social/en/desktop/contents) to work with GoToSocial.
-
-After that, custom features will be added that will necessitate expanding the API.
-
-## Wishlist
-
-Among other things:
-
-* Reputation-based 'slow' federation.
-* Granular post settings.
-* Local-only posting.
-* Easily-configurable character limit.
-* Groups and group posting.
+* Various federation modes, including reputation-based 'slow' federation, 'normal' federation, and zero federation.
+* Local-only posting, and granular post settings including 'rebloggable/boostable', 'likeable', 'replyable'.
+* Character limit for posts that's easy for admins to configure (no messing around in the source code).
+* Groups and group posting!
+* Built-in, automatic LetsEncrypt support (no messing around with Nginx or Certbot).
+* Good performance on lower-powered machines like Raspberry Pi, old laptops, tiny VPSes (the test VPS has 1gb of ram and 1 cpu core).
 
 ## Implementation Status
 
-For an up-to-date view on progress made towards a v1.0.0 release, see [here](./PROGRESS.md).
+Things are moving on the project! As of June 2021 you can now:
+
+* Build and deploy GoToSocial as a binary, with automatic LetsEncrypt certificate support built-in.
+* Connect to the running instance via Tusky or Pinafore, using email address and password (stored encrypted).
+* Post/delete posts.
+* Reply/delete replies.
+* Fave/unfave posts.
+* Post images and gifs.
+* Boost stuff/unboost stuff.
+* Set your profile info (including header and avatar).
+* Follow people/unfollow people.
+* Accept follow requests from people.
+* Post followers only/direct/public/unlocked.
+* Customize posts with further flags: federated (y/n), replyable (y/n), likeable (y/n), boostable (y/n) -- not supported through Pinafore/Tusky yet.
+* Get notifications for mentions/replies/likes/boosts.
+* View local timeline.
+* View and scroll home timeline (with ~10ms latency hell yeah).
+* Stream new posts, notifications and deletes through a websockets connection via Pinafore.
+* Federation support and interoperability with Mastodon and others.
+
+In other words, a deployed GoToSocial instance is already pretty useable!
+
+For a detailed view on progress made towards a v0.1.0 (beta) release, see [here](./PROGRESS.md).
 
 ## Contact
 
@@ -44,7 +59,9 @@ Currently, this project is funded using Liberapay, to put bread on the table whi
 
 ### Sponsors
 
-None yet! [Go For It](https://liberapay.com/dumpsterqueer/)
+Only anonymous donations so far!
+
+[Donate](https://liberapay.com/dumpsterqueer/)
 
 ### Image Attribution
 

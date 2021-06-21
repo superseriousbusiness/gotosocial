@@ -78,7 +78,7 @@
     * [x] /api/v1/statuses/:id/favourite POST               (Fave a status)
     * [x] /api/v1/statuses/:id/unfavourite POST             (Unfave a status)
     * [x] /api/v1/statuses/:id/reblog POST                  (Reblog a status)
-    * [ ] /api/v1/statuses/:id/unreblog POST                (Undo a reblog)
+    * [x] /api/v1/statuses/:id/unreblog POST                (Undo a reblog)
     * [ ] /api/v1/statuses/:id/bookmark POST                (Bookmark a status)
     * [ ] /api/v1/statuses/:id/unbookmark POST              (Undo a bookmark)
     * [ ] /api/v1/statuses/:id/mute POST                    (Mute notifications on a status)

@@ -74,11 +74,9 @@ type Manager interface {
 	GetOldestIndexedID(timelineAccountID string) (string, error)
 	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(timelineAccountID string, limit int) error
-	// WipeStatusFromTimeline completely removes a status and from the index and prepared posts of the given account ID
-	//
-	// The returned int indicates how many entries were removed.
-	WipeStatusFromTimeline(timelineAccountID string, statusID string) (int, error)
-	// WipeStatusFromAllTimelines removes the status from the index and prepared posts of all timelines
+	// Remove removes one status from the timeline of the given timelineAccountID
+	Remove(statusID string, timelineAccountID string) (int, error)
+	// WipeStatusFromAllTimelines removes one status from the index and prepared posts of all timelines
 	WipeStatusFromAllTimelines(statusID string) error
 }
 
@@ -177,12 +175,6 @@ func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
 	return t.PrepareFromTop(limit)
 }
 
-func (m *manager) WipeStatusFromTimeline(timelineAccountID string, statusID string) (int, error) {
-	t := m.getOrCreateTimeline(timelineAccountID)
-
-	return t.Remove(statusID)
-}
-
 func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
 	errors := []string{}
 	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
@@ -195,7 +187,7 @@ func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
 			errors = append(errors, err.Error())
 		}
 
-		return false
+		return true
 	})
 
 	var err error

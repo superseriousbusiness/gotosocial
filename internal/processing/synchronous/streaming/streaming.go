@@ -18,9 +18,14 @@ import (
 type Processor interface {
 	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
+	// OpenStreamForAccount returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
 	OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+	// StreamStatusToAccount streams the given status to any open, appropriate streams belonging to the given account.
 	StreamStatusToAccount(s *apimodel.Status, account *gtsmodel.Account) error
+	// StreamNotificationToAccount streams the given notification to any open, appropriate streams belonging to the given account.
 	StreamNotificationToAccount(n *apimodel.Notification, account *gtsmodel.Account) error
+	// StreamDelete streams the delete of the given statusID to *ALL* open streams.
+	StreamDelete(statusID string) error
 }
 
 type processor struct {
