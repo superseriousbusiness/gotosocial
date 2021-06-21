@@ -118,8 +118,8 @@
   * [ ] Markers
     * [ ] /api/v1/markers GET                               (Get saved timeline position)
     * [ ] /api/v1/markers POST                              (Save timeline position)
-  * [ ] Streaming
-    * [ ] /api/v1/streaming WEBSOCKETS                      (Stream live events to user via websockets)
+  * [x] Streaming
+    * [x] /api/v1/streaming WEBSOCKETS                      (Stream live events to user via websockets)
   * [ ] Notifications
     * [x] /api/v1/notifications GET                         (Get list of notifications)
     * [x] /api/v1/notifications/:id GET                     (Get a single notification)
