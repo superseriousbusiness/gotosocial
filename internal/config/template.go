@@ -22,4 +22,6 @@ package config
 type TemplateConfig struct {
 	// Directory from which gotosocial will attempt to load html templates (.tmpl files).
 	BaseDir string `yaml:"baseDir"`
+	// Directory from which static files are served
+	AssetBaseDir string `yaml:"assetDir"`
 }

@@ -1,0 +1,199 @@
+$bg: #525c66;
+$fg: #fafaff;
+
+$bg_accent: color($bg lightness(-5%));
+
+$acc1: #de8957; // sloth light orange
+$acc2: #c76d33; // sloth dark orange
+
+html, body {
+	padding: 0;
+	margin: 0;
+	background: $bg;
+	color: $fg;
+	font-family: sans-serif;
+}
+
+body {
+	display: grid;
+	grid-template-columns: 1fr 50% 1fr;
+	grid-template-columns: 1fr 90ch 1fr;
+	line-height: 1.5em;
+
+	min-height: 100vh;
+	grid-auto-rows: auto;
+	grid-auto-flow: dense;
+
+	& > * {
+		align-self: start;
+		grid-column: 2;
+	}
+
+	header, footer, .fullWidth {
+		grid-column: 1/4;
+		grid-column: 1/-1;
+	}
+
+	aside.left {
+		grid-column: 1;
+	}
+
+	aside.right {
+		grid-column: 3;
+	}
+}
+
+header {
+	background: $bg_accent;
+	padding: 2rem;
+	margin-bottom: 4rem;
+}
+
+h1 {
+	/* color: $acc1; */
+	margin: 0;
+	line-height: 2.4rem;
+}
+
+a {
+	color: $acc1;
+}
+
+a.button, button {
+	border-radius: 0.2rem;
+	background: $acc1;
+	color: $fg;
+	text-decoration: none;
+	font-size: 1.2rem;
+	font-weight: bold;
+	padding: 0.5rem;
+
+	&:hover {
+		background: $acc2;
+	}
+}
+
+button {
+	border: none;
+	cursor: pointer;
+}
+
+.count {
+	background: $bg_accent;
+	border-radius: 0.3rem;
+	padding: 0.2rem;
+}
+
+.nounderline {
+	text-decoration: none;
+}
+
+.accent {
+	color: $acc1;
+}
+
+aside.logo {
+	justify-self: center;
+	img {
+		height: 30vh;
+	}
+}
+
+section.apps {
+	align-self: start;
+
+	.applist {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-gap: 0.5rem;
+		align-content: start;
+
+		.entry {
+			display: grid;
+			grid-template-columns: 30% 1fr;
+			gap: 0.5rem;
+			padding: 0.5rem;
+			background: $bg_accent;
+			border-radius: 0.5rem;
+
+			.logo {
+				align-self: center;
+				width: 100%;
+				object-fit: contain;
+				flex: 1 1 auto;
+			}
+
+			.logo.redraw {
+				fill: $fg;
+				stroke: $fg;
+			}
+
+			div {
+				padding: 1rem 0;
+				h3 {
+					margin-top: 0;
+				}
+			}
+		}
+	}
+}
+
+section.login {
+	form {
+		display: inline-grid;
+		grid-template-columns: auto 100%;
+		grid-gap: 0.7rem;
+
+		input {
+			border: 1px solid $fg;
+			color: $fg;
+			background: $bg;
+			width: 100%;
+		}
+
+		button {
+			place-self: center;
+			grid-column: 2;
+		}
+	}
+}
+
+footer {
+	align-self: end;
+
+	padding: 2rem;
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+
+	a {
+		font-weight: bold;
+	}
+}
+
+@media screen and (orientation: portrait) {
+	body {
+		grid-template-columns: 1fr 92% 1fr;
+
+		footer, aside.left, aside.right {
+			grid-column: 2;
+		}
+	}
+
+	header {
+		text-align: center;
+	}
+
+	footer {
+		padding: 0;
+		margin-top: 2rem;
+		grid-template-columns: 1fr;
+
+		div {
+			margin: 1rem 0;
+		}
+	}
+
+	section.apps .applist {
+		grid-template-columns: 1fr;
+	}
+}

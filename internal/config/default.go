@@ -18,7 +18,8 @@ func TestDefault() *Config {
 			ApplicationName: defaults.ApplicationName,
 		},
 		TemplateConfig: &TemplateConfig{
-			BaseDir: defaults.TemplateBaseDir,
+			BaseDir:      defaults.TemplateBaseDir,
+			AssetBaseDir: defaults.AssetBaseDir,
 		},
 		AccountsConfig: &AccountsConfig{
 			OpenRegistration: defaults.AccountsOpenRegistration,
@@ -71,7 +72,8 @@ func Default() *Config {
 			ApplicationName: defaults.ApplicationName,
 		},
 		TemplateConfig: &TemplateConfig{
-			BaseDir: defaults.TemplateBaseDir,
+			BaseDir:      defaults.TemplateBaseDir,
+			AssetBaseDir: defaults.AssetBaseDir,
 		},
 		AccountsConfig: &AccountsConfig{
 			OpenRegistration: defaults.AccountsOpenRegistration,
@@ -124,6 +126,7 @@ func GetDefaults() Defaults {
 		DbDatabase: "postgres",
 
 		TemplateBaseDir: "./web/template/",
+		AssetBaseDir:    "./web/assets/",
 
 		AccountsOpenRegistration: true,
 		AccountsRequireApproval:  true,
