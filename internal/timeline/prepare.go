@@ -1,6 +1,7 @@
 package timeline
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 
@@ -30,6 +31,17 @@ func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, mi
 func (t *timeline) PrepareBehind(statusID string, amount int) error {
 	t.Lock()
 	defer t.Unlock()
+
+	// lazily initialize prepared posts if it hasn't been done already
+	if t.preparedPosts.data == nil {
+		t.preparedPosts.data = &list.List{}
+		t.preparedPosts.data.Init()
+	}
+
+	// if the postindex is nil, nothing has been indexed yet so there's nothing to prepare
+	if t.postIndex.data == nil {
+		return nil
+	}
 
 	var prepared int
 	var preparing bool
@@ -71,6 +83,17 @@ prepareloop:
 func (t *timeline) PrepareBefore(statusID string, include bool, amount int) error {
 	t.Lock()
 	defer t.Unlock()
+
+	// lazily initialize prepared posts if it hasn't been done already
+	if t.preparedPosts.data == nil {
+		t.preparedPosts.data = &list.List{}
+		t.preparedPosts.data.Init()
+	}
+
+	// if the postindex is nil, nothing has been indexed yet so there's nothing to prepare
+	if t.postIndex.data == nil {
+		return nil
+	}
 
 	var prepared int
 	var preparing bool
@@ -116,11 +139,24 @@ func (t *timeline) PrepareFromTop(amount int) error {
 	t.Lock()
 	defer t.Unlock()
 
-	t.preparedPosts.data.Init()
+	// lazily initialize prepared posts if it hasn't been done already
+	if t.preparedPosts.data == nil {
+		t.preparedPosts.data = &list.List{}
+		t.preparedPosts.data.Init()
+	}
+
+	// if the postindex is nil, nothing has been indexed yet so there's nothing to prepare
+	if t.postIndex.data == nil {
+		return nil
+	}
 
 	var prepared int
 prepareloop:
 	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+		if e == nil {
+			continue
+		}
+
 		entry, ok := e.Value.(*postIndexEntry)
 		if !ok {
 			return errors.New("PrepareFromTop: could not parse e as a postIndexEntry")

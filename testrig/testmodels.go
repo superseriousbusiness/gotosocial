@@ -345,7 +345,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			ID:                      "01F8MH1H7YV1Z7D2C8K2730QBF",
 			Username:                "the_mighty_zork",
 			AvatarMediaAttachmentID: "01F8MH58A357CV5K7R7TJMSH6S",
-			HeaderMediaAttachmentID: "",
+			HeaderMediaAttachmentID: "01PFPMWK2FF0D9WMHEJHR07C3Q",
 			DisplayName:             "original zork (he/they)",
 			Fields:                  []gtsmodel.Field{},
 			Note:                    "hey yo this is my profile!",
@@ -620,8 +620,8 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			StatusID:  "", // this attachment isn't connected to a status
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 			RemoteURL: "",
-			CreatedAt: time.Now().Add(47 * time.Hour),
-			UpdatedAt: time.Now().Add(47 * time.Hour),
+			CreatedAt: time.Now().Add(-47 * time.Hour),
+			UpdatedAt: time.Now().Add(-47 * time.Hour),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -650,18 +650,66 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    457680,
-				UpdatedAt:   time.Now().Add(47 * time.Hour),
+				UpdatedAt:   time.Now().Add(-47 * time.Hour),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
 				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    15374,
-				UpdatedAt:   time.Now().Add(47 * time.Hour),
+				UpdatedAt:   time.Now().Add(-47 * time.Hour),
 				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				RemoteURL:   "",
 			},
 			Avatar: true,
 			Header: false,
+		},
+		"local_account_1_header": {
+			ID:        "01PFPMWK2FF0D9WMHEJHR07C3Q",
+			StatusID:  "",
+			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+			RemoteURL: "",
+			CreatedAt: time.Now().Add(-47 * time.Hour),
+			UpdatedAt: time.Now().Add(-47 * time.Hour),
+			Type:      gtsmodel.FileTypeImage,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  1018,
+					Height: 764,
+					Size:   777752,
+					Aspect: 1.3324607329842932,
+				},
+				Small: gtsmodel.Small{
+					Width:  256,
+					Height: 192,
+					Size:   49152,
+					Aspect: 1.3333333333333333,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Description:       "A very old-school screenshot of the original team fortress mod for quake ",
+			ScheduledStatusID: "",
+			Blurhash:          "L26j{^WCs+R-N}jsxWj@4;WWxDoK",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    517226,
+				UpdatedAt:   time.Now().Add(-47 * time.Hour),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    42308,
+				UpdatedAt:   time.Now().Add(-47 * time.Hour),
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+				RemoteURL:   "",
+			},
+			Avatar: false,
+			Header: true,
 		},
 	}
 }
@@ -718,6 +766,10 @@ func newTestStoredAttachments() map[string]filenames {
 		"local_account_1_avatar": {
 			Original: "zork-original.jpeg",
 			Small:    "zork-small.jpeg",
+		},
+		"local_account_1_header": {
+			Original: "team-fortress-original.jpeg",
+			Small:    "team-fortress-small.jpeg",
 		},
 	}
 }
@@ -1010,6 +1062,53 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
 			StatusID:        "01F8MH75CBF9JFX4ZAD54N0W0R", // admin account status 1
 			URI:             "http://localhost:8080/users/the_mighty_zork/liked/01F8MHD2QCZSZ6WQS2ATVPEYJ9",
+		},
+		"admin_account_local_account_1_status_1": {
+			ID:              "01F8Q0486ANTDWKG02A7DS1Q24",
+			CreatedAt:       time.Now().Add(-46 * time.Hour),
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF", // admin account
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF", // local account 1
+			StatusID:        "01F8MHAMCHF6Y650WCRSCP4WMY", // local account status 1
+			URI:             "http://localhost:8080/users/admin/liked/01F8Q0486ANTDWKG02A7DS1Q24",
+		},
+	}
+}
+
+func NewTestNotifications() map[string]*gtsmodel.Notification {
+	return map[string]*gtsmodel.Notification{
+		"local_account_1_like": {
+			ID:               "01F8Q0ANPTWW10DAKTX7BRPBJP",
+			NotificationType: gtsmodel.NotificationFave,
+			CreatedAt:        time.Now().Add(-46 * time.Hour),
+			TargetAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
+			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
+			StatusID:         "01F8MHAMCHF6Y650WCRSCP4WMY",
+			Read:             false,
+		},
+	}
+}
+
+func NewTestFollows() map[string]*gtsmodel.Follow {
+	return map[string]*gtsmodel.Follow{
+		"local_account_1_admin_account": {
+			ID:              "01F8PY8RHWRQZV038T4E8T9YK8",
+			CreatedAt:       time.Now().Add(-46 * time.Hour),
+			UpdatedAt:       time.Now().Add(-46 * time.Hour),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
+			TargetAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PY8RHWRQZV038T4E8T9YK8",
+			Notify:          false,
+		},
+		"local_account_1_local_account_2": {
+			ID:              "01F8PYDCE8XE23GRE5DPZJDZDP",
+			CreatedAt:       time.Now().Add(-1 * time.Hour),
+			UpdatedAt:       time.Now().Add(-1 * time.Hour),
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
+			TargetAccountID: "01F8MH5NBDF2MV7CTC4Q5128HF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
+			Notify:          false,
 		},
 	}
 }

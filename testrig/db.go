@@ -131,6 +131,18 @@ func StandardDBSetup(db db.DB) {
 		}
 	}
 
+	for _, v := range NewTestFollows() {
+		if err := db.Put(v); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, v := range NewTestNotifications() {
+		if err := db.Put(v); err != nil {
+			panic(err)
+		}
+	}
+
 	if err := db.CreateInstanceAccount(); err != nil {
 		panic(err)
 	}
