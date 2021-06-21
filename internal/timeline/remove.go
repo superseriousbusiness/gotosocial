@@ -9,9 +9,9 @@ import (
 
 func (t *timeline) Remove(statusID string) (int, error) {
 	l := t.log.WithFields(logrus.Fields{
-		"func": "Remove",
+		"func":            "Remove",
 		"accountTimeline": t.accountID,
-		"statusID": statusID,
+		"statusID":        statusID,
 	})
 	t.Lock()
 	defer t.Unlock()

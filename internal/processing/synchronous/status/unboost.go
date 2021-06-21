@@ -41,11 +41,11 @@ func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.App
 	gtsBoost := &gtsmodel.Status{}
 	where := []db.Where{
 		{
-			Key: "boost_of_id",
+			Key:   "boost_of_id",
 			Value: targetStatusID,
 		},
 		{
-			Key: "account_id",
+			Key:   "account_id",
 			Value: account.ID,
 		},
 	}
