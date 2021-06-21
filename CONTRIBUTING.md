@@ -56,6 +56,42 @@ docker run -d --user postgres --network host sosedoff/pgweb
 
 This will launch a pgweb at `http://localhost:8081`.
 
+### Standalone Testrig
+
+You can also launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
+
+To do this, first build the gotosocial binary with `go build ./cmd/gotosocial`.
+
+Then launch a clean Postgres container on localhost:
+
+```bash
+docker run -d --user postgres --network host -e POSTGRES_PASSWORD=postgres postgres
+```
+
+Then, launch the testrig by invoking the binary as follows:
+
+```bash
+./gotosocial --host localhost:8080 testrig start
+```
+
+To run Pinafore locally in dev mode, first clone the Pinafore repository, and run the following command in the cloned directory:
+
+```bash
+yarn run dev
+```
+
+The Pinafore instance will start running on `localhost:4002`.
+
+To connect to the testrig, navigate to `https://localhost:4002` and enter your instance name as `localhost:8080`.
+
+At the login screen, enter the email address `zork@example.org` and password `password`.
+
+Note the following constraints:
+
+- The testrig data will be destroyed when the testrig is destroyed. It does this by dropping all tables in Postgres on shutdown. As such, you should **NEVER RUN THE TESTRIG AGAINST A DATABASE WITH REAL DATA IN IT** because it will be destroyed. Be especially careful if you're forwarding database ports from a remote instance to your local machine, because you can easily and irreversibly nuke that data if you run the testrig against it.
+- If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
+- The testrig does not make any actual external http calls, so federation will (obviously) not work from a testrig.
+
 ## Running tests
 
 Because the tests use a real Postgres under the hood, you can't run them in parallel, so you need to run tests with the following command:
