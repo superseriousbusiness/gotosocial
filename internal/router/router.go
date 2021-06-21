@@ -42,6 +42,8 @@ type Router interface {
 	AttachHandler(method string, path string, f gin.HandlerFunc)
 	// Attach a gin middleware to the router that will be used globally
 	AttachMiddleware(handler gin.HandlerFunc)
+	// Attach 404 NoRoute handler
+	AttachNoRouteHandler(handler gin.HandlerFunc)
 	// Start the router
 	Start()
 	// Stop the router
@@ -107,6 +109,11 @@ func (r *router) AttachHandler(method string, path string, handler gin.HandlerFu
 // AttachMiddleware attaches a gin middleware to the router that will be used globally
 func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
 	r.engine.Use(middleware)
+}
+
+// AttachNoRouteHandler attaches a gin.HandlerFunc to NoRoute to handle 404's
+func (r *router) AttachNoRouteHandler(handler gin.HandlerFunc) {
+	r.engine.NoRoute(handler)
 }
 
 // New returns a new Router with the specified configuration, using the given logrus logger.
