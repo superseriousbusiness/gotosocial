@@ -1074,6 +1074,7 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
+// NewTestNotifications returns some notifications for use in testing.
 func NewTestNotifications() map[string]*gtsmodel.Notification {
 	return map[string]*gtsmodel.Notification{
 		"local_account_1_like": {
@@ -1088,6 +1089,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 	}
 }
 
+// NewTestFollows returns some follows for use in testing.
 func NewTestFollows() map[string]*gtsmodel.Follow {
 	return map[string]*gtsmodel.Follow{
 		"local_account_1_admin_account": {
