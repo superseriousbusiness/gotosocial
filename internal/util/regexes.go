@@ -24,12 +24,8 @@ import (
 )
 
 const (
-	minimumPasswordEntropy      = 60 // dictates password strength. See https://github.com/wagslane/go-password-validator
-	minimumReasonLength         = 40
-	maximumReasonLength         = 500
 	maximumEmailLength          = 256
 	maximumUsernameLength       = 64
-	maximumPasswordLength       = 64
 	maximumEmojiShortcodeLength = 30
 	maximumHashtagLength        = 30
 )

@@ -40,3 +40,17 @@ func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.Wit
 
 	return ai, nil
 }
+
+func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
+	i := &gtsmodel.Instance{}
+	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: p.config.Host}}, i); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
+	}
+
+	ai, err := p.tc.InstanceToMasto(i)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
+	}
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	return ai, nil
+}

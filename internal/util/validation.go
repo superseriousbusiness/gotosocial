@@ -27,6 +27,17 @@ import (
 	"golang.org/x/text/language"
 )
 
+const (
+	maximumPasswordLength         = 64
+	minimumPasswordEntropy        = 60 // dictates password strength. See https://github.com/wagslane/go-password-validator
+	minimumReasonLength           = 40
+	maximumReasonLength           = 500
+	maximumSiteTitleLength        = 40
+	maximumShortDescriptionLength = 500
+	maximumDescriptionLength      = 5000
+	maximumSiteTermsLength        = 5000
+)
+
 // ValidateNewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
 func ValidateNewPassword(password string) error {
 	if password == "" {
@@ -47,12 +58,8 @@ func ValidateUsername(username string) error {
 		return errors.New("no username provided")
 	}
 
-	if len(username) > maximumUsernameLength {
-		return fmt.Errorf("username should be no more than %d chars but '%s' was %d", maximumUsernameLength, username, len(username))
-	}
-
 	if !usernameValidationRegex.MatchString(username) {
-		return fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", username)
+		return fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max %d characters", username, maximumUsernameLength)
 	}
 
 	return nil
@@ -63,10 +70,6 @@ func ValidateUsername(username string) error {
 func ValidateEmail(email string) error {
 	if email == "" {
 		return errors.New("no email provided")
-	}
-
-	if len(email) > maximumEmailLength {
-		return fmt.Errorf("email address should be no more than %d chars but '%s' was %d", maximumEmailLength, email, len(email))
 	}
 
 	_, err := mail.ParseAddress(email)
@@ -130,5 +133,41 @@ func ValidateEmojiShortcode(shortcode string) error {
 	if !emojiShortcodeValidationRegex.MatchString(shortcode) {
 		return fmt.Errorf("shortcode %s did not pass validation, must be between 2 and 30 characters, lowercase letters, numbers, and underscores only", shortcode)
 	}
+	return nil
+}
+
+// ValidateSiteTitle ensures that the given site title is within spec.
+func ValidateSiteTitle(siteTitle string) error {
+	if len(siteTitle) > maximumSiteTitleLength {
+		return fmt.Errorf("site title should be no more than %d chars but given title was %d", maximumSiteTitleLength, len(siteTitle))
+	}
+
+	return nil
+}
+
+// ValidateSiteShortDescription ensures that the given site short description is within spec.
+func ValidateSiteShortDescription(d string) error {
+	if len(d) > maximumShortDescriptionLength {
+		return fmt.Errorf("short description should be no more than %d chars but given description was %d", maximumShortDescriptionLength, len(d))
+	}
+
+	return nil
+}
+
+// ValidateSiteDescription ensures that the given site description is within spec.
+func ValidateSiteDescription(d string) error {
+	if len(d) > maximumDescriptionLength {
+		return fmt.Errorf("description should be no more than %d chars but given description was %d", maximumDescriptionLength, len(d))
+	}
+
+	return nil
+}
+
+// ValidateSiteTerms ensures that the given site terms string is within spec.
+func ValidateSiteTerms(t string) error {
+	if len(t) > maximumSiteTermsLength {
+		return fmt.Errorf("terms should be no more than %d chars but given terms was %d", maximumSiteTermsLength, len(t))
+	}
+
 	return nil
 }
