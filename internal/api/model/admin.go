@@ -18,6 +18,8 @@
 
 package model
 
+import "mime/multipart"
+
 // AdminAccountInfo represents the *admin* view of an account's details. See here: https://docs.joinmastodon.org/entities/admin-account/
 type AdminAccountInfo struct {
 	// The ID of the account in the database.
@@ -78,4 +80,25 @@ type AdminReportInfo struct {
 	ActionTakenByAccount string `json:"action_taken_by_account"`
 	// Statuses attached to the report, for context.
 	Statuses []Status `json:"statuses"`
+}
+
+// AdminSiteSettings is the form to be parsed on a POST or PATCH to /admin/settings
+type AdminSiteSettings struct {
+	FormAdminSettings FormAdminSettings `form:"form_admin_settings" json:"form_admin_settings" xml:"form_admin_settings"`
+}
+
+// FormAdminSettings wraps a whole bunch of instance settings
+type FormAdminSettings struct {
+	SiteTitle               *string               `form:"site_title" json:"site_title" xml:"site_title"`
+	RegistrationsMode       *string               `form:"registrations_mode" json:"registrations_mode" xml:"registrations_mode"`
+	SiteContactUsername     *string               `form:"site_contact_username" json:"site_contact_username" xml:"site_contact_username"`
+	SiteContactEmail        *string               `form:"site_contact_email" json:"site_contact_email" xml:"site_contact_email"`
+	SiteShortDescription    *string               `form:"site_short_description" json:"site_short_description" xml:"site_short_description"`
+	SiteDescription         *string               `form:"site_description" json:"site_description" xml:"site_description"`
+	SiteExtendedDescription *string               `form:"site_extended_description" json:"site_extended_description" xml:"site_extended_description"`
+	SiteTerms               *string               `form:"site_terms" json:"site_terms" xml:"site_terms"`
+	Thumbnail               *multipart.FileHeader `form:"thumbnail" json:"thumbnail" xml:"thumbnail"`
+	Hero                    *multipart.FileHeader `form:"hero" json:"hero" xml:"hero"`
+	Mascot                  *multipart.FileHeader `form:"mascot" json:"mascot" xml:"mascot"`
+	RequireInviteText       *bool                 `form:"require_invite_text" json:"require_invite_text" xml:"require_invite_text"`
 }

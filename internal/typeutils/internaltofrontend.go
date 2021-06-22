@@ -511,9 +511,30 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		ShortDescription: i.ShortDescription,
 		Email:            i.ContactEmail,
 		Version:          i.Version,
+		Stats:            make(map[string]int),
 	}
 
+	// if the requested instance is *this* instance, we can add some extra information
 	if i.Domain == c.config.Host {
+		userCountKey := "user_count"
+		statusCountKey := "status_count"
+		domainCountKey := "domain_count"
+
+		userCount, err := c.db.GetUserCountForInstance(c.config.Host)
+		if err == nil {
+			mi.Stats[userCountKey] = userCount
+		}
+
+		statusCount, err := c.db.GetStatusCountForInstance(c.config.Host)
+		if err == nil {
+			mi.Stats[statusCountKey] = statusCount
+		}
+
+		domainCount, err := c.db.GetDomainCountForInstance(c.config.Host)
+		if err == nil {
+			mi.Stats[domainCountKey] = domainCount
+		}
+
 		mi.Registrations = c.config.AccountsConfig.OpenRegistration
 		mi.ApprovalRequired = c.config.AccountsConfig.RequireApproval
 		mi.InvitesEnabled = false // TODO

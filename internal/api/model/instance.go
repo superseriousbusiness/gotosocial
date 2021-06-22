@@ -45,7 +45,7 @@ type Instance struct {
 	// URLs of interest for clients apps.
 	URLS *InstanceURLs `json:"urls,omitempty"`
 	// Statistics about how much information the instance contains.
-	Stats *InstanceStats `json:"stats,omitempty"`
+	Stats map[string]int `json:"stats,omitempty"`
 	// Banner image for the website.
 	Thumbnail string `json:"thumbnail"`
 	// A user that can be contacted, as an alternative to email.
