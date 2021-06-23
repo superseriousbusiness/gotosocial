@@ -125,16 +125,22 @@ type timeline struct {
 }
 
 // NewTimeline returns a new Timeline for the given account ID
-func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConverter, log *logrus.Logger) Timeline {
+func NewTimeline(accountID string, db db.DB, typeConverter typeutils.TypeConverter, log *logrus.Logger) (Timeline, error) {
+	timelineOwnerAccount := &gtsmodel.Account{}
+	if err := db.GetByID(accountID, timelineOwnerAccount); err != nil {
+		return nil, err
+	}
+
 	return &timeline{
 		postIndex:     &postIndex{},
 		preparedPosts: &preparedPosts{},
 		accountID:     accountID,
+		account:       timelineOwnerAccount,
 		db:            db,
 		filter:        visibility.NewFilter(db, log),
 		tc:            typeConverter,
 		log:           log,
-	}
+	}, nil
 }
 
 func (t *timeline) Reset() error {

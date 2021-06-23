@@ -14,7 +14,6 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	l := f.log.WithFields(logrus.Fields{
 		"func":                "StatusVisible",
 		"statusID":            targetStatus.ID,
-		"requestingAccountID": requestingAccount.ID,
 	})
 
 	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)
@@ -49,6 +48,16 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		}
 	}
 
+	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
+	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
+	if requestingAccount == nil {
+		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
+			return true, nil
+		}
+		l.Trace("requesting account is nil but the target status isn't public")
+		return false, nil
+	}
+
 	// if the requesting user doesn't exist (anymore) then the status also shouldn't be visible
 	// note: we only do this for local users
 	if requestingAccount.Domain == "" {
@@ -66,16 +75,6 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 			l.Trace("requesting account is local but corresponding user is either disabled, not approved, or not confirmed")
 			return false, nil
 		}
-	}
-
-	// If requesting account is nil, that means whoever requested the status didn't auth, or their auth failed.
-	// In this case, we can still serve the status if it's public, otherwise we definitely shouldn't.
-	if requestingAccount == nil {
-		if targetStatus.Visibility == gtsmodel.VisibilityPublic {
-			return true, nil
-		}
-		l.Trace("requesting account is nil but the target status isn't public")
-		return false, nil
 	}
 
 	// if requesting account is suspended then don't show the status -- although they probably shouldn't have gotten
