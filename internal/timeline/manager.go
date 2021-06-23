@@ -106,7 +106,10 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) (boo
 		"statusID":          status.ID,
 	})
 
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return false, err
+	}
 
 	l.Trace("ingesting status")
 	return t.IndexOne(status.CreatedAt, status.ID, status.BoostOfID)
@@ -119,7 +122,10 @@ func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID st
 		"statusID":          status.ID,
 	})
 
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return false, err
+	}
 
 	l.Trace("ingesting status")
 	return t.IndexAndPrepareOne(status.CreatedAt, status.ID)
@@ -132,7 +138,10 @@ func (m *manager) Remove(statusID string, timelineAccountID string) (int, error)
 		"statusID":          statusID,
 	})
 
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return 0, err
+	}
 
 	l.Trace("removing status")
 	return t.Remove(statusID)
@@ -144,7 +153,10 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 		"timelineAccountID": timelineAccountID,
 	})
 
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return nil, err
+	}
 
 	statuses, err := t.Get(limit, maxID, sinceID, minID)
 	if err != nil {
@@ -154,7 +166,10 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 }
 
 func (m *manager) GetIndexedLength(timelineAccountID string) int {
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return 0
+	}
 
 	return t.PostIndexLength()
 }
@@ -164,13 +179,19 @@ func (m *manager) GetDesiredIndexLength() int {
 }
 
 func (m *manager) GetOldestIndexedID(timelineAccountID string) (string, error) {
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return "", err
+	}
 
 	return t.OldestIndexedPostID()
 }
 
 func (m *manager) PrepareXFromTop(timelineAccountID string, limit int) error {
-	t := m.getOrCreateTimeline(timelineAccountID)
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return err
+	}
 
 	return t.PrepareFromTop(limit)
 }
@@ -198,11 +219,15 @@ func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
 	return err
 }
 
-func (m *manager) getOrCreateTimeline(timelineAccountID string) Timeline {
+func (m *manager) getOrCreateTimeline(timelineAccountID string) (Timeline, error) {
 	var t Timeline
 	i, ok := m.accountTimelines.Load(timelineAccountID)
 	if !ok {
-		t = NewTimeline(timelineAccountID, m.db, m.tc, m.log)
+		var err error
+		t, err = NewTimeline(timelineAccountID, m.db, m.tc, m.log)
+		if err != nil {
+			return nil, err
+		}
 		m.accountTimelines.Store(timelineAccountID, t)
 	} else {
 		t, ok = i.(Timeline)
@@ -211,5 +236,5 @@ func (m *manager) getOrCreateTimeline(timelineAccountID string) Timeline {
 		}
 	}
 
-	return t
+	return t, nil
 }
