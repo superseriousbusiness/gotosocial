@@ -12,8 +12,8 @@ import (
 
 func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
 	l := f.log.WithFields(logrus.Fields{
-		"func":                "StatusVisible",
-		"statusID":            targetStatus.ID,
+		"func":     "StatusVisible",
+		"statusID": targetStatus.ID,
 	})
 
 	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)

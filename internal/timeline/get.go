@@ -13,10 +13,10 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	l := t.log.WithFields(logrus.Fields{
 		"func":      "Get",
 		"accountID": t.accountID,
-		"amount": amount,
-		"maxID": maxID,
-		"sinceID": sinceID,
-		"minID": minID,
+		"amount":    amount,
+		"maxID":     maxID,
+		"sinceID":   sinceID,
+		"minID":     minID,
 	})
 	l.Debug("entering get")
 
