@@ -5,8 +5,10 @@
 			<a href="https://github.com/superseriousbusiness/gotosocial">Source Code</a>
 		</div>
 		<div id="contact">
-			Contact: <a href="/{{.instance.ContactAccount}}" class="nounderline">{{.instance.ContactAccount}}</a><br>
-			<!-- <a href="/moderation">Moderation team</a> -->
+			Contact: <a href="{{.instance.ContactAccount.URL}}" class="nounderline">{{.instance.ContactAccount.Username}}</a><br>
+		</div>
+		<div id="email">
+			Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
 		</div>
 	</footer>
 </body>

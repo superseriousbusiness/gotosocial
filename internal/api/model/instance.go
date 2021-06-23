@@ -18,6 +18,8 @@
 
 package model
 
+import "mime/multipart"
+
 // Instance represents the software instance of Mastodon running on this domain. See https://docs.joinmastodon.org/entities/instance/
 type Instance struct {
 	// REQUIRED
@@ -45,7 +47,7 @@ type Instance struct {
 	// URLs of interest for clients apps.
 	URLS *InstanceURLs `json:"urls,omitempty"`
 	// Statistics about how much information the instance contains.
-	Stats *InstanceStats `json:"stats,omitempty"`
+	Stats map[string]int `json:"stats,omitempty"`
 	// Banner image for the website.
 	Thumbnail string `json:"thumbnail"`
 	// A user that can be contacted, as an alternative to email.
@@ -69,4 +71,16 @@ type InstanceStats struct {
 	StatusCount int `json:"status_count"`
 	// Domains federated with this instance.
 	DomainCount int `json:"domain_count"`
+}
+
+// InstanceSettingsUpdateRequest is the form to be parsed on a PATCH to /api/v1/instance
+type InstanceSettingsUpdateRequest struct {
+	SiteTitle            *string               `form:"site_title" json:"site_title" xml:"site_title"`
+	SiteContactUsername  *string               `form:"site_contact_username" json:"site_contact_username" xml:"site_contact_username"`
+	SiteContactEmail     *string               `form:"site_contact_email" json:"site_contact_email" xml:"site_contact_email"`
+	SiteShortDescription *string               `form:"site_short_description" json:"site_short_description" xml:"site_short_description"`
+	SiteDescription      *string               `form:"site_description" json:"site_description" xml:"site_description"`
+	SiteTerms            *string               `form:"site_terms" json:"site_terms" xml:"site_terms"`
+	Avatar               *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
+	Header               *multipart.FileHeader `form:"header" json:"header" xml:"header"`
 }

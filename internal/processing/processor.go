@@ -95,6 +95,10 @@ type Processor interface {
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode)
+	// InstancePatch updates this instance according to the given form.
+	//
+	// It should already be ascertained that the requesting account is authenticated and an admin.
+	InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
 	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)

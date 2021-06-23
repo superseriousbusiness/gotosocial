@@ -253,6 +253,14 @@ type DB interface {
 	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
 	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error)
 
+	// GetUserCountForInstance returns the number of known accounts registered with the given domain.
+	GetUserCountForInstance(domain string) (int, error)
+
+	// GetStatusCountForInstance returns the number of known statuses posted from the given domain.
+	GetStatusCountForInstance(domain string) (int, error)
+
+	// GetDomainCountForInstance returns the number of known instances known that the given domain federates with.
+	GetDomainCountForInstance(domain string) (int, error)
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/

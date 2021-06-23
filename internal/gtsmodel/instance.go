@@ -24,6 +24,8 @@ type Instance struct {
 	ShortDescription string
 	// Longer description of this instance
 	Description string
+	// Terms and conditions of this instance
+	Terms string
 	// Contact email address for this instance
 	ContactEmail string
 	// Contact account ID in the database for this instance

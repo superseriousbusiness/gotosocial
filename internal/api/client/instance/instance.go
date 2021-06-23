@@ -34,5 +34,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 // Route satisfies the ClientModule interface
 func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, InstanceInformationPath, m.InstanceInformationGETHandler)
+	s.AttachHandler(http.MethodPatch, InstanceInformationPath, m.InstanceUpdatePATCHHandler)
 	return nil
 }
