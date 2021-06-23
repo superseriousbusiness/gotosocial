@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode) {
@@ -42,15 +43,116 @@ func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.Wit
 }
 
 func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
+	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: p.config.Host}}, i); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
+	}
+
+	// fetch the instance account from the db for processing
+	ia := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(p.config.Host, ia); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", p.config.Host, err))
+	}
+
+	// validate & update site title if it's set on the form
+	if form.SiteTitle != nil {
+		if err := util.ValidateSiteTitle(*form.SiteTitle); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
+		}
+		i.Title = *form.SiteTitle
+	}
+
+	// validate & update site contact account if it's set on the form
+	if form.SiteContactUsername != nil {
+		// make sure the account with the given username exists in the db
+		contactAccount := &gtsmodel.Account{}
+		if err := p.db.GetLocalAccountByUsername(*form.SiteContactUsername, contactAccount); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.SiteContactUsername))
+		}
+		// make sure it has a user associated with it
+		contactUser := &gtsmodel.User{}
+		if err := p.db.GetWhere([]db.Where{{Key: "account_id", Value: contactAccount.ID}}, contactUser); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.SiteContactUsername))
+		}
+		// suspended accounts cannot be contact accounts
+		if !contactAccount.SuspendedAt.IsZero() {
+			err := fmt.Errorf("selected contact account %s is suspended", contactAccount.Username)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		// unconfirmed or unapproved users cannot be contacts
+		if contactUser.ConfirmedAt.IsZero() {
+			err := fmt.Errorf("user of selected contact account %s is not confirmed", contactAccount.Username)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		if !contactUser.Approved {
+			err := fmt.Errorf("user of selected contact account %s is not approved", contactAccount.Username)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		// contact account user must be admin or moderator otherwise what's the point of contacting them
+		if !contactUser.Admin || !contactUser.Moderator {
+			err := fmt.Errorf("user of selected contact account %s is neither admin nor moderator", contactAccount.Username)
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		i.ContactAccountID = contactAccount.ID
+	}
+
+	// validate & update site contact email if it's set on the form
+	if form.SiteContactEmail != nil {
+		if err := util.ValidateEmail(*form.SiteContactEmail); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		i.ContactEmail = *form.SiteContactEmail
+	}
+
+	// validate & update site short description if it's set on the form
+	if form.SiteShortDescription != nil {
+		if err := util.ValidateSiteShortDescription(*form.SiteShortDescription); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		i.ShortDescription = *form.SiteShortDescription
+	}
+
+	// validate & update site description if it's set on the form
+	if form.SiteDescription != nil {
+		if err := util.ValidateSiteDescription(*form.SiteDescription); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		i.Description = *form.SiteDescription
+	}
+
+	// validate & update site terms if it's set on the form
+	if form.SiteTerms != nil {
+		if err := util.ValidateSiteTerms(*form.SiteTerms); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		i.Terms = *form.SiteTerms
+	}
+
+	// process avatar if provided
+	if form.Avatar != nil && form.Avatar.Size != 0 {
+		_, err := p.updateAccountAvatar(form.Avatar, ia.ID)
+		if err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
+		}
+	}
+
+	// process header if provided
+	if form.Header != nil && form.Header.Size != 0 {
+		_, err := p.updateAccountHeader(form.Header, ia.ID)
+		if err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
+		}
+	}
+
+	if err := p.db.UpdateByID(i.ID, i); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", p.config.Host, err))
 	}
 
 	ai, err := p.tc.InstanceToMasto(i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
 	return ai, nil
 }

@@ -33,7 +33,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	}
 
 	// if everything on the form is nil, then nothing has been set and we shouldn't continue
-	if form.SiteTitle == nil && form.RegistrationsMode == nil && form.SiteContactUsername == nil && form.SiteContactEmail == nil && form.SiteShortDescription == nil && form.SiteDescription == nil && form.SiteTerms == nil && form.Avatar == nil && form.Header == nil {
+	if form.SiteTitle == nil && form.SiteContactUsername == nil && form.SiteContactEmail == nil && form.SiteShortDescription == nil && form.SiteDescription == nil && form.SiteTerms == nil && form.Avatar == nil && form.Header == nil {
 		l.Debugf("could not parse form from request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty form submitted"})
 		return

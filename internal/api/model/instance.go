@@ -76,7 +76,6 @@ type InstanceStats struct {
 // InstanceSettingsUpdateRequest is the form to be parsed on a PATCH to /api/v1/instance
 type InstanceSettingsUpdateRequest struct {
 	SiteTitle            *string               `form:"site_title" json:"site_title" xml:"site_title"`
-	RegistrationsMode    *string               `form:"registrations_mode" json:"registrations_mode" xml:"registrations_mode"`
 	SiteContactUsername  *string               `form:"site_contact_username" json:"site_contact_username" xml:"site_contact_username"`
 	SiteContactEmail     *string               `form:"site_contact_email" json:"site_contact_email" xml:"site_contact_email"`
 	SiteShortDescription *string               `form:"site_short_description" json:"site_short_description" xml:"site_short_description"`

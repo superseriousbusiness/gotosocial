@@ -542,7 +542,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: fmt.Sprintf("wss://%s", c.config.Host),
 		}
-	}
+	}aaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 	// contact account is optional but let's try to get it
 	if i.ContactAccountID != "" {
