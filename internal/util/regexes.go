@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	maximumEmailLength          = 256
 	maximumUsernameLength       = 64
 	maximumEmojiShortcodeLength = 30
 	maximumHashtagLength        = 30

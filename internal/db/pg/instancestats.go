@@ -30,7 +30,7 @@ func (ps *postgresService) GetStatusCountForInstance(domain string) (int, error)
 	} else {
 		// join on the domain of the account
 		q = q.Join("JOIN accounts AS account ON account.id = status.account_id").
-		Where("account.domain = ?", domain)
+			Where("account.domain = ?", domain)
 	}
 
 	return q.Count()

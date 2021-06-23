@@ -90,7 +90,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		// contact account user must be admin or moderator otherwise what's the point of contacting them
-		if !contactUser.Admin || !contactUser.Moderator {
+		if !contactUser.Admin && !contactUser.Moderator {
 			err := fmt.Errorf("user of selected contact account %s is neither admin nor moderator", contactAccount.Username)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}

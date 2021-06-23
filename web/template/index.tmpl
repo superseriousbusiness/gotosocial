@@ -8,16 +8,14 @@
 		federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.</h1>
 
 	<h3>This is the default landing page, you can edit it from <span class="accent">./web/template/index.tmpl</span></h1>
-	<ul>
-		<li>Some explanation about the instance (description) with instance header and profile images.</li>
-		<li>Instructions for registering.</li>
-		<li>Etc.</li>
-	</ul>
+	<p>
+		{{.instance.ShortDescription}}
+	</p>
 </section>
 
 <section class="apps">
 	<p>
-		GoToSocial does not provide it's own frontend, but implements the Mastodon client API.
+		GoToSocial does not provide its own frontend, but implements the Mastodon client API.
 		You can use this server through a variety of clients:
 	</p>
 	<div class="applist">

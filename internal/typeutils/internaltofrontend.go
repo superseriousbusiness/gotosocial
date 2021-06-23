@@ -512,6 +512,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		Email:            i.ContactEmail,
 		Version:          i.Version,
 		Stats:            make(map[string]int),
+		ContactAccount:   &model.Account{},
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
@@ -542,7 +543,18 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: fmt.Sprintf("wss://%s", c.config.Host),
 		}
-	}aaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	}
+
+	// get the instance account if it exists and just skip if it doesn't
+	ia := &gtsmodel.Account{}
+	if err := c.db.GetWhere([]db.Where{{Key: "username", Value: i.Domain}}, ia); err == nil {
+		// instance account exists, get the header for the account if it exists
+		attachment := &gtsmodel.MediaAttachment{}
+		if err := c.db.GetHeaderForAccountID(attachment, ia.ID); err == nil {
+			// header exists, set it on the api model
+			mi.Thumbnail = attachment.URL
+		}
+	}
 
 	// contact account is optional but let's try to get it
 	if i.ContactAccountID != "" {
