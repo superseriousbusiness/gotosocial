@@ -41,7 +41,7 @@ func (f *federator) FingerRemoteAccount(requestingUsername string, targetUsernam
 		return nil, fmt.Errorf("FingerRemoteAccount: error doing request on behalf of username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}
 
-	resp := &apimodel.WebfingerAccountResponse{}
+	resp := &apimodel.WellKnownResponse{}
 	if err := json.Unmarshal(b, resp); err != nil {
 		return nil, fmt.Errorf("FingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse on behalf of username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}

@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/nodeinfo"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
@@ -70,6 +71,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	appsModule := app.New(c, processor, log)
 	followRequestsModule := followrequest.New(c, processor, log)
 	webfingerModule := webfinger.New(c, processor, log)
+	nodeInfoModule := nodeinfo.New(c, processor, log)
 	webBaseModule := web.New(c, processor, log)
 	usersModule := user.New(c, processor, log)
 	timelineModule := timeline.New(c, processor, log)
@@ -101,6 +103,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		adminModule,
 		statusModule,
 		webfingerModule,
+		nodeInfoModule,
 		usersModule,
 		timelineModule,
 		notificationModule,

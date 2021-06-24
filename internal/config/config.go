@@ -59,9 +59,9 @@ type Config struct {
 
 	/*
 		Not parsed from .yaml configuration file.
-		For short running commands (admin CLI tools etc).
 	*/
 	AccountCLIFlags map[string]string
+	SoftwareVersion string
 }
 
 // FromFile returns a new config from a file, or an error if something goes amiss.
@@ -252,6 +252,8 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) error {
 		c.LetsEncryptConfig.EmailAddress = f.String(fn.LetsEncryptEmailAddress)
 	}
 
+	c.SoftwareVersion = GetDefaults().SoftwareVersion
+
 	// command-specific flags
 
 	// admin account CLI flags
@@ -323,6 +325,7 @@ type Defaults struct {
 	ConfigPath      string
 	Host            string
 	Protocol        string
+	SoftwareVersion string
 
 	DbType     string
 	DbAddress  string

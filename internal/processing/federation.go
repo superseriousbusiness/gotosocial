@@ -265,7 +265,7 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 	return data, nil
 }
 
-func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, gtserror.WithCode) {
+func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -273,13 +273,13 @@ func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.
 	}
 
 	// return the webfinger representation
-	return &apimodel.WebfingerAccountResponse{
+	return &apimodel.WellKnownResponse{
 		Subject: fmt.Sprintf("acct:%s@%s", requestedAccount.Username, p.config.Host),
 		Aliases: []string{
 			requestedAccount.URI,
 			requestedAccount.URL,
 		},
-		Links: []apimodel.WebfingerLink{
+		Links: []apimodel.Link{
 			{
 				Rel:  "http://webfinger.net/rel/profile-page",
 				Type: "text/html",
@@ -291,6 +291,37 @@ func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.
 				Href: requestedAccount.URI,
 			},
 		},
+	}, nil
+}
+
+func (p *processor) GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+	return &apimodel.WellKnownResponse{
+		Links: []apimodel.Link{
+			{
+				Rel:  "http://nodeinfo.diaspora.software/ns/schema/2.0",
+				Href: fmt.Sprintf("%s://%s/nodeinfo/2.0", p.config.Protocol, p.config.Host),
+			},
+		},
+	}, nil
+}
+
+func (p *processor) GetNodeInfo(request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
+	return &apimodel.Nodeinfo{
+		Version: "2.0",
+		Software: apimodel.NodeInfoSoftware{
+			Name:    "gotosocial",
+			Version: p.config.SoftwareVersion,
+		},
+		Protocols: []string{"activitypub"},
+		Services: apimodel.NodeInfoServices{
+			Inbound:  []string{},
+			Outbound: []string{},
+		},
+		OpenRegistrations: p.config.AccountsConfig.OpenRegistration,
+		Usage: apimodel.NodeInfoUsage{
+			Users: apimodel.NodeInfoUsers{},
+		},
+		Metadata: make(map[string]interface{}),
 	}, nil
 }
 

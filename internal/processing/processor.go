@@ -169,7 +169,13 @@ type Processor interface {
 	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, gtserror.WithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
-	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WebfingerAccountResponse, gtserror.WithCode)
+	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+
+	// GetNodeInfoRel returns a well known response giving the path to node info.
+	GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+
+	// GetNodeInfo returns a node info struct in response to a node info request.
+	GetNodeInfo(request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
 
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
