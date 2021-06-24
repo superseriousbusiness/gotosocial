@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 /*
@@ -134,7 +135,8 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 	var pkOwnerURI *url.URL
 	requestingRemoteAccount := &gtsmodel.Account{}
 	requestingLocalAccount := &gtsmodel.Account{}
-	if strings.EqualFold(requestingPublicKeyID.Host, f.config.Host) {
+	requestingHost := requestingPublicKeyID.Host
+	if strings.EqualFold(requestingHost, f.config.Host) {
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
 		if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
@@ -338,6 +340,15 @@ func (f *federator) DereferenceRemoteStatus(username string, remoteStatusID *url
 	}
 
 	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
+}
+
+func (f *federator) DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*apimodel.Instance, error) {
+	transport, err := f.GetTransportForUser(username)
+	if err != nil {
+		return nil, fmt.Errorf("transport err: %s", err)
+	}
+
+	return transport.DereferenceInstance(context.Background(), remoteInstanceURI)
 }
 
 func (f *federator) GetTransportForUser(username string) (transport.Transport, error) {
