@@ -543,6 +543,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: fmt.Sprintf("wss://%s", c.config.Host),
 		}
+		mi.Version = c.config.SoftwareVersion
 	}
 
 	// get the instance account if it exists and just skip if it doesn't
