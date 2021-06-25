@@ -35,9 +35,6 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 /*
@@ -100,11 +97,14 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 
 // AuthenticateFederatedRequest authenticates any kind of incoming federated request from a remote server. This includes things like
 // GET requests for dereferencing our users or statuses etc, and POST requests for delivering new Activities. The function returns
-// the URL of the owner of the public key used in the http signature.
+// the URL of the owner of the public key used in the requesting http signature.
 //
-// Authenticate in this case is defined as just making sure that the http request is actually signed by whoever claims
-// to have signed it, by fetching the public key from the signature and checking it against the remote public key. This function
-// *does not* check whether the request is authorized, only whether it's authentic.
+// Authenticate in this case is defined as making sure that the http request is actually signed by whoever claims
+// to have signed it, by fetching the public key from the signature and checking it against the remote public key.
+//
+// To avoid making unnecessary http calls towards blocked domains, this function *does* bail early if an instance-level domain block exists
+// for the request from the incoming domain. However, it does not check whether individual blocks exist between the requesting user or domain
+// and the requested user: this should be done elsewhere.
 //
 // The provided username will be used to generate a transport for making remote requests/derefencing the public key ID of the request signature.
 // Ideally you should pass in the username of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
@@ -115,7 +115,12 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 //
 // Also note that this function *does not* dereference the remote account that the signature key is associated with.
 // Other functions should use the returned URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error) {
+func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *http.Request) (*url.URL, error) {
+
+	var publicKey interface{}
+	var pkOwnerURI *url.URL
+	var err error
+
 	// set this extra field for signature validation
 	r.Header.Set("host", f.config.Host)
 
@@ -131,8 +136,15 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 		return nil, fmt.Errorf("could not parse key id into a url: %s", err)
 	}
 
-	var publicKey interface{}
-	var pkOwnerURI *url.URL
+	// if the domain is blocked we want to make as few calls towards it as possible, so already bail here if that's the case!
+	blockedDomain, err := f.blockedDomain(requestingPublicKeyID.Host)
+	if err != nil {
+		return nil, fmt.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
+	}
+	if blockedDomain {
+		return nil, fmt.Errorf("host %s was domain blocked, aborting auth", requestingPublicKeyID.Host)
+	}
+
 	requestingRemoteAccount := &gtsmodel.Account{}
 	requestingLocalAccount := &gtsmodel.Account{}
 	requestingHost := requestingPublicKeyID.Host
@@ -159,7 +171,7 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
 		// the request is remote and we don't have the public key yet,
 		// so we need to authenticate the request properly by dereferencing the remote key
-		transport, err := f.GetTransportForUser(username)
+		transport, err := f.GetTransportForUser(requestedUsername)
 		if err != nil {
 			return nil, fmt.Errorf("transport err: %s", err)
 		}
@@ -214,163 +226,19 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 	return pkOwnerURI, nil
 }
 
-func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {
-	f.startHandshake(username, remoteAccountID)
-	defer f.stopHandshake(username, remoteAccountID)
-
-	transport, err := f.GetTransportForUser(username)
-	if err != nil {
-		return nil, fmt.Errorf("transport err: %s", err)
+func (f *federator) blockedDomain(host string) (bool, error) {
+	b := &gtsmodel.DomainBlock{}
+	err := f.db.GetWhere([]db.Where{{Key: "domain", Value: host, CaseInsensitive: true}}, b)
+	if err == nil {
+		// block exists
+		return true, nil
 	}
 
-	b, err := transport.Dereference(context.Background(), remoteAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error deferencing %s: %s", remoteAccountID.String(), err)
+	if _, ok := err.(db.ErrNoEntries); ok {
+		// there are no entries so there's no block
+		return false, nil
 	}
 
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("error unmarshalling bytes into json: %s", err)
-	}
-
-	t, err := streams.ToType(context.Background(), m)
-	if err != nil {
-		return nil, fmt.Errorf("error resolving json into ap vocab type: %s", err)
-	}
-
-	switch t.GetTypeName() {
-	case string(gtsmodel.ActivityStreamsPerson):
-		p, ok := t.(vocab.ActivityStreamsPerson)
-		if !ok {
-			return nil, errors.New("error resolving type as activitystreams person")
-		}
-		return p, nil
-	case string(gtsmodel.ActivityStreamsApplication):
-		p, ok := t.(vocab.ActivityStreamsApplication)
-		if !ok {
-			return nil, errors.New("error resolving type as activitystreams application")
-		}
-		return p, nil
-	case string(gtsmodel.ActivityStreamsService):
-		p, ok := t.(vocab.ActivityStreamsService)
-		if !ok {
-			return nil, errors.New("error resolving type as activitystreams service")
-		}
-		return p, nil
-	}
-
-	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
-}
-
-func (f *federator) DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error) {
-	transport, err := f.GetTransportForUser(username)
-	if err != nil {
-		return nil, fmt.Errorf("transport err: %s", err)
-	}
-
-	b, err := transport.Dereference(context.Background(), remoteStatusID)
-	if err != nil {
-		return nil, fmt.Errorf("error deferencing %s: %s", remoteStatusID.String(), err)
-	}
-
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, fmt.Errorf("error unmarshalling bytes into json: %s", err)
-	}
-
-	t, err := streams.ToType(context.Background(), m)
-	if err != nil {
-		return nil, fmt.Errorf("error resolving json into ap vocab type: %s", err)
-	}
-
-	// Article, Document, Image, Video, Note, Page, Event, Place, Mention, Profile
-	switch t.GetTypeName() {
-	case gtsmodel.ActivityStreamsArticle:
-		p, ok := t.(vocab.ActivityStreamsArticle)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsArticle")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsDocument:
-		p, ok := t.(vocab.ActivityStreamsDocument)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsDocument")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsImage:
-		p, ok := t.(vocab.ActivityStreamsImage)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsImage")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsVideo:
-		p, ok := t.(vocab.ActivityStreamsVideo)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsVideo")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsNote:
-		p, ok := t.(vocab.ActivityStreamsNote)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsNote")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsPage:
-		p, ok := t.(vocab.ActivityStreamsPage)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsPage")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsEvent:
-		p, ok := t.(vocab.ActivityStreamsEvent)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsEvent")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsPlace:
-		p, ok := t.(vocab.ActivityStreamsPlace)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsPlace")
-		}
-		return p, nil
-	case gtsmodel.ActivityStreamsProfile:
-		p, ok := t.(vocab.ActivityStreamsProfile)
-		if !ok {
-			return nil, errors.New("error resolving type as ActivityStreamsProfile")
-		}
-		return p, nil
-	}
-
-	return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
-}
-
-func (f *federator) DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*apimodel.Instance, error) {
-	transport, err := f.GetTransportForUser(username)
-	if err != nil {
-		return nil, fmt.Errorf("transport err: %s", err)
-	}
-
-	return transport.DereferenceInstance(context.Background(), remoteInstanceURI)
-}
-
-func (f *federator) GetTransportForUser(username string) (transport.Transport, error) {
-	// We need an account to use to create a transport for dereferecing the signature.
-	// If a username has been given, we can fetch the account with that username and use it.
-	// Otherwise, we can take the instance account and use those credentials to make the request.
-	ourAccount := &gtsmodel.Account{}
-	var u string
-	if username == "" {
-		u = f.config.Host
-	} else {
-		u = username
-	}
-	if err := f.db.GetLocalAccountByUsername(u, ourAccount); err != nil {
-		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
-	}
-
-	transport, err := f.transportController.NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
-	}
-	return transport, nil
+	// there's an actual error
+	return false, err
 }
