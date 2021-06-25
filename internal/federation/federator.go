@@ -24,10 +24,10 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -50,8 +50,9 @@ type Federator interface {
 	// DereferenceRemoteStatus can be used to get the representation of a remote status, based on its ID (which is a URI).
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error)
-	// DereferenceRemoteInstance
-	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*apimodel.Instance, error)
+	// DereferenceRemoteInstance takes the URL of a remote instance, and a username (optional) to spin up a transport with. It then
+	// does its damnedest to get some kind of information back about the instance, trying /api/v1/instance, then /.well-known/nodeinfo
+	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
 	// This can be used for making signed http requests.
 	//

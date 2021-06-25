@@ -132,9 +132,20 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			// there's been an actual error
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
-		// we don't have an entry for this instance yet so create it
-		var err error
-		i, err := f.DereferenceRemoteInstance()
+
+		// we don't have an entry for this instance yet so dereference it
+		i, err = f.DereferenceRemoteInstance(username, &url.URL{
+			Scheme: publicKeyOwnerURI.Scheme,
+			Host: publicKeyOwnerURI.Host,
+		})
+		if err != nil {
+			return nil, false, fmt.Errorf("could not dereference new remote instance %s during AuthenticatePostInbox: %s", publicKeyOwnerURI.Host, err)
+		}
+
+		// and put it in the db
+		if err := f.db.Put(i); err != nil {
+			return nil, false, fmt.Errorf("error inserting newly dereferenced instance %s: %s", publicKeyOwnerURI.Host, err)
+		}
 	}
 
 	requestingAccount := &gtsmodel.Account{}
