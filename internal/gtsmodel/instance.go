@@ -28,6 +28,8 @@ type Instance struct {
 	Terms string
 	// Contact email address for this instance
 	ContactEmail string
+	// Username of the contact account for this instance
+	ContactAccountUsername string
 	// Contact account ID in the database for this instance
 	ContactAccountID string `pg:"type:CHAR(26)"`
 	// Reputation score of this instance
