@@ -140,7 +140,7 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 	followingURI := fmt.Sprintf("%s/%s", userURI, FollowingPath)
 	likedURI := fmt.Sprintf("%s/%s", userURI, LikedPath)
 	collectionURI := fmt.Sprintf("%s/%s/%s", userURI, CollectionsPath, FeaturedPath)
-	publicKeyURI := fmt.Sprintf("%s#%s", userURI, PublicKeyPath)
+	publicKeyURI := fmt.Sprintf("%s/%s", userURI, PublicKeyPath)
 
 	return &UserURIs{
 		HostURL:     hostURL,
@@ -207,6 +207,11 @@ func IsLikePath(id *url.URL) bool {
 // IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func IsStatusesPath(id *url.URL) bool {
 	return statusesPathRegex.MatchString(id.Path)
+}
+
+// IsPublicKeyPath returns true if the given URL path corresponds to eg /users/example_username/main-key
+func IsPublicKeyPath(id *url.URL) bool {
+	return userPublicKeyPathRegex.MatchString(id.Path)
 }
 
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS

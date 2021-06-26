@@ -25,6 +25,8 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
+	"github.com/go-fed/activity/streams/vocab"
+	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -96,30 +98,49 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 }
 
 func (p *processor) GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode) {
+	l := p.log.WithFields(logrus.Fields{
+		"func":              "GetFediUser",
+		"requestedUsername": requestedUsername,
+		"requestURL":        request.URL.String(),
+	})
+
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
 
-	// authenticate the request
-	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
-	if err != nil {
-		return nil, gtserror.NewErrorNotAuthorized(err)
-	}
+	var requestedPerson vocab.ActivityStreamsPerson
+	var err error
+	if util.IsPublicKeyPath(request.URL) {
+		l.Debug("serving from public key path")
+		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
+		requestedPerson, err = p.tc.AccountToASMinimal(requestedAccount)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else if util.IsUserPath(request.URL) {
+		l.Debug("serving from user path")
+		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
+		requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+		if err != nil {
+			return nil, gtserror.NewErrorNotAuthorized(err)
+		}
 
-	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+		blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 
-	if blocked {
-		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-	}
-
-	requestedPerson, err := p.tc.AccountToAS(requestedAccount)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+		if blocked {
+			return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+		}
+		requestedPerson, err = p.tc.AccountToAS(requestedAccount)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else {
+		return nil, gtserror.NewErrorBadRequest(fmt.Errorf("path was not public key path or user path"))
 	}
 
 	data, err := streams.Serialize(requestedPerson)
