@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"net"
 	"net/mail"
-	"regexp"
 	"strings"
 	"time"
 
@@ -48,7 +47,6 @@ type postgresService struct {
 	conn   *pg.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
-	// federationDB pub.Database
 }
 
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
@@ -118,12 +116,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 	// validate address
 	if c.DBConfig.Address == "" {
 		return nil, errors.New("no address set")
-	}
-
-	ipv4Regex := regexp.MustCompile(`^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$`)
-	hostnameRegex := regexp.MustCompile(`^(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}$`)
-	if !hostnameRegex.MatchString(c.DBConfig.Address) && !ipv4Regex.MatchString(c.DBConfig.Address) && c.DBConfig.Address != "localhost" {
-		return nil, fmt.Errorf("address %s was neither an ipv4 address nor a valid hostname", c.DBConfig.Address)
 	}
 
 	// validate username
