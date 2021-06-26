@@ -50,6 +50,12 @@ In other words, a deployed GoToSocial instance is already pretty useable!
 
 For a detailed view on progress made towards a v0.1.0 (beta) release, see [here](./PROGRESS.md).
 
+## Getting Started
+
+Proper documentation for running and maintaining GoToSocial will be forthcoming in the first prerelease.
+
+For now (if you want to run it pre-alpha, like a beast), check out the [quick and dirty getting started guide](./GETTINGSTARTED.md).
+
 ## Contact
 
 For questions and comments, you can reach out to tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer) or mail admin@gotosocial.org.
