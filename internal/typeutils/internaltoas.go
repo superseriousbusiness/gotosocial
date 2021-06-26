@@ -258,6 +258,72 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	return person, nil
 }
 
+// Converts a gts model account into a VERY MINIMAL Activity Streams person type, following
+// the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
+//
+// The returned account will just have the Type, Username, PublicKey, and ID properties set.
+func (c *converter) AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+	person := streams.NewActivityStreamsPerson()
+
+	// id should be the activitypub URI of this user
+	// something like https://example.org/users/example_user
+	profileIDURI, err := url.Parse(a.URI)
+	if err != nil {
+		return nil, err
+	}
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(profileIDURI)
+	person.SetJSONLDId(idProp)
+
+	// preferredUsername
+	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
+	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
+	preferredUsernameProp.SetXMLSchemaString(a.Username)
+	person.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+
+	// publicKey
+	// Required for signatures.
+	publicKeyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	// create the public key
+	publicKey := streams.NewW3IDSecurityV1PublicKey()
+
+	// set ID for the public key
+	publicKeyIDProp := streams.NewJSONLDIdProperty()
+	publicKeyURI, err := url.Parse(a.PublicKeyURI)
+	if err != nil {
+		return nil, err
+	}
+	publicKeyIDProp.SetIRI(publicKeyURI)
+	publicKey.SetJSONLDId(publicKeyIDProp)
+
+	// set owner for the public key
+	publicKeyOwnerProp := streams.NewW3IDSecurityV1OwnerProperty()
+	publicKeyOwnerProp.SetIRI(profileIDURI)
+	publicKey.SetW3IDSecurityV1Owner(publicKeyOwnerProp)
+
+	// set the pem key itself
+	encodedPublicKey, err := x509.MarshalPKIXPublicKey(a.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: encodedPublicKey,
+	})
+	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
+
+	// append the public key to the public key property
+	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
+
+	// set the public key property on the Person
+	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
+
+	return person, nil
+}
+
 func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
 	// ensure prerequisites here before we get stuck in
 

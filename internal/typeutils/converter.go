@@ -122,6 +122,7 @@ type TypeConverter interface {
 
 	// AccountToAS converts a gts model account into an activity streams person, suitable for federation
 	AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
+	AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation

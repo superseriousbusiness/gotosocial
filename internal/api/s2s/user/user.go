@@ -40,6 +40,8 @@ const (
 	// Use this anywhere you need to know the username of the user being queried.
 	// Eg https://example.org/users/:username
 	UsersBasePathWithUsername = UsersBasePath + "/:" + UsernameKey
+	// UsersPublicKeyPath is a path to a user's public key, for serving bare minimum AP representations.
+	UsersPublicKeyPath = UsersBasePathWithUsername + "/" + util.PublicKeyPath
 	// UsersInboxPath is for serving POST requests to a user's inbox with the given username key.
 	UsersInboxPath = UsersBasePathWithUsername + "/" + util.InboxPath
 	// UsersFollowersPath is for serving GET request's to a user's followers list, with the given username key.
@@ -80,5 +82,6 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, UsersFollowersPath, m.FollowersGETHandler)
 	s.AttachHandler(http.MethodGet, UsersFollowingPath, m.FollowingGETHandler)
 	s.AttachHandler(http.MethodGet, UsersStatusPath, m.StatusGETHandler)
+	s.AttachHandler(http.MethodGet, UsersPublicKeyPath, m.PublicKeyGETHandler)
 	return nil
 }
