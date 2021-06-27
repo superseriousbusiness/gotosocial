@@ -26,7 +26,6 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -35,23 +34,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// authenticateAndDereferenceFediRequest authenticates the HTTP signature of an incoming federation request, using the given
+// dereferenceFediRequest authenticates the HTTP signature of an incoming federation request, using the given
 // username to perform the validation. It will *also* dereference the originator of the request and return it as a gtsmodel account
 // for further processing. NOTE that this function will have the side effect of putting the dereferenced account into the database,
 // and passing it into the processor through a channel for further asynchronous processing.
-func (p *processor) authenticateAndDereferenceFediRequest(username string, r *http.Request) (*gtsmodel.Account, error) {
-
-	// first authenticate
-	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(username, r)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't authenticate request for username %s: %s", username, err)
-	}
-
+func (p *processor) dereferenceFediRequest(username string, requestingAccountURI *url.URL) (*gtsmodel.Account, error) {
 	// OK now we can do the dereferencing part
 	// we might already have an entry for this account so check that first
 	requestingAccount := &gtsmodel.Account{}
 
-	err = p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
+	err := p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
 	if err == nil {
 		// we do have it yay, return it
 		return requestingAccount, nil
@@ -98,12 +90,6 @@ func (p *processor) authenticateAndDereferenceFediRequest(username string, r *ht
 }
 
 func (p *processor) GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode) {
-	l := p.log.WithFields(logrus.Fields{
-		"func":              "GetFediUser",
-		"requestedUsername": requestedUsername,
-		"requestURL":        request.URL.String(),
-	})
-
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -113,28 +99,35 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 	var requestedPerson vocab.ActivityStreamsPerson
 	var err error
 	if util.IsPublicKeyPath(request.URL) {
-		l.Debug("serving from public key path")
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
 		requestedPerson, err = p.tc.AccountToASMinimal(requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	} else if util.IsUserPath(request.URL) {
-		l.Debug("serving from user path")
 		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
-		requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+		requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
 		if err != nil {
 			return nil, gtserror.NewErrorNotAuthorized(err)
 		}
 
-		blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
+		// if we're already handshaking/dereferencing a remote account, we can skip the dereferencing part
+		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
+			requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+			if err != nil {
+				return nil, gtserror.NewErrorNotAuthorized(err)
+			}
+
+			blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+			if err != nil {
+				return nil, gtserror.NewErrorInternalError(err)
+			}
+
+			if blocked {
+				return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+			}
 		}
 
-		if blocked {
-			return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
-		}
 		requestedPerson, err = p.tc.AccountToAS(requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -159,7 +152,12 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil {
+		return nil, gtserror.NewErrorNotAuthorized(err)
+	}
+
+	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -199,7 +197,12 @@ func (p *processor) GetFediFollowing(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil {
+		return nil, gtserror.NewErrorNotAuthorized(err)
+	}
+
+	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -239,7 +242,12 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 	}
 
 	// authenticate the request
-	requestingAccount, err := p.authenticateAndDereferenceFediRequest(requestedUsername, request)
+	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil {
+		return nil, gtserror.NewErrorNotAuthorized(err)
+	}
+
+	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}

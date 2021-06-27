@@ -213,6 +213,8 @@ func (f *federator) AuthenticateFederatedRequest(username string, r *http.Reques
 }
 
 func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {
+	f.startHandshake(username, remoteAccountID)
+	defer f.stopHandshake(username, remoteAccountID)
 
 	transport, err := f.GetTransportForUser(username)
 	if err != nil {

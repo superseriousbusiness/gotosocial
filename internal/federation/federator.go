@@ -21,6 +21,7 @@ package federation
 import (
 	"net/http"
 	"net/url"
+	"sync"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
@@ -54,6 +55,8 @@ type Federator interface {
 	//
 	// If username is an empty string, our instance user's credentials will be used instead.
 	GetTransportForUser(username string) (transport.Transport, error)
+	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
+	Handshaking(username string, remoteAccountID *url.URL) bool
 	pub.CommonBehavior
 	pub.FederatingProtocol
 }
@@ -67,6 +70,8 @@ type federator struct {
 	transportController transport.Controller
 	actor               pub.FederatingActor
 	log                 *logrus.Logger
+	handshakes          map[string][]*url.URL
+	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewFederator returns a new federator
@@ -81,6 +86,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		log:                 log,
+		handshakeSync:       &sync.Mutex{},
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor
