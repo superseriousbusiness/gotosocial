@@ -180,6 +180,6 @@ func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsm
 	if nodeinfoHref == nil {
 		return nil, errors.New("could not find nodeinfo rel in well known response")
 	}
-aaaaaaaaaaaaaaaaa // do the second query
+    // TODO: do the second query
 	return nil, errors.New("not yet implemented")
 }
