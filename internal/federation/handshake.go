@@ -11,7 +11,7 @@ func (f *federator) Handshaking(username string, remoteAccountID *url.URL) bool 
 		return false
 	}
 
-	remoteIDs, ok := f.handshakes[username];
+	remoteIDs, ok := f.handshakes[username]
 	if !ok {
 		// user isn't handshaking with anyone, bail
 		return false

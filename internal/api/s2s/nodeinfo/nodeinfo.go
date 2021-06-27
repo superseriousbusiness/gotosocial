@@ -32,7 +32,7 @@ const (
 	// NodeInfoWellKnownPath is the base path for serving responses to nodeinfo lookup requests.
 	NodeInfoWellKnownPath = ".well-known/nodeinfo"
 	// NodeInfoBasePath is the path for serving nodeinfo responses.
-	NodeInfoBasePath      = "/nodeinfo/2.0"
+	NodeInfoBasePath = "/nodeinfo/2.0"
 )
 
 // Module implements the FederationModule interface
