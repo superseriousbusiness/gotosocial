@@ -27,7 +27,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	//
 	// This will only work with Mastodon-api compatible instances: Mastodon, some Pleroma instances, GoToSocial.
 	l.Debugf("trying to dereference instance %s by /api/v1/instance", iri.Host)
-	i, err = dereferenceByAPIV1Instance(t, c, iri)
+	i, err = dereferenceByAPIV1Instance(c, t, iri)
 	if err == nil {
 		l.Debugf("successfully dereferenced instance using /api/v1/instance")
 		return i, nil
@@ -37,7 +37,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	// If that doesn't work, try to dereference using /.well-known/nodeinfo.
 	// This will involve two API calls and return less info overall, but should be more widely compatible.
 	l.Debugf("trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
-	i, err = dereferenceByNodeInfo(t, c, iri)
+	i, err = dereferenceByNodeInfo(c, t, iri)
 	if err == nil {
 		l.Debugf("successfully dereferenced instance using /.well-known/nodeinfo")
 		return i, nil
@@ -58,7 +58,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	}, nil
 }
 
-func dereferenceByAPIV1Instance(t *transport, c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
+func dereferenceByAPIV1Instance(c context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
 	l := t.log.WithField("func", "dereferenceByAPIV1Instance")
 
 	cleanIRI := &url.URL{
@@ -131,13 +131,13 @@ func dereferenceByAPIV1Instance(t *transport, c context.Context, iri *url.URL) (
 	return i, nil
 }
 
-func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
-	niIRI, err := callNodeInfoWellKnown(t, c, iri)
+func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
+	niIRI, err := callNodeInfoWellKnown(c, t, iri)
 	if err != nil {
 		return nil, fmt.Errorf("dereferenceByNodeInfo: error during initial call to well-known nodeinfo: %s", err)
 	}
 
-	ni, err := callNodeInfo(t, c, niIRI)
+	ni, err := callNodeInfo(c, t, niIRI)
 	if err != nil {
 		return nil, fmt.Errorf("dereferenceByNodeInfo: error doing second call to nodeinfo uri %s: %s", niIRI.String(), err)
 	}
@@ -216,7 +216,7 @@ func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsm
 	return i, nil
 }
 
-func callNodeInfoWellKnown(t *transport, c context.Context, iri *url.URL) (*url.URL, error) {
+func callNodeInfoWellKnown(c context.Context, t *transport, iri *url.URL) (*url.URL, error) {
 	l := t.log.WithField("func", "callNodeInfoWellKnown")
 
 	cleanIRI := &url.URL{
@@ -281,7 +281,7 @@ func callNodeInfoWellKnown(t *transport, c context.Context, iri *url.URL) (*url.
 	return nodeinfoHref, nil
 }
 
-func callNodeInfo(t *transport, c context.Context, iri *url.URL) (*apimodel.Nodeinfo, error) {
+func callNodeInfo(c context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
 	l := t.log.WithField("func", "callNodeInfo")
 
 	l.Debugf("performing GET to %s", iri.String())

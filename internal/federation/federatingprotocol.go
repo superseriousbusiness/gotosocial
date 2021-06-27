@@ -136,7 +136,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		// we don't have an entry for this instance yet so dereference it
 		i, err = f.DereferenceRemoteInstance(username, &url.URL{
 			Scheme: publicKeyOwnerURI.Scheme,
-			Host: publicKeyOwnerURI.Host,
+			Host:   publicKeyOwnerURI.Host,
 		})
 		if err != nil {
 			return nil, false, fmt.Errorf("could not dereference new remote instance %s during AuthenticatePostInbox: %s", publicKeyOwnerURI.Host, err)
