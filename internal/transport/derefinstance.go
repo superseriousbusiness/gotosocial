@@ -13,6 +13,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
@@ -43,7 +44,18 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	}
 	l.Debugf("couldn't dereference instance using /.well-known/nodeinfo: %s", err)
 
-	return nil, fmt.Errorf("couldn't dereference instance %s using either /api/v1/instance or /.well-known/nodeinfo", iri.Host)
+	// we couldn't dereference the instance using any of the known methods, so just return a minimal representation
+	l.Debugf("returning minimal representation of instance %s", iri.Host)
+	id, err := id.NewRandomULID()
+	if err != nil {
+		return nil, fmt.Errorf("error creating new id for instance %s: %s", iri.Host, err)
+	}
+
+	return &gtsmodel.Instance{
+		ID:     id,
+		Domain: iri.Host,
+		URI:    iri.String(),
+	}, nil
 }
 
 func dereferenceByAPIV1Instance(t *transport, c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
@@ -120,7 +132,92 @@ func dereferenceByAPIV1Instance(t *transport, c context.Context, iri *url.URL) (
 }
 
 func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := t.log.WithField("func", "dereferenceByNodeInfo")
+	niIRI, err := callNodeInfoWellKnown(t, c, iri)
+	if err != nil {
+		return nil, fmt.Errorf("dereferenceByNodeInfo: error during initial call to well-known nodeinfo: %s", err)
+	}
+
+	ni, err := callNodeInfo(t, c, niIRI)
+	if err != nil {
+		return nil, fmt.Errorf("dereferenceByNodeInfo: error doing second call to nodeinfo uri %s: %s", niIRI.String(), err)
+	}
+
+	// we got a response of some kind! take what we can from it...
+	id, err := id.NewRandomULID()
+	if err != nil {
+		return nil, fmt.Errorf("dereferenceByNodeInfo: error creating new id for instance %s: %s", iri.Host, err)
+	}
+
+	// this is the bare minimum instance we'll return, and we'll add more stuff to it if we can
+	i := &gtsmodel.Instance{
+		ID:     id,
+		Domain: iri.Host,
+		URI:    iri.String(),
+	}
+
+	var title string
+	if i, present := ni.Metadata["nodeName"]; present {
+		// it's present, check it's a string
+		if v, ok := i.(string); ok {
+			// it is a string!
+			title = v
+		}
+	}
+	i.Title = title
+
+	var shortDescription string
+	if i, present := ni.Metadata["nodeDescription"]; present {
+		// it's present, check it's a string
+		if v, ok := i.(string); ok {
+			// it is a string!
+			shortDescription = v
+		}
+	}
+	i.ShortDescription = shortDescription
+
+	var contactEmail string
+	var contactAccountUsername string
+	if i, present := ni.Metadata["maintainer"]; present {
+		// it's present, check it's a map
+		if v, ok := i.(map[string]string); ok {
+			// see if there's an email in the map
+			if email, present := v["email"]; present {
+				if err := util.ValidateEmail(email); err == nil {
+					// valid email address
+					contactEmail = email
+				}
+			}
+			// see if there's a 'name' in the map
+			if name, present := v["name"]; present {
+				// name could be just a username, or could be a mention string eg @whatever@aaaa.com
+				username, _, err := util.ExtractMentionParts(name)
+				if err == nil {
+					// it was a mention string
+					contactAccountUsername = username
+				} else {
+					// not a mention string
+					contactAccountUsername = name
+				}
+			}
+		}
+	}
+	i.ContactEmail = contactEmail
+	i.ContactAccountUsername = contactAccountUsername
+
+	var software string
+	if ni.Software.Name != "" {
+		software = ni.Software.Name
+	}
+	if ni.Software.Version != "" {
+		software = software + " " + ni.Software.Version
+	}
+	i.Version = software
+
+	return i, nil
+}
+
+func callNodeInfoWellKnown(t *transport, c context.Context, iri *url.URL) (*url.URL, error) {
+	l := t.log.WithField("func", "callNodeInfoWellKnown")
 
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
@@ -150,7 +247,7 @@ func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsm
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
 	}
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -158,28 +255,72 @@ func dereferenceByNodeInfo(t *transport, c context.Context, iri *url.URL) (*gtsm
 	}
 
 	if len(b) == 0 {
-		return nil, errors.New("dereferenceByNodeInfo: response bytes was len 0")
+		return nil, errors.New("callNodeInfoWellKnown: response bytes was len 0")
 	}
 
 	wellKnownResp := &apimodel.WellKnownResponse{}
 	if err := json.Unmarshal(b, wellKnownResp); err != nil {
-		return nil, fmt.Errorf("dereferenceByNodeInfo: could not unmarshal server response as WellKnownResponse: %s", err)
+		return nil, fmt.Errorf("callNodeInfoWellKnown: could not unmarshal server response as WellKnownResponse: %s", err)
 	}
 
 	// look through the links for the first one that matches the nodeinfo schema, this is what we need
 	var nodeinfoHref *url.URL
 	for _, l := range wellKnownResp.Links {
-		if l.Href == "" || !strings.HasPrefix(l.Rel, "http://nodeinfo.diaspora.software/ns/schema") {
+		if l.Href == "" || !strings.HasPrefix(l.Rel, "http://nodeinfo.diaspora.software/ns/schema/2") {
 			continue
 		}
 		nodeinfoHref, err = url.Parse(l.Href)
 		if err != nil {
-			return nil, fmt.Errorf("dereferenceByNodeInfo: couldn't parse url %s: %s", l.Href, err)
+			return nil, fmt.Errorf("callNodeInfoWellKnown: couldn't parse url %s: %s", l.Href, err)
 		}
 	}
 	if nodeinfoHref == nil {
-		return nil, errors.New("could not find nodeinfo rel in well known response")
+		return nil, errors.New("callNodeInfoWellKnown: could not find nodeinfo rel in well known response")
 	}
-    // TODO: do the second query
-	return nil, errors.New("not yet implemented")
+
+	return nodeinfoHref, nil
+}
+
+func callNodeInfo(t *transport, c context.Context, iri *url.URL) (*apimodel.Nodeinfo, error) {
+	l := t.log.WithField("func", "callNodeInfo")
+
+	l.Debugf("performing GET to %s", iri.String())
+	req, err := http.NewRequest("GET", iri.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(c)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
+	req.Header.Set("Host", iri.Host)
+	t.getSignerMu.Lock()
+	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
+	t.getSignerMu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := t.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
+	}
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(b) == 0 {
+		return nil, errors.New("callNodeInfo: response bytes was len 0")
+	}
+
+	niResp := &apimodel.Nodeinfo{}
+	if err := json.Unmarshal(b, niResp); err != nil {
+		return nil, fmt.Errorf("callNodeInfo: could not unmarshal server response as Nodeinfo: %s", err)
+	}
+
+	return niResp, nil
 }
