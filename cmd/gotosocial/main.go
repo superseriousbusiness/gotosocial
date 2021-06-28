@@ -35,6 +35,7 @@ import (
 
 // Version is the software version of GtS being used
 var Version string
+
 // Commit is the git commit of GtS being used
 var Commit string
 
@@ -44,7 +45,7 @@ func main() {
 	defaults := config.GetDefaults()
 	app := &cli.App{
 		Version: Version + " " + Commit[:7],
-		Usage: "a fediverse social media server",
+		Usage:   "a fediverse social media server",
 		Flags: []cli.Flag{
 			// GENERAL FLAGS
 			&cli.StringFlag{
