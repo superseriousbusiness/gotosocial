@@ -33,11 +33,17 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Version is the software version of GtS being used
+var Version string
+// Commit is the git commit of GtS being used
+var Commit string
+
 func main() {
 	flagNames := config.GetFlagNames()
 	envNames := config.GetEnvNames()
 	defaults := config.GetDefaults()
 	app := &cli.App{
+		Version: Version + " " + Commit[:7],
 		Usage: "a fediverse social media server",
 		Flags: []cli.Flag{
 			// GENERAL FLAGS
@@ -399,7 +405,7 @@ func runAction(c *cli.Context, a cliactions.GTSAction) error {
 		return fmt.Errorf("error creating config: %s", err)
 	}
 	// ... and the flags set on the *cli.Context by urfave
-	if err := conf.ParseCLIFlags(c); err != nil {
+	if err := conf.ParseCLIFlags(c, c.App.Version); err != nil {
 		return fmt.Errorf("error parsing config: %s", err)
 	}
 

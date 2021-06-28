@@ -30,7 +30,7 @@ To get started, you first need to have Go installed. GTS was developed with Go 1
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
-Once that's done, you can try building the project: `go build ./cmd/gotosocial`. This will build the `gotosocial` binary.
+Once that's done, you can try building the project: `./build.sh`. This will build the `gotosocial` binary.
 
 If there are no errors, great, you're good to go!
 

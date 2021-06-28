@@ -1,7 +1,5 @@
 package config
 
-const softwareVersion = "0.1.0-SNAPSHOT"
-
 // TestDefault returns a default config for testing
 func TestDefault() *Config {
 	defaults := GetTestDefaults()
@@ -121,7 +119,6 @@ func GetDefaults() Defaults {
 		ConfigPath:      "",
 		Host:            "",
 		Protocol:        "https",
-		SoftwareVersion: softwareVersion,
 
 		DbType:     "postgres",
 		DbAddress:  "localhost",
@@ -168,7 +165,6 @@ func GetTestDefaults() Defaults {
 		ConfigPath:      "",
 		Host:            "localhost:8080",
 		Protocol:        "http",
-		SoftwareVersion: softwareVersion,
 
 		DbType:     "postgres",
 		DbAddress:  "localhost",

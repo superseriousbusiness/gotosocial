@@ -1,4 +1,6 @@
 FROM golang:1.16.4-alpine3.13 AS builder
+RUN apk update && apk upgrade --no-cache
+RUN apk add git
 
 # create build dir
 RUN mkdir -p /go/src/github.com/superseriousbusiness/gotosocial
@@ -11,8 +13,15 @@ ADD testrig /go/src/github.com/superseriousbusiness/gotosocial/testrig
 ADD go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 ADD go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
 
+# move .git dir and version for versioning
+ADD .git /go/src/github.com/superseriousbusiness/gotosocial/.git
+ADD version /go/src/github.com/superseriousbusiness/gotosocial/version
+
+# move the build script
+ADD build.sh /go/src/github.com/superseriousbusiness/gotosocial/build.sh
+
 # do the build step
-RUN go build ./cmd/gotosocial
+RUN ./build.sh
 
 FROM alpine:3.13 AS executor
 RUN apk update && apk upgrade --no-cache

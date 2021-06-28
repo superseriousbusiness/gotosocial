@@ -106,7 +106,7 @@ func loadFromFile(path string) (*Config, error) {
 }
 
 // ParseCLIFlags sets flags on the config using the provided Flags object
-func (c *Config) ParseCLIFlags(f KeyedFlags) error {
+func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	fn := GetFlagNames()
 
 	// For all of these flags, we only want to set them on the config if:
@@ -260,6 +260,8 @@ func (c *Config) ParseCLIFlags(f KeyedFlags) error {
 	c.AccountCLIFlags[UsernameFlag] = f.String(UsernameFlag)
 	c.AccountCLIFlags[EmailFlag] = f.String(EmailFlag)
 	c.AccountCLIFlags[PasswordFlag] = f.String(PasswordFlag)
+
+	c.SoftwareVersion = version
 
 	return nil
 }

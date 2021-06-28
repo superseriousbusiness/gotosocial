@@ -30,7 +30,11 @@ docker run -d --network host --user postgres -e POSTGRES_PASSWORD=some_password 
 
 ### 5: Build the Binary
 
-On your local machine (not your server), with Go installed, clone the GoToSocial repository, and build the binary with `go build ./cmd/gotosocial`.
+On your local machine (not your server), with Go installed, clone the GoToSocial repository, and build the binary with the provided build script:
+
+```bash
+./build/sh
+```
 
 ### 6: Prepare VPS
 
