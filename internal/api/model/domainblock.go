@@ -20,6 +20,7 @@ package model
 
 // DomainBlock represents a block on one domain
 type DomainBlock struct {
+	ID             string `json:"id"`
 	Domain         string `json:"domain"`
 	Obfuscate      bool   `json:"obfuscate"`
 	PrivateComment string `json:"private_comment"`

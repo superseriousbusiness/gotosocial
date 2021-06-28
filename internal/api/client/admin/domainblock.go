@@ -57,3 +57,8 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, domainBlock)
 }
+
+func validateCreateDomainBlock(form *model.DomainBlockCreateRequest) error {
+	// TODO: add some validation here later if necessary
+	return nil
+}

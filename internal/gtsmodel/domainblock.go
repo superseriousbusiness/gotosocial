@@ -25,7 +25,7 @@ type DomainBlock struct {
 	// ID of this block in the database
 	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// blocked domain
-	Domain string `pg:",notnull"`
+	Domain string `pg:",pk,notnull,unique"`
 	// When was this block created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// When was this block updated

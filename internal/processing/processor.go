@@ -32,8 +32,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/status"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -81,6 +82,8 @@ type Processor interface {
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
+	AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
@@ -210,6 +213,7 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
+	adminProcessor     admin.Processor
 	statusProcessor    status.Processor
 	streamingProcessor streaming.Processor
 }
@@ -222,6 +226,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
+	adminProcessor := admin.New(db, tc, mediaHandler, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -238,6 +243,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db, log),
 
+		adminProcessor:     adminProcessor,
 		statusProcessor:    statusProcessor,
 		streamingProcessor: streamingProcessor,
 	}

@@ -644,3 +644,16 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 		Status:    mastoStatus,
 	}, nil
 }
+
+func (c *converter) DomainBlockToMasto(b *gtsmodel.DomainBlock) (*model.DomainBlock, error) {
+	return &model.DomainBlock{
+		ID:             b.ID,
+		Domain:         b.Domain,
+		Obfuscate:      b.Obfuscate,
+		PrivateComment: b.PrivateComment,
+		PublicComment:  b.PublicComment,
+		SubscriptionID: b.SubscriptionID,
+		CreatedBy:      b.CreatedByAccountID,
+		CreatedAt:      b.CreatedAt.Format(time.RFC3339),
+	}, nil
+}
