@@ -20,13 +20,11 @@ package gtsmodel
 
 import "time"
 
-// DomainBlock represents a federation block against a particular domain, of varying severity.
+// DomainBlock represents a federation block against a particular domain
 type DomainBlock struct {
 	// ID of this block in the database
 	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
-	// Domain to block. If ANY PART of the candidate domain contains this string, it will be blocked.
-	// For example: 'example.org' also blocks 'gts.example.org'. '.com' blocks *any* '.com' domains.
-	// TODO: implement wildcards here
+	// blocked domain
 	Domain string `pg:",notnull"`
 	// When was this block created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
@@ -34,14 +32,12 @@ type DomainBlock struct {
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Account ID of the creator of this block
 	CreatedByAccountID string `pg:"type:CHAR(26),notnull"`
-	// TODO: define this
-	Severity int
-	// Reject media from this domain?
-	RejectMedia bool
-	// Reject reports from this domain?
-	RejectReports bool
 	// Private comment on this block, viewable to admins
 	PrivateComment string
 	// Public comment on this block, viewable (optionally) by everyone
 	PublicComment string
+	// whether the domain name should appear obfuscated when displaying it publicly
+	Obfuscate bool
+	// if this block was created through a subscription, what's the subscription ID?
+	SubscriptionID string `pg:"type:CHAR(26)"`
 }

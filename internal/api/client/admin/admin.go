@@ -29,10 +29,12 @@ import (
 )
 
 const (
-	// BasePath is the base API path for this module
+	// BasePath is the base API path for this module.
 	BasePath = "/api/v1/admin"
-	// EmojiPath is used for posting/deleting custom emojis
+	// EmojiPath is used for posting/deleting custom emojis.
 	EmojiPath = BasePath + "/custom_emojis"
+	// DomainBlocksPath is used for posting domain blocks.
+	DomainBlocksPath = BasePath + "/domain_blocks"
 )
 
 // Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
@@ -54,5 +56,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, EmojiPath, m.emojiCreatePOSTHandler)
+	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	return nil
 }
