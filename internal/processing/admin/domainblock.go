@@ -125,7 +125,7 @@ selectAccountsLoop:
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				// no accounts left for this instance so we're done
-				l.Info("domainBlockProcessSideEffects: done iterating through accounts for domain %s", block.Domain)
+				l.Infof("domainBlockProcessSideEffects: done iterating through accounts for domain %s", block.Domain)
 				break selectAccountsLoop
 			}
 			// an actual error has occurred
