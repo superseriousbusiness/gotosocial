@@ -65,11 +65,6 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetWhere(where []Where, i interface{}) error
 
-	// // GetWhereMany gets one entry where key = value for *ALL* parameters passed as "where".
-	// // That is, if you pass 2 'where' entries, with 1 being Key username and Value test, and the second
-	// // being Key domain and Value example.org, only entries will be returned where BOTH conditions are true.
-	// GetWhereMany(i interface{}, where ...model.Where) error
-
 	// GetAll will try to get all entries of type i.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
@@ -261,6 +256,10 @@ type DB interface {
 
 	// GetDomainCountForInstance returns the number of known instances known that the given domain federates with.
 	GetDomainCountForInstance(domain string) (int, error)
+
+	// GetAccountsForInstance returns a slice of accounts from the given instance, arranged by ID.
+	GetAccountsForInstance(domain string, maxID string, limit int) ([]*gtsmodel.Account, error)
+
 	/*
 		USEFUL CONVERSION FUNCTIONS
 	*/

@@ -109,6 +109,6 @@ func (p *processor) domainBlockProcessSideEffects(block *gtsmodel.DomainBlock) {
 		l.Errorf("domainBlockProcessSideEffects: db error removing instance account: %s", err)
 	}
 
-	aaaaaaaaa
 	// TODO: delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)
+	
 }

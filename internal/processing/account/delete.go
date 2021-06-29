@@ -16,16 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package account
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-)
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-// NewTestFederator returns a federator with the given database and (mock!!) transport controller.
-func NewTestFederator(db db.DB, tc transport.Controller, storage blob.Storage) federation.Federator {
-	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db), NewTestMediaHandler(db, storage))
+func (p *processor) Delete(account *gtsmodel.Account) error {
+   return nil
 }

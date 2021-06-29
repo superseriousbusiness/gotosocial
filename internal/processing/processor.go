@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
@@ -213,6 +214,7 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
+	accountProcessor   account.Processor
 	adminProcessor     admin.Processor
 	statusProcessor    status.Processor
 	streamingProcessor streaming.Processor
@@ -226,7 +228,8 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
-	adminProcessor := admin.New(db, tc, mediaHandler, config, log)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
+	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -243,6 +246,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db, log),
 
+		accountProcessor:   accountProcessor,
 		adminProcessor:     adminProcessor,
 		statusProcessor:    statusProcessor,
 		streamingProcessor: streamingProcessor,

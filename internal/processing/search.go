@@ -176,7 +176,7 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 			}
 
 			// properly dereference everything in the status (media attachments etc)
-			if err := p.dereferenceStatusFields(status, authed.Account.Username); err != nil {
+			if err := p.federator.DereferenceStatusFields(status, authed.Account.Username); err != nil {
 				return nil, fmt.Errorf("error dereferencing status fields: %s", err)
 			}
 
@@ -223,7 +223,7 @@ func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve
 			return nil, fmt.Errorf("searchAccountByURI: error inserting account with uri %s: %s", uri.String(), err)
 		}
 
-		if err := p.dereferenceAccountFields(account, authed.Account.Username, false); err != nil {
+		if err := p.federator.DereferenceAccountFields(account, authed.Account.Username, false); err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error further dereferencing account with uri %s: %s", uri.String(), err)
 		}
 
@@ -301,7 +301,7 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 		}
 
 		// properly dereference all the fields on the account immediately
-		if err := p.dereferenceAccountFields(foundAccount, authed.Account.Username, true); err != nil {
+		if err := p.federator.DereferenceAccountFields(foundAccount, authed.Account.Username, true); err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error dereferencing fields on account with uri %s: %s", acctURI.String(), err)
 		}
 	}

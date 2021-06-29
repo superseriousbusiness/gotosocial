@@ -39,17 +39,19 @@ type processor struct {
 	tc            typeutils.TypeConverter
 	config        *config.Config
 	mediaHandler  media.Handler
+	fromClientAPI chan gtsmodel.FromClientAPI
 	db            db.DB
 	log           *logrus.Logger
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan gtsmodel.FromClientAPI, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
-		tc:            tc,
-		config:        config,
-		mediaHandler:  mediaHandler,
-		db:            db,
-		log:           log,
+		tc:           tc,
+		config:       config,
+		mediaHandler: mediaHandler,
+		fromClientAPI: fromClientAPI,
+		db:           db,
+		log:          log,
 	}
 }
