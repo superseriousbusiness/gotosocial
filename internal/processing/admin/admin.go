@@ -47,11 +47,11 @@ type processor struct {
 // New returns a new admin processor.
 func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan gtsmodel.FromClientAPI, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
-		tc:           tc,
-		config:       config,
-		mediaHandler: mediaHandler,
+		tc:            tc,
+		config:        config,
+		mediaHandler:  mediaHandler,
 		fromClientAPI: fromClientAPI,
-		db:           db,
-		log:          log,
+		db:            db,
+		log:           log,
 	}
 }

@@ -116,10 +116,10 @@ func (p *processor) initiateDomainBlockSideEffects(block *gtsmodel.DomainBlock) 
 
 	// delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)
 
-	limit := 20 // just select 20 accounts at a time so we don't nuke our DB/mem with one huge query
+	limit := 20      // just select 20 accounts at a time so we don't nuke our DB/mem with one huge query
 	var maxID string // this is initially an empty string so we'll start at the top of accounts list (sorted by ID)
 
-	selectAccountsLoop:
+selectAccountsLoop:
 	for {
 		accounts, err := p.db.GetAccountsForInstance(block.Domain, maxID, limit)
 		if err != nil {
@@ -143,7 +143,7 @@ func (p *processor) initiateDomainBlockSideEffects(block *gtsmodel.DomainBlock) 
 			}
 
 			// if this is the last account in the slice, set the maxID appropriately for the next query
-			if i == len(accounts) -1 {
+			if i == len(accounts)-1 {
 				maxID = a.ID
 			}
 		}

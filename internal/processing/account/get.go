@@ -36,14 +36,14 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 		return nil, fmt.Errorf("db error: %s", err)
 	}
 
-		// lazily dereference things on the account if it hasn't been done yet
-		var requestingUsername string
-		if requestingAccount != nil {
-			requestingUsername = requestingAccount.Username
-		}
-		if err := p.federator.DereferenceAccountFields(targetAccount, requestingUsername, false); err != nil {
-			p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
-		}
+	// lazily dereference things on the account if it hasn't been done yet
+	var requestingUsername string
+	if requestingAccount != nil {
+		requestingUsername = requestingAccount.Username
+	}
+	if err := p.federator.DereferenceAccountFields(targetAccount, requestingUsername, false); err != nil {
+		p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
+	}
 
 	var mastoAccount *apimodel.Account
 	var err error
