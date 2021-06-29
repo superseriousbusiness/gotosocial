@@ -64,8 +64,8 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 			}
 		}
 
-		// process the side effects of the domain block asynchronously since it might take a little while
-		go p.domainBlockProcessSideEffects(domainBlock) // TODO: add this to a queuing system so it can retry/resume
+		// process the side effects of the domain block asynchronously since it might take a while
+		go p.initiateDomainBlockSideEffects(domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
 	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock)
@@ -76,9 +76,14 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 	return mastoDomainBlock, nil
 }
 
-func (p *processor) domainBlockProcessSideEffects(block *gtsmodel.DomainBlock) {
+// initiateDomainBlockSideEffects should be called asynchronously, to process the side effects of a domain block:
+//
+// 1. Strip most info away from the instance entry for the domain.
+// 2. Delete the instance account for that instance if it exists.
+// 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
+func (p *processor) initiateDomainBlockSideEffects(block *gtsmodel.DomainBlock) {
 	l := p.log.WithFields(logrus.Fields{
-		"func": "domainBlockProcessSideEffects",
+		"func":   "domainBlockProcessSideEffects",
 		"domain": block.Domain,
 	})
 
@@ -101,7 +106,7 @@ func (p *processor) domainBlockProcessSideEffects(block *gtsmodel.DomainBlock) {
 		if err := p.db.UpdateByID(instance.ID, instance); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
-		l.Debug("instance entry updated")
+		l.Debug("domainBlockProcessSideEffects: instance entry updated")
 	}
 
 	// if we have an instance account for this instance, delete it
@@ -109,6 +114,38 @@ func (p *processor) domainBlockProcessSideEffects(block *gtsmodel.DomainBlock) {
 		l.Errorf("domainBlockProcessSideEffects: db error removing instance account: %s", err)
 	}
 
-	// TODO: delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)
-	
+	// delete accounts through the normal account deletion system (which should also delete media + posts + remove posts from timelines)
+
+	limit := 20 // just select 20 accounts at a time so we don't nuke our DB/mem with one huge query
+	var maxID string // this is initially an empty string so we'll start at the top of accounts list (sorted by ID)
+
+	selectAccountsLoop:
+	for {
+		accounts, err := p.db.GetAccountsForInstance(block.Domain, maxID, limit)
+		if err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// no accounts left for this instance so we're done
+				l.Info("domainBlockProcessSideEffects: done iterating through accounts for domain %s", block.Domain)
+				break selectAccountsLoop
+			}
+			// an actual error has occurred
+			l.Errorf("domainBlockProcessSideEffects: db error selecting accounts for domain %s: %s", block.Domain, err)
+		}
+
+		for i, a := range accounts {
+			// pass the account delete through the client api channel for processing
+			p.fromClientAPI <- gtsmodel.FromClientAPI{
+				APObjectType:   gtsmodel.ActivityStreamsPerson,
+				APActivityType: gtsmodel.ActivityStreamsDelete,
+				GTSModel:       a,
+				OriginAccount:  a,
+				TargetAccount:  a,
+			}
+
+			// if this is the last account in the slice, set the maxID appropriately for the next query
+			if i == len(accounts) -1 {
+				maxID = a.ID
+			}
+		}
+	}
 }
