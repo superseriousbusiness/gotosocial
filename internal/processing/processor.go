@@ -261,14 +261,18 @@ func (p *processor) Start() error {
 			select {
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
-				if err := p.processFromClientAPI(clientMsg); err != nil {
-					p.log.Error(err)
-				}
+				go func() {
+					if err := p.processFromClientAPI(clientMsg); err != nil {
+						p.log.Error(err)
+					}
+				}()
 			case federatorMsg := <-p.fromFederator:
 				p.log.Infof("received message FROM federator: %+v", federatorMsg)
-				if err := p.processFromFederator(federatorMsg); err != nil {
-					p.log.Error(err)
-				}
+				go func() {
+					if err := p.processFromFederator(federatorMsg); err != nil {
+						p.log.Error(err)
+					}
+				}()
 			case <-p.stop:
 				break DistLoop
 			}
