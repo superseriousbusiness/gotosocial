@@ -42,7 +42,13 @@ type Federator interface {
 	FederatingDB() federatingdb.DB
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
+	//
+	// If the request is valid and passes authentication, the URL of the key owner ID will be returned, as well as true, and nil.
+	//
+	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
+	//
+	// If something goes wrong during authentication, nil, false, and an error will be returned.
+	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, bool, error)
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
 	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
@@ -97,6 +103,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
+		mediaHandler:        mediaHandler,
 		log:                 log,
 		handshakeSync:       &sync.Mutex{},
 	}

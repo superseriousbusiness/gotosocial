@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -59,6 +60,10 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 }
 
 func validateCreateDomainBlock(form *model.DomainBlockCreateRequest) error {
-	// TODO: add some validation here later if necessary
+	// add some more validation here later if necessary
+	if form.Domain == "" {
+		return errors.New("empty domain provided")
+	}
+
 	return nil
 }

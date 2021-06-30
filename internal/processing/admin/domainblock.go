@@ -35,7 +35,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 	domainBlock := &gtsmodel.DomainBlock{}
 	err := p.db.GetWhere([]db.Where{{Key: "domain", Value: form.Domain, CaseInsensitive: true}}, domainBlock)
 	if err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if _, ok := err.(db.ErrNoEntries); !ok {
 			// something went wrong in the DB
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error checking for existence of domain block %s: %s", form.Domain, err))
 		}
@@ -130,6 +130,7 @@ selectAccountsLoop:
 			}
 			// an actual error has occurred
 			l.Errorf("domainBlockProcessSideEffects: db error selecting accounts for domain %s: %s", block.Domain, err)
+			break selectAccountsLoop
 		}
 
 		for i, a := range accounts {

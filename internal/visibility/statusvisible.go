@@ -2,6 +2,7 @@ package visibility
 
 import (
 	"errors"
+	"net/url"
 
 	"fmt"
 
@@ -16,6 +17,15 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		"statusID": targetStatus.ID,
 	})
 
+	uri, err := url.Parse(targetStatus.URI)
+	if err != nil {
+		return false, fmt.Errorf("StatusVisible: error parsing uri: %s", targetStatus.URI)
+	}
+	if blocked, err := f.blockedDomain(uri.Host); blocked || err != nil {
+		l.Debugf("domain %s is blocked", uri.Host)
+		return blocked, err
+	}
+aaaaaaaaaa
 	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)

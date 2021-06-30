@@ -21,6 +21,10 @@ func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *u
 	f.startHandshake(username, remoteAccountID)
 	defer f.stopHandshake(username, remoteAccountID)
 
+	if blocked, err := f.blockedDomain(remoteAccountID.Host); blocked || err != nil {
+		return nil, fmt.Errorf("DereferenceRemoteAccount: domain %s is blocked", remoteAccountID.Host)
+	}
+
 	transport, err := f.GetTransportForUser(username)
 	if err != nil {
 		return nil, fmt.Errorf("transport err: %s", err)
@@ -66,6 +70,10 @@ func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *u
 }
 
 func (f *federator) DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error) {
+	if blocked, err := f.blockedDomain(remoteStatusID.Host); blocked || err != nil {
+		return nil, fmt.Errorf("DereferenceRemoteStatus: domain %s is blocked", remoteStatusID.Host)
+	}
+
 	transport, err := f.GetTransportForUser(username)
 	if err != nil {
 		return nil, fmt.Errorf("transport err: %s", err)
@@ -148,6 +156,10 @@ func (f *federator) DereferenceRemoteStatus(username string, remoteStatusID *url
 }
 
 func (f *federator) DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
+	if blocked, err := f.blockedDomain(remoteInstanceURI.Host); blocked || err != nil {
+		return nil, fmt.Errorf("DereferenceRemoteInstance: domain %s is blocked", remoteInstanceURI.Host)
+	}
+
 	transport, err := f.GetTransportForUser(username)
 	if err != nil {
 		return nil, fmt.Errorf("transport err: %s", err)
@@ -185,6 +197,14 @@ func (f *federator) DereferenceStatusFields(status *gtsmodel.Status, requestingU
 		"status": fmt.Sprintf("%+v", status),
 	})
 	l.Debug("entering function")
+
+	statusURI, err := url.Parse(status.URI)
+	if err != nil {
+		return fmt.Errorf("DereferenceStatusFields: couldn't parse status URI %s: %s", status.URI, err)
+	}
+	if blocked, err := f.blockedDomain(statusURI.Host); blocked || err != nil {
+		return fmt.Errorf("DereferenceStatusFields: domain %s is blocked", statusURI.Host)
+	}
 
 	t, err := f.GetTransportForUser(requestingUsername)
 	if err != nil {
@@ -321,6 +341,14 @@ func (f *federator) DereferenceAccountFields(account *gtsmodel.Account, requesti
 		"requestingUsername": requestingUsername,
 	})
 
+	accountURI, err := url.Parse(account.URI)
+	if err != nil {
+		return fmt.Errorf("DereferenceAccountFields: couldn't parse account URI %s: %s", account.URI, err)
+	}
+	if blocked, err := f.blockedDomain(accountURI.Host); blocked || err != nil {
+		return fmt.Errorf("DereferenceAccountFields: domain %s is blocked", accountURI.Host)
+	}
+
 	t, err := f.GetTransportForUser(requestingUsername)
 	if err != nil {
 		return fmt.Errorf("error getting transport for user: %s", err)
@@ -342,12 +370,20 @@ func (f *federator) DereferenceAccountFields(account *gtsmodel.Account, requesti
 func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error {
 	if announce.GTSBoostedStatus == nil || announce.GTSBoostedStatus.URI == "" {
 		// we can't do anything unfortunately
-		return errors.New("dereferenceAnnounce: no URI to dereference")
+		return errors.New("DereferenceAnnounce: no URI to dereference")
+	}
+
+	boostedStatusURI, err := url.Parse(announce.GTSBoostedStatus.URI)
+	if err != nil {
+		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.GTSBoostedStatus.URI, err)
+	}
+	if blocked, err := f.blockedDomain(boostedStatusURI.Host); blocked || err != nil {
+		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedStatusURI.Host)
 	}
 
 	// check if we already have the boosted status in the database
 	boostedStatus := &gtsmodel.Status{}
-	err := f.db.GetWhere([]db.Where{{Key: "uri", Value: announce.GTSBoostedStatus.URI}}, boostedStatus)
+	err = f.db.GetWhere([]db.Where{{Key: "uri", Value: announce.GTSBoostedStatus.URI}}, boostedStatus)
 	if err == nil {
 		// nice, we already have it so we don't actually need to dereference it from remote
 		announce.Content = boostedStatus.Content
@@ -364,12 +400,7 @@ func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 	}
 
 	// we don't have it so we need to dereference it
-	remoteStatusURI, err := url.Parse(announce.GTSBoostedStatus.URI)
-	if err != nil {
-		return fmt.Errorf("dereferenceAnnounce: error parsing url %s: %s", announce.GTSBoostedStatus.URI, err)
-	}
-
-	statusable, err := f.DereferenceRemoteStatus(requestingUsername, remoteStatusURI)
+	statusable, err := f.DereferenceRemoteStatus(requestingUsername, boostedStatusURI)
 	if err != nil {
 		return fmt.Errorf("dereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.GTSBoostedStatus.URI, err)
 	}
@@ -460,6 +491,14 @@ func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 // SIDE EFFECTS: remote header and avatar will be stored in local storage, and the database will be updated
 // to reflect the creation of these new attachments.
 func (f *federator) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t transport.Transport, refresh bool) error {
+	accountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("fetchHeaderAndAviForAccount: couldn't parse account URI %s: %s", targetAccount.URI, err)
+	}
+	if blocked, err := f.blockedDomain(accountURI.Host); blocked || err != nil {
+		return fmt.Errorf("fetchHeaderAndAviForAccount: domain %s is blocked", accountURI.Host)
+	}
+
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
 		a, err := f.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.AvatarRemoteURL,

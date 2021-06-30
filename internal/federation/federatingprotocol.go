@@ -119,10 +119,15 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, fmt.Errorf("could not fetch requested account with username %s: %s", username, err)
 	}
 
-	publicKeyOwnerURI, err := f.AuthenticateFederatedRequest(requestedAccount.Username, r)
+	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(requestedAccount.Username, r)
 	if err != nil {
 		l.Debugf("request not authenticated: %s", err)
-		return ctx, false, fmt.Errorf("not authenticated: %s", err)
+		return ctx, false, err
+	}
+
+	if !authenticated {
+		w.WriteHeader(http.StatusForbidden)
+		return ctx, false, nil
 	}
 
 	// authentication has passed, so add an instance entry for this instance if it hasn't been done already
@@ -230,6 +235,14 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	}
 
 	for _, uri := range actorIRIs {
+		blockedDomain, err := f.blockedDomain(uri.Host);
+		if err != nil {
+			return false, fmt.Errorf("error checking domain block: %s", err)
+		}
+		if blockedDomain {
+			return true, nil
+		}
+
 		a := &gtsmodel.Account{}
 		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, a); err != nil {
 			_, ok := err.(db.ErrNoEntries)

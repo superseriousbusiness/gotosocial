@@ -115,7 +115,7 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 //
 // Also note that this function *does not* dereference the remote account that the signature key is associated with.
 // Other functions should use the returned URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *http.Request) (*url.URL, error) {
+func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *http.Request) (*url.URL, bool, error) {
 
 	var publicKey interface{}
 	var pkOwnerURI *url.URL
@@ -126,23 +126,24 @@ func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *ht
 
 	verifier, err := httpsig.NewVerifier(r)
 	if err != nil {
-		return nil, fmt.Errorf("could not create http sig verifier: %s", err)
+		return nil, false, fmt.Errorf("could not create http sig verifier: %s", err)
 	}
 
 	// The key ID should be given in the signature so that we know where to fetch it from the remote server.
 	// This will be something like https://example.org/users/whatever_requesting_user#main-key
 	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
 	if err != nil {
-		return nil, fmt.Errorf("could not parse key id into a url: %s", err)
+		return nil, false, fmt.Errorf("could not parse key id into a url: %s", err)
 	}
 
 	// if the domain is blocked we want to make as few calls towards it as possible, so already bail here if that's the case!
 	blockedDomain, err := f.blockedDomain(requestingPublicKeyID.Host)
 	if err != nil {
-		return nil, fmt.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
+		return nil, false, fmt.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
 	}
 	if blockedDomain {
-		return nil, fmt.Errorf("host %s was domain blocked, aborting auth", requestingPublicKeyID.Host)
+		f.log.Infof("domain %s is blocked", requestingPublicKeyID.Host)
+		return nil, false, nil
 	}
 
 	requestingRemoteAccount := &gtsmodel.Account{}
@@ -152,12 +153,12 @@ func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *ht
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
 		if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
-			return nil, fmt.Errorf("couldn't get local account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err)
+			return nil, false, fmt.Errorf("couldn't get local account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err)
 		}
 		publicKey = requestingLocalAccount.PublicKey
 		pkOwnerURI, err = url.Parse(requestingLocalAccount.URI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing url %s: %s", requestingLocalAccount.URI, err)
+			return nil, false, fmt.Errorf("error parsing url %s: %s", requestingLocalAccount.URI, err)
 		}
 	} else if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
 		// REMOTE ACCOUNT REQUEST WITH KEY CACHED LOCALLY
@@ -165,7 +166,7 @@ func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *ht
 		publicKey = requestingRemoteAccount.PublicKey
 		pkOwnerURI, err = url.Parse(requestingRemoteAccount.URI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing url %s: %s", requestingRemoteAccount.URI, err)
+			return nil, false, fmt.Errorf("error parsing url %s: %s", requestingRemoteAccount.URI, err)
 		}
 	} else {
 		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
@@ -173,72 +174,55 @@ func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *ht
 		// so we need to authenticate the request properly by dereferencing the remote key
 		transport, err := f.GetTransportForUser(requestedUsername)
 		if err != nil {
-			return nil, fmt.Errorf("transport err: %s", err)
+			return nil, false, fmt.Errorf("transport err: %s", err)
 		}
 
 		// The actual http call to the remote server is made right here in the Dereference function.
 		b, err := transport.Dereference(context.Background(), requestingPublicKeyID)
 		if err != nil {
-			return nil, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
+			return nil, false, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
 		}
 
 		// if the key isn't in the response, we can't authenticate the request
 		requestingPublicKey, err := getPublicKeyFromResponse(context.Background(), b, requestingPublicKeyID)
 		if err != nil {
-			return nil, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
+			return nil, false, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
 		}
 
 		// we should be able to get the actual key embedded in the vocab.W3IDSecurityV1PublicKey
 		pkPemProp := requestingPublicKey.GetW3IDSecurityV1PublicKeyPem()
 		if pkPemProp == nil || !pkPemProp.IsXMLSchemaString() {
-			return nil, errors.New("publicKeyPem property is not provided or it is not embedded as a value")
+			return nil, false, errors.New("publicKeyPem property is not provided or it is not embedded as a value")
 		}
 
 		// and decode the PEM so that we can parse it as a golang public key
 		pubKeyPem := pkPemProp.Get()
 		block, _ := pem.Decode([]byte(pubKeyPem))
 		if block == nil || block.Type != "PUBLIC KEY" {
-			return nil, errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type")
+			return nil, false, errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type")
 		}
 
 		publicKey, err = x509.ParsePKIXPublicKey(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
+			return nil, false, fmt.Errorf("could not parse public key from block bytes: %s", err)
 		}
 
 		// all good! we just need the URI of the key owner to return
 		pkOwnerProp := requestingPublicKey.GetW3IDSecurityV1Owner()
 		if pkOwnerProp == nil || !pkOwnerProp.IsIRI() {
-			return nil, errors.New("publicKeyOwner property is not provided or it is not embedded as a value")
+			return nil, false, errors.New("publicKeyOwner property is not provided or it is not embedded as a value")
 		}
 		pkOwnerURI = pkOwnerProp.GetIRI()
 	}
 	if publicKey == nil {
-		return nil, errors.New("returned public key was empty")
+		return nil, false, errors.New("returned public key was empty")
 	}
 
 	// do the actual authentication here!
 	algo := httpsig.RSA_SHA256 // TODO: make this more robust
 	if err := verifier.Verify(publicKey, algo); err != nil {
-		return nil, fmt.Errorf("error verifying key %s: %s", requestingPublicKeyID.String(), err)
+		return nil, false, nil
 	}
 
-	return pkOwnerURI, nil
-}
-
-func (f *federator) blockedDomain(host string) (bool, error) {
-	b := &gtsmodel.DomainBlock{}
-	err := f.db.GetWhere([]db.Where{{Key: "domain", Value: host, CaseInsensitive: true}}, b)
-	if err == nil {
-		// block exists
-		return true, nil
-	}
-
-	if _, ok := err.(db.ErrNoEntries); ok {
-		// there are no entries so there's no block
-		return false, nil
-	}
-
-	// there's an actual error
-	return false, err
+	return pkOwnerURI, true, nil
 }

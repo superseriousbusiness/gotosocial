@@ -106,8 +106,8 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 		}
 	} else if util.IsUserPath(request.URL) {
 		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
-		requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
-		if err != nil {
+		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+		if err != nil || !authenticated {
 			return nil, gtserror.NewErrorNotAuthorized(err)
 		}
 
@@ -152,8 +152,8 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
-	if err != nil {
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil || !authenticated {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
@@ -197,8 +197,8 @@ func (p *processor) GetFediFollowing(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
-	if err != nil {
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil || !authenticated {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
@@ -242,8 +242,8 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 	}
 
 	// authenticate the request
-	requestingAccountURI, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
-	if err != nil {
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	if err != nil || !authenticated {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
@@ -356,6 +356,5 @@ func (p *processor) GetNodeInfo(request *http.Request) (*apimodel.Nodeinfo, gtse
 
 func (p *processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
 	contextWithChannel := context.WithValue(ctx, util.APFromFederatorChanKey, p.fromFederator)
-	posted, err := p.federator.FederatingActor().PostInbox(contextWithChannel, w, r)
-	return posted, err
+	return p.federator.FederatingActor().PostInbox(contextWithChannel, w, r)
 }
