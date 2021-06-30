@@ -21,6 +21,7 @@ package processing
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -158,22 +159,22 @@ type Processor interface {
 
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
-	GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
-	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+	GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode)
 
 	// GetNodeInfoRel returns a well known response giving the path to node info.
 	GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)

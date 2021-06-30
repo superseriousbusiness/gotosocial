@@ -84,7 +84,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	fileServerModule := fileserver.New(c, processor, log)
 	adminModule := admin.New(c, processor, log)
 	statusModule := status.New(c, processor, log)
-	securityModule := security.New(c, log)
+	securityModule := security.New(c, dbService, log)
 	streamingModule := streaming.New(c, processor, log)
 
 	apis := []api.ClientModule{

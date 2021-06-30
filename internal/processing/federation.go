@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func (p *processor) dereferenceFediRequest(username string, requestingAccountURI
 	return requestingAccount, nil
 }
 
-func (p *processor) GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode) {
+func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -98,17 +99,17 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 
 	var requestedPerson vocab.ActivityStreamsPerson
 	var err error
-	if util.IsPublicKeyPath(request.URL) {
+	if util.IsPublicKeyPath(requestURL) {
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
 		requestedPerson, err = p.tc.AccountToASMinimal(requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	} else if util.IsUserPath(request.URL) {
+	} else if util.IsUserPath(requestURL) {
 		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
-		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 		if err != nil || !authenticated {
-			return nil, gtserror.NewErrorNotAuthorized(err)
+			return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 		}
 
 		// if we're already handshaking/dereferencing a remote account, we can skip the dereferencing part
@@ -144,7 +145,7 @@ func (p *processor) GetFediUser(requestedUsername string, request *http.Request)
 	return data, nil
 }
 
-func (p *processor) GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode) {
+func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -152,9 +153,9 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 	if err != nil || !authenticated {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
 	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
@@ -189,7 +190,7 @@ func (p *processor) GetFediFollowers(requestedUsername string, request *http.Req
 	return data, nil
 }
 
-func (p *processor) GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode) {
+func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -197,9 +198,9 @@ func (p *processor) GetFediFollowing(requestedUsername string, request *http.Req
 	}
 
 	// authenticate the request
-	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 	if err != nil || !authenticated {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
 	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
@@ -234,7 +235,7 @@ func (p *processor) GetFediFollowing(requestedUsername string, request *http.Req
 	return data, nil
 }
 
-func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, gtserror.WithCode) {
+func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
@@ -242,9 +243,9 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 	}
 
 	// authenticate the request
-	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(requestedUsername, request)
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 	if err != nil || !authenticated {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
 	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
@@ -294,7 +295,7 @@ func (p *processor) GetFediStatus(requestedUsername string, requestedStatusID st
 	return data, nil
 }
 
-func (p *processor) GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount := &gtsmodel.Account{}
 	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {

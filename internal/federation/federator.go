@@ -19,7 +19,7 @@
 package federation
 
 import (
-	"net/http"
+	"context"
 	"net/url"
 	"sync"
 
@@ -48,7 +48,7 @@ type Federator interface {
 	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
 	//
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
-	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, bool, error)
+	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, bool, error)
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
 	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)

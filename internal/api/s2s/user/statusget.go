@@ -1,10 +1,12 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGETHandler serves the target status as an activitystreams NOTE so that other AP servers can parse it.
@@ -34,9 +36,14 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// make a copy of the context to pass along so we don't break anything
-	cp := c.Copy()
-	status, err := m.processor.GetFediStatus(requestedUsername, requestedStatusID, cp.Request) // handles auth as well
+	// transfer the signature verifier from the gin context to the request context
+	ctx := c.Request.Context()
+	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
+	}
+
+	status, err := m.processor.GetFediStatus(ctx, requestedUsername, requestedStatusID, c.Request.URL) // handles auth as well
 	if err != nil {
 		l.Info(err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})

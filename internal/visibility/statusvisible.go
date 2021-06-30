@@ -2,7 +2,6 @@ package visibility
 
 import (
 	"errors"
-	"net/url"
 
 	"fmt"
 
@@ -17,21 +16,23 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		"statusID": targetStatus.ID,
 	})
 
-	uri, err := url.Parse(targetStatus.URI)
-	if err != nil {
-		return false, fmt.Errorf("StatusVisible: error parsing uri: %s", targetStatus.URI)
-	}
-	if blocked, err := f.blockedDomain(uri.Host); blocked || err != nil {
-		l.Debugf("domain %s is blocked", uri.Host)
-		return blocked, err
-	}
-aaaaaaaaaa
 	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
+		return false, fmt.Errorf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
-	targetAccount := relevantAccounts.StatusAuthor
 
+	domainBlocked, err := f.blockedRelevant(relevantAccounts)
+	if err != nil {
+		l.Debugf("error checking domain block: %s", err)
+		return false, fmt.Errorf("error checking domain block: %s", err)
+	}
+
+	if domainBlocked {
+		return false, nil
+	}
+
+	targetAccount := relevantAccounts.StatusAuthor
 	// if target account is suspended then don't show the status
 	if !targetAccount.SuspendedAt.IsZero() {
 		l.Trace("target account suspended at is not zero")

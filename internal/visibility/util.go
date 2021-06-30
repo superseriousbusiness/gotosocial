@@ -81,6 +81,7 @@ type relevantAccounts struct {
 	MentionedAccounts     []*gtsmodel.Account
 }
 
+// blockedDomain checks whether the given domain is blocked by us or not
 func (f *filter) blockedDomain(host string) (bool, error) {
 	b := &gtsmodel.DomainBlock{}
 	err := f.db.GetWhere([]db.Where{{Key: "domain", Value: host, CaseInsensitive: true}}, b)
@@ -96,4 +97,60 @@ func (f *filter) blockedDomain(host string) (bool, error) {
 
 	// there's an actual error
 	return false, err
+}
+
+// blockedRelevant checks through all relevant accounts attached to a status
+// to make sure none of them are domain blocked by this instance.
+func (f *filter) blockedRelevant(r *relevantAccounts) (bool, error) {
+	if r.StatusAuthor != nil {
+		b, err := f.blockedDomain(r.StatusAuthor.Domain)
+		if err != nil {
+			return false, err
+		}
+		if b {
+			return true, nil
+		}
+	}
+
+	if r.ReplyToAccount != nil {
+		b, err := f.blockedDomain(r.ReplyToAccount.Domain)
+		if err != nil {
+			return false, err
+		}
+		if b {
+			return true, nil
+		}
+	}
+
+	if r.BoostedAccount != nil {
+		b, err := f.blockedDomain(r.BoostedAccount.Domain)
+		if err != nil {
+			return false, err
+		}
+		if b {
+			return true, nil
+		}
+	}
+
+	if r.BoostedReplyToAccount != nil {
+		b, err := f.blockedDomain(r.BoostedReplyToAccount.Domain)
+		if err != nil {
+			return false, err
+		}
+		if b {
+			return true, nil
+		}
+	}
+
+	for _, a := range r.MentionedAccounts {
+		b, err := f.blockedDomain(a.Domain)
+		if err != nil {
+			return false, err
+		}
+		if b {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

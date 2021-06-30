@@ -25,7 +25,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -35,6 +34,7 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 /*
@@ -115,35 +115,30 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 //
 // Also note that this function *does not* dereference the remote account that the signature key is associated with.
 // Other functions should use the returned URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(requestedUsername string, r *http.Request) (*url.URL, bool, error) {
+func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*url.URL, bool, error) {
+	l := f.log.WithField("func", "AuthenticateFederatedRequest")
 
 	var publicKey interface{}
 	var pkOwnerURI *url.URL
 	var err error
 
-	// set this extra field for signature validation
-	r.Header.Set("host", f.config.Host)
-
-	verifier, err := httpsig.NewVerifier(r)
-	if err != nil {
-		return nil, false, fmt.Errorf("could not create http sig verifier: %s", err)
+	// thanks to signaturecheck.go in the security package, we should already have a signature verifier set on the context
+	vi := ctx.Value(util.APRequestingPublicKeyVerifier)
+	if vi == nil {
+		l.Debug("request wasn't signed")
+		return nil, false, nil // request wasn't signed
 	}
 
-	// The key ID should be given in the signature so that we know where to fetch it from the remote server.
-	// This will be something like https://example.org/users/whatever_requesting_user#main-key
+	verifier, ok := vi.(httpsig.Verifier)
+	if !ok {
+		l.Debug("couldn't extract sig verifier")
+		return nil, false, nil // couldn't extract the verifier
+	}
+
 	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
 	if err != nil {
-		return nil, false, fmt.Errorf("could not parse key id into a url: %s", err)
-	}
-
-	// if the domain is blocked we want to make as few calls towards it as possible, so already bail here if that's the case!
-	blockedDomain, err := f.blockedDomain(requestingPublicKeyID.Host)
-	if err != nil {
-		return nil, false, fmt.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
-	}
-	if blockedDomain {
-		f.log.Infof("domain %s is blocked", requestingPublicKeyID.Host)
-		return nil, false, nil
+		l.Debug("couldn't parse public key URL")
+		return nil, false, nil // couldn't parse the public key ID url
 	}
 
 	requestingRemoteAccount := &gtsmodel.Account{}

@@ -66,8 +66,8 @@ const (
 	// APRequestingActorIRI can be used to set and retrieve the actor of an incoming federation request.
 	// This will usually be the owner of whatever activity is being posted.
 	APRequestingActorIRI APContextKey = "requestingActorIRI"
-	// APRequestingPublicKeyID can be used to set and retrieve the public key ID of an incoming federation request.
-	APRequestingPublicKeyID APContextKey = "requestingPublicKeyID"
+	// APRequestingPublicKeyVerifier can be used to set and retrieve the public key verifier of an incoming federation request.
+	APRequestingPublicKeyVerifier APContextKey = "requestingPublicKeyVerifier"
 	// APFromFederatorChanKey can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
 	APFromFederatorChanKey APContextKey = "fromFederatorChan"
 )

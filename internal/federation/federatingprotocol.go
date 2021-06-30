@@ -119,7 +119,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, fmt.Errorf("could not fetch requested account with username %s: %s", username, err)
 	}
 
-	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(requestedAccount.Username, r)
+	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(ctx, requestedAccount.Username)
 	if err != nil {
 		l.Debugf("request not authenticated: %s", err)
 		return ctx, false, err
