@@ -22,7 +22,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		return false, fmt.Errorf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
 
-	domainBlocked, err := f.blockedRelevant(relevantAccounts)
+	domainBlocked, err := f.domainBlockedRelevant(relevantAccounts)
 	if err != nil {
 		l.Debugf("error checking domain block: %s", err)
 		return false, fmt.Errorf("error checking domain block: %s", err)
@@ -134,8 +134,8 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	// status boosts accounts id
-	if relevantAccounts.BoostedAccount != nil {
-		if blocked, err := f.db.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID); err != nil {
+	if relevantAccounts.BoostedStatusAuthor != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.BoostedStatusAuthor.ID, requestingAccount.ID); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted account")
@@ -159,6 +159,16 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and a mentioned account")
+			return false, nil
+		}
+	}
+
+	// boost mentions accounts
+	for _, a := range relevantAccounts.BoostedMentionedAccounts {
+		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID); err != nil {
+			return false, err
+		} else if blocked {
+			l.Trace("a block exists between requesting account and a boosted mentioned account")
 			return false, nil
 		}
 	}
