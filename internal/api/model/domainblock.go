@@ -20,14 +20,14 @@ package model
 
 // DomainBlock represents a block on one domain
 type DomainBlock struct {
-	ID             string `json:"id"`
+	ID             string `json:"id,omitempty"`
 	Domain         string `json:"domain"`
-	Obfuscate      bool   `json:"obfuscate"`
-	PrivateComment string `json:"private_comment"`
-	PublicComment  string `json:"public_comment"`
-	SubscriptionID string `json:"subscription_id"`
-	CreatedBy      string `json:"created_by"`
-	CreatedAt      string `json:"created_at"`
+	Obfuscate      bool   `json:"obfuscate,omitempty"`
+	PrivateComment string `json:"private_comment,omitempty"`
+	PublicComment  string `json:"public_comment,omitempty"`
+	SubscriptionID string `json:"subscription_id,omitempty"`
+	CreatedBy      string `json:"created_by,omitempty"`
+	CreatedAt      string `json:"created_at,omitempty"`
 }
 
 // DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.

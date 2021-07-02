@@ -185,7 +185,6 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return err
 			}
 
-
 			// delete this status from any and all timelines
 			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
 				return err
@@ -393,6 +392,11 @@ func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gts
 }
 
 func (p *processor) federateUnannounce(boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	if originAccount.Domain != "" {
+		// nothing to do here
+		return nil
+	}
+
 	asAnnounce, err := p.tc.BoostToAS(boost, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnannounce: error converting status to announce: %s", err)

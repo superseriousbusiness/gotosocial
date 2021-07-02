@@ -31,3 +31,7 @@ func (p *processor) AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCre
 func (p *processor) AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
 	return p.adminProcessor.DomainBlockCreate(authed.Account, form)
 }
+
+func (p *processor) AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
+   return p.adminProcessor.DomainBlocksGet(authed.Account, export)
+}

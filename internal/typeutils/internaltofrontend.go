@@ -645,15 +645,22 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 	}, nil
 }
 
-func (c *converter) DomainBlockToMasto(b *gtsmodel.DomainBlock) (*model.DomainBlock, error) {
-	return &model.DomainBlock{
-		ID:             b.ID,
+func (c *converter) DomainBlockToMasto(b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
+
+	domainBlock := &model.DomainBlock{
 		Domain:         b.Domain,
-		Obfuscate:      b.Obfuscate,
-		PrivateComment: b.PrivateComment,
 		PublicComment:  b.PublicComment,
-		SubscriptionID: b.SubscriptionID,
-		CreatedBy:      b.CreatedByAccountID,
-		CreatedAt:      b.CreatedAt.Format(time.RFC3339),
-	}, nil
+	}
+
+	// if we're exporting a domain block, return it with minimal information attached
+	if !export {
+		domainBlock.ID = b.ID
+		domainBlock.Obfuscate = b.Obfuscate
+		domainBlock.PrivateComment = b.PrivateComment
+		domainBlock.SubscriptionID = b.SubscriptionID
+		domainBlock.CreatedBy = b.CreatedByAccountID
+		domainBlock.CreatedAt = b.CreatedAt.Format(time.RFC3339)
+	}
+
+	return domainBlock, nil
 }

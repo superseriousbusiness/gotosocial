@@ -32,6 +32,7 @@ import (
 // Processor wraps a bunch of functions for processing admin actions.
 type Processor interface {
 	DomainBlockCreate(account *gtsmodel.Account, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
+	DomainBlocksGet(account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
 	EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 }
 

@@ -54,7 +54,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 		"username": account.Username,
 	})
 
-	l.Debug("beginning account delete process")
+	l.Debugf("beginning account delete process for username %s", account.Username)
 
 	// 1. Delete account's application(s), clients, and oauth tokens
 	// we only need to do this step for local account since remote ones won't have any tokens or applications on our server
@@ -85,6 +85,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	}
 
 	// 2. Delete account's blocks
+	l.Debug("deleting account blocks")
 	// first delete any blocks that this account created
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Block{}); err != nil {
 		l.Errorf("error deleting blocks created by account: %s", err)
@@ -99,6 +100,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	// nothing to do here
 
 	// 4. Delete account's follow requests
+	l.Debug("deleting account follow requests")
 	// first delete any follow requests that this account created
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
 		l.Errorf("error deleting follow requests created by account: %s", err)
@@ -110,6 +112,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	}
 
 	// 5. Delete account's follows
+	l.Debug("deleting account follows")
 	// first delete any follows that this account created
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
 		l.Errorf("error deleting follows created by account: %s", err)
@@ -121,6 +124,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	}
 
 	// 6. Delete account's statuses
+	l.Debug("deleting account statuses")
 	// we'll select statuses 20 at a time so we don't wreck the db, and pass them through to the client api channel
 	// Deleting the statuses in this way also handles 7. Delete account's media attachments, 8. Delete account's mentions, and 9. Delete account's polls,
 	// since these are all attached to statuses.
@@ -130,7 +134,7 @@ selectStatusesLoop:
 		statuses, err := p.db.GetStatusesForAccount(account.ID, 20, false, maxID, false, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
-				// no accounts left for this instance so we're done
+				// no statuses left for this instance so we're done
 				l.Infof("Delete: done iterating through statuses for account %s", account.Username)
 				break selectStatusesLoop
 			}
@@ -142,6 +146,7 @@ selectStatusesLoop:
 		for i, s := range statuses {
 			// pass the status delete through the client api channel for processing
 			s.GTSAuthorAccount = account
+			l.Debug("putting status in the client api channel")
 			p.fromClientAPI <- gtsmodel.FromClientAPI{
 				APObjectType:   gtsmodel.ActivityStreamsNote,
 				APActivityType: gtsmodel.ActivityStreamsDelete,
@@ -158,29 +163,67 @@ selectStatusesLoop:
 				}
 			}
 
+			// if there are any boosts of this status, delete them as well
+			boosts := []*gtsmodel.Status{}
+			if err := p.db.GetWhere([]db.Where{{Key: "boost_of_id", Value: s.ID}}, &boosts); err != nil {
+				if _, ok := err.(db.ErrNoEntries); !ok {
+					// an actual error has occurred
+					l.Errorf("Delete: db error selecting boosts of status %s for account %s: %s", s.ID, account.Username, err)
+					break selectStatusesLoop
+				}
+			}
+
+			for _, b := range boosts {
+				oa := &gtsmodel.Account{}
+				if err := p.db.GetByID(b.AccountID, oa); err == nil {
+
+					l.Debug("putting boost undo in the client api channel")
+					p.fromClientAPI <- gtsmodel.FromClientAPI{
+						APObjectType:   gtsmodel.ActivityStreamsAnnounce,
+						APActivityType: gtsmodel.ActivityStreamsUndo,
+						GTSModel:       s,
+						OriginAccount:  oa,
+						TargetAccount:  account,
+					}
+				}
+
+				if err := p.db.DeleteByID(b.ID, b); err != nil {
+					if _, ok := err.(db.ErrNoEntries); !ok {
+						// actual error has occurred
+						l.Errorf("Delete: db error deleting boost with id %s: %s", b.ID, err)
+						break selectStatusesLoop
+					}
+				}
+			}
+
 			// if this is the last status in the slice, set the maxID appropriately for the next query
 			if i == len(statuses)-1 {
 				maxID = s.ID
 			}
 		}
 	}
+	l.Debug("done deleting statuses")
 
 	// 10. Delete account's notifications
+	l.Debug("deleting account notifications")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications created by account: %s", err)
 	}
 
 	// 11. Delete account's bookmarks
+	l.Debug("deleting account bookmarks")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
 		l.Errorf("error deleting bookmarks created by account: %s", err)
 	}
 
 	// 12. Delete account's faves
+	l.Debug("deleting account faves")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
 		l.Errorf("error deleting faves created by account: %s", err)
 	}
 
 	// 13. Delete account's mutes
+	l.Debug("deleting account mutes")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
 		l.Errorf("error deleting status mutes created by account: %s", err)
 	}
@@ -191,6 +234,7 @@ selectStatusesLoop:
 	// TODO
 
 	// 16. Delete account's user
+	l.Debug("deleting account user")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &gtsmodel.User{}); err != nil {
 		return err
 	}
@@ -217,5 +261,10 @@ selectStatusesLoop:
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = deletedBy
 
-	return p.db.UpdateByID(account.ID, account)
+	if err := p.db.UpdateByID(account.ID, account); err != nil {
+		return err
+	}
+
+	l.Infof("deleted account with username %s from domain %s", account.Username, account.Domain)
+	return nil
 }

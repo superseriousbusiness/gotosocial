@@ -87,6 +87,8 @@ type Processor interface {
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
 	AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlocksGet returns a list of currently blocked domains.
+	AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)

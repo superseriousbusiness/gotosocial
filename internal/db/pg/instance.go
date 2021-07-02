@@ -53,6 +53,8 @@ func (ps *postgresService) GetDomainCountForInstance(domain string) (int, error)
 }
 
 func (ps *postgresService) GetAccountsForInstance(domain string, maxID string, limit int) ([]*gtsmodel.Account, error) {
+	ps.log.Debug("GetAccountsForInstance")
+
 	accounts := []*gtsmodel.Account{}
 
 	q := ps.conn.Model(&accounts).Where("domain = ?", domain).Order("id DESC")

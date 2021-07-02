@@ -35,6 +35,9 @@ const (
 	EmojiPath = BasePath + "/custom_emojis"
 	// DomainBlocksPath is used for posting domain blocks.
 	DomainBlocksPath = BasePath + "/domain_blocks"
+
+	// ExportQueryKey is the key to use when requesting a public export of some data.
+	ExportQueryKey = "export"
 )
 
 // Module implements the ClientAPIModule interface for admin-related actions (reports, emojis, etc)
@@ -57,5 +60,6 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, EmojiPath, m.emojiCreatePOSTHandler)
 	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
+	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	return nil
 }

@@ -65,10 +65,10 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 		}
 
 		// process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(domainBlock) // TODO: add this to a queuing system so it can retry/resume
+		go p.initiateDomainBlockSideEffects(account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock)
+	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/masto representation %s: %s", form.Domain, err))
 	}
@@ -81,7 +81,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 // 1. Strip most info away from the instance entry for the domain.
 // 2. Delete the instance account for that instance if it exists.
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
-func (p *processor) initiateDomainBlockSideEffects(block *gtsmodel.DomainBlock) {
+func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":   "domainBlockProcessSideEffects",
 		"domain": block.Domain,
@@ -134,12 +134,14 @@ selectAccountsLoop:
 		}
 
 		for i, a := range accounts {
+			l.Debugf("putting delete for account %s in the clientAPI channel", a.Username)
+
 			// pass the account delete through the client api channel for processing
 			p.fromClientAPI <- gtsmodel.FromClientAPI{
 				APObjectType:   gtsmodel.ActivityStreamsPerson,
 				APActivityType: gtsmodel.ActivityStreamsDelete,
 				GTSModel:       a,
-				OriginAccount:  a,
+				OriginAccount:  account,
 				TargetAccount:  a,
 			}
 

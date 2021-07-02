@@ -67,3 +67,5 @@ func validateCreateDomainBlock(form *model.DomainBlockCreateRequest) error {
 
 	return nil
 }
+
+

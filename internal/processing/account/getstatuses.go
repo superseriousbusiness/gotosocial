@@ -47,10 +47,7 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(s, requestingAccount)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
-		}
-		if !visible {
+		if err != nil || !visible {
 			continue
 		}
 

@@ -512,6 +512,7 @@ func (ps *postgresService) CountStatusesByAccountID(accountID string) (int, erro
 }
 
 func (ps *postgresService) GetStatusesForAccount(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error) {
+	ps.log.Debugf("getting statuses for account %s", accountID)
 	statuses := []*gtsmodel.Status{}
 
 	q := ps.conn.Model(&statuses).Order("id DESC")
@@ -547,6 +548,12 @@ func (ps *postgresService) GetStatusesForAccount(accountID string, limit int, ex
 		}
 		return nil, err
 	}
+
+	if len(statuses) == 0 {
+		return nil, db.ErrNoEntries{}
+	}
+
+	ps.log.Debugf("returning statuses for account %s", accountID)
 	return statuses, nil
 }
 
