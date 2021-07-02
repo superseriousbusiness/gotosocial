@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
@@ -219,6 +220,7 @@ type processor struct {
 	adminProcessor     admin.Processor
 	statusProcessor    status.Processor
 	streamingProcessor streaming.Processor
+	mediaProcessor     mediaProcessor.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
@@ -231,6 +233,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -251,6 +254,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		adminProcessor:     adminProcessor,
 		statusProcessor:    statusProcessor,
 		streamingProcessor: streamingProcessor,
+		mediaProcessor:     mediaProcessor,
 	}
 }
 

@@ -25,6 +25,7 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -161,6 +162,31 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
+			if statusToDelete.GTSAuthorAccount == nil {
+				statusToDelete.GTSAuthorAccount = clientMsg.OriginAccount
+			}
+
+			// delete all attachments for this status
+			for _, a := range statusToDelete.Attachments {
+				if err := p.mediaProcessor.Delete(a); err != nil {
+					return err
+				}
+			}
+
+			// delete all mentions for this status
+			for _, m := range statusToDelete.Mentions {
+				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
+					return err
+				}
+			}
+
+			// delete all notifications for this status
+			if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+				return err
+			}
+
+
+			// delete this status from any and all timelines
 			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
 				return err
 			}
@@ -173,7 +199,12 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("account was not parseable as *gtsmodel.Account")
 			}
 
-			return p.accountProcessor.Delete(accountToDelete)
+			var deletedBy string
+			if clientMsg.OriginAccount != nil {
+				deletedBy = clientMsg.OriginAccount.ID
+			}
+
+			return p.accountProcessor.Delete(accountToDelete, deletedBy)
 		}
 	}
 	return nil

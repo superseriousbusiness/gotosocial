@@ -19,13 +19,15 @@
 package account
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) Delete(account *gtsmodel.Account) error {
+func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":     "Delete",
 		"username": account.Username,
@@ -39,11 +41,11 @@ func (p *processor) Delete(account *gtsmodel.Account) error {
 	// 3. Delete account's emoji
 	// 4. Delete account's follow requests
 	// 5. Delete account's follows
-	// 6. Delete account's media attachments
-	// 7. Delete account's mentions
-	// 8. Delete account's notifications
+	// 6. Delete account's statuses
+	// 7. Delete account's media attachments
+	// 8. Delete account's mentions
 	// 9. Delete account's polls
-	// 10. Delete account's statuses
+	// 10. Delete account's notifications
 	// 11. Delete account's bookmarks
 	// 12. Delete account's faves
 	// 13. Delete account's mutes
@@ -117,5 +119,74 @@ func (p *processor) Delete(account *gtsmodel.Account) error {
 		l.Errorf("error deleting follows targeting account: %s", err)
 	}
 
-	return nil
+	// 6. Delete account's statuses
+	// we'll select statuses 20 at a time so we don't wreck the db, and pass them through to the client api channel
+	// Deleting the statuses in this way also handles 7. Delete account's media attachments, 8. Delete account's mentions, and 9. Delete account's polls,
+	// since these are all attached to statuses.
+	var maxID string
+selectStatusesLoop:
+	for {
+		statuses, err := p.db.GetStatusesForAccount(account.ID, 20, false, maxID, false, false)
+		if err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// no accounts left for this instance so we're done
+				l.Infof("Delete: done iterating through statuses for account %s", account.Username)
+				break selectStatusesLoop
+			}
+			// an actual error has occurred
+			l.Errorf("Delete: db error selecting statuses for account %s: %s", account.Username, err)
+			break selectStatusesLoop
+		}
+
+		for i, s := range statuses {
+			// pass the status delete through the client api channel for processing
+			s.GTSAuthorAccount = account
+			p.fromClientAPI <- gtsmodel.FromClientAPI{
+				APObjectType:   gtsmodel.ActivityStreamsNote,
+				APActivityType: gtsmodel.ActivityStreamsDelete,
+				GTSModel:       s,
+				OriginAccount:  account,
+				TargetAccount:  account,
+			}
+
+			if err := p.db.DeleteByID(s.ID, s); err != nil {
+				if _, ok := err.(db.ErrNoEntries); !ok {
+					// actual error has occurred
+					l.Errorf("Delete: db error status %s for account %s: %s", s.ID, account.Username, err)
+					break selectStatusesLoop
+				}
+			}
+
+			// if this is the last status in the slice, set the maxID appropriately for the next query
+			if i == len(statuses)-1 {
+				maxID = s.ID
+			}
+		}
+	}
+
+	// 10. Delete account's notifications
+	if err := p.db.DeleteWhere([]db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+		l.Errorf("error deleting notifications created by account: %s", err)
+	}
+
+	// to prevent the account being created again, set all these fields and update it in the db
+	// the account won't actually be *removed* from the database but it will be set to just a stub
+
+	account.Note = ""
+	account.DisplayName = ""
+	account.AvatarMediaAttachmentID = ""
+	account.AvatarRemoteURL = ""
+	account.HeaderMediaAttachmentID = ""
+	account.HeaderRemoteURL = ""
+	account.Reason = ""
+	account.Fields = []gtsmodel.Field{}
+	account.HideCollections = true
+	account.Discoverable = false
+
+	account.UpdatedAt = time.Now()
+
+	account.SuspendedAt = time.Now()
+	account.SuspensionOrigin = deletedBy
+
+	return p.db.UpdateByID(account.ID, account)
 }

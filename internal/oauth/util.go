@@ -73,14 +73,28 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 	if requireToken && a.Token == nil {
 		return nil, errors.New("token not supplied")
 	}
+
 	if requireApp && a.Application == nil {
 		return nil, errors.New("application not supplied")
 	}
-	if requireUser && a.User == nil {
-		return nil, errors.New("user not supplied")
+
+	if requireUser {
+		if a.User == nil {
+			return nil, errors.New("user not supplied")
+		}
+		if a.User.Disabled || !a.User.Approved {
+			return nil, errors.New("user disabled or not approved")
+		}
 	}
-	if requireAccount && a.Account == nil {
-		return nil, errors.New("account not supplied")
+
+	if requireAccount {
+		if a.Account == nil {
+			return nil, errors.New("account not supplied")
+		}
+		if !a.Account.SuspendedAt.IsZero() {
+			return nil, errors.New("account suspended")
+		}
 	}
+	
 	return a, nil
 }

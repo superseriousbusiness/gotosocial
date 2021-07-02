@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
 	targetAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
@@ -36,9 +36,9 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	statuses := []gtsmodel.Status{}
 	apiStatuses := []apimodel.Status{}
-	if err := p.db.GetStatusesByTimeDescending(targetAccountID, &statuses, limit, excludeReplies, maxID, pinned, mediaOnly); err != nil {
+	statuses, err := p.db.GetStatusesForAccount(targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
+	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return apiStatuses, nil
 		}
@@ -46,7 +46,7 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 	}
 
 	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(&s, requestingAccount)
+		visible, err := p.filter.StatusVisible(s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking status visibility: %s", err))
 		}
@@ -54,7 +54,7 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(&s, requestingAccount)
+		apiStatus, err := p.tc.StatusToMasto(s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
 		}

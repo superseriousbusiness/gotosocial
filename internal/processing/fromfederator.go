@@ -159,6 +159,27 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if !ok {
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
+
+			// delete all attachments for this status
+			for _, a := range statusToDelete.Attachments {
+				if err := p.mediaProcessor.Delete(a); err != nil {
+					return err
+				}
+			}
+
+			// delete all mentions for this status
+			for _, m := range statusToDelete.Mentions {
+				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
+					return err
+				}
+			}
+
+			// delete all notifications for this status
+			if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+				return err
+			}
+
+			// remove this status from any and all timelines
 			return p.deleteStatusFromTimelines(statusToDelete)
 		case gtsmodel.ActivityStreamsProfile:
 			// DELETE A PROFILE/ACCOUNT
