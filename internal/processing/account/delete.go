@@ -27,6 +27,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// Delete handles the complete deletion of an account.
+//
+// TODO in this function:
+// 1. Delete account's application(s), clients, and oauth tokens
+// 2. Delete account's blocks
+// 3. Delete account's emoji
+// 4. Delete account's follow requests
+// 5. Delete account's follows
+// 6. Delete account's statuses
+// 7. Delete account's media attachments
+// 8. Delete account's mentions
+// 9. Delete account's polls
+// 10. Delete account's notifications
+// 11. Delete account's bookmarks
+// 12. Delete account's faves
+// 13. Delete account's mutes
+// 14. Delete account's streams
+// 15. Delete account's tags
+// 16. Delete account's user
+// 17. Delete account's timeline
+// 18. Delete account itself
 func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":     "Delete",
@@ -34,26 +55,6 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	})
 
 	l.Debug("beginning account delete process")
-
-	// TODO in this function:
-	// 1. Delete account's application(s), clients, and oauth tokens
-	// 2. Delete account's blocks
-	// 3. Delete account's emoji
-	// 4. Delete account's follow requests
-	// 5. Delete account's follows
-	// 6. Delete account's statuses
-	// 7. Delete account's media attachments
-	// 8. Delete account's mentions
-	// 9. Delete account's polls
-	// 10. Delete account's notifications
-	// 11. Delete account's bookmarks
-	// 12. Delete account's faves
-	// 13. Delete account's mutes
-	// 14. Delete account's streams
-	// 15. Delete account's tags
-	// 16. Delete account's user
-	// 17. Delete account's timeline
-	// 18. Delete account itself
 
 	// 1. Delete account's application(s), clients, and oauth tokens
 	// we only need to do this step for local account since remote ones won't have any tokens or applications on our server
@@ -169,6 +170,34 @@ selectStatusesLoop:
 		l.Errorf("error deleting notifications created by account: %s", err)
 	}
 
+	// 11. Delete account's bookmarks
+	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusBookmark{}); err != nil {
+		l.Errorf("error deleting bookmarks created by account: %s", err)
+	}
+
+	// 12. Delete account's faves
+	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
+		l.Errorf("error deleting faves created by account: %s", err)
+	}
+
+	// 13. Delete account's mutes
+	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusMute{}); err != nil {
+		l.Errorf("error deleting status mutes created by account: %s", err)
+	}
+
+	// 14. Delete account's streams
+
+	// 15. Delete account's tags
+	// TODO
+
+	// 16. Delete account's user
+	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &gtsmodel.User{}); err != nil {
+		return err
+	}
+
+	// 17. Delete account's timeline
+
+	// 18. Delete account itself
 	// to prevent the account being created again, set all these fields and update it in the db
 	// the account won't actually be *removed* from the database but it will be set to just a stub
 
