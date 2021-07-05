@@ -19,10 +19,12 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // UsersGETHandler should be served at https://example.org/users/:username.
@@ -54,9 +56,14 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// make a copy of the context to pass along so we don't break anything
-	cp := c.Copy()
-	user, err := m.processor.GetFediUser(requestedUsername, cp.Request) // GetFediUser handles auth as well
+	// transfer the signature verifier from the gin context to the request context
+	ctx := c.Request.Context()
+	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
+	}
+
+	user, err := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL) // GetFediUser handles auth as well
 	if err != nil {
 		l.Info(err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})

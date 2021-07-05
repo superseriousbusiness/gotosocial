@@ -19,12 +19,13 @@
 package testrig
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // NewTestFederator returns a federator with the given database and (mock!!) transport controller.
-func NewTestFederator(db db.DB, tc transport.Controller) federation.Federator {
-	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db))
+func NewTestFederator(db db.DB, tc transport.Controller, storage blob.Storage) federation.Federator {
+	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestConfig(), NewTestLog(), NewTestTypeConverter(db), NewTestMediaHandler(db, storage))
 }

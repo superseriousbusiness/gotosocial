@@ -57,7 +57,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 			Body:       r,
 		}, nil
 	}))
-	federator := testrig.NewTestFederator(dbService, transportController)
+	federator := testrig.NewTestFederator(dbService, transportController, storageBackend)
 
 	processor := testrig.NewTestProcessor(dbService, storageBackend, federator)
 	if err := processor.Start(); err != nil {
@@ -84,7 +84,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	fileServerModule := fileserver.New(c, processor, log)
 	adminModule := admin.New(c, processor, log)
 	statusModule := status.New(c, processor, log)
-	securityModule := security.New(c, log)
+	securityModule := security.New(c, dbService, log)
 	streamingModule := streaming.New(c, processor, log)
 
 	apis := []api.ClientModule{

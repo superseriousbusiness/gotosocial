@@ -82,7 +82,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		maxID = maxIDString
 	}
 
-	pinned := false
+	pinnedOnly := false
 	pinnedString := c.Query(PinnedKey)
 	if pinnedString != "" {
 		i, err := strconv.ParseBool(pinnedString)
@@ -91,7 +91,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse pinned query param"})
 			return
 		}
-		pinned = i
+		pinnedOnly = i
 	}
 
 	mediaOnly := false
@@ -106,7 +106,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		mediaOnly = i
 	}
 
-	statuses, errWithCode := m.processor.AccountStatusesGet(authed, targetAcctID, limit, excludeReplies, maxID, pinned, mediaOnly)
+	statuses, errWithCode := m.processor.AccountStatusesGet(authed, targetAcctID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
 	if errWithCode != nil {
 		l.Debugf("error from processor account statuses get: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

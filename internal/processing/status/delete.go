@@ -49,6 +49,7 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 		APActivityType: gtsmodel.ActivityStreamsDelete,
 		GTSModel:       targetStatus,
 		OriginAccount:  account,
+		TargetAccount:  account,
 	}
 
 	return mastoStatus, nil

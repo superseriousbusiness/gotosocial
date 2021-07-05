@@ -30,6 +30,9 @@ import (
 )
 
 func (f *federator) FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error) {
+	if blocked, err := f.blockedDomain(targetDomain); blocked || err != nil {
+		return nil, fmt.Errorf("FingerRemoteAccount: domain %s is blocked", targetDomain)
+	}
 
 	t, err := f.GetTransportForUser(requestingUsername)
 	if err != nil {

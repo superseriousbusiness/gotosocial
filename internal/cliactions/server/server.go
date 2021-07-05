@@ -112,7 +112,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	mediaHandler := media.New(c, dbService, storageBackend, log)
 	oauthServer := oauth.New(dbService, log)
 	transportController := transport.NewController(c, &federation.Clock{}, http.DefaultClient, log)
-	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter, mediaHandler)
 	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, timelineManager, dbService, log)
 	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
@@ -138,7 +138,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	fileServerModule := fileserver.New(c, processor, log)
 	adminModule := admin.New(c, processor, log)
 	statusModule := status.New(c, processor, log)
-	securityModule := security.New(c, log)
+	securityModule := security.New(c, dbService, log)
 	streamingModule := streaming.New(c, processor, log)
 
 	apis := []api.ClientModule{

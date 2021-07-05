@@ -25,6 +25,7 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -161,17 +162,69 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
+			if statusToDelete.GTSAuthorAccount == nil {
+				statusToDelete.GTSAuthorAccount = clientMsg.OriginAccount
+			}
+
+			// delete all attachments for this status
+			for _, a := range statusToDelete.Attachments {
+				if err := p.mediaProcessor.Delete(a); err != nil {
+					return err
+				}
+			}
+
+			// delete all mentions for this status
+			for _, m := range statusToDelete.Mentions {
+				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
+					return err
+				}
+			}
+
+			// delete all notifications for this status
+			if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+				return err
+			}
+
+			// delete this status from any and all timelines
 			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
 				return err
 			}
 
-			return p.federateStatusDelete(statusToDelete, clientMsg.OriginAccount)
+			return p.federateStatusDelete(statusToDelete)
+		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
+			// DELETE ACCOUNT/PROFILE
+			accountToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("account was not parseable as *gtsmodel.Account")
+			}
+
+			var deletedBy string
+			if clientMsg.OriginAccount != nil {
+				deletedBy = clientMsg.OriginAccount.ID
+			}
+
+			return p.accountProcessor.Delete(accountToDelete, deletedBy)
 		}
 	}
 	return nil
 }
 
+// TODO: move all the below functions into federation.Federator
+
 func (p *processor) federateStatus(status *gtsmodel.Status) error {
+	if status.GTSAuthorAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(status.AccountID, a); err != nil {
+			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
+		}
+		status.GTSAuthorAccount = a
+	}
+
+	// do nothing if this isn't our status
+	if status.GTSAuthorAccount.Domain != "" {
+		return nil
+	}
+
 	asStatus, err := p.tc.StatusToAS(status)
 	if err != nil {
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
@@ -186,20 +239,33 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 	return err
 }
 
-func (p *processor) federateStatusDelete(status *gtsmodel.Status, originAccount *gtsmodel.Account) error {
+func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
+	if status.GTSAuthorAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(status.AccountID, a); err != nil {
+			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
+		}
+		status.GTSAuthorAccount = a
+	}
+
+	// do nothing if this isn't our status
+	if status.GTSAuthorAccount.Domain != "" {
+		return nil
+	}
+
 	asStatus, err := p.tc.StatusToAS(status)
 	if err != nil {
 		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
 	}
 
-	outboxIRI, err := url.Parse(originAccount.OutboxURI)
+	outboxIRI, err := url.Parse(status.GTSAuthorAccount.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", status.GTSAuthorAccount.OutboxURI, err)
 	}
 
-	actorIRI, err := url.Parse(originAccount.URI)
+	actorIRI, err := url.Parse(status.GTSAuthorAccount.URI)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", originAccount.URI, err)
+		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", status.GTSAuthorAccount.URI, err)
 	}
 
 	// create a delete and set the appropriate actor on it
@@ -326,6 +392,11 @@ func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gts
 }
 
 func (p *processor) federateUnannounce(boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+	if originAccount.Domain != "" {
+		// nothing to do here
+		return nil
+	}
+
 	asAnnounce, err := p.tc.BoostToAS(boost, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnannounce: error converting status to announce: %s", err)

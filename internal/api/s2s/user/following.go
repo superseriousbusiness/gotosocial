@@ -19,10 +19,12 @@
 package user
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
@@ -46,9 +48,14 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// make a copy of the context to pass along so we don't break anything
-	cp := c.Copy()
-	user, err := m.processor.GetFediFollowing(requestedUsername, cp.Request) // handles auth as well
+	// transfer the signature verifier from the gin context to the request context
+	ctx := c.Request.Context()
+	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
+	}
+
+	user, err := m.processor.GetFediFollowing(ctx, requestedUsername, c.Request.URL) // handles auth as well
 	if err != nil {
 		l.Info(err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})

@@ -19,7 +19,7 @@
 package federation
 
 import (
-	"net/http"
+	"context"
 	"net/url"
 	"sync"
 
@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -41,7 +42,13 @@ type Federator interface {
 	FederatingDB() federatingdb.DB
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	AuthenticateFederatedRequest(username string, r *http.Request) (*url.URL, error)
+	//
+	// If the request is valid and passes authentication, the URL of the key owner ID will be returned, as well as true, and nil.
+	//
+	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
+	//
+	// If something goes wrong during authentication, nil, false, and an error will be returned.
+	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, bool, error)
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
 	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
@@ -54,6 +61,12 @@ type Federator interface {
 	// DereferenceRemoteInstance takes the URL of a remote instance, and a username (optional) to spin up a transport with. It then
 	// does its damnedest to get some kind of information back about the instance, trying /api/v1/instance, then /.well-known/nodeinfo
 	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+	// DereferenceStatusFields does further dereferencing on a status.
+	DereferenceStatusFields(status *gtsmodel.Status, requestingUsername string) error
+	// DereferenceAccountFields does further dereferencing on an account.
+	DereferenceAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error
+	// DereferenceAnnounce does further dereferencing on an announce.
+	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
 	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
 	// This can be used for making signed http requests.
 	//
@@ -72,6 +85,7 @@ type federator struct {
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
+	mediaHandler        media.Handler
 	actor               pub.FederatingActor
 	log                 *logrus.Logger
 	handshakes          map[string][]*url.URL
@@ -79,7 +93,7 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter) Federator {
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
 
 	clock := &Clock{}
 	f := &federator{
@@ -89,6 +103,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
+		mediaHandler:        mediaHandler,
 		log:                 log,
 		handshakeSync:       &sync.Mutex{},
 	}

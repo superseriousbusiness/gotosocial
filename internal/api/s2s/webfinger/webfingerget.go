@@ -19,12 +19,14 @@
 package webfinger
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // WebfingerGETRequest handles requests to, for example, https://example.org/.well-known/webfinger?resource=acct:some_user@example.org
@@ -68,7 +70,14 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	resp, err := m.processor.GetWebfingerAccount(username, c.Request)
+	// transfer the signature verifier from the gin context to the request context
+	ctx := c.Request.Context()
+	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
+	}
+
+	resp, err := m.processor.GetWebfingerAccount(ctx, username, c.Request.URL)
 	if err != nil {
 		l.Debugf("aborting request with an error: %s", err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})

@@ -7,7 +7,7 @@ type Instance struct {
 	// ID of this instance in the database
 	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
 	// Instance domain eg example.org
-	Domain string `pg:",notnull,unique"`
+	Domain string `pg:",pk,notnull,unique"`
 	// Title of this instance as it would like to be displayed.
 	Title string
 	// base URI of this instance eg https://example.org

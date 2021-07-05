@@ -131,7 +131,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 
 	// process avatar if provided
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		_, err := p.updateAccountAvatar(form.Avatar, ia.ID)
+		_, err := p.accountProcessor.UpdateAvatar(form.Avatar, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
@@ -139,7 +139,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 
 	// process header if provided
 	if form.Header != nil && form.Header.Size != 0 {
-		_, err := p.updateAccountHeader(form.Header, ia.ID)
+		_, err := p.accountProcessor.UpdateHeader(form.Header, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}

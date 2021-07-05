@@ -2,6 +2,7 @@ package pg
 
 import (
 	"github.com/go-pg/pg/v10"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -49,4 +50,34 @@ func (ps *postgresService) GetDomainCountForInstance(domain string) (int, error)
 	}
 
 	return q.Count()
+}
+
+func (ps *postgresService) GetAccountsForInstance(domain string, maxID string, limit int) ([]*gtsmodel.Account, error) {
+	ps.log.Debug("GetAccountsForInstance")
+
+	accounts := []*gtsmodel.Account{}
+
+	q := ps.conn.Model(&accounts).Where("domain = ?", domain).Order("id DESC")
+
+	if maxID != "" {
+		q = q.Where("id < ?", maxID)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+
+	err := q.Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, db.ErrNoEntries{}
+		}
+		return nil, err
+	}
+
+	if len(accounts) == 0 {
+		return nil, db.ErrNoEntries{}
+	}
+
+	return accounts, nil
 }

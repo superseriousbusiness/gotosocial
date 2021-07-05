@@ -21,6 +21,7 @@ package processing
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -32,8 +33,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/status"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/synchronous/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -81,6 +85,14 @@ type Processor interface {
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
+	AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlocksGet returns a list of currently blocked domains.
+	AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlockGet returns one domain block, specified by ID.
+	AdminDomainBlockGet(authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlockDelete deletes one domain block, specified by ID, returning the deleted domain block.
+	AdminDomainBlockDelete(authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
@@ -154,22 +166,22 @@ type Processor interface {
 
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
-	GetFediUser(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowers(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediFollowing(requestedUsername string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
-	GetFediStatus(requestedUsername string, requestedStatusID string, request *http.Request) (interface{}, gtserror.WithCode)
+	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
-	GetWebfingerAccount(requestedUsername string, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+	GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode)
 
 	// GetNodeInfoRel returns a well known response giving the path to node info.
 	GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
@@ -210,8 +222,11 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
+	accountProcessor   account.Processor
+	adminProcessor     admin.Processor
 	statusProcessor    status.Processor
 	streamingProcessor streaming.Processor
+	mediaProcessor     mediaProcessor.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
@@ -222,6 +237,9 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
+	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -238,8 +256,11 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db, log),
 
+		accountProcessor:   accountProcessor,
+		adminProcessor:     adminProcessor,
 		statusProcessor:    statusProcessor,
 		streamingProcessor: streamingProcessor,
+		mediaProcessor:     mediaProcessor,
 	}
 }
 
@@ -251,14 +272,18 @@ func (p *processor) Start() error {
 			select {
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Infof("received message FROM client API: %+v", clientMsg)
-				if err := p.processFromClientAPI(clientMsg); err != nil {
-					p.log.Error(err)
-				}
+				go func() {
+					if err := p.processFromClientAPI(clientMsg); err != nil {
+						p.log.Error(err)
+					}
+				}()
 			case federatorMsg := <-p.fromFederator:
 				p.log.Infof("received message FROM federator: %+v", federatorMsg)
-				if err := p.processFromFederator(federatorMsg); err != nil {
-					p.log.Error(err)
-				}
+				go func() {
+					if err := p.processFromFederator(federatorMsg); err != nil {
+						p.log.Error(err)
+					}
+				}()
 			case <-p.stop:
 				break DistLoop
 			}

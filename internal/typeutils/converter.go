@@ -76,6 +76,8 @@ type TypeConverter interface {
 	RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error)
 	// NotificationToMasto converts a gts notification into a mastodon notification
 	NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error)
+	// DomainBlockTomasto converts a gts model domin block into a mastodon domain block, for serving at /api/v1/admin/domain_blocks
+	DomainBlockToMasto(b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
 
 	/*
 		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL

@@ -511,39 +511,50 @@ func (ps *postgresService) CountStatusesByAccountID(accountID string) (int, erro
 	return count, nil
 }
 
-func (ps *postgresService) GetStatusesByTimeDescending(accountID string, statuses *[]gtsmodel.Status, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) error {
-	q := ps.conn.Model(statuses).Order("created_at DESC")
+func (ps *postgresService) GetStatusesForAccount(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error) {
+	ps.log.Debugf("getting statuses for account %s", accountID)
+	statuses := []*gtsmodel.Status{}
+
+	q := ps.conn.Model(&statuses).Order("id DESC")
 	if accountID != "" {
 		q = q.Where("account_id = ?", accountID)
 	}
+
 	if limit != 0 {
 		q = q.Limit(limit)
 	}
+
 	if excludeReplies {
 		q = q.Where("? IS NULL", pg.Ident("in_reply_to_id"))
 	}
-	if pinned {
+
+	if pinnedOnly {
 		q = q.Where("pinned = ?", true)
 	}
+
 	if mediaOnly {
 		q = q.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 			return q.Where("? IS NOT NULL", pg.Ident("attachments")).Where("attachments != '{}'"), nil
 		})
 	}
+
 	if maxID != "" {
-		s := &gtsmodel.Status{}
-		if err := ps.conn.Model(s).Where("id = ?", maxID).Select(); err != nil {
-			return err
-		}
-		q = q.Where("status.created_at < ?", s.CreatedAt)
+		q = q.Where("id < ?", maxID)
 	}
+
 	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return nil, db.ErrNoEntries{}
 		}
-		return err
+		return nil, err
 	}
-	return nil
+
+	if len(statuses) == 0 {
+		return nil, db.ErrNoEntries{}
+	}
+
+	ps.log.Debugf("returning statuses for account %s", accountID)
+	return statuses, nil
 }
 
 func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
