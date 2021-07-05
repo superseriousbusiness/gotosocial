@@ -648,8 +648,8 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 func (c *converter) DomainBlockToMasto(b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
 
 	domainBlock := &model.DomainBlock{
-		Domain:         b.Domain,
-		PublicComment:  b.PublicComment,
+		Domain:        b.Domain,
+		PublicComment: b.PublicComment,
 	}
 
 	// if we're exporting a domain block, return it with minimal information attached

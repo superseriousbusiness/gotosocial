@@ -33,5 +33,13 @@ func (p *processor) AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.Do
 }
 
 func (p *processor) AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
-   return p.adminProcessor.DomainBlocksGet(authed.Account, export)
+	return p.adminProcessor.DomainBlocksGet(authed.Account, export)
+}
+
+func (p *processor) AdminDomainBlockGet(authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
+	return p.adminProcessor.DomainBlockGet(authed.Account, id, export)
+}
+
+func (p *processor) AdminDomainBlockDelete(authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode) {
+	return p.adminProcessor.DomainBlockDelete(authed.Account, id)
 }

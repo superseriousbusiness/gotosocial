@@ -89,6 +89,10 @@ type Processor interface {
 	AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlocksGet returns a list of currently blocked domains.
 	AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlockGet returns one domain block, specified by ID.
+	AdminDomainBlockGet(authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminDomainBlockDelete deletes one domain block, specified by ID, returning the deleted domain block.
+	AdminDomainBlockDelete(authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)

@@ -9,7 +9,7 @@ import (
 
 func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (*relevantAccounts, error) {
 	accounts := &relevantAccounts{
-		MentionedAccounts: []*gtsmodel.Account{},
+		MentionedAccounts:        []*gtsmodel.Account{},
 		BoostedMentionedAccounts: []*gtsmodel.Account{},
 	}
 

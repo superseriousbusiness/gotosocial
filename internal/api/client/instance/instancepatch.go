@@ -8,6 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// InstanceUpdatePATCHHandler allows an admin to update the instance information served at /api/v1/instance
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	l := m.log.WithField("func", "InstanceUpdatePATCHHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

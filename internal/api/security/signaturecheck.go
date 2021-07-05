@@ -11,6 +11,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// SignatureCheck checks whether an incoming http request has been signed. If so, it will check if the domain
+// that signed the request is permitted to access the server. If it is permitted, the handler will set the key
+// verifier in the gin context for use down the line.
 func (m *Module) SignatureCheck(c *gin.Context) {
 	l := m.log.WithField("func", "DomainBlockChecker")
 

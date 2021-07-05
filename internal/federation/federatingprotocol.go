@@ -235,7 +235,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	}
 
 	for _, uri := range actorIRIs {
-		blockedDomain, err := f.blockedDomain(uri.Host);
+		blockedDomain, err := f.blockedDomain(uri.Host)
 		if err != nil {
 			return false, fmt.Errorf("error checking domain block: %s", err)
 		}

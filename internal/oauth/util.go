@@ -95,6 +95,6 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 			return nil, errors.New("account suspended")
 		}
 	}
-	
+
 	return a, nil
 }

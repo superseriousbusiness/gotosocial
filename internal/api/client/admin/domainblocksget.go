@@ -9,10 +9,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlockGETHandler returns one existing domain block, identified by its id.
-func (m *Module) DomainBlockGETHandler(c *gin.Context) {
+// DomainBlocksGETHandler returns a list of all existing domain blocks.
+func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
-		"func":        "DomainBlockGETHandler",
+		"func":        "DomainBlocksGETHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),
 		"origin_ip":   c.ClientIP(),
@@ -31,12 +31,6 @@ func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 		return
 	}
 
-	domainBlockID := c.Param(IDKey)
-	if domainBlockID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no domain block id provided"})
-		return
-	}
-
 	export := false
 	exportString := c.Query(ExportQueryKey)
 	if exportString != "" {
@@ -49,12 +43,12 @@ func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 		export = i
 	}
 
-	domainBlock, err := m.processor.AdminDomainBlockGet(authed, domainBlockID, export)
+	domainBlocks, err := m.processor.AdminDomainBlocksGet(authed, export)
 	if err != nil {
-		l.Debugf("error getting domain block: %s", err)
+		l.Debugf("error getting domain blocks: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, domainBlock)
+	c.JSON(http.StatusOK, domainBlocks)
 }

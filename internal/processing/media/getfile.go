@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"strings"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {

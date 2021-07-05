@@ -2,17 +2,16 @@ package admin
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlockGETHandler returns one existing domain block, identified by its id.
-func (m *Module) DomainBlockGETHandler(c *gin.Context) {
+// DomainBlockDELETEHandler deals with the delete of an existing domain block.
+func (m *Module) DomainBlockDELETEHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
-		"func":        "DomainBlockGETHandler",
+		"func":        "DomainBlockDELETEHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),
 		"origin_ip":   c.ClientIP(),
@@ -37,22 +36,10 @@ func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 		return
 	}
 
-	export := false
-	exportString := c.Query(ExportQueryKey)
-	if exportString != "" {
-		i, err := strconv.ParseBool(exportString)
-		if err != nil {
-			l.Debugf("error parsing export string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse export query param"})
-			return
-		}
-		export = i
-	}
-
-	domainBlock, err := m.processor.AdminDomainBlockGet(authed, domainBlockID, export)
-	if err != nil {
-		l.Debugf("error getting domain block: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	domainBlock, errWithCode := m.processor.AdminDomainBlockDelete(authed, domainBlockID)
+	if errWithCode != nil {
+		l.Debugf("error deleting domain block: %s", errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// DomainBlocksPOSTHandler deals with the creation of a new domain block.
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "DomainBlocksPOSTHandler",
@@ -67,5 +68,3 @@ func validateCreateDomainBlock(form *model.DomainBlockCreateRequest) error {
 
 	return nil
 }
-
-
