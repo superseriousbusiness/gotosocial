@@ -18,13 +18,15 @@
 
 package model
 
+import "mime/multipart"
+
 // DomainBlock represents a block on one domain
 type DomainBlock struct {
 	ID             string `json:"id,omitempty"`
-	Domain         string `json:"domain"`
+	Domain         string `form:"domain" json:"domain" validation:"required"`
 	Obfuscate      bool   `json:"obfuscate,omitempty"`
 	PrivateComment string `json:"private_comment,omitempty"`
-	PublicComment  string `json:"public_comment,omitempty"`
+	PublicComment  string `form:"public_comment" json:"public_comment,omitempty"`
 	SubscriptionID string `json:"subscription_id,omitempty"`
 	CreatedBy      string `json:"created_by,omitempty"`
 	CreatedAt      string `json:"created_at,omitempty"`
@@ -32,8 +34,10 @@ type DomainBlock struct {
 
 // DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.
 type DomainBlockCreateRequest struct {
+	// A list of domains to block. Only used if import=true is specified.
+	Domains *multipart.FileHeader `form:"domains" json:"domains" xml:"domains"`
 	// hostname/domain to block
-	Domain string `form:"domain" json:"domain" xml:"domain" validation:"required"`
+	Domain string `form:"domain" json:"domain" xml:"domain"`
 	// whether the domain should be obfuscated when being displayed publicly
 	Obfuscate bool `form:"obfuscate" json:"obfuscate" xml:"obfuscate"`
 	// private comment for other admins on why the domain was blocked

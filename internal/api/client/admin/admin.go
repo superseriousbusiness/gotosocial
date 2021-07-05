@@ -35,11 +35,13 @@ const (
 	EmojiPath = BasePath + "/custom_emojis"
 	// DomainBlocksPath is used for posting domain blocks.
 	DomainBlocksPath = BasePath + "/domain_blocks"
-	// DomainBlockPath is used for interacting with a single domain block.
-	DomainBlockPath = DomainBlocksPath + "/:" + IDKey
+	// DomainBlocksPathWithID is used for interacting with a single domain block.
+	DomainBlocksPathWithID = DomainBlocksPath + "/:" + IDKey
 
 	// ExportQueryKey is for requesting a public export of some data.
 	ExportQueryKey = "export"
+	// ImportQueryKey is for submitting an import of some data.
+	ImportQueryKey = "import"
 	// IDKey specifies the ID of a single item being interacted with.
 	IDKey = "id"
 )
@@ -65,7 +67,7 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodPost, EmojiPath, m.emojiCreatePOSTHandler)
 	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
-	r.AttachHandler(http.MethodGet, DomainBlockPath, m.DomainBlockGETHandler)
-	r.AttachHandler(http.MethodDelete, DomainBlockPath, m.DomainBlockDELETEHandler)
+	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
+	r.AttachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
 	return nil
 }

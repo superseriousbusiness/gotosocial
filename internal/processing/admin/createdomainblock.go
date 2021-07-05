@@ -30,37 +30,37 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	// first check if we already have a block -- if err == nil we already had a block so we can skip a whole lot of work
 	domainBlock := &gtsmodel.DomainBlock{}
-	err := p.db.GetWhere([]db.Where{{Key: "domain", Value: form.Domain, CaseInsensitive: true}}, domainBlock)
+	err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain, CaseInsensitive: true}}, domainBlock)
 	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			// something went wrong in the DB
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error checking for existence of domain block %s: %s", form.Domain, err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error checking for existence of domain block %s: %s", domain, err))
 		}
 
 		// there's no block for this domain yet so create one
 		// note: we take a new ulid from timestamp here in case we need to sort blocks
 		blockID, err := id.NewULID()
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error creating id for new domain block %s: %s", form.Domain, err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error creating id for new domain block %s: %s", domain, err))
 		}
 
 		domainBlock = &gtsmodel.DomainBlock{
 			ID:                 blockID,
-			Domain:             form.Domain,
+			Domain:             domain,
 			CreatedByAccountID: account.ID,
-			PrivateComment:     form.PrivateComment,
-			PublicComment:      form.PublicComment,
-			Obfuscate:          form.Obfuscate,
+			PrivateComment:     privateComment,
+			PublicComment:      publicComment,
+			Obfuscate:          obfuscate,
 		}
 
 		// put the new block in the database
 		if err := p.db.Put(domainBlock); err != nil {
 			if _, ok := err.(db.ErrAlreadyExists); !ok {
 				// there's a real error creating the block
-				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", form.Domain, err))
+				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
 			}
 		}
 
@@ -70,7 +70,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, form *apimodel.
 
 	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock, false)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/masto representation %s: %s", form.Domain, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/masto representation %s: %s", domain, err))
 	}
 
 	return mastoDomainBlock, nil

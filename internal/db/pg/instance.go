@@ -42,8 +42,8 @@ func (ps *postgresService) GetDomainCountForInstance(domain string) (int, error)
 
 	if domain == ps.config.Host {
 		// if the domain is *this* domain, just count other instances it knows about
-		// TODO: exclude domains that are blocked or silenced
-		q = q.Where("domain != ?", domain)
+		// exclude domains that are blocked
+		q = q.Where("domain != ?", domain).Where("? IS NULL", pg.Ident("suspended_at"))
 	} else {
 		// TODO: implement federated domain counting properly for remote domains
 		return 0, nil

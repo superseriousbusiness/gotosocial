@@ -29,7 +29,11 @@ func (p *processor) AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCre
 }
 
 func (p *processor) AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode) {
-	return p.adminProcessor.DomainBlockCreate(authed.Account, form)
+	return p.adminProcessor.DomainBlockCreate(authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
+}
+
+func (p *processor) AdminDomainBlocksImport(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) ([]*apimodel.DomainBlock, gtserror.WithCode) {
+   return p.adminProcessor.DomainBlocksImport(authed.Account, form.Domains)
 }
 
 func (p *processor) AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {

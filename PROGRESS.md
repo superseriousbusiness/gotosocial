@@ -41,9 +41,9 @@
   * [ ] Blocks
     * [ ] /api/v1/blocks GET                                (See list of blocked accounts)
   * [ ] Domain Blocks
-    * [ ] /api/v1/domain_blocks GET                         (See list of domain blocks)
-    * [ ] /api/v1/domain_blocks POST                        (Create a domain block)
-    * [ ] /api/v1/domain_blocks DELETE                      (Remove a domain block)
+    * [x] /api/v1/domain_blocks GET                         (See list of domain blocks)
+    * [x] /api/v1/domain_blocks POST                        (Create a domain block)
+    * [x] /api/v1/domain_blocks DELETE                      (Remove a domain block)
   * [ ] Filters
     * [ ] /api/v1/filters GET                               (Get list of filters)
     * [ ] /api/v1/filters/:id GET                           (View a filter)
@@ -134,7 +134,7 @@
     * [x] /api/v2/search GET                                (Get search query results)
   * [ ] Instance
     * [x] /api/v1/instance GET                              (Get instance information)
-    * [ ] /api/v1/instance PATCH                            (Update instance information)
+    * [x] /api/v1/instance PATCH                            (Update instance information)
     * [ ] /api/v1/instance/peers GET                        (Get list of federated servers)
     * [ ] /api/v1/instance/activity GET                     (Instance activity over the last 3 months, binned weekly.)
   * [ ] Trends
@@ -198,10 +198,10 @@
   * [ ] App creation guide
 * [ ] Tooling
   * [ ] Database migration tool
-  * [ ] Admin CLI tool
+  * [x] Admin CLI tool
 * [ ] Build
-  * [ ] Docker containerization
-    * [ ] Dockerfile
+  * [x] Docker containerization
+    * [x] Dockerfile
     * [ ] docker-compose.yml
 * [ ] Tests
   * [ ] Unit/integration

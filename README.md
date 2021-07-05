@@ -26,9 +26,15 @@ A grab-bag of things that are already included or will be included in the projec
 
 ## Implementation Status
 
-Things are moving on the project! As of June 2021 you can now:
+Things are moving on the project! As of July 2021 you can now:
+
+### Admin
 
 * Build and deploy GoToSocial as a binary, with automatic LetsEncrypt certificate support built-in.
+* Create, confirm, and promote users using self-documented CLI tool.
+
+### User
+
 * Connect to the running instance via Tusky or Pinafore, using email address and password (stored encrypted).
 * Post/delete posts.
 * Reply/delete replies.
@@ -44,7 +50,12 @@ Things are moving on the project! As of June 2021 you can now:
 * View local timeline.
 * View and scroll home timeline (with ~10ms latency hell yeah).
 * Stream new posts, notifications and deletes through a websockets connection via Pinafore.
+
+### Federation
+
 * Federation support and interoperability with Mastodon and others.
+* Domain blocking: create, update, delete, and export domain blocks.
+* Domain blocking: import lists of domain blocks -- no more blocking domains one-by-one.
 
 In other words, a deployed GoToSocial instance is already pretty useable!
 
