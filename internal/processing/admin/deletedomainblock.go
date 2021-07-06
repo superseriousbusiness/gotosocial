@@ -64,5 +64,20 @@ func (p *processor) DomainBlockDelete(account *gtsmodel.Account, id string) (*ap
 		}
 	}
 
+	// unsuspend all accounts whose suspension origin was this domain block
+	// 1. remove the 'suspended_at' entry from their accounts
+	if err := p.db.UpdateWhere([]db.Where{
+		{Key: "suspension_origin", Value: domainBlock.ID},
+	}, "suspended_at", nil, &[]*gtsmodel.Account{}); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error removing suspended_at from accounts: %s", err))
+	}
+
+	// 2. remove the 'suspension_origin' entry from their accounts
+	if err := p.db.UpdateWhere([]db.Where{
+		{Key: "suspension_origin", Value: domainBlock.ID},
+	}, "suspension_origin", nil, &[]*gtsmodel.Account{}); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error removing suspension_origin from accounts: %s", err))
+	}
+
 	return mastoDomainBlock, nil
 }

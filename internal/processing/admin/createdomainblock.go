@@ -54,6 +54,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 			PrivateComment:     privateComment,
 			PublicComment:      publicComment,
 			Obfuscate:          obfuscate,
+			SubscriptionID:     subscriptionID,
 		}
 
 		// put the new block in the database
@@ -140,7 +141,7 @@ selectAccountsLoop:
 			p.fromClientAPI <- gtsmodel.FromClientAPI{
 				APObjectType:   gtsmodel.ActivityStreamsPerson,
 				APActivityType: gtsmodel.ActivityStreamsDelete,
-				GTSModel:       a,
+				GTSModel:       block,
 				OriginAccount:  account,
 				TargetAccount:  a,
 			}

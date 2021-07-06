@@ -86,6 +86,9 @@ type DB interface {
 	// UpdateOneByID updates interface i with database the given database id. It will update one field of key key and value value.
 	UpdateOneByID(id string, key string, value interface{}, i interface{}) error
 
+	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
+	UpdateWhere(where []Where, key string, value interface{}, i interface{}) error
+
 	// DeleteByID removes i with id id.
 	// If i didn't exist anyway, then no error should be returned.
 	DeleteByID(id string, i interface{}) error

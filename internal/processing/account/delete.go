@@ -48,7 +48,7 @@ import (
 // 16. Delete account's user
 // 17. Delete account's timeline
 // 18. Delete account itself
-func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
+func (p *processor) Delete(account *gtsmodel.Account, origin string) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":     "Delete",
 		"username": account.Username,
@@ -100,6 +100,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	// nothing to do here
 
 	// 4. Delete account's follow requests
+	// TODO: federate these if necessary
 	l.Debug("deleting account follow requests")
 	// first delete any follow requests that this account created
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.FollowRequest{}); err != nil {
@@ -112,6 +113,7 @@ func (p *processor) Delete(account *gtsmodel.Account, deletedBy string) error {
 	}
 
 	// 5. Delete account's follows
+	// TODO: federate these if necessary
 	l.Debug("deleting account follows")
 	// first delete any follows that this account created
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.Follow{}); err != nil {
@@ -217,6 +219,7 @@ selectStatusesLoop:
 	}
 
 	// 12. Delete account's faves
+	// TODO: federate these if necessary
 	l.Debug("deleting account faves")
 	if err := p.db.DeleteWhere([]db.Where{{Key: "account_id", Value: account.ID}}, &[]*gtsmodel.StatusFave{}); err != nil {
 		l.Errorf("error deleting faves created by account: %s", err)
@@ -229,6 +232,7 @@ selectStatusesLoop:
 	}
 
 	// 14. Delete account's streams
+	// TODO
 
 	// 15. Delete account's tags
 	// TODO
@@ -240,6 +244,7 @@ selectStatusesLoop:
 	}
 
 	// 17. Delete account's timeline
+	// TODO
 
 	// 18. Delete account itself
 	// to prevent the account being created again, set all these fields and update it in the db
@@ -259,7 +264,7 @@ selectStatusesLoop:
 	account.UpdatedAt = time.Now()
 
 	account.SuspendedAt = time.Now()
-	account.SuspensionOrigin = deletedBy
+	account.SuspensionOrigin = origin
 
 	if err := p.db.UpdateByID(account.ID, account); err != nil {
 		return err

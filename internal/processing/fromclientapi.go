@@ -193,17 +193,17 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			return p.federateStatusDelete(statusToDelete)
 		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
 			// DELETE ACCOUNT/PROFILE
-			accountToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Account)
-			if !ok {
-				return errors.New("account was not parseable as *gtsmodel.Account")
-			}
 
-			var deletedBy string
-			if clientMsg.OriginAccount != nil {
-				deletedBy = clientMsg.OriginAccount.ID
+			// the origin of the delete could be either a domain block, or an action by another (or this) account
+			var origin string
+			if domainBlock, ok := clientMsg.GTSModel.(*gtsmodel.DomainBlock); ok {
+				// origin is a domain block
+				origin = domainBlock.ID
+			} else {
+				// origin is whichever account caused this message
+				origin = clientMsg.OriginAccount.ID
 			}
-
-			return p.accountProcessor.Delete(accountToDelete, deletedBy)
+			return p.accountProcessor.Delete(clientMsg.TargetAccount, origin)
 		}
 	}
 	return nil

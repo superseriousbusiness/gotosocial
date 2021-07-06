@@ -33,7 +33,7 @@ func (p *processor) AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.Do
 }
 
 func (p *processor) AdminDomainBlocksImport(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) ([]*apimodel.DomainBlock, gtserror.WithCode) {
-   return p.adminProcessor.DomainBlocksImport(authed.Account, form.Domains)
+	return p.adminProcessor.DomainBlocksImport(authed.Account, form.Domains)
 }
 
 func (p *processor) AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
