@@ -115,7 +115,7 @@ type Account struct {
 		CRYPTO FIELDS
 	*/
 
-	// Privatekey for validating activitypub requests, will obviously only be defined for local accounts
+	// Privatekey for validating activitypub requests, will only be defined for local accounts
 	PrivateKey *rsa.PrivateKey
 	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
 	PublicKey *rsa.PublicKey
@@ -134,8 +134,8 @@ type Account struct {
 	SuspendedAt time.Time `pg:"type:timestamp"`
 	// Should we hide this account's collections?
 	HideCollections bool
-	// id of the user that suspended this account through an admin action
-	SuspensionOrigin string
+	// id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
+	SuspensionOrigin string `pg:"type:CHAR(26)"`
 }
 
 // Field represents a key value field on an account, for things like pronouns, website, etc.

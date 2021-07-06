@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package pg
 
 import (
@@ -42,8 +60,8 @@ func (ps *postgresService) GetDomainCountForInstance(domain string) (int, error)
 
 	if domain == ps.config.Host {
 		// if the domain is *this* domain, just count other instances it knows about
-		// TODO: exclude domains that are blocked or silenced
-		q = q.Where("domain != ?", domain)
+		// exclude domains that are blocked
+		q = q.Where("domain != ?", domain).Where("? IS NULL", pg.Ident("suspended_at"))
 	} else {
 		// TODO: implement federated domain counting properly for remote domains
 		return 0, nil

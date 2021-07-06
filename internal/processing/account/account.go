@@ -40,7 +40,8 @@ type Processor interface {
 	// Create processes the given form for creating a new account, returning an oauth token for that account if successful.
 	Create(applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
 	// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
-	Delete(account *gtsmodel.Account, deletedBy string) error
+	// The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
+	Delete(account *gtsmodel.Account, origin string) error
 	// Get processes the given request for account information.
 	Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
 	// Update processes the update of an account with the given form
