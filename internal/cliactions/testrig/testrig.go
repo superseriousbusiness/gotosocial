@@ -44,7 +44,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	c := testrig.NewTestConfig()
 	dbService := testrig.NewTestDB()
 	testrig.StandardDBSetup(dbService)
-	router := testrig.NewTestRouter()
+	router := testrig.NewTestRouter(dbService)
 	storageBackend := testrig.NewTestStorage()
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 

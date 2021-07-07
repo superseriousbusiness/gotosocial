@@ -38,6 +38,9 @@ import (
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
+	s.Options(sessions.Options{
+		MaxAge: 120, // give the user 2 minutes to sign in before expiring their session
+	})
 
 	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
@@ -117,9 +120,6 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
-	// At this point we know the user has said 'yes' to allowing the application and oauth client
-	// work for them, so we can set the
-
 	// We need to retrieve the original form submitted to the authorizeGEThandler, and
 	// recreate it on the request so that it can be used further by the oauth2 library.
 	// So first fetch all the values from the session.
@@ -153,8 +153,13 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing userid"})
 		return
 	}
+
 	// we're done with the session so we can clear it now
 	s.Clear()
+	if err := s.Save(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	// now set the values on the request
 	values := url.Values{}
