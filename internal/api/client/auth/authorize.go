@@ -26,7 +26,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -38,20 +37,25 @@ import (
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
-	s.Options(sessions.Options{
-		MaxAge: 120, // give the user 2 minutes to sign in before expiring their session
-	})
 
 	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
 	userID, ok := s.Get("userid").(string)
 	if !ok || userID == "" {
 		l.Trace("userid was empty, parsing form then redirecting to sign in page")
-		if err := parseAuthForm(c, l); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		} else {
-			c.Redirect(http.StatusFound, AuthSignInPath)
+		form := &model.OAuthAuthorize{}
+		if err := c.Bind(form); err != nil {
+			l.Debugf("invalid auth form: %s", err)
+			return
 		}
+		l.Debugf("parsed auth form: %+v", form)
+
+		if err := extractAuthForm(s, form); err != nil {
+			l.Debug(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.Redirect(http.StatusFound, AuthSignInPath)
 		return
 	}
 
@@ -178,18 +182,9 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	}
 }
 
-// parseAuthForm parses the OAuthAuthorize form in the gin context, and stores
+// extractAuthForm checks the given OAuthAuthorize form, and stores
 // the values in the form into the session.
-func parseAuthForm(c *gin.Context, l *logrus.Entry) error {
-	s := sessions.Default(c)
-
-	// first make sure they've filled out the authorize form with the required values
-	form := &model.OAuthAuthorize{}
-	if err := c.ShouldBind(form); err != nil {
-		return err
-	}
-	l.Tracef("parsed form: %+v", form)
-
+func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
 	// these fields are *required* so check 'em
 	if form.ResponseType == "" || form.ClientID == "" || form.RedirectURI == "" {
 		return errors.New("missing one of: response_type, client_id or redirect_uri")
