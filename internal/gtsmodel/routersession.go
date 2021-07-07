@@ -16,18 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package gtsmodel
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
-)
-
-// NewTestRouter returns a Router suitable for testing
-func NewTestRouter(db db.DB) router.Router {
-	r, err := router.New(NewTestConfig(), db, NewTestLog())
-	if err != nil {
-		panic(err)
-	}
-	return r
+// RouterSession is used to store and retrieve settings for a router session.
+type RouterSession struct {
+	ID    string `pg:"type:CHAR(26),pk,notnull"`
+	Auth  []byte `pg:",notnull"`
+	Crypt []byte `pg:",notnull"`
 }

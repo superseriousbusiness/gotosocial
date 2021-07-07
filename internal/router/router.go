@@ -20,20 +20,22 @@ package router
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"golang.org/x/crypto/acme/autocert"
+)
+
+var (
+	readTimeout       = 60 * time.Second
+	writeTimeout      = 30 * time.Second
+	idleTimeout       = 30 * time.Second
+	readHeaderTimeout = 30 * time.Second
 )
 
 // Router provides the REST interface for gotosocial, using gin.
@@ -96,31 +98,17 @@ func (r *router) Stop(ctx context.Context) error {
 	return r.srv.Shutdown(ctx)
 }
 
-// AttachHandler attaches the given gin.HandlerFunc to the router with the specified method and path.
-// If the path is set to ANY, then the handlerfunc will be used for ALL methods at its given path.
-func (r *router) AttachHandler(method string, path string, handler gin.HandlerFunc) {
-	if method == "ANY" {
-		r.engine.Any(path, handler)
-	} else {
-		r.engine.Handle(method, path, handler)
-	}
-}
-
-// AttachMiddleware attaches a gin middleware to the router that will be used globally
-func (r *router) AttachMiddleware(middleware gin.HandlerFunc) {
-	r.engine.Use(middleware)
-}
-
-// AttachNoRouteHandler attaches a gin.HandlerFunc to NoRoute to handle 404's
-func (r *router) AttachNoRouteHandler(handler gin.HandlerFunc) {
-	r.engine.NoRoute(handler)
-}
-
 // New returns a new Router with the specified configuration, using the given logrus logger.
-func New(config *config.Config, logger *logrus.Logger) (Router, error) {
-	lvl, err := logrus.ParseLevel(config.LogLevel)
+//
+// The given DB is only used in the New function for parsing config values, and is not otherwise
+// pinned to the router.
+func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
+
+	// gin has different log modes; for convenience, we match the gin log mode to
+	// whatever log mode has been set for logrus
+	lvl, err := logrus.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse log level %s to set router level: %s", config.LogLevel, err)
+		return nil, fmt.Errorf("couldn't parse log level %s to set router level: %s", cfg.LogLevel, err)
 	}
 	switch lvl {
 	case logrus.TraceLevel, logrus.DebugLevel:
@@ -131,52 +119,43 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.Default()
-	engine.Use(cors.New(cors.Config{
-		AllowAllOrigins:        true,
-		AllowBrowserExtensions: true,
-		AllowMethods:           []string{"POST", "PUT", "DELETE", "GET", "PATCH", "OPTIONS"},
-		AllowHeaders:           []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Upgrade", "Sec-WebSocket-Extensions", "Sec-WebSocket-Key", "Sec-WebSocket-Protocol", "Sec-WebSocket-Version", "Connection"},
-		AllowWebSockets:        true,
-		ExposeHeaders:          []string{"Link", "X-RateLimit-Reset", "X-RateLimit-Limit", " X-RateLimit-Remaining", "X-Request-Id", "Connection", "Sec-WebSocket-Accept", "Upgrade"},
-		MaxAge:                 2 * time.Minute,
-	}))
 	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
 
-	// create a new session store middleware
-	store, err := sessionStore()
-	if err != nil {
-		return nil, fmt.Errorf("error creating session store: %s", err)
+	// enable cors on the engine
+	if err := useCors(cfg, engine); err != nil {
+		return nil, err
 	}
-	engine.Use(sessions.Sessions("gotosocial-session", store))
 
-	// load html templates for use by the router
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("error getting current working directory: %s", err)
+	// load templates onto the engine
+	if err := loadTemplates(cfg, engine); err != nil {
+		return nil, err
 	}
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", config.TemplateConfig.BaseDir))
-	logger.Debugf("loading templates from %s", tmPath)
-	engine.LoadHTMLGlob(tmPath)
 
-	// create the actual http server here
+	// enable session store middleware on the engine
+	if err := useSession(cfg, db, engine); err != nil {
+		return nil, err
+	}
+
+	// create the http server here, passing the gin engine as handler
 	s := &http.Server{
 		Handler:           engine,
-		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 30 * time.Second,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
-	var m *autocert.Manager
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
 	// In either case, the gin engine will still be used for routing requests.
-	if config.LetsEncryptConfig.Enabled {
+
+	var m *autocert.Manager
+	if cfg.LetsEncryptConfig.Enabled {
 		// le IS enabled, so roll up an autocert manager for handling letsencrypt requests
 		m = &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(config.Host),
-			Cache:      autocert.DirCache(config.LetsEncryptConfig.CertDir),
-			Email:      config.LetsEncryptConfig.EmailAddress,
+			HostPolicy: autocert.HostWhitelist(cfg.Host),
+			Cache:      autocert.DirCache(cfg.LetsEncryptConfig.CertDir),
+			Email:      cfg.LetsEncryptConfig.EmailAddress,
 		}
 		// and create an HTTPS server
 		s.Addr = ":https"
@@ -190,25 +169,9 @@ func New(config *config.Config, logger *logrus.Logger) (Router, error) {
 		logger:      logger,
 		engine:      engine,
 		srv:         s,
-		config:      config,
+		config:      cfg,
 		certManager: m,
 	}, nil
-}
-
-// sessionStore returns a new session store with a random auth and encryption key.
-// This means that cookies using the store will be reset if gotosocial is restarted!
-func sessionStore() (memstore.Store, error) {
-	auth := make([]byte, 32)
-	crypt := make([]byte, 32)
-
-	if _, err := rand.Read(auth); err != nil {
-		return nil, err
-	}
-	if _, err := rand.Read(crypt); err != nil {
-		return nil, err
-	}
-
-	return memstore.NewStore(auth, crypt), nil
 }
 
 func httpsRedirect(w http.ResponseWriter, req *http.Request) {

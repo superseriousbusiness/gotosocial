@@ -47,6 +47,7 @@ var testModels []interface{} = []interface{}{
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
+	&gtsmodel.RouterSession{},
 	&oauth.Token{},
 	&oauth.Client{},
 }

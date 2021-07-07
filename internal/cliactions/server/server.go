@@ -67,6 +67,7 @@ var models []interface{} = []interface{}{
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
+	&gtsmodel.RouterSession{},
 	&oauth.Token{},
 	&oauth.Client{},
 }
@@ -94,7 +95,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 
 	federatingDB := federatingdb.New(dbService, c, log)
 
-	router, err := router.New(c, log)
+	router, err := router.New(c, dbService, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
