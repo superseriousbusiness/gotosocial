@@ -9,7 +9,7 @@
 
 	<h3>This is the default landing page, you can edit it from <span class="accent">./web/template/index.tmpl</span></h1>
 	<p>
-		{{.instance.ShortDescription}}
+		{{.instance.ShortDescription | noescape}}
 	</p>
 </section>
 
