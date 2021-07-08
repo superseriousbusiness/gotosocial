@@ -59,16 +59,13 @@ a {
 	font-size: 1.2rem;
 	font-weight: bold;
 	padding: 0.5rem;
+	border: none;
+	cursor: pointer;
 }
 
 .button:hover, button:hover {
 		background: #c76d33;
 	}
-
-button {
-	border: none;
-	cursor: pointer;
-}
 
 .count {
 	background: rgb(70, 79, 88);
