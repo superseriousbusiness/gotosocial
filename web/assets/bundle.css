@@ -51,7 +51,7 @@ a {
 	color: #de8957;
 }
 
-a.button, button {
+.button, button {
 	border-radius: 0.2rem;
 	background: #de8957;
 	color: #fafaff;
@@ -61,7 +61,7 @@ a.button, button {
 	padding: 0.5rem;
 }
 
-a.button:hover, button:hover {
+.button:hover, button:hover {
 		background: #c76d33;
 	}
 
