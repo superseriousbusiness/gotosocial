@@ -143,13 +143,12 @@ section.login form button {
 			grid-column: 2;
 		}
 
-input, select {
+input, select, textarea {
 	border: 1px solid #fafaff;
 	color: #fafaff;
 	background: #525c66;
 	width: 100%;
 }
-
 
 footer {
 	align-self: end;
@@ -158,7 +157,6 @@ footer {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
 }
-
 
 footer a {
 		font-weight: bold;
