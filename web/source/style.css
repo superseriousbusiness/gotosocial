@@ -151,7 +151,7 @@ section.login {
 	}
 }
 
-input, select {
+input, select, textarea {
 	border: 1px solid $fg;
 	color: $fg;
 	background: $bg;
