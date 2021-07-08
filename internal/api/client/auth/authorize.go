@@ -157,7 +157,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing scope"})
 		return
 	}
-	
+
 	userID, ok := s.Get(sessionUserID).(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing userid"})
