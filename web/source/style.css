@@ -59,7 +59,7 @@ a {
 	color: $acc1;
 }
 
-a.button, button {
+.button, button {
 	border-radius: 0.2rem;
 	background: $acc1;
 	color: $fg;
