@@ -47,8 +47,6 @@ type Router interface {
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Attach 404 NoRoute handler
 	AttachNoRouteHandler(handler gin.HandlerFunc)
-	// Set Template function map
-	SetTemplateFuncMap(functions template.FuncMap)
 	// Start the router
 	Start()
 	// Stop the router
@@ -101,11 +99,6 @@ func (r *router) Stop(ctx context.Context) error {
 	return r.srv.Shutdown(ctx)
 }
 
-// Set Template function map
-func (r *router) SetTemplateFuncMap(functions template.FuncMap) {
-	r.engine.SetFuncMap(functions)
-}
-
 // New returns a new Router with the specified configuration, using the given logrus logger.
 //
 // The given DB is only used in the New function for parsing config values, and is not otherwise
@@ -133,6 +126,9 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 	if err := useCors(cfg, engine); err != nil {
 		return nil, err
 	}
+
+	// set template functions
+	loadTemplateFunctions(engine);
 
 	// load templates onto the engine
 	if err := loadTemplates(cfg, engine); err != nil {

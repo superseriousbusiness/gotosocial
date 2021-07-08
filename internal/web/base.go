@@ -85,10 +85,6 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	})
 }
 
-func noescape(str string) template.HTML {
-	return template.HTML(str)
-}
-
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 
@@ -105,10 +101,6 @@ func (m *Module) Route(s router.Router) error {
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
-
-	s.SetTemplateFuncMap(template.FuncMap{
-		"noescape": noescape,
-	})
 
 	if err != nil {
 		return fmt.Errorf("error setting router FuncMap: %s", err)
