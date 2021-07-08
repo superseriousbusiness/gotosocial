@@ -40,7 +40,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
-	userID, ok := s.Get("userid").(string)
+	userID, ok := s.Get(sessionUserID).(string)
 	if !ok || userID == "" {
 		l.Trace("userid was empty, parsing form then redirecting to sign in page")
 		form := &model.OAuthAuthorize{}
@@ -48,10 +48,10 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 			l.Debugf("invalid auth form: %s", err)
 			return
 		}
-		l.Debugf("parsed auth form: %+v", form)
+		l.Tracef("parsed auth form: %+v", form)
 
 		if err := extractAuthForm(s, form); err != nil {
-			l.Debug(err)
+			l.Debugf(fmt.Sprintf("error parsing form at /oauth/authorize: %s", err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -60,7 +60,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	}
 
 	// We can use the client_id on the session to retrieve info about the app associated with the client_id
-	clientID, ok := s.Get("client_id").(string)
+	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session"})
 		return
@@ -68,7 +68,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	app := &gtsmodel.Application{
 		ClientID: clientID,
 	}
-	if err := m.db.GetWhere([]db.Where{{Key: "client_id", Value: app.ClientID}}, app); err != nil {
+	if err := m.db.GetWhere([]db.Where{{Key: sessionClientID, Value: app.ClientID}}, app); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
 		return
 	}
@@ -92,12 +92,12 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	}
 
 	// Finally we should also get the redirect and scope of this particular request, as stored in the session.
-	redirect, ok := s.Get("redirect_uri").(string)
+	redirect, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirect == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no redirect_uri found in session"})
 		return
 	}
-	scope, ok := s.Get("scope").(string)
+	scope, ok := s.Get(sessionScope).(string)
 	if !ok || scope == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no scope found in session"})
 		return
@@ -111,7 +111,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		"appname":    app.Name,
 		"appwebsite": app.Website,
 		"redirect":   redirect,
-		"scope":      scope,
+		sessionScope: scope,
 		"user":       acct.Username,
 	})
 }
@@ -127,39 +127,47 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	// We need to retrieve the original form submitted to the authorizeGEThandler, and
 	// recreate it on the request so that it can be used further by the oauth2 library.
 	// So first fetch all the values from the session.
-	forceLogin, ok := s.Get("force_login").(string)
+
+	forceLogin, ok := s.Get(sessionForceLogin).(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing force_login"})
 		return
 	}
-	responseType, ok := s.Get("response_type").(string)
+
+	responseType, ok := s.Get(sessionResponseType).(string)
 	if !ok || responseType == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing response_type"})
 		return
 	}
-	clientID, ok := s.Get("client_id").(string)
+
+	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing client_id"})
 		return
 	}
-	redirectURI, ok := s.Get("redirect_uri").(string)
+
+	redirectURI, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirectURI == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
 		return
 	}
-	scope, ok := s.Get("scope").(string)
+
+	scope, ok := s.Get(sessionScope).(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing scope"})
 		return
 	}
-	userID, ok := s.Get("userid").(string)
+	
+	userID, ok := s.Get(sessionUserID).(string)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing userid"})
 		return
 	}
 
 	// we're done with the session so we can clear it now
-	s.Clear()
+	for _, key := range sessionKeys {
+		s.Delete(key)
+	}
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -167,12 +175,12 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	// now set the values on the request
 	values := url.Values{}
-	values.Set("force_login", forceLogin)
-	values.Set("response_type", responseType)
-	values.Set("client_id", clientID)
-	values.Set("redirect_uri", redirectURI)
-	values.Set("scope", scope)
-	values.Set("userid", userID)
+	values.Set(sessionForceLogin, forceLogin)
+	values.Set(sessionResponseType, responseType)
+	values.Set(sessionClientID, clientID)
+	values.Set(sessionRedirectURI, redirectURI)
+	values.Set(sessionScope, scope)
+	values.Set(sessionUserID, userID)
 	c.Request.Form = values
 	l.Tracef("values on request set to %+v", c.Request.Form)
 
@@ -196,10 +204,10 @@ func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
 	}
 
 	// save these values from the form so we can use them elsewhere in the session
-	s.Set("force_login", form.ForceLogin)
-	s.Set("response_type", form.ResponseType)
-	s.Set("client_id", form.ClientID)
-	s.Set("redirect_uri", form.RedirectURI)
-	s.Set("scope", form.Scope)
+	s.Set(sessionForceLogin, form.ForceLogin)
+	s.Set(sessionResponseType, form.ResponseType)
+	s.Set(sessionClientID, form.ClientID)
+	s.Set(sessionRedirectURI, form.RedirectURI)
+	s.Set(sessionScope, form.Scope)
 	return s.Save()
 }

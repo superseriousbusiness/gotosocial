@@ -62,7 +62,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	s.Set("userid", userid)
+	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -107,7 +107,7 @@ func (m *Module) ValidatePassword(email string, password string) (userid string,
 
 	// If we've made it this far the email/password is correct, so we can just return the id of the user.
 	userid = gtsUser.ID
-	l.Debugf("returning (%s, %s)", userid, err)
+	l.Tracef("returning (%s, %s)", userid, err)
 	return
 }
 
