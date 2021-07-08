@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
 
@@ -27,7 +28,7 @@ func noescape(str string) template.HTML {
 }
 
 func loadTemplateFunctions(engine *gin.Engine) {
-	return r.engine.SetFuncMap(template.FuncMap{
+	engine.SetFuncMap(template.FuncMap{
 		"noescape": noescape,
 	})
 }

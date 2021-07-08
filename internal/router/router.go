@@ -21,7 +21,6 @@ package router
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net/http"
 	"time"
 
