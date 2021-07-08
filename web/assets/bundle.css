@@ -138,17 +138,17 @@ section.login form {
 		grid-gap: 0.7rem;
 	}
 
-section.login form input {
-			border: 1px solid #fafaff;
-			color: #fafaff;
-			background: #525c66;
-			width: 100%;
-		}
-
 section.login form button {
 			place-self: center;
 			grid-column: 2;
 		}
+
+input, select, textarea {
+	border: 1px solid #fafaff;
+	color: #fafaff;
+	background: #525c66;
+	width: 100%;
+}
 
 footer {
 	align-self: end;
