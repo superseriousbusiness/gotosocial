@@ -36,7 +36,25 @@ const (
 	OauthTokenPath = "/oauth/token"
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
+
+	sessionUserID       = "userid"
+	sessionClientID     = "client_id"
+	sessionRedirectURI  = "redirect_uri"
+	sessionForceLogin   = "force_login"
+	sessionResponseType = "response_type"
+	sessionCode         = "code"
+	sessionScope        = "scope"
 )
+
+var sessionKeys []string = []string{
+	sessionUserID,
+	sessionClientID,
+	sessionRedirectURI,
+	sessionForceLogin,
+	sessionResponseType,
+	sessionCode,
+	sessionScope,
+}
 
 // Module implements the ClientAPIModule interface for
 type Module struct {
