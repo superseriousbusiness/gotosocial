@@ -75,12 +75,20 @@ type InstanceStats struct {
 
 // InstanceSettingsUpdateRequest is the form to be parsed on a PATCH to /api/v1/instance
 type InstanceSettingsUpdateRequest struct {
-	SiteTitle            *string               `form:"site_title" json:"site_title" xml:"site_title"`
-	SiteContactUsername  *string               `form:"site_contact_username" json:"site_contact_username" xml:"site_contact_username"`
-	SiteContactEmail     *string               `form:"site_contact_email" json:"site_contact_email" xml:"site_contact_email"`
-	SiteShortDescription *string               `form:"site_short_description" json:"site_short_description" xml:"site_short_description"`
-	SiteDescription      *string               `form:"site_description" json:"site_description" xml:"site_description"`
-	SiteTerms            *string               `form:"site_terms" json:"site_terms" xml:"site_terms"`
-	Avatar               *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
-	Header               *multipart.FileHeader `form:"header" json:"header" xml:"header"`
+	// Title to use for the instance. Max 40 characters.
+	Title *string `form:"title" json:"title" xml:"title"`
+	// Username for the instance contact account. Must be the username of an existing admin.
+	ContactUsername *string `form:"contact_username" json:"contact_username" xml:"contact_username"`
+	// Email for reaching the instance administrator(s).
+	ContactEmail *string `form:"contact_email" json:"contact_email" xml:"contact_email"`
+	// Short description of the instance, max 500 chars. HTML formatting accepted.
+	ShortDescription *string `form:"short_description" json:"short_description" xml:"short_description"`
+	// Longer description of the instance, max 5,000 chars. HTML formatting accepted.
+	Description *string `form:"description" json:"description" xml:"description"`
+	// Terms and conditions of the instance, max 5,000 chars. HTML formatting accepted.
+	Terms *string `form:"terms" json:"terms" xml:"terms"`
+	// Image to use as the instance thumbnail.
+	Avatar *multipart.FileHeader `form:"avatar" json:"avatar" xml:"avatar"`
+	// Image to use as the instance header.
+	Header *multipart.FileHeader `form:"header" json:"header" xml:"header"`
 }
