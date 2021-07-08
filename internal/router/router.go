@@ -21,6 +21,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -46,6 +47,8 @@ type Router interface {
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Attach 404 NoRoute handler
 	AttachNoRouteHandler(handler gin.HandlerFunc)
+	// Set Template function map
+	SetTemplateFuncMap(functions template.FuncMap)
 	// Start the router
 	Start()
 	// Stop the router
@@ -96,6 +99,11 @@ func (r *router) Start() {
 // Stop shuts down the router nicely
 func (r *router) Stop(ctx context.Context) error {
 	return r.srv.Shutdown(ctx)
+}
+
+// Set Template function map
+func (r *router) SetTemplateFuncMap(functions template.FuncMap) {
+	r.engine.SetFuncMap(functions)
 }
 
 // New returns a new Router with the specified configuration, using the given logrus logger.
