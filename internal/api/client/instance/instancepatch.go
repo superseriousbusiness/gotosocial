@@ -25,7 +25,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	l.Debugf("parsing request form %s", c.Request.Form)
+	l.Debug("parsing request form")
 	form := &model.InstanceSettingsUpdateRequest{}
 	if err := c.ShouldBind(&form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
@@ -33,8 +33,10 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
+	l.Debugf("parsed form: %+v", form)
+
 	// if everything on the form is nil, then nothing has been set and we shouldn't continue
-	if form.SiteTitle == nil && form.SiteContactUsername == nil && form.SiteContactEmail == nil && form.SiteShortDescription == nil && form.SiteDescription == nil && form.SiteTerms == nil && form.Avatar == nil && form.Header == nil {
+	if form.Title == nil && form.ContactUsername == nil && form.ContactEmail == nil && form.ShortDescription == nil && form.Description == nil && form.Terms == nil && form.Avatar == nil && form.Header == nil {
 		l.Debugf("could not parse form from request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty form submitted"})
 		return

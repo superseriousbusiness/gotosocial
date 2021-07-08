@@ -56,24 +56,24 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 	}
 
 	// validate & update site title if it's set on the form
-	if form.SiteTitle != nil {
-		if err := util.ValidateSiteTitle(*form.SiteTitle); err != nil {
+	if form.Title != nil {
+		if err := util.ValidateSiteTitle(*form.Title); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
-		i.Title = *form.SiteTitle
+		i.Title = *form.Title
 	}
 
 	// validate & update site contact account if it's set on the form
-	if form.SiteContactUsername != nil {
+	if form.ContactUsername != nil {
 		// make sure the account with the given username exists in the db
 		contactAccount := &gtsmodel.Account{}
-		if err := p.db.GetLocalAccountByUsername(*form.SiteContactUsername, contactAccount); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.SiteContactUsername))
+		if err := p.db.GetLocalAccountByUsername(*form.ContactUsername, contactAccount); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}
 		// make sure it has a user associated with it
 		contactUser := &gtsmodel.User{}
 		if err := p.db.GetWhere([]db.Where{{Key: "account_id", Value: contactAccount.ID}}, contactUser); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.SiteContactUsername))
+			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.ContactUsername))
 		}
 		// suspended accounts cannot be contact accounts
 		if !contactAccount.SuspendedAt.IsZero() {
@@ -98,35 +98,35 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 	}
 
 	// validate & update site contact email if it's set on the form
-	if form.SiteContactEmail != nil {
-		if err := util.ValidateEmail(*form.SiteContactEmail); err != nil {
+	if form.ContactEmail != nil {
+		if err := util.ValidateEmail(*form.ContactEmail); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.ContactEmail = *form.SiteContactEmail
+		i.ContactEmail = *form.ContactEmail
 	}
 
 	// validate & update site short description if it's set on the form
-	if form.SiteShortDescription != nil {
-		if err := util.ValidateSiteShortDescription(*form.SiteShortDescription); err != nil {
+	if form.ShortDescription != nil {
+		if err := util.ValidateSiteShortDescription(*form.ShortDescription); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.ShortDescription = *form.SiteShortDescription
+		i.ShortDescription = *form.ShortDescription
 	}
 
 	// validate & update site description if it's set on the form
-	if form.SiteDescription != nil {
-		if err := util.ValidateSiteDescription(*form.SiteDescription); err != nil {
+	if form.Description != nil {
+		if err := util.ValidateSiteDescription(*form.Description); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.Description = *form.SiteDescription
+		i.Description = *form.Description
 	}
 
 	// validate & update site terms if it's set on the form
-	if form.SiteTerms != nil {
-		if err := util.ValidateSiteTerms(*form.SiteTerms); err != nil {
+	if form.Terms != nil {
+		if err := util.ValidateSiteTerms(*form.Terms); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.Terms = *form.SiteTerms
+		i.Terms = *form.Terms
 	}
 
 	// process avatar if provided
