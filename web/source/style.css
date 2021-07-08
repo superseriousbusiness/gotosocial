@@ -67,15 +67,12 @@ a {
 	font-size: 1.2rem;
 	font-weight: bold;
 	padding: 0.5rem;
+	border: none;
+	cursor: pointer;
 
 	&:hover {
 		background: $acc2;
 	}
-}
-
-button {
-	border: none;
-	cursor: pointer;
 }
 
 .count {
