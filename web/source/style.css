@@ -144,19 +144,20 @@ section.login {
 		grid-template-columns: auto 100%;
 		grid-gap: 0.7rem;
 
-		input {
-			border: 1px solid $fg;
-			color: $fg;
-			background: $bg;
-			width: 100%;
-		}
-
 		button {
 			place-self: center;
 			grid-column: 2;
 		}
 	}
 }
+
+input, select {
+	border: 1px solid $fg;
+	color: $fg;
+	background: $bg;
+	width: 100%;
+}
+
 
 footer {
 	align-self: end;
