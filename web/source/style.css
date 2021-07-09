@@ -59,7 +59,7 @@ a {
 	color: $acc1;
 }
 
-a.button, button {
+.button, button {
 	border-radius: 0.2rem;
 	background: $acc1;
 	color: $fg;
@@ -67,15 +67,12 @@ a.button, button {
 	font-size: 1.2rem;
 	font-weight: bold;
 	padding: 0.5rem;
+	border: none;
+	cursor: pointer;
 
 	&:hover {
 		background: $acc2;
 	}
-}
-
-button {
-	border: none;
-	cursor: pointer;
 }
 
 .count {
