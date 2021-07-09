@@ -60,11 +60,15 @@ No external dependencies apart from a database. Just download the binary + asset
 
 #### HTTP signature authentication
 
+Protect your data.
+
 #### User Safety
 
 Strict privacy enforcement for posts and strict blocking logic.
 
 #### Subscribeable and shareable allow/denylists for federation
+
+Import and export allowlists and denylists. Subscribe to community-created blocklists (think Adblocker, but for federation!).
 
 #### Various federation modes
 
