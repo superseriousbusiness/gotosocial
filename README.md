@@ -18,7 +18,7 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
 
 Because GoToSocial uses the [ActivityPub](https://activitypub.rocks/) protocol, you can Keep in touch not only with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly!
 
-### Mastodon App Compatible
+### Mastodon API compatible
 
 Full support for modern, elegant apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
 
@@ -30,7 +30,7 @@ Tusky                                                        |  Pinafore
 
 #### Granular post settings
 
-You should be able to choose how you want things you post to be interacted with:
+You should be able to choose how your posts can be interacted with:
 
 * Local-only posts.
 * Rebloggable/boostable toggle.
@@ -152,3 +152,5 @@ Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://
 ### License
 
 GoToSocial is licensed under the [GNU AGPL v3](LICENSE).
+
+Copyright (C) 2021 the GoToSocial Authors.
