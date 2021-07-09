@@ -151,7 +151,9 @@ type Processor interface {
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
 	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
+	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
+	FavedTimelineGet(authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)

@@ -81,12 +81,15 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		local = i
 	}
 
-	statuses, errWithCode := m.processor.PublicTimelineGet(authed, maxID, sinceID, minID, limit, local)
+	resp, errWithCode := m.processor.PublicTimelineGet(authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
-		l.Debugf("error from processor account statuses get: %s", errWithCode)
+		l.Debugf("error from processor PublicTimelineGet: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, statuses)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Statuses)
 }

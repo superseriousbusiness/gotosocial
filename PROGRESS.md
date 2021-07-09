@@ -67,8 +67,8 @@ Things are moving on the project! As of July 2021 you can now:
     * [ ] /api/v1/accounts/search GET                       (Search for an account)
   * [ ] Bookmarks
     * [ ] /api/v1/bookmarks GET                             (See bookmarked statuses)
-  * [ ] Favourites
-    * [ ] /api/v1/favourites GET                            (See faved statuses)
+  * [x] Favourites
+    * [x] /api/v1/favourites GET                            (See faved statuses)
   * [ ] Mutes
     * [ ] /api/v1/mutes GET                                 (See list of muted accounts)
   * [ ] Blocks
