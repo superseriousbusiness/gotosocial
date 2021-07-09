@@ -2,53 +2,89 @@
 
 ![patrons](https://img.shields.io/liberapay/patrons/dumpsterqueer.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/dumpsterqueer.svg?logo=liberapay)
 
-Federated social media software.
+GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
 ![Sloth logo made by Freepik from www.flaticon.com](./web/assets/sloth.png)
 
-GoToSocial is a Fediverse server project, written in Golang. It provides a lightweight, customizable, and safety-focused alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
+GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), and [PixelFed](https://pixelfed.org/).
 
-One of the key differences between GoToSocial and those other projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp).
-
-Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static pages, and a well-documented API. On top of this API, developers are free to build any front-end implementation or mobile application that they wish.
-
-Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
+With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles, without being tracked or advertised to.
 
 ## Features
 
-A grab-bag of things that are already included or will be included in the first release(s) of the project:
+### Federation
 
-* Mastodon API compatible, which means full support for apps you already know and love like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
-* Various federation modes:
-  * 'Normal' federation
-  * Allowlist-only federation
-  * Zero federation.
-* Granular post settings:
-  * Local-only posts.
-  * Rebloggable/boostable toggle.
-  * 'Likeable' toggle.
-  * 'Replyable' toggle.
-* Easy customizability for admins, without messing around in the source code:
-  * Adjustable post length.
-  * Media upload size settings.
-* Built-in, automatic LetsEncrypt support (no messing around with Nginx or Certbot).
-* Good performance on lower-powered machines like Raspberry Pi, old laptops and tiny VPSes (the test VPS has 1gb of ram and 1 cpu core).
-* Subscribeable and shareable allow/denylists for federation.
-* Strict privacy enforcement for posts and strict blocking logic.
-* HTTP signature authentication by default (equivalent to Mastodon's [Secure Mode](https://docs.joinmastodon.org/spec/security/#http) being always-on).
-* No external dependencies apart from a database. Binary + static assets only.
+Because GoToSocial uses the [ActivityPub](https://activitypub.rocks/) protocol, you can Keep in touch not only with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly!
+
+### Mastodon App Compatible
+
+Full support for modern, elegant apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
+
+### Customizable
+
+#### Granular post settings
+
+You should be able to choose how you want things you post to be interacted with:
+
+* Local-only posts.
+* Rebloggable/boostable toggle.
+* 'Likeable' toggle.
+* 'Replyable' toggle.
+
+#### Easy customizability for admins
+
+* Adjustable post length.
+* Media upload size settings.
+
+### Convenient
+
+#### LetsEncrypt
+
+ Built-in, automatic support for secure HTTPS with [LetsEncrypt](https://letsencrypt.org/).
+
+#### Light footprint and good performance
+
+Plays nice with lower-powered machines like Raspberry Pi, old laptops and tiny VPSes.
+
+#### Easy to deploy
+
+No external dependencies apart from a database. Just download the binary + assets (or Docker container), and run.
+
+### Secure
+
+#### HTTP signature authentication
+
+#### User Safety
+
+Strict privacy enforcement for posts and strict blocking logic.
+
+#### Subscribeable and shareable allow/denylists for federation
+
+#### Various federation modes
+
+* 'Normal' federation; discover new servers.
+* Allowlist-only federation; choose which servers you talk to.
+* Zero federation; keep your server private.
 
 ### Wishlist
 
 These cool things will be implemented if time allows (because we really want them):
 
-* Groups and group posting!
+* **Groups** and group posting!
 * Reputation-based 'slow' federation.
 * User-selectable custom templates for rendering public posts:
   * Twitter-style
   * Blogpost
   * Gallery
   * Etc.
+
+## Design Ethos
+
+One of the key differences between GoToSocial and other federated server projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp).
+
+Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static pages, and a well-documented API. On top of this API, developers are free to build any front-end implementation or mobile application that they wish.
+
+Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
 
 ## Status
 
