@@ -23,8 +23,8 @@ Because GoToSocial uses the [ActivityPub](https://activitypub.rocks/) protocol, 
 Full support for modern, elegant apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
 
 Tusky                                                        |  Pinafore
-:-----------------------------------------------------------:|:-------------------------------------------------------------------:
-![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  |  ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
+:-----------------------------------------------------------:|:------------------------------------------------------------------:
+![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
 
 ### Customizable
 
