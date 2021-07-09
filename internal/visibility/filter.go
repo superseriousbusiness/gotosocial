@@ -17,6 +17,11 @@ type Filter interface {
 	//
 	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 	StatusHometimelineable(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
+
+	// StatusPublictimelineable returns true if targetStatus should be in the public timeline of the requesting account.
+	//
+	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
+	StatusPublictimelineable(targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error)
 }
 
 type filter struct {

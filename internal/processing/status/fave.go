@@ -60,7 +60,7 @@ func (p *processor) Fave(account *gtsmodel.Account, targetStatusID string) (*api
 	}
 
 	if newFave {
-		thisFaveID, err := id.NewRandomULID()
+		thisFaveID, err := id.NewULID()
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

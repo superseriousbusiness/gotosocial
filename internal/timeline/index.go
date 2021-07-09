@@ -23,7 +23,7 @@ func (t *timeline) IndexBefore(statusID string, include bool, amount int) error 
 
 grabloop:
 	for len(filtered) < amount {
-		statuses, err := t.db.GetStatusesWhereFollowing(t.accountID, "", offsetStatus, "", amount, false)
+		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, "", offsetStatus, "", amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
@@ -58,7 +58,7 @@ func (t *timeline) IndexBehind(statusID string, amount int) error {
 
 grabloop:
 	for len(filtered) < amount {
-		statuses, err := t.db.GetStatusesWhereFollowing(t.accountID, offsetStatus, "", "", amount, false)
+		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, offsetStatus, "", "", amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
