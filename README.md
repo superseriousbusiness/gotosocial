@@ -4,7 +4,9 @@
 
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
-![Sloth logo made by Freepik from www.flaticon.com](./web/assets/sloth.png)
+<p align="middle">
+  <img src="./docs/assets/sloth.png" width="300"/>
+</p>
 
 GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), and [PixelFed](https://pixelfed.org/).
 
@@ -19,6 +21,10 @@ Because GoToSocial uses the [ActivityPub](https://activitypub.rocks/) protocol, 
 ### Mastodon App Compatible
 
 Full support for modern, elegant apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
+
+Tusky                                                        |  Pinafore
+:-----------------------------------------------------------:|:-------------------------------------------------------------------:
+![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  |  ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
 
 ### Customizable
 
