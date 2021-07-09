@@ -120,24 +120,24 @@ For bugs and feature requests, please check to see if there's [already an issue]
 
 The following libraries and frameworks are used by GoToSocial, with gratitude 💕
 
-* [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes.
-* [gin-gonic/gin](https://github.com/gin-gonic/gin); speedy router engine.
-  * [gin-contrib/cors](https://github.com/gin-contrib/cors); Gin CORS middleware.
-  * [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware.
-  * [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware.
-* [go-fed/activity](https://github.com/go-fed/activity); Golang ActivityPub/ActivityStreams library.
-* [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library.
-* [go-pg/pg](https://github.com/go-pg/pg); Postgres ORM library.
-* [google/uuid](https://github.com/google/uuid); UUID generation.
-* [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity.
-* [h2non/filetype](https://github.com/h2non/filetype); filetype checking.
-* [oklog/ulid](https://github.com/oklog/ulid); sequential, database-friendly ID generation.
-* [sirupsen/logrus](https://github.com/sirupsen/logrus); logging.
-* [stretchr/testify](https://github.com/stretchr/testify); test framework.
-* [superseriousbusiness/exifremove](https://github.com/superseriousbusiness/exifremove) forked from [scottleedavis/go-exif-remove](https://github.com/scottleedavis/go-exif-remove); EXIF data removal.
-* [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); oauth server framework and token handling.
-* [urfave/cli](https://github.com/urfave/cli); command-line interface framework.
-* [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation.
+* [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
+* [gin-gonic/gin](https://github.com/gin-gonic/gin); speedy router engine. [MIT License](https://spdx.org/licenses/MIT.html).
+  * [gin-contrib/cors](https://github.com/gin-contrib/cors); Gin CORS middleware. [MIT License](https://spdx.org/licenses/MIT.html).
+  * [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware. [MIT License](https://spdx.org/licenses/MIT.html)
+  * [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware. [MIT License](https://spdx.org/licenses/MIT.html)
+* [go-fed/activity](https://github.com/go-fed/activity); Golang ActivityPub/ActivityStreams library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
+* [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
+* [go-pg/pg](https://github.com/go-pg/pg); Postgres ORM library. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
+* [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html)
+* [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
+* [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
+* [oklog/ulid](https://github.com/oklog/ulid); sequential, database-friendly ID generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
+* [sirupsen/logrus](https://github.com/sirupsen/logrus); logging. [MIT License](https://spdx.org/licenses/MIT.html).
+* [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
+* [superseriousbusiness/exifremove](https://github.com/superseriousbusiness/exifremove) forked from [scottleedavis/go-exif-remove](https://github.com/scottleedavis/go-exif-remove); EXIF data removal. [MIT License](https://spdx.org/licenses/MIT.html).
+* [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); oauth server framework and token handling. [MIT License](https://spdx.org/licenses/MIT.html).
+* [urfave/cli](https://github.com/urfave/cli); command-line interface framework. [MIT License](https://spdx.org/licenses/MIT.html).
+* [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
 
 ## Sponsorship + Funding
 
@@ -147,10 +147,10 @@ If you want to sponsor this project, you can do so [here](https://liberapay.com/
 
 ### Image Attribution
 
-Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
 
 ### License
 
-GoToSocial is licensed under the [GNU AGPL v3](LICENSE).
+GoToSocial is licensed under the [GNU AGPL v3 LICENSE](LICENSE).
 
 Copyright (C) 2021 the GoToSocial Authors.
