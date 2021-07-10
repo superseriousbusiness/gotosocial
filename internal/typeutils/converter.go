@@ -104,6 +104,8 @@ type TypeConverter interface {
 	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
 	// ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
 	ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error)
+	// ASBlockToBlock converts a remote activity streams 'block' representation into a gts model block.
+	ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error)
 	// ASAnnounceToStatus converts an activitystreams 'announce' into a status.
 	//
 	// The returned bool indicates whether this status is new (true) or not new (false).
@@ -124,6 +126,11 @@ type TypeConverter interface {
 
 	// AccountToAS converts a gts model account into an activity streams person, suitable for federation
 	AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
+	// AccountToASMinimal converts a gts model account into an activity streams person, suitable for federation.
+	//
+	// The returned account will just have the Type, Username, PublicKey, and ID properties set. This is
+	// suitable for serving to requesters to whom we want to give as little information as possible because
+	// we don't trust them (yet).
 	AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error)
 	// StatusToAS converts a gts model status into an activity streams note, suitable for federation
 	StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error)
@@ -137,6 +144,8 @@ type TypeConverter interface {
 	FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error)
 	// BoostToAS converts a gts model boost into an activityStreams ANNOUNCE, suitable for federation
 	BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error)
+	// BlockToAS converts a gts model block into an activityStreams BLOCK, suitable for federation.
+	BlockToAS(block *gtsmodel.Block) (vocab.ActivityStreamsBlock, error)
 
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL

@@ -67,23 +67,23 @@ sendLoop:
 		select {
 		case m := <-stream.Messages:
 			// we've got a streaming message!!
-			l.Debug("received message from stream")
+			l.Trace("received message from stream")
 			if err := conn.WriteJSON(m); err != nil {
-				l.Infof("error writing json to websocket connection: %s", err)
+				l.Debugf("error writing json to websocket connection: %s", err)
 				// if something is wrong we want to bail and drop the connection -- the client will create a new one
 				break sendLoop
 			}
-			l.Debug("wrote message into websocket connection")
+			l.Trace("wrote message into websocket connection")
 		case <-t.C:
-			l.Debug("received TICK from ticker")
+			l.Trace("received TICK from ticker")
 			if err := conn.WriteMessage(websocket.PingMessage, []byte(": ping")); err != nil {
-				l.Infof("error writing ping to websocket connection: %s", err)
+				l.Debugf("error writing ping to websocket connection: %s", err)
 				// if something is wrong we want to bail and drop the connection -- the client will create a new one
 				break sendLoop
 			}
-			l.Debug("wrote ping message into websocket connection")
+			l.Trace("wrote ping message into websocket connection")
 		}
 	}
 
-	l.Debug("leaving StreamGETHandler")
+	l.Trace("leaving StreamGETHandler")
 }

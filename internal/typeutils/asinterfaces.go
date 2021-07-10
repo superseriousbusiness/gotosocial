@@ -111,6 +111,15 @@ type Likeable interface {
 	withObject
 }
 
+// Blockable represents the minimum interface for an activitystreams 'block' activity.
+type Blockable interface {
+	withJSONLDId
+	withTypeName
+
+	withActor
+	withObject
+}
+
 // Announceable represents the minimum interface for an activitystreams 'announce' activity.
 type Announceable interface {
 	withJSONLDId

@@ -50,6 +50,8 @@ const (
 	FollowPath = "follow"
 	// UpdatePath is used to generate the URI for an account update
 	UpdatePath = "updates"
+	// BlocksPath is used to generate the URI for a block
+	BlocksPath = "blocks"
 )
 
 // APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
@@ -122,6 +124,12 @@ func GenerateURIForLike(username string, protocol string, host string, thisFaved
 // https://example.org/users/whatever_user#updates/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForUpdate(username string, protocol string, host string, thisUpdateID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
+}
+
+// GenerateURIForBlock returns the AP URI for a new block activity -- something like:
+// https://example.org/users/whatever_user/blocks/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForBlock(username string, protocol string, host string, thisBlockID string) string {
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
@@ -214,6 +222,11 @@ func IsPublicKeyPath(id *url.URL) bool {
 	return userPublicKeyPathRegex.MatchString(id.Path)
 }
 
+// IsBlockPath returns true if the given URL path corresponds to eg /users/example_username/blocks/SOME_ULID_OF_A_BLOCK
+func IsBlockPath(id *url.URL) bool {
+	return blockPathRegex.MatchString(id.Path)
+}
+
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
 	matches := statusesPathRegex.FindStringSubmatch(id.Path)
@@ -284,6 +297,18 @@ func ParseFollowingPath(id *url.URL) (username string, err error) {
 // ParseLikedPath returns the username and ulid from a path such as /users/example_username/liked/SOME_ULID_OF_A_STATUS
 func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
 	matches := likePathRegex.FindStringSubmatch(id.Path)
+	if len(matches) != 3 {
+		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	ulid = matches[2]
+	return
+}
+
+// ParseBlockPath returns the username and ulid from a path such as /users/example_username/blocks/SOME_ULID_OF_A_BLOCK
+func ParseBlockPath(id *url.URL) (username string, ulid string, err error) {
+	matches := blockPathRegex.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return

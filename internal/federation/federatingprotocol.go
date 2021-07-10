@@ -243,8 +243,8 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			return true, nil
 		}
 
-		a := &gtsmodel.Account{}
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, a); err != nil {
+		requestingAccount := &gtsmodel.Account{}
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, requestingAccount); err != nil {
 			_, ok := err.(db.ErrNoEntries)
 			if ok {
 				// we don't have an entry for this account so it's not blocked
@@ -253,11 +253,13 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			}
 			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
 		}
-		blocked, err := f.db.Blocked(requestedAccount.ID, a.ID)
-		if err != nil {
-			return false, fmt.Errorf("error checking account blocks: %s", err)
-		}
-		if blocked {
+
+		// check if requested account blocks requesting account
+		if err := f.db.GetWhere([]db.Where{
+			{Key: "account_id", Value: requestedAccount.ID},
+			{Key: "target_account_id", Value: requestingAccount.ID},
+		}, &gtsmodel.Block{}); err == nil {
+			// a block exists
 			return true, nil
 		}
 	}

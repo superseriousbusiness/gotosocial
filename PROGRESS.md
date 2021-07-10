@@ -56,8 +56,8 @@ Things are moving on the project! As of July 2021 you can now:
     * [ ] /api/v1/accounts/:id/identity_proofs GET          (Get identity proofs for this account)
     * [x] /api/v1/accounts/:id/follow POST                  (Follow this account)
     * [x] /api/v1/accounts/:id/unfollow POST                (Unfollow this account)
-    * [ ] /api/v1/accounts/:id/block POST                   (Block this account)
-    * [ ] /api/v1/accounts/:id/unblock POST                 (Unblock this account)
+    * [x] /api/v1/accounts/:id/block POST                   (Block this account)
+    * [x] /api/v1/accounts/:id/unblock POST                 (Unblock this account)
     * [ ] /api/v1/accounts/:id/mute POST                    (Mute this account)
     * [ ] /api/v1/accounts/:id/unmute POST                  (Unmute this account)
     * [ ] /api/v1/accounts/:id/pin POST                     (Feature this account on profile)
@@ -71,8 +71,8 @@ Things are moving on the project! As of July 2021 you can now:
     * [x] /api/v1/favourites GET                            (See faved statuses)
   * [ ] Mutes
     * [ ] /api/v1/mutes GET                                 (See list of muted accounts)
-  * [ ] Blocks
-    * [ ] /api/v1/blocks GET                                (See list of blocked accounts)
+  * [x] Blocks
+    * [x] /api/v1/blocks GET                                (See list of blocked accounts)
   * [ ] Domain Blocks
     * [x] /api/v1/domain_blocks GET                         (See list of domain blocks)
     * [x] /api/v1/domain_blocks POST                        (Create a domain block)

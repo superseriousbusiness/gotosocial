@@ -780,3 +780,73 @@ func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccou
 
 	return announce, nil
 }
+
+/*
+	we want to end up with something like this:
+
+	{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"actor": "https://example.org/users/some_user",
+		"id":"https://example.org/users/some_user/blocks/SOME_ULID_OF_A_BLOCK",
+		"object":"https://some_other.instance/users/some_other_user",
+		"type":"Block"
+	}
+*/
+func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
+	if b.Account == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(b.AccountID, a); err != nil {
+			return nil, fmt.Errorf("BlockToAS: error getting block account from database: %s", err)
+		}
+		b.Account = a
+	}
+
+	if b.TargetAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := c.db.GetByID(b.TargetAccountID, a); err != nil {
+			return nil, fmt.Errorf("BlockToAS: error getting block target account from database: %s", err)
+		}
+		b.TargetAccount = a
+	}
+
+	// create the block
+	block := streams.NewActivityStreamsBlock()
+
+	// set the actor property to the block-ing account's URI
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorIRI, err := url.Parse(b.Account.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BlockToAS: error parsing uri %s: %s", b.Account.URI, err)
+	}
+	actorProp.AppendIRI(actorIRI)
+	block.SetActivityStreamsActor(actorProp)
+
+	// set the ID property to the blocks's URI
+	idProp := streams.NewJSONLDIdProperty()
+	idIRI, err := url.Parse(b.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BlockToAS: error parsing uri %s: %s", b.URI, err)
+	}
+	idProp.Set(idIRI)
+	block.SetJSONLDId(idProp)
+
+	// set the object property to the target account's URI
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	targetIRI, err := url.Parse(b.TargetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BlockToAS: error parsing uri %s: %s", b.TargetAccount.URI, err)
+	}
+	objectProp.AppendIRI(targetIRI)
+	block.SetActivityStreamsObject(objectProp)
+
+	// set the TO property to the target account's IRI
+	toProp := streams.NewActivityStreamsToProperty()
+	toIRI, err := url.Parse(b.TargetAccount.URI)
+	if err != nil {
+		return nil, fmt.Errorf("BlockToAS: error parsing uri %s: %s", b.TargetAccount.URI, err)
+	}
+	toProp.AppendIRI(toIRI)
+	block.SetActivityStreamsTo(toProp)
+
+	return block, nil
+}
