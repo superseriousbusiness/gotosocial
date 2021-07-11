@@ -81,7 +81,7 @@ func (t *timeline) RemoveAllBy(accountID string) (int, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":            "RemoveAllBy",
 		"accountTimeline": t.accountID,
-		"accountID":        accountID,
+		"accountID":       accountID,
 	})
 	t.Lock()
 	defer t.Unlock()
