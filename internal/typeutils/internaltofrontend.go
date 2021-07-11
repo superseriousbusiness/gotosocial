@@ -173,6 +173,27 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}, nil
 }
 
+func (c *converter) AccountToMastoBlocked(a *gtsmodel.Account) (*model.Account, error) {
+	var acct string
+	if a.Domain != "" {
+		// this is a remote user
+		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
+	} else {
+		// this is a local user
+		acct = a.Username
+	}
+
+	return &model.Account{
+		ID:             a.ID,
+		Username:       a.Username,
+		Acct:           acct,
+		DisplayName:    a.Username,
+		Bot:            a.Bot,
+		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
+		URL:            a.URL,
+	}, nil
+}
+
 func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*model.Application, error) {
 	return &model.Application{
 		ID:           a.ID,

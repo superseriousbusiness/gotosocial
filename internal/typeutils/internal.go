@@ -67,6 +67,7 @@ func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.
 		Language:            s.Language,
 		Text:                s.Text,
 		BoostOfID:           s.ID,
+		BoostOfAccountID:    s.AccountID,
 		Visibility:          s.Visibility,
 		VisibilityAdvanced:  s.VisibilityAdvanced,
 

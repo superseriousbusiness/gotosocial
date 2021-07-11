@@ -56,6 +56,8 @@ type Status struct {
 	InReplyToAccountID string `pg:"type:CHAR(26)"`
 	// id of the status this status is a boost of
 	BoostOfID string `pg:"type:CHAR(26)"`
+	// id of the account that owns the boosted status
+	BoostOfAccountID string `pg:"type:CHAR(26)"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status

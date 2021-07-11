@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// AccountBlockPOSTHandler handles the creation of a block from the authed account targeting the given account ID.
 func (m *Module) AccountBlockPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

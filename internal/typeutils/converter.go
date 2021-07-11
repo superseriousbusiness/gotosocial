@@ -48,6 +48,10 @@ type TypeConverter interface {
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
 	AccountToMastoPublic(account *gtsmodel.Account) (*model.Account, error)
+	// AccountToMastoBlocked takes a db model account as a param, and returns a mastotype account, or an error if
+	// something goes wrong. The returned account will be a bare minimum representation of the account. This function should be used
+	// when someone wants to view an account they've blocked.
+	AccountToMastoBlocked(account *gtsmodel.Account) (*model.Account, error)
 	// AppToMastoSensitive takes a db model application as a param, and returns a populated mastotype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 	// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.

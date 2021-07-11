@@ -99,7 +99,14 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("block was not parseable as *gtsmodel.Block")
 			}
 
-			// TODO: remove any of the blocking account's statuses from the blocked account's timeline
+			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+				return err
+			}
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+				return err
+			}
+
 			// TODO: same with notifications
 			// TODO: same with bookmarks
 

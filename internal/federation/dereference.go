@@ -393,6 +393,7 @@ func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 		announce.Language = boostedStatus.Language
 		announce.Text = boostedStatus.Text
 		announce.BoostOfID = boostedStatus.ID
+		announce.BoostOfAccountID = boostedStatus.AccountID
 		announce.Visibility = boostedStatus.Visibility
 		announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
 		announce.GTSBoostedStatus = boostedStatus
@@ -477,6 +478,7 @@ func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 	announce.Language = boostedStatus.Language
 	announce.Text = boostedStatus.Text
 	announce.BoostOfID = boostedStatus.ID
+	announce.BoostOfAccountID = boostedStatus.AccountID
 	announce.Visibility = boostedStatus.Visibility
 	announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
 	announce.GTSBoostedStatus = boostedStatus
