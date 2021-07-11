@@ -61,10 +61,14 @@ const (
 	GetFollowingPath = BasePathWithID + "/following"
 	// GetRelationshipsPath is for showing an account's relationship with other accounts
 	GetRelationshipsPath = BasePath + "/relationships"
-	// PostFollowPath is for POSTing new follows to, and updating existing follows
-	PostFollowPath = BasePathWithID + "/follow"
-	// PostUnfollowPath is for POSTing an unfollow
-	PostUnfollowPath = BasePathWithID + "/unfollow"
+	// FollowPath is for POSTing new follows to, and updating existing follows
+	FollowPath = BasePathWithID + "/follow"
+	// UnfollowPath is for POSTing an unfollow
+	UnfollowPath = BasePathWithID + "/unfollow"
+	// BlockPath is for creating a block of an account
+	BlockPath = BasePathWithID + "/block"
+	// UnblockPath is for removing a block of an account
+	UnblockPath = BasePathWithID + "/unblock"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -85,15 +89,33 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
+	// create account
 	r.AttachHandler(http.MethodPost, BasePath, m.AccountCreatePOSTHandler)
+
+	// get account
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
+
+	// modify account
 	r.AttachHandler(http.MethodPatch, BasePathWithID, m.muxHandler)
+
+	// get account's statuses
 	r.AttachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
+
+	// get following or followers
 	r.AttachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
 	r.AttachHandler(http.MethodGet, GetFollowingPath, m.AccountFollowingGETHandler)
+
+	// get relationship with account
 	r.AttachHandler(http.MethodGet, GetRelationshipsPath, m.AccountRelationshipsGETHandler)
-	r.AttachHandler(http.MethodPost, PostFollowPath, m.AccountFollowPOSTHandler)
-	r.AttachHandler(http.MethodPost, PostUnfollowPath, m.AccountUnfollowPOSTHandler)
+
+	// follow or unfollow account
+	r.AttachHandler(http.MethodPost, FollowPath, m.AccountFollowPOSTHandler)
+	r.AttachHandler(http.MethodPost, UnfollowPath, m.AccountUnfollowPOSTHandler)
+
+	// block or unblock account
+	r.AttachHandler(http.MethodPost, BlockPath, m.AccountBlockPOSTHandler)
+	r.AttachHandler(http.MethodPost, UnblockPath, m.AccountUnblockPOSTHandler)
+
 	return nil
 }
 

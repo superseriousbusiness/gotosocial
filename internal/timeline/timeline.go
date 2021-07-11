@@ -65,7 +65,7 @@ type Timeline interface {
 	//
 	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
 	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) (bool, error)
+	IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
@@ -85,7 +85,7 @@ type Timeline interface {
 	//
 	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
 	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) (bool, error)
+	IndexAndPrepareOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 	// OldestPreparedPostID returns the id of the rearmost (ie., the oldest) prepared post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestPreparedPostID() (string, error)
@@ -109,6 +109,10 @@ type Timeline interface {
 	//
 	// The returned int indicates the amount of entries that were removed.
 	Remove(statusID string) (int, error)
+	// RemoveAllBy removes all statuses by the given accountID, from both the index and prepared posts.
+	//
+	// The returned int indicates the amount of entries that were removed.
+	RemoveAllBy(accountID string) (int, error)
 }
 
 // timeline fulfils the Timeline interface

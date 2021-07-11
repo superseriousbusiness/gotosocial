@@ -129,6 +129,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			}
 		}
 	case gtsmodel.ActivityStreamsFollow:
+		// FOLLOW SOMETHING
 		follow, ok := asType.(vocab.ActivityStreamsFollow)
 		if !ok {
 			return errors.New("could not convert type to follow")
@@ -156,6 +157,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			ReceivingAccount: targetAcct,
 		}
 	case gtsmodel.ActivityStreamsLike:
+		// LIKE SOMETHING
 		like, ok := asType.(vocab.ActivityStreamsLike)
 		if !ok {
 			return errors.New("could not convert type to like")
@@ -180,6 +182,34 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			APObjectType:     gtsmodel.ActivityStreamsLike,
 			APActivityType:   gtsmodel.ActivityStreamsCreate,
 			GTSModel:         fave,
+			ReceivingAccount: targetAcct,
+		}
+	case gtsmodel.ActivityStreamsBlock:
+		// BLOCK SOMETHING
+		blockable, ok := asType.(vocab.ActivityStreamsBlock)
+		if !ok {
+			return errors.New("could not convert type to block")
+		}
+
+		block, err := f.typeConverter.ASBlockToBlock(blockable)
+		if err != nil {
+			return fmt.Errorf("could not convert Block to gts model block")
+		}
+
+		newID, err := id.NewULID()
+		if err != nil {
+			return err
+		}
+		block.ID = newID
+
+		if err := f.db.Put(block); err != nil {
+			return fmt.Errorf("database error inserting block: %s", err)
+		}
+
+		fromFederatorChan <- gtsmodel.FromFederator{
+			APObjectType:     gtsmodel.ActivityStreamsBlock,
+			APActivityType:   gtsmodel.ActivityStreamsCreate,
+			GTSModel:         block,
 			ReceivingAccount: targetAcct,
 		}
 	}

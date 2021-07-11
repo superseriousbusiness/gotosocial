@@ -76,7 +76,6 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 
 			return p.federateFave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
-
 		case gtsmodel.ActivityStreamsAnnounce:
 			// CREATE BOOST/ANNOUNCE
 			boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
@@ -93,6 +92,25 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 
 			return p.federateAnnounce(boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsBlock:
+			// CREATE BLOCK
+			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
+			if !ok {
+				return errors.New("block was not parseable as *gtsmodel.Block")
+			}
+
+			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+				return err
+			}
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+				return err
+			}
+
+			// TODO: same with notifications
+			// TODO: same with bookmarks
+
+			return p.federateBlock(block)
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -132,6 +150,13 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
 			}
 			return p.federateUnfollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+		case gtsmodel.ActivityStreamsBlock:
+			// UNDO BLOCK
+			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
+			if !ok {
+				return errors.New("undo was not parseable as *gtsmodel.Block")
+			}
+			return p.federateUnblock(block)
 		case gtsmodel.ActivityStreamsLike:
 			// UNDO LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
@@ -528,5 +553,95 @@ func (p *processor) federateAccountUpdate(updatedAccount *gtsmodel.Account, orig
 	}
 
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, update)
+	return err
+}
+
+func (p *processor) federateBlock(block *gtsmodel.Block) error {
+	if block.Account == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(block.AccountID, a); err != nil {
+			return fmt.Errorf("federateBlock: error getting block account from database: %s", err)
+		}
+		block.Account = a
+	}
+
+	if block.TargetAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(block.TargetAccountID, a); err != nil {
+			return fmt.Errorf("federateBlock: error getting block target account from database: %s", err)
+		}
+		block.TargetAccount = a
+	}
+
+	// if both accounts are local there's nothing to do here
+	if block.Account.Domain == "" && block.TargetAccount.Domain == "" {
+		return nil
+	}
+
+	asBlock, err := p.tc.BlockToAS(block)
+	if err != nil {
+		return fmt.Errorf("federateBlock: error converting block to AS format: %s", err)
+	}
+
+	outboxIRI, err := url.Parse(block.Account.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateBlock: error parsing outboxURI %s: %s", block.Account.OutboxURI, err)
+	}
+
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asBlock)
+	return err
+}
+
+func (p *processor) federateUnblock(block *gtsmodel.Block) error {
+	if block.Account == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(block.AccountID, a); err != nil {
+			return fmt.Errorf("federateUnblock: error getting block account from database: %s", err)
+		}
+		block.Account = a
+	}
+
+	if block.TargetAccount == nil {
+		a := &gtsmodel.Account{}
+		if err := p.db.GetByID(block.TargetAccountID, a); err != nil {
+			return fmt.Errorf("federateUnblock: error getting block target account from database: %s", err)
+		}
+		block.TargetAccount = a
+	}
+
+	// if both accounts are local there's nothing to do here
+	if block.Account.Domain == "" && block.TargetAccount.Domain == "" {
+		return nil
+	}
+
+	asBlock, err := p.tc.BlockToAS(block)
+	if err != nil {
+		return fmt.Errorf("federateUnblock: error converting block to AS format: %s", err)
+	}
+
+	targetAccountURI, err := url.Parse(block.TargetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("federateUnblock: error parsing uri %s: %s", block.TargetAccount.URI, err)
+	}
+
+	// create an Undo and set the appropriate actor on it
+	undo := streams.NewActivityStreamsUndo()
+	undo.SetActivityStreamsActor(asBlock.GetActivityStreamsActor())
+
+	// Set the block as the 'object' property.
+	undoObject := streams.NewActivityStreamsObjectProperty()
+	undoObject.AppendActivityStreamsBlock(asBlock)
+	undo.SetActivityStreamsObject(undoObject)
+
+	// Set the To of the undo as the target of the block
+	undoTo := streams.NewActivityStreamsToProperty()
+	undoTo.AppendIRI(targetAccountURI)
+	undo.SetActivityStreamsTo(undoTo)
+
+	outboxIRI, err := url.Parse(block.Account.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateUnblock: error parsing outboxURI %s: %s", block.Account.OutboxURI, err)
+	}
+	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
 	return err
 }

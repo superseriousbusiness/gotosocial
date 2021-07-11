@@ -59,3 +59,11 @@ func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.Accou
 func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	return p.accountProcessor.FollowRemove(authed.Account, targetAccountID)
 }
+
+func (p *processor) AccountBlockCreate(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.BlockCreate(authed.Account, targetAccountID)
+}
+
+func (p *processor) AccountBlockRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.BlockRemove(authed.Account, targetAccountID)
+}

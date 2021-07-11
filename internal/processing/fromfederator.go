@@ -34,7 +34,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 		"federatorMsg": fmt.Sprintf("%+v", federatorMsg),
 	})
 
-	l.Debug("entering function PROCESS FROM FEDERATOR")
+	l.Trace("entering function PROCESS FROM FEDERATOR")
 
 	switch federatorMsg.APActivityType {
 	case gtsmodel.ActivityStreamsCreate:
@@ -47,7 +47,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			l.Debug("will now derefence incoming status")
+			l.Trace("will now derefence incoming status")
 			if err := p.federator.DereferenceStatusFields(incomingStatus, federatorMsg.ReceivingAccount.Username); err != nil {
 				return fmt.Errorf("error dereferencing status from federator: %s", err)
 			}
@@ -70,7 +70,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("profile was not parseable as *gtsmodel.Account")
 			}
 
-			l.Debug("will now derefence incoming account")
+			l.Trace("will now derefence incoming account")
 			if err := p.federator.DereferenceAccountFields(incomingAccount, "", false); err != nil {
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
@@ -127,6 +127,22 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if err := p.notifyAnnounce(incomingAnnounce); err != nil {
 				return err
 			}
+		case gtsmodel.ActivityStreamsBlock:
+			// CREATE A BLOCK
+			block, ok := federatorMsg.GTSModel.(*gtsmodel.Block)
+			if !ok {
+				return errors.New("block was not parseable as *gtsmodel.Block")
+			}
+
+			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+				return err
+			}
+			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+				return err
+			}
+			// TODO: same with notifications
+			// TODO: same with bookmarks
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -138,7 +154,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("profile was not parseable as *gtsmodel.Account")
 			}
 
-			l.Debug("will now derefence incoming account")
+			l.Trace("will now derefence incoming account")
 			if err := p.federator.DereferenceAccountFields(incomingAccount, federatorMsg.ReceivingAccount.Username, true); err != nil {
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}

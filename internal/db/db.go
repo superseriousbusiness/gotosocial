@@ -159,6 +159,8 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetStatusesForAccount(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error)
 
+	GetBlocksForAccount(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error)
+
 	// GetLastStatusForAccountID simply gets the most recent status by the given account.
 	// The given slice 'status' pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned

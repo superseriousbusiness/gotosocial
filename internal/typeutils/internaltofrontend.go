@@ -150,6 +150,11 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		acct = a.Username
 	}
 
+	var suspended bool
+	if !a.SuspendedAt.IsZero() {
+		suspended = true
+	}
+
 	return &model.Account{
 		ID:             a.ID,
 		Username:       a.Username,
@@ -170,6 +175,34 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		LastStatusAt:   lastStatusAt,
 		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
+		Suspended:      suspended,
+	}, nil
+}
+
+func (c *converter) AccountToMastoBlocked(a *gtsmodel.Account) (*model.Account, error) {
+	var acct string
+	if a.Domain != "" {
+		// this is a remote user
+		acct = fmt.Sprintf("%s@%s", a.Username, a.Domain)
+	} else {
+		// this is a local user
+		acct = a.Username
+	}
+
+	var suspended bool
+	if !a.SuspendedAt.IsZero() {
+		suspended = true
+	}
+
+	return &model.Account{
+		ID:          a.ID,
+		Username:    a.Username,
+		Acct:        acct,
+		DisplayName: a.DisplayName,
+		Bot:         a.Bot,
+		CreatedAt:   a.CreatedAt.Format(time.RFC3339),
+		URL:         a.URL,
+		Suspended:   suspended,
 	}, nil
 }
 

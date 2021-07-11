@@ -1,0 +1,49 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package account
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// AccountUnblockPOSTHandler handles the removal of a block from the authed account targeting the given account ID.
+func (m *Module) AccountUnblockPOSTHandler(c *gin.Context) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	targetAcctID := c.Param(IDKey)
+	if targetAcctID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no account id specified"})
+		return
+	}
+
+	relationship, errWithCode := m.processor.AccountBlockRemove(authed, targetAcctID)
+	if errWithCode != nil {
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
+
+	c.JSON(http.StatusOK, relationship)
+}

@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package timeline
 
 import (
@@ -44,7 +62,7 @@ grabloop:
 	}
 
 	for _, s := range filtered {
-		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID); err != nil {
+		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
 			return fmt.Errorf("IndexBefore: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -79,7 +97,7 @@ grabloop:
 	}
 
 	for _, s := range filtered {
-		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID); err != nil {
+		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
 			return fmt.Errorf("IndexBehind: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -91,24 +109,29 @@ func (t *timeline) IndexOneByID(statusID string) error {
 	return nil
 }
 
-func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string) (bool, error) {
+func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
 	postIndexEntry := &postIndexEntry{
-		statusID:  statusID,
-		boostOfID: boostOfID,
+		statusID:         statusID,
+		boostOfID:        boostOfID,
+		accountID:        accountID,
+		boostOfAccountID: boostOfAccountID,
 	}
 
 	return t.postIndex.insertIndexed(postIndexEntry)
 }
 
-func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string) (bool, error) {
+func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
 	postIndexEntry := &postIndexEntry{
-		statusID: statusID,
+		statusID:         statusID,
+		boostOfID:        boostOfID,
+		accountID:        accountID,
+		boostOfAccountID: boostOfAccountID,
 	}
 
 	inserted, err := t.postIndex.insertIndexed(postIndexEntry)

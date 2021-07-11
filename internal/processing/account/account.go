@@ -59,6 +59,11 @@ type Processor interface {
 	FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
 	// FollowRemove handles the removal of a follow/follow request to an account, either remote or local.
 	FollowRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	// BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
+	BlockCreate(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	// BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
+	BlockRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+
 	// UpdateHeader does the dirty work of checking the header part of an account update form,
 	// parsing and checking the image, and doing the necessary updates in the database for this to become
 	// the account's new header image.

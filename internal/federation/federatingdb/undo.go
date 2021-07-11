@@ -85,6 +85,31 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			// UNDO LIKE
 		case string(gtsmodel.ActivityStreamsAnnounce):
 			// UNDO BOOST/REBLOG/ANNOUNCE
+		case string(gtsmodel.ActivityStreamsBlock):
+			// UNDO BLOCK
+			ASBlock, ok := iter.GetType().(vocab.ActivityStreamsBlock)
+			if !ok {
+				return errors.New("UNDO: couldn't parse block into vocab.ActivityStreamsBlock")
+			}
+			// make sure the actor owns the follow
+			if !sameActor(undo.GetActivityStreamsActor(), ASBlock.GetActivityStreamsActor()) {
+				return errors.New("UNDO: block actor and activity actor not the same")
+			}
+			// convert the block to something we can understand
+			gtsBlock, err := f.typeConverter.ASBlockToBlock(ASBlock)
+			if err != nil {
+				return fmt.Errorf("UNDO: error converting asblock to gtsblock: %s", err)
+			}
+			// make sure the addressee of the original block is the same as whatever inbox this landed in
+			if gtsBlock.TargetAccountID != targetAcct.ID {
+				return errors.New("UNDO: block object account and inbox account were not the same")
+			}
+			// delete any existing BLOCK
+			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsBlock.URI}}, &gtsmodel.Block{}); err != nil {
+				return fmt.Errorf("UNDO: db error removing block: %s", err)
+			}
+			l.Debug("block undone")
+			return nil
 		}
 	}
 
