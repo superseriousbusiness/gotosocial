@@ -426,6 +426,41 @@ func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error
 	}, nil
 }
 
+func (c *converter) ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error) {
+	idProp := blockable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, errors.New("ASBlockToBlock: no id property set on block, or was not an iri")
+	}
+	uri := idProp.GetIRI().String()
+
+	origin, err := extractActor(blockable)
+	if err != nil {
+		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
+	}
+	originAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: origin.String()}}, originAccount); err != nil {
+		return nil, fmt.Errorf("ASBlockToBlock: error extracting account with uri %s from the database: %s", origin.String(), err)
+	}
+
+	target, err := extractObject(blockable)
+	if err != nil {
+		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
+	}
+
+	targetAccount := &gtsmodel.Account{}
+	if err := c.db.GetWhere([]db.Where{{Key: "uri", Value: target.String(), CaseInsensitive: true}}, targetAccount); err != nil {
+		return nil, fmt.Errorf("ASBlockToBlock: error extracting account with uri %s from the database: %s", target.String(), err)
+	}
+
+	return &gtsmodel.Block{
+		AccountID:       originAccount.ID,
+		Account:         originAccount,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		URI:             uri,
+	}, nil
+}
+
 func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Status, bool, error) {
 	status := &gtsmodel.Status{}
 	isNew := true

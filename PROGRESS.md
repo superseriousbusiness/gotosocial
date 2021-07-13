@@ -1,5 +1,38 @@
 # Progress
 
+Things are moving on the project! As of July 2021 you can now:
+
+## Admin
+
+* Build and deploy GoToSocial as a binary, with automatic LetsEncrypt certificate support built-in.
+* Create, confirm, and promote users using self-documented CLI tool.
+
+## User
+
+* Connect to the running instance via Tusky or Pinafore, using email address and password (stored encrypted).
+* Post/delete posts.
+* Reply/delete replies.
+* Fave/unfave posts.
+* Post images and gifs.
+* Boost stuff/unboost stuff.
+* Set your profile info (including header and avatar).
+* Follow people/unfollow people.
+* Accept follow requests from people.
+* Post followers only/direct/public/unlocked.
+* Customize posts with further flags: federated (y/n), replyable (y/n), likeable (y/n), boostable (y/n) -- not supported through Pinafore/Tusky yet.
+* Get notifications for mentions/replies/likes/boosts.
+* View local timeline.
+* View and scroll home timeline (with ~10ms latency hell yeah).
+* Stream new posts, notifications and deletes through a websockets connection via Pinafore.
+
+## Federation
+
+* Federation support and interoperability with Mastodon and others.
+* Domain blocking: create, update, delete, and export domain blocks.
+* Domain blocking: import lists of domain blocks -- no more blocking domains one-by-one.
+
+## To-do list
+
 * [ ] Client-To-Server (Client REST API)
   * [ ] Token and sign-in
     * [x] /api/v1/apps POST                                 (Create an application)
@@ -23,8 +56,8 @@
     * [ ] /api/v1/accounts/:id/identity_proofs GET          (Get identity proofs for this account)
     * [x] /api/v1/accounts/:id/follow POST                  (Follow this account)
     * [x] /api/v1/accounts/:id/unfollow POST                (Unfollow this account)
-    * [ ] /api/v1/accounts/:id/block POST                   (Block this account)
-    * [ ] /api/v1/accounts/:id/unblock POST                 (Unblock this account)
+    * [x] /api/v1/accounts/:id/block POST                   (Block this account)
+    * [x] /api/v1/accounts/:id/unblock POST                 (Unblock this account)
     * [ ] /api/v1/accounts/:id/mute POST                    (Mute this account)
     * [ ] /api/v1/accounts/:id/unmute POST                  (Unmute this account)
     * [ ] /api/v1/accounts/:id/pin POST                     (Feature this account on profile)
@@ -34,12 +67,12 @@
     * [ ] /api/v1/accounts/search GET                       (Search for an account)
   * [ ] Bookmarks
     * [ ] /api/v1/bookmarks GET                             (See bookmarked statuses)
-  * [ ] Favourites
-    * [ ] /api/v1/favourites GET                            (See faved statuses)
+  * [x] Favourites
+    * [x] /api/v1/favourites GET                            (See faved statuses)
   * [ ] Mutes
     * [ ] /api/v1/mutes GET                                 (See list of muted accounts)
-  * [ ] Blocks
-    * [ ] /api/v1/blocks GET                                (See list of blocked accounts)
+  * [x] Blocks
+    * [x] /api/v1/blocks GET                                (See list of blocked accounts)
   * [ ] Domain Blocks
     * [x] /api/v1/domain_blocks GET                         (See list of domain blocks)
     * [x] /api/v1/domain_blocks POST                        (Create a domain block)

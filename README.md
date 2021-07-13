@@ -2,81 +2,151 @@
 
 ![patrons](https://img.shields.io/liberapay/patrons/dumpsterqueer.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/dumpsterqueer.svg?logo=liberapay)
 
-Federated social media software.
+GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
-![Sloth logo made by Freepik from www.flaticon.com](./web/assets/sloth.png)
+<p align="middle">
+  <img src="./docs/assets/sloth.png" width="300"/>
+</p>
 
-GoToSocial is a Fediverse server project, written in Golang. It provides an alternative to existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), [PixelFed](https://pixelfed.org/) etc.
+GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), and [PixelFed](https://pixelfed.org/).
 
-One of the key differences between GoToSocial and those other projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp). Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static web pages for profiles and posts, and a well-documented API. On this API, developers are free to build any front-end implementation or mobile application that they wish.
+With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles, without being tracked or advertised to.
 
-Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
-
-## Features Wishlist
-
-A grab-bag of things that are already included or will be included in the project if time allows:
-
-* Various federation modes, including reputation-based 'slow' federation, 'normal' federation, allowlist-only federation, and zero federation.
-* Local-only posting, and granular post settings including 'rebloggable/boostable', 'likeable', 'replyable'.
-* Character limit for posts that's easy for admins to configure (no messing around in the source code).
-* Groups and group posting!
-* Built-in, automatic LetsEncrypt support (no messing around with Nginx or Certbot).
-* Good performance on lower-powered machines like Raspberry Pi, old laptops, tiny VPSes (the test VPS has 1gb of ram and 1 cpu core).
-* Subscribeable and shareable allowlists/denylists for federation.
-
-## Implementation Status
-
-Things are moving on the project! As of July 2021 you can now:
-
-### Admin
-
-* Build and deploy GoToSocial as a binary, with automatic LetsEncrypt certificate support built-in.
-* Create, confirm, and promote users using self-documented CLI tool.
-
-### User
-
-* Connect to the running instance via Tusky or Pinafore, using email address and password (stored encrypted).
-* Post/delete posts.
-* Reply/delete replies.
-* Fave/unfave posts.
-* Post images and gifs.
-* Boost stuff/unboost stuff.
-* Set your profile info (including header and avatar).
-* Follow people/unfollow people.
-* Accept follow requests from people.
-* Post followers only/direct/public/unlocked.
-* Customize posts with further flags: federated (y/n), replyable (y/n), likeable (y/n), boostable (y/n) -- not supported through Pinafore/Tusky yet.
-* Get notifications for mentions/replies/likes/boosts.
-* View local timeline.
-* View and scroll home timeline (with ~10ms latency hell yeah).
-* Stream new posts, notifications and deletes through a websockets connection via Pinafore.
+## Features
 
 ### Federation
 
-* Federation support and interoperability with Mastodon and others.
-* Domain blocking: create, update, delete, and export domain blocks.
-* Domain blocking: import lists of domain blocks -- no more blocking domains one-by-one.
+Because GoToSocial uses the [ActivityPub](https://activitypub.rocks/) protocol, you can Keep in touch not only with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly!
 
-In other words, a deployed GoToSocial instance is already pretty useable!
+### Mastodon API compatible
 
-For a detailed view on progress made towards a v0.1.0 (beta) release, see [here](./PROGRESS.md).
+Full support for modern, elegant apps like [Tusky](https://tusky.app/) and [Pinafore](https://pinafore.social/).
+
+Tusky                                                        |  Pinafore
+:-----------------------------------------------------------:|:------------------------------------------------------------------:
+![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
+
+### Granular post settings
+
+You should be able to choose how your posts can be interacted with:
+
+* Local-only posts.
+* Rebloggable/boostable toggle.
+* 'Likeable' toggle.
+* 'Replyable' toggle.
+
+### Easy customizability for admins
+
+* Adjustable post length.
+* Media upload size settings.
+
+### LetsEncrypt
+
+ Built-in, automatic support for secure HTTPS with [LetsEncrypt](https://letsencrypt.org/).
+
+### Light footprint and good performance
+
+Plays nice with lower-powered machines like Raspberry Pi, old laptops and tiny VPSes.
+
+### Easy to deploy
+
+No external dependencies apart from a database. Just download the binary + assets (or Docker container), and run.
+
+### HTTP signature authentication
+
+Protect your data.
+
+### User Safety
+
+Strict privacy enforcement for posts and strict blocking logic.
+
+### Subscribeable and shareable allow/denylists for federation
+
+Import and export allowlists and denylists. Subscribe to community-created blocklists (think Adblocker, but for federation!).
+
+### Various federation modes
+
+* 'Normal' federation; discover new servers.
+* Allowlist-only federation; choose which servers you talk to.
+* Zero federation; keep your server private.
+
+### Wishlist
+
+These cool things will be implemented if time allows (because we really want them):
+
+* **Groups** and group posting!
+* Reputation-based 'slow' federation.
+* Community decision making for federation and moderation actions.
+* User-selectable custom templates for rendering public posts:
+  * Twitter-style
+  * Blogpost
+  * Gallery
+  * Etc.
+
+## Design Ethos
+
+One of the key differences between GoToSocial and other federated server projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp).
+
+Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static pages, and a well-documented API. On top of this API, developers are free to build any front-end implementation or mobile application that they wish.
+
+Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
+
+## Status
+
+Work began on the project around February 2021, and the project is still in prerelease.
+
+At this point, GoToSocial is already deployable and very useable, and it federates cleanly with other Fediverse servers.
+
+For a detailed view on what's implemented and what's not, and progress made towards a first v0.1.0 (beta) release, see [here](./PROGRESS.md).
 
 ## Getting Started
 
-Proper documentation for running and maintaining GoToSocial will be forthcoming in the first prerelease.
+Proper documentation for running and maintaining GoToSocial will be forthcoming in the first release.
 
 For now (if you want to run it pre-alpha, like a beast), check out the [quick and dirty getting started guide](./GETTINGSTARTED.md).
 
 ## Contact
 
-For questions and comments, you can reach out to tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer) or mail admin@gotosocial.org.
+For questions and comments, you can reach out to tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer), mail [admin@gotosocial.org](mailto:admin@gotosocial.org), or [join our Matrix channel](https://matrix.to/#/!gotosocial:ondergrond.org).
 
-## Sponsorship
+For bugs and feature requests, please check to see if there's [already an issue](https://github.com/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
+
+## Credits
+
+The following libraries and frameworks are used by GoToSocial, with gratitude 💕
+
+* [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
+* [gin-gonic/gin](https://github.com/gin-gonic/gin); speedy router engine. [MIT License](https://spdx.org/licenses/MIT.html).
+  * [gin-contrib/cors](https://github.com/gin-contrib/cors); Gin CORS middleware. [MIT License](https://spdx.org/licenses/MIT.html).
+  * [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware. [MIT License](https://spdx.org/licenses/MIT.html)
+  * [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware. [MIT License](https://spdx.org/licenses/MIT.html)
+* [go-fed/activity](https://github.com/go-fed/activity); Golang ActivityPub/ActivityStreams library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
+* [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
+* [go-pg/pg](https://github.com/go-pg/pg); Postgres ORM library. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
+* [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html)
+* [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
+* [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
+* [microcosm-cc/bluemonday](https://github.com/microcosm-cc/bluemonday); HTML user-input sanitization. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
+* [oklog/ulid](https://github.com/oklog/ulid); sequential, database-friendly ID generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
+* [sirupsen/logrus](https://github.com/sirupsen/logrus); logging. [MIT License](https://spdx.org/licenses/MIT.html).
+* [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
+* [superseriousbusiness/exifremove](https://github.com/superseriousbusiness/exifremove) forked from [scottleedavis/go-exif-remove](https://github.com/scottleedavis/go-exif-remove); EXIF data removal. [MIT License](https://spdx.org/licenses/MIT.html).
+* [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); oauth server framework and token handling. [MIT License](https://spdx.org/licenses/MIT.html).
+* [urfave/cli](https://github.com/urfave/cli); command-line interface framework. [MIT License](https://spdx.org/licenses/MIT.html).
+* [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
+
+### Image Attribution
+
+Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+
+## Sponsorship + Funding
 
 Currently, this project is funded using Liberapay, to put bread on the table while work continues on it.
 
 If you want to sponsor this project, you can do so [here](https://liberapay.com/dumpsterqueer/)! `<3`
 
-### Image Attribution
+## License
 
-Logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+GoToSocial is licensed under the [GNU AGPL v3 LICENSE](LICENSE).
+
+Copyright (C) 2021 the GoToSocial Authors.

@@ -104,4 +104,9 @@ var (
 	// from eg /users/example_username/statuses/01F7XT5JZW1WMVSW1KADS8PVDH
 	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
 	statusesPathRegex = regexp.MustCompile(statusesPathRegexString)
+
+	blockPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, UsersPath, usernameRegexString, BlocksPath, ulidRegexString)
+	// blockPathRegex parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
+	blockPathRegex = regexp.MustCompile(blockPathRegexString)
 )

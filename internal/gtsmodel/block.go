@@ -11,9 +11,11 @@ type Block struct {
 	// When was this block updated
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Who created this block?
-	AccountID string `pg:"type:CHAR(26),notnull"`
+	AccountID string   `pg:"type:CHAR(26),notnull"`
+	Account   *Account `pg:"rel:has-one"`
 	// Who is targeted by this block?
-	TargetAccountID string `pg:"type:CHAR(26),notnull"`
+	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `pg:"rel:has-one"`
 	// Activitypub URI for this block
-	URI string
+	URI string `pg:",notnull"`
 }

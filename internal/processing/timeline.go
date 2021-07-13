@@ -31,33 +31,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+func (p *processor) packageStatusResponse(statuses []*apimodel.Status, path string, nextMaxID string, prevMinID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
 	resp := &apimodel.StatusTimelineResponse{
 		Statuses: []*apimodel.Status{},
 	}
-
-	apiStatuses, err := p.timelineManager.HomeTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	resp.Statuses = apiStatuses
+	resp.Statuses = statuses
 
 	// prepare the next and previous links
-	if len(apiStatuses) != 0 {
+	if len(statuses) != 0 {
 		nextLink := &url.URL{
 			Scheme:   p.config.Protocol,
 			Host:     p.config.Host,
-			Path:     "/api/v1/timelines/home",
-			RawPath:  url.PathEscape("api/v1/timelines/home"),
-			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, apiStatuses[len(apiStatuses)-1].ID),
+			Path:     path,
+			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, nextMaxID),
 		}
 		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
 
 		prevLink := &url.URL{
 			Scheme:   p.config.Protocol,
 			Host:     p.config.Host,
-			Path:     "/api/v1/timelines/home",
-			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, apiStatuses[0].ID),
+			Path:     path,
+			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, prevMinID),
 		}
 		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLink.String())
 		resp.LinkHeader = fmt.Sprintf("%s, %s", next, prev)
@@ -66,37 +60,81 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 	return resp, nil
 }
 
-func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode) {
-	statuses, err := p.db.GetPublicTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
+func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+	statuses, err := p.timelineManager.HomeTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	s, err := p.filterStatuses(authed, statuses)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if len(statuses) == 0 {
+		return &apimodel.StatusTimelineResponse{
+			Statuses: []*apimodel.Status{},
+		}, nil
 	}
 
-	return s, nil
+	return p.packageStatusResponse(statuses, "api/v1/timelines/home", statuses[len(statuses)-1].ID, statuses[0].ID, limit)
 }
 
-func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	l := p.log.WithField("func", "filterStatuses")
+func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+	statuses, err := p.db.GetPublicTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
+	if err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			// there are just no entries left
+			return &apimodel.StatusTimelineResponse{
+				Statuses: []*apimodel.Status{},
+			}, nil
+		}
+		// there's an actual error
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	s, err := p.filterPublicStatuses(authed, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return p.packageStatusResponse(s, "api/v1/timelines/public", s[len(s)-1].ID, s[0].ID, limit)
+}
+
+func (p *processor) FavedTimelineGet(authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimelineForAccount(authed.Account.ID, maxID, minID, limit)
+	if err != nil {
+		if _, ok := err.(db.ErrNoEntries); ok {
+			// there are just no entries left
+			return &apimodel.StatusTimelineResponse{
+				Statuses: []*apimodel.Status{},
+			}, nil
+		}
+		// there's an actual error
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	s, err := p.filterFavedStatuses(authed, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return p.packageStatusResponse(s, "api/v1/favourites", nextMaxID, prevMinID, limit)
+}
+
+func (p *processor) filterPublicStatuses(authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+	l := p.log.WithField("func", "filterPublicStatuses")
 
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
 		targetAccount := &gtsmodel.Account{}
 		if err := p.db.GetByID(s.AccountID, targetAccount); err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
-				l.Debugf("skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				l.Debugf("filterPublicStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
 				continue
 			}
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error getting status author: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
 		}
 
-		timelineable, err := p.filter.StatusHometimelineable(s, authed.Account)
+		timelineable, err := p.filter.StatusPublictimelineable(s, authed.Account)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("HomeTimelineGet: error checking status visibility: %s", err))
+			l.Debugf("filterPublicStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			continue
 		}
 		if !timelineable {
 			continue
@@ -104,7 +142,42 @@ func (p *processor) filterStatuses(authed *oauth.Auth, statuses []*gtsmodel.Stat
 
 		apiStatus, err := p.tc.StatusToMasto(s, authed.Account)
 		if err != nil {
-			l.Debugf("skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
+			l.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
+			continue
+		}
+
+		apiStatuses = append(apiStatuses, apiStatus)
+	}
+
+	return apiStatuses, nil
+}
+
+func (p *processor) filterFavedStatuses(authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
+	l := p.log.WithField("func", "filterFavedStatuses")
+
+	apiStatuses := []*apimodel.Status{}
+	for _, s := range statuses {
+		targetAccount := &gtsmodel.Account{}
+		if err := p.db.GetByID(s.AccountID, targetAccount); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				l.Debugf("filterFavedStatuses: skipping status %s because account %s can't be found in the db", s.ID, s.AccountID)
+				continue
+			}
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("filterPublicStatuses: error getting status author: %s", err))
+		}
+
+		timelineable, err := p.filter.StatusVisible(s, authed.Account)
+		if err != nil {
+			l.Debugf("filterFavedStatuses: skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			continue
+		}
+		if !timelineable {
+			continue
+		}
+
+		apiStatus, err := p.tc.StatusToMasto(s, authed.Account)
+		if err != nil {
+			l.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
 			continue
 		}
 
@@ -157,7 +230,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 
 	desiredIndexLength := p.timelineManager.GetDesiredIndexLength()
 
-	statuses, err := p.db.GetStatusesWhereFollowing(account.ID, "", "", "", desiredIndexLength, false)
+	statuses, err := p.db.GetHomeTimelineForAccount(account.ID, "", "", "", desiredIndexLength, false)
 	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
@@ -176,7 +249,7 @@ func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGrou
 		}
 
 		if rearmostStatusID != "" {
-			moreStatuses, err := p.db.GetStatusesWhereFollowing(account.ID, rearmostStatusID, "", "", desiredIndexLength/2, false)
+			moreStatuses, err := p.db.GetHomeTimelineForAccount(account.ID, rearmostStatusID, "", "", desiredIndexLength/2, false)
 			if err != nil {
 				l.Error(fmt.Errorf("initTimelineFor: error getting more statuses: %s", err))
 				return

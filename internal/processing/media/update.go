@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) Update(account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
@@ -43,7 +44,7 @@ func (p *processor) Update(account *gtsmodel.Account, mediaAttachmentID string, 
 	}
 
 	if form.Description != nil {
-		attachment.Description = *form.Description
+		attachment.Description = util.RemoveHTML(*form.Description)
 		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
 		}

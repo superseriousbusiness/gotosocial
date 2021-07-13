@@ -94,6 +94,8 @@ func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.Header("Link", resp.LinkHeader)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
 	c.JSON(http.StatusOK, resp.Statuses)
 }

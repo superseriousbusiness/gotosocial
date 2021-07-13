@@ -50,7 +50,8 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 		if err := util.ValidateDisplayName(*form.DisplayName); err != nil {
 			return nil, err
 		}
-		if err := p.db.UpdateOneByID(account.ID, "display_name", *form.DisplayName, &gtsmodel.Account{}); err != nil {
+		displayName := util.RemoveHTML(*form.DisplayName) // no html allowed in display name
+		if err := p.db.UpdateOneByID(account.ID, "display_name", displayName, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
 	}
@@ -59,7 +60,8 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 		if err := util.ValidateNote(*form.Note); err != nil {
 			return nil, err
 		}
-		if err := p.db.UpdateOneByID(account.ID, "note", *form.Note, &gtsmodel.Account{}); err != nil {
+		note := util.SanitizeHTML(*form.Note) // html OK in note but sanitize it
+		if err := p.db.UpdateOneByID(account.ID, "note", note, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
 	}

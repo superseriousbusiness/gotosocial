@@ -78,6 +78,8 @@ type Manager interface {
 	Remove(statusID string, timelineAccountID string) (int, error)
 	// WipeStatusFromAllTimelines removes one status from the index and prepared posts of all timelines
 	WipeStatusFromAllTimelines(statusID string) error
+	// WipeStatusesFromAccountID removes all statuses by the given accountID from the timelineAccountID's timelines.
+	WipeStatusesFromAccountID(accountID string, timelineAccountID string) error
 }
 
 // NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
@@ -112,7 +114,7 @@ func (m *manager) Ingest(status *gtsmodel.Status, timelineAccountID string) (boo
 	}
 
 	l.Trace("ingesting status")
-	return t.IndexOne(status.CreatedAt, status.ID, status.BoostOfID)
+	return t.IndexOne(status.CreatedAt, status.ID, status.BoostOfID, status.AccountID, status.BoostOfAccountID)
 }
 
 func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID string) (bool, error) {
@@ -128,7 +130,7 @@ func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID st
 	}
 
 	l.Trace("ingesting status")
-	return t.IndexAndPrepareOne(status.CreatedAt, status.ID)
+	return t.IndexAndPrepareOne(status.CreatedAt, status.ID, status.BoostOfID, status.AccountID, status.BoostOfAccountID)
 }
 
 func (m *manager) Remove(statusID string, timelineAccountID string) (int, error) {
@@ -216,6 +218,16 @@ func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
 		err = fmt.Errorf("one or more errors removing status %s from all timelines: %s", statusID, strings.Join(errors, ";"))
 	}
 
+	return err
+}
+
+func (m *manager) WipeStatusesFromAccountID(accountID string, timelineAccountID string) error {
+	t, err := m.getOrCreateTimeline(timelineAccountID)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.RemoveAllBy(accountID)
 	return err
 }
 

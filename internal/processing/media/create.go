@@ -26,6 +26,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) Create(account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
@@ -53,7 +54,7 @@ func (p *processor) Create(account *gtsmodel.Account, form *apimodel.AttachmentR
 	// TODO: handle this inside mediaHandler.ProcessAttachment (just pass more params to it)
 
 	// first description
-	attachment.Description = form.Description
+	attachment.Description = util.RemoveHTML(form.Description) // remove any HTML from the image description
 
 	// now parse the focus parameter
 	focusx, focusy, err := parseFocus(form.Focus)

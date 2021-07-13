@@ -39,16 +39,15 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			"id":   id.String(),
 		},
 	)
-	l.Debugf("entering OWNS function with id %s", id.String())
+	l.Tracef("entering OWNS function with id %s", id.String())
 
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {
-		l.Debugf("we DO NOT own activity because the host is %s not %s", id.Host, f.config.Host)
+		l.Tracef("we DO NOT own activity because the host is %s not %s", id.Host, f.config.Host)
 		return false, nil
 	}
 
 	// apparently it belongs to this host, so what *is* it?
-
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
 	if util.IsStatusesPath(id) {
 		_, uid, err := util.ParseStatusesPath(id)
@@ -63,11 +62,10 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
-		l.Debug("we DO own this")
+		l.Debugf("we own url %s", id.String())
 		return true, nil
 	}
 
-	// check if it's a user, eg /users/example_username
 	if util.IsUserPath(id) {
 		username, err := util.ParseUserPath(id)
 		if err != nil {
@@ -81,7 +79,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debug("we DO own this")
+		l.Debugf("we own url %s", id.String())
 		return true, nil
 	}
 
@@ -98,7 +96,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debug("we DO own this")
+		l.Debugf("we own url %s", id.String())
 		return true, nil
 	}
 
@@ -115,7 +113,57 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debug("we DO own this")
+		l.Debugf("we own url %s", id.String())
+		return true, nil
+	}
+
+	if util.IsLikePath(id) {
+		username, likeID, err := util.ParseLikedPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
+		}
+		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		if err := f.db.GetByID(likeID, &gtsmodel.StatusFave{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching like with id %s: %s", likeID, err)
+		}
+		l.Debugf("we own url %s", id.String())
+		return true, nil
+	}
+
+	if util.IsBlockPath(id) {
+		username, blockID, err := util.ParseBlockPath(id)
+		if err != nil {
+			return false, fmt.Errorf("error parsing block path for url %s: %s", id.String(), err)
+		}
+		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries for this username
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
+		}
+		if err := f.db.GetByID(blockID, &gtsmodel.Block{}); err != nil {
+			if _, ok := err.(db.ErrNoEntries); ok {
+				// there are no entries
+				return false, nil
+			}
+			// an actual error happened
+			return false, fmt.Errorf("database error fetching block with id %s: %s", blockID, err)
+		}
+		l.Debugf("we own url %s", id.String())
 		return true, nil
 	}
 

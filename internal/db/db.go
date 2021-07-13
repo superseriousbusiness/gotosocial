@@ -159,6 +159,8 @@ type DB interface {
 	// In case of no entries, a 'no entries' error will be returned
 	GetStatusesForAccount(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error)
 
+	GetBlocksForAccount(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error)
+
 	// GetLastStatusForAccountID simply gets the most recent status by the given account.
 	// The given slice 'status' pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
@@ -241,12 +243,25 @@ type DB interface {
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error)
 
-	// GetStatusesWhereFollowing returns a slice of statuses from accounts that are followed by the given account id.
-	GetStatusesWhereFollowing(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+	// GetHomeTimelineForAccount returns a slice of statuses from accounts that are followed by the given account id.
+	//
+	// Statuses should be returned in descending order of when they were created (newest first).
+	GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
-	// GetPublicTimelineForAccount fetches the account's PUBLIC timline -- ie., posts and replies that are public.
+	// GetPublicTimelineForAccount fetches the account's PUBLIC timeline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
+	//
+	// Statuses should be returned in descending order of when they were created (newest first).
 	GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+
+	// GetFavedTimelineForAccount fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
+	// It will use the given filters and try to return as many statuses as possible up to the limit.
+	//
+	// Note that unlike the other GetTimeline functions, the returned statuses will be arranged by their FAVE id, not the STATUS id.
+	// In other words, they'll be returned in descending order of when they were faved by the requesting user, not when they were created.
+	//
+	// Also note the extra return values, which correspond to the nextMaxID and prevMinID for building Link headers.
+	GetFavedTimelineForAccount(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, error)
 
 	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
 	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error)

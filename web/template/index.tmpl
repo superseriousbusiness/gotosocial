@@ -6,9 +6,8 @@
 	<h1>Home to <span class="count">{{.instance.Stats.user_count}}</span> users
 		who posted <span class="count">{{.instance.Stats.status_count}}</span> statuses,
 		federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.</h1>
-
 	<div className="short-description">
-		{{.instance.ShortDescription}}
+		{{.instance.ShortDescription |noescape}}
 	</div>
 </section>
 

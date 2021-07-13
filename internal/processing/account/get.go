@@ -45,9 +45,19 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 		p.log.WithField("func", "AccountGet").Debugf("dereferencing account: %s", err)
 	}
 
-	var mastoAccount *apimodel.Account
+	var blocked bool
 	var err error
-	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
+	if requestingAccount != nil {
+		blocked, err = p.db.Blocked(requestingAccount.ID, targetAccountID)
+		if err != nil {
+			return nil, fmt.Errorf("error checking account block: %s", err)
+		}
+	}
+
+	var mastoAccount *apimodel.Account
+	if blocked {
+		mastoAccount, err = p.tc.AccountToMastoBlocked(targetAccount)
+	} else if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
 		mastoAccount, err = p.tc.AccountToMastoSensitive(targetAccount)
 	} else {
 		mastoAccount, err = p.tc.AccountToMastoPublic(targetAccount)

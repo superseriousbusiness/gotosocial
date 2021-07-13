@@ -51,7 +51,7 @@ a {
 	color: #de8957;
 }
 
-a.button, button {
+.button, button {
 	border-radius: 0.2rem;
 	background: #de8957;
 	color: #fafaff;
@@ -59,16 +59,13 @@ a.button, button {
 	font-size: 1.2rem;
 	font-weight: bold;
 	padding: 0.5rem;
-}
-
-a.button:hover, button:hover {
-		background: #c76d33;
-	}
-
-button {
 	border: none;
 	cursor: pointer;
 }
+
+.button:hover, button:hover {
+		background: #c76d33;
+	}
 
 .count {
 	background: rgb(70, 79, 88);
@@ -138,17 +135,17 @@ section.login form {
 		grid-gap: 0.7rem;
 	}
 
-section.login form input {
-			border: 1px solid #fafaff;
-			color: #fafaff;
-			background: #525c66;
-			width: 100%;
-		}
-
 section.login form button {
 			place-self: center;
 			grid-column: 2;
 		}
+
+input, select, textarea {
+	border: 1px solid #fafaff;
+	color: #fafaff;
+	background: #525c66;
+	width: 100%;
+}
 
 footer {
 	align-self: end;

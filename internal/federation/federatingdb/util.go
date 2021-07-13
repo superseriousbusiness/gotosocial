@@ -139,7 +139,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 		// ID might already be set on an announce we've created, so check it here and return it if it is
 		announce, ok := t.(vocab.ActivityStreamsAnnounce)
 		if !ok {
-			return nil, errors.New("newid: fave couldn't be parsed into vocab.ActivityStreamsAnnounce")
+			return nil, errors.New("newid: announce couldn't be parsed into vocab.ActivityStreamsAnnounce")
 		}
 		idProp := announce.GetJSONLDId()
 		if idProp != nil {
@@ -152,9 +152,35 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 		// ID might already be set on an update we've created, so check it here and return it if it is
 		update, ok := t.(vocab.ActivityStreamsUpdate)
 		if !ok {
-			return nil, errors.New("newid: fave couldn't be parsed into vocab.ActivityStreamsUpdate")
+			return nil, errors.New("newid: update couldn't be parsed into vocab.ActivityStreamsUpdate")
 		}
 		idProp := update.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
+	case gtsmodel.ActivityStreamsBlock:
+		// BLOCK
+		// ID might already be set on a block we've created, so check it here and return it if it is
+		block, ok := t.(vocab.ActivityStreamsBlock)
+		if !ok {
+			return nil, errors.New("newid: block couldn't be parsed into vocab.ActivityStreamsBlock")
+		}
+		idProp := block.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
+	case gtsmodel.ActivityStreamsUndo:
+		// UNDO
+		// ID might already be set on an undo we've created, so check it here and return it if it is
+		undo, ok := t.(vocab.ActivityStreamsUndo)
+		if !ok {
+			return nil, errors.New("newid: undo couldn't be parsed into vocab.ActivityStreamsUndo")
+		}
+		idProp := undo.GetJSONLDId()
 		if idProp != nil {
 			if idProp.IsIRI() {
 				return idProp.GetIRI(), nil

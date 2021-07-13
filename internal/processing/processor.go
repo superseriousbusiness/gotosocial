@@ -82,6 +82,10 @@ type Processor interface {
 	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
 	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	// AccountBlockCreate handles the creation of a block from authed account to target account, either remote or local.
+	AccountBlockCreate(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	// AccountBlockRemove handles the removal of a block from authed account to target account, either remote or local.
+	AccountBlockRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
@@ -98,6 +102,9 @@ type Processor interface {
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
+
+	// BlocksGet returns a list of accounts blocked by the requesting account.
+	BlocksGet(authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
 
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
@@ -151,7 +158,9 @@ type Processor interface {
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
 	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, gtserror.WithCode)
+	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
+	FavedTimelineGet(authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
@@ -273,14 +282,14 @@ func (p *processor) Start() error {
 		for {
 			select {
 			case clientMsg := <-p.fromClientAPI:
-				p.log.Infof("received message FROM client API: %+v", clientMsg)
+				p.log.Tracef("received message FROM client API: %+v", clientMsg)
 				go func() {
 					if err := p.processFromClientAPI(clientMsg); err != nil {
 						p.log.Error(err)
 					}
 				}()
 			case federatorMsg := <-p.fromFederator:
-				p.log.Infof("received message FROM federator: %+v", federatorMsg)
+				p.log.Tracef("received message FROM federator: %+v", federatorMsg)
 				go func() {
 					if err := p.processFromFederator(federatorMsg); err != nil {
 						p.log.Error(err)

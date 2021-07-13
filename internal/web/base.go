@@ -101,5 +101,9 @@ func (m *Module) Route(s router.Router) error {
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
 
+	if err != nil {
+		return fmt.Errorf("error setting router FuncMap: %s", err)
+	}
+
 	return nil
 }
