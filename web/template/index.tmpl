@@ -1,16 +1,14 @@
 {{ template "header.tmpl" .}}
-<aside class="left logo">
+<div class="left logo">
 	<img src="/assets/sloth.png" alt="Clipart styled sloth logo">
-</aside>
+</div>
 <section>
 	<h1>Home to <span class="count">{{.instance.Stats.user_count}}</span> users
 		who posted <span class="count">{{.instance.Stats.status_count}}</span> statuses,
 		federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.</h1>
-
-	<h3>This is the default landing page, you can edit it from <span class="accent">./web/template/index.tmpl</span></h1>
-	<p>
+	<div className="short-description">
 		{{.instance.ShortDescription |noescape}}
-	</p>
+	</div>
 </section>
 
 <section class="apps">
@@ -24,7 +22,7 @@
 				<path d="M9212 5993H5987V823c1053 667 2747 2177 3225 5170zM3100 2690A12240 12240 0 01939 6035h2161zm676 7210h2448a3067 3067 0 003067-3067H5052V627a527 527 0 00-1052 0v6206H709a3067 3067 0 003067 3067z"></path>
 			</svg>
 			<div>
-				<h3>Pinafore</h3>
+				<h2>Pinafore</h2>
 				<p>Pinafore is a web client designed for speed and simplicity.</p>
 				<a class="button" href="https://pinafore.social/settings/instances/add">Use Pinafore</a>
 			</div>
@@ -32,7 +30,7 @@
 		<div class="entry">
 			<img class="logo" src="/assets/tusky.svg" alt="The Tusky mascot, a cartoon elephant tooting happily"/>
 			<div>
-				<h3>Tusky</h3>
+				<h2>Tusky</h2>
 				<p>Tusky is a lightweight mobile client for Android</p>
 				<a class="button" href="https://tusky.app">Get Tusky</a>
 			</div>
