@@ -29,7 +29,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		Local:                    true,
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
-		ContentWarning:           form.SpoilerText,
+		ContentWarning:           util.RemoveHTML(form.SpoilerText),
 		ActivityStreamsType:      gtsmodel.ActivityStreamsNote,
 		Sensitive:                form.Sensitive,
 		Language:                 form.Language,
