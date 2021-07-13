@@ -126,6 +126,9 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 		return nil, err
 	}
 
+	// set template functions
+	loadTemplateFunctions(engine)
+
 	// load templates onto the engine
 	if err := loadTemplates(cfg, engine); err != nil {
 		return nil, err

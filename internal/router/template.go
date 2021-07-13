@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"html/template"
 	"os"
 	"path/filepath"
 
@@ -20,4 +21,14 @@ func loadTemplates(cfg *config.Config, engine *gin.Engine) error {
 
 	engine.LoadHTMLGlob(tmPath)
 	return nil
+}
+
+func noescape(str string) template.HTML {
+	return template.HTML(str)
+}
+
+func loadTemplateFunctions(engine *gin.Engine) {
+	engine.SetFuncMap(template.FuncMap{
+		"noescape": noescape,
+	})
 }
