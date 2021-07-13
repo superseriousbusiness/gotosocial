@@ -34,11 +34,11 @@ body {
 		grid-column: 1/-1;
 	}
 
-	aside.left {
+	.left {
 		grid-column: 1;
 	}
 
-	aside.right {
+	.right {
 		grid-column: 3;
 	}
 }
@@ -92,7 +92,7 @@ button {
 	color: $acc1;
 }
 
-aside.logo {
+.logo {
 	justify-self: center;
 	img {
 		height: 30vh;
@@ -174,7 +174,7 @@ footer {
 	body {
 		grid-template-columns: 1fr 92% 1fr;
 
-		footer, aside.left, aside.right {
+		footer, .left, .right {
 			grid-column: 2;
 		}
 	}
