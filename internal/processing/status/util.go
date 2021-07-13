@@ -264,6 +264,10 @@ func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, acco
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")
 
-	status.Content = content
+	// sanitize html to remove any dodgy scripts or other disallowed elements
+	clean := util.SanitizeHTML(content)
+
+	// set the content as the shiny clean parsed content
+	status.Content = clean
 	return nil
 }

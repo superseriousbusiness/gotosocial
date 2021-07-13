@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
@@ -51,8 +52,8 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 			ID:                 blockID,
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
-			PrivateComment:     privateComment,
-			PublicComment:      publicComment,
+			PrivateComment:     util.RemoveHTML(privateComment),
+			PublicComment:      util.RemoveHTML(publicComment),
 			Obfuscate:          obfuscate,
 			SubscriptionID:     subscriptionID,
 		}

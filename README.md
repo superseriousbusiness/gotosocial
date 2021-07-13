@@ -26,9 +26,7 @@ Tusky                                                        |  Pinafore
 :-----------------------------------------------------------:|:------------------------------------------------------------------:
 ![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Pinafore](./docs/assets/pinafore.png)
 
-### Customizable
-
-#### Granular post settings
+### Granular post settings
 
 You should be able to choose how your posts can be interacted with:
 
@@ -37,40 +35,36 @@ You should be able to choose how your posts can be interacted with:
 * 'Likeable' toggle.
 * 'Replyable' toggle.
 
-#### Easy customizability for admins
+### Easy customizability for admins
 
 * Adjustable post length.
 * Media upload size settings.
 
-### Convenient
-
-#### LetsEncrypt
+### LetsEncrypt
 
  Built-in, automatic support for secure HTTPS with [LetsEncrypt](https://letsencrypt.org/).
 
-#### Light footprint and good performance
+### Light footprint and good performance
 
 Plays nice with lower-powered machines like Raspberry Pi, old laptops and tiny VPSes.
 
-#### Easy to deploy
+### Easy to deploy
 
 No external dependencies apart from a database. Just download the binary + assets (or Docker container), and run.
 
-### Secure
-
-#### HTTP signature authentication
+### HTTP signature authentication
 
 Protect your data.
 
-#### User Safety
+### User Safety
 
 Strict privacy enforcement for posts and strict blocking logic.
 
-#### Subscribeable and shareable allow/denylists for federation
+### Subscribeable and shareable allow/denylists for federation
 
 Import and export allowlists and denylists. Subscribe to community-created blocklists (think Adblocker, but for federation!).
 
-#### Various federation modes
+### Various federation modes
 
 * 'Normal' federation; discover new servers.
 * Allowlist-only federation; choose which servers you talk to.
@@ -82,6 +76,7 @@ These cool things will be implemented if time allows (because we really want the
 
 * **Groups** and group posting!
 * Reputation-based 'slow' federation.
+* Community decision making for federation and moderation actions.
 * User-selectable custom templates for rendering public posts:
   * Twitter-style
   * Blogpost
@@ -131,6 +126,7 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 * [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html)
 * [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 * [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
+* [microcosm-cc/bluemonday](https://github.com/microcosm-cc/bluemonday); HTML user-input sanitization. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 * [oklog/ulid](https://github.com/oklog/ulid); sequential, database-friendly ID generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 * [sirupsen/logrus](https://github.com/sirupsen/logrus); logging. [MIT License](https://spdx.org/licenses/MIT.html).
 * [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -139,17 +135,17 @@ The following libraries and frameworks are used by GoToSocial, with gratitude ðŸ
 * [urfave/cli](https://github.com/urfave/cli); command-line interface framework. [MIT License](https://spdx.org/licenses/MIT.html).
 * [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
 
+### Image Attribution
+
+Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
+
 ## Sponsorship + Funding
 
 Currently, this project is funded using Liberapay, to put bread on the table while work continues on it.
 
 If you want to sponsor this project, you can do so [here](https://liberapay.com/dumpsterqueer/)! `<3`
 
-### Image Attribution
-
-Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](https://www.flaticon.com/).
-
-### License
+## License
 
 GoToSocial is licensed under the [GNU AGPL v3 LICENSE](LICENSE).
 

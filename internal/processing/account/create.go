@@ -23,6 +23,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
@@ -44,7 +45,7 @@ func (p *processor) Create(applicationToken oauth2.TokenInfo, application *gtsmo
 	}
 
 	l.Trace("creating new username and account")
-	user, err := p.db.NewSignup(form.Username, reason, p.config.AccountsConfig.RequireApproval, form.Email, form.Password, form.IP, form.Locale, application.ID)
+	user, err := p.db.NewSignup(form.Username, util.RemoveHTML(reason), p.config.AccountsConfig.RequireApproval, form.Email, form.Password, form.IP, form.Locale, application.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new signup in the database: %s", err)
 	}
