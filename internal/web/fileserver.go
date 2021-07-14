@@ -35,7 +35,7 @@ func (fs FileSystem) Open(path string) (http.File, error) {
 		return nil, err
 	}
 
-	s, err := f.Stat()
+	s, _ := f.Stat()
 	if s.IsDir() {
 		index := strings.TrimSuffix(path, "/") + "/index.html"
 		if _, err := fs.fs.Open(index); err != nil {
