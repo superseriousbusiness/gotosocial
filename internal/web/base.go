@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -93,17 +92,17 @@ func (m *Module) Route(s router.Router) error {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
 	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir)
-	s.AttachMiddleware(static.Serve("/assets", static.LocalFile(assetPath, false)))
+	s.AttachStaticFS("/assets", FileSystem{http.Dir(assetPath)})
+
+	// Admin panel route, if it exists
+	adminPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir, "/admin")
+	s.AttachStaticFS("/admin", FileSystem{http.Dir(adminPath)})
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
-
-	if err != nil {
-		return fmt.Errorf("error setting router FuncMap: %s", err)
-	}
 
 	return nil
 }
