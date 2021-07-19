@@ -50,23 +50,23 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	usernameDomain := strings.Split(withAcct[1], "@")
-	if len(usernameDomain) != 2 {
+	usernameAndAccountDomain := strings.Split(withAcct[1], "@")
+	if len(usernameAndAccountDomain) != 2 {
 		l.Debugf("aborting request because username and domain could not be parsed from %s", withAcct[1])
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
-	username := strings.ToLower(usernameDomain[0])
-	domain := strings.ToLower(usernameDomain[1])
-	if username == "" || domain == "" {
+	username := strings.ToLower(usernameAndAccountDomain[0])
+	accountDomain := strings.ToLower(usernameAndAccountDomain[1])
+	if username == "" || accountDomain == "" {
 		l.Debug("aborting request because username or domain was empty")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
-	if domain != m.config.Host {
-		l.Debugf("aborting request because domain %s does not belong to this instance", domain)
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("domain %s does not belong to this instance", domain)})
+	if accountDomain != m.config.AccountDomain {
+		l.Debugf("aborting request because accountDomain %s does not belong to this instance", accountDomain)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("accountDomain %s does not belong to this instance", accountDomain)})
 		return
 	}
 

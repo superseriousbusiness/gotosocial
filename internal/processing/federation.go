@@ -304,7 +304,7 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 
 	// return the webfinger representation
 	return &apimodel.WellKnownResponse{
-		Subject: fmt.Sprintf("acct:%s@%s", requestedAccount.Username, p.config.Host),
+		Subject: fmt.Sprintf("acct:%s@%s", requestedAccount.Username, p.config.AccountDomain),
 		Aliases: []string{
 			requestedAccount.URI,
 			requestedAccount.URL,

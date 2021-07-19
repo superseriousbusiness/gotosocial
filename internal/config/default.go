@@ -118,6 +118,7 @@ func GetDefaults() Defaults {
 		ApplicationName: "gotosocial",
 		ConfigPath:      "",
 		Host:            "",
+		AccountDomain:   "",
 		Protocol:        "https",
 
 		DbType:      "postgres",
@@ -166,6 +167,7 @@ func GetTestDefaults() Defaults {
 		ApplicationName: "gotosocial",
 		ConfigPath:      "",
 		Host:            "localhost:8080",
+		AccountDomain:   "",
 		Protocol:        "http",
 
 		DbType:     "postgres",

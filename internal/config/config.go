@@ -48,6 +48,7 @@ type Config struct {
 	LogLevel          string             `yaml:"logLevel"`
 	ApplicationName   string             `yaml:"applicationName"`
 	Host              string             `yaml:"host"`
+	AccountDomain     string             `yaml:"accountDomain"`
 	Protocol          string             `yaml:"protocol"`
 	DBConfig          *DBConfig          `yaml:"db"`
 	TemplateConfig    *TemplateConfig    `yaml:"template"`
@@ -131,6 +132,13 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	}
 	if c.Host == "" {
 		return errors.New("host was not set")
+	}
+
+	if c.AccountDomain == "" || f.IsSet(fn.AccountDomain) {
+		c.AccountDomain = f.String(fn.AccountDomain)
+	}
+	if c.AccountDomain == "" {
+		c.AccountDomain = c.Host // default to whatever the host is, if this is empty
 	}
 
 	if c.Protocol == "" || f.IsSet(fn.Protocol) {
@@ -290,6 +298,7 @@ type Flags struct {
 	ApplicationName string
 	ConfigPath      string
 	Host            string
+	AccountDomain   string
 	Protocol        string
 
 	DbType      string
@@ -336,6 +345,7 @@ type Defaults struct {
 	ApplicationName string
 	ConfigPath      string
 	Host            string
+	AccountDomain   string
 	Protocol        string
 	SoftwareVersion string
 
@@ -385,6 +395,7 @@ func GetFlagNames() Flags {
 		ApplicationName: "application-name",
 		ConfigPath:      "config-path",
 		Host:            "host",
+		AccountDomain:   "account-domain",
 		Protocol:        "protocol",
 
 		DbType:      "db-type",
@@ -434,6 +445,7 @@ func GetEnvNames() Flags {
 		ApplicationName: "GTS_APPLICATION_NAME",
 		ConfigPath:      "GTS_CONFIG_PATH",
 		Host:            "GTS_HOST",
+		AccountDomain:   "GTS_ACCOUNT_DOMAIN",
 		Protocol:        "GTS_PROTOCOL",
 
 		DbType:      "GTS_DB_TYPE",
