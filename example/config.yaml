@@ -18,7 +18,7 @@
 ##### GENERAL CONFIG ######
 ###########################
 # String. Log level to use throughout the application. Must be lower-case.
-# Options: ["debug","info","warn","error","fatal"]
+# Options: ["trace","debug","info","warn","error","fatal"]
 # Default: "info"
 logLevel: "info"
 
@@ -66,13 +66,28 @@ db:
   # REQUIRED
   # String. Password to use for the database connection
   # Examples: ["password123","verysafepassword","postgres"]
-  # Default: ""
-  password: ""
+  # Default: "postgres"
+  password: "postgres"
 
   # String. Name of the database to use within the provided database type.
   # Examples: ["mydb","postgres","gotosocial"]
   # Default: "postgres"
   database: "postgres"
+
+  # String. Disable, enable, or require SSL/TLS connection to the database.
+  # If "disable" then no TLS connection will be attempted.
+  # If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
+  # If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
+  # Options: ["disable", "enable", "require"]
+  # Default: "disable"
+  tlsMode: "disable"
+
+  # String. Path to a CA certificate on the host machine for db certificate validation.
+  # If this is left empty, just the host certificates will be used.
+  # If filled in, the certificate will be loaded and added to host certificates.
+  # Examples: ["/path/to/some/cert.crt"]
+  # Default: ""
+  tlsCACert: ""
 
 ###############################
 ##### WEB TEMPLATE CONFIG #####
@@ -84,6 +99,11 @@ template:
   # Default: "./web/template/"
   baseDir: "./web/template/"
 
+  # String. Directory from which gotosocial will attempt to serve static web assets (images, scripts).
+  # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
+  # Default: "./web/assets/"
+  assetBaseDir: "./web/assets/"
+
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################
@@ -93,7 +113,142 @@ accounts:
   # Options: [true, false]
   # Default: true
   openRegistration: true
+
   # Bool. Do sign up requests require approval from an admin/moderator before an account can sign in/use the server?
   # Options: [true, false]
   # Default: true
   requireApproval: true
+
+  # Bool. Are sign up requests required to submit a reason for the request (eg., an explanation of why they want to join the instance)?
+  # Options: [true, false]
+  # Default: true
+  reasonRequired: true
+
+########################
+##### MEDIA CONFIG #####
+########################
+# Config pertaining to user media uploads (videos, image, image descriptions).
+media:
+  # Int. Maximum allowed image upload size in bytes.
+  # Examples: [2097152, 10485760]
+  # Default: 2097152 -- aka 2MB
+  maxImageSize: 2097152
+
+  # Int. Maximum allowed video upload size in bytes.
+  # Examples: [2097152, 10485760]
+  # Default: 10485760 -- aka 10MB
+  maxVideoSize: 10485760
+
+  # Int. Minimum amount of characters required as an image or video description.
+  # Examples: [500, 1000, 1500]
+  # Default: 0 (not required)
+  minDescriptionChars: 0
+
+  # Int. Maximum amount of characters permitted in an image or video description.
+  # Examples: [500, 1000, 1500]
+  # Default: 500
+  maxDescriptionChars: 500
+
+##########################
+##### STORAGE CONFIG #####
+##########################
+# Config pertaining to storage of user-created uploads (videos, images, etc).
+storage:
+  # String. Type of storage backend to use.
+  # Examples: ["local", "s3"]
+  # Default: "local" (storage on local disk)
+  # NOTE: s3 storage is not yet supported!
+  backend: "local"
+
+  # String. Directory to use as a base path for storing files.
+  # Make sure whatever user/group gotosocial is running as has permission to access
+  # this directly, and create new subdirectories and files with in.
+  # Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
+  # Default: "/gotosocial/storage"
+  basePath: "/gotosocial/storage"
+
+  # String. Protocol to use for serving stored files.
+  # It's very unlikely that you'll need to change this ever, but there might be edge cases.
+  # Examples: ["http", "https"]
+  serveProtocol: "https"
+
+  # String. Host for serving stored files.
+  # If you're using local storage, this should be THE SAME as the value you've set for Host, above.
+  # It should only be a different value if you're serving stored files from a host
+  # other than the one your instance is running on.
+  # Examples: ["localhost", "example.org"]
+  # Default: "localhost" -- you should absolutely change this.
+  serveHost: "localhost"
+
+  # String. Base path for serving stored files. This will be added to serveHost and serveProtocol
+  # to form the prefix url of your stored files. Eg., https://example.org/fileserver/.....
+  # It's unlikely that you will need to change this.
+  # Examples: ["/fileserver", "/media"]
+  # Default: "/fileserver"
+  serveBasePath: "/fileserver"
+
+###########################
+##### STATUSES CONFIG #####
+###########################
+# Config pertaining to the creation of statuses/posts, and permitted limits.
+statuses:
+  # Int. Maximum amount of characters permitted for a new status.
+  # Note that going way higher than the default might break federation.
+  # Examples: [140, 500, 5000]
+  # Default: 5000
+  maxChars: 5000
+
+  # Int. Maximum amount of characters allowed in the CW/subject header of a status.
+  # Note that going way higher than the default might break federation.
+  # Examples: [100, 200]
+  # Default: 100
+  cwMaxChars: 100
+
+  # Int. Maximum amount of options to permit when creating a new poll.
+  # Note that going way higher than the default might break federation.
+  # Examples: [4, 6, 10]
+  # Default: 6
+  pollMaxOptions: 6
+
+  # Int. Maximum amount of characters to permit per poll option when creating a new poll.
+  # Note that going way higher than the default might break federation.
+  # Examples: [50, 100, 150]
+  # Default: 50
+  pollOptionMaxChars: 50
+
+  # Int. Maximum amount of media files that can be attached to a new status.
+  # Note that going way higher than the default might break federation.
+  # Examples: [4, 6, 10]
+  # Default: 6
+  maxMediaFiles: 6
+
+##############################
+##### LETSENCRYPT CONFIG #####
+##############################
+# Config pertaining to the automatic acquisition and use of LetsEncrypt HTTPS certificates.
+letsEncrypt:
+  # Bool. Whether or not letsencrypt should be enabled for the server.
+  # If true, the server will serve on port 443 (https) and obtain letsencrypt
+  # certificates automatically.
+  # If false, the server will serve on port 8080 (http), and the rest of the settings
+  # here will be ignored.
+  # You should only change this if you want to serve GoToSocial behind a reverse proxy
+  # like Traefik, HAProxy, or Nginx.
+  # Options: [true, false]
+  # Default: true 
+  enabled: true
+
+  # String. Directory in which to store LetsEncrypt certificates.
+  # It is a good move to make this a sub-path within your storage directory, as it makes
+  # backup easier, but you might wish to move them elsewhere if they're also accessed by other services.
+  # In any case, make sure GoToSocial has permissions to write to / read from this directory.
+  # Examples: ["/home/gotosocial/storage/certs", "/acmecerts"]
+  # Default: "/gotosocial/storage/certs"
+  certDir: "/gotosocial/storage/certs"
+
+  # String. Email address to use when registering LetsEncrypt certs.
+  # Most likely, this will be the email address of the instance administrator.
+  # LetsEncrypt will send notifications about expiring certificates etc to this address.
+  # Examples: ["admin@example.org"]
+  # Default: ""
+  emailAddress: ""
