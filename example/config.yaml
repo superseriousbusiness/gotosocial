@@ -27,11 +27,24 @@ logLevel: "info"
 # Default: "gotosocial"
 applicationName: "gotosocial"
 
-# String. Hostname/domain to use for the server. Defaults to localhost for local testing,
+# String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
-# Examples: ["example.org","some.server.com"]
+# DO NOT change this after your server has already run once, or you will break things!
+# Examples: ["gts.example.org","some.server.com"]
 # Default: "localhost"
 host: "localhost"
+
+# String. Domain to use when federating profiles. This is useful when you want your server to be at
+# eg., "gts.example.org", but you want the domain on accounts to be "example.org" because it looks better
+# or is just shorter/easier to remember.
+# To make this setting work properly, you need to redirect requests at "example.org/.well-known/webfinger"
+# to "gts.example.org/.well-known/webfinger" so that GtS can handle them properly.
+# You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
+# An empty string (ie., not set) means that the same value as 'host' will be used.
+# DO NOT change this after your server has already run once, or you will break things!
+# Examples: ["example.org","server.com"]
+# Default: ""
+accountDomain: ""
 
 # String. Protocol to use for the server. Only change to http for local testing!
 # Options: ["http","https"]

@@ -69,9 +69,15 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:    flagNames.Host,
-				Usage:   "Hostname to use for the server (eg., example.org, gotosocial.whatever.com)",
+				Usage:   "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",
 				Value:   defaults.Host,
 				EnvVars: []string{envNames.Host},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.AccountDomain,
+				Usage:   "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!",
+				Value:   defaults.AccountDomain,
+				EnvVars: []string{envNames.AccountDomain},
 			},
 			&cli.StringFlag{
 				Name:    flagNames.Protocol,

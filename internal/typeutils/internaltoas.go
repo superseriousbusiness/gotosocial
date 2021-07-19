@@ -580,7 +580,7 @@ func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMenti
 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
 	var domain string
 	if m.GTSAccount.Domain == "" {
-		domain = c.config.Host
+		domain = c.config.AccountDomain
 	} else {
 		domain = m.GTSAccount.Domain
 	}
