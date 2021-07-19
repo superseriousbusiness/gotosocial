@@ -117,6 +117,18 @@ func main() {
 				Value:   defaults.DbDatabase,
 				EnvVars: []string{envNames.DbDatabase},
 			},
+			&cli.StringFlag{
+				Name:    flagNames.DbTLSMode,
+				Usage:   "Database tls mode",
+				Value:   defaults.DBTlsMode,
+				EnvVars: []string{envNames.DbTLSMode},
+			},
+			&cli.StringFlag{
+				Name:    flagNames.DbTLSCACert,
+				Usage:   "Path to CA cert for db tls connection",
+				Value:   defaults.DBTlsCACert,
+				EnvVars: []string{envNames.DbTLSCACert},
+			},
 
 			// TEMPLATE FLAGS
 			&cli.StringFlag{

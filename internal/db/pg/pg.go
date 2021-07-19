@@ -22,10 +22,14 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"net"
 	"net/mail"
+	"os"
 	"strings"
 	"time"
 
@@ -133,6 +137,49 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 		return nil, errors.New("no database set")
 	}
 
+	var tlsConfig *tls.Config
+	switch c.DBConfig.TLSMode {
+	case config.DBTLSModeDisable, config.DBTLSModeUnset:
+		break // nothing to do
+	case config.DBTLSModeEnable:
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+	case config.DBTLSModeRequire:
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: false,
+		}
+	}
+
+	if tlsConfig != nil && c.DBConfig.TLSCACert != "" {
+		// load the system cert pool first -- we'll append the given CA cert to this
+		certPool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, fmt.Errorf("error fetching system CA cert pool: %s", err)
+		}
+
+		caCertBytes, err := os.ReadFile(c.DBConfig.TLSCACert)
+		if err != nil {
+			return nil, fmt.Errorf("error opening CA certificate at %s: %s", c.DBConfig.TLSCACert, err)
+		}
+
+		if len(caCertBytes) == 0 {
+			return nil, fmt.Errorf("ca cert at %s was empty", c.DBConfig.TLSCACert)
+		}
+
+		caPem, _ := pem.Decode(caCertBytes)
+		if caPem == nil {
+			return nil, fmt.Errorf("could not parse cert at %s into PEM", c.DBConfig.TLSCACert)
+		}
+
+		caCert, err := x509.ParseCertificate(caPem.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", c.DBConfig.TLSCACert, err)
+		}
+
+		certPool.AddCert(caCert)
+	}
+
 	// We can rely on the pg library we're using to set
 	// sensible defaults for everything we don't set here.
 	options := &pg.Options{
@@ -141,6 +188,7 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 		Password:        c.DBConfig.Password,
 		Database:        c.DBConfig.Database,
 		ApplicationName: c.ApplicationName,
+		TLSConfig:       tlsConfig,
 	}
 
 	return options, nil
