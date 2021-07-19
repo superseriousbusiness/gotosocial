@@ -20,11 +20,30 @@ package config
 
 // DBConfig provides configuration options for the database connection
 type DBConfig struct {
-	Type            string `yaml:"type"`
-	Address         string `yaml:"address"`
-	Port            int    `yaml:"port"`
-	User            string `yaml:"user"`
-	Password        string `yaml:"password"`
-	Database        string `yaml:"database"`
-	ApplicationName string `yaml:"applicationName"`
+	Type            string    `yaml:"type"`
+	Address         string    `yaml:"address"`
+	Port            int       `yaml:"port"`
+	User            string    `yaml:"user"`
+	Password        string    `yaml:"password"`
+	Database        string    `yaml:"database"`
+	ApplicationName string    `yaml:"applicationName"`
+	TLSMode         DBTLSMode `yaml:"tlsMode"`
+	TLSCACert       string    `yaml:"tlsCACert"`
 }
+
+// DBTLSMode describes a mode of connecting to a database with or without TLS.
+type DBTLSMode string
+
+// DBTLSModeDisable does not attempt to make a TLS connection to the database.
+var DBTLSModeDisable DBTLSMode = "disable"
+
+// DBTLSModeEnable attempts to make a TLS connection to the database, but doesn't fail if
+// the certificate passed by the database isn't verified.
+var DBTLSModeEnable DBTLSMode = "enable"
+
+// DBTLSModeRequire attempts to make a TLS connection to the database, and requires
+// that the certificate presented by the database is valid.
+var DBTLSModeRequire DBTLSMode = "require"
+
+// DBTLSModeUnset means that the TLS mode has not been set.
+var DBTLSModeUnset DBTLSMode = ""

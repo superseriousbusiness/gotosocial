@@ -165,6 +165,14 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.DBConfig.Database = f.String(fn.DbDatabase)
 	}
 
+	if c.DBConfig.TLSMode == DBTLSModeUnset || f.IsSet(fn.DbTLSMode) {
+		c.DBConfig.TLSMode = DBTLSMode(f.String(fn.DbTLSMode))
+	}
+
+	if c.DBConfig.TLSCACert == "" || f.IsSet(fn.DbTLSCACert) {
+		c.DBConfig.TLSCACert = f.String(fn.DbTLSCACert)
+	}
+
 	// template flags
 	if c.TemplateConfig.BaseDir == "" || f.IsSet(fn.TemplateBaseDir) {
 		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
@@ -284,12 +292,14 @@ type Flags struct {
 	Host            string
 	Protocol        string
 
-	DbType     string
-	DbAddress  string
-	DbPort     string
-	DbUser     string
-	DbPassword string
-	DbDatabase string
+	DbType      string
+	DbAddress   string
+	DbPort      string
+	DbUser      string
+	DbPassword  string
+	DbDatabase  string
+	DbTLSMode   string
+	DbTLSCACert string
 
 	TemplateBaseDir string
 	AssetBaseDir    string
@@ -329,12 +339,14 @@ type Defaults struct {
 	Protocol        string
 	SoftwareVersion string
 
-	DbType     string
-	DbAddress  string
-	DbPort     int
-	DbUser     string
-	DbPassword string
-	DbDatabase string
+	DbType      string
+	DbAddress   string
+	DbPort      int
+	DbUser      string
+	DbPassword  string
+	DbDatabase  string
+	DBTlsMode   string
+	DBTlsCACert string
 
 	TemplateBaseDir string
 	AssetBaseDir    string
@@ -375,12 +387,14 @@ func GetFlagNames() Flags {
 		Host:            "host",
 		Protocol:        "protocol",
 
-		DbType:     "db-type",
-		DbAddress:  "db-address",
-		DbPort:     "db-port",
-		DbUser:     "db-user",
-		DbPassword: "db-password",
-		DbDatabase: "db-database",
+		DbType:      "db-type",
+		DbAddress:   "db-address",
+		DbPort:      "db-port",
+		DbUser:      "db-user",
+		DbPassword:  "db-password",
+		DbDatabase:  "db-database",
+		DbTLSMode:   "db-tls-mode",
+		DbTLSCACert: "db-tls-ca-cert",
 
 		TemplateBaseDir: "template-basedir",
 		AssetBaseDir:    "asset-basedir",
@@ -422,12 +436,14 @@ func GetEnvNames() Flags {
 		Host:            "GTS_HOST",
 		Protocol:        "GTS_PROTOCOL",
 
-		DbType:     "GTS_DB_TYPE",
-		DbAddress:  "GTS_DB_ADDRESS",
-		DbPort:     "GTS_DB_PORT",
-		DbUser:     "GTS_DB_USER",
-		DbPassword: "GTS_DB_PASSWORD",
-		DbDatabase: "GTS_DB_DATABASE",
+		DbType:      "GTS_DB_TYPE",
+		DbAddress:   "GTS_DB_ADDRESS",
+		DbPort:      "GTS_DB_PORT",
+		DbUser:      "GTS_DB_USER",
+		DbPassword:  "GTS_DB_PASSWORD",
+		DbDatabase:  "GTS_DB_DATABASE",
+		DbTLSMode:   "GTS_DB_TLS_MODE",
+		DbTLSCACert: "GTS_DB_CA_CERT",
 
 		TemplateBaseDir: "GTS_TEMPLATE_BASEDIR",
 		AssetBaseDir:    "GTS_ASSET_BASEDIR",
