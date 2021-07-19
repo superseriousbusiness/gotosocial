@@ -148,6 +148,7 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 	case config.DBTLSModeRequire:
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
+			ServerName:         c.DBConfig.Address,
 		}
 	}
 

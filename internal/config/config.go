@@ -98,7 +98,7 @@ func loadFromFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("could not read file at path %s: %s", path, err)
 	}
 
-	config := &Config{}
+	config := Empty()
 	if err := yaml.Unmarshal(bytes, config); err != nil {
 		return nil, fmt.Errorf("could not unmarshal file at path %s: %s", path, err)
 	}
