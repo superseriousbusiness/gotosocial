@@ -158,26 +158,30 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 			return nil, fmt.Errorf("error fetching system CA cert pool: %s", err)
 		}
 
+		// open the file itself and make sure there's something in it
 		caCertBytes, err := os.ReadFile(c.DBConfig.TLSCACert)
 		if err != nil {
 			return nil, fmt.Errorf("error opening CA certificate at %s: %s", c.DBConfig.TLSCACert, err)
 		}
-
 		if len(caCertBytes) == 0 {
 			return nil, fmt.Errorf("ca cert at %s was empty", c.DBConfig.TLSCACert)
 		}
 
+		// make sure we have a PEM block
 		caPem, _ := pem.Decode(caCertBytes)
 		if caPem == nil {
 			return nil, fmt.Errorf("could not parse cert at %s into PEM", c.DBConfig.TLSCACert)
 		}
 
+		// parse the PEM block into the certificate
 		caCert, err := x509.ParseCertificate(caPem.Bytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", c.DBConfig.TLSCACert, err)
 		}
 
+		// we're happy, add it to the existing pool and then use this pool in our tls config
 		certPool.AddCert(caCert)
+		tlsConfig.RootCAs = certPool
 	}
 
 	// We can rely on the pg library we're using to set
