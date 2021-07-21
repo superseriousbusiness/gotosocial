@@ -42,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
@@ -121,8 +122,13 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
+	idp, err := oidc.NewIDP(c)
+	if err != nil {
+		return fmt.Errorf("error creating oidc idp: %s", err)
+	}
+
 	// build client api modules
-	authModule := auth.New(c, dbService, oauthServer, log)
+	authModule := auth.New(c, dbService, oauthServer, idp, log)
 	accountModule := account.New(c, processor, log)
 	instanceModule := instance.New(c, processor, log)
 	appsModule := app.New(c, processor, log)

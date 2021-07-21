@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -36,6 +37,8 @@ const (
 	OauthTokenPath = "/oauth/token"
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
+	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
+	CallbackPath = "/auth/callback"
 
 	sessionUserID       = "userid"
 	sessionClientID     = "client_id"
@@ -61,15 +64,17 @@ type Module struct {
 	config *config.Config
 	db     db.DB
 	server oauth.Server
+	idp    oidc.IDP
 	log    *logrus.Logger
 }
 
 // New returns a new auth module
-func New(config *config.Config, db db.DB, server oauth.Server, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, db db.DB, server oauth.Server, idp oidc.IDP, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config: config,
 		db:     db,
 		server: server,
+		idp:    idp,
 		log:    log,
 	}
 }
