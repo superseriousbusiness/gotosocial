@@ -64,7 +64,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	if accountDomain != m.config.AccountDomain {
+	if accountDomain != m.config.AccountDomain && accountDomain != m.config.Host {
 		l.Debugf("aborting request because accountDomain %s does not belong to this instance", accountDomain)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("accountDomain %s does not belong to this instance", accountDomain)})
 		return
