@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,5 +50,13 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	b, mErr := json.Marshal(user)
+	if mErr != nil {
+		err := fmt.Errorf("could not marshal json: %s", mErr)
+		l.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Data(http.StatusOK, format, b)
 }
