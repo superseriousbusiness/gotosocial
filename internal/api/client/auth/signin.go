@@ -39,7 +39,13 @@ type login struct {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
 func (m *Module) SignInGETHandler(c *gin.Context) {
-	m.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
+	l := m.log.WithField("func", "SignInGETHandler")
+	l.Trace("entering sign in handler")
+	if m.idp != nil && m.config.OIDCConfig.Issuer != "" {
+		l.Debug("redirecting to external idp at %s", m.config.OIDCConfig.Issuer)
+		c.Redirect(http.StatusFound, m.config.OIDCConfig.Issuer)
+		return
+	}
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
 }
 

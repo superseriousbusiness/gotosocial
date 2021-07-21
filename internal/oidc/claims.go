@@ -16,24 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package auth
+package oidc
 
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-)
-
-// CallbackGETHandler parses a token from an external auth provider.
-func (m *Module) CallbackGETHandler(c *gin.Context) {
-	state := c.Query(callbackStateParam)
-	code := c.Query(callbackCodeParam)
-
-	claims, err := m.idp.HandleCallback(c.Request.Context(), state, code)
-	if err != nil {
-		c.String(http.StatusForbidden, err.Error())
-		return
-	}
-
-	c.JSON(http.StatusOK, claims)
+// Claims represents claims as found in an id_token returned from an OIDC flow.
+type Claims struct {
+	Email  string   `json:"email"`
+	Groups []string `json:"groups"`
 }
