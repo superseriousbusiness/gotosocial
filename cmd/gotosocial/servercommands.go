@@ -19,36 +19,24 @@
 package main
 
 import (
-	"os"
-
-	"github.com/sirupsen/logrus"
-
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
 	"github.com/urfave/cli/v2"
 )
 
-// Version is the software version of GtS being used
-var Version string
-
-// Commit is the git commit of GtS being used
-var Commit string
-
-func main() {
-	var v string
-	if Commit == "" {
-		v = Version
-	} else {
-		v = Version + " " + Commit[:7]
-	}
-
-	app := &cli.App{
-		Version:  v,
-		Usage:    "a fediverse social media server",
-		Flags:    getFlags(),
-		Commands: getCommands(),
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		logrus.Fatal(err)
+func serverCommands() []*cli.Command {
+	return []*cli.Command{
+		{
+			Name:  "server",
+			Usage: "gotosocial server-related tasks",
+			Subcommands: []*cli.Command{
+				{
+					Name:  "start",
+					Usage: "start the gotosocial server",
+					Action: func(c *cli.Context) error {
+						return runAction(c, server.Start)
+					},
+				},
+			},
+		},
 	}
 }

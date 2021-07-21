@@ -19,36 +19,30 @@
 package main
 
 import (
-	"os"
-
-	"github.com/sirupsen/logrus"
-
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/urfave/cli/v2"
 )
 
-// Version is the software version of GtS being used
-var Version string
+func getFlags() []cli.Flag {
+	flagNames := config.GetFlagNames()
+	envNames := config.GetEnvNames()
+	defaults := config.GetDefaults()
 
-// Commit is the git commit of GtS being used
-var Commit string
-
-func main() {
-	var v string
-	if Commit == "" {
-		v = Version
-	} else {
-		v = Version + " " + Commit[:7]
+	flags := []cli.Flag{}
+	flagSets := [][]cli.Flag{
+		generalFlags(flagNames, envNames, defaults),
+		databaseFlags(flagNames, envNames, defaults),
+		templateFlags(flagNames, envNames, defaults),
+		accountsFlags(flagNames, envNames, defaults),
+		mediaFlags(flagNames, envNames, defaults),
+		storageFlags(flagNames, envNames, defaults),
+		statusesFlags(flagNames, envNames, defaults),
+		letsEncryptFlags(flagNames, envNames, defaults),
+		oidcFlags(flagNames, envNames, defaults),
+	}
+	for _, fs := range flagSets {
+		flags = append(flags, fs...)
 	}
 
-	app := &cli.App{
-		Version:  v,
-		Usage:    "a fediverse social media server",
-		Flags:    getFlags(),
-		Commands: getCommands(),
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	return flags
 }
