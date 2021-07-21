@@ -38,7 +38,10 @@ const (
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
 	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
-	CallbackPath = "/auth/callback"
+	CallbackPath = oidc.CallbackPath
+
+	callbackStateParam = "state"
+	callbackCodeParam  = "code"
 
 	sessionUserID       = "userid"
 	sessionClientID     = "client_id"
@@ -88,6 +91,8 @@ func (m *Module) Route(s router.Router) error {
 
 	s.AttachHandler(http.MethodGet, OauthAuthorizePath, m.AuthorizeGETHandler)
 	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
+
+	s.AttachHandler(http.MethodGet, CallbackPath, m.CallbackGETHandler)
 
 	s.AttachMiddleware(m.OauthTokenMiddleware)
 	return nil
