@@ -48,20 +48,9 @@ const (
 	sessionRedirectURI  = "redirect_uri"
 	sessionForceLogin   = "force_login"
 	sessionResponseType = "response_type"
-	sessionCode         = "code"
 	sessionScope        = "scope"
 	sessionState        = "state"
 )
-
-var sessionKeys []string = []string{
-	sessionUserID,
-	sessionClientID,
-	sessionRedirectURI,
-	sessionForceLogin,
-	sessionResponseType,
-	sessionCode,
-	sessionScope,
-}
 
 // Module implements the ClientAPIModule interface for
 type Module struct {

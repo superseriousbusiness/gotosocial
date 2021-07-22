@@ -38,10 +38,10 @@ func SessionOptions(cfg *config.Config) sessions.Options {
 	return sessions.Options{
 		Path:     "/",
 		Domain:   cfg.Host,
-		MaxAge:   120,                     // 2 minutes
-		Secure:   true,                    // only use cookie over https
-		HttpOnly: true,                    // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteStrictMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		MaxAge:   120,                      // 2 minutes
+		Secure:   true,                     // only use cookie over https
+		HttpOnly: true,                     // exclude javascript from inspecting cookie
+		SameSite: http.SameSiteDefaultMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
 	}
 }
 

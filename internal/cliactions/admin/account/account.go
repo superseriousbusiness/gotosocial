@@ -64,7 +64,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 		return err
 	}
 
-	_, err = dbConn.NewSignup(username, "", false, email, password, nil, "", "")
+	_, err = dbConn.NewSignup(username, "", false, email, password, nil, "", "", false, false)
 	if err != nil {
 		return err
 	}

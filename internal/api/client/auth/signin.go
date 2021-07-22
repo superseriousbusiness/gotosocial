@@ -24,7 +24,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
@@ -44,13 +43,15 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 	l.Trace("entering sign in handler")
 	if m.idp != nil {
 		s := sessions.Default(c)
-		state := uuid.NewString()
-		s.Set(sessionState, state)
-		if err := s.Save(); err != nil {
+
+		stateI := s.Get(sessionState)
+		state, ok := stateI.(string)
+		if !ok {
 			m.clearSession(s)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusForbidden, gin.H{"error": "state not found in session"})
 			return
 		}
+
 		redirect := m.idp.AuthCodeURL(state)
 		l.Debugf("redirecting to external idp at %s", redirect)
 		c.Redirect(http.StatusSeeOther, redirect)
