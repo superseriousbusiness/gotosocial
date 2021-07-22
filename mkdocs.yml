@@ -1,0 +1,4 @@
+site_name: GoToSocial Documentation
+theme: readthedocs
+repo_url: https://github.com/superseriousbusiness/gotosocial
+copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2021 the GoToSocial Authors.

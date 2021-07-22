@@ -9,3 +9,6 @@ cp.out
 
 # exclude node_modules if installed
 /web/source/node_modules
+
+# exclude compiled mkdocs site
+site/
