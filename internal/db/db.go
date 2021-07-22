@@ -177,9 +177,9 @@ type DB interface {
 	// C) something went wrong in the db
 	IsEmailAvailable(email string) error
 
-	// NewSignup creates a new user in the database with the given parameters, with an *unconfirmed* email address.
+	// NewSignup creates a new user in the database with the given parameters.
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
-	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error)
+	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, error)
 
 	// SetHeaderOrAvatarForAccountID sets the header or avatar for the given accountID to the given media attachment.
 	SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error

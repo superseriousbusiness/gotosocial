@@ -27,6 +27,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -51,14 +52,15 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		l.Tracef("parsed auth form: %+v", form)
+		l.Debugf("parsed auth form: %+v", form)
 
 		if err := extractAuthForm(s, form); err != nil {
 			l.Debugf(fmt.Sprintf("error parsing form at /oauth/authorize: %s", err))
+			m.clearSession(s)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		c.Redirect(http.StatusFound, AuthSignInPath)
+		c.Redirect(http.StatusSeeOther, AuthSignInPath)
 		return
 	}
 
@@ -140,7 +142,7 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 
 	forceLogin, ok := s.Get(sessionForceLogin).(string)
 	if !ok {
-		errs = append(errs, "session missing force_login")
+		forceLogin = "false"
 	}
 
 	responseType, ok := s.Get(sessionResponseType).(string)
@@ -211,5 +213,6 @@ func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
 	s.Set(sessionClientID, form.ClientID)
 	s.Set(sessionRedirectURI, form.RedirectURI)
 	s.Set(sessionScope, form.Scope)
+	s.Set(sessionState, uuid.NewString())
 	return s.Save()
 }

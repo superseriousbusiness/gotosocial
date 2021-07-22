@@ -548,38 +548,49 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	return nil
 }
 
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string) (*gtsmodel.User, error) {
+func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		ps.log.Errorf("error creating new rsa key: %s", err)
 		return nil, err
 	}
 
-	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
-	newAccountID, err := id.NewRandomULID()
+	// if something went wrong while creating a user, we might already have an account, so check here first...
+	a := &gtsmodel.Account{}
+	err = ps.conn.Model(a).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
 	if err != nil {
-		return nil, err
-	}
+		// there's been an actual error
+		if err != pg.ErrNoRows {
+			return nil, fmt.Errorf("db error checking existence of account: %s", err)
+		}
 
-	a := &gtsmodel.Account{
-		ID:                    newAccountID,
-		Username:              username,
-		DisplayName:           username,
-		Reason:                reason,
-		URL:                   newAccountURIs.UserURL,
-		PrivateKey:            key,
-		PublicKey:             &key.PublicKey,
-		PublicKeyURI:          newAccountURIs.PublicKeyURI,
-		ActorType:             gtsmodel.ActivityStreamsPerson,
-		URI:                   newAccountURIs.UserURI,
-		InboxURI:              newAccountURIs.InboxURI,
-		OutboxURI:             newAccountURIs.OutboxURI,
-		FollowersURI:          newAccountURIs.FollowersURI,
-		FollowingURI:          newAccountURIs.FollowingURI,
-		FeaturedCollectionURI: newAccountURIs.CollectionURI,
-	}
-	if _, err = ps.conn.Model(a).Insert(); err != nil {
-		return nil, err
+		// we just don't have an account yet create one
+		newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
+		newAccountID, err := id.NewRandomULID()
+		if err != nil {
+			return nil, err
+		}
+
+		a = &gtsmodel.Account{
+			ID:                    newAccountID,
+			Username:              username,
+			DisplayName:           username,
+			Reason:                reason,
+			URL:                   newAccountURIs.UserURL,
+			PrivateKey:            key,
+			PublicKey:             &key.PublicKey,
+			PublicKeyURI:          newAccountURIs.PublicKeyURI,
+			ActorType:             gtsmodel.ActivityStreamsPerson,
+			URI:                   newAccountURIs.UserURI,
+			InboxURI:              newAccountURIs.InboxURI,
+			OutboxURI:             newAccountURIs.OutboxURI,
+			FollowersURI:          newAccountURIs.FollowersURI,
+			FollowingURI:          newAccountURIs.FollowingURI,
+			FeaturedCollectionURI: newAccountURIs.CollectionURI,
+		}
+		if _, err = ps.conn.Model(a).Insert(); err != nil {
+			return nil, err
+		}
 	}
 
 	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -594,14 +605,25 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 
 	u := &gtsmodel.User{
 		ID:                     newUserID,
-		AccountID:              newAccountID,
+		AccountID:              a.ID,
 		EncryptedPassword:      string(pw),
-		SignUpIP:               signUpIP,
+		SignUpIP:               signUpIP.To4(),
 		Locale:                 locale,
 		UnconfirmedEmail:       email,
 		CreatedByApplicationID: appID,
 		Approved:               !requireApproval, // if we don't require moderator approval, just pre-approve the user
 	}
+
+	if emailVerified {
+		u.ConfirmedAt = time.Now()
+		u.Email = email
+	}
+
+	if admin {
+		u.Admin = true
+		u.Moderator = true
+	}
+
 	if _, err = ps.conn.Model(u).Insert(); err != nil {
 		return nil, err
 	}
