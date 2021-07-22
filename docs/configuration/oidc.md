@@ -6,7 +6,7 @@ This means that you can connect GoToSocial to an external OIDC provider like [Gi
 
 This is very convenient in the following cases:
 
-- You're running multiple services on a platform, and you want users to be able to use the same sign in page for all of them.
+- You're running multiple services on a platform (Matrix, Peertube, GoToSocial), and you want users to be able to use the same sign in page for all of them.
 - You want to delegate management of users, accounts, passwords etc. to an external service to make admin easier for yourself.
 - You already have a lot of users in an external system and you don't want to have to recreate them all in GoToSocial manually.
 
