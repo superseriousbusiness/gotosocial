@@ -21,7 +21,6 @@ package config
 // OIDCConfig contains configuration values for openID connect (oauth) authorization by an external service such as Dex.
 type OIDCConfig struct {
 	Enabled          bool     `yaml:"enabled"`
-	IDPID            string   `yaml:"idpId"`
 	IDPName          string   `yaml:"idpName"`
 	SkipVerification bool     `yaml:"skipVerification"`
 	Issuer           string   `yaml:"issuer"`

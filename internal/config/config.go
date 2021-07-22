@@ -275,10 +275,6 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.OIDCConfig.Enabled = f.Bool(fn.OIDCEnabled)
 	}
 
-	if c.OIDCConfig.IDPID == "" || f.IsSet(fn.OIDCIdpID) {
-		c.OIDCConfig.IDPID = f.String(fn.OIDCIdpID)
-	}
-
 	if c.OIDCConfig.IDPName == "" || f.IsSet(fn.OIDCIdpName) {
 		c.OIDCConfig.IDPName = f.String(fn.OIDCIdpName)
 	}
@@ -372,7 +368,6 @@ type Flags struct {
 	LetsEncryptEmailAddress string
 
 	OIDCEnabled          string
-	OIDCIdpID            string
 	OIDCIdpName          string
 	OIDCSkipVerification string
 	OIDCIssuer           string
@@ -429,7 +424,6 @@ type Defaults struct {
 	LetsEncryptEmailAddress string
 
 	OIDCEnabled          bool
-	OIDCIdpID            string
 	OIDCIdpName          string
 	OIDCSkipVerification bool
 	OIDCIssuer           string
@@ -487,7 +481,6 @@ func GetFlagNames() Flags {
 		LetsEncryptEmailAddress: "letsencrypt-email",
 
 		OIDCEnabled:          "oidc-enabled",
-		OIDCIdpID:            "oidc-idp-id",
 		OIDCIdpName:          "oidc-idp-name",
 		OIDCSkipVerification: "oidc-skip-verification",
 		OIDCIssuer:           "oidc-issuer",
@@ -546,7 +539,6 @@ func GetEnvNames() Flags {
 		LetsEncryptEmailAddress: "GTS_LETSENCRYPT_EMAIL",
 
 		OIDCEnabled:          "GTS_OIDC_ENABLED",
-		OIDCIdpID:            "GTS_OIDC_IDP_ID",
 		OIDCIdpName:          "GTS_OIDC_IDP_NAME",
 		OIDCSkipVerification: "GTS_OIDC_SKIP_VERIFICATION",
 		OIDCIssuer:           "GTS_OIDC_ISSUER",

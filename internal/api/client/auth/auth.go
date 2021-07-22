@@ -50,6 +50,7 @@ const (
 	sessionResponseType = "response_type"
 	sessionCode         = "code"
 	sessionScope        = "scope"
+	sessionState        = "state"
 )
 
 var sessionKeys []string = []string{

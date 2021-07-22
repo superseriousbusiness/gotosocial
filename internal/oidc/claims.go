@@ -20,6 +20,8 @@ package oidc
 
 // Claims represents claims as found in an id_token returned from an OIDC flow.
 type Claims struct {
-	Email  string   `json:"email"`
-	Groups []string `json:"groups"`
+	Email         string   `json:"email"`
+	EmailVerified bool     `json:"email_verified"`
+	Groups        []string `json:"groups"`
+	Name          string   `json:"name"`
 }

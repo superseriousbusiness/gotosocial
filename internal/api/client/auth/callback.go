@@ -19,21 +19,81 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 )
 
 // CallbackGETHandler parses a token from an external auth provider.
 func (m *Module) CallbackGETHandler(c *gin.Context) {
-	state := c.Query(callbackStateParam)
-	code := c.Query(callbackCodeParam)
+   s := sessions.Default(c)
 
-	claims, err := m.idp.HandleCallback(c.Request.Context(), state, code)
-	if err != nil {
-		c.String(http.StatusForbidden, err.Error())
+	// first make sure the state set in the cookie is the same as the state returned from the external provider
+	state := c.Query(callbackStateParam)
+	if state == "" {
+      m.clearSession(s)
+		c.JSON(http.StatusForbidden, gin.H{"error": "state query not found on callback"})
 		return
 	}
 
-	c.JSON(http.StatusOK, claims)
+	savedStateI := s.Get(sessionState)
+	savedState, ok := savedStateI.(string)
+	if !ok {
+      m.clearSession(s)
+		c.JSON(http.StatusForbidden, gin.H{"error": "state not found in session"})
+		return
+	}
+
+	if state != savedState {
+      m.clearSession(s)
+		c.JSON(http.StatusForbidden, gin.H{"error": "state mismatch"})
+		return
+	}
+
+	code := c.Query(callbackCodeParam)
+
+	claims, err := m.idp.HandleCallback(c.Request.Context(), code)
+	if err != nil {
+      m.clearSession(s)
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := m.parseUserFromClaims(claims)
+	if err != nil {
+      m.clearSession(s)
+		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		return
+	}
+
+	s.Set(sessionUserID, user.ID)
+	if err := s.Save(); err != nil {
+      m.clearSession(s)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Redirect(http.StatusFound, OauthAuthorizePath)
+}
+
+func (m *Module) parseUserFromClaims(claims *oidc.Claims) (*gtsmodel.User, error) {
+   if claims.Email == "" {
+      return nil, errors.New("no email returned in claims")
+   }
+   // see if we already have a user for this email address
+
+
+   if claims.Name == "" {
+		return nil, errors.New("no name returned in claims")
+	}
+   username := ""
+	nameParts := strings.Split(claims.Name, " ")
+   for i, n := range nameParts {
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+   }
 }

@@ -17,6 +17,7 @@
 ###########################
 ##### GENERAL CONFIG ######
 ###########################
+
 # String. Log level to use throughout the application. Must be lower-case.
 # Options: ["trace","debug","info","warn","error","fatal"]
 # Default: "info"
@@ -54,8 +55,10 @@ protocol: "https"
 ############################
 ##### DATABASE CONFIG ######
 ############################
+
 # Config pertaining to the Gotosocial database connection
 db:
+
   # String. Database type.
   # Options: ["postgres"]
   # Default: "postgres"
@@ -105,8 +108,10 @@ db:
 ###############################
 ##### WEB TEMPLATE CONFIG #####
 ###############################
+
 # Config pertaining to templating of web pages/email notifications and the like
 template:
+
   # String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
   # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
   # Default: "./web/template/"
@@ -120,8 +125,10 @@ template:
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################
+
 # Config pertaining to creation and maintenance of accounts on the server, as well as defaults for new accounts.
 accounts:
+
   # Bool. Do we want people to be able to just submit sign up requests, or do we want invite only?
   # Options: [true, false]
   # Default: true
@@ -140,8 +147,10 @@ accounts:
 ########################
 ##### MEDIA CONFIG #####
 ########################
+
 # Config pertaining to user media uploads (videos, image, image descriptions).
 media:
+
   # Int. Maximum allowed image upload size in bytes.
   # Examples: [2097152, 10485760]
   # Default: 2097152 -- aka 2MB
@@ -165,8 +174,10 @@ media:
 ##########################
 ##### STORAGE CONFIG #####
 ##########################
+
 # Config pertaining to storage of user-created uploads (videos, images, etc).
 storage:
+
   # String. Type of storage backend to use.
   # Examples: ["local", "s3"]
   # Default: "local" (storage on local disk)
@@ -203,8 +214,10 @@ storage:
 ###########################
 ##### STATUSES CONFIG #####
 ###########################
+
 # Config pertaining to the creation of statuses/posts, and permitted limits.
 statuses:
+
   # Int. Maximum amount of characters permitted for a new status.
   # Note that going way higher than the default might break federation.
   # Examples: [140, 500, 5000]
@@ -238,8 +251,10 @@ statuses:
 ##############################
 ##### LETSENCRYPT CONFIG #####
 ##############################
+
 # Config pertaining to the automatic acquisition and use of LetsEncrypt HTTPS certificates.
 letsEncrypt:
+
   # Bool. Whether or not letsencrypt should be enabled for the server.
   # If true, the server will serve on port 443 (https) and obtain letsencrypt
   # certificates automatically.
@@ -248,7 +263,7 @@ letsEncrypt:
   # You should only change this if you want to serve GoToSocial behind a reverse proxy
   # like Traefik, HAProxy, or Nginx.
   # Options: [true, false]
-  # Default: true 
+  # Default: true
   enabled: true
 
   # String. Directory in which to store LetsEncrypt certificates.
@@ -265,3 +280,58 @@ letsEncrypt:
   # Examples: ["admin@example.org"]
   # Default: ""
   emailAddress: ""
+
+#######################
+##### OIDC CONFIG #####
+#######################
+
+# Config for authentication with an external OIDC provider (Dex, Google, Auth0, etc).
+oidc:
+
+  # Bool. Enable authentication with external OIDC provider. If set to true, then
+  # the other OIDC options must be set as well. If this is set to false, then the standard
+  # internal oauth flow will be used, where users sign in to GtS with username/password.
+  # Options: [true, false]
+  # Default: false
+  enabled: false
+
+  # String. Name of the oidc idp (identity provider). This will be shown to users when
+  # they log in.
+  # Examples: ["Google", "Dex", "Auth0"]
+  # Default: ""
+  idpName: ""
+
+  # Bool. Skip the normal verification flow of tokens returned from the OIDC provider, ie.,
+  # don't check the expiry or signature. This should only be used in debugging or testing,
+  # never ever in a production environment as it's extremely unsafe!
+  # Options: [true, false]
+  # Default: false
+  skipVerification: false
+
+  # String. The OIDC issuer URI. This is where GtS will redirect users to for login.
+  # Typically this will look like a standard web URL.
+  # Examples: ["https://auth.example.org", "https://example.org/auth"]
+  # Default: ""
+  issuer: ""
+
+  # String. The ID for this client as registered with the OIDC provider.
+  # Examples: ["some-client-id", "fda3772a-ad35-41c9-9a59-f1943ad18f54"]
+  # Default: ""
+  clientID: ""
+
+  # String. The secret for this client as registered with the OIDC provider.
+  # Examples: ["super-secret-business", "79379cf5-8057-426d-bb83-af504d98a7b0"]
+  # Default: ""
+  clientSecret: ""
+
+  # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
+  # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
+  # 'profile' is used to extract a username for the newly created user.
+  # 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
+  # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
+  # Default: ["openid", "email", "profile", "groups"]
+  scopes:
+    - "openid"
+    - "email"
+    - "profile"
+    - "groups"
