@@ -56,7 +56,6 @@ func TestDefault() *Config {
 		},
 		OIDCConfig: &OIDCConfig{
 			Enabled:          defaults.OIDCEnabled,
-			IDPID:            defaults.OIDCIdpID,
 			IDPName:          defaults.OIDCIdpName,
 			SkipVerification: defaults.OIDCSkipVerification,
 			Issuer:           defaults.OIDCIssuer,
@@ -121,7 +120,6 @@ func Default() *Config {
 		},
 		OIDCConfig: &OIDCConfig{
 			Enabled:          defaults.OIDCEnabled,
-			IDPID:            defaults.OIDCIdpID,
 			IDPName:          defaults.OIDCIdpName,
 			SkipVerification: defaults.OIDCSkipVerification,
 			Issuer:           defaults.OIDCIssuer,
@@ -181,7 +179,6 @@ func GetDefaults() Defaults {
 		LetsEncryptEmailAddress: "",
 
 		OIDCEnabled:          false,
-		OIDCIdpID:            "",
 		OIDCIdpName:          "",
 		OIDCSkipVerification: false,
 		OIDCIssuer:           "",
@@ -235,5 +232,13 @@ func GetTestDefaults() Defaults {
 		LetsEncryptEnabled:      false,
 		LetsEncryptCertDir:      "",
 		LetsEncryptEmailAddress: "",
+
+		OIDCEnabled:          false,
+		OIDCIdpName:          "",
+		OIDCSkipVerification: false,
+		OIDCIssuer:           "",
+		OIDCClientID:         "",
+		OIDCClientSecret:     "",
+		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 	}
 }

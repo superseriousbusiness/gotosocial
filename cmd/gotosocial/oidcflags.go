@@ -32,12 +32,6 @@ func oidcFlags(flagNames, envNames config.Flags, defaults config.Defaults) []cli
 			EnvVars: []string{envNames.OIDCEnabled},
 		},
 		&cli.StringFlag{
-			Name:    flagNames.OIDCIdpID,
-			Usage:   "ID of the OIDC identity provider.",
-			Value:   defaults.OIDCIdpID,
-			EnvVars: []string{envNames.OIDCIdpID},
-		},
-		&cli.StringFlag{
 			Name:    flagNames.OIDCIdpName,
 			Usage:   "Name of the OIDC identity provider. Will be shown to the user when logging in.",
 			Value:   defaults.OIDCIdpName,

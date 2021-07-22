@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -46,6 +47,8 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		form := &model.OAuthAuthorize{}
 		if err := c.Bind(form); err != nil {
 			l.Debugf("invalid auth form: %s", err)
+			m.clearSession(s)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		l.Tracef("parsed auth form: %+v", form)
@@ -69,6 +72,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		ClientID: clientID,
 	}
 	if err := m.db.GetWhere([]db.Where{{Key: sessionClientID, Value: app.ClientID}}, app); err != nil {
+		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
 		return
 	}
@@ -78,6 +82,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		ID: userID,
 	}
 	if err := m.db.GetByID(user.ID, user); err != nil {
+		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -87,6 +92,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	}
 
 	if err := m.db.GetByID(acct.ID, acct); err != nil {
+		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -94,11 +100,13 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// Finally we should also get the redirect and scope of this particular request, as stored in the session.
 	redirect, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirect == "" {
+		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no redirect_uri found in session"})
 		return
 	}
 	scope, ok := s.Get(sessionScope).(string)
 	if !ok || scope == "" {
+		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no scope found in session"})
 		return
 	}
@@ -128,48 +136,42 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	// recreate it on the request so that it can be used further by the oauth2 library.
 	// So first fetch all the values from the session.
 
+	errs := []string{}
+
 	forceLogin, ok := s.Get(sessionForceLogin).(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing force_login"})
-		return
+		errs = append(errs, "session missing force_login")
 	}
 
 	responseType, ok := s.Get(sessionResponseType).(string)
 	if !ok || responseType == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing response_type"})
-		return
+		errs = append(errs, "session missing response_type")
 	}
 
 	clientID, ok := s.Get(sessionClientID).(string)
 	if !ok || clientID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing client_id"})
-		return
+		errs = append(errs, "session missing client_id")
 	}
 
 	redirectURI, ok := s.Get(sessionRedirectURI).(string)
 	if !ok || redirectURI == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing redirect_uri"})
-		return
+		errs = append(errs, "session missing redirect_uri")
 	}
 
 	scope, ok := s.Get(sessionScope).(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing scope"})
-		return
+		errs = append(errs, "session missing scope")
 	}
 
 	userID, ok := s.Get(sessionUserID).(string)
 	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing userid"})
-		return
+		errs = append(errs, "session missing userid")
 	}
 
-	// we're done with the session so we can clear it now
-	for _, key := range sessionKeys {
-		s.Delete(key)
-	}
-	if err := s.Save(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	m.clearSession(s)
+
+	if len(errs) != 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": strings.Join(errs, ": ")})
 		return
 	}
 

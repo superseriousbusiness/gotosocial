@@ -24,6 +24,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
@@ -41,9 +42,18 @@ type login struct {
 func (m *Module) SignInGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "SignInGETHandler")
 	l.Trace("entering sign in handler")
-	if m.idp != nil && m.config.OIDCConfig.Issuer != "" {
-		l.Debug("redirecting to external idp at %s", m.config.OIDCConfig.Issuer)
-		c.Redirect(http.StatusFound, m.config.OIDCConfig.Issuer)
+	if m.idp != nil {
+		s := sessions.Default(c)
+		state := uuid.NewString()
+		s.Set(sessionState, state)
+		if err := s.Save(); err != nil {
+			m.clearSession(s)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		redirect := m.idp.AuthCodeURL(state)
+		l.Debugf("redirecting to external idp at %s", redirect)
+		c.Redirect(http.StatusSeeOther, redirect)
 		return
 	}
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
@@ -58,6 +68,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	form := &login{}
 	if err := c.ShouldBind(form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		m.clearSession(s)
 		return
 	}
 	l.Tracef("parsed form: %+v", form)
@@ -65,12 +76,14 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	userid, err := m.ValidatePassword(form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
+		m.clearSession(s)
 		return
 	}
 
 	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		m.clearSession(s)
 		return
 	}
 

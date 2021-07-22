@@ -31,13 +31,11 @@ import (
 const (
 	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
 	CallbackPath = "/auth/callback"
-	profileScope = "profile"
-	emailScope   = "email"
-	groupsScope  = "groups"
 )
 
 type IDP interface {
-	HandleCallback(ctx context.Context, state string, code string) (*Claims, error)
+	HandleCallback(ctx context.Context, code string) (*Claims, error)
+	AuthCodeURL(state string) string
 }
 
 type idp struct {
@@ -55,9 +53,6 @@ func NewIDP(config *config.Config, log *logrus.Logger) (IDP, error) {
 	}
 
 	// validate config fields
-	if config.OIDCConfig.IDPID == "" {
-		return nil, fmt.Errorf("not set: IDPID")
-	}
 	if config.OIDCConfig.IDPName == "" {
 		return nil, fmt.Errorf("not set: IDPName")
 	}

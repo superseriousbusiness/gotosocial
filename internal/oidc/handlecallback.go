@@ -24,13 +24,8 @@ import (
 	"fmt"
 )
 
-func (i *idp) HandleCallback(ctx context.Context, state string, code string) (*Claims, error) {
+func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, error) {
 	l := i.log.WithField("func", "HandleCallback")
-
-	if state == "" {
-		return nil, errors.New("state was empty string")
-	}
-
 	if code == "" {
 		return nil, errors.New("code was empty string")
 	}
@@ -48,7 +43,7 @@ func (i *idp) HandleCallback(ctx context.Context, state string, code string) (*C
 	if !ok {
 		return nil, errors.New("no id_token in oauth2token")
 	}
-	l.Debug("raw id token: %s", rawIDToken)
+	l.Debugf("raw id token: %s", rawIDToken)
 
 	// Parse and verify ID Token payload.
 	l.Debug("verifying id_token")
@@ -65,4 +60,8 @@ func (i *idp) HandleCallback(ctx context.Context, state string, code string) (*C
 	}
 
 	return claims, nil
+}
+
+func (i *idp) AuthCodeURL(state string) string {
+	return i.oauth2Config.AuthCodeURL(state)
 }
