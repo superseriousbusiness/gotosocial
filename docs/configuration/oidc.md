@@ -75,9 +75,9 @@ oidc:
 
 ### Dex
 
-[Dex](https://dexidp.io/) is an open-source OIDC Provider that you can host yourself.
+[Dex](https://dexidp.io/) is an open-source OIDC Provider that you can host yourself. The procedure for installing Dex is out of scope for this documentation, but you can check out the Dex docs [here](https://dexidp.io/docs/).
 
-To configure Dex and GoToSocial to work together, create the following client under the `staticClients` section of the Dex config:
+To configure Dex and GoToSocial to work together, create the following client under the `staticClients` section of your Dex config:
 
 ```yaml
 staticClients:
