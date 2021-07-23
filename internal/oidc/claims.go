@@ -16,39 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package main
+package oidc
 
-import (
-	"os"
-
-	"github.com/sirupsen/logrus"
-
-	"github.com/urfave/cli/v2"
-)
-
-// Version is the software version of GtS being used
-var Version string
-
-// Commit is the git commit of GtS being used
-var Commit string
-
-func main() {
-	var v string
-	if Commit == "" {
-		v = Version
-	} else {
-		v = Version + " " + Commit[:7]
-	}
-
-	app := &cli.App{
-		Version:  v,
-		Usage:    "a fediverse social media server",
-		Flags:    getFlags(),
-		Commands: getCommands(),
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		logrus.Fatal(err)
-	}
+// Claims represents claims as found in an id_token returned from an OIDC flow.
+type Claims struct {
+	Email         string   `json:"email"`
+	EmailVerified bool     `json:"email_verified"`
+	Groups        []string `json:"groups"`
+	Name          string   `json:"name"`
 }

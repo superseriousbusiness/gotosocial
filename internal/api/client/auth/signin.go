@@ -39,7 +39,24 @@ type login struct {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
 func (m *Module) SignInGETHandler(c *gin.Context) {
-	m.log.WithField("func", "SignInGETHandler").Trace("serving sign in html")
+	l := m.log.WithField("func", "SignInGETHandler")
+	l.Trace("entering sign in handler")
+	if m.idp != nil {
+		s := sessions.Default(c)
+
+		stateI := s.Get(sessionState)
+		state, ok := stateI.(string)
+		if !ok {
+			m.clearSession(s)
+			c.JSON(http.StatusForbidden, gin.H{"error": "state not found in session"})
+			return
+		}
+
+		redirect := m.idp.AuthCodeURL(state)
+		l.Debugf("redirecting to external idp at %s", redirect)
+		c.Redirect(http.StatusSeeOther, redirect)
+		return
+	}
 	c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{})
 }
 
@@ -52,6 +69,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	form := &login{}
 	if err := c.ShouldBind(form); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		m.clearSession(s)
 		return
 	}
 	l.Tracef("parsed form: %+v", form)
@@ -59,12 +77,14 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	userid, err := m.ValidatePassword(form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
+		m.clearSession(s)
 		return
 	}
 
 	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		m.clearSession(s)
 		return
 	}
 

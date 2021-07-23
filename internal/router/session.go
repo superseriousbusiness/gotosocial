@@ -33,6 +33,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
+// SessionOptions returns the standard set of options to use for each session.
+func SessionOptions(cfg *config.Config) sessions.Options {
+	return sessions.Options{
+		Path:     "/",
+		Domain:   cfg.Host,
+		MaxAge:   120,                      // 2 minutes
+		Secure:   true,                     // only use cookie over https
+		HttpOnly: true,                     // exclude javascript from inspecting cookie
+		SameSite: http.SameSiteDefaultMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+	}
+}
+
 func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 	// check if we have a saved router session already
 	routerSessions := []*gtsmodel.RouterSession{}
@@ -64,14 +76,7 @@ func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 	}
 
 	store := memstore.NewStore(rs.Auth, rs.Crypt)
-	store.Options(sessions.Options{
-		Path:     "/",
-		Domain:   cfg.Host,
-		MaxAge:   120,                     // 2 minutes
-		Secure:   true,                    // only use cookie over https
-		HttpOnly: true,                    // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteStrictMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
-	})
+	store.Options(SessionOptions(cfg))
 	sessionName := fmt.Sprintf("gotosocial-%s", cfg.Host)
 	engine.Use(sessions.Sessions(sessionName, store))
 	return nil

@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -66,8 +67,13 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
+	idp, err := oidc.NewIDP(c, log)
+	if err != nil {
+		return fmt.Errorf("error creating oidc idp: %s", err)
+	}
+
 	// build client api modules
-	authModule := auth.New(c, dbService, oauthServer, log)
+	authModule := auth.New(c, dbService, oauthServer, idp, log)
 	accountModule := account.New(c, processor, log)
 	instanceModule := instance.New(c, processor, log)
 	appsModule := app.New(c, processor, log)

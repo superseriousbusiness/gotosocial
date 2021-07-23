@@ -19,36 +19,23 @@
 package main
 
 import (
-	"os"
-
-	"github.com/sirupsen/logrus"
-
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/urfave/cli/v2"
 )
 
-// Version is the software version of GtS being used
-var Version string
-
-// Commit is the git commit of GtS being used
-var Commit string
-
-func main() {
-	var v string
-	if Commit == "" {
-		v = Version
-	} else {
-		v = Version + " " + Commit[:7]
-	}
-
-	app := &cli.App{
-		Version:  v,
-		Usage:    "a fediverse social media server",
-		Flags:    getFlags(),
-		Commands: getCommands(),
-	}
-
-	err := app.Run(os.Args)
-	if err != nil {
-		logrus.Fatal(err)
+func templateFlags(flagNames, envNames config.Flags, defaults config.Defaults) []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:    flagNames.TemplateBaseDir,
+			Usage:   "Basedir for html templating files for rendering pages and composing emails.",
+			Value:   defaults.TemplateBaseDir,
+			EnvVars: []string{envNames.TemplateBaseDir},
+		},
+		&cli.StringFlag{
+			Name:    flagNames.AssetBaseDir,
+			Usage:   "Directory to serve static assets from, accessible at example.com/assets/",
+			Value:   defaults.AssetBaseDir,
+			EnvVars: []string{envNames.AssetBaseDir},
+		},
 	}
 }

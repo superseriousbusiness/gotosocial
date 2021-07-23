@@ -1,5 +1,7 @@
 package config
 
+import "github.com/coreos/go-oidc/v3/oidc"
+
 // TestDefault returns a default config for testing
 func TestDefault() *Config {
 	defaults := GetTestDefaults()
@@ -51,6 +53,15 @@ func TestDefault() *Config {
 			Enabled:      defaults.LetsEncryptEnabled,
 			CertDir:      defaults.LetsEncryptCertDir,
 			EmailAddress: defaults.LetsEncryptEmailAddress,
+		},
+		OIDCConfig: &OIDCConfig{
+			Enabled:          defaults.OIDCEnabled,
+			IDPName:          defaults.OIDCIdpName,
+			SkipVerification: defaults.OIDCSkipVerification,
+			Issuer:           defaults.OIDCIssuer,
+			ClientID:         defaults.OIDCClientID,
+			ClientSecret:     defaults.OIDCClientSecret,
+			Scopes:           defaults.OIDCScopes,
 		},
 	}
 }
@@ -107,6 +118,15 @@ func Default() *Config {
 			CertDir:      defaults.LetsEncryptCertDir,
 			EmailAddress: defaults.LetsEncryptEmailAddress,
 		},
+		OIDCConfig: &OIDCConfig{
+			Enabled:          defaults.OIDCEnabled,
+			IDPName:          defaults.OIDCIdpName,
+			SkipVerification: defaults.OIDCSkipVerification,
+			Issuer:           defaults.OIDCIssuer,
+			ClientID:         defaults.OIDCClientID,
+			ClientSecret:     defaults.OIDCClientSecret,
+			Scopes:           defaults.OIDCScopes,
+		},
 	}
 }
 
@@ -157,6 +177,14 @@ func GetDefaults() Defaults {
 		LetsEncryptEnabled:      true,
 		LetsEncryptCertDir:      "/gotosocial/storage/certs",
 		LetsEncryptEmailAddress: "",
+
+		OIDCEnabled:          false,
+		OIDCIdpName:          "",
+		OIDCSkipVerification: false,
+		OIDCIssuer:           "",
+		OIDCClientID:         "",
+		OIDCClientSecret:     "",
+		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 	}
 }
 
@@ -204,5 +232,13 @@ func GetTestDefaults() Defaults {
 		LetsEncryptEnabled:      false,
 		LetsEncryptCertDir:      "",
 		LetsEncryptEmailAddress: "",
+
+		OIDCEnabled:          false,
+		OIDCIdpName:          "",
+		OIDCSkipVerification: false,
+		OIDCIssuer:           "",
+		OIDCClientID:         "",
+		OIDCClientSecret:     "",
+		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 	}
 }

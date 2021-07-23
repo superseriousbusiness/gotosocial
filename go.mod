@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/buckket/go-blurhash v1.1.0
+	github.com/coreos/go-oidc/v3 v3.0.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/dsoprea/go-exif v0.0.0-20210512055020-8213cfabc61b // indirect
 	github.com/dsoprea/go-exif/v2 v2.0.0-20210512055020-8213cfabc61b // indirect
@@ -50,6 +51,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea // indirect
 	golang.org/x/text v0.3.6
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect

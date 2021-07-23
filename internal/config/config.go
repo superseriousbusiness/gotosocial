@@ -57,6 +57,7 @@ type Config struct {
 	StorageConfig     *StorageConfig     `yaml:"storage"`
 	StatusesConfig    *StatusesConfig    `yaml:"statuses"`
 	LetsEncryptConfig *LetsEncryptConfig `yaml:"letsEncrypt"`
+	OIDCConfig        *OIDCConfig        `yaml:"oidc"`
 
 	/*
 		Not parsed from .yaml configuration file.
@@ -87,6 +88,7 @@ func Empty() *Config {
 		StorageConfig:     &StorageConfig{},
 		StatusesConfig:    &StatusesConfig{},
 		LetsEncryptConfig: &LetsEncryptConfig{},
+		OIDCConfig:        &OIDCConfig{},
 		AccountCLIFlags:   make(map[string]string),
 	}
 }
@@ -268,7 +270,34 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.LetsEncryptConfig.EmailAddress = f.String(fn.LetsEncryptEmailAddress)
 	}
 
-	c.SoftwareVersion = GetDefaults().SoftwareVersion
+	// OIDC flags
+	if f.IsSet(fn.OIDCEnabled) {
+		c.OIDCConfig.Enabled = f.Bool(fn.OIDCEnabled)
+	}
+
+	if c.OIDCConfig.IDPName == "" || f.IsSet(fn.OIDCIdpName) {
+		c.OIDCConfig.IDPName = f.String(fn.OIDCIdpName)
+	}
+
+	if f.IsSet(fn.OIDCSkipVerification) {
+		c.OIDCConfig.SkipVerification = f.Bool(fn.OIDCSkipVerification)
+	}
+
+	if c.OIDCConfig.Issuer == "" || f.IsSet(fn.OIDCIssuer) {
+		c.OIDCConfig.Issuer = f.String(fn.OIDCIssuer)
+	}
+
+	if c.OIDCConfig.ClientID == "" || f.IsSet(fn.OIDCClientID) {
+		c.OIDCConfig.ClientID = f.String(fn.OIDCClientID)
+	}
+
+	if c.OIDCConfig.ClientSecret == "" || f.IsSet(fn.OIDCClientSecret) {
+		c.OIDCConfig.ClientSecret = f.String(fn.OIDCClientSecret)
+	}
+
+	if len(c.OIDCConfig.Scopes) == 0 || f.IsSet(fn.OIDCScopes) {
+		c.OIDCConfig.Scopes = f.StringSlice(fn.OIDCScopes)
+	}
 
 	// command-specific flags
 
@@ -278,7 +307,6 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	c.AccountCLIFlags[PasswordFlag] = f.String(PasswordFlag)
 
 	c.SoftwareVersion = version
-
 	return nil
 }
 
@@ -287,6 +315,7 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 type KeyedFlags interface {
 	Bool(k string) bool
 	String(k string) string
+	StringSlice(k string) []string
 	Int(k string) int
 	IsSet(k string) bool
 }
@@ -337,6 +366,14 @@ type Flags struct {
 	LetsEncryptEnabled      string
 	LetsEncryptCertDir      string
 	LetsEncryptEmailAddress string
+
+	OIDCEnabled          string
+	OIDCIdpName          string
+	OIDCSkipVerification string
+	OIDCIssuer           string
+	OIDCClientID         string
+	OIDCClientSecret     string
+	OIDCScopes           string
 }
 
 // Defaults contains all the default values for a gotosocial config
@@ -385,6 +422,14 @@ type Defaults struct {
 	LetsEncryptEnabled      bool
 	LetsEncryptCertDir      string
 	LetsEncryptEmailAddress string
+
+	OIDCEnabled          bool
+	OIDCIdpName          string
+	OIDCSkipVerification bool
+	OIDCIssuer           string
+	OIDCClientID         string
+	OIDCClientSecret     string
+	OIDCScopes           []string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -434,6 +479,14 @@ func GetFlagNames() Flags {
 		LetsEncryptEnabled:      "letsencrypt-enabled",
 		LetsEncryptCertDir:      "letsencrypt-cert-dir",
 		LetsEncryptEmailAddress: "letsencrypt-email",
+
+		OIDCEnabled:          "oidc-enabled",
+		OIDCIdpName:          "oidc-idp-name",
+		OIDCSkipVerification: "oidc-skip-verification",
+		OIDCIssuer:           "oidc-issuer",
+		OIDCClientID:         "oidc-client-id",
+		OIDCClientSecret:     "oidc-client-secret",
+		OIDCScopes:           "oidc-scopes",
 	}
 }
 
@@ -484,5 +537,13 @@ func GetEnvNames() Flags {
 		LetsEncryptEnabled:      "GTS_LETSENCRYPT_ENABLED",
 		LetsEncryptCertDir:      "GTS_LETSENCRYPT_CERT_DIR",
 		LetsEncryptEmailAddress: "GTS_LETSENCRYPT_EMAIL",
+
+		OIDCEnabled:          "GTS_OIDC_ENABLED",
+		OIDCIdpName:          "GTS_OIDC_IDP_NAME",
+		OIDCSkipVerification: "GTS_OIDC_SKIP_VERIFICATION",
+		OIDCIssuer:           "GTS_OIDC_ISSUER",
+		OIDCClientID:         "GTS_OIDC_CLIENT_ID",
+		OIDCClientSecret:     "GTS_OIDC_CLIENT_SECRET",
+		OIDCScopes:           "GTS_OIDC_SCOPES",
 	}
 }
