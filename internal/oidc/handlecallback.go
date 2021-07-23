@@ -30,8 +30,6 @@ func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, error) 
 		return nil, errors.New("code was empty string")
 	}
 
-	// TODO: verify state
-
 	l.Debug("exchanging code for oauth2token")
 	oauth2Token, err := i.oauth2Config.Exchange(ctx, code)
 	if err != nil {

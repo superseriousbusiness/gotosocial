@@ -33,8 +33,15 @@ const (
 	CallbackPath = "/auth/callback"
 )
 
+// IDP contains logic for parsing an OIDC access code into a set of claims by calling an external OIDC provider.
 type IDP interface {
+	// HandleCallback accepts a context (pass the context from the http.Request), and an oauth2 code as returned from a successful
+	// login through an OIDC provider. It uses the code to request a token from the OIDC provider, which should contain an id_token
+	// with a set of claims.
+	//
+	// Note that this function *does not* verify state. That should be handled by the caller *before* this function is called.
 	HandleCallback(ctx context.Context, code string) (*Claims, error)
+	// AuthCodeURL returns the proper redirect URL for this IDP, for redirecting requesters to the correct OIDC endpoint.
 	AuthCodeURL(state string) string
 }
 
@@ -45,10 +52,14 @@ type idp struct {
 	log          *logrus.Logger
 }
 
+// NewIDP returns a new IDP configured with the given config and logger.
+// If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
+// is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
+// then the other OIDC config fields must also be set.
 func NewIDP(config *config.Config, log *logrus.Logger) (IDP, error) {
 
 	// oidc isn't enabled so we don't need to do anything
-	if !config.OIDCConfig.Enabled {
+	if config.OIDCConfig == nil || !config.OIDCConfig.Enabled {
 		return nil, nil
 	}
 
