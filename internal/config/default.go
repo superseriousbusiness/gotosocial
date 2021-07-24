@@ -11,6 +11,7 @@ func TestDefault() *Config {
 		Host:            defaults.Host,
 		Protocol:        defaults.Protocol,
 		Port:            defaults.Port,
+		TrustedProxies:  defaults.TrustedProxies,
 		SoftwareVersion: defaults.SoftwareVersion,
 		DBConfig: &DBConfig{
 			Type:            defaults.DbType,
@@ -77,6 +78,7 @@ func Default() *Config {
 		Host:            defaults.Host,
 		Protocol:        defaults.Protocol,
 		Port:            defaults.Port,
+		TrustedProxies:  defaults.TrustedProxies,
 		SoftwareVersion: defaults.SoftwareVersion,
 		DBConfig: &DBConfig{
 			Type:            defaults.DbType,
@@ -145,6 +147,7 @@ func GetDefaults() Defaults {
 		AccountDomain:   "",
 		Protocol:        "https",
 		Port:            8080,
+		TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
 
 		DbType:      "postgres",
 		DbAddress:   "localhost",
@@ -204,6 +207,7 @@ func GetTestDefaults() Defaults {
 		AccountDomain:   "",
 		Protocol:        "http",
 		Port:            8080,
+		TrustedProxies:  []string{"127.0.0.1/32"},
 
 		DbType:     "postgres",
 		DbAddress:  "localhost",

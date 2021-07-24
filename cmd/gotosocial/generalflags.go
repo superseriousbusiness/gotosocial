@@ -68,5 +68,11 @@ func generalFlags(flagNames, envNames config.Flags, defaults config.Defaults) []
 			Value:   defaults.Port,
 			EnvVars: []string{envNames.Port},
 		},
+		&cli.StringSliceFlag{
+			Name:    flagNames.TrustedProxies,
+			Usage:   "Proxies to trust when parsing x-forwarded headers into real IPs.",
+			Value:   cli.NewStringSlice(defaults.TrustedProxies...),
+			EnvVars: []string{envNames.TrustedProxies},
+		},
 	}
 }
