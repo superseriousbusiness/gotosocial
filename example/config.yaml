@@ -48,9 +48,21 @@ host: "localhost"
 accountDomain: ""
 
 # String. Protocol to use for the server. Only change to http for local testing!
+# This should be the protocol part of the URI that your server is actually reachable on. So even if you're
+# running GoToSocial behind a reverse proxy that handles SSL certificates for you, instead of using built-in
+# letsencrypt, it should still be https.
 # Options: ["http","https"]
 # Default: "https"
 protocol: "https"
+
+# Int. Listen port for the GoToSocial webserver + API. If you're running behind a reverse proxy and/or in a docker,
+# container, just set this to whatever you like (or leave the default), and make sure it's forwarded properly.
+# If you are running with built-in letsencrypt enabled, and running GoToSocial directly on a host machine, you will
+# probably want to set this to 443 (standard https port), unless you have other services already using that port.
+# This *MUST NOT* be the same as the letsencrypt port specified below, unless letsencrypt is turned off.
+# Examples: [443, 6666, 8080]
+# Default: 8080
+port: 8080
 
 ############################
 ##### DATABASE CONFIG ######
@@ -256,15 +268,20 @@ statuses:
 letsEncrypt:
 
   # Bool. Whether or not letsencrypt should be enabled for the server.
-  # If true, the server will serve on port 443 (https) and obtain letsencrypt
-  # certificates automatically.
-  # If false, the server will serve on port 8080 (http), and the rest of the settings
-  # here will be ignored.
+  # If false, the rest of the settings here will be ignored.
   # You should only change this if you want to serve GoToSocial behind a reverse proxy
   # like Traefik, HAProxy, or Nginx.
   # Options: [true, false]
   # Default: true
   enabled: true
+
+  # Int. Port to listen for letsencrypt certificate challenges on.
+  # If letsencrypt is enabled, this port must be reachable or you won't be able to obtain certs.
+  # If letsencrypt is disabled, this port will not be used.
+  # This *must not* be the same as the webserver/API port specified above.
+  # Examples: [80, 8000, 1312]
+  # Default: 80
+  port: 80
 
   # String. Directory in which to store LetsEncrypt certificates.
   # It is a good move to make this a sub-path within your storage directory, as it makes

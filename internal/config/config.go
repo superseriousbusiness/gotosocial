@@ -50,6 +50,7 @@ type Config struct {
 	Host              string             `yaml:"host"`
 	AccountDomain     string             `yaml:"accountDomain"`
 	Protocol          string             `yaml:"protocol"`
+	Port              int                `yaml:"port"`
 	DBConfig          *DBConfig          `yaml:"db"`
 	TemplateConfig    *TemplateConfig    `yaml:"template"`
 	AccountsConfig    *AccountsConfig    `yaml:"accounts"`
@@ -148,6 +149,10 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	}
 	if c.Protocol == "" {
 		return errors.New("protocol was not set")
+	}
+
+	if c.Port == 0 || f.IsSet(fn.Port) {
+		c.Port = f.Int(fn.Port)
 	}
 
 	// db flags
@@ -262,6 +267,10 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.LetsEncryptConfig.Enabled = f.Bool(fn.LetsEncryptEnabled)
 	}
 
+	if c.LetsEncryptConfig.Port == 0 || f.IsSet(fn.LetsEncryptPort) {
+		c.LetsEncryptConfig.Port = f.Int(fn.LetsEncryptPort)
+	}
+
 	if c.LetsEncryptConfig.CertDir == "" || f.IsSet(fn.LetsEncryptCertDir) {
 		c.LetsEncryptConfig.CertDir = f.String(fn.LetsEncryptCertDir)
 	}
@@ -329,6 +338,7 @@ type Flags struct {
 	Host            string
 	AccountDomain   string
 	Protocol        string
+	Port            string
 
 	DbType      string
 	DbAddress   string
@@ -366,6 +376,7 @@ type Flags struct {
 	LetsEncryptEnabled      string
 	LetsEncryptCertDir      string
 	LetsEncryptEmailAddress string
+	LetsEncryptPort         string
 
 	OIDCEnabled          string
 	OIDCIdpName          string
@@ -384,6 +395,7 @@ type Defaults struct {
 	Host            string
 	AccountDomain   string
 	Protocol        string
+	Port            int
 	SoftwareVersion string
 
 	DbType      string
@@ -422,6 +434,7 @@ type Defaults struct {
 	LetsEncryptEnabled      bool
 	LetsEncryptCertDir      string
 	LetsEncryptEmailAddress string
+	LetsEncryptPort         int
 
 	OIDCEnabled          bool
 	OIDCIdpName          string
@@ -442,6 +455,7 @@ func GetFlagNames() Flags {
 		Host:            "host",
 		AccountDomain:   "account-domain",
 		Protocol:        "protocol",
+		Port:            "port",
 
 		DbType:      "db-type",
 		DbAddress:   "db-address",
@@ -477,6 +491,7 @@ func GetFlagNames() Flags {
 		StatusesMaxMediaFiles:      "statuses-max-media-files",
 
 		LetsEncryptEnabled:      "letsencrypt-enabled",
+		LetsEncryptPort:         "letsencrypt-port",
 		LetsEncryptCertDir:      "letsencrypt-cert-dir",
 		LetsEncryptEmailAddress: "letsencrypt-email",
 
@@ -500,6 +515,7 @@ func GetEnvNames() Flags {
 		Host:            "GTS_HOST",
 		AccountDomain:   "GTS_ACCOUNT_DOMAIN",
 		Protocol:        "GTS_PROTOCOL",
+		Port:            "GTS_PORT",
 
 		DbType:      "GTS_DB_TYPE",
 		DbAddress:   "GTS_DB_ADDRESS",
@@ -535,6 +551,7 @@ func GetEnvNames() Flags {
 		StatusesMaxMediaFiles:      "GTS_STATUSES_MAX_MEDIA_FILES",
 
 		LetsEncryptEnabled:      "GTS_LETSENCRYPT_ENABLED",
+		LetsEncryptPort:         "GTS_LETSENCRYPT_PORT",
 		LetsEncryptCertDir:      "GTS_LETSENCRYPT_CERT_DIR",
 		LetsEncryptEmailAddress: "GTS_LETSENCRYPT_EMAIL",
 

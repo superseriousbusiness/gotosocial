@@ -31,6 +31,12 @@ func letsEncryptFlags(flagNames, envNames config.Flags, defaults config.Defaults
 			Value:   defaults.LetsEncryptEnabled,
 			EnvVars: []string{envNames.LetsEncryptEnabled},
 		},
+		&cli.IntFlag{
+			Name:    flagNames.LetsEncryptPort,
+			Usage:   "Port to listen on for letsencrypt certificate challenges. Must not be the same as the GtS webserver/API port.",
+			Value:   defaults.LetsEncryptPort,
+			EnvVars: []string{envNames.LetsEncryptPort},
+		},
 		&cli.StringFlag{
 			Name:    flagNames.LetsEncryptCertDir,
 			Usage:   "Directory to store acquired letsencrypt certificates.",
