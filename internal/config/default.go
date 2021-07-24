@@ -10,6 +10,7 @@ func TestDefault() *Config {
 		ApplicationName: defaults.ApplicationName,
 		Host:            defaults.Host,
 		Protocol:        defaults.Protocol,
+		Port:            defaults.Port,
 		SoftwareVersion: defaults.SoftwareVersion,
 		DBConfig: &DBConfig{
 			Type:            defaults.DbType,
@@ -51,6 +52,7 @@ func TestDefault() *Config {
 		},
 		LetsEncryptConfig: &LetsEncryptConfig{
 			Enabled:      defaults.LetsEncryptEnabled,
+			Port:         defaults.LetsEncryptPort,
 			CertDir:      defaults.LetsEncryptCertDir,
 			EmailAddress: defaults.LetsEncryptEmailAddress,
 		},
@@ -115,6 +117,7 @@ func Default() *Config {
 		},
 		LetsEncryptConfig: &LetsEncryptConfig{
 			Enabled:      defaults.LetsEncryptEnabled,
+			Port:         defaults.LetsEncryptPort,
 			CertDir:      defaults.LetsEncryptCertDir,
 			EmailAddress: defaults.LetsEncryptEmailAddress,
 		},
@@ -140,6 +143,7 @@ func GetDefaults() Defaults {
 		Host:            "",
 		AccountDomain:   "",
 		Protocol:        "https",
+		Port:            8080,
 
 		DbType:      "postgres",
 		DbAddress:   "localhost",
@@ -175,6 +179,7 @@ func GetDefaults() Defaults {
 		StatusesMaxMediaFiles:      6,
 
 		LetsEncryptEnabled:      true,
+		LetsEncryptPort:         80,
 		LetsEncryptCertDir:      "/gotosocial/storage/certs",
 		LetsEncryptEmailAddress: "",
 
@@ -197,6 +202,7 @@ func GetTestDefaults() Defaults {
 		Host:            "localhost:8080",
 		AccountDomain:   "",
 		Protocol:        "http",
+		Port:            8080,
 
 		DbType:     "postgres",
 		DbAddress:  "localhost",
@@ -230,6 +236,7 @@ func GetTestDefaults() Defaults {
 		StatusesMaxMediaFiles:      6,
 
 		LetsEncryptEnabled:      false,
+		LetsEncryptPort:         0,
 		LetsEncryptCertDir:      "",
 		LetsEncryptEmailAddress: "",
 

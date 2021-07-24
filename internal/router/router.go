@@ -68,30 +68,24 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 	r.engine.StaticFS(relativePath, fs)
 }
 
-// Start starts the router nicely.
-//
-// Different ports and handlers will be served depending on whether letsencrypt is enabled or not.
-// If it is enabled, then port 80 will be used for handling LE requests, and port 443 will be used
-// for serving actual requests.
-//
-// If letsencrypt is not being used, then port 8080 only will be used for serving requests.
+// Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
 	if r.config.LetsEncryptConfig.Enabled {
-		// serve the http handler on port 80 for receiving letsencrypt requests and solving their devious riddles
+		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
-			if err := http.ListenAndServe(":http", r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", r.config.LetsEncryptConfig.Port), r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
 				r.logger.Fatalf("listen: %s", err)
 			}
 		}()
 
-		// and serve the actual TLS handler on port 443
+		// and serve the actual TLS handler
 		go func() {
 			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 				r.logger.Fatalf("listen: %s", err)
 			}
 		}()
 	} else {
-		// no tls required so just serve on port 8080
+		// no tls required
 		go func() {
 			if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				r.logger.Fatalf("listen: %s", err)
@@ -148,6 +142,7 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 
 	// create the http server here, passing the gin engine as handler
 	s := &http.Server{
+		Addr:              fmt.Sprintf(":%d", cfg.Port),
 		Handler:           engine,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
@@ -167,12 +162,7 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 			Cache:      autocert.DirCache(cfg.LetsEncryptConfig.CertDir),
 			Email:      cfg.LetsEncryptConfig.EmailAddress,
 		}
-		// and create an HTTPS server
-		s.Addr = ":https"
 		s.TLSConfig = m.TLSConfig()
-	} else {
-		// le is NOT enabled, so just serve bare requests on port 8080
-		s.Addr = ":8080"
 	}
 
 	return &router{

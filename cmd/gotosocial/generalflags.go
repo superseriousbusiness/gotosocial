@@ -62,5 +62,11 @@ func generalFlags(flagNames, envNames config.Flags, defaults config.Defaults) []
 			Value:   defaults.Protocol,
 			EnvVars: []string{envNames.Protocol},
 		},
+		&cli.IntFlag{
+			Name:    flagNames.Port,
+			Usage:   "Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine.",
+			Value:   defaults.Port,
+			EnvVars: []string{envNames.Port},
+		},
 	}
 }

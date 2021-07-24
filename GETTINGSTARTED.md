@@ -33,7 +33,13 @@ docker run -d --network host --user postgres -e POSTGRES_PASSWORD=some_password 
 On your local machine (not your server), with Go installed, clone the GoToSocial repository, and build the binary with the provided build script:
 
 ```bash
-./build/sh
+./build.sh
+```
+
+If you need to build for a different architecture other than the one you're running the build on (eg., you're running on a Raspberry Pi but building on an amd64 machine), you can put set `GOOS` or `GOARCH` environment variables before running the build script, eg:
+
+```bash
+GOARCH=arm64 ./build.sh
 ```
 
 ### 6: Prepare VPS
@@ -52,7 +58,7 @@ Copy your binary from your local machine onto the VPS, using something like the 
 scp ./gotosocial root@example.org:/gotosocial/gotosocial
 ```
 
-Replace `root` with whatever user you're actually running on your remote server.
+Replace `root` with whatever user you're actually running on your remote server (you wouldn't run as root right? ;).
 
 ### 8: Copy Web Dir
 
@@ -75,10 +81,12 @@ cd /gotosocial
 Then start the GoToSocial server with the following command (where `example.org` is the domain you set up in step 1, and `some_password` is the password you set for Postgres in step 4):
 
 ```bash
-./gotosocial --host example.org --storage-serve-host example.org --letsencrypt-enabled=true server start
+./gotosocial --host example.org --port 443 --storage-serve-host example.org --letsencrypt-enabled=true server start
 ```
 
 The server should now start up and you should be able to access the splash page by navigating to your domain in the browser. Note that it might take up to a minute or so for your LetsEncrypt certificates to be created for the first time, so refresh a few times if necessary.
+
+Note that for this example we're assuming that we're allowed to run on port 443 (standard https port), and that nothing else is running on this port.
 
 ### 10: Create and confirm your user
 
