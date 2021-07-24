@@ -76,6 +76,7 @@ func Default() *Config {
 		ApplicationName: defaults.ApplicationName,
 		Host:            defaults.Host,
 		Protocol:        defaults.Protocol,
+		Port:            defaults.Port,
 		SoftwareVersion: defaults.SoftwareVersion,
 		DBConfig: &DBConfig{
 			Type:            defaults.DbType,
