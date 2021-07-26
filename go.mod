@@ -39,18 +39,15 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/onsi/gomega v1.14.0 // indirect
 	github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
-	github.com/tidwall/btree v0.5.0 // indirect
 	github.com/tidwall/buntdb v1.2.4 // indirect
-	github.com/ugorji/go v1.2.6 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/wagslane/go-password-validator v0.3.0
-	go.opentelemetry.io/otel v0.20.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

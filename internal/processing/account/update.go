@@ -28,6 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -50,7 +51,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 		if err := util.ValidateDisplayName(*form.DisplayName); err != nil {
 			return nil, err
 		}
-		displayName := util.RemoveHTML(*form.DisplayName) // no html allowed in display name
+		displayName := text.RemoveHTML(*form.DisplayName) // no html allowed in display name
 		if err := p.db.UpdateOneByID(account.ID, "display_name", displayName, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
@@ -60,7 +61,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 		if err := util.ValidateNote(*form.Note); err != nil {
 			return nil, err
 		}
-		note := util.SanitizeHTML(*form.Note) // html OK in note but sanitize it
+		note := text.SanitizeHTML(*form.Note) // html OK in note but sanitize it
 		if err := p.db.UpdateOneByID(account.ID, "note", note, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}

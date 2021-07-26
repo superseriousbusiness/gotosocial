@@ -103,6 +103,9 @@ type StatusCreateRequest struct {
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
 	// ISO 639 language code for this status.
 	Language string `form:"language" json:"language" xml:"language"`
+	// Format in which to parse the submitted status.
+	// Can be either plain or markdown. Empty will default to plain.
+	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
 
 // Visibility denotes the visibility of this status to other users
@@ -140,3 +143,15 @@ type AdvancedVisibilityFlagsForm struct {
 	// This status can be liked/faved
 	Likeable *bool `form:"likeable" json:"likeable" xml:"likeable"`
 }
+
+// StatusFormat determines what kind of format a submitted status should be parsed in
+type StatusFormat string
+
+// StatusFormatPlain expects a plaintext status which will then be formatted into html.
+const StatusFormatPlain StatusFormat = "plain"
+
+// StatusFormatMarkdown expects a markdown formatted status, which will then be formatted into html.
+const StatusFormatMarkdown StatusFormat = "markdown"
+
+// StatusFormatDefault is the format that should be used when nothing else is specified.
+const StatusFormatDefault StatusFormat = StatusFormatPlain

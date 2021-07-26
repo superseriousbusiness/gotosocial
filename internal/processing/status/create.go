@@ -8,6 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -29,7 +30,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		Local:                    true,
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
-		ContentWarning:           util.RemoveHTML(form.SpoilerText),
+		ContentWarning:           text.RemoveHTML(form.SpoilerText),
 		ActivityStreamsType:      gtsmodel.ActivityStreamsNote,
 		Sensitive:                form.Sensitive,
 		Language:                 form.Language,
