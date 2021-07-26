@@ -122,6 +122,11 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 	engine := gin.Default()
 	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
 
+	// set up IP forwarding via x-forward-* headers.
+	if err := engine.SetTrustedProxies(cfg.TrustedProxies); err != nil {
+		return nil, err
+	}
+
 	// enable cors on the engine
 	if err := useCors(cfg, engine); err != nil {
 		return nil, err

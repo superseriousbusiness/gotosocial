@@ -51,6 +51,7 @@ type Config struct {
 	AccountDomain     string             `yaml:"accountDomain"`
 	Protocol          string             `yaml:"protocol"`
 	Port              int                `yaml:"port"`
+	TrustedProxies    []string           `yaml:"trustedProxies"`
 	DBConfig          *DBConfig          `yaml:"db"`
 	TemplateConfig    *TemplateConfig    `yaml:"template"`
 	AccountsConfig    *AccountsConfig    `yaml:"accounts"`
@@ -153,6 +154,10 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 
 	if c.Port == 0 || f.IsSet(fn.Port) {
 		c.Port = f.Int(fn.Port)
+	}
+
+	if len(c.TrustedProxies) == 0 || f.IsSet(fn.TrustedProxies) {
+		c.TrustedProxies = f.StringSlice(fn.TrustedProxies)
 	}
 
 	// db flags
@@ -339,6 +344,7 @@ type Flags struct {
 	AccountDomain   string
 	Protocol        string
 	Port            string
+	TrustedProxies  string
 
 	DbType      string
 	DbAddress   string
@@ -396,6 +402,7 @@ type Defaults struct {
 	AccountDomain   string
 	Protocol        string
 	Port            int
+	TrustedProxies  []string
 	SoftwareVersion string
 
 	DbType      string
@@ -456,6 +463,7 @@ func GetFlagNames() Flags {
 		AccountDomain:   "account-domain",
 		Protocol:        "protocol",
 		Port:            "port",
+		TrustedProxies:  "trusted-proxies",
 
 		DbType:      "db-type",
 		DbAddress:   "db-address",
@@ -516,6 +524,7 @@ func GetEnvNames() Flags {
 		AccountDomain:   "GTS_ACCOUNT_DOMAIN",
 		Protocol:        "GTS_PROTOCOL",
 		Port:            "GTS_PORT",
+		TrustedProxies:  "GTS_TRUSTED_PROXIES",
 
 		DbType:      "GTS_DB_TYPE",
 		DbAddress:   "GTS_DB_ADDRESS",
