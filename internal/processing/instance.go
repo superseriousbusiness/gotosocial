@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -60,7 +61,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 		if err := util.ValidateSiteTitle(*form.Title); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
-		i.Title = util.RemoveHTML(*form.Title) // don't allow html in site title
+		i.Title = text.RemoveHTML(*form.Title) // don't allow html in site title
 	}
 
 	// validate & update site contact account if it's set on the form
@@ -110,7 +111,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 		if err := util.ValidateSiteShortDescription(*form.ShortDescription); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.ShortDescription = util.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
+		i.ShortDescription = text.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
 	}
 
 	// validate & update site description if it's set on the form
@@ -118,7 +119,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 		if err := util.ValidateSiteDescription(*form.Description); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.Description = util.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
+		i.Description = text.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
 	}
 
 	// validate & update site terms if it's set on the form
@@ -126,7 +127,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 		if err := util.ValidateSiteTerms(*form.Terms); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		i.Terms = util.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
+		i.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
 	}
 
 	// process avatar if provided

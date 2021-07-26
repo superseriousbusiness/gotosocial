@@ -3,7 +3,6 @@ package status
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -238,36 +237,28 @@ func (p *processor) processEmojis(form *apimodel.AdvancedStatusCreateForm, accou
 }
 
 func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+	// if there's nothing in the status at all we can just return early
 	if form.Status == "" {
 		status.Content = ""
 		return nil
 	}
 
-	// surround the whole status in '<p>'
-	content := fmt.Sprintf(`<p>%s</p>`, form.Status)
-
-	// format mentions nicely
-	for _, menchie := range status.GTSMentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := p.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			content = strings.ReplaceAll(content, menchie.NameString, mentionContent)
-		}
+	// if format wasn't specified we should set the default
+	if form.Format == "" {
+		form.Format = apimodel.StatusFormatDefault
 	}
 
-	// format tags nicely
-	for _, tag := range status.GTSTags {
-		tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
-		content = strings.ReplaceAll(content, fmt.Sprintf("#%s", tag.Name), tagContent)
+	// parse content out of the status depending on what format has been submitted
+	var content string
+	switch form.Format {
+	case apimodel.StatusFormatPlain:
+		content = p.formatter.FromPlain(form.Status, status.GTSMentions, status.GTSTags)
+	case apimodel.StatusFormatMarkdown:
+		content = p.formatter.FromMarkdown(form.Status, status.GTSMentions, status.GTSTags)
+	default:
+		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}
 
-	// replace newlines with breaks
-	content = strings.ReplaceAll(content, "\n", "<br />")
-
-	// sanitize html to remove any dodgy scripts or other disallowed elements
-	clean := util.SanitizeHTML(content)
-
-	// set the content as the shiny clean parsed content
-	status.Content = clean
+	status.Content = content
 	return nil
 }

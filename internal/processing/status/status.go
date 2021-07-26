@@ -7,6 +7,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
@@ -40,6 +41,7 @@ type processor struct {
 	config        *config.Config
 	db            db.DB
 	filter        visibility.Filter
+	formatter     text.Formatter
 	fromClientAPI chan gtsmodel.FromClientAPI
 	log           *logrus.Logger
 }
@@ -51,6 +53,7 @@ func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClient
 		config:        config,
 		db:            db,
 		filter:        visibility.NewFilter(db, log),
+		formatter:     text.NewFormatter(config, db, log),
 		fromClientAPI: fromClientAPI,
 		log:           log,
 	}
