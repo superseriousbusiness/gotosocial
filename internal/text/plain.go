@@ -28,6 +28,9 @@ import (
 func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(plain)
 
+	// format links nicely
+	content = ReplaceLinks(content)
+
 	// format mentions nicely
 	for _, menchie := range mentions {
 		targetAccount := &gtsmodel.Account{}
