@@ -33,7 +33,9 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 
 	targetAcctI := ctx.Value(util.APAccount)
 	if targetAcctI == nil {
-		l.Error("UNDO: target account wasn't set on context")
+		// If the target account wasn't set on the context, that means this request didn't pass through the
+		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
 	}
 	targetAcct, ok := targetAcctI.(*gtsmodel.Account)

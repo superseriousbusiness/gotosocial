@@ -65,23 +65,25 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 
 	targetAcctI := ctx.Value(util.APAccount)
 	if targetAcctI == nil {
-		l.Error("target account wasn't set on context")
+		// If the target account wasn't set on the context, that means this request didn't pass through the
+		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
 	}
 	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
 	if !ok {
-		l.Error("target account was set on context but couldn't be parsed")
+		l.Error("CREATE: target account was set on context but couldn't be parsed")
 		return nil
 	}
 
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
-		l.Error("from federator channel wasn't set on context")
+		l.Error("CREATE: from federator channel wasn't set on context")
 		return nil
 	}
 	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
 	if !ok {
-		l.Error("from federator channel was set on context but couldn't be parsed")
+		l.Error("CREATE: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 
@@ -90,7 +92,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// CREATE SOMETHING
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
-			return errors.New("could not convert type to create")
+			return errors.New("CREATE: could not convert type to create")
 		}
 		object := create.GetActivityStreamsObject()
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
@@ -100,7 +102,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				note := objectIter.GetActivityStreamsNote()
 				status, err := f.typeConverter.ASStatusToStatus(note)
 				if err != nil {
-					return fmt.Errorf("error converting note to status: %s", err)
+					return fmt.Errorf("CREATE: error converting note to status: %s", err)
 				}
 
 				// id the status based on the time it was created
@@ -117,7 +119,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 						return nil
 					}
 					// an actual error has happened
-					return fmt.Errorf("database error inserting status: %s", err)
+					return fmt.Errorf("CREATE: database error inserting status: %s", err)
 				}
 
 				fromFederatorChan <- gtsmodel.FromFederator{
@@ -132,12 +134,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// FOLLOW SOMETHING
 		follow, ok := asType.(vocab.ActivityStreamsFollow)
 		if !ok {
-			return errors.New("could not convert type to follow")
+			return errors.New("CREATE: could not convert type to follow")
 		}
 
 		followRequest, err := f.typeConverter.ASFollowToFollowRequest(follow)
 		if err != nil {
-			return fmt.Errorf("could not convert Follow to follow request: %s", err)
+			return fmt.Errorf("CREATE: could not convert Follow to follow request: %s", err)
 		}
 
 		newID, err := id.NewULID()
@@ -147,7 +149,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		followRequest.ID = newID
 
 		if err := f.db.Put(followRequest); err != nil {
-			return fmt.Errorf("database error inserting follow request: %s", err)
+			return fmt.Errorf("CREATE: database error inserting follow request: %s", err)
 		}
 
 		fromFederatorChan <- gtsmodel.FromFederator{
@@ -160,12 +162,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// LIKE SOMETHING
 		like, ok := asType.(vocab.ActivityStreamsLike)
 		if !ok {
-			return errors.New("could not convert type to like")
+			return errors.New("CREATE: could not convert type to like")
 		}
 
 		fave, err := f.typeConverter.ASLikeToFave(like)
 		if err != nil {
-			return fmt.Errorf("could not convert Like to fave: %s", err)
+			return fmt.Errorf("CREATE: could not convert Like to fave: %s", err)
 		}
 
 		newID, err := id.NewULID()
@@ -175,7 +177,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		fave.ID = newID
 
 		if err := f.db.Put(fave); err != nil {
-			return fmt.Errorf("database error inserting fave: %s", err)
+			return fmt.Errorf("CREATE: database error inserting fave: %s", err)
 		}
 
 		fromFederatorChan <- gtsmodel.FromFederator{
@@ -188,12 +190,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// BLOCK SOMETHING
 		blockable, ok := asType.(vocab.ActivityStreamsBlock)
 		if !ok {
-			return errors.New("could not convert type to block")
+			return errors.New("CREATE: could not convert type to block")
 		}
 
 		block, err := f.typeConverter.ASBlockToBlock(blockable)
 		if err != nil {
-			return fmt.Errorf("could not convert Block to gts model block")
+			return fmt.Errorf("CREATE: could not convert Block to gts model block")
 		}
 
 		newID, err := id.NewULID()
@@ -203,7 +205,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		block.ID = newID
 
 		if err := f.db.Put(block); err != nil {
-			return fmt.Errorf("database error inserting block: %s", err)
+			return fmt.Errorf("CREATE: database error inserting block: %s", err)
 		}
 
 		fromFederatorChan <- gtsmodel.FromFederator{

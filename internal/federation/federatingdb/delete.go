@@ -26,25 +26,27 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	)
 	l.Debugf("received DELETE id %s", id.String())
 
-	inboxAcctI := ctx.Value(util.APAccount)
-	if inboxAcctI == nil {
-		l.Error("inbox account wasn't set on context")
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		// If the target account wasn't set on the context, that means this request didn't pass through the
+		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
 	}
-	inboxAcct, ok := inboxAcctI.(*gtsmodel.Account)
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
 	if !ok {
-		l.Error("inbox account was set on context but couldn't be parsed")
+		l.Error("DELETE: target account was set on context but couldn't be parsed")
 		return nil
 	}
 
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
-		l.Error("from federator channel wasn't set on context")
+		l.Error("DELETE: from federator channel wasn't set on context")
 		return nil
 	}
 	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
 	if !ok {
-		l.Error("from federator channel was set on context but couldn't be parsed")
+		l.Error("DELETE: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 
@@ -57,13 +59,13 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		// it's a status
 		l.Debugf("uri is for status with id: %s", s.ID)
 		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
-			return fmt.Errorf("Delete: err deleting status: %s", err)
+			return fmt.Errorf("DELETE: err deleting status: %s", err)
 		}
 		fromFederatorChan <- gtsmodel.FromFederator{
 			APObjectType:     gtsmodel.ActivityStreamsNote,
 			APActivityType:   gtsmodel.ActivityStreamsDelete,
 			GTSModel:         s,
-			ReceivingAccount: inboxAcct,
+			ReceivingAccount: targetAcct,
 		}
 	}
 
@@ -72,13 +74,13 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		// it's an account
 		l.Debugf("uri is for an account with id: %s", s.ID)
 		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {
-			return fmt.Errorf("Delete: err deleting account: %s", err)
+			return fmt.Errorf("DELETE: err deleting account: %s", err)
 		}
 		fromFederatorChan <- gtsmodel.FromFederator{
 			APObjectType:     gtsmodel.ActivityStreamsProfile,
 			APActivityType:   gtsmodel.ActivityStreamsDelete,
 			GTSModel:         a,
-			ReceivingAccount: inboxAcct,
+			ReceivingAccount: targetAcct,
 		}
 	}
 
