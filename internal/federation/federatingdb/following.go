@@ -31,19 +31,19 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	acct := &gtsmodel.Account{}
 	if util.IsUserPath(actorIRI) {
 		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
-			return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+			return nil, fmt.Errorf("FOLLOWING: db error getting account with uri %s: %s", actorIRI.String(), err)
 		}
 	} else if util.IsFollowingPath(actorIRI) {
 		if err := f.db.GetWhere([]db.Where{{Key: "following_uri", Value: actorIRI.String()}}, acct); err != nil {
-			return nil, fmt.Errorf("db error getting account with following uri %s: %s", actorIRI.String(), err)
+			return nil, fmt.Errorf("FOLLOWING: db error getting account with following uri %s: %s", actorIRI.String(), err)
 		}
 	} else {
-		return nil, fmt.Errorf("could not parse actor IRI %s as users or following path", actorIRI.String())
+		return nil, fmt.Errorf("FOLLOWING: could not parse actor IRI %s as users or following path", actorIRI.String())
 	}
 
 	acctFollowing := []gtsmodel.Follow{}
 	if err := f.db.GetFollowingByAccountID(acct.ID, &acctFollowing); err != nil {
-		return nil, fmt.Errorf("db error getting following for account id %s: %s", acct.ID, err)
+		return nil, fmt.Errorf("FOLLOWING: db error getting following for account id %s: %s", acct.ID, err)
 	}
 
 	following = streams.NewActivityStreamsCollection()
@@ -51,11 +51,11 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	for _, follow := range acctFollowing {
 		gtsFollowing := &gtsmodel.Account{}
 		if err := f.db.GetByID(follow.AccountID, gtsFollowing); err != nil {
-			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+			return nil, fmt.Errorf("FOLLOWING: db error getting account id %s: %s", follow.AccountID, err)
 		}
 		uri, err := url.Parse(gtsFollowing.URI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollowing.URI, err)
+			return nil, fmt.Errorf("FOLLOWING: error parsing %s as url: %s", gtsFollowing.URI, err)
 		}
 		items.AppendIRI(uri)
 	}

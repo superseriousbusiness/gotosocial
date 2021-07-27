@@ -31,6 +31,19 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	}
 	l.Debugf("received ACCEPT asType %s", string(b))
 
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI == nil {
+		// If the target account wasn't set on the context, that means this request didn't pass through the
+		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
+		return nil
+	}
+	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
+	if !ok {
+		l.Error("ACCEPT: target account was set on context but couldn't be parsed")
+		return nil
+	}
+
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI == nil {
 		l.Error("ACCEPT: from federator channel wasn't set on context")
@@ -39,17 +52,6 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
 	if !ok {
 		l.Error("ACCEPT: from federator channel was set on context but couldn't be parsed")
-		return nil
-	}
-
-	inboxAcctI := ctx.Value(util.APAccount)
-	if inboxAcctI == nil {
-		l.Error("ACCEPT: inbox account wasn't set on context")
-		return nil
-	}
-	inboxAcct, ok := inboxAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("ACCEPT: inbox account was set on context but couldn't be parsed")
 		return nil
 	}
 
@@ -71,7 +73,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				}
 
 				// make sure the addressee of the original follow is the same as whatever inbox this landed in
-				if gtsFollowRequest.AccountID != inboxAcct.ID {
+				if gtsFollowRequest.AccountID != targetAcct.ID {
 					return errors.New("ACCEPT: follow object account and inbox account were not the same")
 				}
 				follow, err := f.db.AcceptFollowRequest(gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
@@ -83,7 +85,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					APObjectType:     gtsmodel.ActivityStreamsFollow,
 					APActivityType:   gtsmodel.ActivityStreamsAccept,
 					GTSModel:         follow,
-					ReceivingAccount: inboxAcct,
+					ReceivingAccount: targetAcct,
 				}
 
 				return nil
@@ -108,7 +110,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
 			}
 			// make sure the addressee of the original follow is the same as whatever inbox this landed in
-			if gtsFollow.AccountID != inboxAcct.ID {
+			if gtsFollow.AccountID != targetAcct.ID {
 				return errors.New("ACCEPT: follow object account and inbox account were not the same")
 			}
 			follow, err := f.db.AcceptFollowRequest(gtsFollow.AccountID, gtsFollow.TargetAccountID)
@@ -120,7 +122,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				APObjectType:     gtsmodel.ActivityStreamsFollow,
 				APActivityType:   gtsmodel.ActivityStreamsAccept,
 				GTSModel:         follow,
-				ReceivingAccount: inboxAcct,
+				ReceivingAccount: targetAcct,
 			}
 
 			return nil

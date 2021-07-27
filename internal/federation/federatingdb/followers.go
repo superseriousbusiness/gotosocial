@@ -32,19 +32,19 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 
 	if util.IsUserPath(actorIRI) {
 		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
-			return nil, fmt.Errorf("db error getting account with uri %s: %s", actorIRI.String(), err)
+			return nil, fmt.Errorf("FOLLOWERS: db error getting account with uri %s: %s", actorIRI.String(), err)
 		}
 	} else if util.IsFollowersPath(actorIRI) {
 		if err := f.db.GetWhere([]db.Where{{Key: "followers_uri", Value: actorIRI.String()}}, acct); err != nil {
-			return nil, fmt.Errorf("db error getting account with followers uri %s: %s", actorIRI.String(), err)
+			return nil, fmt.Errorf("FOLLOWERS: db error getting account with followers uri %s: %s", actorIRI.String(), err)
 		}
 	} else {
-		return nil, fmt.Errorf("could not parse actor IRI %s as users or followers path", actorIRI.String())
+		return nil, fmt.Errorf("FOLLOWERS: could not parse actor IRI %s as users or followers path", actorIRI.String())
 	}
 
 	acctFollowers := []gtsmodel.Follow{}
 	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers, false); err != nil {
-		return nil, fmt.Errorf("db error getting followers for account id %s: %s", acct.ID, err)
+		return nil, fmt.Errorf("FOLLOWERS: db error getting followers for account id %s: %s", acct.ID, err)
 	}
 
 	followers = streams.NewActivityStreamsCollection()
@@ -52,11 +52,11 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	for _, follow := range acctFollowers {
 		gtsFollower := &gtsmodel.Account{}
 		if err := f.db.GetByID(follow.AccountID, gtsFollower); err != nil {
-			return nil, fmt.Errorf("db error getting account id %s: %s", follow.AccountID, err)
+			return nil, fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
 		}
 		uri, err := url.Parse(gtsFollower.URI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing %s as url: %s", gtsFollower.URI, err)
+			return nil, fmt.Errorf("FOLLOWERS: error parsing %s as url: %s", gtsFollower.URI, err)
 		}
 		items.AppendIRI(uri)
 	}
