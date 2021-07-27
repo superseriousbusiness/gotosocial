@@ -87,7 +87,7 @@ These cool things will be implemented if time allows (because we really want the
 
 One of the key differences between GoToSocial and other federated server projects is that GoToSocial doesn't include an integrated client front-end (ie., a webapp).
 
-Instead, like the Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static pages, and a well-documented API. On top of this API, developers are free to build any front-end implementation or mobile application that they wish.
+Instead, like Matrix.org's [Synapse](https://github.com/matrix-org/synapse) project, it provides only a server implementation, some static pages, and a well-documented API. On top of this API, developers are free to build any front-end implementation or mobile application that they wish.
 
 Because the server implementation is as generic and flexible/configurable as possible, GoToSocial provides the basis for many different types of social media experience, whether Tumblr-like, Facebook-like, or Twitter-like.
 
@@ -95,7 +95,7 @@ Because the server implementation is as generic and flexible/configurable as pos
 
 Work began on the project around February 2021, and the project is still in prerelease.
 
-At this point, GoToSocial is already deployable and very useable, and it federates cleanly with other Fediverse servers.
+At this point, GoToSocial is already deployable and very useable, and it federates cleanly with most other Fediverse servers.
 
 For a detailed view on what's implemented and what's not, and progress made towards a first v0.1.0 (beta) release, see [here](./PROGRESS.md).
 
@@ -107,7 +107,7 @@ For now (if you want to run it pre-alpha, like a beast), check out the [quick an
 
 ## Contact
 
-For questions and comments, you can reach out to tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer), mail [admin@gotosocial.org](mailto:admin@gotosocial.org), or [join our Matrix channel](https://matrix.to/#/!gotosocial:ondergrond.org).
+For questions and comments, you can reach out to tobi on the Fediverse [here](https://ondergrond.org/@dumpsterqueer), mail [admin@gotosocial.org](mailto:admin@gotosocial.org), or [join our Matrix channel](https://matrix.to/#/#gotosocial:superseriousbusiness.org) at `#gotosocial:superseriousbusiness.org`.
 
 For bugs and feature requests, please check to see if there's [already an issue](https://github.com/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
 
