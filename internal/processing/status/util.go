@@ -8,6 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -248,13 +249,15 @@ func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, acco
 		form.Format = apimodel.StatusFormatDefault
 	}
 
+	// remove any existing html from the status
+	content := text.RemoveHTML(form.Status)
+
 	// parse content out of the status depending on what format has been submitted
-	var content string
 	switch form.Format {
 	case apimodel.StatusFormatPlain:
-		content = p.formatter.FromPlain(form.Status, status.GTSMentions, status.GTSTags)
+		content = p.formatter.FromPlain(content, status.GTSMentions, status.GTSTags)
 	case apimodel.StatusFormatMarkdown:
-		content = p.formatter.FromMarkdown(form.Status, status.GTSMentions, status.GTSTags)
+		content = p.formatter.FromMarkdown(content, status.GTSMentions, status.GTSTags)
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}
