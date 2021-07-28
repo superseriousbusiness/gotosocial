@@ -121,11 +121,22 @@ these should be deduplicated
 `, replaced)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText4() {
+func (suite *TextTestSuite) TestReplaceLinksFromText3() {
 	// we know mailto links won't be replaced with hrefs -- we only accept https and http
 	replaced := text.ReplaceLinks(text3)
 	assert.Equal(suite.T(), `
 here's a mailto link: mailto:whatever@test.org
+`, replaced)
+}
+
+func (suite *TextTestSuite) TestReplaceLinksFromText4() {
+	replaced := text.ReplaceLinks(text4)
+	assert.Equal(suite.T(), `
+two similar links:
+
+<a href="https://example.org" rel="noopener">example.org</a>
+
+<a href="https://example.org/test" rel="noopener">example.org/test</a>
 `, replaced)
 }
 
