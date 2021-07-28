@@ -19,10 +19,8 @@
 package text_test
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -61,34 +59,13 @@ https://example.org/test
 `
 
 const text5 = `
-
 what happens when we already have a link within an href?
 
 <a href="https://example.org">https://example.org</a>
-
 `
 
 type TextTestSuite struct {
 	suite.Suite
-	log *logrus.Logger
-}
-
-func (suite *TextTestSuite) SetupSuite() {
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-	suite.log = log
-}
-
-func (suite *TextTestSuite) TearDownSuite() {
-
-}
-
-func (suite *TextTestSuite) SetupTest() {
-
-}
-
-func (suite *TextTestSuite) TearDownTest() {
-
 }
 
 func (suite *TextTestSuite) TestParseURLsFromText1() {
@@ -106,6 +83,7 @@ func (suite *TextTestSuite) TestParseURLsFromText2() {
 	urls, err := text.FindLinks(text2)
 	assert.NoError(suite.T(), err)
 
+	// assert length 1 because the found links will be deduplicated
 	assert.Len(suite.T(), urls, 1)
 }
 
@@ -113,28 +91,52 @@ func (suite *TextTestSuite) TestParseURLsFromText3() {
 	urls, err := text.FindLinks(text3)
 	assert.NoError(suite.T(), err)
 
-	assert.Len(suite.T(), urls, 1)
-	assert.Equal(suite.T(), "mailto:whatever@test.org", urls[0].String())
+	// assert length 0 because `mailto:` isn't accepted
+	assert.Len(suite.T(), urls, 0)
 }
 
 func (suite *TextTestSuite) TestReplaceLinksFromText1() {
 	replaced := text.ReplaceLinks(text1)
-	fmt.Println(replaced)
+	assert.Equal(suite.T(), `
+This is a text with some links in it. Here's link number one: <a href="https://example.org/link/to/something#fragment" rel="noopener">example.org/link/to/something#fragment</a>
+
+Here's link number two: <a href="http://test.example.org?q=bahhhhhhhhhhhh" rel="noopener">test.example.org?q=bahhhhhhhhhhhh</a>
+
+<a href="https://another.link.example.org/with/a/pretty/long/path/at/the/end/of/it" rel="noopener">another.link.example.org/with/a/pretty/long/path/at/the/end/of/it</a>
+
+really.cool.website <-- this one shouldn't be parsed as a link because it doesn't contain the scheme
+
+<a href="https://example.orghttps://google.com" rel="noopener">example.orghttps//google.com</a> <-- this shouldn't work either, but it does?! OK
+`, replaced)
 }
 
 func (suite *TextTestSuite) TestReplaceLinksFromText2() {
 	replaced := text.ReplaceLinks(text2)
-	fmt.Println(replaced)
+	assert.Equal(suite.T(), `
+this is one link: <a href="https://example.org" rel="noopener">example.org</a>
+
+this is the same link again: <a href="https://example.org" rel="noopener">example.org</a>
+
+these should be deduplicated
+`, replaced)
 }
 
 func (suite *TextTestSuite) TestReplaceLinksFromText4() {
+	// we know mailto links won't be replaced with hrefs -- we only accept https and http
 	replaced := text.ReplaceLinks(text3)
-	fmt.Println(replaced)
+	assert.Equal(suite.T(), `
+here's a mailto link: mailto:whatever@test.org
+`, replaced)
 }
 
 func (suite *TextTestSuite) TestReplaceLinksFromText5() {
+	// we know this one doesn't work properly, which is why html should always be sanitized before being passed into the ReplaceLinks function
 	replaced := text.ReplaceLinks(text5)
-	fmt.Println(replaced)
+	assert.Equal(suite.T(), `
+what happens when we already have a link within an href?
+
+<a href="<a href="https://example.org" rel="noopener">example.org</a>"><a href="https://example.org" rel="noopener">example.org</a></a>
+`, replaced)
 }
 
 func TestTextTestSuite(t *testing.T) {

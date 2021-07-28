@@ -100,11 +100,15 @@ func ReplaceLinks(in string) string {
 			shortString = shortString + thisURL.Path
 		}
 
+		if thisURL.Fragment != "" {
+			shortString = shortString + "#" + thisURL.Fragment
+		}
+
 		if thisURL.RawQuery != "" {
 			shortString = shortString + "?" + thisURL.RawQuery
 		}
 
-		replacement := fmt.Sprintf(`<a href="%s">%s</a>`, urlString, shortString)
+		replacement := fmt.Sprintf(`<a href="%s" rel="noopener">%s</a>`, urlString, shortString)
 		return replacement
 	})
 	return replaced
