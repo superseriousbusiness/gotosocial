@@ -30,25 +30,26 @@ const (
 )
 
 var (
-	mentionNameRegexString = `^@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_\-\.]+)?)$`
+	mentionNameRegexString = `^@(\w+)(?:@([a-zA-Z0-9_\-\.]+)?)$`
 	// mention name regex captures the username and domain part from a mention string
 	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
 	mentionNameRegex = regexp.MustCompile(mentionNameRegexString)
 
 	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionFinderRegexString = `(?: |^|\W)(@[a-zA-Z0-9_]+(?:@[a-zA-Z0-9_\-\.]+)?)(?:[^a-zA-Z0-9]|\W|$)?`
+	mentionFinderRegexString = `(?:\B)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)(?:\B)?`
 	mentionFinderRegex       = regexp.MustCompile(mentionFinderRegexString)
 
-	// hashtag regex can be played with here: https://regex101.com/r/Vhy8pg/1
-	hashtagFinderRegexString = fmt.Sprintf(`(?:\b)?#(\w{1,%d})(?:\b)`, maximumHashtagLength)
-	hashtagFinderRegex       = regexp.MustCompile(hashtagFinderRegexString)
+	// hashtag regex can be played with here: https://regex101.com/r/bPxeca/1
+	hashtagFinderRegexString = fmt.Sprintf(`(?:^|\n|\s)(#[a-zA-Z0-9]{1,%d})(?:\b)`, maximumHashtagLength)
+	// HashtagFinderRegex finds possible hashtags in a string.
+	// It returns just the string part of the hashtag, not the # symbol.
+	HashtagFinderRegex = regexp.MustCompile(hashtagFinderRegexString)
 
-	// emoji shortcode regex can be played with here: https://regex101.com/r/zMDRaG/1
-	emojiShortcodeRegexString     = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumEmojiShortcodeLength)
+	emojiShortcodeRegexString     = fmt.Sprintf(`\w{2,%d}`, maximumEmojiShortcodeLength)
 	emojiShortcodeValidationRegex = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcodeRegexString))
 
 	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
-	emojiFinderRegexString = fmt.Sprintf(`(?: |^|\W)?:(%s):(?:\b|\r)?`, emojiShortcodeRegexString)
+	emojiFinderRegexString = fmt.Sprintf(`(?:\B)?:(%s):(?:\B)?`, emojiShortcodeRegexString)
 	emojiFinderRegex       = regexp.MustCompile(emojiFinderRegexString)
 
 	// usernameRegexString defines an acceptable username on this instance

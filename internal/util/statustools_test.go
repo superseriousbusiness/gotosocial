@@ -37,17 +37,22 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 	@someone_else@testing.best-horse.com can you confirm? @hello@test.lgbt
 
-	@thisisalocaluser ! @NORWILL@THIS.one!!
+	@thisisalocaluser!
 
-	here is a duplicate mention: @hello@test.lgbt
+	here is a duplicate mention: @hello@test.lgbt @hello@test.lgbt
+
+	@account1@whatever.com @account2@whatever.com
+
 	`
 
 	menchies := util.DeriveMentionsFromStatus(statusText)
-	assert.Len(suite.T(), menchies, 4)
+	assert.Len(suite.T(), menchies, 6)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
 	assert.Equal(suite.T(), "@hello@test.lgbt", menchies[2])
 	assert.Equal(suite.T(), "@thisisalocaluser", menchies[3])
+	assert.Equal(suite.T(), "@account1@whatever.com", menchies[4])
+	assert.Equal(suite.T(), "@account2@whatever.com", menchies[5])
 }
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
@@ -57,11 +62,13 @@ func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 }
 
 func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
-	statusText := `#testing123 #also testing
+	statusText := `weeeeeeee #testing123 #also testing
 
 # testing this one shouldn't work
 
 			#thisshouldwork
+
+	here's a link with a fragment: https://example.org/whatever#ahhh
 
 #ThisShouldAlsoWork #not_this_though
 

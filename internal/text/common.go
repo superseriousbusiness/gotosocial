@@ -35,7 +35,7 @@ func preformat(in string) string {
 func postformat(in string) string {
 	// do some postformatting of the text
 	// 1. sanitize html to remove any dodgy scripts or other disallowed elements
-	s := SanitizeHTML(in)
+	s := SanitizeOutgoing(in)
 	// 2. wrap the whole thing in a paragraph
 	s = fmt.Sprintf(`<p>%s</p>`, s)
 	// 3. remove any cheeky newlines

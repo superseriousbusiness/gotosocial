@@ -57,6 +57,7 @@ func (suite *StatusCreateTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.log = testrig.NewTestLog()
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.statusModule = status.New(suite.config, suite.processor, suite.log).(*status.Module)
@@ -68,6 +69,14 @@ func (suite *StatusCreateTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
+
+var statusWithLinksAndTags = `#test alright, should be able to post #links with fragments in them now, let's see........
+
+https://docs.gotosocial.org/en/latest/user_guide/posts/#links
+
+#gotosocial
+
+(tobi remember to pull the docker image challenge)`
 
 // Post a new status with some custom visibility settings
 func (suite *StatusCreateTestSuite) TestPostNewStatus() {
@@ -109,7 +118,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "this is a brand new status! #helloworld", statusReply.Content)
+	assert.Equal(suite.T(), "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility)
 	assert.Len(suite.T(), statusReply.Tags, 1)
@@ -122,6 +131,43 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	err = suite.db.GetWhere([]db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
+}
+
+func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
+
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.TokenToOauthToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
+	ctx.Request.Form = url.Values{
+		"status": {statusWithLinksAndTags},
+	}
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	// check response
+
+	// 1. we should have OK from our call to the function
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	fmt.Println(string(b))
+
+	statusReply := &model.Status{}
+	err = json.Unmarshal(b, statusReply)
+	assert.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), "<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let&#39;s see........<br/><br/><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br/><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br/><br/>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
@@ -154,7 +200,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: ", statusReply.Content)
+	assert.Equal(suite.T(), "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: <br/> here&#39;s an emoji that isn&#39;t in the db: :test_emoji:</p>", statusReply.Content)
 
 	assert.Len(suite.T(), statusReply.Emojis, 1)
 	mastoEmoji := statusReply.Emojis[0]
@@ -228,7 +274,7 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
+	assert.Equal(suite.T(), fmt.Sprintf("<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@%s\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>%s</span></a></span> this reply should work!</p>", testrig.NewTestAccounts()["local_account_2"].Username, testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
 	assert.False(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), model.VisibilityPublic, statusReply.Visibility)
 	assert.Equal(suite.T(), testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
@@ -241,6 +287,8 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.TokenToOauthToken(t)
 
+	attachment := suite.testAttachments["local_account_1_unattached_1"]
+
 	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
@@ -251,7 +299,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
 		"status":    {"here's an image attachment"},
-		"media_ids": {"7a3b9f77-ab30-461e-bdd8-e64bd1db3008"},
+		"media_ids": {attachment.ID},
 	}
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
@@ -263,23 +311,21 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	fmt.Println(string(b))
-
-	statusReply := &model.Status{}
-	err = json.Unmarshal(b, statusReply)
+	statusResponse := &model.Status{}
+	err = json.Unmarshal(b, statusResponse)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "here's an image attachment", statusReply.Content)
-	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPublic, statusReply.Visibility)
+	assert.Equal(suite.T(), "", statusResponse.SpoilerText)
+	assert.Equal(suite.T(), "<p>here&#39;s an image attachment</p>", statusResponse.Content)
+	assert.False(suite.T(), statusResponse.Sensitive)
+	assert.Equal(suite.T(), model.VisibilityPublic, statusResponse.Visibility)
 
 	// there should be one media attachment
-	assert.Len(suite.T(), statusReply.MediaAttachments, 1)
+	assert.Len(suite.T(), statusResponse.MediaAttachments, 1)
 
 	// get the updated media attachment from the database
 	gtsAttachment := &gtsmodel.MediaAttachment{}
-	err = suite.db.GetByID(statusReply.MediaAttachments[0].ID, gtsAttachment)
+	err = suite.db.GetByID(statusResponse.MediaAttachments[0].ID, gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// convert it to a masto attachment
@@ -287,10 +333,10 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	assert.NoError(suite.T(), err)
 
 	// compare it with what we have now
-	assert.EqualValues(suite.T(), statusReply.MediaAttachments[0], gtsAttachmentAsMasto)
+	assert.EqualValues(suite.T(), statusResponse.MediaAttachments[0], gtsAttachmentAsMasto)
 
 	// the status id of the attachment should now be set to the id of the status we just created
-	assert.Equal(suite.T(), statusReply.ID, gtsAttachment.StatusID)
+	assert.Equal(suite.T(), statusResponse.ID, gtsAttachment.StatusID)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {
