@@ -31,6 +31,13 @@ type Formatter interface {
 	FromMarkdown(md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
 	// FromPlain parses an HTML text from a plaintext.
 	FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
+
+	// ReplaceTags takes a piece of text and a slice of tags, and returns the same text with the tags nicely formatted as hrefs.
+	ReplaceTags(in string, tags []*gtsmodel.Tag) string
+	// ReplaceMentions takes a piece of text and a slice of mentions, and returns the same text with the mentions nicely formatted as hrefs.
+	ReplaceMentions(in string, mentions []*gtsmodel.Mention) string
+	// ReplaceLinks takes a piece of text, finds all recognizable links in that text, and replaces them with hrefs.
+	ReplaceLinks(in string) string
 }
 
 type formatter struct {

@@ -19,41 +19,22 @@
 package text
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(plain)
 
 	// format links nicely
-	content = ReplaceLinks(content)
+	content = f.ReplaceLinks(content)
 
 	// format tags nicely
-	content = util.HashtagFinderRegex.ReplaceAllStringFunc(content, func(match string) string {
-		for _, tag := range tags {
-			if strings.TrimSpace(match) == fmt.Sprintf("#%s", tag.Name) {
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
-				if strings.HasPrefix(match, " ") {
-					tagContent = " " + tagContent
-				}
-				return tagContent
-			}
-		}
-		return content
-	})
+	content = f.ReplaceTags(content, tags)
 
 	// format mentions nicely
-	for _, menchie := range mentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			content = strings.ReplaceAll(content, menchie.NameString, mentionContent)
-		}
-	}
+	content = f.ReplaceMentions(content, mentions)
 
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")

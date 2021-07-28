@@ -31,8 +31,7 @@ var regular *bluemonday.Policy = bluemonday.UGCPolicy().
 	RequireNoReferrerOnLinks(true).
 	RequireNoFollowOnLinks(true).
 	RequireCrossOriginAnonymous(true).
-	AddTargetBlankToFullyQualifiedLinks(true).
-	AllowAttrs("class").OnElements("a")
+	AddTargetBlankToFullyQualifiedLinks(true)
 
 // outgoing policy should be used on statuses we've already parsed and added our own elements etc to. It is less strict than regular.
 var outgoing *bluemonday.Policy = regular.

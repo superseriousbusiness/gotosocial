@@ -19,12 +19,8 @@
 package text
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 var bfExtensions = blackfriday.NoIntraEmphasis |
@@ -41,27 +37,10 @@ func (f *formatter) FromMarkdown(md string, mentions []*gtsmodel.Mention, tags [
 	content = string(blackfriday.Run([]byte(content), blackfriday.WithExtensions(bfExtensions)))
 
 	// format tags nicely
-	content = util.HashtagFinderRegex.ReplaceAllStringFunc(content, func(match string) string {
-		for _, tag := range tags {
-			if strings.TrimSpace(match) == fmt.Sprintf("#%s", tag.Name) {
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
-				if strings.HasPrefix(match, " ") {
-					tagContent = " " + tagContent
-				}
-				return tagContent
-			}
-		}
-		return content
-	})
+	content = f.ReplaceTags(content, tags)
 
 	// format mentions nicely
-	for _, menchie := range mentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			content = strings.ReplaceAll(content, menchie.NameString, mentionContent)
-		}
-	}
+	content = f.ReplaceMentions(content, mentions)
 
 	return postformat(content)
 }
