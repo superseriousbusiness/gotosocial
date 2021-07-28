@@ -48,7 +48,6 @@ func (f *formatter) FromMarkdown(md string, mentions []*gtsmodel.Mention, tags [
 				if strings.HasPrefix(match, " ") {
 					tagContent = " " + tagContent
 				}
-				fmt.Println(tagContent)
 				return tagContent
 			}
 		}

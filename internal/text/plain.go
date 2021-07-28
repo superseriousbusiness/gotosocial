@@ -40,7 +40,6 @@ func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags [
 				if strings.HasPrefix(match, " ") {
 					tagContent = " " + tagContent
 				}
-				fmt.Println(tagContent)
 				return tagContent
 			}
 		}
