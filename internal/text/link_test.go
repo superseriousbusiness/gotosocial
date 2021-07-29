@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 const text1 = `
@@ -64,11 +65,40 @@ what happens when we already have a link within an href?
 <a href="https://example.org">https://example.org</a>
 `
 
-type TextTestSuite struct {
-	suite.Suite
+type LinkTestSuite struct {
+	TextStandardTestSuite
 }
 
-func (suite *TextTestSuite) TestParseURLsFromText1() {
+func (suite *LinkTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTags = testrig.NewTestTags()
+}
+
+func (suite *LinkTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.log = testrig.NewTestLog()
+	suite.formatter = text.NewFormatter(suite.config, suite.db, suite.log)
+
+	testrig.StandardDBSetup(suite.db)
+}
+
+func (suite *LinkTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+}
+
+func (suite *LinkTestSuite) TestParseSimple() {
+	f := suite.formatter.FromPlain(simple, nil, nil)
+	assert.Equal(suite.T(), simpleExpected, f)
+}
+
+func (suite *LinkTestSuite) TestParseURLsFromText1() {
 	urls, err := text.FindLinks(text1)
 
 	assert.NoError(suite.T(), err)
@@ -79,7 +109,7 @@ func (suite *TextTestSuite) TestParseURLsFromText1() {
 	assert.Equal(suite.T(), "https://example.orghttps://google.com", urls[3].String())
 }
 
-func (suite *TextTestSuite) TestParseURLsFromText2() {
+func (suite *LinkTestSuite) TestParseURLsFromText2() {
 	urls, err := text.FindLinks(text2)
 	assert.NoError(suite.T(), err)
 
@@ -87,7 +117,7 @@ func (suite *TextTestSuite) TestParseURLsFromText2() {
 	assert.Len(suite.T(), urls, 1)
 }
 
-func (suite *TextTestSuite) TestParseURLsFromText3() {
+func (suite *LinkTestSuite) TestParseURLsFromText3() {
 	urls, err := text.FindLinks(text3)
 	assert.NoError(suite.T(), err)
 
@@ -95,8 +125,8 @@ func (suite *TextTestSuite) TestParseURLsFromText3() {
 	assert.Len(suite.T(), urls, 0)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText1() {
-	replaced := text.ReplaceLinks(text1)
+func (suite *LinkTestSuite) TestReplaceLinksFromText1() {
+	replaced := suite.formatter.ReplaceLinks(text1)
 	assert.Equal(suite.T(), `
 This is a text with some links in it. Here's link number one: <a href="https://example.org/link/to/something#fragment" rel="noopener">example.org/link/to/something#fragment</a>
 
@@ -110,8 +140,8 @@ really.cool.website <-- this one shouldn't be parsed as a link because it doesn'
 `, replaced)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText2() {
-	replaced := text.ReplaceLinks(text2)
+func (suite *LinkTestSuite) TestReplaceLinksFromText2() {
+	replaced := suite.formatter.ReplaceLinks(text2)
 	assert.Equal(suite.T(), `
 this is one link: <a href="https://example.org" rel="noopener">example.org</a>
 
@@ -121,16 +151,16 @@ these should be deduplicated
 `, replaced)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText3() {
+func (suite *LinkTestSuite) TestReplaceLinksFromText3() {
 	// we know mailto links won't be replaced with hrefs -- we only accept https and http
-	replaced := text.ReplaceLinks(text3)
+	replaced := suite.formatter.ReplaceLinks(text3)
 	assert.Equal(suite.T(), `
 here's a mailto link: mailto:whatever@test.org
 `, replaced)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText4() {
-	replaced := text.ReplaceLinks(text4)
+func (suite *LinkTestSuite) TestReplaceLinksFromText4() {
+	replaced := suite.formatter.ReplaceLinks(text4)
 	assert.Equal(suite.T(), `
 two similar links:
 
@@ -140,9 +170,9 @@ two similar links:
 `, replaced)
 }
 
-func (suite *TextTestSuite) TestReplaceLinksFromText5() {
+func (suite *LinkTestSuite) TestReplaceLinksFromText5() {
 	// we know this one doesn't work properly, which is why html should always be sanitized before being passed into the ReplaceLinks function
-	replaced := text.ReplaceLinks(text5)
+	replaced := suite.formatter.ReplaceLinks(text5)
 	assert.Equal(suite.T(), `
 what happens when we already have a link within an href?
 
@@ -150,6 +180,6 @@ what happens when we already have a link within an href?
 `, replaced)
 }
 
-func TestTextTestSuite(t *testing.T) {
-	suite.Run(t, new(TextTestSuite))
+func TestLinkTestSuite(t *testing.T) {
+	suite.Run(t, new(LinkTestSuite))
 }

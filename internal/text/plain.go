@@ -19,7 +19,6 @@
 package text
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -29,22 +28,13 @@ func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags [
 	content := preformat(plain)
 
 	// format links nicely
-	content = ReplaceLinks(content)
-
-	// format mentions nicely
-	for _, menchie := range mentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			content = strings.ReplaceAll(content, menchie.NameString, mentionContent)
-		}
-	}
+	content = f.ReplaceLinks(content)
 
 	// format tags nicely
-	for _, tag := range tags {
-		tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
-		content = strings.ReplaceAll(content, fmt.Sprintf("#%s", tag.Name), tagContent)
-	}
+	content = f.ReplaceTags(content, tags)
+
+	// format mentions nicely
+	content = f.ReplaceMentions(content, mentions)
 
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")

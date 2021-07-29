@@ -21,6 +21,9 @@ package text
 import (
 	"fmt"
 	"strings"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // preformat contains some common logic for making a string ready for formatting, which should be used for all user-input text.
@@ -35,7 +38,7 @@ func preformat(in string) string {
 func postformat(in string) string {
 	// do some postformatting of the text
 	// 1. sanitize html to remove any dodgy scripts or other disallowed elements
-	s := SanitizeHTML(in)
+	s := SanitizeOutgoing(in)
 	// 2. wrap the whole thing in a paragraph
 	s = fmt.Sprintf(`<p>%s</p>`, s)
 	// 3. remove any cheeky newlines
@@ -43,4 +46,30 @@ func postformat(in string) string {
 	// 4. remove any whitespace added as a result of the formatting
 	s = strings.TrimSpace(s)
 	return s
+}
+
+func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
+	return util.HashtagFinderRegex.ReplaceAllStringFunc(in, func(match string) string {
+		for _, tag := range tags {
+			if strings.TrimSpace(match) == fmt.Sprintf("#%s", tag.Name) {
+				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
+				if strings.HasPrefix(match, " ") {
+					tagContent = " " + tagContent
+				}
+				return tagContent
+			}
+		}
+		return in
+	})
+}
+
+func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) string {
+	for _, menchie := range mentions {
+		targetAccount := &gtsmodel.Account{}
+		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
+			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
+			in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
+		}
+	}
+	return in
 }

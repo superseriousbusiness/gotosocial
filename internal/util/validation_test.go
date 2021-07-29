@@ -102,32 +102,32 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 
 	err = util.ValidateUsername(tooLong)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("username should be no more than 64 chars but '%s' was 66", tooLong), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong), err)
 	}
 
 	err = util.ValidateUsername(withSpaces)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", withSpaces), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces), err)
 	}
 
 	err = util.ValidateUsername(weirdChars)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", weirdChars), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars), err)
 	}
 
 	err = util.ValidateUsername(leadingSpace)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", leadingSpace), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace), err)
 	}
 
 	err = util.ValidateUsername(trailingSpace)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", trailingSpace), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace), err)
 	}
 
 	err = util.ValidateUsername(newlines)
 	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores", newlines), err)
+		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines), err)
 	}
 
 	err = util.ValidateUsername(goodUsername)
@@ -141,7 +141,6 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 	notAnEmailAddress := "this-is-no-email-address!"
 	almostAnEmailAddress := "@thisisalmostan@email.address"
 	aWebsite := "https://thisisawebsite.com"
-	tooLong := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhggggggggggggggggggggggggggggggggggggggghhhhhhhhhhhhhhhhhggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhh@gmail.com"
 	emailAddress := "thisis.actually@anemail.address"
 	var err error
 
@@ -163,11 +162,6 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 	err = util.ValidateEmail(aWebsite)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("mail: missing '@' or angle-addr"), err)
-	}
-
-	err = util.ValidateEmail(tooLong)
-	if assert.Error(suite.T(), err) {
-		assert.Equal(suite.T(), fmt.Errorf("email address should be no more than 256 chars but '%s' was 286", tooLong), err)
 	}
 
 	err = util.ValidateEmail(emailAddress)

@@ -29,7 +29,6 @@ import (
 //
 // It will look for fully-qualified account names in the form "@user@example.org".
 // or the form "@username" for local users.
-// The case of the returned mentions will be lowered, for consistency.
 func DeriveMentionsFromStatus(status string) []string {
 	mentionedAccounts := []string{}
 	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
@@ -44,16 +43,15 @@ func DeriveMentionsFromStatus(status string) []string {
 // tags will be lowered, for consistency.
 func DeriveHashtagsFromStatus(status string) []string {
 	tags := []string{}
-	for _, m := range hashtagFinderRegex.FindAllStringSubmatch(status, -1) {
-		tags = append(tags, m[1])
+	for _, m := range HashtagFinderRegex.FindAllStringSubmatch(status, -1) {
+		tags = append(tags, strings.TrimPrefix(m[1], "#"))
 	}
-	return unique(tags)
+	return uniqueLower(tags)
 }
 
 // DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
 // and applies a regex to it to return a deduplicated list of emojis
-// used in that status, without the surround ::. The case of the returned
-// emojis will be lowered, for consistency.
+// used in that status, without the surround ::.
 func DeriveEmojisFromStatus(status string) []string {
 	emojis := []string{}
 	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
@@ -90,6 +88,20 @@ func unique(s []string) []string {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
 			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+// uniqueLower returns a deduplicated version of a given string slice, with all entries converted to lowercase
+func uniqueLower(s []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range s {
+		eLower := strings.ToLower(entry)
+		if _, value := keys[eLower]; !value {
+			keys[eLower] = true
+			list = append(list, eLower)
 		}
 	}
 	return list

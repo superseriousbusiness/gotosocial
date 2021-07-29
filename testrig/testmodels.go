@@ -1041,6 +1041,7 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 	return map[string]*gtsmodel.Tag{
 		"welcome": {
 			ID:                     "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
+			URL:                    "http://localhost:8080/tags/welcome",
 			Name:                   "welcome",
 			FirstSeenFromAccountID: "",
 			CreatedAt:              time.Now().Add(-71 * time.Hour),
