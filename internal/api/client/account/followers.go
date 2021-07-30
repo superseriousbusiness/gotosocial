@@ -26,6 +26,40 @@ import (
 )
 
 // AccountFollowersGETHandler serves the followers of the requested account, if they're visible to the requester.
+//
+// swagger:operation GET /api/v1/accounts/{id}/followers accountFollowers
+//
+// See followers of account with given id.
+//
+// ---
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Account ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     name: accounts
+//     description: Array of accounts that follow this account.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/account"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountFollowersGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

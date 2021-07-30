@@ -562,7 +562,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: ""
+          description: Your relationship to this account.
           schema:
             $ref: '#/definitions/accountRelationship'
         "400":
@@ -573,8 +573,90 @@ paths:
           description: not found
       security:
       - OAuth2 Bearer:
-        - write:accounts
+        - write:blocks
       summary: Block account with id.
+  /api/v1/accounts/{id}/follow:
+    post:
+      operationId: accountFollow
+      parameters:
+      - description: The id of the account to follow.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Your relationship to this account.
+          schema:
+            $ref: '#/definitions/accountRelationship'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - write:follows
+      summary: Follow account with id.
+  /api/v1/accounts/{id}/followers:
+    get:
+      operationId: accountFollowers
+      parameters:
+      - description: Account ID.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of accounts that follow this account.
+          schema:
+            items:
+              $ref: '#/definitions/account'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - read:accounts
+      summary: See followers of account with given id.
+  /api/v1/accounts/{id}/following:
+    get:
+      operationId: accountFollowing
+      parameters:
+      - description: Account ID.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of accounts that are followed by this account.
+          schema:
+            items:
+              $ref: '#/definitions/account'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - read:accounts
+      summary: See accounts followed by given account id.
   /api/v1/accounts/update_credentials:
     patch:
       consumes:
@@ -677,6 +759,8 @@ securityDefinitions:
       read:accounts: grants read access to accounts
       write: grants write access to everything
       write:accounts: grants write access to accounts
+      write:blocks: grants write access to blocks
+      write:follows: grants write access to follows
     tokenUrl: https://example.org/oauth/token
     type: oauth2
 swagger: "2.0"

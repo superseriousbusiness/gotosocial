@@ -44,10 +44,12 @@ import (
 //
 // security:
 // - OAuth2 Bearer:
-//   - write:accounts
+//   - write:blocks
 //
 // responses:
 //   '200':
+//     name: account relationship
+//     description: Your relationship to this account.
 //     schema:
 //       "$ref": "#/definitions/accountRelationship"
 //   '401':
