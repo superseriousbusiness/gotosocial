@@ -27,7 +27,30 @@ import (
 
 // AccountVerifyGETHandler serves a user's account details to them IF they reached this
 // handler while in possession of a valid token, according to the oauth middleware.
-// It should be served as a GET at /api/v1/accounts/verify_credentials
+// It should be served as a GET at /api/v1/accounts/verify_credentials.
+//
+// swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
+//
+// Verify a token by returning account details pertaining to it.
+//
+// ---
+// produces:
+// - application/json
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     schema:
+//       "$ref": "#/definitions/account"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountVerifyGETHandler")
 	authed, err := oauth.Authed(c, true, false, false, true)

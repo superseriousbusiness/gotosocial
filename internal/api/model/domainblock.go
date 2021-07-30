@@ -21,18 +21,40 @@ package model
 import "mime/multipart"
 
 // DomainBlock represents a block on one domain
+//
+// swagger:model domainBlock
 type DomainBlock struct {
-	ID             string `json:"id,omitempty"`
-	Domain         string `form:"domain" json:"domain" validation:"required"`
-	Obfuscate      bool   `json:"obfuscate,omitempty"`
+	// The ID of the domain block.
+	// example: 01FBW21XJA09XYX51KV5JVBW0F
+	// readonly: true
+	ID string `json:"id,omitempty"`
+	// The hostname of the blocked domain.
+	// example: example.org
+	Domain string `form:"domain" json:"domain" validation:"required"`
+	// Obfuscate the domain name when serving this domain block publicly.
+	// A useful anti-harassment tool.
+	// example: false
+	Obfuscate bool `json:"obfuscate,omitempty"`
+	// Private comment for this block, visible to our instance admins only.
+	// example: they are poopoo
 	PrivateComment string `json:"private_comment,omitempty"`
-	PublicComment  string `form:"public_comment" json:"public_comment,omitempty"`
+	// Public comment for this block, visible if domain blocks are served publicly.
+	// example: they smell
+	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
+	// The ID of the subscription that created/caused this domain block.
+	// example: 01FBW25TF5J67JW3HFHZCSD23K
 	SubscriptionID string `json:"subscription_id,omitempty"`
-	CreatedBy      string `json:"created_by,omitempty"`
-	CreatedAt      string `json:"created_at,omitempty"`
+	// ID of the account that created this domain block.
+	// example: 01FBW2758ZB6PBR200YPDDJK4C
+	CreatedBy string `json:"created_by,omitempty"`
+	// Time at which this block was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	CreatedAt string `json:"created_at,omitempty"`
 }
 
 // DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.
+//
+// swagger:model domainBlockCreateRequest
 type DomainBlockCreateRequest struct {
 	// A list of domains to block. Only used if import=true is specified.
 	Domains *multipart.FileHeader `form:"domains" json:"domains" xml:"domains"`

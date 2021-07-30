@@ -19,14 +19,16 @@
 package model
 
 // Field represents a name/value pair to display on an account's profile.
+//
+// swagger:model field
 type Field struct {
 	// The key/name of this field.
-   // example: pronouns
+	// example: pronouns
 	Name string `json:"name"`
 	// The value of this field.
-   // example: they/them
+	// example: they/them
 	Value string `json:"value"`
-   // If this field has been verified, when did this occur? (ISO 8601 Datetime).
+	// If this field has been verified, when did this occur? (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	VerifiedAt string `json:"verified_at,omitempty"`
 }

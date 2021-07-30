@@ -18,31 +18,34 @@
 
 package model
 
-// Relationship represents a relationship between accounts. See https://docs.joinmastodon.org/entities/relationship/
+// Relationship represents a relationship between accounts.
+//
+// swagger:model accountRelationship
 type Relationship struct {
 	// The account id.
+	// example: 01FBW9XGEP7G6K88VY4S9MPE1R
 	ID string `json:"id"`
-	// Are you following this user?
+	// You are following this account.
 	Following bool `json:"following"`
-	// Are you receiving this user's boosts in your home timeline?
+	// You are seeing reblogs/boosts from this account in your home timeline.
 	ShowingReblogs bool `json:"showing_reblogs"`
-	// Have you enabled notifications for this user?
+	// You are seeing notifications when this account posts.
 	Notifying bool `json:"notifying"`
-	// Are you followed by this user?
+	// This account follows you.
 	FollowedBy bool `json:"followed_by"`
-	// Are you blocking this user?
+	// You are blocking this account.
 	Blocking bool `json:"blocking"`
-	// Is this user blocking you?
+	// This account is blocking you.
 	BlockedBy bool `json:"blocked_by"`
-	// Are you muting this user?
+	// You are muting this account.
 	Muting bool `json:"muting"`
-	// Are you muting notifications from this user?
+	// You are muting notifications from this account.
 	MutingNotifications bool `json:"muting_notifications"`
-	// Do you have a pending follow request for this user?
+	// You have requested to follow this account, and the request is pending.
 	Requested bool `json:"requested"`
-	// Are you blocking this user's domain?
+	// You are blocking this account's domain.
 	DomainBlocking bool `json:"domain_blocking"`
-	// Are you featuring this user on your profile?
+	// You are featuring this account on your profile.
 	Endorsed bool `json:"endorsed"`
 	// Your note on this account.
 	Note string `json:"note"`

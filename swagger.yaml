@@ -1,51 +1,5 @@
 basePath: /
 definitions:
-  Emoji:
-    properties:
-      category:
-        description: Used for sorting custom emoji in the picker.
-        type: string
-        x-go-name: Category
-      shortcode:
-        description: The name of the custom emoji.
-        type: string
-        x-go-name: Shortcode
-      static_url:
-        description: A link to a static copy of the custom emoji.
-        type: string
-        x-go-name: StaticURL
-      url:
-        description: A link to the custom emoji.
-        type: string
-        x-go-name: URL
-      visible_in_picker:
-        description: Whether this Emoji should be visible in the picker or unlisted.
-        type: boolean
-        x-go-name: VisibleInPicker
-    title: Emoji represents a custom emoji. See https://docs.joinmastodon.org/entities/emoji/
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  Field:
-    properties:
-      name:
-        description: The key/name of this field.
-        example: pronouns
-        type: string
-        x-go-name: Name
-      value:
-        description: The value of this field.
-        example: they/them
-        type: string
-        x-go-name: Value
-      verified_at:
-        description: If this field has been verified, when did this occur? (ISO 8601
-          Datetime).
-        example: "2021-07-30T09:20:25+00:00"
-        type: string
-        x-go-name: VerifiedAt
-    title: Field represents a name/value pair to display on an account's profile.
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   FileHeader:
     properties:
       Filename:
@@ -58,22 +12,6 @@ definitions:
     title: A FileHeader describes a file part of a multipart request.
     type: object
     x-go-package: mime/multipart
-  IP:
-    description: |-
-      Note that in this documentation, referring to an
-      IP address as an IPv4 address or an IPv6 address
-      is a semantic property of the address, not just the
-      length of the byte slice: a 16-byte slice can still
-      be an IPv4 address.
-    items:
-      format: uint8
-      type: integer
-    title: |-
-      An IP is a single IP address, a slice of bytes.
-      Functions in this package accept either 4-byte (IPv4)
-      or 16-byte (IPv6) slices as input.
-    type: array
-    x-go-package: net
   MIMEHeader:
     additionalProperties:
       items:
@@ -92,7 +30,7 @@ definitions:
       fields:
         description: Metadata about the account.
         items:
-          $ref: '#/definitions/Field'
+          $ref: '#/definitions/field'
         type: array
         x-go-name: Fields
       follow_requests_count:
@@ -115,37 +53,6 @@ definitions:
         type: boolean
         x-go-name: Sensitive
     title: Source represents display or publishing preferences of user's own account.
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  UpdateField:
-    description: By default, max 4 fields and 255 characters per property/value.
-    properties:
-      name:
-        description: Name of the field
-        type: string
-        x-go-name: Name
-      value:
-        description: Value of the field
-        type: string
-        x-go-name: Value
-    title: UpdateField is to be used specifically in an UpdateCredentialsRequest.
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  UpdateSource:
-    properties:
-      language:
-        description: Default language to use for authored statuses. (ISO 6391)
-        type: string
-        x-go-name: Language
-      privacy:
-        description: Default post privacy for authored statuses.
-        type: string
-        x-go-name: Privacy
-      sensitive:
-        description: Whether to mark authored statuses as sensitive by default.
-        type: boolean
-        x-go-name: Sensitive
-    title: UpdateSource is to be used specifically in an UpdateCredentialsRequest.
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Visibility:
@@ -196,13 +103,13 @@ definitions:
         description: Array of custom emojis used in this account's note or display
           name.
         items:
-          $ref: '#/definitions/Emoji'
+          $ref: '#/definitions/emoji'
         type: array
         x-go-name: Emojis
       fields:
         description: Additional metadata attached to this account's profile.
         items:
-          $ref: '#/definitions/Field'
+          $ref: '#/definitions/field'
         type: array
         x-go-name: Fields
       followers_count:
@@ -280,24 +187,22 @@ definitions:
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   accountCreateRequest:
     properties:
-      IP:
-        $ref: '#/definitions/IP'
       agreement:
-        description: |-
-          Whether the user agrees to the local rules, terms, and policies.
-          These should be presented to the user in order to allow them to consent before setting this parameter to TRUE.
+        description: The user agrees to the terms, conditions, and policies of the
+          instance.
         type: boolean
         x-go-name: Agreement
       email:
-        description: The email address to be used for login
+        description: The email address to be used for login.
         type: string
         x-go-name: Email
       locale:
-        description: The language of the confirmation email that will be sent
+        description: The language of the confirmation email that will be sent.
         type: string
         x-go-name: Locale
       password:
-        description: The password to be used for login
+        description: The password to be used for login. This will be hashed before
+          storage.
         type: string
         x-go-name: Password
       reason:
@@ -306,7 +211,7 @@ definitions:
         type: string
         x-go-name: Reason
       username:
-        description: The desired username for the account
+        description: The desired username for the account.
         type: string
         x-go-name: Username
     title: AccountCreateRequest represents the form submitted during a POST request
@@ -314,44 +219,229 @@ definitions:
     type: object
     x-go-name: AccountCreateRequest
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  accountUpdateRequest:
+  accountFollowRequest:
+    description: AccountFollowRequest is for parsing requests at /api/v1/accounts/:id/follow
     properties:
-      avatar:
-        $ref: '#/definitions/FileHeader'
-      bot:
-        description: Whether the account has a bot flag.
-        type: boolean
-        x-go-name: Bot
-      discoverable:
-        description: Whether the account should be shown in the profile directory.
-        type: boolean
-        x-go-name: Discoverable
-      display_name:
-        description: The display name to use for the profile.
+      TargetAccountID:
+        description: |-
+          ID of the account to follow request
+          This should be a URL parameter not a form field
         type: string
-        x-go-name: DisplayName
-      fields_attributes:
-        description: Profile metadata name and value
-        items:
-          $ref: '#/definitions/UpdateField'
-        type: array
-        x-go-name: FieldsAttributes
-      header:
-        $ref: '#/definitions/FileHeader'
-      locked:
-        description: Whether manual approval of follow requests is required.
+      notify:
+        description: Notify when this account posts?
         type: boolean
-        x-go-name: Locked
+        x-go-name: Notify
+      reblogs:
+        description: Show reblogs for this account?
+        type: boolean
+        x-go-name: Reblogs
+    type: object
+    x-go-name: AccountFollowRequest
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  accountRelationship:
+    properties:
+      blocked_by:
+        description: This account is blocking you.
+        type: boolean
+        x-go-name: BlockedBy
+      blocking:
+        description: You are blocking this account.
+        type: boolean
+        x-go-name: Blocking
+      domain_blocking:
+        description: You are blocking this account's domain.
+        type: boolean
+        x-go-name: DomainBlocking
+      endorsed:
+        description: You are featuring this account on your profile.
+        type: boolean
+        x-go-name: Endorsed
+      followed_by:
+        description: This account follows you.
+        type: boolean
+        x-go-name: FollowedBy
+      following:
+        description: You are following this account.
+        type: boolean
+        x-go-name: Following
+      id:
+        description: The account id.
+        example: 01FBW9XGEP7G6K88VY4S9MPE1R
+        type: string
+        x-go-name: ID
+      muting:
+        description: You are muting this account.
+        type: boolean
+        x-go-name: Muting
+      muting_notifications:
+        description: You are muting notifications from this account.
+        type: boolean
+        x-go-name: MutingNotifications
       note:
-        description: The account bio.
+        description: Your note on this account.
         type: string
         x-go-name: Note
-      source:
-        $ref: '#/definitions/UpdateSource'
-    title: UpdateCredentialsRequest represents the form submitted during a PATCH request
-      to /api/v1/accounts/update_credentials.
+      notifying:
+        description: You are seeing notifications when this account posts.
+        type: boolean
+        x-go-name: Notifying
+      requested:
+        description: You have requested to follow this account, and the request is
+          pending.
+        type: boolean
+        x-go-name: Requested
+      showing_reblogs:
+        description: You are seeing reblogs/boosts from this account in your home
+          timeline.
+        type: boolean
+        x-go-name: ShowingReblogs
+    title: Relationship represents a relationship between accounts.
     type: object
-    x-go-name: UpdateCredentialsRequest
+    x-go-name: Relationship
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  domainBlock:
+    description: DomainBlock represents a block on one domain
+    properties:
+      created_at:
+        description: Time at which this block was created (ISO 8601 Datetime).
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: CreatedAt
+      created_by:
+        description: ID of the account that created this domain block.
+        example: 01FBW2758ZB6PBR200YPDDJK4C
+        type: string
+        x-go-name: CreatedBy
+      domain:
+        description: The hostname of the blocked domain.
+        example: example.org
+        type: string
+        x-go-name: Domain
+      id:
+        description: The ID of the domain block.
+        example: 01FBW21XJA09XYX51KV5JVBW0F
+        readOnly: true
+        type: string
+        x-go-name: ID
+      obfuscate:
+        description: |-
+          Obfuscate the domain name when serving this domain block publicly.
+          A useful anti-harassment tool.
+        example: false
+        type: boolean
+        x-go-name: Obfuscate
+      private_comment:
+        description: Private comment for this block, visible to our instance admins
+          only.
+        example: they are poopoo
+        type: string
+        x-go-name: PrivateComment
+      public_comment:
+        description: Public comment for this block, visible if domain blocks are served
+          publicly.
+        example: they smell
+        type: string
+        x-go-name: PublicComment
+      subscription_id:
+        description: The ID of the subscription that created/caused this domain block.
+        example: 01FBW25TF5J67JW3HFHZCSD23K
+        type: string
+        x-go-name: SubscriptionID
+    type: object
+    x-go-name: DomainBlock
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  domainBlockCreateRequest:
+    properties:
+      domain:
+        description: hostname/domain to block
+        type: string
+        x-go-name: Domain
+      domains:
+        $ref: '#/definitions/FileHeader'
+      obfuscate:
+        description: whether the domain should be obfuscated when being displayed
+          publicly
+        type: boolean
+        x-go-name: Obfuscate
+      private_comment:
+        description: private comment for other admins on why the domain was blocked
+        type: string
+        x-go-name: PrivateComment
+      public_comment:
+        description: public comment on the reason for the domain block
+        type: string
+        x-go-name: PublicComment
+    title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks
+      to create a new block.
+    type: object
+    x-go-name: DomainBlockCreateRequest
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  emoji:
+    properties:
+      category:
+        description: Used for sorting custom emoji in the picker.
+        example: blobcats
+        type: string
+        x-go-name: Category
+      shortcode:
+        description: The name of the custom emoji.
+        example: blobcat_uwu
+        type: string
+        x-go-name: Shortcode
+      static_url:
+        description: A link to a static copy of the custom emoji.
+        example: https://example.org/fileserver/emojis/blogcat_uwu.png
+        type: string
+        x-go-name: StaticURL
+      url:
+        description: Web URL of the custom emoji.
+        example: https://example.org/fileserver/emojis/blogcat_uwu.gif
+        type: string
+        x-go-name: URL
+      visible_in_picker:
+        description: Emoji is visible in the emoji picker of the instance.
+        example: true
+        type: boolean
+        x-go-name: VisibleInPicker
+    title: Emoji represents a custom emoji.
+    type: object
+    x-go-name: Emoji
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  emojiCreateRequest:
+    properties:
+      Image:
+        $ref: '#/definitions/FileHeader'
+      Shortcode:
+        description: Desired shortcode for the emoji, without surrounding colons.
+          This must be unique for the domain.
+        example: blobcat_uwu
+        type: string
+    title: EmojiCreateRequest represents a request to create a custom emoji made through
+      the admin API.
+    type: object
+    x-go-name: EmojiCreateRequest
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  field:
+    properties:
+      name:
+        description: The key/name of this field.
+        example: pronouns
+        type: string
+        x-go-name: Name
+      value:
+        description: The value of this field.
+        example: they/them
+        type: string
+        x-go-name: Value
+      verified_at:
+        description: If this field has been verified, when did this occur? (ISO 8601
+          Datetime).
+        example: "2021-07-30T09:20:25+00:00"
+        type: string
+        x-go-name: VerifiedAt
+    title: Field represents a name/value pair to display on an account's profile.
+    type: object
+    x-go-name: Field
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   oauthToken:
     properties:
@@ -380,17 +470,65 @@ definitions:
     type: object
     x-go-name: Token
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  updateField:
+    description: By default, max 4 fields and 255 characters per property/value.
+    properties:
+      name:
+        description: Name of the field
+        type: string
+        x-go-name: Name
+      value:
+        description: Value of the field
+        type: string
+        x-go-name: Value
+    title: UpdateField is to be used specifically in an UpdateCredentialsRequest.
+    type: object
+    x-go-name: UpdateField
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
 host: example.org
 info:
   description: GoToSocial Swagger documentation.
   title: GoToSocial
   version: 0.1.0-SNAPSHOT
 paths:
+  /api/v1/accounts:
+    post:
+      consumes:
+      - application/json
+      - application/xml
+      - application/x-www-form-urlencoded
+      - multipart/form-data
+      operationId: accountCreate
+      parameters:
+      - in: body
+        name: Account Create Request
+        schema:
+          $ref: '#/definitions/accountCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: An OAuth2 access token for the newly-created account.
+          schema:
+            $ref: '#/definitions/oauthToken'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+        "500":
+          description: internal error
+      security:
+      - OAuth2 Application:
+        - write:accounts
+      summary: Create a new account using an application token.
   /api/v1/accounts/{id}:
     get:
-      operationId: accountGET
+      operationId: accountGet
       parameters:
-      - in: path
+      - description: The id of the requested account.
+        in: path
         name: id
         required: true
         type: string
@@ -408,13 +546,128 @@ paths:
         "404":
           description: not found
       security:
-      - oauth2:
+      - OAuth2 Bearer:
         - read:accounts
+      summary: Get information about an account with the given ID.
+  /api/v1/accounts/{id}/block:
+    post:
+      operationId: accountBlock
+      parameters:
+      - description: The id of the account to block.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/accountRelationship'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - write:accounts
+      summary: Block account with id.
+  /api/v1/accounts/update_credentials:
+    patch:
+      consumes:
+      - multipart/form-data
+      operationId: accountUpdate
+      parameters:
+      - description: Account should be made discoverable and shown in the profile
+          directory (if enabled).
+        in: formData
+        name: discoverable
+        type: boolean
+      - description: Account is flagged as a bot.
+        in: formData
+        name: bot
+        type: boolean
+      - description: The display name to use for the account.
+        in: formData
+        name: display_name
+        type: string
+      - description: Bio/description of this account.
+        in: formData
+        name: note
+        type: string
+      - description: Avatar of the user.
+        in: formData
+        name: avatar
+        type: file
+      - description: Header of the user.
+        in: formData
+        name: header
+        type: file
+      - description: Require manual approval of follow requests.
+        in: formData
+        name: locked
+        type: boolean
+      - description: Default post privacy for authored statuses.
+        in: formData
+        name: source.privacy
+        type: string
+      - description: Mark authored statuses as sensitive by default.
+        in: formData
+        name: source.sensitive
+        type: boolean
+      - description: Default language to use for authored statuses (ISO 6391).
+        in: formData
+        name: source.language
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The newly updated account.
+          schema:
+            $ref: '#/definitions/account'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      security:
+      - OAuth2 Bearer:
+        - write:accounts
+      summary: Update your account.
+  /api/v1/accounts/verify_credentials:
+    get:
+      operationId: accountVerify
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/account'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - read:accounts
+      summary: Verify a token by returning account details pertaining to it.
 schemes:
 - https
 - http
 securityDefinitions:
-  oauth2:
+  OAuth2 Application:
+    flow: application
+    scopes:
+      write:accounts: grants write access to accounts
+    tokenUrl: https://example.org/oauth/token
+    type: oauth2
+  OAuth2 Bearer:
     authorizationUrl: https://example.org/oauth/authorize
     flow: accessCode
     scopes:

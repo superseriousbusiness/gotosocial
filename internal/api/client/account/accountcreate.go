@@ -32,13 +32,50 @@ import (
 
 // AccountCreatePOSTHandler handles create account requests, validates them,
 // and puts them in the database if they're valid.
-// It should be served as a POST at /api/v1/accounts
+//
+// swagger:operation POST /api/v1/accounts accountCreate
+//
+// Create a new account using an application token.
+//
+// ---
+// consumes:
+// - application/json
+// - application/xml
+// - application/x-www-form-urlencoded
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: Account Create Request
+//   in: body
+//   schema:
+//     "$ref": "#/definitions/accountCreateRequest"
+//
+// security:
+// - OAuth2 Application:
+//   - write:accounts
+//
+// responses:
+//   '200':
+//     description: "An OAuth2 access token for the newly-created account."
+//     schema:
+//       "$ref": "#/definitions/oauthToken"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
+//   '500':
+//      description: internal error
 func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, false, false)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -25,12 +25,12 @@ type Token struct {
 	// Access token used for authorization.
 	AccessToken string `json:"access_token"`
 	// OAuth token type. Will always be 'Bearer'.
-   // example: bearer
+	// example: bearer
 	TokenType string `json:"token_type"`
 	// OAuth scopes granted by this token, space-separated.
-   // example: read write admin
+	// example: read write admin
 	Scope string `json:"scope"`
 	// When the OAuth token was generated (UNIX timestamp seconds).
-   // example: 1627644520
+	// example: 1627644520
 	CreatedAt int64 `json:"created_at"`
 }

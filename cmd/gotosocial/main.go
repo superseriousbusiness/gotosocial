@@ -47,8 +47,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/urfave/cli/v2"
 	_ "github.com/superseriousbusiness/gotosocial/docs"
+	"github.com/urfave/cli/v2"
 )
 
 // Version is the software version of GtS being used
