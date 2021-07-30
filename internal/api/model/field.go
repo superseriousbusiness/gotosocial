@@ -18,16 +18,15 @@
 
 package model
 
-// Field represents a profile field as a name-value pair with optional verification. See https://docs.joinmastodon.org/entities/field/
+// Field represents a name/value pair to display on an account's profile.
 type Field struct {
-	// REQUIRED
-
-	// The key of a given field's key-value pair.
+	// The key/name of this field.
+   // example: pronouns
 	Name string `json:"name"`
-	// The value associated with the name key.
+	// The value of this field.
+   // example: they/them
 	Value string `json:"value"`
-
-	// OPTIONAL
-	// Timestamp of when the server verified a URL value for a rel="me” link. String (ISO 8601 Datetime) if value is a verified URL
+   // If this field has been verified, when did this occur? (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	VerifiedAt string `json:"verified_at,omitempty"`
 }

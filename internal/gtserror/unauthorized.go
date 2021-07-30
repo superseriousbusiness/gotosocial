@@ -16,21 +16,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package gtserror
 
-// Token represents an OAuth token used for authenticating with the GoToSocial API and performing actions.
-//
-// swagger:model oauthToken
-type Token struct {
-	// Access token used for authorization.
-	AccessToken string `json:"access_token"`
-	// OAuth token type. Will always be 'Bearer'.
-   // example: bearer
-	TokenType string `json:"token_type"`
-	// OAuth scopes granted by this token, space-separated.
-   // example: read write admin
-	Scope string `json:"scope"`
-	// When the OAuth token was generated (UNIX timestamp seconds).
-   // example: 1627644520
-	CreatedAt int64 `json:"created_at"`
-}
+

@@ -23,58 +23,76 @@ import (
 	"net"
 )
 
-// Account represents a mastodon-api Account object, as described here: https://docs.joinmastodon.org/entities/account/
+// Account represents a fediverse account of some kind, either a remote one or one on this instance.
+//
+// swagger:model account
 type Account struct {
-	// The account id
+	// The account id.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id"`
 	// The username of the account, not including domain.
+	// example: some_user
 	Username string `json:"username"`
-	// The Webfinger account URI. Equal to username for local users, or username@domain for remote users.
+	// The account URI as discovered via webfinger.
+	// Equal to username for local users, or username@domain for remote users.
+	// example: some_user@example.org
 	Acct string `json:"acct"`
-	// The profile's display name.
+	// The account's display name.
+	// example: big jeff (he/him)
 	DisplayName string `json:"display_name"`
-	// Whether the account manually approves follow requests.
+	// Account manually approves follow requests.
 	Locked bool `json:"locked"`
-	// Whether the account has opted into discovery features such as the profile directory.
+	// Account has opted into discovery features such as the profile directory.
 	Discoverable bool `json:"discoverable,omitempty"`
-	// A presentational flag. Indicates that the account may perform automated actions, may not be monitored, or identifies as a robot.
+	// Account identifies as a bot.
 	Bot bool `json:"bot"`
-	// When the account was created. (ISO 8601 Datetime)
+	// When the account was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
-	// The profile's bio / description.
+	// Bio/description of this account.
 	Note string `json:"note"`
-	// The location of the user's profile page.
+	// Web location of the account's profile page.
+	// example: https://example.org/@some_user
 	URL string `json:"url"`
-	// An image icon that is shown next to statuses and in the profile.
+	// Web location of the account's avatar.
+	// example: https://example.org/media/some_user/avatar/original/avatar.jpeg
 	Avatar string `json:"avatar"`
-	// A static version of the avatar. Equal to avatar if its value is a static image; different if avatar is an animated GIF.
+	// Web location of a static version of the account's avatar.
+	// Only relevant when the account's main avatar is a video or a gif.
+	// example: https://example.org/media/some_user/avatar/static/avatar.png
 	AvatarStatic string `json:"avatar_static"`
-	// An image banner that is shown above the profile and in profile cards.
+	// Web location of the account's header image.
+	// example: https://example.org/media/some_user/header/original/header.jpeg
 	Header string `json:"header"`
-	// A static version of the header. Equal to header if its value is a static image; different if header is an animated GIF.
+	// Web location of a static version of the account's header.
+	// Only relevant when the account's main header is a video or a gif.
+	// example: https://example.org/media/some_user/header/static/header.png
 	HeaderStatic string `json:"header_static"`
-	//  The reported followers of this profile.
+	// Number of accounts following this account, according to our instance.
 	FollowersCount int `json:"followers_count"`
-	// The reported follows of this profile.
+	// Number of account's followed by this account, according to our instance.
 	FollowingCount int `json:"following_count"`
-	// How many statuses are attached to this account.
+	// Number of statuses posted by this account, according to our instance.
 	StatusesCount int `json:"statuses_count"`
-	// When the most recent status was posted. (ISO 8601 Datetime)
+	// When the account's most recent status was posted (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	LastStatusAt string `json:"last_status_at"`
-	// Custom emoji entities to be used when rendering the profile. If none, an empty array will be returned.
+	// Array of custom emojis used in this account's note or display name.
 	Emojis []Emoji `json:"emojis"`
-	// Additional metadata attached to a profile as name-value pairs.
+	// Additional metadata attached to this account's profile.
 	Fields []Field `json:"fields"`
-	// An extra entity returned when an account is suspended.
+	// Account has been suspended by our instance.
 	Suspended bool `json:"suspended,omitempty"`
-	// When a timed mute will expire, if applicable. (ISO 8601 Datetime)
+	// If this account has been muted, when will the mute expire (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
-	// An extra entity to be used with API methods to verify credentials and update credentials.
+	// Extra profile information. Shown only if the requester owns the account being requested.
 	Source *Source `json:"source,omitempty"`
 }
 
 // AccountCreateRequest represents the form submitted during a POST request to /api/v1/accounts.
-// See https://docs.joinmastodon.org/methods/accounts/
+//
+// swagger:model accountCreateRequest
 type AccountCreateRequest struct {
 	// Text that will be reviewed by moderators if registrations require manual approval.
 	Reason string `form:"reason" json:"reason" xml:"reason"`
@@ -94,7 +112,8 @@ type AccountCreateRequest struct {
 }
 
 // UpdateCredentialsRequest represents the form submitted during a PATCH request to /api/v1/accounts/update_credentials.
-// See https://docs.joinmastodon.org/methods/accounts/
+//
+// swagger:model accountUpdateRequest
 type UpdateCredentialsRequest struct {
 	// Whether the account should be shown in the profile directory.
 	Discoverable *bool `form:"discoverable" json:"discoverable" xml:"discoverable"`
