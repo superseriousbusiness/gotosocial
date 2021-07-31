@@ -120,6 +120,23 @@ func adminCommands() []*cli.Command {
 								return runAction(c, account.Suspend)
 							},
 						},
+						{
+							Name:  "password",
+							Usage: "set a new password for the given account",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  config.UsernameFlag,
+									Usage: config.UsernameUsage,
+								},
+								&cli.StringFlag{
+									Name:  config.PasswordFlag,
+									Usage: config.PasswordUsage,
+								},
+							},
+							Action: func(c *cli.Context) error {
+								return runAction(c, account.Password)
+							},
+						},
 					},
 				},
 			},
