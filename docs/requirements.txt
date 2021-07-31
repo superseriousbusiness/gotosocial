@@ -1,0 +1,1 @@
+mkdocs-render-swagger-plugin==0.0.3
