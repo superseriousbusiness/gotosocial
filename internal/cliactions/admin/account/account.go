@@ -253,6 +253,6 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 	if err := dbConn.UpdateByID(u.ID, u); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
