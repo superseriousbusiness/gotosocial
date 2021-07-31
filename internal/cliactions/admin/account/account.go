@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Create creates a new account in the database using the provided flags.
@@ -206,5 +207,52 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 // Suspend suspends the target account, cleanly removing all of its media, followers, following, likes, statuses, etc.
 var Suspend cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
 	// TODO
+	return nil
+}
+
+// Password sets the password of target account.
+var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
+	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	if err != nil {
+		return fmt.Errorf("error creating dbservice: %s", err)
+	}
+
+	username, ok := c.AccountCLIFlags[config.UsernameFlag]
+	if !ok {
+		return errors.New("no username set")
+	}
+	if err := util.ValidateUsername(username); err != nil {
+		return err
+	}
+
+	password, ok := c.AccountCLIFlags[config.PasswordFlag]
+	if !ok {
+		return errors.New("no password set")
+	}
+	if err := util.ValidateNewPassword(password); err != nil {
+		return err
+	}
+
+	a := &gtsmodel.Account{}
+	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+		return err
+	}
+
+	u := &gtsmodel.User{}
+	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+		return err
+	}
+
+	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("error hashing password: %s", err)
+	}
+
+	u.EncryptedPassword = string(pw)
+
+	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+		return err
+	}
+	
 	return nil
 }
