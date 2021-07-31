@@ -1,76 +1,5 @@
 basePath: /
 definitions:
-  Card:
-    properties:
-      author_name:
-        description: The author of the original resource.
-        type: string
-        x-go-name: AuthorName
-      author_url:
-        description: A link to the author of the original resource.
-        type: string
-        x-go-name: AuthorURL
-      blurhash:
-        description: A hash computed by the BlurHash algorithm, for generating colorful
-          preview thumbnails when media has not been downloaded yet.
-        type: string
-        x-go-name: Blurhash
-      description:
-        description: Description of preview.
-        type: string
-        x-go-name: Description
-      embed_url:
-        description: Used for photo embeds, instead of custom html.
-        type: string
-        x-go-name: EmbedURL
-      height:
-        description: Height of preview, in pixels.
-        format: int64
-        type: integer
-        x-go-name: Height
-      html:
-        description: HTML to be used for generating the preview card.
-        type: string
-        x-go-name: HTML
-      image:
-        description: Preview thumbnail.
-        type: string
-        x-go-name: Image
-      provider_name:
-        description: The provider of the original resource.
-        type: string
-        x-go-name: ProviderName
-      provider_url:
-        description: A link to the provider of the original resource.
-        type: string
-        x-go-name: ProviderURL
-      title:
-        description: Title of linked resource.
-        type: string
-        x-go-name: Title
-      type:
-        description: |-
-          The type of the preview card.
-          String (Enumerable, oneOf)
-          link = Link OEmbed
-          photo = Photo OEmbed
-          video = Video OEmbed
-          rich = iframe OEmbed. Not currently accepted, so won't show up in practice.
-        type: string
-        x-go-name: Type
-      url:
-        description: Location of linked resource.
-        type: string
-        x-go-name: URL
-      width:
-        description: Width of preview, in pixels.
-        format: int64
-        type: integer
-        x-go-name: Width
-    title: 'Card represents a rich preview card that is generated using OpenGraph
-      tags from a URL. See here: https://docs.joinmastodon.org/entities/card/'
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   FileHeader:
     properties:
       Filename:
@@ -96,97 +25,28 @@ definitions:
   Mention:
     properties:
       acct:
-        description: 'The webfinger acct: URI of the mentioned user. Equivalent to
-          username for local users, or username@domain for remote users.'
+        description: |-
+          The account URI as discovered via webfinger.
+          Equal to username for local users, or username@domain for remote users.
+        example: some_user@example.org
         type: string
         x-go-name: Acct
       id:
-        description: The account id of the mentioned user.
+        description: The ID of the mentioned account.
+        example: 01FBYJHQWQZAVWFRK9PDYTKGMB
         type: string
         x-go-name: ID
       url:
-        description: The location of the mentioned user's profile.
+        description: The web URL of the mentioned account's profile.
+        example: https://example.org/@some_user
         type: string
         x-go-name: URL
       username:
-        description: The username of the mentioned user.
+        description: The username of the mentioned account.
+        example: some_user
         type: string
         x-go-name: Username
-    title: 'Mention represents the mastodon-api mention type, as documented here:
-      https://docs.joinmastodon.org/entities/mention/'
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  Poll:
-    properties:
-      emojis:
-        description: Custom emoji to be used for rendering poll options.
-        items:
-          $ref: '#/definitions/emoji'
-        type: array
-        x-go-name: Emojis
-      expired:
-        description: Is the poll currently expired?
-        type: boolean
-        x-go-name: Expired
-      expires_at:
-        description: When the poll ends. (ISO 8601 Datetime), or null if the poll
-          does not end
-        type: string
-        x-go-name: ExpiresAt
-      id:
-        description: The ID of the poll in the database.
-        type: string
-        x-go-name: ID
-      multiple:
-        description: Does the poll allow multiple-choice answers?
-        type: boolean
-        x-go-name: Multiple
-      options:
-        description: Possible answers for the poll.
-        items:
-          $ref: '#/definitions/PollOptions'
-        type: array
-        x-go-name: Options
-      own_votes:
-        description: When called with a user token, which options has the authorized
-          user chosen? Contains an array of index values for options.
-        items:
-          format: int64
-          type: integer
-        type: array
-        x-go-name: OwnVotes
-      voted:
-        description: When called with a user token, has the authorized user voted?
-        type: boolean
-        x-go-name: Voted
-      voters_count:
-        description: How many unique accounts have voted on a multiple-choice poll.
-          Null if multiple is false.
-        format: int64
-        type: integer
-        x-go-name: VotersCount
-      votes_count:
-        description: How many votes have been received.
-        format: int64
-        type: integer
-        x-go-name: VotesCount
-    title: 'Poll represents the mastodon-api poll type, as described here: https://docs.joinmastodon.org/entities/poll/'
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  PollOptions:
-    description: PollOptions represents the current vote counts for different poll
-      options
-    properties:
-      title:
-        description: The text value of the poll option. String.
-        type: string
-        x-go-name: Title
-      votes_count:
-        description: The number of received votes for this option. Number, or null
-          if results are not published yet.
-        format: int64
-        type: integer
-        x-go-name: VotesCount
+    title: Mention represents a mention of another account.
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Source:
@@ -220,19 +80,6 @@ definitions:
         type: boolean
         x-go-name: Sensitive
     title: Source represents display or publishing preferences of user's own account.
-    type: object
-    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  Tag:
-    properties:
-      name:
-        description: 'The value of the hashtag after the # sign.'
-        type: string
-        x-go-name: Name
-      url:
-        description: A link to the hashtag on the instance.
-        type: string
-        x-go-name: URL
-    title: Tag represents a hashtag used within the content of a status. See https://docs.joinmastodon.org/entities/tag/
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   account:
@@ -525,7 +372,7 @@ definitions:
         x-go-name: Blurhash
       description:
         description: Alt text that describes what is in the media attachment.
-        example: 'This is a picture of a kitten. '
+        example: This is a picture of a kitten.
         type: string
         x-go-name: Description
       id:
@@ -577,6 +424,87 @@ definitions:
       media upload request.
     type: object
     x-go-name: Attachment
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  card:
+    properties:
+      author_name:
+        description: The author of the original resource.
+        example: weewee@buzzfeed.com
+        type: string
+        x-go-name: AuthorName
+      author_url:
+        description: A link to the author of the original resource.
+        example: https://buzzfeed.com/authors/weewee
+        type: string
+        x-go-name: AuthorURL
+      blurhash:
+        description: A hash computed by the BlurHash algorithm, for generating colorful
+          preview thumbnails when media has not been downloaded yet.
+        type: string
+        x-go-name: Blurhash
+      description:
+        description: Description of preview.
+        example: Is water wet? We're not sure. In this article, we ask an expert...
+        type: string
+        x-go-name: Description
+      embed_url:
+        description: Used for photo embeds, instead of custom html.
+        type: string
+        x-go-name: EmbedURL
+      height:
+        description: Height of preview, in pixels.
+        format: int64
+        type: integer
+        x-go-name: Height
+      html:
+        description: HTML to be used for generating the preview card.
+        type: string
+        x-go-name: HTML
+      image:
+        description: Preview thumbnail.
+        example: https://example.org/fileserver/preview/thumb.jpg
+        type: string
+        x-go-name: Image
+      provider_name:
+        description: The provider of the original resource.
+        example: Buzzfeed
+        type: string
+        x-go-name: ProviderName
+      provider_url:
+        description: A link to the provider of the original resource.
+        example: https://buzzfeed.com
+        type: string
+        x-go-name: ProviderURL
+      title:
+        description: Title of linked resource.
+        example: Buzzfeed - Is Water Wet?
+        type: string
+        x-go-name: Title
+      type:
+        description: |-
+          The type of the preview card.
+          String (Enumerable, oneOf)
+          link = Link OEmbed
+          photo = Photo OEmbed
+          video = Video OEmbed
+          rich = iframe OEmbed. Not currently accepted, so won't show up in practice.
+        example: link
+        type: string
+        x-go-name: Type
+      url:
+        description: Location of linked resource.
+        example: https://buzzfeed.com/some/fuckin/buzzfeed/article
+        type: string
+        x-go-name: URL
+      width:
+        description: Width of preview, in pixels.
+        format: int64
+        type: integer
+        x-go-name: Width
+    title: Card represents a rich preview card that is generated using OpenGraph tags
+      from a URL.
+    type: object
+    x-go-name: Card
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   domainBlock:
     description: DomainBlock represents a block on one domain
@@ -844,6 +772,81 @@ definitions:
     type: object
     x-go-name: Token
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  poll:
+    properties:
+      emojis:
+        description: Custom emoji to be used for rendering poll options.
+        items:
+          $ref: '#/definitions/emoji'
+        type: array
+        x-go-name: Emojis
+      expired:
+        description: Is the poll currently expired?
+        type: boolean
+        x-go-name: Expired
+      expires_at:
+        description: When the poll ends. (ISO 8601 Datetime), or null if the poll
+          does not end
+        type: string
+        x-go-name: ExpiresAt
+      id:
+        description: The ID of the poll in the database.
+        example: 01FBYKMD1KBMJ0W6JF1YZ3VY5D
+        type: string
+        x-go-name: ID
+      multiple:
+        description: Does the poll allow multiple-choice answers?
+        type: boolean
+        x-go-name: Multiple
+      options:
+        description: Possible answers for the poll.
+        items:
+          $ref: '#/definitions/pollOptions'
+        type: array
+        x-go-name: Options
+      own_votes:
+        description: When called with a user token, which options has the authorized
+          user chosen? Contains an array of index values for options.
+        items:
+          format: int64
+          type: integer
+        type: array
+        x-go-name: OwnVotes
+      voted:
+        description: When called with a user token, has the authorized user voted?
+        type: boolean
+        x-go-name: Voted
+      voters_count:
+        description: How many unique accounts have voted on a multiple-choice poll.
+          Null if multiple is false.
+        format: int64
+        type: integer
+        x-go-name: VotersCount
+      votes_count:
+        description: How many votes have been received.
+        format: int64
+        type: integer
+        x-go-name: VotesCount
+    title: Poll represents a poll attached to a status.
+    type: object
+    x-go-name: Poll
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  pollOptions:
+    properties:
+      title:
+        description: The text value of the poll option. String.
+        type: string
+        x-go-name: Title
+      votes_count:
+        description: The number of received votes for this option. Number, or null
+          if results are not published yet.
+        format: int64
+        type: integer
+        x-go-name: VotesCount
+    title: PollOptions represents the current vote counts for different poll options.
+    type: object
+    x-go-name: PollOptions
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   status:
     properties:
       account:
@@ -855,7 +858,7 @@ definitions:
         type: boolean
         x-go-name: Bookmarked
       card:
-        $ref: '#/definitions/Card'
+        $ref: '#/definitions/card'
       content:
         description: The content of this status. Should be HTML, but might also be
           plaintext in some cases.
@@ -927,7 +930,7 @@ definitions:
         type: boolean
         x-go-name: Pinned
       poll:
-        $ref: '#/definitions/Poll'
+        $ref: '#/definitions/poll'
       reblog:
         $ref: '#/definitions/status'
       reblogged:
@@ -959,7 +962,7 @@ definitions:
       tags:
         description: Hashtags used within the status content.
         items:
-          $ref: '#/definitions/Tag'
+          $ref: '#/definitions/tag'
         type: array
         x-go-name: Tags
       text:
@@ -991,6 +994,22 @@ definitions:
     title: Visibility denotes the visibility of a status to other users.
     type: string
     x-go-name: Visibility
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  tag:
+    properties:
+      name:
+        description: 'The value of the hashtag after the # sign.'
+        example: helloworld
+        type: string
+        x-go-name: Name
+      url:
+        description: Web link to the hashtag.
+        example: https://example.org/tags/helloworld
+        type: string
+        x-go-name: URL
+    title: Tag represents a hashtag used within the content of a status.
+    type: object
+    x-go-name: Tag
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   updateField:
     description: By default, max 4 fields and 255 characters per property/value.

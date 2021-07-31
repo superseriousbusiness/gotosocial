@@ -18,15 +18,18 @@
 
 package model
 
-// Card represents a rich preview card that is generated using OpenGraph tags from a URL. See here: https://docs.joinmastodon.org/entities/card/
+// Card represents a rich preview card that is generated using OpenGraph tags from a URL.
+//
+// swagger:model card
 type Card struct {
-	// REQUIRED
-
 	// Location of linked resource.
+	// example: https://buzzfeed.com/some/fuckin/buzzfeed/article
 	URL string `json:"url"`
 	// Title of linked resource.
+	// example: Buzzfeed - Is Water Wet?
 	Title string `json:"title"`
 	// Description of preview.
+	// example: Is water wet? We're not sure. In this article, we ask an expert...
 	Description string `json:"description"`
 	// The type of the preview card.
 	//    String (Enumerable, oneOf)
@@ -34,17 +37,19 @@ type Card struct {
 	//    photo = Photo OEmbed
 	//    video = Video OEmbed
 	//    rich = iframe OEmbed. Not currently accepted, so won't show up in practice.
+	// example: link
 	Type string `json:"type"`
-
-	// OPTIONAL
-
 	// The author of the original resource.
+	// example: weewee@buzzfeed.com
 	AuthorName string `json:"author_name"`
 	// A link to the author of the original resource.
+	// example: https://buzzfeed.com/authors/weewee
 	AuthorURL string `json:"author_url"`
 	// The provider of the original resource.
+	// example: Buzzfeed
 	ProviderName string `json:"provider_name"`
 	// A link to the provider of the original resource.
+	// example: https://buzzfeed.com
 	ProviderURL string `json:"provider_url"`
 	// HTML to be used for generating the preview card.
 	HTML string `json:"html"`
@@ -53,6 +58,7 @@ type Card struct {
 	// Height of preview, in pixels.
 	Height int `json:"height"`
 	// Preview thumbnail.
+	// example: https://example.org/fileserver/preview/thumb.jpg
 	Image string `json:"image"`
 	// Used for photo embeds, instead of custom html.
 	EmbedURL string `json:"embed_url"`

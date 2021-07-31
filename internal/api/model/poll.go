@@ -18,12 +18,15 @@
 
 package model
 
-// Poll represents the mastodon-api poll type, as described here: https://docs.joinmastodon.org/entities/poll/
+// Poll represents a poll attached to a status.
+//
+// swagger:model poll
 type Poll struct {
 	// The ID of the poll in the database.
+	// example: 01FBYKMD1KBMJ0W6JF1YZ3VY5D
 	ID string `json:"id"`
 	// When the poll ends. (ISO 8601 Datetime), or null if the poll does not end
-	ExpiresAt string `json:"expires_at"`
+	ExpiresAt string `json:"expires_at,omitempty"`
 	// Is the poll currently expired?
 	Expired bool `json:"expired"`
 	// Does the poll allow multiple-choice answers?
@@ -42,7 +45,9 @@ type Poll struct {
 	Emojis []Emoji `json:"emojis"`
 }
 
-// PollOptions represents the current vote counts for different poll options
+// PollOptions represents the current vote counts for different poll options.
+//
+// swagger:model pollOptions
 type PollOptions struct {
 	// The text value of the poll option. String.
 	Title string `json:"title"`
