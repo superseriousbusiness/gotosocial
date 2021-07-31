@@ -105,7 +105,7 @@ For a detailed view on what's implemented and what's not, and progress made towa
 
 Proper documentation for running and maintaining GoToSocial will be forthcoming in the first release.
 
-For now (if you want to run it pre-alpha, like a beast), check out the [quick and dirty getting started guide](https://docs.gotosocial.org/installation_guide/quick_and_dirty/).
+For now (if you want to run it pre-alpha, like a beast), check out the [quick and dirty getting started guide](https://docs.gotosocial.org/en/latest/installation_guide/quick_and_dirty/).
 
 ## Contact
 
