@@ -88,7 +88,7 @@ import (
 //     description: |-
 //       The newly created domain block, if import != true.
 //       Note that if a list has been imported, then an `array` of
-//       newly created domain blocks will be returned instead. 
+//       newly created domain blocks will be returned instead.
 //     schema:
 //       "$ref": "#/definitions/domainBlock"
 //   '403':
