@@ -24,7 +24,7 @@ import (
 // parameters:
 // - name: id
 //   type: array
-//   items: 
+//   items:
 //     type: string
 //   description: Account IDs.
 //   in: query
