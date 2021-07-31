@@ -42,6 +42,7 @@ type Emoji struct {
 }
 
 // EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
+//
 // swagger:model emojiCreateRequest
 type EmojiCreateRequest struct {
 	// Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.

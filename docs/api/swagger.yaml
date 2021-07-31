@@ -1449,6 +1449,203 @@ paths:
       summary: Verify a token by returning account details pertaining to it.
       tags:
       - accounts
+  /api/v1/admin/custom_emojis:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: emojiCreate
+      parameters:
+      - description: |-
+          The code to use for the emoji, which will be used by instance denizens to select it.
+          This must be unique on the instance.
+        example: blobcat_uwu
+        in: formData
+        name: shortcode
+        pattern: \w{2,30}
+        type: string
+      - description: A jpeg, png, or gif image of the emoji.
+        in: formData
+        name: domains
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The newly-created emoji.
+          schema:
+            $ref: '#/definitions/emoji'
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: Upload and create a new instance emoji.
+      tags:
+      - admin
+  /api/v1/admin/domain_blocks:
+    get:
+      operationId: domainBlocksGet
+      parameters:
+      - description: |-
+          If set to true, then each entry in the returned list of domain blocks will only consist of
+          the fields 'domain' and 'public_comment'. This is perfect for when you want to save and share
+          a list of all the domains you have blocked on your instance, so that someone else can easily import them,
+          but you don't need them to see the database IDs of your blocks, or private comments etc.
+        in: query
+        name: export
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: All domain blocks currently in place.
+          schema:
+            items:
+              $ref: '#/definitions/domainBlock'
+            type: array
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: View all domain blocks currently in place.
+      tags:
+      - admin
+    patch:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Note that you have two options when using this endpoint: either you can set 'import' to true
+        and upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
+        false, and just add one domain block.
+
+        The format of the json file should be something like: `[{"domain":"example.org"},{"domain":"whatever.com","public_comment":"they smell"}]`
+      operationId: domainBlockCreate
+      parameters:
+      - description: |-
+          Signal that a list of domain blocks is being imported as a file.
+          If set to true, then 'domains' must be present as a JSON-formatted file.
+          If set to false, then 'domains' will be ignored, and 'domain' must be present.
+        in: query
+        name: import
+        type: boolean
+      - description: |-
+          JSON-formatted list of domain blocks to import.
+          This is only used if 'import' is set to true.
+        in: formData
+        name: domains
+        type: file
+      - description: |-
+          Single domain to block.
+          Used only if 'import' is not true.
+        example: example.org
+        in: formData
+        name: domain
+        type: string
+      - description: |-
+          Obfuscate the name of the domain when serving it publicly.
+          Eg., 'example.org' becomes something like 'ex***e.org'.
+          Used only if 'import' is not true.
+        in: formData
+        name: obfuscate
+        type: boolean
+      - description: |-
+          Public comment about this domain block.
+          Will be displayed alongside the domain block if you choose to share blocks.
+          Used only if 'import' is not true.
+        example: harassment, transphobia
+        in: formData
+        name: public_comment
+        type: string
+      - description: |-
+          Private comment about this domain block. Will only be shown to other admins, so this
+          is a useful way of internally keeping track of why a certain domain ended up blocked.
+          Used only if 'import' is not true.
+        example: harassment, transphobia, and some stuff only other admins need to
+          know about
+        in: formData
+        name: private_comment
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: "The newly created domain block, if import != true.\nNote that
+            if a list has been imported, then an `array` of\nnewly created domain
+            blocks will be returned instead. "
+          schema:
+            $ref: '#/definitions/domainBlock'
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: Create one or more domain blocks, from a string or a file.
+      tags:
+      - admin
+  /api/v1/admin/domain_blocks/{id}:
+    delete:
+      operationId: domainBlockDelete
+      parameters:
+      - description: The id of the domain block.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The domain block that was just deleted.
+          schema:
+            $ref: '#/definitions/domainBlock'
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: Delete domain block with the given ID.
+      tags:
+      - admin
+    get:
+      operationId: domainBlockGet
+      parameters:
+      - description: The id of the domain block.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The requested domain block.
+          schema:
+            $ref: '#/definitions/domainBlock'
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: View domain block with the given ID.
+      tags:
+      - admin
 schemes:
 - https
 - http

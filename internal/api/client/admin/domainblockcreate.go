@@ -12,7 +12,89 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlocksPOSTHandler deals with the creation of a new domain block.
+// DomainBlocksPOSTHandler deals with the creation of one or more domain blocks.
+//
+// swagger:operation PATCH /api/v1/admin/domain_blocks domainBlockCreate
+//
+// Create one or more domain blocks, from a string or a file.
+//
+// Note that you have two options when using this endpoint: either you can set 'import' to true
+// and upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
+// false, and just add one domain block.
+//
+// The format of the json file should be something like: `[{"domain":"example.org"},{"domain":"whatever.com","public_comment":"they smell"}]`
+//
+// ---
+// tags:
+// - admin
+//
+// consumes:
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: import
+//   in: query
+//   description: |-
+//     Signal that a list of domain blocks is being imported as a file.
+//     If set to true, then 'domains' must be present as a JSON-formatted file.
+//     If set to false, then 'domains' will be ignored, and 'domain' must be present.
+//   type: boolean
+// - name: domains
+//   in: formData
+//   description: |-
+//     JSON-formatted list of domain blocks to import.
+//     This is only used if 'import' is set to true.
+//   type: file
+// - name: domain
+//   in: formData
+//   description: |-
+//     Single domain to block.
+//     Used only if 'import' is not true.
+//   type: string
+//   example: example.org
+// - name: obfuscate
+//   in: formData
+//   description: |-
+//     Obfuscate the name of the domain when serving it publicly.
+//     Eg., 'example.org' becomes something like 'ex***e.org'.
+//     Used only if 'import' is not true.
+//   type: boolean
+// - name: public_comment
+//   in: formData
+//   description: |-
+//     Public comment about this domain block.
+//     Will be displayed alongside the domain block if you choose to share blocks.
+//     Used only if 'import' is not true.
+//   type: string
+//   example: "harassment, transphobia"
+// - name: private_comment
+//   in: formData
+//   description: |-
+//     Private comment about this domain block. Will only be shown to other admins, so this
+//     is a useful way of internally keeping track of why a certain domain ended up blocked.
+//     Used only if 'import' is not true.
+//   type: string
+//   example: "harassment, transphobia, and some stuff only other admins need to know about"
+//
+// security:
+// - OAuth2 Bearer:
+//   - admin
+//
+// responses:
+//   '200':
+//     description: |-
+//       The newly created domain block, if import != true.
+//       Note that if a list has been imported, then an `array` of
+//       newly created domain blocks will be returned instead. 
+//     schema:
+//       "$ref": "#/definitions/domainBlock"
+//   '403':
+//      description: forbidden
+//   '400':
+//      description: bad request
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "DomainBlocksPOSTHandler",

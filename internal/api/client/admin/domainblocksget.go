@@ -10,6 +10,46 @@ import (
 )
 
 // DomainBlocksGETHandler returns a list of all existing domain blocks.
+//
+// swagger:operation GET /api/v1/admin/domain_blocks domainBlocksGet
+//
+// View all domain blocks currently in place.
+//
+// ---
+// tags:
+// - admin
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: export
+//   type: boolean
+//   description: |-
+//     If set to true, then each entry in the returned list of domain blocks will only consist of
+//     the fields 'domain' and 'public_comment'. This is perfect for when you want to save and share
+//     a list of all the domains you have blocked on your instance, so that someone else can easily import them,
+//     but you don't need them to see the database IDs of your blocks, or private comments etc.
+//   in: query
+//   required: false
+//
+// security:
+// - OAuth2 Bearer:
+//   - admin
+//
+// responses:
+//   '200':
+//     description: All domain blocks currently in place.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/domainBlock"
+//   '403':
+//      description: forbidden
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "DomainBlocksGETHandler",
