@@ -18,49 +18,62 @@
 
 package model
 
-// Status represents a mastodon-api Status type, as defined here: https://docs.joinmastodon.org/entities/status/
+// Status represents a status or post.
+//
+// swagger:model status
 type Status struct {
-	// ID of the status in the database.
+	// ID of the status.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id"`
-	// The date when this status was created (ISO 8601 Datetime)
+	// The date when this status was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
-	// ID of the status being replied.
+	// ID of the status being replied to.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	InReplyToID string `json:"in_reply_to_id,omitempty"`
 	// ID of the account being replied to.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	InReplyToAccountID string `json:"in_reply_to_account_id,omitempty"`
-	// Is this status marked as sensitive content?
+	// Status contains sensitive content.
+	// example: false
 	Sensitive bool `json:"sensitive"`
-	// Subject or summary line, below which status content is collapsed until expanded.
+	// Subject, summary, or content warning for the status.
+	// example: warning nsfw
 	SpoilerText string `json:"spoiler_text"`
 	// Visibility of this status.
+	// example: unlisted
 	Visibility Visibility `json:"visibility"`
-	// Primary language of this status. (ISO 639 Part 1 two-letter language code)
+	// Primary language of this status (ISO 639 Part 1 two-letter language code).
+	// example: en
 	Language string `json:"language"`
-	// URI of the status used for federation.
+	// ActivityPub URI of the status. Equivalent to the status's activitypub ID.
+	// example: https://example.org/users/some_user/statuses/01FBVD42CQ3ZEEVMW180SBX03B
 	URI string `json:"uri"`
-	// A link to the status's HTML representation.
+	// The status's publicly available web URL. This link will only work if the visibility of the status is 'public'.
+	// example: https://example.org/@some_user/statuses/01FBVD42CQ3ZEEVMW180SBX03B
 	URL string `json:"url"`
-	// How many replies this status has received.
+	// Number of replies to this status, according to our instance.
 	RepliesCount int `json:"replies_count"`
-	// How many boosts this status has received.
+	// Number of times this status has been boosted/reblogged, according to our instance.
 	ReblogsCount int `json:"reblogs_count"`
-	// How many favourites this status has received.
+	// Number of favourites/likes this status has received, according to our instance.
 	FavouritesCount int `json:"favourites_count"`
-	// Have you favourited this status?
+	// This status has been favourited by the account viewing it.
 	Favourited bool `json:"favourited"`
-	// Have you boosted this status?
+	// This status has been boosted/reblogged by the account viewing it.
 	Reblogged bool `json:"reblogged"`
-	// Have you muted notifications for this status's conversation?
+	// Replies to this status have been muted by the account viewing it.
 	Muted bool `json:"muted"`
-	// Have you bookmarked this status?
+	// This status has been bookmarked by the account viewing it.
 	Bookmarked bool `json:"bookmarked"`
-	// Have you pinned this status? Only appears if the status is pinnable.
+	// This status has been pinned by the account viewing it (only relevant for your own statuses).
 	Pinned bool `json:"pinned,omitempty"`
-	// HTML-encoded status content.
+	// The content of this status. Should be HTML, but might also be plaintext in some cases.
+	// example: <p>Hey this is a status!</p>
 	Content string `json:"content"`
-	// The status being reblogged.
+	// The status that this status is a reblog/boost of.
 	Reblog *Status `json:"reblog,omitempty"`
-	// The application used to post this status.
+	// The application used to post this status, if visible.
 	Application *Application `json:"application"`
 	// The account that authored this status.
 	Account *Account `json:"account"`
@@ -108,17 +121,21 @@ type StatusCreateRequest struct {
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
 
-// Visibility denotes the visibility of this status to other users
+// Visibility denotes the visibility of a status to other users.
+//
+// swagger:model statusVisibility
 type Visibility string
 
 const (
-	// VisibilityPublic means visible to everyone
+	// VisibilityPublic is visible to everyone, and will be available via the web even for nonauthenticated users.
 	VisibilityPublic Visibility = "public"
-	// VisibilityUnlisted means visible to everyone but only on home timelines or in lists
+	// VisibilityUnlisted is visible to everyone, but only on home timelines, lists, etc.
 	VisibilityUnlisted Visibility = "unlisted"
-	// VisibilityPrivate means visible to followers only
+	// VisibilityPrivate is visible only to followers of the account that posted the status.
 	VisibilityPrivate Visibility = "private"
-	// VisibilityDirect means visible only to tagged recipients
+	// VisibilityMutualsOnly is visible only to mutual followers of the account that posted the status.
+	VisibilityMutualsOnly Visibility = "mutuals_only"
+	// VisibilityDirect is visible only to accounts tagged in the status. It is equivalent to a direct message.
 	VisibilityDirect Visibility = "direct"
 )
 

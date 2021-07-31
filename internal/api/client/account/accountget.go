@@ -30,6 +30,9 @@ import (
 // Get information about an account with the given ID.
 //
 // ---
+// tags:
+// - accounts
+//
 // produces:
 // - application/json
 //

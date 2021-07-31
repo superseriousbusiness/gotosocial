@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SWAGGER_FILE="swagger.yaml"
+SWAGGER_FILE="docs/api/swagger.yaml"
 GTS_VERSION="$(cat version)"
 
 swagger generate spec -o "${SWAGGER_FILE}" --scan-models

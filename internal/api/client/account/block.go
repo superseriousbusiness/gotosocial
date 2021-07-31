@@ -32,6 +32,9 @@ import (
 // Block account with id.
 //
 // ---
+// tags:
+// - accounts
+//
 // produces:
 // - application/json
 //

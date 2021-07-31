@@ -38,6 +38,9 @@ import (
 // Create a new account using an application token.
 //
 // ---
+// tags:
+// - accounts
+//
 // consumes:
 // - application/json
 // - application/xml

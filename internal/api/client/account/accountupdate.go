@@ -34,6 +34,9 @@ import (
 // Update your account.
 //
 // ---
+// tags:
+// - accounts
+//
 // consumes:
 // - multipart/form-data
 //

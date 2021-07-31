@@ -34,6 +34,9 @@ import (
 // Verify a token by returning account details pertaining to it.
 //
 // ---
+// tags:
+// - accounts
+//
 // produces:
 // - application/json
 //

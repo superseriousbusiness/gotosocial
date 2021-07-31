@@ -36,9 +36,10 @@ type AttachmentUpdateRequest struct {
 }
 
 // Attachment represents the object returned to a client after a successful media upload request.
-// See: https://docs.joinmastodon.org/methods/statuses/media/
+//
+// swagger:model attachment
 type Attachment struct {
-	// The ID of the attachment in the database.
+	// The ID of the attachment.
 	ID string `json:"id"`
 	// The type of the attachment.
 	// 	unknown = unsupported or unrecognized file type.
@@ -46,23 +47,28 @@ type Attachment struct {
 	// 	gifv = Looping, soundless animation.
 	// 	video = Video clip.
 	// 	audio = Audio track.
+	// example: image
 	Type string `json:"type"`
 	// The location of the original full-size attachment.
+	// example: https://example.org/fileserver/some_id/attachments/some_id/original/attachment.jpeg
 	URL string `json:"url"`
 	// The location of a scaled-down preview of the attachment.
+	// example: https://example.org/fileserver/some_id/attachments/some_id/small/attachment.jpeg
 	PreviewURL string `json:"preview_url"`
 	// The location of the full-size original attachment on the remote server.
+	// Only defined for instances other than our own.
+	// example: https://some-other-server.org/attachments/original/ahhhhh.jpeg
 	RemoteURL string `json:"remote_url,omitempty"`
 	// The location of a scaled-down preview of the attachment on the remote server.
+	// Only defined for instances other than our own.
+	// example: https://some-other-server.org/attachments/small/ahhhhh.jpeg
 	PreviewRemoteURL string `json:"preview_remote_url,omitempty"`
 	// A shorter URL for the attachment.
 	TextURL string `json:"text_url,omitempty"`
-	// Metadata returned by Paperclip.
-	// May contain subtrees small and original, as well as various other top-level properties.
-	// More importantly, there may be another top-level focus Hash object as of 2.3.0, with coordinates can be used for smart thumbnail cropping.
-	// See https://docs.joinmastodon.org/methods/statuses/media/#focal-points points for more.
+	// Metadata for this attachment.
 	Meta MediaMeta `json:"meta,omitempty"`
-	// Alternate text that describes what is in the media attachment, to be used for the visually impaired or when media attachments do not load.
+	// Alt text that describes what is in the media attachment.
+	// example: This is a picture of a kitten. 
 	Description string `json:"description,omitempty"`
 	// A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
 	// See https://github.com/woltapp/blurhash
@@ -70,6 +76,8 @@ type Attachment struct {
 }
 
 // MediaMeta describes the returned media
+//
+// swagger:model mediaMeta
 type MediaMeta struct {
 	Length        string          `json:"length,omitempty"`
 	Duration      float32         `json:"duration,omitempty"`
@@ -87,12 +95,16 @@ type MediaMeta struct {
 }
 
 // MediaFocus describes the focal point of a piece of media. It should be returned to the caller as part of MediaMeta.
+//
+// swagger:model mediaFocus
 type MediaFocus struct {
 	X float32 `json:"x"` // should be between -1 and 1
 	Y float32 `json:"y"` // should be between -1 and 1
 }
 
 // MediaDimensions describes the physical properties of a piece of media. It should be returned to the caller as part of MediaMeta.
+//
+// swagger:model mediaDimensions
 type MediaDimensions struct {
 	Width     int     `json:"width,omitempty"`
 	Height    int     `json:"height,omitempty"`

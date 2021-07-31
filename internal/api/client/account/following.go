@@ -32,6 +32,9 @@ import (
 // See accounts followed by given account id.
 //
 // ---
+// tags:
+// - accounts
+//
 // produces:
 // - application/json
 //

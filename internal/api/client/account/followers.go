@@ -32,6 +32,9 @@ import (
 // See followers of account with given id.
 //
 // ---
+// tags:
+// - accounts
+//
 // produces:
 // - application/json
 //
