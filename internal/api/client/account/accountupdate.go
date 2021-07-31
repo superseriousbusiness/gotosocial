@@ -29,14 +29,78 @@ import (
 // AccountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
 // It should be served as a PATCH at /api/v1/accounts/update_credentials
 //
-// TODO: this can be optimized massively by building up a picture of what we want the new account
-// details to be, and then inserting it all in the database at once. As it is, we do queries one-by-one
-// which is not gonna make the database very happy when lots of requests are going through.
-// This way it would also be safer because the update won't happen until *all* the fields are validated.
-// Otherwise we risk doing a partial update and that's gonna cause probllleeemmmsss.
+// swagger:operation PATCH /api/v1/accounts/update_credentials accountUpdate
+//
+// Update your account.
+//
+// ---
+// tags:
+// - accounts
+//
+// consumes:
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: discoverable
+//   in: formData
+//   description: Account should be made discoverable and shown in the profile directory (if enabled).
+//   type: boolean
+// - name: bot
+//   in: formData
+//   description: Account is flagged as a bot.
+//   type: boolean
+// - name: display_name
+//   in: formData
+//   description: The display name to use for the account.
+//   type: string
+// - name: note
+//   in: formData
+//   description: Bio/description of this account.
+//   type: string
+// - name: avatar
+//   in: formData
+//   description: Avatar of the user.
+//   type: file
+// - name: header
+//   in: formData
+//   description: Header of the user.
+//   type: file
+// - name: locked
+//   in: formData
+//   description: Require manual approval of follow requests.
+//   type: boolean
+// - name: source.privacy
+//   in: formData
+//   description: Default post privacy for authored statuses.
+//   type: string
+// - name: source.sensitive
+//   in: formData
+//   description: Mark authored statuses as sensitive by default.
+//   type: boolean
+// - name: source.language
+//   in: formData
+//   description: Default language to use for authored statuses (ISO 6391).
+//   type: string
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:accounts
+//
+// responses:
+//   '200':
+//     description: "The newly updated account."
+//     schema:
+//       "$ref": "#/definitions/account"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
 func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	l := m.log.WithField("func", "accountUpdateCredentialsPATCHHandler")
-	authed, err := oauth.Authed(c, true, false, false, true)
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
 		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})

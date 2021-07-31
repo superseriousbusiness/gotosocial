@@ -26,6 +26,41 @@ import (
 )
 
 // AccountUnfollowPOSTHandler is the endpoint for removing a follow and/or follow request to the target account
+//
+// swagger:operation POST /api/v1/accounts/{id}/unfollow accountUnfollow
+//
+// Unfollow account with id.
+//
+// ---
+// tags:
+// - accounts
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: The id of the account to unfollow.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:follows
+//
+// responses:
+//   '200':
+//     name: account relationship
+//     description: Your relationship to this account.
+//     schema:
+//       "$ref": "#/definitions/accountRelationship"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AccountUnfollowPOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

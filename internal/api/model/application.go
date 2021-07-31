@@ -18,23 +18,28 @@
 
 package model
 
-// Application represents a mastodon-api Application, as defined here: https://docs.joinmastodon.org/entities/application/.
+// Application represents an api Application, as defined here.
 // Primarily, application is used for allowing apps like Tusky etc to connect to Mastodon on behalf of a user.
-// See https://docs.joinmastodon.org/methods/apps/
+//
+// swagger:model application
 type Application struct {
-	// The application ID in the db
+	// The ID of the application.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id,omitempty"`
-	// The name of your application.
+	// The name of the application.
+	// example: Tusky
 	Name string `json:"name"`
-	// The website associated with your application (url)
+	// The website associated with the application (url)
+	// example: https://tusky.app
 	Website string `json:"website,omitempty"`
-	// Where the user should be redirected after authorization.
+	// Post-authorization redirect URI for the application (OAuth2).
+	// example: https://example.org/callback?some=query
 	RedirectURI string `json:"redirect_uri,omitempty"`
-	// ClientID to use when obtaining an oauth token for this application (ie., in client_id parameter of https://docs.joinmastodon.org/methods/apps/)
+	// Client ID associated with this application.
 	ClientID string `json:"client_id,omitempty"`
-	// Client secret to use when obtaining an auth token for this application (ie., in client_secret parameter of https://docs.joinmastodon.org/methods/apps/)
+	// Client secret associated with this application.
 	ClientSecret string `json:"client_secret,omitempty"`
-	// Used for Push Streaming API. Returned with POST /api/v1/apps. Equivalent to https://docs.joinmastodon.org/entities/pushsubscription/#server_key
+	// Push API key for this application.
 	VapidKey string `json:"vapid_key,omitempty"`
 }
 

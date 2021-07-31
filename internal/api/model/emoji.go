@@ -20,28 +20,32 @@ package model
 
 import "mime/multipart"
 
-// Emoji represents a custom emoji. See https://docs.joinmastodon.org/entities/emoji/
+// Emoji represents a custom emoji.
+//
+// swagger:model emoji
 type Emoji struct {
-	// REQUIRED
-
 	// The name of the custom emoji.
+	// example: blobcat_uwu
 	Shortcode string `json:"shortcode"`
-	// A link to the custom emoji.
+	// Web URL of the custom emoji.
+	// example: https://example.org/fileserver/emojis/blogcat_uwu.gif
 	URL string `json:"url"`
 	// A link to a static copy of the custom emoji.
+	// example: https://example.org/fileserver/emojis/blogcat_uwu.png
 	StaticURL string `json:"static_url"`
-	// Whether this Emoji should be visible in the picker or unlisted.
+	// Emoji is visible in the emoji picker of the instance.
+	// example: true
 	VisibleInPicker bool `json:"visible_in_picker"`
-
-	// OPTIONAL
-
 	// Used for sorting custom emoji in the picker.
+	// example: blobcats
 	Category string `json:"category,omitempty"`
 }
 
 // EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
+// swagger:model emojiCreateRequest
 type EmojiCreateRequest struct {
 	// Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
+	// example: blobcat_uwu
 	Shortcode string `form:"shortcode" validation:"required"`
 	// Image file to use for the emoji. Must be png or gif and no larger than 50kb.
 	Image *multipart.FileHeader `form:"image" validation:"required"`

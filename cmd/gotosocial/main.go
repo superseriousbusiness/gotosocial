@@ -16,6 +16,30 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Package classification awesome.
+//
+// Documentation of our awesome AaaaaaaaaaPI.
+//
+//     Schemes: http
+//     BasePath: /
+//     Version: 1.0.0
+//     Host: some-url.com
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - basic
+//
+//    SecurityDefinitions:
+//    basic:
+//      type: basic
+//
+// swagger:meta
+
 package main
 
 import (
@@ -23,6 +47,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	_ "github.com/superseriousbusiness/gotosocial/docs"
 	"github.com/urfave/cli/v2"
 )
 
@@ -32,6 +57,7 @@ var Version string
 // Commit is the git commit of GtS being used
 var Commit string
 
+//go:generate swagger generate spec
 func main() {
 	var v string
 	if Commit == "" {

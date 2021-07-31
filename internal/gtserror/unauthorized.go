@@ -16,16 +16,4 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
-
-// Activity represents the mastodon-api Activity type. See here: https://docs.joinmastodon.org/entities/activity/
-type Activity struct {
-	// Midnight at the first day of the week. (UNIX Timestamp as string)
-	Week string `json:"week"`
-	// Statuses created since the week began. Integer cast to string.
-	Statuses string `json:"statuses"`
-	// User logins since the week began. Integer cast as string.
-	Logins string `json:"logins"`
-	// User registrations since the week began. Integer cast as string.
-	Registrations string `json:"registrations"`
-}
+package gtserror

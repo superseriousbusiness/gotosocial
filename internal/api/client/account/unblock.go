@@ -26,6 +26,41 @@ import (
 )
 
 // AccountUnblockPOSTHandler handles the removal of a block from the authed account targeting the given account ID.
+//
+// swagger:operation POST /api/v1/accounts/{id}/unblock accountUnblock
+//
+// Unblock account with ID.
+//
+// ---
+// tags:
+// - accounts
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: The id of the account to unblock.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:blocks
+//
+// responses:
+//   '200':
+//     name: account relationship
+//     description: Your relationship to this account.
+//     schema:
+//       "$ref": "#/definitions/accountRelationship"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountUnblockPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

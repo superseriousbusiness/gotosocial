@@ -18,10 +18,14 @@
 
 package model
 
-// Tag represents a hashtag used within the content of a status. See https://docs.joinmastodon.org/entities/tag/
+// Tag represents a hashtag used within the content of a status.
+//
+// swagger:model tag
 type Tag struct {
 	// The value of the hashtag after the # sign.
+	// example: helloworld
 	Name string `json:"name"`
-	// A link to the hashtag on the instance.
+	// Web link to the hashtag.
+	// example: https://example.org/tags/helloworld
 	URL string `json:"url"`
 }

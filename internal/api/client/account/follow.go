@@ -27,6 +27,41 @@ import (
 )
 
 // AccountFollowPOSTHandler is the endpoint for creating a new follow request to the target account
+//
+// swagger:operation POST /api/v1/accounts/{id}/follow accountFollow
+//
+// Follow account with id.
+//
+// ---
+// tags:
+// - accounts
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: The id of the account to follow.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:follows
+//
+// responses:
+//   '200':
+//     name: account relationship
+//     description: Your relationship to this account.
+//     schema:
+//       "$ref": "#/definitions/accountRelationship"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountFollowPOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

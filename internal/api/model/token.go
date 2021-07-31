@@ -18,14 +18,19 @@
 
 package model
 
-// Token represents an OAuth token used for authenticating with the API and performing actions.. See https://docs.joinmastodon.org/entities/token/
+// Token represents an OAuth token used for authenticating with the GoToSocial API and performing actions.
+//
+// swagger:model oauthToken
 type Token struct {
-	// An OAuth token to be used for authorization.
+	// Access token used for authorization.
 	AccessToken string `json:"access_token"`
-	// The OAuth token type. Mastodon uses Bearer tokens.
+	// OAuth token type. Will always be 'Bearer'.
+	// example: bearer
 	TokenType string `json:"token_type"`
-	// The OAuth scopes granted by this token, space-separated.
+	// OAuth scopes granted by this token, space-separated.
+	// example: read write admin
 	Scope string `json:"scope"`
-	// When the token was generated. (UNIX timestamp seconds)
+	// When the OAuth token was generated (UNIX timestamp seconds).
+	// example: 1627644520
 	CreatedAt int64 `json:"created_at"`
 }

@@ -18,14 +18,19 @@
 
 package model
 
-// Mention represents the mastodon-api mention type, as documented here: https://docs.joinmastodon.org/entities/mention/
+// Mention represents a mention of another account.
 type Mention struct {
-	// The account id of the mentioned user.
+	// The ID of the mentioned account.
+	// example: 01FBYJHQWQZAVWFRK9PDYTKGMB
 	ID string `json:"id"`
-	// The username of the mentioned user.
+	// The username of the mentioned account.
+	// example: some_user
 	Username string `json:"username"`
-	// The location of the mentioned user's profile.
+	// The web URL of the mentioned account's profile.
+	// example: https://example.org/@some_user
 	URL string `json:"url"`
-	// The webfinger acct: URI of the mentioned user. Equivalent to username for local users, or username@domain for remote users.
+	// The account URI as discovered via webfinger.
+	// Equal to username for local users, or username@domain for remote users.
+	// example: some_user@example.org
 	Acct string `json:"acct"`
 }

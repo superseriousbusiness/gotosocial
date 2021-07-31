@@ -25,12 +25,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountGETHandler serves the account information held by the server in response to a GET
-// request. It should be served as a GET at /api/v1/accounts/:id.
+// AccountGETHandler returns info about the given account.
 //
-// See: https://docs.joinmastodon.org/methods/accounts/
+// swagger:operation GET /api/v1/accounts/{id} accountGet
+//
+// Get information about an account with the given ID.
+//
+// ---
+// tags:
+// - accounts
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: The id of the requested account.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     schema:
+//       "$ref": "#/definitions/account"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) AccountGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, false, false, false, false)
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
