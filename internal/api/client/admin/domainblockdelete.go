@@ -9,6 +9,40 @@ import (
 )
 
 // DomainBlockDELETEHandler deals with the delete of an existing domain block.
+//
+// swagger:operation DELETE /api/v1/admin/domain_blocks/{id} domainBlockDelete
+//
+// Delete domain block with the given ID.
+//
+// ---
+// tags:
+// - admin
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: The id of the domain block.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - admin
+//
+// responses:
+//   '200':
+//     description: The domain block that was just deleted.
+//     schema:
+//       "$ref": "#/definitions/domainBlock"
+//   '403':
+//      description: forbidden
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
 func (m *Module) DomainBlockDELETEHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "DomainBlockDELETEHandler",

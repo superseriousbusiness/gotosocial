@@ -31,6 +31,49 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// emojiCreateRequest handles the creation of a new instance emoji.
+//
+// swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
+//
+// Upload and create a new instance emoji.
+//
+// ---
+// tags:
+// - admin
+//
+// consumes:
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: shortcode
+//   in: formData
+//   description: |-
+//     The code to use for the emoji, which will be used by instance denizens to select it.
+//     This must be unique on the instance.
+//   type: string
+//   pattern: \w{2,30}
+//   example: blobcat_uwu
+// - name: domains
+//   in: formData
+//   description: A png or gif image of the emoji. Animated pngs work too!
+//   type: file
+//
+// security:
+// - OAuth2 Bearer:
+//   - admin
+//
+// responses:
+//   '200':
+//     description: The newly-created emoji.
+//     schema:
+//       "$ref": "#/definitions/emoji"
+//   '403':
+//      description: forbidden
+//   '400':
+//      description: bad request
 func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "emojiCreatePOSTHandler",
