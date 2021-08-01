@@ -322,6 +322,108 @@ definitions:
     type: object
     x-go-name: Relationship
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  advancedStatusCreateForm:
+    description: |-
+      AdvancedStatusCreateForm wraps the mastodon status create form along with the GTS advanced
+      visibility settings.
+    properties:
+      boostable:
+        description: This status can be boosted/reblogged.
+        type: boolean
+        x-go-name: Boostable
+      federated:
+        description: This status will be federated beyond the local timeline(s).
+        type: boolean
+        x-go-name: Federated
+      format:
+        $ref: '#/definitions/statusFormat'
+      in_reply_to_id:
+        description: ID of the status being replied to, if status is a reply.
+        example: 01FC0VT29CVV2BMXRKC7H42A99
+        type: string
+        x-go-name: InReplyToID
+      language:
+        description: ISO 639 language code for this status.
+        example: en
+        type: string
+        x-go-name: Language
+      likeable:
+        description: This status can be liked/faved.
+        type: boolean
+        x-go-name: Likeable
+      media_ids:
+        description: Array of Attachment ids to be attached as media. If provided,
+          status becomes optional, and poll cannot be used.
+        items:
+          type: string
+        type: array
+        x-go-name: MediaIDs
+      poll:
+        $ref: '#/definitions/pollRequest'
+      replyable:
+        description: This status can be replied to.
+        type: boolean
+        x-go-name: Replyable
+      scheduled_at:
+        description: ISO 8601 Datetime at which to schedule a status. Providing this
+          paramter will cause ScheduledStatus to be returned instead of Status. Must
+          be at least 5 minutes in the future.
+        type: string
+        x-go-name: ScheduledAt
+      sensitive:
+        description: Status and attached media should be marked as sensitive.
+        example: true
+        type: boolean
+        x-go-name: Sensitive
+      spoiler_text:
+        description: Text to be shown as a warning or subject before the actual content.
+          Statuses are generally collapsed behind this field.
+        example: long article, politics
+        type: string
+        x-go-name: SpoilerText
+      status:
+        description: Text content of the status. If media_ids is provided, this becomes
+          optional. Attaching a poll is optional while status is provided.
+        example: this is a brand new status!
+        type: string
+        x-go-name: Status
+      visibility:
+        $ref: '#/definitions/statusVisibility'
+      visibility_advanced:
+        description: The gotosocial visibility model.
+        type: string
+        x-go-name: VisibilityAdvanced
+    type: object
+    x-go-name: AdvancedStatusCreateForm
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  advancedVisibilityFlagsForm:
+    description: |-
+      AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
+      to the standard mastodon-compatible ones.
+    properties:
+      boostable:
+        description: This status can be boosted/reblogged.
+        type: boolean
+        x-go-name: Boostable
+      federated:
+        description: This status will be federated beyond the local timeline(s).
+        type: boolean
+        x-go-name: Federated
+      likeable:
+        description: This status can be liked/faved.
+        type: boolean
+        x-go-name: Likeable
+      replyable:
+        description: This status can be replied to.
+        type: boolean
+        x-go-name: Replyable
+      visibility_advanced:
+        description: The gotosocial visibility model.
+        type: string
+        x-go-name: VisibilityAdvanced
+    type: object
+    x-go-name: AdvancedVisibilityFlagsForm
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   application:
     description: Primarily, application is used for allowing apps like Tusky etc to
       connect to Mastodon on behalf of a user.
@@ -361,6 +463,36 @@ definitions:
     title: Application represents an api Application, as defined here.
     type: object
     x-go-name: Application
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  applicationCreateRequest:
+    properties:
+      client_name:
+        description: The name of the application.
+        example: Tusky
+        type: string
+        x-go-name: ClientName
+      redirect_uris:
+        description: |-
+          Where the user should be redirected after authorization.
+          To display the authorization code to the user instead of redirecting
+          to a web page, use urn:ietf:wg:oauth:2.0:oob in this parameter.
+        example: https://someapp.org/callback?q=something
+        type: string
+        x-go-name: RedirectURIs
+      scopes:
+        description: Space separated list of scopes. If none is provided, defaults
+          to read.
+        example: read write admin
+        type: string
+        x-go-name: Scopes
+      website:
+        description: A URL to the web page of the app (optional).
+        example: https://tusky.app
+        type: string
+        x-go-name: Website
+    title: ApplicationCreateRequest represents a POST request to https://example.org/api/v1/apps.
+    type: object
+    x-go-name: ApplicationCreateRequest
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   attachment:
     properties:
@@ -847,6 +979,31 @@ definitions:
     type: object
     x-go-name: PollOptions
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  pollRequest:
+    description: It should be used at the path https://example.org/api/v1/statuses
+    properties:
+      ExpiresIn:
+        description: Duration the poll should be open, in seconds. If provided, media_ids
+          cannot be used, and poll[options] must be provided.
+        format: int64
+        type: integer
+      HideTotals:
+        description: Hide vote counts until the poll ends?
+        type: boolean
+      Multiple:
+        description: Allow multiple choices?
+        type: boolean
+      Options:
+        description: Array of possible answers. If provided, media_ids cannot be used,
+          and poll[expires_in] must be provided.
+        items:
+          type: string
+        type: array
+    title: 'PollRequest represents a mastodon-api poll attached to a status POST request,
+      as defined here: https://docs.joinmastodon.org/methods/statuses/'
+    type: object
+    x-go-name: PollRequest
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   status:
     properties:
       account:
@@ -989,6 +1146,66 @@ definitions:
     title: Status represents a status or post.
     type: object
     x-go-name: Status
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  statusCreateRequest:
+    description: It should be used at the path https://mastodon.example/api/v1/statuses
+    properties:
+      format:
+        $ref: '#/definitions/statusFormat'
+      in_reply_to_id:
+        description: ID of the status being replied to, if status is a reply.
+        example: 01FC0VT29CVV2BMXRKC7H42A99
+        type: string
+        x-go-name: InReplyToID
+      language:
+        description: ISO 639 language code for this status.
+        example: en
+        type: string
+        x-go-name: Language
+      media_ids:
+        description: Array of Attachment ids to be attached as media. If provided,
+          status becomes optional, and poll cannot be used.
+        items:
+          type: string
+        type: array
+        x-go-name: MediaIDs
+      poll:
+        $ref: '#/definitions/pollRequest'
+      scheduled_at:
+        description: ISO 8601 Datetime at which to schedule a status. Providing this
+          paramter will cause ScheduledStatus to be returned instead of Status. Must
+          be at least 5 minutes in the future.
+        type: string
+        x-go-name: ScheduledAt
+      sensitive:
+        description: Status and attached media should be marked as sensitive.
+        example: true
+        type: boolean
+        x-go-name: Sensitive
+      spoiler_text:
+        description: Text to be shown as a warning or subject before the actual content.
+          Statuses are generally collapsed behind this field.
+        example: long article, politics
+        type: string
+        x-go-name: SpoilerText
+      status:
+        description: Text content of the status. If media_ids is provided, this becomes
+          optional. Attaching a poll is optional while status is provided.
+        example: this is a brand new status!
+        type: string
+        x-go-name: Status
+      visibility:
+        $ref: '#/definitions/statusVisibility'
+    title: 'StatusCreateRequest represents a mastodon-api status POST request, as
+      defined here: https://docs.joinmastodon.org/methods/statuses/'
+    type: object
+    x-go-name: StatusCreateRequest
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  statusFormat:
+    description: Can be either plain or markdown. Empty will default to plain.
+    title: StatusFormat is the format in which to parse the submitted status.
+    type: string
+    x-go-name: StatusFormat
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   statusVisibility:
     title: Visibility denotes the visibility of a status to other users.
@@ -1463,7 +1680,7 @@ paths:
         name: shortcode
         pattern: \w{2,30}
         type: string
-      - description: A jpeg, png, or gif image of the emoji.
+      - description: A png or gif image of the emoji. Animated pngs work too!
         in: formData
         name: domains
         type: file
@@ -1517,7 +1734,7 @@ paths:
       summary: View all domain blocks currently in place.
       tags:
       - admin
-    patch:
+    post:
       consumes:
       - multipart/form-data
       description: |-
@@ -1576,9 +1793,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: "The newly created domain block, if import != true.\nNote that
-            if a list has been imported, then an `array` of\nnewly created domain
-            blocks will be returned instead. "
+          description: |-
+            The newly created domain block, if import != true.
+            Note that if a list has been imported, then an `array` of
+            newly created domain blocks will be returned instead.
           schema:
             $ref: '#/definitions/domainBlock'
         "400":
@@ -1646,6 +1864,156 @@ paths:
       summary: View domain block with the given ID.
       tags:
       - admin
+  /api/v1/apps:
+    post:
+      consumes:
+      - application/json
+      - application/xml
+      - application/x-www-form-urlencoded
+      - multipart/form-data
+      description: |-
+        The registered application can be used to obtain an application token,
+        which can then be used to register a new account, or (through user auth) obtain
+        an access token.
+      operationId: appCreate
+      parameters:
+      - in: body
+        name: Application Create Request
+        schema:
+          $ref: '#/definitions/applicationCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The newly-created application.
+          schema:
+            $ref: '#/definitions/application'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "422":
+          description: unprocessable
+        "500":
+          description: internal error
+      summary: Register a new application on this instance.
+      tags:
+      - apps
+  /api/v1/blocks:
+    get:
+      description: |-
+        The next and previous queries can be parsed from the returned Link header.
+        Example: `<https://example.org/api/v1/blocks?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/blocks?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"`
+      operationId: blocksGet
+      parameters:
+      - default: 20
+        description: Number of blocks to return.
+        in: query
+        name: limit
+        type: integer
+      - description: |-
+          Return only blocks *OLDER* than the given max block ID.
+          The block with the specified ID will not be included in the response.
+        in: query
+        name: max_id
+        type: string
+      - description: |-
+          Return only blocks *NEWER* than the given since block ID.
+          The block with the specified ID will not be included in the response.
+        in: query
+        name: since_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          headers:
+            Link:
+              description: Links to the next and previous queries.
+              type: string
+          schema:
+            items:
+              $ref: '#/definitions/account'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - read:blocks
+      summary: Get an array of accounts that requesting account has blocked.
+      tags:
+      - blocks
+  /api/v1/statuses:
+    post:
+      consumes:
+      - application/json
+      - application/xml
+      - application/x-www-form-urlencoded
+      operationId: statusCreate
+      parameters:
+      - in: body
+        name: Status create form.
+        schema:
+          $ref: '#/definitions/advancedStatusCreateForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The newly created status.
+          schema:
+            $ref: '#/definitions/status'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "404":
+          description: not found
+        "500":
+          description: internal error
+      security:
+      - OAuth2 Application:
+        - write:statuses
+      summary: Create a new status.
+      tags:
+      - statuses
+  /api/v1/statuses/{id}/reblog:
+    post:
+      description: |-
+        If the target status is rebloggable/boostable, it will be shared with your followers.
+        This is equivalent to an activitypub 'announce' activity.
+      operationId: statusReblog
+      parameters:
+      - description: Target status ID.
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: The boost of the status.
+          schema:
+            $ref: '#/definitions/status'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - write:statuses
+      summary: Reblog/boost status with the given ID.
+      tags:
+      - statuses
 schemes:
 - https
 - http
@@ -1664,10 +2032,12 @@ securityDefinitions:
       admin:accounts: grants admin access to accounts
       read: grants read access to everything
       read:accounts: grants read access to accounts
+      read:blocks: grant read access to blocks
       write: grants write access to everything
       write:accounts: grants write access to accounts
       write:blocks: grants write access to blocks
       write:follows: grants write access to follows
+      write:statuses: grants write access to statuses
     tokenUrl: https://example.org/oauth/token
     type: oauth2
 swagger: "2.0"

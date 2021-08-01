@@ -29,6 +29,47 @@ import (
 
 // AppsPOSTHandler should be served at https://example.org/api/v1/apps
 // It is equivalent to: https://docs.joinmastodon.org/methods/apps/
+//
+// swagger:operation POST /api/v1/apps appCreate
+//
+// Register a new application on this instance.
+//
+// The registered application can be used to obtain an application token,
+// which can then be used to register a new account, or (through user auth) obtain
+// an access token.
+//
+// ---
+// tags:
+// - apps
+//
+// consumes:
+// - application/json
+// - application/xml
+// - application/x-www-form-urlencoded
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: Application Create Request
+//   in: body
+//   schema:
+//     "$ref": "#/definitions/applicationCreateRequest"
+//
+// responses:
+//   '200':
+//     description: "The newly-created application."
+//     schema:
+//       "$ref": "#/definitions/application"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '422':
+//      description: unprocessable
+//   '500':
+//      description: internal error
 func (m *Module) AppsPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AppsPOSTHandler")
 	l.Trace("entering AppsPOSTHandler")

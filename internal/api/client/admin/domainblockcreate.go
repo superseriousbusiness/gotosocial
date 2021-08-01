@@ -14,7 +14,7 @@ import (
 
 // DomainBlocksPOSTHandler deals with the creation of one or more domain blocks.
 //
-// swagger:operation PATCH /api/v1/admin/domain_blocks domainBlockCreate
+// swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
 //
 // Create one or more domain blocks, from a string or a file.
 //

@@ -97,33 +97,40 @@ type Status struct {
 
 // StatusCreateRequest represents a mastodon-api status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
 // It should be used at the path https://mastodon.example/api/v1/statuses
+//
+// swagger:model statusCreateRequest
 type StatusCreateRequest struct {
 	// Text content of the status. If media_ids is provided, this becomes optional. Attaching a poll is optional while status is provided.
+	// example: this is a brand new status!
 	Status string `form:"status" json:"status" xml:"status"`
 	// Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
 	MediaIDs []string `form:"media_ids" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
-	// ID of the status being replied to, if status is a reply
+	// ID of the status being replied to, if status is a reply.
+	// example: 01FC0VT29CVV2BMXRKC7H42A99
 	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id" xml:"in_reply_to_id"`
-	// Mark status and attached media as sensitive?
+	// Status and attached media should be marked as sensitive.
+	// example: true
 	Sensitive bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
 	// Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
+	// example: long article, politics
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
 	// Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
 	// ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
 	// ISO 639 language code for this status.
+	// example: en
 	Language string `form:"language" json:"language" xml:"language"`
-	// Format in which to parse the submitted status.
-	// Can be either plain or markdown. Empty will default to plain.
+	// Format to use when parsing this status: markdown, plain.
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
 
 // Visibility denotes the visibility of a status to other users.
 //
 // swagger:model statusVisibility
+// example: unlisted
 type Visibility string
 
 const (
@@ -141,6 +148,8 @@ const (
 
 // AdvancedStatusCreateForm wraps the mastodon status create form along with the GTS advanced
 // visibility settings.
+//
+// swagger:model advancedStatusCreateForm
 type AdvancedStatusCreateForm struct {
 	StatusCreateRequest
 	AdvancedVisibilityFlagsForm
@@ -148,20 +157,29 @@ type AdvancedStatusCreateForm struct {
 
 // AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
 // to the standard mastodon-compatible ones.
+//
+// swagger:model advancedVisibilityFlagsForm
 type AdvancedVisibilityFlagsForm struct {
-	// The gotosocial visibility model
+	// The gotosocial visibility model.
 	VisibilityAdvanced *string `form:"visibility_advanced" json:"visibility_advanced" xml:"visibility_advanced"`
-	// This status will be federated beyond the local timeline(s)
+	// This status will be federated beyond the local timeline(s).
 	Federated *bool `form:"federated" json:"federated" xml:"federated"`
-	// This status can be boosted/reblogged
+	// This status can be boosted/reblogged.
 	Boostable *bool `form:"boostable" json:"boostable" xml:"boostable"`
-	// This status can be replied to
+	// This status can be replied to.
 	Replyable *bool `form:"replyable" json:"replyable" xml:"replyable"`
-	// This status can be liked/faved
+	// This status can be liked/faved.
 	Likeable *bool `form:"likeable" json:"likeable" xml:"likeable"`
 }
 
-// StatusFormat determines what kind of format a submitted status should be parsed in
+// StatusFormat is the format in which to parse the submitted status.
+// Can be either plain or markdown. Empty will default to plain.
+//
+// swagger:model statusFormat
+// enum:
+//   - plain
+//   - markdown
+// example: plain
 type StatusFormat string
 
 // StatusFormatPlain expects a plaintext status which will then be formatted into html.

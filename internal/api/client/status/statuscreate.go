@@ -30,7 +30,47 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// StatusCreatePOSTHandler deals with the creation of new statuses
+// StatusCreatePOSTHandler deals with the creation of new statuses.
+//
+// swagger:operation POST /api/v1/statuses statusCreate
+//
+// Create a new status.
+//
+// ---
+// tags:
+// - statuses
+//
+// consumes:
+// - application/json
+// - application/xml
+// - application/x-www-form-urlencoded
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: Status create form.
+//   in: body
+//   schema:
+//     "$ref": "#/definitions/advancedStatusCreateForm"
+//
+// security:
+// - OAuth2 Application:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     description: "The newly created status."
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
+//   '500':
+//      description: internal error
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true) // posting a status is serious business so we want *everything*
