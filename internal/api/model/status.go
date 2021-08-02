@@ -18,7 +18,7 @@
 
 package model
 
-// Status represents a status or post.
+// Status models a status or post.
 //
 // swagger:model status
 type Status struct {

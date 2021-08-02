@@ -37,7 +37,9 @@
 //           read:accounts: grants read access to accounts
 //           read:blocks: grant read access to blocks
 //           read:media: grant read access to media
+//           read:search: grant read access to searches
 //           read:statuses: grants read access to statuses
+//           read:streaming: grants read access to streaming api
 //           write: grants write access to everything
 //           write:accounts: grants write access to accounts
 //           write:blocks: grants write access to blocks

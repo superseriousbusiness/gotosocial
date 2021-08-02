@@ -26,15 +26,81 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// HomeTimelineGETHandler serves status from the HOME timeline.
+// HomeTimelineGETHandler swagger:operation GET /api/v1/timelines/home homeTimeline
 //
-// Several different filters might be passed into this function in the query:
+// See statuses/posts by accounts you follow.
 //
-// 	max_id -- the maximum ID of the status to show
-//  since_id -- Return results newer than id
-// 	min_id -- Return results immediately newer than id
-// 	limit -- show only limit number of statuses
-// 	local -- Return only local statuses?
+// The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+//
+// The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+//
+// Example:
+//
+// ```
+// <https://example.org/api/v1/timelines/home?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/home?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+// ````
+//
+// ---
+// tags:
+// - timelines
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: max_id
+//   type: string
+//   description: |-
+//     Return only statuses *OLDER* than the given max status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
+//   required: false
+// - name: since_id
+//   type: string
+//   description: |-
+//     Return only statuses *NEWER* than the given since status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
+// - name: min_id
+//   type: string
+//   description: |-
+//     Return only statuses *NEWER* than the given since status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
+//   required: false
+// - name: limit
+//   type: integer
+//   description: Number of statuses to return.
+//   default: 20
+//   in: query
+//   required: false
+// - name: local
+//   type: boolean
+//   description: Show only statuses posted by local accounts.
+//   default: false
+//   in: query
+//   required: false
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:statuses
+//
+// responses:
+//   '200':
+//     name: statuses
+//     description: Array of statuses.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/status"
+//     headers:
+//       Link:
+//         type: string
+//         description: Links to the next and previous queries.
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
 func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "HomeTimelineGETHandler")
 

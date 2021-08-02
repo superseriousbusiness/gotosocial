@@ -1226,6 +1226,27 @@ definitions:
     type: object
     x-go-name: PollOptions
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  searchResult:
+    properties:
+      accounts:
+        items:
+          $ref: '#/definitions/account'
+        type: array
+        x-go-name: Accounts
+      hashtags:
+        items:
+          $ref: '#/definitions/tag'
+        type: array
+        x-go-name: Hashtags
+      statuses:
+        items:
+          $ref: '#/definitions/status'
+        type: array
+        x-go-name: Statuses
+    title: SearchResult models a search result.
+    type: object
+    x-go-name: SearchResult
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   status:
     properties:
       account:
@@ -1365,7 +1386,7 @@ definitions:
         x-go-name: URL
       visibility:
         $ref: '#/definitions/statusVisibility'
-    title: Status represents a status or post.
+    title: Status models a status or post.
     type: object
     x-go-name: Status
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -2590,6 +2611,107 @@ paths:
       summary: Update a media attachment.
       tags:
       - media
+  /api/v1/search:
+    get:
+      description: If statuses are in the result, they will be returned in descending
+        chronological order (newest first), with sequential IDs (bigger = newer).
+      operationId: searchGet
+      parameters:
+      - description: If type is `statuses`, then statuses returned will be authored
+          only by this account.
+        in: query
+        name: account_id
+        type: string
+        x-go-name: AccountID
+      - description: |-
+          Return results *older* than this id.
+
+          The entry with this ID will not be included in the search results.
+        in: query
+        name: max_id
+        type: string
+        x-go-name: MaxID
+      - description: |-
+          Return results *newer* than this id.
+
+          The entry with this ID will not be included in the search results.
+        in: query
+        name: min_id
+        type: string
+        x-go-name: MinID
+      - description: |-
+          Type of the search query to perform.
+
+          Must be one of: `accounts`, `hashtags`, `statuses`.
+        in: query
+        name: type
+        required: true
+        type: string
+        x-go-name: Type
+      - default: false
+        description: Filter out tags that haven't been reviewed and approved by an
+          instance admin.
+        in: query
+        name: exclude_unreviewed
+        type: boolean
+        x-go-name: ExcludeUnreviewed
+      - description: |-
+          String to use as a search query.
+
+          For accounts, this should be in the format `@someaccount@some.instance.com`, or the format `https://some.instance.com/@someaccount`
+
+          For a status, this can be in the format: `https://some.instance.com/@someaccount/SOME_ID_OF_A_STATUS`
+        in: query
+        name: q
+        required: true
+        type: string
+        x-go-name: Query
+      - default: false
+        description: Attempt to resolve the query by performing a remote webfinger
+          lookup, if the query includes a remote host.
+        in: query
+        name: resolve
+        type: boolean
+        x-go-name: Resolve
+      - default: 20
+        description: Maximum number of results to load, per type.
+        format: int64
+        in: query
+        maximum: 40
+        minimum: 1
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - default: 0
+        description: Offset for paginating search results.
+        format: int64
+        in: query
+        name: offset
+        type: integer
+        x-go-name: Offset
+      - default: false
+        description: Only include accounts that the searching account is following.
+        in: query
+        name: following
+        type: boolean
+        x-go-name: Following
+      responses:
+        "200":
+          description: Results of the search.
+          schema:
+            items:
+              $ref: '#/definitions/searchResult'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      security:
+      - OAuth2 Bearer:
+        - read:search
+      summary: Search for statuses, accounts, or hashtags, on this instance or elsewhere.
+      tags:
+      - search
   /api/v1/statuses:
     post:
       consumes:
@@ -2743,8 +2865,8 @@ paths:
       - statuses
   /api/v1/statuses/{id}/context:
     get:
-      description: The returned statuses will be ordered in threads, so they are suitable
-        to be displayed in the order in which they were returned.
+      description: The returned statuses will be ordered in a thread structure, so
+        they are suitable to be displayed in the order in which they were returned.
       operationId: statusContext
       parameters:
       - description: Target status ID.
@@ -2770,8 +2892,7 @@ paths:
       security:
       - OAuth2 Bearer:
         - read:statuses
-      summary: Return parents and children of the given status. In other words, see
-        the reply chain of this status.
+      summary: Return ancestors and descendants of the given status.
       tags:
       - statuses
   /api/v1/statuses/{id}/favourite:
@@ -2961,6 +3082,230 @@ paths:
       summary: Unreblog/unboost status with the given ID.
       tags:
       - statuses
+  /api/v1/streaming:
+    get:
+      description: |-
+        The scheme used should *always* be `wss`. The streaming basepath can be viewed at `/api/v1/instance`.
+
+        On a successful connection, a code `101` will be returned, which indicates that the connection is being upgraded to a secure websocket connection.
+
+        As long as the connection is open, various message types will be streamed into it.
+
+        GoToSocial will ping the connection every 30 seconds to check whether the client is still receiving.
+
+        If the ping fails, or something else goes wrong during transmission, then the connection will be dropped, and the client will be expected to start it again.
+      operationId: streamGet
+      parameters:
+      - description: Access token for the requesting account.
+        in: query
+        name: access_token
+        required: true
+        type: string
+      - description: |-
+          Type of stream to request.
+
+          Options are:
+
+          `user`: receive updates for the account's home timeline.
+          `public`: receive updates for the public timeline.
+          `public:local`: receive updates for the local timeline.
+          `hashtag`: receive updates for a given hashtag.
+          `hashtag:local`: receive local updates for a given hashtag.
+          `list`: receive updates for a certain list of accounts.
+          `direct`: receive updates for direct messages.
+        in: query
+        name: stream
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: ""
+          schema:
+            properties:
+              event:
+                description: |-
+                  The type of event being received.
+
+                  `update`: a new status has been received.
+                  `notification`: a new notification has been received.
+                  `delete`: a status has been deleted.
+                  `filters_changed`: not implemented.
+                enum:
+                - update
+                - notification
+                - delete
+                - filters_changed
+                type: string
+              payload:
+                description: |-
+                  The payload of the streamed message.
+                  Different depending on the `event` type.
+
+                  If present, it should be parsed as a string.
+
+                  If `event` = `update`, then the payload will be a JSON string of a status.
+                  If `event` = `notification`, then the payload will be a JSON string of a notification.
+                  If `event` = `delete`, then the payload will be a status ID.
+                example: '{"id":"01FC3TZ5CFG6H65GCKCJRKA669","created_at":"2021-08-02T16:25:52Z","sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"https://gts.superseriousbusiness.org/users/dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669","url":"https://gts.superseriousbusiness.org/@dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669","replies_count":0,"reblogs_count":0,"favourites_count":0,"favourited":false,"reblogged":false,"muted":false,"bookmarked":fals…//gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/original/019036W043D8FXPJKSKCX7G965.png","header_static":"https://gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/small/019036W043D8FXPJKSKCX7G965.png","followers_count":33,"following_count":28,"statuses_count":126,"last_status_at":"2021-08-02T16:25:52Z","emojis":[],"fields":[]},"media_attachments":[],"mentions":[],"tags":[],"emojis":[],"card":null,"poll":null,"text":"a"}'
+                type: string
+              stream:
+                items:
+                  enum:
+                  - user
+                  - public
+                  - public:local
+                  - hashtag
+                  - hashtag:local
+                  - list
+                  - direct
+                  type: string
+                type: array
+            type: object
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      schemes:
+      - wss
+      security:
+      - OAuth2 Bearer:
+        - read:streaming
+      summary: Initiate a websocket connection for live streaming of statuses and
+        notifications.
+      tags:
+      - streaming
+  /api/v1/timelines/home:
+    get:
+      description: |-
+        The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+        The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+
+        Example:
+
+        ```
+        <https://example.org/api/v1/timelines/home?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/home?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+        ````
+      operationId: homeTimeline
+      parameters:
+      - description: |-
+          Return only statuses *OLDER* than the given max status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: max_id
+        type: string
+      - description: |-
+          Return only statuses *NEWER* than the given since status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: since_id
+        type: string
+      - description: |-
+          Return only statuses *NEWER* than the given since status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: min_id
+        type: string
+      - default: 20
+        description: Number of statuses to return.
+        in: query
+        name: limit
+        type: integer
+      - default: false
+        description: Show only statuses posted by local accounts.
+        in: query
+        name: local
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of statuses.
+          headers:
+            Link:
+              description: Links to the next and previous queries.
+              type: string
+          schema:
+            items:
+              $ref: '#/definitions/status'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      security:
+      - OAuth2 Bearer:
+        - read:statuses
+      summary: See statuses/posts by accounts you follow.
+      tags:
+      - timelines
+  /api/v1/timelines/public:
+    get:
+      description: |-
+        The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+        The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+
+        Example:
+
+        ```
+        <https://example.org/api/v1/timelines/public?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/public?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+        ````
+      operationId: publicTimeline
+      parameters:
+      - description: |-
+          Return only statuses *OLDER* than the given max status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: max_id
+        type: string
+      - description: |-
+          Return only statuses *NEWER* than the given since status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: since_id
+        type: string
+      - description: |-
+          Return only statuses *NEWER* than the given since status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: min_id
+        type: string
+      - default: 20
+        description: Number of statuses to return.
+        in: query
+        name: limit
+        type: integer
+      - default: false
+        description: Show only statuses posted by local accounts.
+        in: query
+        name: local
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of statuses.
+          headers:
+            Link:
+              description: Links to the next and previous queries.
+              type: string
+          schema:
+            items:
+              $ref: '#/definitions/status'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      security:
+      - OAuth2 Bearer:
+        - read:statuses
+      summary: See public statuses/posts that your instance is aware of.
+      tags:
+      - timelines
 schemes:
 - https
 - http
@@ -2981,7 +3326,9 @@ securityDefinitions:
       read:accounts: grants read access to accounts
       read:blocks: grant read access to blocks
       read:media: grant read access to media
+      read:search: grant read access to searches
       read:statuses: grants read access to statuses
+      read:streaming: grants read access to streaming api
       write: grants write access to everything
       write:accounts: grants write access to accounts
       write:blocks: grants write access to blocks

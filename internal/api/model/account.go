@@ -24,6 +24,7 @@ import (
 )
 
 // Account models a fediverse account.
+//
 // The modelled account can be either a remote account, or one on this instance.
 //
 // swagger:model account

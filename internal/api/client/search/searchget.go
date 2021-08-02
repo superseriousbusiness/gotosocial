@@ -29,8 +29,32 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// SearchGETHandler handles searches for local and remote accounts, statuses, and hashtags.
-// It corresponds to the mastodon endpoint described here: https://docs.joinmastodon.org/methods/search/
+// SearchGETHandler swagger:operation GET /api/v1/search searchGet
+//
+// Search for statuses, accounts, or hashtags, on this instance or elsewhere.
+//
+// If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+//
+// ---
+// tags:
+// - search
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:search
+//
+// responses:
+//   '200':
+//     name: search results
+//     description: Results of the search.
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/searchResult"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
 func (m *Module) SearchGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "SearchGETHandler",
