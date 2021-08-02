@@ -10,7 +10,7 @@ import (
 //
 // View instance information.
 //
-// This is mostly provided for Mastodon application compatibility, since many apps that work with Mastodon use `/api/v1/instance` to inform their connection parameters. 
+// This is mostly provided for Mastodon application compatibility, since many apps that work with Mastodon use `/api/v1/instance` to inform their connection parameters.
 //
 // However, it can also be used by other instances for gathering instance information and representing instances in some UI or other.
 //

@@ -33,7 +33,7 @@ type Instance struct {
 	// Description of the instance.
 	//
 	// Should be HTML formatted, but might be plaintext.
-	// 
+	//
 	// This should be displayed on the 'about' page for an instance.
 	Description string `json:"description"`
 	// A shorter description of the instance.
