@@ -18,7 +18,9 @@
 
 package model
 
-// Context represents the tree around a given status. Used for reconstructing threads of statuses. See: https://docs.joinmastodon.org/entities/context/
+// Context models the tree around a given status.
+//
+// swagger:model statusContext
 type Context struct {
 	// Parents in the thread.
 	Ancestors []Status `json:"ancestors"`

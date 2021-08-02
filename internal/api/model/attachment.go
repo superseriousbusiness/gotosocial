@@ -20,33 +20,50 @@ package model
 
 import "mime/multipart"
 
-// AttachmentRequest represents the form data parameters submitted by a client during a media upload request.
-// See: https://docs.joinmastodon.org/methods/statuses/media/
+// AttachmentRequest models media attachment creation parameters.
+//
+// swagger: ignore
 type AttachmentRequest struct {
-	File        *multipart.FileHeader `form:"file" binding:"required"`
-	Description string                `form:"description"`
-	Focus       string                `form:"focus"`
+	// Media file.
+	File *multipart.FileHeader `form:"file" binding:"required"`
+	// Description of the media file. Optional.
+	// This will be used as alt-text for users of screenreaders etc.
+	// example: This is an image of some kittens, they are very cute and fluffy.
+	Description string `form:"description"`
+	// Focus of the media file. Optional.
+	// If present, it should be in the form of two comma-separated floats between -1 and 1.
+	// example: -0.5,0.565
+	Focus string `form:"focus"`
 }
 
-// AttachmentUpdateRequest represents the form data parameters submitted by a client during a media update/PUT request.
-// See: https://docs.joinmastodon.org/methods/statuses/media/
+// AttachmentUpdateRequest models an update request for an attachment.
+//
+// swagger:ignore
 type AttachmentUpdateRequest struct {
+	// Description of the media file.
+	// This will be used as alt-text for users of screenreaders etc.
+	// allowEmptyValue: true
 	Description *string `form:"description" json:"description" xml:"description"`
-	Focus       *string `form:"focus" json:"focus" xml:"focus"`
+	// Focus of the media file.
+	// If present, it should be in the form of two comma-separated floats between -1 and 1.
+	// allowEmptyValue: true
+	Focus *string `form:"focus" json:"focus" xml:"focus"`
 }
 
-// Attachment represents the object returned to a client after a successful media upload request.
+// Attachment models a media attachment.
 //
 // swagger:model attachment
 type Attachment struct {
 	// The ID of the attachment.
+	// example: 01FC31DZT1AYWDZ8XTCRWRBYRK
 	ID string `json:"id"`
 	// The type of the attachment.
-	// 	unknown = unsupported or unrecognized file type.
-	// 	image = Static image.
-	// 	gifv = Looping, soundless animation.
-	// 	video = Video clip.
-	// 	audio = Audio track.
+	// enum:
+	//   - unknown
+	//   - image
+	//   - gifv
+	//   - video
+	//   - audio
 	// example: image
 	Type string `json:"type"`
 	// The location of the original full-size attachment.
@@ -64,6 +81,7 @@ type Attachment struct {
 	// example: https://some-other-server.org/attachments/small/ahhhhh.jpeg
 	PreviewRemoteURL string `json:"preview_remote_url,omitempty"`
 	// A shorter URL for the attachment.
+	// Not currently used.
 	TextURL string `json:"text_url,omitempty"`
 	// Metadata for this attachment.
 	Meta MediaMeta `json:"meta,omitempty"`
@@ -75,42 +93,88 @@ type Attachment struct {
 	Blurhash string `json:"blurhash,omitempty"`
 }
 
-// MediaMeta describes the returned media
+// MediaMeta models media metadata.
+// This can be metadata about an image, an audio file, video, etc.
 //
 // swagger:model mediaMeta
 type MediaMeta struct {
-	Length        string          `json:"length,omitempty"`
-	Duration      float32         `json:"duration,omitempty"`
-	FPS           uint16          `json:"fps,omitempty"`
-	Size          string          `json:"size,omitempty"`
-	Width         int             `json:"width,omitempty"`
-	Height        int             `json:"height,omitempty"`
-	Aspect        float32         `json:"aspect,omitempty"`
-	AudioEncode   string          `json:"audio_encode,omitempty"`
-	AudioBitrate  string          `json:"audio_bitrate,omitempty"`
-	AudioChannels string          `json:"audio_channels,omitempty"`
-	Original      MediaDimensions `json:"original"`
-	Small         MediaDimensions `json:"small,omitempty"`
-	Focus         MediaFocus      `json:"focus,omitempty"`
+	Length string `json:"length,omitempty"`
+	// Duration of the media in seconds.
+	// Only set for video and audio.
+	// example: 5.43
+	Duration float32 `json:"duration,omitempty"`
+	// Framerate of the media.
+	// Only set for video and gifs.
+	// example: 30
+	FPS uint16 `json:"fps,omitempty"`
+	// Size of the media, in the format `[width]x[height]`.
+	// Not set for audio.
+	// example: 1920x1080
+	Size string `json:"size,omitempty"`
+	// Width of the media in pixels.
+	// Not set for audio.
+	// example: 1920
+	Width int `json:"width,omitempty"`
+	// Height of the media in pixels.
+	// Not set for audio.
+	// example: 1080
+	Height int `json:"height,omitempty"`
+	// Aspect ratio of the media.
+	// Equal to width / height.
+	// example: 1.777777778
+	Aspect        float32 `json:"aspect,omitempty"`
+	AudioEncode   string  `json:"audio_encode,omitempty"`
+	AudioBitrate  string  `json:"audio_bitrate,omitempty"`
+	AudioChannels string  `json:"audio_channels,omitempty"`
+	// Dimensions of the original media.
+	Original MediaDimensions `json:"original"`
+	// Dimensions of the thumbnail/small version of the media.
+	Small MediaDimensions `json:"small,omitempty"`
+	// Focus data for the media.
+	Focus MediaFocus `json:"focus,omitempty"`
 }
 
-// MediaFocus describes the focal point of a piece of media. It should be returned to the caller as part of MediaMeta.
+// MediaFocus models the focal point of a piece of media.
 //
 // swagger:model mediaFocus
 type MediaFocus struct {
-	X float32 `json:"x"` // should be between -1 and 1
-	Y float32 `json:"y"` // should be between -1 and 1
+	// x position of the focus
+	// should be between -1 and 1
+	X float32 `json:"x"`
+	// y position of the focus
+	// should be between -1 and 1
+	Y float32 `json:"y"`
 }
 
-// MediaDimensions describes the physical properties of a piece of media. It should be returned to the caller as part of MediaMeta.
+// MediaDimensions models detailed properties of a piece of media.
 //
 // swagger:model mediaDimensions
 type MediaDimensions struct {
-	Width     int     `json:"width,omitempty"`
-	Height    int     `json:"height,omitempty"`
-	FrameRate string  `json:"frame_rate,omitempty"`
-	Duration  float32 `json:"duration,omitempty"`
-	Bitrate   int     `json:"bitrate,omitempty"`
-	Size      string  `json:"size,omitempty"`
-	Aspect    float32 `json:"aspect,omitempty"`
+	// Width of the media in pixels.
+	// Not set for audio.
+	// example: 1920
+	Width int `json:"width,omitempty"`
+	// Height of the media in pixels.
+	// Not set for audio.
+	// example: 1080
+	Height int `json:"height,omitempty"`
+	// Framerate of the media.
+	// Only set for video and gifs.
+	// example: 30
+	FrameRate string `json:"frame_rate,omitempty"`
+	// Duration of the media in seconds.
+	// Only set for video and audio.
+	// example: 5.43
+	Duration float32 `json:"duration,omitempty"`
+	// Bitrate of the media in bits per second.
+	// example: 1000000
+	Bitrate int `json:"bitrate,omitempty"`
+	// Size of the media, in the format `[width]x[height]`.
+	// Not set for audio.
+	// example: 1920x1080
+	Size string `json:"size,omitempty"`
+	// Aspect ratio of the media.
+	// Equal to width / height.
+	// example: 1.777777778
+	Aspect float32 `json:"aspect,omitempty"`
 }

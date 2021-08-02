@@ -225,7 +225,7 @@ Things are moving on the project! As of July 2021 you can now:
   * [ ] Scope middleware
   * [ ] Permissions/acl middleware for admins+moderators
 * [ ] Documentation
-  * [ ] Swagger API documentation
+  * [x] Swagger API documentation
   * [ ] ReadTheDocs.io documentation
   * [ ] Deployment documentation
   * [ ] App creation guide

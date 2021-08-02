@@ -1,12 +1,3 @@
-package media
-
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-)
-
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
@@ -25,7 +16,50 @@ import (
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// MediaGETHandler allows the owner of an attachment to get information about that attachment before it's used in a status.
+package media
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// MediaGETHandler swagger:operation GET /api/v1/media/{id} mediaGet
+//
+// Get a media attachment that you own.
+//
+// ---
+// tags:
+// - media
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   description: id of the attachment
+//   type: string
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:media
+//
+// responses:
+//   '200':
+//     description: The requested media attachment.
+//     schema:
+//       "$ref": "#/definitions/attachment"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '422':
+//      description: unprocessable
 func (m *Module) MediaGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

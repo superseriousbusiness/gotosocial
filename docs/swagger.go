@@ -35,10 +35,17 @@
 //         scopes:
 //           read: grants read access to everything
 //           read:accounts: grants read access to accounts
+//           read:blocks: grant read access to blocks
+//           read:media: grant read access to media
+//           read:search: grant read access to searches
+//           read:statuses: grants read access to statuses
+//           read:streaming: grants read access to streaming api
 //           write: grants write access to everything
 //           write:accounts: grants write access to accounts
 //           write:blocks: grants write access to blocks
 //           write:follows: grants write access to follows
+//           write:media: grants write access to media
+//           write:statuses: grants write access to statuses
 //           admin: grants admin access to everything
 //           admin:accounts: grants admin access to accounts
 //       OAuth2 Application:

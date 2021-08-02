@@ -21,22 +21,18 @@ func (p *processor) processVisibility(form *apimodel.AdvancedStatusCreateForm, a
 		Likeable:  true,
 	}
 
-	var gtsBasicVis gtsmodel.Visibility
-	// Advanced takes priority if it's set.
-	// If it's not set, take whatever masto visibility is set.
-	// If *that's* not set either, then just take the account default.
+	var vis gtsmodel.Visibility
+	// If visibility isn't set on the form, then just take the account default.
 	// If that's also not set, take the default for the whole instance.
-	if form.VisibilityAdvanced != nil {
-		gtsBasicVis = gtsmodel.Visibility(*form.VisibilityAdvanced)
-	} else if form.Visibility != "" {
-		gtsBasicVis = p.tc.MastoVisToVis(form.Visibility)
+	if form.Visibility != "" {
+		vis = p.tc.MastoVisToVis(form.Visibility)
 	} else if accountDefaultVis != "" {
-		gtsBasicVis = accountDefaultVis
+		vis = accountDefaultVis
 	} else {
-		gtsBasicVis = gtsmodel.VisibilityDefault
+		vis = gtsmodel.VisibilityDefault
 	}
 
-	switch gtsBasicVis {
+	switch vis {
 	case gtsmodel.VisibilityPublic:
 		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
 		break
@@ -82,7 +78,7 @@ func (p *processor) processVisibility(form *apimodel.AdvancedStatusCreateForm, a
 		gtsAdvancedVis.Likeable = true
 	}
 
-	status.Visibility = gtsBasicVis
+	status.Visibility = vis
 	status.VisibilityAdvanced = gtsAdvancedVis
 	return nil
 }

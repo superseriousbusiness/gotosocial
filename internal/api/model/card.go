@@ -32,11 +32,11 @@ type Card struct {
 	// example: Is water wet? We're not sure. In this article, we ask an expert...
 	Description string `json:"description"`
 	// The type of the preview card.
-	//    String (Enumerable, oneOf)
-	//    link = Link OEmbed
-	//    photo = Photo OEmbed
-	//    video = Video OEmbed
-	//    rich = iframe OEmbed. Not currently accepted, so won't show up in practice.
+	// enum:
+	// - link
+	// - photo
+	// - video
+	// - rich
 	// example: link
 	Type string `json:"type"`
 	// The author of the original resource.

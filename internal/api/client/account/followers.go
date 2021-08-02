@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountFollowersGETHandler serves the followers of the requested account, if they're visible to the requester.
-//
-// swagger:operation GET /api/v1/accounts/{id}/followers accountFollowers
+// AccountFollowersGETHandler swagger:operation GET /api/v1/accounts/{id}/followers accountFollowers
 //
 // See followers of account with given id.
 //

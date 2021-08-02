@@ -117,22 +117,24 @@ const (
 	VisibilityFollowersOnly Visibility = "followers_only"
 	// VisibilityMutualsOnly means this status is visible to mutual followers only.
 	VisibilityMutualsOnly Visibility = "mutuals_only"
-	// VisibilityDirect means this status is visible only to mentioned recipients
+	// VisibilityDirect means this status is visible only to mentioned recipients.
 	VisibilityDirect Visibility = "direct"
-	// VisibilityDefault is used when no other setting can be found
-	VisibilityDefault Visibility = "public"
+	// VisibilityDefault is used when no other setting can be found.
+	VisibilityDefault Visibility = VisibilityUnlocked
 )
 
-// VisibilityAdvanced denotes a set of flags that can be set on a status for fine-tuning visibility and interactivity of the status.
+// VisibilityAdvanced models flags for fine-tuning visibility and interactivity of a status.
+//
+// All flags default to true.
+//
+// If PUBLIC is selected, flags will all be overwritten to TRUE regardless of what is selected.
+//
+// If UNLOCKED is selected, any flags can be turned on or off in any combination.
+//
+// If FOLLOWERS-ONLY or MUTUALS-ONLY are selected, boostable will always be FALSE. Other flags can be turned on or off as desired.
+//
+// If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
 type VisibilityAdvanced struct {
-	/*
-		ADVANCED SETTINGS -- These should all default to TRUE.
-
-		If PUBLIC is selected, they will all be overwritten to TRUE regardless of what is selected.
-		If UNLOCKED is selected, any of them can be turned on or off in any combination.
-		If FOLLOWERS-ONLY or MUTUALS-ONLY are selected, boostable will always be FALSE. The others can be turned on or off as desired.
-		If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
-	*/
 	// This status will be federated beyond the local timeline(s)
 	Federated bool `pg:"default:true"`
 	// This status can be boosted/reblogged

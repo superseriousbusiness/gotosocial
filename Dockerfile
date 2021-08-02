@@ -11,6 +11,7 @@ WORKDIR /go/src/github.com/superseriousbusiness/gotosocial
 ADD cmd /go/src/github.com/superseriousbusiness/gotosocial/cmd
 ADD internal /go/src/github.com/superseriousbusiness/gotosocial/internal
 ADD testrig /go/src/github.com/superseriousbusiness/gotosocial/testrig
+ADD docs/swagger.go /go/src/github.com/superseriousbusiness/gotosocial/docs/swagger.go
 ADD go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 ADD go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
 
@@ -55,6 +56,9 @@ COPY --from=binary_builder /go/src/github.com/superseriousbusiness/gotosocial/go
 
 # copy over the web directory with templates etc
 COPY --from=web_builder web /gotosocial/web
+
+# put the swagger yaml in the web assets directory so it can be accessed
+COPY docs/api/swagger.yaml /gotosocial/web/assets/swagger.yaml
 
 # copy over the admin directory
 COPY --from=admin_builder /gotosocial-admin/public /gotosocial/web/assets/admin

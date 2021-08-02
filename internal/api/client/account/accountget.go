@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountGETHandler returns info about the given account.
-//
-// swagger:operation GET /api/v1/accounts/{id} accountGet
+// AccountGETHandler swagger:operation GET /api/v1/accounts/{id} accountGet
 //
 // Get information about an account with the given ID.
 //

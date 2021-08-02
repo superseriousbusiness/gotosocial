@@ -26,7 +26,41 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusFavePOSTHandler handles fave requests against a given status ID
+// StatusFavePOSTHandler swagger:operation POST /api/v1/statuses/{id}/favourite statusFave
+//
+// Star/like/favourite the given status, if permitted.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     description: "The newly faved status."
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusFavePOSTHandler",

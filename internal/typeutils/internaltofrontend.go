@@ -488,7 +488,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		statusInteractions = si
 	}
 
-	return &model.Status{
+	apiStatus := &model.Status{
 		ID:                 s.ID,
 		CreatedAt:          s.CreatedAt.Format(time.RFC3339),
 		InReplyToID:        s.InReplyToID,
@@ -508,7 +508,6 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		Reblogged:          statusInteractions.Reblogged,
 		Pinned:             s.Pinned,
 		Content:            s.Content,
-		Reblog:             mastoRebloggedStatus,
 		Application:        mastoApplication,
 		Account:            mastoAuthorAccount,
 		MediaAttachments:   mastoAttachments,
@@ -518,7 +517,13 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		Card:               mastoCard, // TODO: implement cards
 		Poll:               mastoPoll, // TODO: implement polls
 		Text:               s.Text,
-	}, nil
+	}
+
+	if mastoRebloggedStatus != nil {
+		apiStatus.Reblog = &model.StatusReblogged{Status: mastoRebloggedStatus}
+	}
+
+	return apiStatus, nil
 }
 
 // VisToMasto converts a gts visibility into its mastodon equivalent

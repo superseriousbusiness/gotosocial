@@ -18,33 +18,72 @@
 
 package model
 
-// SearchQuery corresponds to search parameters as submitted through the client API.
-// See https://docs.joinmastodon.org/methods/search/
+// SearchQuery models a search request.
+//
+// swagger:parameters searchGet
 type SearchQuery struct {
-	// If provided, statuses returned will be authored only by this account
-	AccountID string
-	// Return results older than this id
-	MaxID string
-	// Return results immediately newer than this id
-	MinID string
-	// Enum(accounts, hashtags, statuses)
-	Type string
-	// Filter out unreviewed tags? Defaults to false. Use true when trying to find trending tags.
-	ExcludeUnreviewed bool
-	// The search query
-	Query string
-	// Attempt WebFinger lookup. Defaults to false.
-	Resolve bool
-	// Maximum number of results to load, per type. Defaults to 20. Max 40.
-	Limit int
-	// Offset in search results. Used for pagination. Defaults to 0.
-	Offset int
-	// Only include accounts that the user is following. Defaults to false.
-	Following bool
+	// If type is `statuses`, then statuses returned will be authored only by this account.
+	//
+	// in: query
+	AccountID string `json:"account_id"`
+	// Return results *older* than this id.
+	//
+	// The entry with this ID will not be included in the search results.
+	// in: query
+	MaxID string `json:"max_id"`
+	// Return results *newer* than this id.
+	//
+	// The entry with this ID will not be included in the search results.
+	// in: query
+	MinID string `json:"min_id"`
+	// Type of the search query to perform.
+	//
+	// Must be one of: `accounts`, `hashtags`, `statuses`.
+	//
+	// enum:
+	// - accounts
+	// - hashtags
+	// - statuses
+	// required: true
+	// in: query
+	Type string `json:"type"`
+	// Filter out tags that haven't been reviewed and approved by an instance admin.
+	//
+	// default: false
+	// in: query
+	ExcludeUnreviewed bool `json:"exclude_unreviewed"`
+	// String to use as a search query.
+	//
+	// For accounts, this should be in the format `@someaccount@some.instance.com`, or the format `https://some.instance.com/@someaccount`
+	//
+	// For a status, this can be in the format: `https://some.instance.com/@someaccount/SOME_ID_OF_A_STATUS`
+	//
+	// required: true
+	// in: query
+	Query string `json:"q"`
+	// Attempt to resolve the query by performing a remote webfinger lookup, if the query includes a remote host.
+	// default: false
+	Resolve bool `json:"resolve"`
+	// Maximum number of results to load, per type.
+	// default: 20
+	// minimum: 1
+	// maximum: 40
+	// in: query
+	Limit int `json:"limit"`
+	// Offset for paginating search results.
+	//
+	// default: 0
+	// in: query
+	Offset int `json:"offset"`
+	// Only include accounts that the searching account is following.
+	// default: false
+	// in: query
+	Following bool `json:"following"`
 }
 
-// SearchResult corresponds to a search result, containing accounts, statuses, and hashtags.
-// See https://docs.joinmastodon.org/methods/search/
+// SearchResult models a search result.
+//
+// swagger:model searchResult
 type SearchResult struct {
 	Accounts []Account `json:"accounts"`
 	Statuses []Status  `json:"statuses"`

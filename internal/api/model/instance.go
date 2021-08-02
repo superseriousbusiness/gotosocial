@@ -20,60 +20,77 @@ package model
 
 import "mime/multipart"
 
-// Instance represents the software instance of Mastodon running on this domain. See https://docs.joinmastodon.org/entities/instance/
+// Instance models information about this or another instance.
+//
+// swagger:model instance
 type Instance struct {
-	// REQUIRED
-
-	// The domain name of the instance.
+	// The URI of the instance.
+	// example: https://example.org
 	URI string `json:"uri,omitempty"`
-	// The title of the website.
+	// The title of the instance.
+	// example: GoToSocial Example Instance
 	Title string `json:"title,omitempty"`
-	// Admin-defined description of the Mastodon site.
+	// Description of the instance.
+	//
+	// Should be HTML formatted, but might be plaintext.
+	//
+	// This should be displayed on the 'about' page for an instance.
 	Description string `json:"description"`
-	// A shorter description defined by the admin.
+	// A shorter description of the instance.
+	//
+	// Should be HTML formatted, but might be plaintext.
+	//
+	// This should be displayed on the instance splash/landing page.
 	ShortDescription string `json:"short_description"`
-	// An email that may be contacted for any inquiries.
+	// An email address that may be used for inquiries.
+	// example: admin@example.org
 	Email string `json:"email"`
-	// The version of Mastodon installed on the instance.
+	// The version of GoToSocial installed on the instance.
+	//
+	// This will contain at least a semantic version number.
+	//
+	// It may also contain, after a space, the short git commit ID of the running software.
+	//
+	// example: 0.1.1 cb85f65
 	Version string `json:"version"`
-	// Primary langauges of the website and its staff.
+	// Primary language of the instance.
+	// example: en
 	Languages []string `json:"languages,omitempty"`
-	// Whether registrations are enabled.
+	// New account registrations are enabled on this instance.
 	Registrations bool `json:"registrations"`
-	// Whether registrations require moderator approval.
+	// New account registrations require admin approval.
 	ApprovalRequired bool `json:"approval_required"`
-	// Whether invites are enabled.
+	// Invites are enabled on this instance.
 	InvitesEnabled bool `json:"invites_enabled"`
-	// URLs of interest for clients apps.
+	// URLs of interest for client applications.
 	URLS *InstanceURLs `json:"urls,omitempty"`
-	// Statistics about how much information the instance contains.
+	// Statistics about the instance: number of posts, accounts, etc.
 	Stats map[string]int `json:"stats,omitempty"`
-	// Banner image for the website.
+	// URL of the instance avatar/banner image.
+	// example: https://example.org/files/instance/thumbnail.jpeg
 	Thumbnail string `json:"thumbnail"`
-	// A user that can be contacted, as an alternative to email.
+	// Contact account for the instance.
 	ContactAccount *Account `json:"contact_account,omitempty"`
-	// What's the maximum allowed length of a post on this instance?
-	// This is provided for compatibility with Tusky.
+	// Maximum allowed length of a post on this instance, in characters.
+	//
+	// This is provided for compatibility with Tusky and other apps.
+	//
+	// example: 5000
 	MaxTootChars uint `json:"max_toot_chars"`
 }
 
-// InstanceURLs represents URLs necessary for successfully connecting to the instance as a user. See https://docs.joinmastodon.org/entities/instance/
+// InstanceURLs models instance-relevant URLs for client application consumption.
+//
+// swagger:model instanceURLs
 type InstanceURLs struct {
-	// Websockets address for push streaming.
+	// Websockets address for status and notification streaming.
+	// example: wss://example.org
 	StreamingAPI string `json:"streaming_api"`
 }
 
-// InstanceStats represents some public-facing stats about the instance. See https://docs.joinmastodon.org/entities/instance/
-type InstanceStats struct {
-	// Users registered on this instance.
-	UserCount int `json:"user_count"`
-	// Statuses authored by users on instance.
-	StatusCount int `json:"status_count"`
-	// Domains federated with this instance.
-	DomainCount int `json:"domain_count"`
-}
-
-// InstanceSettingsUpdateRequest is the form to be parsed on a PATCH to /api/v1/instance
+// InstanceSettingsUpdateRequest models an instance update request.
+//
+// swagger:ignore
 type InstanceSettingsUpdateRequest struct {
 	// Title to use for the instance. Max 40 characters.
 	Title *string `form:"title" json:"title" xml:"title"`

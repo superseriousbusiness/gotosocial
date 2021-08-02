@@ -31,7 +31,7 @@ import (
 
 func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
-	blocked, err := p.db.Blocked(requestingAccount.ID, form.TargetAccountID)
+	blocked, err := p.db.Blocked(requestingAccount.ID, form.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -41,9 +41,9 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(form.TargetAccountID, targetAcct); err != nil {
+	if err := p.db.GetByID(form.ID, targetAcct); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.TargetAccountID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.ID, err))
 		}
 	}
 
@@ -54,7 +54,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 	if follows {
 		// already follows so just return the relationship
-		return p.RelationshipGet(requestingAccount, form.TargetAccountID)
+		return p.RelationshipGet(requestingAccount, form.ID)
 	}
 
 	// check if a follow exists already
@@ -64,7 +64,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 	if followRequested {
 		// already follow requested so just return the relationship
-		return p.RelationshipGet(requestingAccount, form.TargetAccountID)
+		return p.RelationshipGet(requestingAccount, form.ID)
 	}
 
 	// make the follow request
@@ -76,7 +76,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	fr := &gtsmodel.FollowRequest{
 		ID:              newFollowID,
 		AccountID:       requestingAccount.ID,
-		TargetAccountID: form.TargetAccountID,
+		TargetAccountID: form.ID,
 		ShowReblogs:     true,
 		URI:             util.GenerateURIForFollow(requestingAccount.Username, p.config.Protocol, p.config.Host, newFollowID),
 		Notify:          false,
@@ -95,11 +95,11 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 
 	// if it's a local account that's not locked we can just straight up accept the follow request
 	if !targetAcct.Locked && targetAcct.Domain == "" {
-		if _, err := p.db.AcceptFollowRequest(requestingAccount.ID, form.TargetAccountID); err != nil {
+		if _, err := p.db.AcceptFollowRequest(requestingAccount.ID, form.ID); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}
 		// return the new relationship
-		return p.RelationshipGet(requestingAccount, form.TargetAccountID)
+		return p.RelationshipGet(requestingAccount, form.ID)
 	}
 
 	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
@@ -112,5 +112,5 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// return whatever relationship results from this
-	return p.RelationshipGet(requestingAccount, form.TargetAccountID)
+	return p.RelationshipGet(requestingAccount, form.ID)
 }

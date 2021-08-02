@@ -26,9 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountStatusesGETHandler serves the statuses of the requested account, if they're visible to the requester.
-//
-// swagger:operation GET /api/v1/accounts/{id}/statuses accountStatuses
+// AccountStatusesGETHandler swagger:operation GET /api/v1/accounts/{id}/statuses accountStatuses
 //
 // See statuses posted by the requested account.
 //
@@ -86,7 +84,7 @@ import (
 // responses:
 //   '200':
 //     name: statuses
-//     description: Array of statuses..
+//     description: Array of statuses.
 //     schema:
 //       type: array
 //       items:

@@ -26,7 +26,41 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusUnfavePOSTHandler is for undoing a fave on a status with a given ID
+// StatusUnfavePOSTHandler swagger:operation POST /api/v1/statuses/{id}/unfavourite statusUnfave
+//
+// Unstar/unlike/unfavourite the given status.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     description: "The unfaved status."
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusUnfavePOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusUnfavePOSTHandler",

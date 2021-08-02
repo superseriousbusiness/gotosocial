@@ -26,7 +26,45 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusBoostPOSTHandler handles boost requests against a given status ID
+// StatusBoostPOSTHandler swagger:operation POST /api/v1/statuses/{id}/reblog statusReblog
+//
+// Reblog/boost status with the given ID.
+//
+// If the target status is rebloggable/boostable, it will be shared with your followers.
+// This is equivalent to an activitypub 'announce' activity.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     name: status
+//     description: The boost of the status.
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusBoostPOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusBoostPOSTHandler",

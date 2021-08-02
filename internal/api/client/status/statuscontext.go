@@ -26,7 +26,44 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusContextGETHandler returns the context around the given status ID.
+// StatusContextGETHandler swagger:operation GET /api/v1/statuses/{id}/context statusContext
+//
+// Return ancestors and descendants of the given status.
+//
+// The returned statuses will be ordered in a thread structure, so they are suitable to be displayed in the order in which they were returned.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:statuses
+//
+// responses:
+//   '200':
+//     name: statuses
+//     description: Status context object.
+//     schema:
+//       "$ref": "#/definitions/statusContext"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusContextGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusContextGETHandler",
