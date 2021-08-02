@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountUnfollowPOSTHandler is the endpoint for removing a follow and/or follow request to the target account
-//
-// swagger:operation POST /api/v1/accounts/{id}/unfollow accountUnfollow
+// AccountUnfollowPOSTHandler swagger:operation POST /api/v1/accounts/{id}/unfollow accountUnfollow
 //
 // Unfollow account with id.
 //

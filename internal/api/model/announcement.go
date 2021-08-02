@@ -18,20 +18,46 @@
 
 package model
 
-// Announcement represents an admin/moderator announcement for local users. See here: https://docs.joinmastodon.org/entities/announcement/
+// Announcement models an admin announcement for the instance.
+//
+// swagger:model announcement
 type Announcement struct {
-	ID          string                 `json:"id"`
-	Content     string                 `json:"content"`
-	StartsAt    string                 `json:"starts_at"`
-	EndsAt      string                 `json:"ends_at"`
-	AllDay      bool                   `json:"all_day"`
-	PublishedAt string                 `json:"published_at"`
-	UpdatedAt   string                 `json:"updated_at"`
-	Published   bool                   `json:"published"`
-	Read        bool                   `json:"read"`
-	Mentions    []Mention              `json:"mentions"`
-	Statuses    []Status               `json:"statuses"`
-	Tags        []Tag                  `json:"tags"`
-	Emojis      []Emoji                `json:"emoji"`
-	Reactions   []AnnouncementReaction `json:"reactions"`
+	// The ID of the announcement.
+	// example: 01FC30T7X4TNCZK0TH90QYF3M4
+	ID string `json:"id"`
+	// The body of the announcement.
+	// Should be HTML formatted.
+	// example: <p>This is an announcement. No malarky.</p>
+	Content string `json:"content"`
+	// When the announcement should begin to be displayed (ISO 8601 Datetime).
+	// If the announcement has no start time, this will be omitted or empty.
+	// example: 2021-07-30T09:20:25+00:00
+	StartsAt string `json:"starts_at"`
+	// When the announcement should stop being displayed (ISO 8601 Datetime).
+	// If the announcement has no end time, this will be omitted or empty.
+	// example: 2021-07-30T09:20:25+00:00
+	EndsAt string `json:"ends_at"`
+	// Announcement doesn't have begin time and end time, but begin day and end day.
+	AllDay bool `json:"all_day"`
+	// When the announcement was first published (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	PublishedAt string `json:"published_at"`
+	// When the announcement was last updated (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	UpdatedAt string `json:"updated_at"`
+	// Announcement is 'published', ie., visible to users.
+	// Announcements that are not published should be shown only to admins.
+	Published bool `json:"published"`
+	// Requesting account has seen this announcement.
+	Read bool `json:"read"`
+	// Mentions this announcement contains.
+	Mentions []Mention `json:"mentions"`
+	// Statuses contained in this announcement.
+	Statuses []Status `json:"statuses"`
+	// Tags used in this announcement.
+	Tags []Tag `json:"tags"`
+	// Emojis used in this announcement.
+	Emojis []Emoji `json:"emoji"`
+	// Reactions to this announcement.
+	Reactions []AnnouncementReaction `json:"reactions"`
 }

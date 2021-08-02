@@ -30,12 +30,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// AccountCreatePOSTHandler handles create account requests, validates them,
-// and puts them in the database if they're valid.
-//
-// swagger:operation POST /api/v1/accounts accountCreate
+// AccountCreatePOSTHandler swagger:operation POST /api/v1/accounts accountCreate
 //
 // Create a new account using an application token.
+//
+// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
 // ---
 // tags:
@@ -45,16 +45,9 @@ import (
 // - application/json
 // - application/xml
 // - application/x-www-form-urlencoded
-// - multipart/form-data
 //
 // produces:
 // - application/json
-//
-// parameters:
-// - name: Account Create Request
-//   in: body
-//   schema:
-//     "$ref": "#/definitions/accountCreateRequest"
 //
 // security:
 // - OAuth2 Application:

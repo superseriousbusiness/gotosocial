@@ -1,16 +1,3 @@
-package media
-
-import (
-	"errors"
-	"fmt"
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-)
-
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
@@ -29,7 +16,80 @@ import (
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// MediaPUTHandler allows the owner of an attachment to update information about that attachment before it's used in a status.
+package media
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// MediaPUTHandler swagger:operation PUT /api/v1/media/{id} mediaUpdate
+//
+// Update a media attachment.
+//
+// You must own the media attachment, and the attachment must not yet be attached to a status.
+//
+// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+//
+// ---
+// tags:
+// - media
+//
+// consumes:
+// - application/json
+// - application/xml
+// - application/x-www-form-urlencoded
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   description: id of the attachment to update
+//   type: string
+//   in: path
+//   required: true
+// - name: description
+//   in: formData
+//   description: |-
+//     Image or media description to use as alt-text on the attachment.
+//     This is very useful for users of screenreaders.
+//     May or may not be required, depending on your instance settings.
+//   type: string
+//   allowEmptyValue: true
+// - name: focus
+//   in: formData
+//   description: |-
+//     Focus of the media file.
+//     If present, it should be in the form of two comma-separated floats between -1 and 1.
+//     For example: `-0.5,0.25`.
+//   type: string
+//   allowEmptyValue: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:media
+//
+// responses:
+//   '200':
+//     description: The newly-updated media attachment.
+//     schema:
+//       "$ref": "#/definitions/attachment"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '422':
+//      description: unprocessable
 func (m *Module) MediaPUTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

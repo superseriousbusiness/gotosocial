@@ -27,16 +27,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AppsPOSTHandler should be served at https://example.org/api/v1/apps
-// It is equivalent to: https://docs.joinmastodon.org/methods/apps/
-//
-// swagger:operation POST /api/v1/apps appCreate
+// AppsPOSTHandler swagger:operation POST /api/v1/apps appCreate
 //
 // Register a new application on this instance.
 //
-// The registered application can be used to obtain an application token,
-// which can then be used to register a new account, or (through user auth) obtain
-// an access token.
+// The registered application can be used to obtain an application token.
+// This can then be used to register a new account, or (through user auth) obtain an access token.
+//
+// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
 // ---
 // tags:
@@ -46,16 +45,9 @@ import (
 // - application/json
 // - application/xml
 // - application/x-www-form-urlencoded
-// - multipart/form-data
 //
 // produces:
 // - application/json
-//
-// parameters:
-// - name: Application Create Request
-//   in: body
-//   schema:
-//     "$ref": "#/definitions/applicationCreateRequest"
 //
 // responses:
 //   '200':

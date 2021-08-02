@@ -23,7 +23,8 @@ import (
 	"net"
 )
 
-// Account represents a fediverse account of some kind, either a remote one or one on this instance.
+// Account models a fediverse account.
+// The modelled account can be either a remote account, or one on this instance.
 //
 // swagger:model account
 type Account struct {
@@ -42,7 +43,7 @@ type Account struct {
 	DisplayName string `json:"display_name"`
 	// Account manually approves follow requests.
 	Locked bool `json:"locked"`
-	// Account has opted into discovery features such as the profile directory.
+	// Account has opted into discovery features.
 	Discoverable bool `json:"discoverable,omitempty"`
 	// Account identifies as a bot.
 	Bot bool `json:"bot"`
@@ -90,9 +91,9 @@ type Account struct {
 	Source *Source `json:"source,omitempty"`
 }
 
-// AccountCreateRequest represents the form submitted during a POST request to /api/v1/accounts.
+// AccountCreateRequest models account creation parameters.
 //
-// swagger:model accountCreateRequest
+// swagger:parameters accountCreate
 type AccountCreateRequest struct {
 	// Text that will be reviewed by moderators if registrations require manual approval.
 	Reason string `form:"reason" json:"reason" xml:"reason"`
@@ -127,7 +128,8 @@ type AccountCreateRequest struct {
 	IP net.IP `form:"-"`
 }
 
-// UpdateCredentialsRequest represents the form submitted during a PATCH request to /api/v1/accounts/update_credentials.
+// UpdateCredentialsRequest models an update to an account, by the account owner.
+//
 // swagger:ignore
 type UpdateCredentialsRequest struct {
 	// Account should be made discoverable and shown in the profile directory (if enabled).
@@ -151,7 +153,8 @@ type UpdateCredentialsRequest struct {
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
-// swagger:ignore
+//
+// swagger:model updateSource
 type UpdateSource struct {
 	// Default post privacy for authored statuses.
 	Privacy *string `form:"privacy" json:"privacy" xml:"privacy"`
@@ -172,15 +175,14 @@ type UpdateField struct {
 	Value *string `form:"value" json:"value" xml:"value"`
 }
 
-// AccountFollowRequest is for parsing requests at /api/v1/accounts/:id/follow
+// AccountFollowRequest models a request to follow an account.
 //
-// swagger:model accountFollowRequest
+// swagger:ignore
 type AccountFollowRequest struct {
-	// ID of the account to follow request
-	// This should be a URL parameter not a form field
-	TargetAccountID string `form:"-"`
-	// Show reblogs for this account?
+	// The id of the account to follow.
+	ID string `form:"-" json:"-" xml:"-"`
+	// Show reblogs from this account.
 	Reblogs *bool `form:"reblogs" json:"reblogs" xml:"reblogs"`
-	// Notify when this account posts?
+	// Notify when this account posts.
 	Notify *bool `form:"notify" json:"notify" xml:"notify"`
 }

@@ -26,7 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusUnboostPOSTHandler handles unboost requests against a given status ID
+// StatusUnboostPOSTHandler swagger:operation POST /api/v1/statuses/{id}/unreblog statusUnreblog
+//
+// Unreblog/unboost status with the given ID.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     name: status
+//     description: The unboosted status.
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusUnboostPOSTHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusUnboostPOSTHandler",

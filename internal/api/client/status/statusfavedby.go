@@ -26,7 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusFavedByGETHandler is for serving a list of accounts that have faved a given status
+// StatusFavedByGETHandler swagger:operation GET /api/v1/statuses/{id}/favourited_by statusFavedBy
+//
+// View accounts that have faved/starred/liked the target status.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/account"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusFavedByGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "statusGETHandler",

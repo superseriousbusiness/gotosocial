@@ -26,9 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusBoostPOSTHandler handles boosts/reblogs against a given status ID.
-//
-// swagger:operation POST /api/v1/statuses/{id}/reblog statusReblog
+// StatusBoostPOSTHandler swagger:operation POST /api/v1/statuses/{id}/reblog statusReblog
 //
 // Reblog/boost status with the given ID.
 //

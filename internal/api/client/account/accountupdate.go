@@ -26,10 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountUpdateCredentialsPATCHHandler allows a user to modify their account/profile settings.
-// It should be served as a PATCH at /api/v1/accounts/update_credentials
-//
-// swagger:operation PATCH /api/v1/accounts/update_credentials accountUpdate
+// AccountUpdateCredentialsPATCHHandler swagger:operation PATCH /api/v1/accounts/update_credentials accountUpdate
 //
 // Update your account.
 //
@@ -56,10 +53,12 @@ import (
 //   in: formData
 //   description: The display name to use for the account.
 //   type: string
+//   allowEmptyValue: true
 // - name: note
 //   in: formData
 //   description: Bio/description of this account.
 //   type: string
+//   allowEmptyValue: true
 // - name: avatar
 //   in: formData
 //   description: Avatar of the user.
@@ -72,15 +71,15 @@ import (
 //   in: formData
 //   description: Require manual approval of follow requests.
 //   type: boolean
-// - name: source.privacy
+// - name: source[privacy]
 //   in: formData
 //   description: Default post privacy for authored statuses.
 //   type: string
-// - name: source.sensitive
+// - name: source[sensitive]
 //   in: formData
 //   description: Mark authored statuses as sensitive by default.
 //   type: boolean
-// - name: source.language
+// - name: source[language]
 //   in: formData
 //   description: Default language to use for authored statuses (ISO 6391).
 //   type: string

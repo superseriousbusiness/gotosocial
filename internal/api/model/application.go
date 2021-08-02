@@ -18,8 +18,7 @@
 
 package model
 
-// Application represents an api Application, as defined here.
-// Primarily, application is used for allowing apps like Tusky etc to connect to Mastodon on behalf of a user.
+// Application models an api application.
 //
 // swagger:model application
 type Application struct {
@@ -43,22 +42,30 @@ type Application struct {
 	VapidKey string `json:"vapid_key,omitempty"`
 }
 
-// ApplicationCreateRequest represents a POST request to https://example.org/api/v1/apps.
+// ApplicationCreateRequest models app create parameters.
 //
-// swagger:model applicationCreateRequest
+// swagger:parameters appCreate
 type ApplicationCreateRequest struct {
 	// The name of the application.
-	// example: Tusky
+	//
+	// in: formData
+	// required: true
 	ClientName string `form:"client_name" json:"client_name" xml:"client_name" binding:"required"`
 	// Where the user should be redirected after authorization.
-	// To display the authorization code to the user instead of redirecting
-	// to a web page, use urn:ietf:wg:oauth:2.0:oob in this parameter.
-	// example: https://someapp.org/callback?q=something
+	//
+	// To display the authorization code to the user instead of redirecting to a web page, use `urn:ietf:wg:oauth:2.0:oob` in this parameter.
+	//
+	// in: formData
+	// required: true
 	RedirectURIs string `form:"redirect_uris" json:"redirect_uris" xml:"redirect_uris" binding:"required"`
-	// Space separated list of scopes. If none is provided, defaults to read.
-	// example: read write admin
+	// Space separated list of scopes.
+	//
+	// If no scopes are provided, defaults to `read`.
+	//
+	// in: formData
 	Scopes string `form:"scopes" json:"scopes" xml:"scopes"`
 	// A URL to the web page of the app (optional).
-	// example: https://tusky.app
+	//
+	// in: formData
 	Website string `form:"website" json:"website" xml:"website"`
 }

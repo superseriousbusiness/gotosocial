@@ -26,13 +26,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// BlocksGETHandler handles GETting blocks.
-//
-// swagger:operation GET /api/v1/blocks blocksGet
+// BlocksGETHandler swagger:operation GET /api/v1/blocks blocksGet
 //
 // Get an array of accounts that requesting account has blocked.
+//
 // The next and previous queries can be parsed from the returned Link header.
-// Example: `<https://example.org/api/v1/blocks?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/blocks?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"`
+// Example:
+//
+// ```
+// <https://example.org/api/v1/blocks?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/blocks?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+// ````
 //
 // ---
 // tags:
@@ -47,21 +50,18 @@ import (
 //   description: Number of blocks to return.
 //   default: 20
 //   in: query
-//   required: false
 // - name: max_id
 //   type: string
 //   description: |-
 //     Return only blocks *OLDER* than the given max block ID.
 //     The block with the specified ID will not be included in the response.
 //   in: query
-//   required: false
 // - name: since_id
 //   type: string
 //   description: |-
 //     Return only blocks *NEWER* than the given since block ID.
 //     The block with the specified ID will not be included in the response.
 //   in: query
-//   required: false
 //
 // security:
 // - OAuth2 Bearer:

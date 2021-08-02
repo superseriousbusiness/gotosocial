@@ -26,7 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusBoostedByGETHandler is for serving a list of accounts that have boosted/reblogged a given status
+// StatusBoostedByGETHandler swagger:operation GET /api/v1/statuses/{id}/reblogged_by statusBoostedBy
+//
+// View accounts that have reblogged/boosted the target status.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     schema:
+//       type: array
+//       items:
+//         "$ref": "#/definitions/account"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusBoostedByGETHandler",

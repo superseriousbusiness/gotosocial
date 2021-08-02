@@ -29,7 +29,58 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// MediaCreatePOSTHandler handles requests to create/upload media attachments
+// MediaCreatePOSTHandler swagger:operation POST /api/v1/media mediaCreate
+//
+// Upload a new media attachment.
+//
+// ---
+// tags:
+// - media
+//
+// consumes:
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: description
+//   in: formData
+//   description: |-
+//     Image or media description to use as alt-text on the attachment.
+//     This is very useful for users of screenreaders.
+//     May or may not be required, depending on your instance settings.
+//   type: string
+// - name: focus
+//   in: formData
+//   description: |-
+//     Focus of the media file.
+//     If present, it should be in the form of two comma-separated floats between -1 and 1.
+//     For example: `-0.5,0.25`.
+//   type: string
+// - name: file
+//   in: formData
+//   description: The media attachment to upload.
+//   type: file
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:media
+//
+// responses:
+//   '200':
+//     description: The newly-created media attachment.
+//     schema:
+//       "$ref": "#/definitions/attachment"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '422':
+//      description: unprocessable
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true) // posting new media is serious business so we want *everything*

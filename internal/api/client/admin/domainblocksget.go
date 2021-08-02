@@ -9,9 +9,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlocksGETHandler returns a list of all existing domain blocks.
-//
-// swagger:operation GET /api/v1/admin/domain_blocks domainBlocksGet
+// DomainBlocksGETHandler swagger:operation GET /api/v1/admin/domain_blocks domainBlocksGet
 //
 // View all domain blocks currently in place.
 //

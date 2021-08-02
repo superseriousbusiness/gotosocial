@@ -12,13 +12,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlocksPOSTHandler deals with the creation of one or more domain blocks.
-//
-// swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
+// DomainBlocksPOSTHandler swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
 //
 // Create one or more domain blocks, from a string or a file.
 //
-// Note that you have two options when using this endpoint: either you can set 'import' to true
+// Note that you have two options when using this endpoint: either you can set `import` to true
 // and upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
 // false, and just add one domain block.
 //
@@ -46,38 +44,35 @@ import (
 //   in: formData
 //   description: |-
 //     JSON-formatted list of domain blocks to import.
-//     This is only used if 'import' is set to true.
+//     This is only used if `import` is set to true.
 //   type: file
 // - name: domain
 //   in: formData
 //   description: |-
 //     Single domain to block.
-//     Used only if 'import' is not true.
+//     Used only if `import` is not true.
 //   type: string
-//   example: example.org
 // - name: obfuscate
 //   in: formData
 //   description: |-
 //     Obfuscate the name of the domain when serving it publicly.
 //     Eg., 'example.org' becomes something like 'ex***e.org'.
-//     Used only if 'import' is not true.
+//     Used only if `import` is not true.
 //   type: boolean
 // - name: public_comment
 //   in: formData
 //   description: |-
 //     Public comment about this domain block.
 //     Will be displayed alongside the domain block if you choose to share blocks.
-//     Used only if 'import' is not true.
+//     Used only if `import` is not true.
 //   type: string
-//   example: "harassment, transphobia"
 // - name: private_comment
 //   in: formData
 //   description: |-
 //     Private comment about this domain block. Will only be shown to other admins, so this
 //     is a useful way of internally keeping track of why a certain domain ended up blocked.
-//     Used only if 'import' is not true.
+//     Used only if `import` is not true.
 //   type: string
-//   example: "harassment, transphobia, and some stuff only other admins need to know about"
 //
 // security:
 // - OAuth2 Bearer:
@@ -86,9 +81,8 @@ import (
 // responses:
 //   '200':
 //     description: |-
-//       The newly created domain block, if import != true.
-//       Note that if a list has been imported, then an `array` of
-//       newly created domain blocks will be returned instead.
+//       The newly created domain block, if `import` != `true`.
+//       Note that if a list has been imported, then an `array` of newly created domain blocks will be returned instead.
 //     schema:
 //       "$ref": "#/definitions/domainBlock"
 //   '403':

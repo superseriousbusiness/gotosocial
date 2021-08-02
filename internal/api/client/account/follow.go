@@ -26,25 +26,43 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountFollowPOSTHandler is the endpoint for creating a new follow request to the target account
-//
-// swagger:operation POST /api/v1/accounts/{id}/follow accountFollow
+// AccountFollowPOSTHandler swagger:operation POST /api/v1/accounts/{id}/follow accountFollow
 //
 // Follow account with id.
+//
+// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
 // ---
 // tags:
 // - accounts
 //
-// produces:
+// consumes:
 // - application/json
+// - application/xml
+// - application/x-www-form-urlencoded
 //
 // parameters:
 // - name: id
-//   type: string
-//   description: The id of the account to follow.
-//   in: path
 //   required: true
+//   in: path
+//   description: ID of the account to follow.
+//   type: string
+// - default: true
+//   description: Show reblogs from this account.
+//   in: formData
+//   name: reblogs
+//   type: boolean
+//   x-go-name: Reblogs
+// - default: false
+//   description: Notify when this account posts.
+//   in: formData
+//   name: notify
+//   type: boolean
+//   x-go-name: Notify
+//
+// produces:
+// - application/json
 //
 // security:
 // - OAuth2 Bearer:
@@ -79,7 +97,7 @@ func (m *Module) AccountFollowPOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	form.TargetAccountID = targetAcctID
+	form.ID = targetAcctID
 
 	relationship, errWithCode := m.processor.AccountFollowCreate(authed, form)
 	if errWithCode != nil {

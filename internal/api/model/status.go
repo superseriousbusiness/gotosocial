@@ -71,8 +71,9 @@ type Status struct {
 	// The content of this status. Should be HTML, but might also be plaintext in some cases.
 	// example: <p>Hey this is a status!</p>
 	Content string `json:"content"`
-	// The status that this status is a reblog/boost of.
-	Reblog *Status `json:"reblog,omitempty"`
+	// The status that this status reblogs/boosts.
+	// nullable: true
+	Reblog *StatusReblogged `json:"reblog,omitempty"`
 	// The application used to post this status, if visible.
 	Application *Application `json:"application"`
 	// The account that authored this status.
@@ -95,42 +96,71 @@ type Status struct {
 	Text string `json:"text"`
 }
 
-// StatusCreateRequest represents a mastodon-api status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
-// It should be used at the path https://mastodon.example/api/v1/statuses
+// StatusReblogged represents a reblogged status.
 //
-// swagger:model statusCreateRequest
+// swagger:model statusReblogged
+type StatusReblogged struct {
+	*Status
+}
+
+// StatusCreateRequest models status creation parameters.
+//
+// swagger:parameters statusCreate
 type StatusCreateRequest struct {
-	// Text content of the status. If media_ids is provided, this becomes optional. Attaching a poll is optional while status is provided.
-	// example: this is a brand new status!
+	// Text content of the status.
+	// If media_ids is provided, this becomes optional.
+	// Attaching a poll is optional while status is provided.
+	// in: formData
 	Status string `form:"status" json:"status" xml:"status"`
-	// Array of Attachment ids to be attached as media. If provided, status becomes optional, and poll cannot be used.
+	// Array of Attachment ids to be attached as media.
+	// If provided, status becomes optional, and poll cannot be used.
+	// in: formData
 	MediaIDs []string `form:"media_ids" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
+	// swagger:ignore
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
 	// ID of the status being replied to, if status is a reply.
-	// example: 01FC0VT29CVV2BMXRKC7H42A99
+	// in: formData
 	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id" xml:"in_reply_to_id"`
 	// Status and attached media should be marked as sensitive.
-	// example: true
+	// in: formData
 	Sensitive bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
-	// Text to be shown as a warning or subject before the actual content. Statuses are generally collapsed behind this field.
-	// example: long article, politics
+	// Text to be shown as a warning or subject before the actual content.
+	// Statuses are generally collapsed behind this field.
+	// in: formData
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
-	// Visibility of the posted status. Enumerable oneOf public, unlisted, private, direct.
+	// Visibility of the posted status.
+	// enum:
+	// - public
+	// - unlisted
+	// - private
+	// - direct
+	// in: formData
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
-	// ISO 8601 Datetime at which to schedule a status. Providing this paramter will cause ScheduledStatus to be returned instead of Status. Must be at least 5 minutes in the future.
+	// ISO 8601 Datetime at which to schedule a status.
+	// Providing this paramter will cause ScheduledStatus to be returned instead of Status.
+	// Must be at least 5 minutes in the future.
+	// in: formData
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
 	// ISO 639 language code for this status.
-	// example: en
+	// in: formData
 	Language string `form:"language" json:"language" xml:"language"`
-	// Format to use when parsing this status: markdown, plain.
+	// Format to use when parsing this status.
+	// enum:
+	// - markdown
+	// - plain
+	// in: formData
 	Format StatusFormat `form:"format" json:"format" xml:"format"`
 }
 
-// Visibility denotes the visibility of a status to other users.
+// Visibility models the visibility of a status.
 //
 // swagger:model statusVisibility
-// example: unlisted
+// enum:
+// - public
+// - unlisted
+// - private
+// - direct
 type Visibility string
 
 const (
@@ -160,8 +190,6 @@ type AdvancedStatusCreateForm struct {
 //
 // swagger:model advancedVisibilityFlagsForm
 type AdvancedVisibilityFlagsForm struct {
-	// The gotosocial visibility model.
-	VisibilityAdvanced *string `form:"visibility_advanced" json:"visibility_advanced" xml:"visibility_advanced"`
 	// This status will be federated beyond the local timeline(s).
 	Federated *bool `form:"federated" json:"federated" xml:"federated"`
 	// This status can be boosted/reblogged.
@@ -177,8 +205,8 @@ type AdvancedVisibilityFlagsForm struct {
 //
 // swagger:model statusFormat
 // enum:
-//   - plain
-//   - markdown
+// - plain
+// - markdown
 // example: plain
 type StatusFormat string
 

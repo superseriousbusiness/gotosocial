@@ -18,7 +18,7 @@
 
 package model
 
-// AdminAccountInfo represents the *admin* view of an account's details. See here: https://docs.joinmastodon.org/entities/admin-account/
+// AdminAccountInfo models the admin view of an account's details.
 type AdminAccountInfo struct {
 	// The ID of the account in the database.
 	ID string `json:"id"`
@@ -56,7 +56,7 @@ type AdminAccountInfo struct {
 	InvitedByAccountID string `json:"invited_by_account_id"`
 }
 
-// AdminReportInfo represents the *admin* view of a report. See here: https://docs.joinmastodon.org/entities/admin-report/
+// AdminReportInfo models the admin view of a report.
 type AdminReportInfo struct {
 	// The ID of the report in the database.
 	ID string `json:"id"`

@@ -51,18 +51,21 @@ type Poll struct {
 type PollOptions struct {
 	// The text value of the poll option. String.
 	Title string `json:"title"`
-	// The number of received votes for this option. Number, or null if results are not published yet.
+	// The number of received votes for this option.
+	// Number, or null if results are not published yet.
 	VotesCount int `json:"votes_count,omitempty"`
 }
 
-// PollRequest represents a mastodon-api poll attached to a status POST request, as defined here: https://docs.joinmastodon.org/methods/statuses/
-// It should be used at the path https://example.org/api/v1/statuses
+// PollRequest models a request to create a poll.
 //
-// swagger:model pollRequest
+// swagger:parameters createStatus
 type PollRequest struct {
-	// Array of possible answers. If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+	// Array of possible answers.
+	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+	// name: poll[options]
 	Options []string `form:"options" json:"options" xml:"options"`
-	// Duration the poll should be open, in seconds. If provided, media_ids cannot be used, and poll[options] must be provided.
+	// Duration the poll should be open, in seconds.
+	// If provided, media_ids cannot be used, and poll[options] must be provided.
 	ExpiresIn int `form:"expires_in" json:"expires_in" xml:"expires_in"`
 	// Allow multiple choices on this poll.
 	Multiple bool `form:"multiple" json:"multiple" xml:"multiple"`

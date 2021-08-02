@@ -8,7 +8,81 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// InstanceUpdatePATCHHandler allows an admin to update the instance information served at /api/v1/instance
+// InstanceUpdatePATCHHandler swagger:operation PATCH /api/v1/instance instanceUpdate
+//
+// Update your instance information and/or upload a new avatar/header for the instance.
+//
+// This requires admin permissions on the instance.
+//
+// ---
+// tags:
+// - instance
+//
+// consumes:
+// - multipart/form-data
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: title
+//   in: formData
+//   description: Title to use for the instance.
+//   type: string
+//   maximum: 40
+//   allowEmptyValue: true
+// - name: contact_username
+//   in: formData
+//   description: |-
+//     Username of the contact account.
+//     This must be the username of an instance admin.
+//   type: string
+//   allowEmptyValue: true
+// - name: contact_email
+//   in: formData
+//   description: Email address to use as the instance contact.
+//   type: string
+//   allowEmptyValue: true
+// - name: short_description
+//   in: formData
+//   description: Short description of the instance.
+//   type: string
+//   maximum: 500
+//   allowEmptyValue: true
+// - name: description
+//   in: formData
+//   description: Longer description of the instance.
+//   type: string
+//   maximum: 5000
+//   allowEmptyValue: true
+// - name: terms
+//   in: formData
+//   description: Terms and conditions of the instance.
+//   type: string
+//   maximum: 5000
+//   allowEmptyValue: true
+// - name: avatar
+//   in: formData
+//   description: Avatar of the instance.
+//   type: file
+// - name: header
+//   in: formData
+//   description: Header of the instance.
+//   type: file
+//
+// security:
+// - OAuth2 Bearer:
+//   - admin
+//
+// responses:
+//   '200':
+//     description: "The newly updated instance."
+//     schema:
+//       "$ref": "#/definitions/instance"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 	l := m.log.WithField("func", "InstanceUpdatePATCHHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)

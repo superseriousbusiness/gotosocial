@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountUnblockPOSTHandler handles the removal of a block from the authed account targeting the given account ID.
-//
-// swagger:operation POST /api/v1/accounts/{id}/unblock accountUnblock
+// AccountUnblockPOSTHandler swagger:operation POST /api/v1/accounts/{id}/unblock accountUnblock
 //
 // Unblock account with ID.
 //

@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountBlockPOSTHandler handles the creation of a block from the authed account targeting the given account ID.
-//
-// swagger:operation POST /api/v1/accounts/{id}/block accountBlock
+// AccountBlockPOSTHandler swagger:operation POST /api/v1/accounts/{id}/block accountBlock
 //
 // Block account with id.
 //

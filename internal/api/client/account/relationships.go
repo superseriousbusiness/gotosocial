@@ -8,9 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountRelationshipsGETHandler serves the relationship of the requesting account with one or more requested account IDs.
-//
-// swagger:operation GET /api/v1/accounts/relationships accountRelationships
+// AccountRelationshipsGETHandler swagger:operation GET /api/v1/accounts/relationships accountRelationships
 //
 // See your account's relationships with the given account IDs.
 //

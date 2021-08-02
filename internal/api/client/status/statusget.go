@@ -26,7 +26,41 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusGETHandler is for handling requests to just get one status based on its ID
+// StatusGETHandler swagger:operation GET /api/v1/statuses/{id} statusGet
+//
+// View status with the given ID.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:statuses
+//
+// responses:
+//   '200':
+//     description: "The requested created status."
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '401':
+//      description: unauthorized
+//   '400':
+//      description: bad request
+//   '404':
+//      description: not found
+//   '500':
+//      description: internal error
 func (m *Module) StatusGETHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "statusGETHandler",

@@ -8,9 +8,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainBlockDELETEHandler deals with the delete of an existing domain block.
-//
-// swagger:operation DELETE /api/v1/admin/domain_blocks/{id} domainBlockDelete
+// DomainBlockDELETEHandler swagger:operation DELETE /api/v1/admin/domain_blocks/{id} domainBlockDelete
 //
 // Delete domain block with the given ID.
 //

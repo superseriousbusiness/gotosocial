@@ -25,9 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountFollowingGETHandler serves the following of the requested account, if they're visible to the requester.
-//
-// swagger:operation GET /api/v1/accounts/{id}/following accountFollowing
+// AccountFollowingGETHandler swagger:operation GET /api/v1/accounts/{id}/following accountFollowing
 //
 // See accounts followed by given account id.
 //

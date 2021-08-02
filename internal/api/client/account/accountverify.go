@@ -25,11 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountVerifyGETHandler serves a user's account details to them IF they reached this
-// handler while in possession of a valid token, according to the oauth middleware.
-// It should be served as a GET at /api/v1/accounts/verify_credentials.
-//
-// swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
+// AccountVerifyGETHandler swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
 //
 // Verify a token by returning account details pertaining to it.
 //

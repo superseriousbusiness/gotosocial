@@ -31,9 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// emojiCreateRequest handles the creation of a new instance emoji.
-//
-// swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
+// emojiCreateRequest swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
 //
 // Upload and create a new instance emoji.
 //
@@ -55,11 +53,12 @@ import (
 //     This must be unique on the instance.
 //   type: string
 //   pattern: \w{2,30}
-//   example: blobcat_uwu
-// - name: domains
+//   required: true
+// - name: image
 //   in: formData
 //   description: A png or gif image of the emoji. Animated pngs work too!
 //   type: file
+//   required: true
 //
 // security:
 // - OAuth2 Bearer:

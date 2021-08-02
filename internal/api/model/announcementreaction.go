@@ -18,16 +18,24 @@
 
 package model
 
-// AnnouncementReaction represents a user reaction to admin/moderator announcement. See here: https://docs.joinmastodon.org/entities/announcementreaction/
+// AnnouncementReaction models a user reaction to an announcement.
+//
+// swagger:model announcementReaction
 type AnnouncementReaction struct {
 	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
+	// example: blobcat_uwu
 	Name string `json:"name"`
 	// The total number of users who have added this reaction.
+	// example: 5
 	Count int `json:"count"`
-	// Whether the authorized user has added this reaction to the announcement.
+	// This reaction belongs to the account viewing it.
 	Me bool `json:"me"`
-	// A link to the custom emoji.
+	// Web link to the image of the custom emoji.
+	// Empty for unicode emojis.
+	// example: https://example.org/custom_emojis/original/blobcat_uwu.png
 	URL string `json:"url,omitempty"`
-	// A link to a non-animated version of the custom emoji.
+	// Web link to a non-animated image of the custom emoji.
+	// Empty for unicode emojis.
+	// example: https://example.org/custom_emojis/statuc/blobcat_uwu.png
 	StaticURL string `json:"static_url,omitempty"`
 }

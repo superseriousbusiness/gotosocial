@@ -30,11 +30,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// StatusCreatePOSTHandler deals with the creation of new statuses.
-//
-// swagger:operation POST /api/v1/statuses statusCreate
+// StatusCreatePOSTHandler swagger:operation POST /api/v1/statuses statusCreate
 //
 // Create a new status.
+//
+// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
 //
 // ---
 // tags:
@@ -48,14 +49,8 @@ import (
 // produces:
 // - application/json
 //
-// parameters:
-// - name: Status create form.
-//   in: body
-//   schema:
-//     "$ref": "#/definitions/advancedStatusCreateForm"
-//
 // security:
-// - OAuth2 Application:
+// - OAuth2 Bearer:
 //   - write:statuses
 //
 // responses:

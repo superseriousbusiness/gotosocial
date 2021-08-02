@@ -26,7 +26,44 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusDELETEHandler verifies and handles deletion of a status
+// StatusDELETEHandler swagger:operation DELETE /api/v1/statuses/{id} statusDelete
+//
+// Delete status with the given ID. The status must belong to you.
+//
+// The deleted status will be returned in the response. The `text` field will contain the original text of the status as it was submitted.
+// This is useful when doing a 'delete and redraft' type operation.
+//
+// ---
+// tags:
+// - statuses
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: id
+//   type: string
+//   description: Target status ID.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:statuses
+//
+// responses:
+//   '200':
+//     description: "The newly deleted status."
+//     schema:
+//       "$ref": "#/definitions/status"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
 func (m *Module) StatusDELETEHandler(c *gin.Context) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":        "StatusDELETEHandler",
