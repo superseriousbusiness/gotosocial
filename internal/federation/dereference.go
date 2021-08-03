@@ -17,6 +17,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
+// DereferenceRemoteReplies takes a statusable (something that has withReplies and withInReplyTo),
+// and returns a slice of URLs equivalent to the IDs of all further statusables in the conversation that
+// are CC or TO public.
+//
+// This process involves working up and down the chain of replies, and parsing through the collections of IDs
+// presented by remote instances as part of their replies collections, and will likely involve making calls to
+// multiple different hosts.
+func (f *federator) DereferenceRemoteReplies(username string, statusable typeutils.Statusable) ([]*url.URL, error) {
+	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+}
+
 func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {
 	f.startHandshake(username, remoteAccountID)
 	defer f.stopHandshake(username, remoteAccountID)
