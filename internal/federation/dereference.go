@@ -18,16 +18,25 @@ import (
 )
 
 // DereferenceRemoteThread takes a statusable (something that has withReplies and withInReplyTo),
-// and returns a slice of URLs equivalent to the IDs of all statusables in the conversation that
-// are CC or TO public.
+// and dereferences statusables in the conversation that are CC or TO public.
 //
 // This process involves working up and down the chain of replies, and parsing through the collections of IDs
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
-func (f *federator) DereferenceRemoteThread(username string, statusable typeutils.Statusable) ([]typeutils.Statusable, error) {
+func (f *federator) DereferenceRemoteThread(username string, statusIRI *url.URL) error {
+	l := f.log.WithFields(logrus.Fields{
+		"func":      "DereferenceRemoteThread",
+		"username":  username,
+		"statusIRI": statusIRI.String(),
+	})
 
-	// we're gonna start piecing together the entire thread, starting with the statusable we have
-	thread := []typeutils.Statusable{statusable}
+	// we're gonna start piecing together the entire thread
+	thread := []typeutils.Statusable{}
+
+	statusable, err := f.DereferenceRemoteStatus(username, statusIRI)
+	if err != nil {
+		return fmt.Errorf("DereferenceRemoteThread: error dereferencing initial status with id %s: %s", statusIRI.String(), err)
+	}
 
 	// we'll begin by working up/backwards through the thread to find ancestors of statusable, and then ancestors of anything else we find...
 ancestorsLoop:
@@ -35,12 +44,14 @@ ancestorsLoop:
 		inReplyToProp := s.GetActivityStreamsInReplyTo()
 		if inReplyToProp.Empty() || inReplyToProp.Len() != 1 {
 			// we don't have one status that this is a reply to, so bail
+			l.Debug("inReplyToProp empty")
 			break ancestorsLoop
 		}
 
 		inReplyTo := inReplyToProp.At(0)
 		if inReplyTo == nil || !inReplyTo.IsIRI() {
 			// we don't have an IRI -- a status ID -- so we can't do anything more
+			l.Debug("no ID set on inReplyTo")
 			break ancestorsLoop
 		}
 
@@ -48,75 +59,76 @@ ancestorsLoop:
 		inReplyToIRI := inReplyTo.GetIRI()
 		inReplyToStatusable, err := f.DereferenceRemoteStatus(username, inReplyToIRI)
 		if err != nil {
+			l.Debugf("error dereferencing %s: %s", inReplyToIRI.String(), err)
 			break ancestorsLoop
 		}
 
+
 		// we've got it, so *prepend* it to the slice
+		l.Debugf("found ancestor with uri: %s", inReplyToIRI.String())
 		thread = append([]typeutils.Statusable{inReplyToStatusable}, thread...)
+
 		// now set the current statusable as the one we just found, so we'll try to dereference any ancestors of *that* in the next loop iteration
 		s = inReplyToStatusable
 	}
+	l.Debugf("thread is length %d after finding ancestors", len(thread))
 
 	// now that we have ancestors, we'll look for descendants...
-descendantsLoop:
-	for s := statusable; s != nil; {
-		replies := s.GetActivityStreamsReplies()
+	replies := statusable.GetActivityStreamsReplies()
 
-		if replies == nil || !replies.IsActivityStreamsCollection() {
-			// can't parse any replies
-			break descendantsLoop
-		}
-
+	// make sure we have a replies collection...
+	if replies != nil && replies.IsActivityStreamsCollection() {
 		repliesCollection := replies.GetActivityStreamsCollection()
-		if repliesCollection == nil {
-			// can't parse any replies
-			break descendantsLoop
-		}
+		if repliesCollection != nil {
 
-		first := repliesCollection.GetActivityStreamsFirst()
-		if first == nil || !first.IsActivityStreamsCollectionPage() {
-			// can't parse any replies
-			break descendantsLoop
-		}
+			// make sure we have a 'first' page of the replies collection...
+			first := repliesCollection.GetActivityStreamsFirst()
+			if first != nil && first.IsActivityStreamsCollectionPage() {
+				var page typeutils.CollectionPageable
 
-		var page typeutils.CollectionPageable
-		descendantsInnerLoop:
-		for page = first.GetActivityStreamsCollectionPage(); page != nil; {
-			// usually the first collection page IRI doesn't have any items on it, so we'll immediately jump to the next one
-			next := page.GetActivityStreamsNext()
-			if next == nil || !next.IsIRI() {
-				break descendantsInnerLoop
-			}
-			nextIRI := next.GetIRI()
-
-			// gotta dereference this
-			nextPageable, err := f.DereferenceCollectionPage(username, nextIRI)
-			if err != nil {
-				break descendantsInnerLoop
-			}
-
-			pageItems := nextPageable.GetActivityStreamsItems()
-			if pageItems == nil || pageItems.Len() == 0 {
-				// no items left
-				break descendantsInnerLoop
-			}
-
-			for iter := pageItems.Begin(); iter != pageItems.End(); iter = iter.Next() {
-				if iter.IsIRI() {
-					// we've found a reply, dereference it
-					statusable, err := f.DereferenceRemoteStatus(username, iter.GetIRI())
-					if err != nil {
-						// no dice, try the next iri in the items
-						continue
+				// OK, we can look for items now
+			descendantsLoop:
+				for page = first.GetActivityStreamsCollectionPage(); page != nil; {
+					// usually the first collection page IRI doesn't have any items on it, so we'll immediately jump to the next one
+					next := page.GetActivityStreamsNext()
+					if next == nil || !next.IsIRI() {
+						break descendantsLoop
 					}
-					thread = append(thread, statusable)
+					nextIRI := next.GetIRI()
+
+					// gotta dereference this
+					nextPageable, err := f.DereferenceCollectionPage(username, nextIRI)
+					if err != nil {
+						break descendantsLoop
+					}
+
+					pageItems := nextPageable.GetActivityStreamsItems()
+					if pageItems == nil || pageItems.Len() == 0 {
+						// no items left
+						break descendantsLoop
+					}
+
+					for iter := pageItems.Begin(); iter != pageItems.End(); iter = iter.Next() {
+						if iter.IsIRI() {
+							// we've found a reply, dereference it
+							statusable, err := f.DereferenceRemoteStatus(username, iter.GetIRI())
+							if err != nil {
+								// no dice, try the next iri in the items
+								continue
+							}
+							l.Debug("found descendant")
+							thread = append(thread, statusable)
+						}
+					}
+
+					// set page to the next page we've been working on, so it'll look through it on the next loop iteration
+					page = nextPageable
 				}
 			}
-
-			// set page to the next page we've been working on, so it'll look through it on the next loop iteration
-			page = nextPageable
 		}
 	}
+
+	l.Debugf("thread is length %d after finding descendants", len(thread))
 
 	// remove any duplicates in the slice
 	keys := make(map[string]bool)
@@ -133,7 +145,93 @@ descendantsLoop:
 		}
 	}
 
-	return threadDeduped, nil
+	l.Debugf("deduped thread is length %d", len(thread))
+
+	// now for each statusable we can dereference it and its account and put them in the db
+	var i int
+	for _, s := range threadDeduped {
+		// if we already have this status in the db we can just skip this whole procedure, so check by URI
+		statusURI := s.GetJSONLDId()
+		if statusURI == nil || !statusURI.IsIRI() {
+			continue
+		}
+
+		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: statusURI.GetIRI().String()}}, &gtsmodel.Status{}); err == nil {
+			// we already have this status stored
+			l.Debugf("status with id %s already in database", statusURI.GetIRI().String())
+			continue
+		}
+
+		// make sure we have the author account in the db
+		attributedToProp := statusable.GetActivityStreamsAttributedTo()
+		for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
+			if !iter.IsIRI() {
+				continue
+			}
+
+			accountURI := iter.GetIRI()
+			if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: accountURI.String()}}, &gtsmodel.Account{}); err == nil {
+				// we already have it, nice
+				l.Debugf("account with id %s already in database", accountURI.String())
+				continue
+			}
+
+			// we don't have the status author account yet so dereference it
+			accountable, err := f.DereferenceRemoteAccount(username, accountURI)
+			if err != nil {
+				return fmt.Errorf("DereferenceRemoteThread: error dereferencing remote account with id %s: %s", accountURI.String(), err)
+			}
+			account, err := f.typeConverter.ASRepresentationToAccount(accountable, false)
+			if err != nil {
+				return fmt.Errorf("DereferenceRemoteThread: error converting dereferenced account with id %s into account : %s", accountURI.String(), err)
+			}
+
+			accountID, err := id.NewRandomULID()
+			if err != nil {
+				return err
+			}
+			account.ID = accountID
+
+			if err := f.db.Put(account); err != nil {
+				return fmt.Errorf("DereferenceRemoteThread: error putting dereferenced account with id %s into database : %s", accountURI.String(), err)
+			}
+
+			if err := f.DereferenceAccountFields(account, username, false); err != nil {
+				return fmt.Errorf("DereferenceRemoteThread: error dereferencing fields on account with id %s : %s", accountURI.String(), err)
+			}
+		}
+
+		gtsStatus, err := f.typeConverter.ASStatusToStatus(s)
+		if err != nil {
+			l.Debugf("couldn't convert statusable %s to gtsStatus: %s", statusURI.GetIRI().String(), err)
+			continue
+		}
+
+		id, err := id.NewULIDFromTime(gtsStatus.CreatedAt)
+		if err != nil {
+			l.Debugf("error generating ulid: %s", err)
+			continue
+		}
+		gtsStatus.ID = id
+
+		if err := f.db.Put(gtsStatus); err != nil {
+			return fmt.Errorf("DereferenceRemoteThread: error putting dereferenced status with id %s into the db: %s", gtsStatus.URI, err)
+		}
+
+		// now dereference additional fields straight away (we're already async here so we have time)
+		if err := f.DereferenceStatusFields(gtsStatus, username); err != nil {
+			return fmt.Errorf("DereferenceRemoteThread: error dereferencing status fields for status with id %s: %s", gtsStatus.URI, err)
+		}
+
+		// update with the newly dereferenced fields
+		if err := f.db.UpdateByID(gtsStatus.ID, gtsStatus); err != nil {
+			return fmt.Errorf("DereferenceRemoteThread: error updating dereferenced status in the db: %s", err)
+		}
+		i = i + 1
+	}
+
+	l.Debugf("fetched %d status(es) in conversation", i)
+	return nil
 }
 
 // DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
@@ -368,8 +466,7 @@ func (f *federator) DereferenceStatusFields(status *gtsmodel.Status, requestingU
 		return fmt.Errorf("error creating transport: %s", err)
 	}
 
-	// the status should have an ID by now, but just in case it doesn't let's generate one here
-	// because we'll need it further down
+	// in case the status doesn't have an id yet (ie., it hasn't entered the database yet)
 	if status.ID == "" {
 		newID, err := id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
@@ -536,6 +633,11 @@ func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUse
 	}
 	if blocked, err := f.blockedDomain(boostedStatusURI.Host); blocked || err != nil {
 		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedStatusURI.Host)
+	}
+
+	// dereference statuses in the thread of the boosted status
+	if err := f.DereferenceRemoteThread(requestingUsername, boostedStatusURI); err != nil {
+		return fmt.Errorf("DereferenceAnnounce: error dereferencing thread of boosted status: %s", err)
 	}
 
 	// check if we already have the boosted status in the database

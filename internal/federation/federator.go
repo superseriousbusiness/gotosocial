@@ -64,12 +64,12 @@ type Federator interface {
 	// does its damnedest to get some kind of information back about the instance, trying /api/v1/instance, then /.well-known/nodeinfo
 	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 	// DereferenceRemoteThread takes a statusable (something that has withReplies and withInReplyTo),
-	// and returns a slice of of all statusables in the conversation that we can see.
+	// and dereferences statusables in the conversation, putting them in the database.
 	//
 	// This process involves working up and down the chain of replies, and parsing through the collections of IDs
 	// presented by remote instances as part of their replies collections, and will likely involve making several calls to
 	// multiple different hosts.
-	DereferenceRemoteThread(username string, statusable typeutils.Statusable) ([]typeutils.Statusable, error)
+	DereferenceRemoteThread(username string, statusURI *url.URL) error
 	// DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
 	DereferenceCollectionPage(username string, pageIRI *url.URL) (typeutils.CollectionPageable, error)
 

@@ -21,6 +21,7 @@ package processing
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -47,7 +48,15 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			l.Trace("will now derefence incoming status")
+			incomingStatusURI, err := url.Parse(incomingStatus.URI)
+			if err != nil {
+				return err
+			}
+			if err := p.federator.DereferenceRemoteThread(federatorMsg.ReceivingAccount.Username, incomingStatusURI); err != nil {
+				return err
+			}
+
+			l.Trace("will now further derefence incoming status")
 			if err := p.federator.DereferenceStatusFields(incomingStatus, federatorMsg.ReceivingAccount.Username); err != nil {
 				return fmt.Errorf("error dereferencing status from federator: %s", err)
 			}
