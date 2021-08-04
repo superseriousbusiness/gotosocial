@@ -17,15 +17,161 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// DereferenceRemoteReplies takes a statusable (something that has withReplies and withInReplyTo),
-// and returns a slice of URLs equivalent to the IDs of all further statusables in the conversation that
+// DereferenceRemoteThread takes a statusable (something that has withReplies and withInReplyTo),
+// and returns a slice of URLs equivalent to the IDs of all statusables in the conversation that
 // are CC or TO public.
 //
 // This process involves working up and down the chain of replies, and parsing through the collections of IDs
-// presented by remote instances as part of their replies collections, and will likely involve making calls to
+// presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
-func (f *federator) DereferenceRemoteReplies(username string, statusable typeutils.Statusable) ([]*url.URL, error) {
-	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+func (f *federator) DereferenceRemoteThread(username string, statusable typeutils.Statusable) ([]typeutils.Statusable, error) {
+
+	// we're gonna start piecing together the entire thread, starting with the statusable we have
+	thread := []typeutils.Statusable{statusable}
+
+	// we'll begin by working up/backwards through the thread to find ancestors of statusable, and then ancestors of anything else we find...
+ancestorsLoop:
+	for s := statusable; s != nil; {
+		inReplyToProp := s.GetActivityStreamsInReplyTo()
+		if inReplyToProp.Empty() || inReplyToProp.Len() != 1 {
+			// we don't have one status that this is a reply to, so bail
+			break ancestorsLoop
+		}
+
+		inReplyTo := inReplyToProp.At(0)
+		if inReplyTo == nil || !inReplyTo.IsIRI() {
+			// we don't have an IRI -- a status ID -- so we can't do anything more
+			break ancestorsLoop
+		}
+
+		// this is the IRI of the statusable that this statusable is a reply to, so let's dereference it....
+		inReplyToIRI := inReplyTo.GetIRI()
+		inReplyToStatusable, err := f.DereferenceRemoteStatus(username, inReplyToIRI)
+		if err != nil {
+			break ancestorsLoop
+		}
+
+		// we've got it, so *prepend* it to the slice
+		thread = append([]typeutils.Statusable{inReplyToStatusable}, thread...)
+		// now set the current statusable as the one we just found, so we'll try to dereference any ancestors of *that* in the next loop iteration
+		s = inReplyToStatusable
+	}
+
+	// now that we have ancestors, we'll look for descendants...
+descendantsLoop:
+	for s := statusable; s != nil; {
+		replies := s.GetActivityStreamsReplies()
+
+		if replies == nil || !replies.IsActivityStreamsCollection() {
+			// can't parse any replies
+			break descendantsLoop
+		}
+
+		repliesCollection := replies.GetActivityStreamsCollection()
+		if repliesCollection == nil {
+			// can't parse any replies
+			break descendantsLoop
+		}
+
+		first := repliesCollection.GetActivityStreamsFirst()
+		if first == nil || !first.IsActivityStreamsCollectionPage() {
+			// can't parse any replies
+			break descendantsLoop
+		}
+
+		var page typeutils.CollectionPageable
+		descendantsInnerLoop:
+		for page = first.GetActivityStreamsCollectionPage(); page != nil; {
+			// usually the first collection page IRI doesn't have any items on it, so we'll immediately jump to the next one
+			next := page.GetActivityStreamsNext()
+			if next == nil || !next.IsIRI() {
+				break descendantsInnerLoop
+			}
+			nextIRI := next.GetIRI()
+
+			// gotta dereference this
+			nextPageable, err := f.DereferenceCollectionPage(username, nextIRI)
+			if err != nil {
+				break descendantsInnerLoop
+			}
+
+			pageItems := nextPageable.GetActivityStreamsItems()
+			if pageItems == nil || pageItems.Len() == 0 {
+				// no items left
+				break descendantsInnerLoop
+			}
+
+			for iter := pageItems.Begin(); iter != pageItems.End(); iter = iter.Next() {
+				if iter.IsIRI() {
+					// we've found a reply, dereference it
+					statusable, err := f.DereferenceRemoteStatus(username, iter.GetIRI())
+					if err != nil {
+						// no dice, try the next iri in the items
+						continue
+					}
+					thread = append(thread, statusable)
+				}
+			}
+
+			// set page to the next page we've been working on, so it'll look through it on the next loop iteration
+			page = nextPageable
+		}
+	}
+
+	// remove any duplicates in the slice
+	keys := make(map[string]bool)
+	threadDeduped := []typeutils.Statusable{}
+	for _, entry := range thread {
+		idProp := entry.GetJSONLDId()
+		if idProp == nil || !idProp.IsIRI() {
+			continue
+		}
+		thisIRI := idProp.GetIRI()
+		if _, value := keys[thisIRI.String()]; !value {
+			keys[thisIRI.String()] = true
+			threadDeduped = append(threadDeduped, entry)
+		}
+	}
+
+	return threadDeduped, nil
+}
+
+// DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
+func (f *federator) DereferenceCollectionPage(username string, pageIRI *url.URL) (typeutils.CollectionPageable, error) {
+	if blocked, err := f.blockedDomain(pageIRI.Host); blocked || err != nil {
+		return nil, fmt.Errorf("DereferenceCollectionPage: domain %s is blocked", pageIRI.Host)
+	}
+
+	transport, err := f.GetTransportForUser(username)
+	if err != nil {
+		return nil, fmt.Errorf("transport err: %s", err)
+	}
+
+	b, err := transport.Dereference(context.Background(), pageIRI)
+	if err != nil {
+		return nil, fmt.Errorf("error deferencing %s: %s", pageIRI.String(), err)
+	}
+
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, fmt.Errorf("error unmarshalling bytes into json: %s", err)
+	}
+
+	t, err := streams.ToType(context.Background(), m)
+	if err != nil {
+		return nil, fmt.Errorf("error resolving json into ap vocab type: %s", err)
+	}
+
+	if t.GetTypeName() != gtsmodel.ActivityStreamsCollectionPage {
+		return nil, fmt.Errorf("type name %s not supported", t.GetTypeName())
+	}
+
+	p, ok := t.(vocab.ActivityStreamsCollectionPage)
+	if !ok {
+		return nil, errors.New("error resolving type as activitystreams collection page")
+	}
+
+	return p, nil
 }
 
 func (f *federator) DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {

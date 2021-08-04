@@ -132,6 +132,16 @@ type Announceable interface {
 	withCC
 }
 
+// CollectionPageable represents the minimum interface for an activitystreams 'CollectionPage' object.
+type CollectionPageable interface {
+	withJSONLDId
+	withTypeName
+
+	withNext
+	withPartOf
+	withItems
+}
+
 type withJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }
@@ -262,4 +272,16 @@ type withActor interface {
 
 type withObject interface {
 	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
+}
+
+type withNext interface {
+	GetActivityStreamsNext() vocab.ActivityStreamsNextProperty
+}
+
+type withPartOf interface {
+	GetActivityStreamsPartOf() vocab.ActivityStreamsPartOfProperty
+}
+
+type withItems interface {
+	GetActivityStreamsItems() vocab.ActivityStreamsItemsProperty
 }

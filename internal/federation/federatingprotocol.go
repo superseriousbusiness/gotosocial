@@ -287,6 +287,17 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 // type and extension. The unhandled ones are passed to DefaultCallback.
 func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
 	wrapped = pub.FederatingWrappedCallbacks{
+		// Create handles additional side effects for the Create ActivityStreams
+		// type, specific to the application using go-fed.
+		//
+		// The wrapping callback for the Federating Protocol ensures the
+		// 'object' property is created in the database.
+		//
+		// Create calls Create for each object in the federated Activity.
+		Create: func(context.Context, vocab.ActivityStreamsCreate) error {
+			aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+			return nil
+		},
 		// OnFollow determines what action to take for this particular callback
 		// if a Follow Activity is handled.
 		//
