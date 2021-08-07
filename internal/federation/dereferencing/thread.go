@@ -69,7 +69,7 @@ searchLoop:
 		}
 
 		// we don't have currentIRI status in our database yet so we'll have to dereference it to see if it replies to something
-		statusable, err := d.DereferenceStatusable(username, currentIRI)
+		statusable, err := d.dereferenceStatusable(username, currentIRI)
 		if err != nil {
 			l.Debugf("error dereferencing %s: %s", currentIRI.String(), err)
 			break searchLoop
@@ -102,14 +102,20 @@ func (d *deref) iterateDescendants(username string, statusIRI url.URL) error {
 		return nil
 	}
 
-	// fetch the remote representation of the given status
-	statusable, err := d.DereferenceStatusable(username, &statusIRI)
+	_, new, err := d.GetRemoteStatus(username, &statusIRI)
 	if err != nil {
-		return fmt.Errorf("stashDescendants: error dereferencing status with id %s: %s", statusIRI.String(), err)
+		return fmt.Errorf("stashDescendants: error getting status with id %s: %s", statusIRI.String(), err)
 	}
 
-	if err := d.FullyDereferenceStatusableAndAccount(username, statusable); err != nil {
-		return fmt.Errorf("stashDescendants: error fully dereferencing statusable: %s", err)
+	if !new {
+		// since we've already seen this status, we don't need to proceed with further iteration
+		return nil
+	}
+
+	// fetch the remote representation of the given status
+	statusable, err := d.dereferenceStatusable(username, &statusIRI)
+	if err != nil {
+		return fmt.Errorf("stashDescendants: error dereferencing status with id %s: %s", statusIRI.String(), err)
 	}
 
 	replies := statusable.GetActivityStreamsReplies()

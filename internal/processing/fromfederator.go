@@ -56,14 +56,6 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return err
 			}
 
-			l.Trace("will now further derefence incoming status")
-			if err := p.federator.DereferenceStatusFields(incomingStatus, federatorMsg.ReceivingAccount.Username); err != nil {
-				return fmt.Errorf("error dereferencing status from federator: %s", err)
-			}
-			if err := p.db.UpdateByID(incomingStatus.ID, incomingStatus); err != nil {
-				return fmt.Errorf("error updating dereferenced status in the db: %s", err)
-			}
-
 			if err := p.timelineStatus(incomingStatus); err != nil {
 				return err
 			}
@@ -71,21 +63,9 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			if err := p.notifyStatus(incomingStatus); err != nil {
 				return err
 			}
-
 		case gtsmodel.ActivityStreamsProfile:
 			// CREATE AN ACCOUNT
-			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
-			if !ok {
-				return errors.New("profile was not parseable as *gtsmodel.Account")
-			}
-
-			l.Trace("will now derefence incoming account")
-			if err := p.federator.DereferenceAccountFields(incomingAccount, "", false); err != nil {
-				return fmt.Errorf("error dereferencing account from federator: %s", err)
-			}
-			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
-				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
-			}
+			// nothing to do here
 		case gtsmodel.ActivityStreamsLike:
 			// CREATE A FAVE
 			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
@@ -163,12 +143,13 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("profile was not parseable as *gtsmodel.Account")
 			}
 
-			l.Trace("will now derefence incoming account")
-			if err := p.federator.DereferenceAccountFields(incomingAccount, federatorMsg.ReceivingAccount.Username, true); err != nil {
-				return fmt.Errorf("error dereferencing account from federator: %s", err)
+			incomingAccountURI, err := url.Parse(incomingAccount.URI)
+			if err != nil {
+				return err
 			}
-			if err := p.db.UpdateByID(incomingAccount.ID, incomingAccount); err != nil {
-				return fmt.Errorf("error updating dereferenced account in the db: %s", err)
+
+			if _, _, err := p.federator.GetRemoteAccount(federatorMsg.ReceivingAccount.Username, incomingAccountURI, true); err != nil {
+				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
 		}
 	case gtsmodel.ActivityStreamsDelete:

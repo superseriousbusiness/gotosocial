@@ -218,7 +218,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 
 	// which account posted this status?
 	// if we don't know the account yet we can dereference it later
-	attributedTo, err := extractAttributedTo(statusable)
+	attributedTo, err := ExtractAttributedTo(statusable)
 	if err != nil {
 		return nil, errors.New("attributedTo was empty")
 	}

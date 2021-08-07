@@ -19,7 +19,6 @@
 package processing
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -29,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -134,57 +132,8 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 
 	// we don't have it locally so dereference it if we're allowed to
 	if resolve {
-		statusable, err := p.federator.DereferenceRemoteStatus(authed.Account.Username, uri)
+		status, _, err := p.federator.GetRemoteStatus(authed.Account.Username, uri)
 		if err == nil {
-			// it IS a status!
-
-			// extract the status owner's IRI from the statusable
-			var statusOwnerURI *url.URL
-			statusAttributedTo := statusable.GetActivityStreamsAttributedTo()
-			for i := statusAttributedTo.Begin(); i != statusAttributedTo.End(); i = i.Next() {
-				if i.IsIRI() {
-					statusOwnerURI = i.GetIRI()
-					break
-				}
-			}
-			if statusOwnerURI == nil {
-				return nil, errors.New("couldn't extract ownerAccountURI from statusable")
-			}
-
-			// make sure the status owner exists in the db by searching for it
-			_, err := p.searchAccountByURI(authed, statusOwnerURI, resolve)
-			if err != nil {
-				return nil, err
-			}
-
-			// we have the status owner, we have the dereferenced status, so now we should finish dereferencing the status properly
-
-			// first turn it into a gtsmodel.Status
-			status, err := p.tc.ASStatusToStatus(statusable)
-			if err != nil {
-				return nil, gtserror.NewErrorInternalError(err)
-			}
-
-			statusID, err := id.NewULIDFromTime(status.CreatedAt)
-			if err != nil {
-				return nil, err
-			}
-			status.ID = statusID
-
-			if err := p.db.Put(status); err != nil {
-				return nil, fmt.Errorf("error putting status in the db: %s", err)
-			}
-
-			// properly dereference everything in the status (media attachments etc)
-			if err := p.federator.DereferenceStatusFields(status, authed.Account.Username); err != nil {
-				return nil, fmt.Errorf("error dereferencing status fields: %s", err)
-			}
-
-			// update with the nicely dereferenced status
-			if err := p.db.UpdateByID(status.ID, status); err != nil {
-				return nil, fmt.Errorf("error updating status in the db: %s", err)
-			}
-
 			return status, nil
 		}
 	}
@@ -202,31 +151,10 @@ func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve
 	}
 	if resolve {
 		// we don't have it locally so try and dereference it
-		accountable, err := p.federator.DereferenceRemoteAccount(authed.Account.Username, uri)
+		account, _, err := p.federator.GetRemoteAccount(authed.Account.Username, uri, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
 		}
-
-		// it IS an account!
-		account, err := p.tc.ASRepresentationToAccount(accountable, false)
-		if err != nil {
-			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
-		}
-
-		accountID, err := id.NewRandomULID()
-		if err != nil {
-			return nil, err
-		}
-		account.ID = accountID
-
-		if err := p.db.Put(account); err != nil {
-			return nil, fmt.Errorf("searchAccountByURI: error inserting account with uri %s: %s", uri.String(), err)
-		}
-
-		if err := p.federator.DereferenceAccountFields(account, authed.Account.Username, false); err != nil {
-			return nil, fmt.Errorf("searchAccountByURI: error further dereferencing account with uri %s: %s", uri.String(), err)
-		}
-
 		return account, nil
 	}
 	return nil, nil
@@ -275,35 +203,12 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 			return nil, fmt.Errorf("searchAccountByMention: error fingering remote account with username %s and domain %s: %s", username, domain, err)
 		}
 
-		// dereference the account based on the URI we retrieved from the webfinger lookup
-		accountable, err := p.federator.DereferenceRemoteAccount(authed.Account.Username, acctURI)
+		// we don't have it locally so try and dereference it
+		account, _, err := p.federator.GetRemoteAccount(authed.Account.Username, acctURI, true)
 		if err != nil {
-			// something went wrong doing the dereferencing so we can't process the request
-			return nil, fmt.Errorf("searchAccountByMention: error dereferencing remote account with uri %s: %s", acctURI.String(), err)
+			return nil, fmt.Errorf("searchAccountByMention: error dereferencing account with uri %s: %s", acctURI.String(), err)
 		}
-
-		// convert the dereferenced account to the gts model of that account
-		foundAccount, err := p.tc.ASRepresentationToAccount(accountable, false)
-		if err != nil {
-			// something went wrong doing the conversion to a gtsmodel.Account so we can't process the request
-			return nil, fmt.Errorf("searchAccountByMention: error converting account with uri %s: %s", acctURI.String(), err)
-		}
-
-		foundAccountID, err := id.NewULID()
-		if err != nil {
-			return nil, err
-		}
-		foundAccount.ID = foundAccountID
-
-		// put this new account in our database
-		if err := p.db.Put(foundAccount); err != nil {
-			return nil, fmt.Errorf("searchAccountByMention: error inserting account with uri %s: %s", acctURI.String(), err)
-		}
-
-		// properly dereference all the fields on the account immediately
-		if err := p.federator.DereferenceAccountFields(foundAccount, authed.Account.Username, true); err != nil {
-			return nil, fmt.Errorf("searchAccountByMention: error dereferencing fields on account with uri %s: %s", acctURI.String(), err)
-		}
+		return account, nil
 	}
 
 	return nil, nil

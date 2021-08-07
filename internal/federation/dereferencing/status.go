@@ -16,7 +16,61 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-func (d *deref) DereferenceStatusable(username string, remoteStatusID *url.URL) (typeutils.Statusable, error) {
+// GetRemoteStatus completely dereferences a remote status, converts it to a GtS model status,
+// puts it in the database, and returns it to a caller. The boolean indicates whether the status is new
+// to us or not. If we haven't seen the status before, bool will be true. If we have seen the status before,
+// it will be false.
+//
+// SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
+func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL) (*gtsmodel.Status, bool, error) {
+	// check if we already have the status in our db, if so we can just return that
+	maybeStatus := &gtsmodel.Status{}
+	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteStatusID.String()}}, maybeStatus); err == nil {
+		return maybeStatus, false, nil
+	}
+
+	// new is now true because we haven't seen this status before
+	new := true
+
+	statusable, err := d.dereferenceStatusable(username, remoteStatusID)
+	if err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
+	}
+
+	accountURI, err := typeutils.ExtractAttributedTo(statusable)
+	if err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error extracting attributedTo: %s", err)
+	}
+
+	// do this so we know we have the remote account of the status in the db
+	_, _, err = d.GetRemoteAccount(username, accountURI, false)
+	if err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
+	}
+
+	gtsStatus, err := d.typeConverter.ASStatusToStatus(statusable)
+	if err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
+	}
+
+	if err := d.populateStatusFields(gtsStatus, username); err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
+	}
+
+	ulid, err := id.NewRandomULID()
+	if err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error generating new id for status: %s", err)
+	}
+	gtsStatus.ID = ulid
+
+	if err := d.db.Put(gtsStatus); err != nil {
+		return nil, new, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
+	}
+
+	return gtsStatus, new, nil
+}
+
+func (d *deref) dereferenceStatusable(username string, remoteStatusID *url.URL) (typeutils.Statusable, error) {
 	if blocked, err := d.blockedDomain(remoteStatusID.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: domain %s is blocked", remoteStatusID.Host)
 	}
@@ -102,7 +156,7 @@ func (d *deref) DereferenceStatusable(username string, remoteStatusID *url.URL) 
 	return nil, fmt.Errorf("DereferenceStatusable: type name %s not supported", t.GetTypeName())
 }
 
-// PopulateStatusFields fetches all the information we temporarily pinned to an incoming
+// populateStatusFields fetches all the information we temporarily pinned to an incoming
 // federated status, back in the federating db's Create function.
 //
 // When a status comes in from the federation API, there are certain fields that
@@ -125,7 +179,7 @@ func (d *deref) DereferenceStatusable(username string, remoteStatusID *url.URL) 
 // This function will deference all of the above, insert them in the database as necessary,
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
-func (d *deref) PopulateStatusFields(status *gtsmodel.Status, requestingUsername string) error {
+func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername string) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
@@ -232,7 +286,7 @@ func (d *deref) PopulateStatusFields(status *gtsmodel.Status, requestingUsername
 			}
 
 			// we just don't have it yet, so we should go get it....
-			accountable, err := d.DereferenceAccountable(requestingUsername, uri)
+			accountable, err := d.dereferenceAccountable(requestingUsername, uri)
 			if err != nil {
 				// we can't dereference it so just skip it
 				l.Debugf("error dereferencing remote account with uri %s: %s", uri.String(), err)

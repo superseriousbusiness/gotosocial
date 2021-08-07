@@ -31,64 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
-
-// dereferenceFediRequest authenticates the HTTP signature of an incoming federation request, using the given
-// username to perform the validation. It will *also* dereference the originator of the request and return it as a gtsmodel account
-// for further processing. NOTE that this function will have the side effect of putting the dereferenced account into the database,
-// and passing it into the processor through a channel for further asynchronous processing.
-func (p *processor) dereferenceFediRequest(username string, requestingAccountURI *url.URL) (*gtsmodel.Account, error) {
-	// OK now we can do the dereferencing part
-	// we might already have an entry for this account so check that first
-	requestingAccount := &gtsmodel.Account{}
-
-	err := p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
-	if err == nil {
-		// we do have it yay, return it
-		return requestingAccount, nil
-	}
-
-	if _, ok := err.(db.ErrNoEntries); !ok {
-		// something has actually gone wrong so bail
-		return nil, fmt.Errorf("database error getting account with uri %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// we just don't have an entry for this account yet
-	// what we do now should depend on our chosen federation method
-	// for now though, we'll just dereference it
-	// TODO: slow-fed
-	requestingPerson, err := p.federator.DereferenceRemoteAccount(username, requestingAccountURI)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't dereference %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// convert it to our internal account representation
-	requestingAccount, err = p.tc.ASRepresentationToAccount(requestingPerson, false)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't convert dereferenced uri %s to gtsmodel account: %s", requestingAccountURI.String(), err)
-	}
-
-	requestingAccountID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-	requestingAccount.ID = requestingAccountID
-
-	if err := p.db.Put(requestingAccount); err != nil {
-		return nil, fmt.Errorf("database error inserting account with uri %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// put it in our channel to queue it for async processing
-	p.fromFederator <- gtsmodel.FromFederator{
-		APObjectType:   gtsmodel.ActivityStreamsProfile,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
-		GTSModel:       requestingAccount,
-	}
-
-	return requestingAccount, nil
-}
 
 func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
@@ -114,7 +58,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 
 		// if we're already handshaking/dereferencing a remote account, we can skip the dereferencing part
 		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
-			requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+			requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}
@@ -158,7 +102,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -203,7 +147,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -248,7 +192,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}

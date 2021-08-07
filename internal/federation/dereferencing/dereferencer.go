@@ -2,6 +2,7 @@ package dereferencing
 
 import (
 	"net/url"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -13,21 +14,14 @@ import (
 )
 
 type Dereferencer interface {
-	DereferenceAccountable(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
-	DereferenceStatusable(username string, remoteStatusID *url.URL) (typeutils.Statusable, error)
-
-
-	PopulateAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error
+	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+	GetRemoteStatus(username string, remoteStatusID *url.URL) (*gtsmodel.Status, bool, error)
+	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
-
-	DereferenceCollectionPage(username string, pageIRI *url.URL) (typeutils.CollectionPageable, error)
-	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
-	FullyDereferenceStatusableAndAccount(username string, statusable typeutils.Statusable) error
 	DereferenceThread(username string, statusIRI *url.URL) error
 
-	PopulateStatusFields(status *gtsmodel.Status, requestingUsername string) error
-
+	Handshaking(username string, remoteAccountID *url.URL) bool
 }
 
 type deref struct {
@@ -37,6 +31,8 @@ type deref struct {
 	transportController transport.Controller
 	mediaHandler        media.Handler
 	config              *config.Config
+	handshakes          map[string][]*url.URL
+	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler, log *logrus.Logger) Dereferencer {
@@ -47,5 +43,6 @@ func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.Ty
 		transportController: transportController,
 		mediaHandler:        mediaHandler,
 		config:              config,
+		handshakeSync:       &sync.Mutex{},
 	}
 }

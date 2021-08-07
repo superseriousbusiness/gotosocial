@@ -126,7 +126,8 @@ func extractCCs(i withCC) ([]*url.URL, error) {
 	return cc, nil
 }
 
-func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
+// ExtractAttributedTo returns the URL of the actor that the withAttributedTo is attributed to.
+func ExtractAttributedTo(i withAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
 	if attributedToProp == nil {
 		return nil, errors.New("attributedToProp was nil")

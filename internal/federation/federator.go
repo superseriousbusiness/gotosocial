@@ -21,7 +21,6 @@ package federation
 import (
 	"context"
 	"net/url"
-	"sync"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
@@ -55,31 +54,13 @@ type Federator interface {
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
 	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
-	// DereferenceRemoteAccount can be used to get the representation of a remote account, based on the account ID (which is a URI).
-	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
-	// DereferenceRemoteStatus can be used to get the representation of a remote status, based on its ID (which is a URI).
-	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error)
-	// DereferenceRemoteInstance takes the URL of a remote instance, and a username (optional) to spin up a transport with. It then
-	// does its damnedest to get some kind of information back about the instance, trying /api/v1/instance, then /.well-known/nodeinfo
-	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
-	// DereferenceRemoteThread takes a statusable (something that has withReplies and withInReplyTo),
-	// and dereferences statusables in the conversation, putting them in the database.
-	//
-	// This process involves working up and down the chain of replies, and parsing through the collections of IDs
-	// presented by remote instances as part of their replies collections, and will likely involve making several calls to
-	// multiple different hosts.
-	DereferenceRemoteThread(username string, statusURI *url.URL) error
-	// DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
-	DereferenceCollectionPage(username string, pageIRI *url.URL) (typeutils.CollectionPageable, error)
 
-	// DereferenceStatusFields does further dereferencing on a status.
-	DereferenceStatusFields(status *gtsmodel.Status, requestingUsername string) error
-	// DereferenceAccountFields does further dereferencing on an account.
-	DereferenceAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error
-	// DereferenceAnnounce does further dereferencing on an announce.
+	DereferenceRemoteThread(username string, statusURI *url.URL) error
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
+
+	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+	GetRemoteStatus(username string, remoteStatusID *url.URL) (*gtsmodel.Status, bool, error)
+	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
 	Handshaking(username string, remoteAccountID *url.URL) bool
@@ -98,8 +79,6 @@ type federator struct {
 	mediaHandler        media.Handler
 	actor               pub.FederatingActor
 	log                 *logrus.Logger
-	handshakes          map[string][]*url.URL
-	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewFederator returns a new federator
@@ -118,7 +97,6 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		dereferencer:        dereferencer,
 		mediaHandler:        mediaHandler,
 		log:                 log,
-		handshakeSync:       &sync.Mutex{},
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor
