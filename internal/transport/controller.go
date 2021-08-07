@@ -27,15 +27,19 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
 type Controller interface {
 	NewTransport(pubKeyID string, privkey crypto.PrivateKey) (Transport, error)
+	NewTransportForUsername(username string) (Transport, error)
 }
 
 type controller struct {
 	config   *config.Config
+	db       db.DB
 	clock    pub.Clock
 	client   pub.HttpClient
 	appAgent string
@@ -43,9 +47,10 @@ type controller struct {
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(config *config.Config, clock pub.Clock, client pub.HttpClient, log *logrus.Logger) Controller {
+func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.HttpClient, log *logrus.Logger) Controller {
 	return &controller{
 		config:   config,
+		db:       db,
 		clock:    clock,
 		client:   client,
 		appAgent: fmt.Sprintf("%s %s", config.ApplicationName, config.Host),
@@ -84,4 +89,26 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (T
 		getSignerMu:  &sync.Mutex{},
 		log:          c.log,
 	}, nil
+}
+
+func (c *controller) NewTransportForUsername(username string) (Transport, error) {
+	// We need an account to use to create a transport for dereferecing something.
+	// If a username has been given, we can fetch the account with that username and use it.
+	// Otherwise, we can take the instance account and use those credentials to make the request.
+	ourAccount := &gtsmodel.Account{}
+	var u string
+	if username == "" {
+		u = c.config.Host
+	} else {
+		u = username
+	}
+	if err := c.db.GetLocalAccountByUsername(u, ourAccount); err != nil {
+		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
+	}
+
+	transport, err := c.NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
+	}
+	return transport, nil
 }

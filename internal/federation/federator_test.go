@@ -87,7 +87,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	// setup transport controller with a no-op client so we don't make external calls
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return nil, nil
-	}))
+	}), suite.db)
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
@@ -152,7 +152,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}))
+	}), suite.db)
 
 	// now setup module being tested, with the mock transport controller
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))

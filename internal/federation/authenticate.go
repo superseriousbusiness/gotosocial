@@ -167,7 +167,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
 		// the request is remote and we don't have the public key yet,
 		// so we need to authenticate the request properly by dereferencing the remote key
-		transport, err := f.GetTransportForUser(requestedUsername)
+		transport, err := f.transportController.NewTransportForUsername(requestedUsername)
 		if err != nil {
 			return nil, false, fmt.Errorf("transport err: %s", err)
 		}

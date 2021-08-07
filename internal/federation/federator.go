@@ -27,6 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -80,11 +81,6 @@ type Federator interface {
 	// DereferenceAnnounce does further dereferencing on an announce.
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
 
-	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
-	// This can be used for making signed http requests.
-	//
-	// If username is an empty string, our instance user's credentials will be used instead.
-	GetTransportForUser(username string) (transport.Transport, error)
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
 	Handshaking(username string, remoteAccountID *url.URL) bool
 	pub.CommonBehavior
@@ -98,6 +94,7 @@ type federator struct {
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
+	dereferencer        dereferencing.Dereferencer
 	mediaHandler        media.Handler
 	actor               pub.FederatingActor
 	log                 *logrus.Logger
@@ -108,6 +105,8 @@ type federator struct {
 // NewFederator returns a new federator
 func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
 
+	dereferencer := dereferencing.NewDereferencer(config, db, typeConverter, transportController, mediaHandler, log)
+
 	clock := &Clock{}
 	f := &federator{
 		config:              config,
@@ -116,6 +115,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
+		dereferencer:        dereferencer,
 		mediaHandler:        mediaHandler,
 		log:                 log,
 		handshakeSync:       &sync.Mutex{},

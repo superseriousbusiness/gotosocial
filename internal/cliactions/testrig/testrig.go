@@ -59,7 +59,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}))
+	}), dbService)
 	federator := testrig.NewTestFederator(dbService, transportController, storageBackend)
 
 	processor := testrig.NewTestProcessor(dbService, storageBackend, federator)

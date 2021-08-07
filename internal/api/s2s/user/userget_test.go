@@ -42,7 +42,7 @@ func (suite *UserGetTestSuite) SetupTest() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	suite.log = testrig.NewTestLog()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
 	testrig.StandardDBSetup(suite.db)
@@ -96,7 +96,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}))
+	}), suite.db)
 	// get this transport controller embedded right in the user module we're testing
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
