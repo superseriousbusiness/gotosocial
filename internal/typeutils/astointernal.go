@@ -233,8 +233,8 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.GTSAuthorAccount = statusOwner
 
 	// check if there's a post that this is a reply to
-	inReplyToURI, err := extractInReplyToURI(statusable)
-	if err == nil {
+	inReplyToURI := ExtractInReplyToURI(statusable)
+	if inReplyToURI != nil {
 		// something is set so we can at least set this field on the
 		// status and dereference using this later if we need to
 		status.InReplyToURI = inReplyToURI.String()

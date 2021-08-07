@@ -60,19 +60,38 @@ func extractName(i withName) (string, error) {
 	return "", errors.New("activityStreamsName not found")
 }
 
-func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
+// ExtractInReplyToURI extracts the inReplyToURI property (if present) from an interface.
+func ExtractInReplyToURI(i withInReplyTo) *url.URL {
 	inReplyToProp := i.GetActivityStreamsInReplyTo()
 	if inReplyToProp == nil {
-		return nil, errors.New("in reply to prop was nil")
+		// the property just wasn't set
+		return nil
 	}
 	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
-				return iter.GetIRI(), nil
+				return iter.GetIRI()
 			}
 		}
 	}
-	return nil, errors.New("couldn't find iri for in reply to")
+	// couldn't find a URI
+	return nil
+}
+
+// ExtractURLItems extracts a slice of URLs from a property that has withItems.
+func ExtractURLItems(i withItems) []*url.URL {
+	urls := []*url.URL{}
+	items := i.GetActivityStreamsItems()
+	if items == nil || items.Len() == 0 {
+		return urls
+	}
+
+	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			urls = append(urls, iter.GetIRI())
+		}
+	}
+	return urls
 }
 
 func extractTos(i withTo) ([]*url.URL, error) {
