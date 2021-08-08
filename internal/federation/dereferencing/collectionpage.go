@@ -9,12 +9,12 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
-func (d *deref) DereferenceCollectionPage(username string, pageIRI *url.URL) (typeutils.CollectionPageable, error) {
+func (d *deref) DereferenceCollectionPage(username string, pageIRI *url.URL) (ap.CollectionPageable, error) {
 	if blocked, err := d.blockedDomain(pageIRI.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceCollectionPage: domain %s is blocked", pageIRI.Host)
 	}

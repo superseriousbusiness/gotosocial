@@ -9,8 +9,8 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -78,7 +78,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		typeName == gtsmodel.ActivityStreamsPerson ||
 		typeName == gtsmodel.ActivityStreamsService {
 		// it's an UPDATE to some kind of account
-		var accountable typeutils.Accountable
+		var accountable ap.Accountable
 
 		switch asType.GetTypeName() {
 		case gtsmodel.ActivityStreamsApplication:

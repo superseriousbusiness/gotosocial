@@ -24,6 +24,7 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
@@ -59,7 +60,11 @@ type Federator interface {
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
 
 	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	GetRemoteStatus(username string, remoteStatusID *url.URL) (*gtsmodel.Status, bool, error)
+	EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+
+	GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
+	EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
+
 	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.

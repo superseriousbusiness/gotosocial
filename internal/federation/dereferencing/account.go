@@ -10,12 +10,29 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
+
+// EnrichRemoteAccount takes an account that's already been inserted into the database in a minimal form,
+// and populates it with additional fields, media, etc.
+//
+// EnrichRemoteAccount is mostly useful for calling after an account has been initially created by
+// the federatingDB's Create function, or during the federated authorization flow.
+func (d *deref) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	if err := d.populateAccountFields(account, username, false); err != nil {
+		return nil, err
+	}
+
+	if err := d.db.UpdateByID(account.ID, account); err != nil {
+		return nil, fmt.Errorf("EnrichRemoteAccount: error updating account: %s", err)
+	}
+
+	return account, nil
+}
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
 // puts it in the database, and returns it to a caller. The boolean indicates whether the account is new
@@ -27,20 +44,19 @@ import (
 //
 // SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
 func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error) {
-	var maybeAccount *gtsmodel.Account
+	new := true
 
-	a := &gtsmodel.Account{}
-	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteAccountID.String()}}, a); err == nil {
-		maybeAccount = a
+	// check if we already have the account in our db
+	maybeAccount := &gtsmodel.Account{}
+	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteAccountID.String()}}, maybeAccount); err == nil {
+		// we've seen this account before so it's not new
+		new = false
+
+		// if we're not being asked to refresh, we can just return the maybeAccount as-is and avoid doing any external calls
+		if !refresh {
+			return maybeAccount, new, nil
+		}
 	}
-
-	if !refresh && maybeAccount != nil {
-		// a refresh isn't required so if we have the account already we can just return that, no need to call the remote
-		return maybeAccount, false, nil
-	}
-
-	// this is a 'new' account to us if we didn't already have an entry for it
-	new := maybeAccount == nil
 
 	accountable, err := d.dereferenceAccountable(username, remoteAccountID)
 	if err != nil {
@@ -52,18 +68,7 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error converting accountable to account: %s", err)
 	}
 
-	if maybeAccount != nil {
-		// take the id we already have and do an update
-		gtsAccount.ID = maybeAccount.ID
-
-		if err := d.populateAccountFields(gtsAccount, username, refresh); err != nil {
-			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
-		}
-
-		if err := d.db.UpdateByID(gtsAccount.ID, gtsAccount); err != nil {
-			return nil, new, fmt.Errorf("FullyDereferenceAccount: error updating existing account: %s", err)
-		}
-	} else {
+	if new {
 		// generate a new id since we haven't seen this account before, and do a put
 		ulid, err := id.NewRandomULID()
 		if err != nil {
@@ -78,6 +83,17 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		if err := d.db.Put(gtsAccount); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error putting new account: %s", err)
 		}
+	} else {
+		// take the id we already have and do an update
+		gtsAccount.ID = maybeAccount.ID
+
+		if err := d.populateAccountFields(gtsAccount, username, refresh); err != nil {
+			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
+		}
+
+		if err := d.db.UpdateByID(gtsAccount.ID, gtsAccount); err != nil {
+			return nil, new, fmt.Errorf("FullyDereferenceAccount: error updating existing account: %s", err)
+		}
 	}
 
 	return gtsAccount, new, nil
@@ -87,7 +103,7 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 // it finds as something that an account model can be constructed out of.
 //
 // Will work for Person, Application, or Service models.
-func (d *deref) dereferenceAccountable(username string, remoteAccountID *url.URL) (typeutils.Accountable, error) {
+func (d *deref) dereferenceAccountable(username string, remoteAccountID *url.URL) (ap.Accountable, error) {
 	d.startHandshake(username, remoteAccountID)
 	defer d.stopHandshake(username, remoteAccountID)
 

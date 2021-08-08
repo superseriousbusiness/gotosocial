@@ -48,24 +48,29 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			incomingStatusURI, err := url.Parse(incomingStatus.URI)
+			status, err := p.federator.EnrichRemoteStatus(federatorMsg.ReceivingAccount.Username, incomingStatus)
 			if err != nil {
 				return err
 			}
-			if err := p.federator.DereferenceRemoteThread(federatorMsg.ReceivingAccount.Username, incomingStatusURI); err != nil {
+
+			if err := p.timelineStatus(status); err != nil {
 				return err
 			}
 
-			if err := p.timelineStatus(incomingStatus); err != nil {
-				return err
-			}
-
-			if err := p.notifyStatus(incomingStatus); err != nil {
+			if err := p.notifyStatus(status); err != nil {
 				return err
 			}
 		case gtsmodel.ActivityStreamsProfile:
 			// CREATE AN ACCOUNT
-			// nothing to do here
+			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("profile was not parseable as *gtsmodel.Account")
+			}
+
+			_, err := p.federator.EnrichRemoteAccount(federatorMsg.ReceivingAccount.Username, incomingAccount)
+			if err != nil {
+				return err
+			}
 		case gtsmodel.ActivityStreamsLike:
 			// CREATE A FAVE
 			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)

@@ -24,11 +24,12 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) ASRepresentationToAccount(accountable Accountable, update bool) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update bool) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
@@ -55,7 +56,7 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 
 	// Username aka preferredUsername
 	// We need this one so bail if it's not set.
-	username, err := extractPreferredUsername(accountable)
+	username, err := ap.ExtractPreferredUsername(accountable)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't extract username: %s", err)
 	}
@@ -66,27 +67,27 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 
 	// avatar aka icon
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if avatarURL, err := extractIconURL(accountable); err == nil {
+	if avatarURL, err := ap.ExtractIconURL(accountable); err == nil {
 		acct.AvatarRemoteURL = avatarURL.String()
 	}
 
 	// header aka image
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if headerURL, err := extractImageURL(accountable); err == nil {
+	if headerURL, err := ap.ExtractImageURL(accountable); err == nil {
 		acct.HeaderRemoteURL = headerURL.String()
 	}
 
 	// display name aka name
 	// we default to the username, but take the more nuanced name property if it exists
 	acct.DisplayName = username
-	if displayName, err := extractName(accountable); err == nil {
+	if displayName, err := ap.ExtractName(accountable); err == nil {
 		acct.DisplayName = displayName
 	}
 
 	// TODO: fields aka attachment array
 
 	// note aka summary
-	note, err := extractSummary(accountable)
+	note, err := ap.ExtractSummary(accountable)
 	if err == nil && note != "" {
 		acct.Note = note
 	}
@@ -110,13 +111,13 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 	// discoverable
 	// default to false -- take custom value if it's set though
 	acct.Discoverable = false
-	discoverable, err := extractDiscoverable(accountable)
+	discoverable, err := ap.ExtractDiscoverable(accountable)
 	if err == nil {
 		acct.Discoverable = discoverable
 	}
 
 	// url property
-	url, err := extractURL(accountable)
+	url, err := ap.ExtractURL(accountable)
 	if err == nil {
 		// take the URL if we can find it
 		acct.URL = url.String()
@@ -155,7 +156,7 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 	// TODO: alsoKnownAs
 
 	// publicKey
-	pkey, pkeyURL, err := extractPublicKeyForOwner(accountable, uri)
+	pkey, pkeyURL, err := ap.ExtractPublicKeyForOwner(accountable, uri)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get public key for person %s: %s", uri.String(), err)
 	}
@@ -165,7 +166,7 @@ func (c *converter) ASRepresentationToAccount(accountable Accountable, update bo
 	return acct, nil
 }
 
-func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error) {
+func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := &gtsmodel.Status{}
 
 	// uri at which this status is reachable
@@ -176,49 +177,49 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.URI = uriProp.GetIRI().String()
 
 	// web url for viewing this status
-	if statusURL, err := extractURL(statusable); err == nil {
+	if statusURL, err := ap.ExtractURL(statusable); err == nil {
 		status.URL = statusURL.String()
 	}
 
 	// the html-formatted content of this status
-	if content, err := extractContent(statusable); err == nil {
+	if content, err := ap.ExtractContent(statusable); err == nil {
 		status.Content = content
 	}
 
 	// attachments to dereference and fetch later on (we don't do that here)
-	if attachments, err := extractAttachments(statusable); err == nil {
+	if attachments, err := ap.ExtractAttachments(statusable); err == nil {
 		status.GTSMediaAttachments = attachments
 	}
 
 	// hashtags to dereference later on
-	if hashtags, err := extractHashtags(statusable); err == nil {
+	if hashtags, err := ap.ExtractHashtags(statusable); err == nil {
 		status.GTSTags = hashtags
 	}
 
 	// emojis to dereference and fetch later on
-	if emojis, err := extractEmojis(statusable); err == nil {
+	if emojis, err := ap.ExtractEmojis(statusable); err == nil {
 		status.GTSEmojis = emojis
 	}
 
 	// mentions to dereference later on
-	if mentions, err := extractMentions(statusable); err == nil {
+	if mentions, err := ap.ExtractMentions(statusable); err == nil {
 		status.GTSMentions = mentions
 	}
 
 	// cw string for this status
-	if cw, err := extractSummary(statusable); err == nil {
+	if cw, err := ap.ExtractSummary(statusable); err == nil {
 		status.ContentWarning = cw
 	}
 
 	// when was this status created?
-	published, err := extractPublished(statusable)
+	published, err := ap.ExtractPublished(statusable)
 	if err == nil {
 		status.CreatedAt = published
 	}
 
 	// which account posted this status?
 	// if we don't know the account yet we can dereference it later
-	attributedTo, err := ExtractAttributedTo(statusable)
+	attributedTo, err := ap.ExtractAttributedTo(statusable)
 	if err != nil {
 		return nil, errors.New("attributedTo was empty")
 	}
@@ -233,7 +234,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	status.GTSAuthorAccount = statusOwner
 
 	// check if there's a post that this is a reply to
-	inReplyToURI := ExtractInReplyToURI(statusable)
+	inReplyToURI := ap.ExtractInReplyToURI(statusable)
 	if inReplyToURI != nil {
 		// something is set so we can at least set this field on the
 		// status and dereference using this later if we need to
@@ -259,12 +260,12 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	// visibility entry for this status
 	var visibility gtsmodel.Visibility
 
-	to, err := extractTos(statusable)
+	to, err := ap.ExtractTos(statusable)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting TO values: %s", err)
 	}
 
-	cc, err := extractCCs(statusable)
+	cc, err := ap.ExtractCCs(statusable)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting CC values: %s", err)
 	}
@@ -315,7 +316,7 @@ func (c *converter) ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, e
 	return status, nil
 }
 
-func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error) {
+func (c *converter) ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel.FollowRequest, error) {
 
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -323,7 +324,7 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := extractActor(followable)
+	origin, err := ap.ExtractActor(followable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
@@ -332,7 +333,7 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := extractObject(followable)
+	target, err := ap.ExtractObject(followable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
@@ -350,14 +351,14 @@ func (c *converter) ASFollowToFollowRequest(followable Followable) (*gtsmodel.Fo
 	return followRequest, nil
 }
 
-func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error) {
+func (c *converter) ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on follow, or was not an iri")
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := extractActor(followable)
+	origin, err := ap.ExtractActor(followable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
@@ -366,7 +367,7 @@ func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, e
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := extractObject(followable)
+	target, err := ap.ExtractObject(followable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
@@ -384,14 +385,14 @@ func (c *converter) ASFollowToFollow(followable Followable) (*gtsmodel.Follow, e
 	return follow, nil
 }
 
-func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error) {
+func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
 	idProp := likeable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on like, or was not an iri")
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := extractActor(likeable)
+	origin, err := ap.ExtractActor(likeable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from like")
 	}
@@ -400,7 +401,7 @@ func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := extractObject(likeable)
+	target, err := ap.ExtractObject(likeable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from like")
 	}
@@ -426,14 +427,14 @@ func (c *converter) ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error
 	}, nil
 }
 
-func (c *converter) ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error) {
+func (c *converter) ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, error) {
 	idProp := blockable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("ASBlockToBlock: no id property set on block, or was not an iri")
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := extractActor(blockable)
+	origin, err := ap.ExtractActor(blockable)
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
 	}
@@ -442,7 +443,7 @@ func (c *converter) ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error)
 		return nil, fmt.Errorf("ASBlockToBlock: error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := extractObject(blockable)
+	target, err := ap.ExtractObject(blockable)
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
 	}
@@ -461,7 +462,7 @@ func (c *converter) ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error)
 	}, nil
 }
 
-func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Status, bool, error) {
+func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
 	status := &gtsmodel.Status{}
 	isNew := true
 
@@ -480,7 +481,7 @@ func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Sta
 	status.URI = uri
 
 	// get the URI of the announced/boosted status
-	boostedStatusURI, err := extractObject(announceable)
+	boostedStatusURI, err := ap.ExtractObject(announceable)
 	if err != nil {
 		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error getting object from announce: %s", err)
 	}
@@ -491,7 +492,7 @@ func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Sta
 	}
 
 	// get the published time for the announce
-	published, err := extractPublished(announceable)
+	published, err := ap.ExtractPublished(announceable)
 	if err != nil {
 		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting published time: %s", err)
 	}
@@ -499,7 +500,7 @@ func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Sta
 	status.UpdatedAt = published
 
 	// get the actor's IRI (ie., the person who boosted the status)
-	actor, err := extractActor(announceable)
+	actor, err := ap.ExtractActor(announceable)
 	if err != nil {
 		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting actor: %s", err)
 	}
@@ -522,12 +523,12 @@ func (c *converter) ASAnnounceToStatus(announceable Announceable) (*gtsmodel.Sta
 	// parse the visibility from the To and CC entries
 	var visibility gtsmodel.Visibility
 
-	to, err := extractTos(announceable)
+	to, err := ap.ExtractTos(announceable)
 	if err != nil {
 		return nil, isNew, fmt.Errorf("error extracting TO values: %s", err)
 	}
 
-	cc, err := extractCCs(announceable)
+	cc, err := ap.ExtractCCs(announceable)
 	if err != nil {
 		return nil, isNew, fmt.Errorf("error extracting CC values: %s", err)
 	}

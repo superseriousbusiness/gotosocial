@@ -132,7 +132,7 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 
 	// we don't have it locally so dereference it if we're allowed to
 	if resolve {
-		status, _, err := p.federator.GetRemoteStatus(authed.Account.Username, uri)
+		status, _, _, err := p.federator.GetRemoteStatus(authed.Account.Username, uri, true)
 		if err == nil {
 			return status, nil
 		}

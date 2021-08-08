@@ -36,9 +36,9 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -1155,14 +1155,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 }
 
 // NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
-func NewTestFediPeople() map[string]typeutils.Accountable {
+func NewTestFediPeople() map[string]ap.Accountable {
 	newPerson1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 	newPerson1Pub := &newPerson1Priv.PublicKey
 
-	return map[string]typeutils.Accountable{
+	return map[string]ap.Accountable{
 		"new_person_1": newPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
@@ -1290,7 +1290,7 @@ func newPerson(
 	avatarURL *url.URL,
 	avatarContentType string,
 	headerURL *url.URL,
-	headerContentType string) typeutils.Accountable {
+	headerContentType string) ap.Accountable {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user

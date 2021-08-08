@@ -3,6 +3,7 @@ package federation
 import (
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -10,8 +11,16 @@ func (f *federator) GetRemoteAccount(username string, remoteAccountID *url.URL, 
 	return f.dereferencer.GetRemoteAccount(username, remoteAccountID, refresh)
 }
 
-func (f *federator) GetRemoteStatus(username string, remoteStatusID *url.URL) (*gtsmodel.Status, bool, error) {
-	return f.dereferencer.GetRemoteStatus(username, remoteStatusID)
+func (f *federator) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	return f.dereferencer.EnrichRemoteAccount(username, account)
+}
+
+func (f *federator) GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
+	return f.dereferencer.GetRemoteStatus(username, remoteStatusID, refresh)
+}
+
+func (f *federator) EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error) {
+	return f.dereferencer.EnrichRemoteStatus(username, status)
 }
 
 func (f *federator) DereferenceRemoteThread(username string, statusIRI *url.URL) error {

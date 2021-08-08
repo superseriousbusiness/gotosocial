@@ -16,237 +16,264 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package typeutils
+package ap
 
 import "github.com/go-fed/activity/streams/vocab"
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // This interface is fulfilled by: Person, Application, Organization, Service, and Group
 type Accountable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withPreferredUsername
-	withIcon
-	withName
-	withImage
-	withSummary
-	withDiscoverable
-	withURL
-	withPublicKey
-	withInbox
-	withOutbox
-	withFollowing
-	withFollowers
-	withFeatured
+	WithPreferredUsername
+	WithIcon
+	WithName
+	WithImage
+	WithSummary
+	WithDiscoverable
+	WithURL
+	WithPublicKey
+	WithInbox
+	WithOutbox
+	WithFollowing
+	WithFollowers
+	WithFeatured
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.
 // This interface is fulfilled by: Article, Document, Image, Video, Note, Page, Event, Place, Mention, Profile
 type Statusable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withSummary
-	withInReplyTo
-	withPublished
-	withURL
-	withAttributedTo
-	withTo
-	withCC
-	withSensitive
-	withConversation
-	withContent
-	withAttachment
-	withTag
-	withReplies
+	WithSummary
+	WithInReplyTo
+	WithPublished
+	WithURL
+	WithAttributedTo
+	WithTo
+	WithCC
+	WithSensitive
+	WithConversation
+	WithContent
+	WithAttachment
+	WithTag
+	WithReplies
 }
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'.
 // This interface is fulfilled by: Audio, Document, Image, Video
 type Attachmentable interface {
-	withTypeName
-	withMediaType
-	withURL
-	withName
+	WithTypeName
+	WithMediaType
+	WithURL
+	WithName
 }
 
 // Hashtaggable represents the minimum activitypub interface for representing a 'hashtag' tag.
 type Hashtaggable interface {
-	withTypeName
-	withHref
-	withName
+	WithTypeName
+	WithHref
+	WithName
 }
 
 // Emojiable represents the minimum interface for an 'emoji' tag.
 type Emojiable interface {
-	withJSONLDId
-	withTypeName
-	withName
-	withUpdated
-	withIcon
+	WithJSONLDId
+	WithTypeName
+	WithName
+	WithUpdated
+	WithIcon
 }
 
 // Mentionable represents the minimum interface for a 'mention' tag.
 type Mentionable interface {
-	withName
-	withHref
+	WithName
+	WithHref
 }
 
 // Followable represents the minimum interface for an activitystreams 'follow' activity.
 type Followable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withActor
-	withObject
+	WithActor
+	WithObject
 }
 
 // Likeable represents the minimum interface for an activitystreams 'like' activity.
 type Likeable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withActor
-	withObject
+	WithActor
+	WithObject
 }
 
 // Blockable represents the minimum interface for an activitystreams 'block' activity.
 type Blockable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withActor
-	withObject
+	WithActor
+	WithObject
 }
 
 // Announceable represents the minimum interface for an activitystreams 'announce' activity.
 type Announceable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withActor
-	withObject
-	withPublished
-	withTo
-	withCC
+	WithActor
+	WithObject
+	WithPublished
+	WithTo
+	WithCC
 }
 
 // CollectionPageable represents the minimum interface for an activitystreams 'CollectionPage' object.
 type CollectionPageable interface {
-	withJSONLDId
-	withTypeName
+	WithJSONLDId
+	WithTypeName
 
-	withNext
-	withPartOf
-	withItems
+	WithNext
+	WithPartOf
+	WithItems
 }
 
-type withJSONLDId interface {
+// WithJSONLDId represents an activity with JSONLDIdProperty
+type WithJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }
 
-type withTypeName interface {
+// WithTypeName represents an activity with a type name
+type WithTypeName interface {
 	GetTypeName() string
 }
 
-type withPreferredUsername interface {
+// WithPreferredUsername represents an activity with ActivityStreamsPreferredUsernameProperty
+type WithPreferredUsername interface {
 	GetActivityStreamsPreferredUsername() vocab.ActivityStreamsPreferredUsernameProperty
 }
 
-type withIcon interface {
+// WithIcon represents an activity with ActivityStreamsIconProperty
+type WithIcon interface {
 	GetActivityStreamsIcon() vocab.ActivityStreamsIconProperty
 }
 
-type withName interface {
+// WithName represents an activity with ActivityStreamsNameProperty
+type WithName interface {
 	GetActivityStreamsName() vocab.ActivityStreamsNameProperty
 }
 
-type withImage interface {
+// WithImage represents an activity with ActivityStreamsImageProperty
+type WithImage interface {
 	GetActivityStreamsImage() vocab.ActivityStreamsImageProperty
 }
 
-type withSummary interface {
+// WithSummary represents an activity with ActivityStreamsSummaryProperty
+type WithSummary interface {
 	GetActivityStreamsSummary() vocab.ActivityStreamsSummaryProperty
 }
 
-type withDiscoverable interface {
+// WithDiscoverable represents an activity with TootDiscoverableProperty
+type WithDiscoverable interface {
 	GetTootDiscoverable() vocab.TootDiscoverableProperty
 }
 
-type withURL interface {
+// WithURL represents an activity with ActivityStreamsUrlProperty
+type WithURL interface {
 	GetActivityStreamsUrl() vocab.ActivityStreamsUrlProperty
 }
 
-type withPublicKey interface {
+// WithPublicKey represents an activity with W3IDSecurityV1PublicKeyProperty
+type WithPublicKey interface {
 	GetW3IDSecurityV1PublicKey() vocab.W3IDSecurityV1PublicKeyProperty
 }
 
-type withInbox interface {
+// WithInbox represents an activity with ActivityStreamsInboxProperty
+type WithInbox interface {
 	GetActivityStreamsInbox() vocab.ActivityStreamsInboxProperty
 }
 
-type withOutbox interface {
+// WithOutbox represents an activity with ActivityStreamsOutboxProperty
+type WithOutbox interface {
 	GetActivityStreamsOutbox() vocab.ActivityStreamsOutboxProperty
 }
 
-type withFollowing interface {
+// WithFollowing represents an activity with ActivityStreamsFollowingProperty
+type WithFollowing interface {
 	GetActivityStreamsFollowing() vocab.ActivityStreamsFollowingProperty
 }
 
-type withFollowers interface {
+// WithFollowers represents an activity with ActivityStreamsFollowersProperty
+type WithFollowers interface {
 	GetActivityStreamsFollowers() vocab.ActivityStreamsFollowersProperty
 }
 
-type withFeatured interface {
+// WithFeatured represents an activity with TootFeaturedProperty
+type WithFeatured interface {
 	GetTootFeatured() vocab.TootFeaturedProperty
 }
 
-type withAttributedTo interface {
+// WithAttributedTo represents an activity with ActivityStreamsAttributedToProperty
+type WithAttributedTo interface {
 	GetActivityStreamsAttributedTo() vocab.ActivityStreamsAttributedToProperty
 }
 
-type withAttachment interface {
+// WithAttachment represents an activity with ActivityStreamsAttachmentProperty
+type WithAttachment interface {
 	GetActivityStreamsAttachment() vocab.ActivityStreamsAttachmentProperty
 }
 
-type withTo interface {
+// WithTo represents an activity with ActivityStreamsToProperty
+type WithTo interface {
 	GetActivityStreamsTo() vocab.ActivityStreamsToProperty
 }
 
-type withInReplyTo interface {
+// WithInReplyTo represents an activity with ActivityStreamsInReplyToProperty
+type WithInReplyTo interface {
 	GetActivityStreamsInReplyTo() vocab.ActivityStreamsInReplyToProperty
 }
 
-type withCC interface {
+// WithCC represents an activity with ActivityStreamsCcProperty
+type WithCC interface {
 	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
 }
 
-type withSensitive interface {
+// WithSensitive ...
+type WithSensitive interface {
 	// TODO
 }
 
-type withConversation interface {
+// WithConversation ...
+type WithConversation interface {
 	// TODO
 }
 
-type withContent interface {
+// WithContent represents an activity with ActivityStreamsContentProperty
+type WithContent interface {
 	GetActivityStreamsContent() vocab.ActivityStreamsContentProperty
 }
 
-type withPublished interface {
+// WithPublished represents an activity with ActivityStreamsPublishedProperty
+type WithPublished interface {
 	GetActivityStreamsPublished() vocab.ActivityStreamsPublishedProperty
 }
 
-type withTag interface {
+// WithTag represents an activity with ActivityStreamsTagProperty
+type WithTag interface {
 	GetActivityStreamsTag() vocab.ActivityStreamsTagProperty
 }
 
-type withReplies interface {
+// WithReplies represents an activity with ActivityStreamsRepliesProperty
+type WithReplies interface {
 	GetActivityStreamsReplies() vocab.ActivityStreamsRepliesProperty
 }
 
-type withMediaType interface {
+// WithMediaType represents an activity with ActivityStreamsMediaTypeProperty
+type WithMediaType interface {
 	GetActivityStreamsMediaType() vocab.ActivityStreamsMediaTypeProperty
 }
 
@@ -258,30 +285,37 @@ type withMediaType interface {
 // 	// TODO
 // }
 
-type withHref interface {
+// WithHref represents an activity with ActivityStreamsHrefProperty
+type WithHref interface {
 	GetActivityStreamsHref() vocab.ActivityStreamsHrefProperty
 }
 
-type withUpdated interface {
+// WithUpdated represents an activity with ActivityStreamsUpdatedProperty
+type WithUpdated interface {
 	GetActivityStreamsUpdated() vocab.ActivityStreamsUpdatedProperty
 }
 
-type withActor interface {
+// WithActor represents an activity with ActivityStreamsActorProperty
+type WithActor interface {
 	GetActivityStreamsActor() vocab.ActivityStreamsActorProperty
 }
 
-type withObject interface {
+// WithObject represents an activity with ActivityStreamsObjectProperty
+type WithObject interface {
 	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
 }
 
-type withNext interface {
+// WithNext represents an activity with ActivityStreamsNextProperty
+type WithNext interface {
 	GetActivityStreamsNext() vocab.ActivityStreamsNextProperty
 }
 
-type withPartOf interface {
+// WithPartOf represents an activity with ActivityStreamsPartOfProperty
+type WithPartOf interface {
 	GetActivityStreamsPartOf() vocab.ActivityStreamsPartOfProperty
 }
 
-type withItems interface {
+// WithItems represents an activity with ActivityStreamsItemsProperty
+type WithItems interface {
 	GetActivityStreamsItems() vocab.ActivityStreamsItemsProperty
 }

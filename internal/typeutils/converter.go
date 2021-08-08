@@ -20,6 +20,7 @@ package typeutils
 
 import (
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -99,17 +100,17 @@ type TypeConverter interface {
 	// If update is false, and the account is already known in the database, then the existing account entry will be returned.
 	// If update is true, then even if the account is already known, all fields in the accountable will be parsed and a new *gtsmodel.Account
 	// will be generated. This is useful when one needs to force refresh of an account, eg., during an Update of a Profile.
-	ASRepresentationToAccount(accountable Accountable, update bool) (*gtsmodel.Account, error)
+	ASRepresentationToAccount(accountable ap.Accountable, update bool) (*gtsmodel.Account, error)
 	// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
-	ASStatusToStatus(statusable Statusable) (*gtsmodel.Status, error)
+	ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
-	ASFollowToFollowRequest(followable Followable) (*gtsmodel.FollowRequest, error)
+	ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel.FollowRequest, error)
 	// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
-	ASFollowToFollow(followable Followable) (*gtsmodel.Follow, error)
+	ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow, error)
 	// ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
-	ASLikeToFave(likeable Likeable) (*gtsmodel.StatusFave, error)
+	ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, error)
 	// ASBlockToBlock converts a remote activity streams 'block' representation into a gts model block.
-	ASBlockToBlock(blockable Blockable) (*gtsmodel.Block, error)
+	ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, error)
 	// ASAnnounceToStatus converts an activitystreams 'announce' into a status.
 	//
 	// The returned bool indicates whether this status is new (true) or not new (false).
@@ -122,7 +123,7 @@ type TypeConverter interface {
 	// This is useful when multiple users on an instance might receive the same boost, and we only want to process the boost once.
 	//
 	// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
-	ASAnnounceToStatus(announceable Announceable) (status *gtsmodel.Status, new bool, err error)
+	ASAnnounceToStatus(announceable ap.Announceable) (status *gtsmodel.Status, new bool, err error)
 
 	/*
 		INTERNAL (gts) MODEL TO ACTIVITYSTREAMS MODEL

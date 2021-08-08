@@ -5,35 +5,72 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // DereferenceThread takes a statusable (something that has withReplies and withInReplyTo),
-// and dereferences statusables in the conversation that are CC or TO public.
+// and dereferences statusables in the conversation.
 //
 // This process involves working up and down the chain of replies, and parsing through the collections of IDs
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
 func (d *deref) DereferenceThread(username string, statusIRI *url.URL) error {
-	// first we need to find the oldest ancestor of this thread, or as near as we can get
-	oldestIRI, err := d.iterateAncestors(username, *statusIRI)
-	if err != nil {
-		return fmt.Errorf("error finding oldest ancestor of status %s: %s", statusIRI.String(), err)
-	}
-
-	// now that we have the oldest, we can work our way down from that to find descendants/replies
-	return d.iterateDescendants(username, *oldestIRI)
-}
-
-func (d *deref) iterateAncestors(username string, statusIRI url.URL) (*url.URL, error) {
 	l := d.log.WithFields(logrus.Fields{
-		"func":      "iterateToAncestor",
+		"func":      "DereferenceThread",
 		"username":  username,
 		"statusIRI": statusIRI.String(),
 	})
-	l.Debug("entering iterateToAncestor")
+	l.Debug("entering DereferenceThread")
+
+	// if it's our status we already have everything stashed so we can bail early
+	if statusIRI.Host == d.config.Host {
+		l.Debug("iri belongs to us, bailing")
+		return nil
+	}
+
+	// first make sure we have this status in our db
+	_, _, _, err := d.GetRemoteStatus(username, statusIRI, true)
+	if err != nil {
+		return fmt.Errorf("DereferenceThread: error getting status with id %s: %s", statusIRI.String(), err)
+	}
+
+
+
+	// first iterate up through ancestors, dereferencing if necessary as we go
+	if err := d.iterateAncestors(username, *statusIRI); err != nil {
+		return fmt.Errorf("error iterating ancestors of status %s: %s", statusIRI.String(), err)
+	}
+
+	// now iterate down through descendants, again dereferencing as we go
+	if err := d.iterateDescendants(username, *statusIRI); err != nil {
+		return fmt.Errorf("error iterating descendants of status %s: %s", statusIRI.String(), err)
+	}
+
+	return nil
+}
+
+func (d *deref) iterateAncestors(username string, statusIRI url.URL) error {
+	l := d.log.WithFields(logrus.Fields{
+		"func":      "iterateAncestors",
+		"username":  username,
+		"statusIRI": statusIRI.String(),
+	})
+	l.Debug("entering iterateAncestors")
+
+	// if it's our status we already have ancestors stashed so we can bail early
+	if statusIRI.Host == d.config.Host {
+		l.Debug("iri belongs to us, bailing")
+		return nil
+	}
+
+	// fetch the remote representation of the given status
+	statusable, err := d.dereferenceStatusable(username, &statusIRI)
+	if err != nil {
+		return fmt.Errorf("iterateAncestors: error dereferencing status with id %s: %s", statusIRI.String(), err)
+	}
 
 	currentIRI := &statusIRI
 searchLoop:
@@ -51,7 +88,7 @@ searchLoop:
 				// we don't have the replyToURI, but we do have a status ID so the status replied to should be in our db already...
 				repliedGTSStatus := &gtsmodel.Status{}
 				if err := d.db.GetByID(gtsStatus.InReplyToID, repliedGTSStatus); err != nil {
-					return nil, fmt.Errorf("database error getting status with id %s: %s", gtsStatus.InReplyToID, err)
+					return fmt.Errorf("database error getting status with id %s: %s", gtsStatus.InReplyToID, err)
 				}
 				inReplyToURI = repliedGTSStatus.URI
 			} else {
@@ -62,7 +99,7 @@ searchLoop:
 			// set the oldestIRI to the parent we just found, and go to the next iteration
 			repliedGTSStatusIRI, err := url.Parse(inReplyToURI)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing URI %s: %s", inReplyToURI, err)
+				return fmt.Errorf("error parsing URI %s: %s", inReplyToURI, err)
 			}
 			currentIRI = repliedGTSStatusIRI
 			continue
@@ -75,7 +112,7 @@ searchLoop:
 			break searchLoop
 		}
 
-		inReplyToURI := typeutils.ExtractInReplyToURI(statusable)
+		inReplyToURI := ap.ExtractInReplyToURI(statusable)
 		if inReplyToURI != nil {
 			currentIRI = inReplyToURI
 			continue
@@ -85,16 +122,16 @@ searchLoop:
 		break searchLoop
 	}
 
-	return currentIRI, nil
+	return nil
 }
 
 func (d *deref) iterateDescendants(username string, statusIRI url.URL) error {
 	l := d.log.WithFields(logrus.Fields{
-		"func":      "stashDescendants",
+		"func":      "iterateDescendants",
 		"username":  username,
 		"statusIRI": statusIRI.String(),
 	})
-	l.Debug("entering stashDescendants")
+	l.Debug("entering iterateDescendants")
 
 	// if it's our status we already have descendants stashed so we can bail early
 	if statusIRI.Host == d.config.Host {
@@ -104,7 +141,7 @@ func (d *deref) iterateDescendants(username string, statusIRI url.URL) error {
 
 	_, new, err := d.GetRemoteStatus(username, &statusIRI)
 	if err != nil {
-		return fmt.Errorf("stashDescendants: error getting status with id %s: %s", statusIRI.String(), err)
+		return fmt.Errorf("iterateDescendants: error getting status with id %s: %s", statusIRI.String(), err)
 	}
 
 	if !new {
@@ -115,7 +152,7 @@ func (d *deref) iterateDescendants(username string, statusIRI url.URL) error {
 	// fetch the remote representation of the given status
 	statusable, err := d.dereferenceStatusable(username, &statusIRI)
 	if err != nil {
-		return fmt.Errorf("stashDescendants: error dereferencing status with id %s: %s", statusIRI.String(), err)
+		return fmt.Errorf("iterateDescendants: error dereferencing status with id %s: %s", statusIRI.String(), err)
 	}
 
 	replies := statusable.GetActivityStreamsReplies()
