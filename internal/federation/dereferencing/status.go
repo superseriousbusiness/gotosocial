@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package dereferencing
 
 import (
@@ -70,7 +88,7 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	}
 
 	// do this so we know we have the remote account of the status in the db
-	_, _, err = d.GetRemoteAccount(username, accountURI, refresh)
+	_, _, err = d.GetRemoteAccount(username, accountURI, false)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
 	}
@@ -81,7 +99,7 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	}
 
 	if new {
-		ulid, err := id.NewRandomULID()
+		ulid, err := id.NewULIDFromTime(gtsStatus.CreatedAt)
 		if err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error generating new id for status: %s", err)
 		}
@@ -225,6 +243,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	})
 	l.Debug("entering function")
 
+	// make sure we have a status URI and that the domain in question isn't blocked
 	statusURI, err := url.Parse(status.URI)
 	if err != nil {
 		return fmt.Errorf("DereferenceStatusFields: couldn't parse status URI %s: %s", status.URI, err)
@@ -233,12 +252,13 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		return fmt.Errorf("DereferenceStatusFields: domain %s is blocked", statusURI.Host)
 	}
 
+	// we can continue -- create a new transport here because we'll probably need it
 	t, err := d.transportController.NewTransportForUsername(requestingUsername)
 	if err != nil {
 		return fmt.Errorf("error creating transport: %s", err)
 	}
 
-	// in case the status doesn't have an id yet (ie., it hasn't entered the database yet)
+	// in case the status doesn't have an id yet (ie., it hasn't entered the database yet), then create one
 	if status.ID == "" {
 		newID, err := id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
@@ -257,14 +277,14 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	// This should be enough to pass along to the media processor.
 	attachmentIDs := []string{}
 	for _, a := range status.GTSMediaAttachments {
-		l.Debugf("dereferencing attachment: %+v", a)
+		l.Tracef("dereferencing attachment: %+v", a)
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
 		maybeAttachment := &gtsmodel.MediaAttachment{}
 		err := d.db.GetWhere([]db.Where{{Key: "remote_url", Value: a.RemoteURL}}, maybeAttachment)
 		if err == nil {
 			// we already have it in the db, dereferenced, no need to do it again
-			l.Debugf("attachment already exists with id %s", maybeAttachment.ID)
+			l.Tracef("attachment already exists with id %s", maybeAttachment.ID)
 			attachmentIDs = append(attachmentIDs, maybeAttachment.ID)
 			continue
 		}
@@ -299,13 +319,17 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
 	mentions := []string{}
 	for _, m := range status.GTSMentions {
-		if m.ID == "" {
-			mID, err := id.NewRandomULID()
-			if err != nil {
-				return err
-			}
-			m.ID = mID
+
+		if m.ID != "" {
+			continue
+			// we've already populated this mention, since it has an ID
 		}
+
+		mID, err := id.NewRandomULID()
+		if err != nil {
+			return err
+		}
+		m.ID = mID
 
 		uri, err := url.Parse(m.MentionedAccountURI)
 		if err != nil {
@@ -317,36 +341,9 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		m.OriginAccountID = status.GTSAuthorAccount.ID
 		m.OriginAccountURI = status.GTSAuthorAccount.URI
 
-		targetAccount := &gtsmodel.Account{}
-		if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, targetAccount); err != nil {
-			// proper error
-			if _, ok := err.(db.ErrNoEntries); !ok {
-				return fmt.Errorf("db error checking for account with uri %s", uri.String())
-			}
-
-			// we just don't have it yet, so we should go get it....
-			accountable, err := d.dereferenceAccountable(requestingUsername, uri)
-			if err != nil {
-				// we can't dereference it so just skip it
-				l.Debugf("error dereferencing remote account with uri %s: %s", uri.String(), err)
-				continue
-			}
-
-			targetAccount, err = d.typeConverter.ASRepresentationToAccount(accountable, false)
-			if err != nil {
-				l.Debugf("error converting remote account with uri %s into gts model: %s", uri.String(), err)
-				continue
-			}
-
-			targetAccountID, err := id.NewRandomULID()
-			if err != nil {
-				return err
-			}
-			targetAccount.ID = targetAccountID
-
-			if err := d.db.Put(targetAccount); err != nil {
-				return fmt.Errorf("db error inserting account with uri %s", uri.String())
-			}
+		targetAccount, _, err := d.GetRemoteAccount(requestingUsername, uri, false)
+		if err != nil {
+			continue
 		}
 
 		// by this point, we know the targetAccount exists in our database with an ID :)

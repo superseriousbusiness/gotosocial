@@ -56,7 +56,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 			return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 		}
 
-		// if we're already handshaking/dereferencing a remote account, we can skip the dereferencing part
+		// if we're not already handshaking/dereferencing a remote account, dereference it now
 		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
 			requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 			if err != nil {

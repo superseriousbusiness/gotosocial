@@ -152,27 +152,9 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount, newAccount, err := f.GetRemoteAccount(username, publicKeyOwnerURI, false)
+	requestingAccount, _, err := f.GetRemoteAccount(username, publicKeyOwnerURI, false)
 	if err != nil {
 		return nil, false, fmt.Errorf("couldn't get remote account: %s", err)
-	}
-
-	if newAccount {
-		// send the newly dereferenced account into the processor channel for further async processing
-		fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-		if fromFederatorChanI == nil {
-			l.Error("from federator channel wasn't set on context")
-		}
-		fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
-		if !ok {
-			l.Error("from federator channel was set on context but couldn't be parsed")
-		}
-
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:   gtsmodel.ActivityStreamsProfile,
-			APActivityType: gtsmodel.ActivityStreamsCreate,
-			GTSModel:       requestingAccount,
-		}
 	}
 
 	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)

@@ -120,6 +120,11 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 }
 
 func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
+	l := p.log.WithFields(logrus.Fields{
+		"func":    "searchStatusByURI",
+		"uri":     uri.String(),
+		"resolve": resolve,
+	})
 
 	maybeStatus := &gtsmodel.Status{}
 	if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String(), CaseInsensitive: true}}, maybeStatus); err == nil {
@@ -134,6 +139,10 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 	if resolve {
 		status, _, _, err := p.federator.GetRemoteStatus(authed.Account.Username, uri, true)
 		if err == nil {
+			if err := p.federator.DereferenceRemoteThread(authed.Account.Username, uri); err != nil {
+				// try to deref the thread while we're here
+				l.Debug("searchStatusByURI: error dereferencing remote thread: %s", err)
+			}
 			return status, nil
 		}
 	}

@@ -62,15 +62,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 		case gtsmodel.ActivityStreamsProfile:
 			// CREATE AN ACCOUNT
-			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
-			if !ok {
-				return errors.New("profile was not parseable as *gtsmodel.Account")
-			}
-
-			_, err := p.federator.EnrichRemoteAccount(federatorMsg.ReceivingAccount.Username, incomingAccount)
-			if err != nil {
-				return err
-			}
+			// nothing to do here
 		case gtsmodel.ActivityStreamsLike:
 			// CREATE A FAVE
 			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
