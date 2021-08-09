@@ -151,7 +151,8 @@ type TypeConverter interface {
 	BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error)
 	// BlockToAS converts a gts model block into an activityStreams BLOCK, suitable for federation.
 	BlockToAS(block *gtsmodel.Block) (vocab.ActivityStreamsBlock, error)
-
+	// StatusToASRepliesCollection converts a gts model status into an activityStreams REPLIES collection.
+	StatusToASRepliesCollection(status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error)
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL
 	*/

@@ -191,6 +191,10 @@ type Processor interface {
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 
+	// GetFediStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
+	// authentication before returning a JSON serializable interface to the caller.
+	GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
+
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode)
 

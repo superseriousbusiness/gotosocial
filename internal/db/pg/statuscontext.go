@@ -25,14 +25,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) StatusParents(status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
+func (ps *postgresService) StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error) {
 	parents := []*gtsmodel.Status{}
-	ps.statusParent(status, &parents)
+	ps.statusParent(status, &parents, onlyDirect)
 
 	return parents, nil
 }
 
-func (ps *postgresService) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status) {
+func (ps *postgresService) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
 	if status.InReplyToID == "" {
 		return
 	}
@@ -42,13 +42,16 @@ func (ps *postgresService) statusParent(status *gtsmodel.Status, foundStatuses *
 		*foundStatuses = append(*foundStatuses, parentStatus)
 	}
 
-	ps.statusParent(parentStatus, foundStatuses)
+	if onlyDirect {
+		return
+	}
+	ps.statusParent(parentStatus, foundStatuses, false)
 }
 
-func (ps *postgresService) StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
+func (ps *postgresService) StatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
-	ps.statusChildren(status, foundStatuses)
+	ps.statusChildren(status, foundStatuses, onlyDirect, minID)
 
 	children := []*gtsmodel.Status{}
 	for e := foundStatuses.Front(); e != nil; e = e.Next() {
@@ -66,11 +69,15 @@ func (ps *postgresService) StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.
 	return children, nil
 }
 
-func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses *list.List) {
+func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
 	immediateChildren := []*gtsmodel.Status{}
 
-	err := ps.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID).Select()
-	if err != nil {
+	q := ps.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID)
+	if minID != "" {
+		q = q.Where("status.id > ?", minID)
+	}
+
+	if err := q.Select(); err != nil {
 		return
 	}
 
@@ -88,6 +95,10 @@ func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses
 			}
 		}
 
-		ps.statusChildren(child, foundStatuses)
+		// only do one loop if we only want direct children
+		if onlyDirect {
+			return
+		}
+		ps.statusChildren(child, foundStatuses, false, minID)
 	}
 }

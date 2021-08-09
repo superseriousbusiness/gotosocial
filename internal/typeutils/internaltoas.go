@@ -27,6 +27,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -505,7 +506,14 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	status.SetActivityStreamsAttachment(attachmentProp)
 
 	// replies
-	// TODO
+	repliesCollection, err := c.StatusToASRepliesCollection(s, false)
+	if err != nil {
+		return nil, fmt.Errorf("error creating repliesCollection: %s", err)
+	}
+
+	repliesProp := streams.NewActivityStreamsRepliesProperty()
+	repliesProp.SetActivityStreamsCollection(repliesCollection)
+	status.SetActivityStreamsReplies(repliesProp)
 
 	return status, nil
 }
@@ -850,3 +858,69 @@ func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, er
 
 	return block, nil
 }
+
+/*
+
+the goal is to end up with something like this:
+
+			{
+			  "@context": "https://www.w3.org/ns/activitystreams",
+			  "id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
+			  "type": "Collection",
+			  "first": {
+			    "id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?page=true",
+			    "type": "CollectionPage",
+			    "next": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?only_other_accounts=true&page=true",
+			    "partOf": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
+			    "items": []
+			  }
+			}
+*/
+func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
+	collectionID := fmt.Sprintf("%s/replies", status.URI)
+	collectionIDURI, err := url.Parse(collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	collection := streams.NewActivityStreamsCollection()
+
+	// collection.id
+	collectionIDProp := streams.NewJSONLDIdProperty()
+	collectionIDProp.SetIRI(collectionIDURI)
+	collection.SetJSONLDId(collectionIDProp)
+
+	// first
+	first := streams.NewActivityStreamsFirstProperty()
+	firstPage := streams.NewActivityStreamsCollectionPage()
+
+	// first.id
+	firstPageIDProp := streams.NewJSONLDIdProperty()
+	firstPageID, err := url.Parse(fmt.Sprintf("%s?page=true", collectionID))
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	firstPageIDProp.SetIRI(firstPageID)
+	firstPage.SetJSONLDId(firstPageIDProp)
+
+	// first.next
+	nextProp := streams.NewActivityStreamsNextProperty()
+	nextPropID, err := url.Parse(fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts))
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	nextProp.SetIRI(nextPropID)
+	firstPage.SetActivityStreamsNext(nextProp)
+
+	// first.partOf
+	partOfProp := streams.NewActivityStreamsPartOfProperty()
+	partOfProp.SetIRI(collectionIDURI)
+	firstPage.SetActivityStreamsPartOf(partOfProp)
+
+	// collection.first
+	first.SetActivityStreamsCollectionPage(firstPage)
+
+	return collection, nil
+}
+
+func (c *converter) StatusURIsToASRepliesPage(statuses map[string]*url.URL)
