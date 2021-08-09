@@ -1,11 +1,8 @@
 package user_test
 
 import (
-	"bytes"
 	"context"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,6 +43,7 @@ func (suite *UserGetTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
+	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
 	testrig.StandardDBSetup(suite.db)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
@@ -58,45 +57,16 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	// the dereference we're gonna use
 	signedRequest := testrig.NewTestDereferenceRequests(suite.testAccounts)["foss_satan_dereference_zork"]
 
-	requestingAccount := suite.testAccounts["remote_account_1"]
+	fmt.Println()
+	fmt.Println()
+	fmt.Printf("%+v", signedRequest)
+	fmt.Println()
+	fmt.Println()
+
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	encodedPublicKey, err := x509.MarshalPKIXPublicKey(requestingAccount.PublicKey)
-	assert.NoError(suite.T(), err)
-	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: encodedPublicKey,
-	})
-	publicKeyString := strings.ReplaceAll(string(publicKeyBytes), "\n", "\\n")
-
-	// for this test we need the client to return the public key of the requester on the 'remote' instance
-	responseBodyString := fmt.Sprintf(`
-	{
-		"@context": [
-			"https://www.w3.org/ns/activitystreams",
-			"https://w3id.org/security/v1"
-		],
-
-		"id": "%s",
-		"type": "Person",
-		"preferredUsername": "%s",
-		"inbox": "%s",
-
-		"publicKey": {
-			"id": "%s",
-			"owner": "%s",
-			"publicKeyPem": "%s"
-		}
-	}`, requestingAccount.URI, requestingAccount.Username, requestingAccount.InboxURI, requestingAccount.PublicKeyURI, requestingAccount.URI, publicKeyString)
-
 	// create a transport controller whose client will just return the response body string we specified above
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := ioutil.NopCloser(bytes.NewReader([]byte(responseBodyString)))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	}), suite.db)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	// get this transport controller embedded right in the user module we're testing
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
@@ -120,6 +90,13 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
 	ctx.Request.Header.Set("Digest", signedRequest.DigestHeader)
+	ctx.Request.Header.Set("Host", signedRequest.HostHeader)
+	ctx.Request.Host = signedRequest.HostHeader
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.securityModule.SignatureCheck(ctx)
+
+	fmt.Println(ctx.Request.Header)
 
 	// trigger the function being tested
 	userModule.UsersGETHandler(ctx)

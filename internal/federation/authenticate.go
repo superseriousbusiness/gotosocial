@@ -214,10 +214,19 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	}
 
 	// do the actual authentication here!
-	algo := httpsig.RSA_SHA256 // TODO: make this more robust
-	if err := verifier.Verify(publicKey, algo); err != nil {
-		return nil, false, nil
+	algos := []httpsig.Algorithm{
+		httpsig.RSA_SHA512,
+		httpsig.RSA_SHA256, // TODO: make this more robust
+		httpsig.ED25519,
 	}
 
-	return pkOwnerURI, true, nil
+	for _, algo := range algos {
+		l.Trace("trying algo: %s", algo)
+		if err := verifier.Verify(publicKey, algo); err == nil {
+			return pkOwnerURI, true, nil
+		}
+	}
+
+	l.Infof("AuthenticateFederatedRequest: authentication not passed for %s", pkOwnerURI)
+	return nil, false, nil
 }

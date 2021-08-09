@@ -323,7 +323,12 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 	replyURIs := map[string]*url.URL{}
 	for _, r := range replies {
 		// only show public or unlocked statuses as replies
-		if r.Visibility != gtsmodel.VisibilityPublic || r.Visibility != gtsmodel.VisibilityUnlocked {
+		if r.Visibility != gtsmodel.VisibilityPublic && r.Visibility != gtsmodel.VisibilityUnlocked {
+			continue
+		}
+
+		// respect onlyOtherAccounts parameter
+		if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
 			continue
 		}
 
@@ -339,11 +344,6 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 			continue
 		}
 
-		// respect onlyOtherAccounts parameter
-		if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
-			continue
-		}
-
 		rURI, err := url.Parse(r.URI)
 		if err != nil {
 			continue
@@ -352,7 +352,12 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		replyURIs[r.ID] = rURI
 	}
 
-	return data, nil
+	repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return repliesPage, nil
 }
 
 func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode) {

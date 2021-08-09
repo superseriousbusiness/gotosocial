@@ -40,7 +40,7 @@ const (
 	MinIDKey = "min_id"
 	// PageKey is for filtering status responses.
 	PageKey = "page"
-	
+
 	// UsersBasePath is the base path for serving information about Users eg https://example.org/users
 	UsersBasePath = "/" + util.UsersPath
 	// UsersBasePathWithUsername is just the users base path with the Username key in it.

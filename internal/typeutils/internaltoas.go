@@ -860,21 +860,20 @@ func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, er
 }
 
 /*
+	the goal is to end up with something like this:
 
-the goal is to end up with something like this:
-
-			{
-			  "@context": "https://www.w3.org/ns/activitystreams",
-			  "id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
-			  "type": "Collection",
-			  "first": {
-			    "id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?page=true",
-			    "type": "CollectionPage",
-			    "next": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?only_other_accounts=true&page=true",
-			    "partOf": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
-			    "items": []
-			  }
-			}
+	{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
+		"type": "Collection",
+		"first": {
+		"id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?page=true",
+		"type": "CollectionPage",
+		"next": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?only_other_accounts=true&page=true",
+		"partOf": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
+		"items": []
+		}
+	}
 */
 func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
 	collectionID := fmt.Sprintf("%s/replies", status.URI)
@@ -923,4 +922,71 @@ func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOth
 	return collection, nil
 }
 
-func (c *converter) StatusURIsToASRepliesPage(statuses map[string]*url.URL)
+/*
+	the goal is to end up with something like this:
+	{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?only_other_accounts=true&page=true",
+		"type": "CollectionPage",
+		"next": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies?min_id=106720870266901180&only_other_accounts=true&page=true",
+		"partOf": "https://example.org/users/whatever/statuses/01FCNEXAGAKPEX1J7VJRPJP490/replies",
+		"items": [
+			"https://example.com/users/someone/statuses/106720752853216226",
+			"https://somewhere.online/users/eeeeeeeeeep/statuses/106720870163727231"
+		]
+	}
+*/
+func (c *converter) StatusURIsToASRepliesPage(status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
+	collectionID := fmt.Sprintf("%s/replies", status.URI)
+
+	page := streams.NewActivityStreamsCollectionPage()
+
+	// .id
+	pageIDProp := streams.NewJSONLDIdProperty()
+	pageIDString := fmt.Sprintf("%s?page=true&only_other_accounts=%t", collectionID, onlyOtherAccounts)
+	if minID != "" {
+		pageIDString = fmt.Sprintf("%s&min_id=%s", pageIDString, minID)
+	}
+
+	pageID, err := url.Parse(pageIDString)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	pageIDProp.SetIRI(pageID)
+	page.SetJSONLDId(pageIDProp)
+
+	// .partOf
+	collectionIDURI, err := url.Parse(collectionID)
+	if err != nil {
+		return nil, err
+	}
+	partOfProp := streams.NewActivityStreamsPartOfProperty()
+	partOfProp.SetIRI(collectionIDURI)
+	page.SetActivityStreamsPartOf(partOfProp)
+
+	// .items
+	items := streams.NewActivityStreamsItemsProperty()
+	var highestID string
+	for k, v := range replies {
+		items.AppendIRI(v)
+		if k > highestID {
+			highestID = k
+		}
+	}
+
+	// .next
+	nextProp := streams.NewActivityStreamsNextProperty()
+	nextPropIDString := fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts)
+	if highestID != "" {
+		nextPropIDString = fmt.Sprintf("%s&min_id=%s", nextPropIDString, highestID)
+	}
+
+	nextPropID, err := url.Parse(nextPropIDString)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	nextProp.SetIRI(nextPropID)
+	page.SetActivityStreamsNext(nextProp)
+
+	return page, nil
+}

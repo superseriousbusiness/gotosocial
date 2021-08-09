@@ -443,7 +443,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
 			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
-			PrivateKey:            nil,
+			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
 			PublicKeyURI:          "http://fossbros-anonymous.io/users/foss_satan#main-key",
 			SensitizedAt:          time.Time{},
@@ -1122,6 +1122,7 @@ type ActivityWithSignature struct {
 	SignatureHeader string
 	DigestHeader    string
 	DateHeader      string
+	HostHeader      string
 }
 
 // NewTestActivities returns a bunch of pub.Activity types for use in testing the federation protocols.
@@ -1187,12 +1188,13 @@ func NewTestFediPeople() map[string]ap.Accountable {
 
 // NewTestDereferenceRequests returns a map of incoming dereference requests, with their signatures.
 func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
-	sig, digest, date := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
+	sig, digest, date, host := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork": {
 			SignatureHeader: sig,
 			DigestHeader:    digest,
 			DateHeader:      date,
+			HostHeader:      host,
 		},
 	}
 }
@@ -1242,13 +1244,14 @@ func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 
 // getSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string, hostHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
 			signatureHeader = req.Header.Get("Signature")
 			digestHeader = req.Header.Get("Digest")
 			dateHeader = req.Header.Get("Date")
+			hostHeader = req.Header.Get("Host")
 			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
 			return &http.Response{
 				StatusCode: 200,

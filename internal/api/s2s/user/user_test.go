@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -18,13 +19,14 @@ import (
 type UserStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config    *config.Config
-	db        db.DB
-	log       *logrus.Logger
-	tc        typeutils.TypeConverter
-	federator federation.Federator
-	processor processing.Processor
-	storage   blob.Storage
+	config         *config.Config
+	db             db.DB
+	log            *logrus.Logger
+	tc             typeutils.TypeConverter
+	federator      federation.Federator
+	processor      processing.Processor
+	storage        blob.Storage
+	securityModule *security.Module
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token

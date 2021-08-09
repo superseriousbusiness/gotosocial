@@ -19,6 +19,8 @@
 package typeutils
 
 import (
+	"net/url"
+
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -153,6 +155,8 @@ type TypeConverter interface {
 	BlockToAS(block *gtsmodel.Block) (vocab.ActivityStreamsBlock, error)
 	// StatusToASRepliesCollection converts a gts model status into an activityStreams REPLIES collection.
 	StatusToASRepliesCollection(status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error)
+	// StatusURIsToASRepliesPage returns a collection page with appropriate next/part of pagination.
+	StatusURIsToASRepliesPage(status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error)
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL
 	*/
