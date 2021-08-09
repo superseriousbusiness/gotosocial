@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
+// Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
 	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
 	EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
@@ -58,6 +59,7 @@ type deref struct {
 	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
+// NewDereferencer returns a Dereferencer initialized with the given parameters.
 func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler, log *logrus.Logger) Dereferencer {
 	return &deref{
 		log:                 log,

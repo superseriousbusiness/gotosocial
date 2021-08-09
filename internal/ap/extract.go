@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// package ap contains models and utilities for working with activitypub/activitystreams representations.
+// Package ap contains models and utilities for working with activitypub/activitystreams representations.
 //
 // It is built on top of go-fed/activity.
 package ap
@@ -525,6 +525,7 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	return emoji, nil
 }
 
+// ExtractMentions extracts a slice of gtsmodel Mentions from a WithTag interface.
 func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 	mentions := []*gtsmodel.Mention{}
 	tagsProp := i.GetActivityStreamsTag()
@@ -556,6 +557,7 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 	return mentions, nil
 }
 
+// ExtractMention extracts a gts model mention from a Mentionable.
 func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	mention := &gtsmodel.Mention{}
 
@@ -583,6 +585,7 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	return mention, nil
 }
 
+// ExtractActor extracts the actor ID/IRI from an interface WithActor.
 func ExtractActor(i WithActor) (*url.URL, error) {
 	actorProp := i.GetActivityStreamsActor()
 	if actorProp == nil {
@@ -596,6 +599,7 @@ func ExtractActor(i WithActor) (*url.URL, error) {
 	return nil, errors.New("no iri found for actor prop")
 }
 
+// ExtractObject extracts a URL object from a WithObject interface.
 func ExtractObject(i WithObject) (*url.URL, error) {
 	objectProp := i.GetActivityStreamsObject()
 	if objectProp == nil {
