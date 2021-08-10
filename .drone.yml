@@ -1,4 +1,3 @@
----
 kind: pipeline
 type: docker
 name: dockerpublish
@@ -17,4 +16,3 @@ steps:
       event:
         exclude:
           - pull_request
----
