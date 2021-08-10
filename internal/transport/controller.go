@@ -60,7 +60,7 @@ func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.
 
 // NewTransport returns a new http signature transport with the given public key id (a URL), and the given private key.
 func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (Transport, error) {
-	prefs := []httpsig.Algorithm{httpsig.RSA_SHA512}
+	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256}
 	digestAlgo := httpsig.DigestSha256
 	getHeaders := []string{httpsig.RequestTarget, "host", "date"}
 	postHeaders := []string{httpsig.RequestTarget, "host", "date", "digest"}
