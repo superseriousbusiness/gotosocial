@@ -31,7 +31,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -139,7 +138,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 
 		// we don't have an entry for this instance yet so dereference it
-		i, err = f.DereferenceRemoteInstance(username, &url.URL{
+		i, err = f.GetRemoteInstance(username, &url.URL{
 			Scheme: publicKeyOwnerURI.Scheme,
 			Host:   publicKeyOwnerURI.Host,
 		})
@@ -153,51 +152,9 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount := &gtsmodel.Account{}
-	if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: publicKeyOwnerURI.String()}}, requestingAccount); err != nil {
-		// there's been a proper error so return it
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
-		}
-
-		// we don't know this account (yet) so let's dereference it right now
-		person, err := f.DereferenceRemoteAccount(requestedAccount.Username, publicKeyOwnerURI)
-		if err != nil {
-			return ctx, false, fmt.Errorf("error dereferencing account with public key id %s: %s", publicKeyOwnerURI.String(), err)
-		}
-
-		a, err := f.typeConverter.ASRepresentationToAccount(person, false)
-		if err != nil {
-			return ctx, false, fmt.Errorf("error converting person with public key id %s to account: %s", publicKeyOwnerURI.String(), err)
-		}
-
-		aID, err := id.NewRandomULID()
-		if err != nil {
-			return ctx, false, err
-		}
-		a.ID = aID
-
-		if err := f.db.Put(a); err != nil {
-			l.Errorf("error inserting dereferenced remote account: %s", err)
-		}
-
-		requestingAccount = a
-
-		// send the newly dereferenced account into the processor channel for further async processing
-		fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-		if fromFederatorChanI == nil {
-			l.Error("from federator channel wasn't set on context")
-		}
-		fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
-		if !ok {
-			l.Error("from federator channel was set on context but couldn't be parsed")
-		}
-
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:   gtsmodel.ActivityStreamsProfile,
-			APActivityType: gtsmodel.ActivityStreamsCreate,
-			GTSModel:       requestingAccount,
-		}
+	requestingAccount, _, err := f.GetRemoteAccount(username, publicKeyOwnerURI, false)
+	if err != nil {
+		return nil, false, fmt.Errorf("couldn't get remote account: %s", err)
 	}
 
 	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)

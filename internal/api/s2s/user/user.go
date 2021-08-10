@@ -34,6 +34,13 @@ const (
 	UsernameKey = "username"
 	// StatusIDKey is for status IDs
 	StatusIDKey = "status"
+	// OnlyOtherAccountsKey is for filtering status responses.
+	OnlyOtherAccountsKey = "only_other_accounts"
+	// MinIDKey is for filtering status responses.
+	MinIDKey = "min_id"
+	// PageKey is for filtering status responses.
+	PageKey = "page"
+
 	// UsersBasePath is the base path for serving information about Users eg https://example.org/users
 	UsersBasePath = "/" + util.UsersPath
 	// UsersBasePathWithUsername is just the users base path with the Username key in it.
@@ -50,6 +57,8 @@ const (
 	UsersFollowingPath = UsersBasePathWithUsername + "/" + util.FollowingPath
 	// UsersStatusPath is for serving GET requests to a particular status by a user, with the given username key and status ID
 	UsersStatusPath = UsersBasePathWithUsername + "/" + util.StatusesPath + "/:" + StatusIDKey
+	// UsersStatusRepliesPath is for serving the replies collection of a status.
+	UsersStatusRepliesPath = UsersStatusPath + "/replies"
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
@@ -83,5 +92,6 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, UsersFollowingPath, m.FollowingGETHandler)
 	s.AttachHandler(http.MethodGet, UsersStatusPath, m.StatusGETHandler)
 	s.AttachHandler(http.MethodGet, UsersPublicKeyPath, m.PublicKeyGETHandler)
+	s.AttachHandler(http.MethodGet, UsersStatusRepliesPath, m.StatusRepliesGETHandler)
 	return nil
 }

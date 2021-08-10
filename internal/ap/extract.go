@@ -16,7 +16,10 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package typeutils
+// Package ap contains models and utilities for working with activitypub/activitystreams representations.
+//
+// It is built on top of go-fed/activity.
+package ap
 
 import (
 	"crypto/rsa"
@@ -33,7 +36,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func extractPreferredUsername(i withPreferredUsername) (string, error) {
+// ExtractPreferredUsername returns a string representation of an interface's preferredUsername property.
+func ExtractPreferredUsername(i WithPreferredUsername) (string, error) {
 	u := i.GetActivityStreamsPreferredUsername()
 	if u == nil || !u.IsXMLSchemaString() {
 		return "", errors.New("preferredUsername was not a string")
@@ -44,7 +48,8 @@ func extractPreferredUsername(i withPreferredUsername) (string, error) {
 	return u.GetXMLSchemaString(), nil
 }
 
-func extractName(i withName) (string, error) {
+// ExtractName returns a string representation of an interface's name property.
+func ExtractName(i WithName) (string, error) {
 	nameProp := i.GetActivityStreamsName()
 	if nameProp == nil {
 		return "", errors.New("activityStreamsName not found")
@@ -60,22 +65,42 @@ func extractName(i withName) (string, error) {
 	return "", errors.New("activityStreamsName not found")
 }
 
-func extractInReplyToURI(i withInReplyTo) (*url.URL, error) {
+// ExtractInReplyToURI extracts the inReplyToURI property (if present) from an interface.
+func ExtractInReplyToURI(i WithInReplyTo) *url.URL {
 	inReplyToProp := i.GetActivityStreamsInReplyTo()
 	if inReplyToProp == nil {
-		return nil, errors.New("in reply to prop was nil")
+		// the property just wasn't set
+		return nil
 	}
 	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
-				return iter.GetIRI(), nil
+				return iter.GetIRI()
 			}
 		}
 	}
-	return nil, errors.New("couldn't find iri for in reply to")
+	// couldn't find a URI
+	return nil
 }
 
-func extractTos(i withTo) ([]*url.URL, error) {
+// ExtractURLItems extracts a slice of URLs from a property that has withItems.
+func ExtractURLItems(i WithItems) []*url.URL {
+	urls := []*url.URL{}
+	items := i.GetActivityStreamsItems()
+	if items == nil || items.Len() == 0 {
+		return urls
+	}
+
+	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			urls = append(urls, iter.GetIRI())
+		}
+	}
+	return urls
+}
+
+// ExtractTos returns a list of URIs that the activity addresses as To.
+func ExtractTos(i WithTo) ([]*url.URL, error) {
 	to := []*url.URL{}
 	toProp := i.GetActivityStreamsTo()
 	if toProp == nil {
@@ -91,7 +116,8 @@ func extractTos(i withTo) ([]*url.URL, error) {
 	return to, nil
 }
 
-func extractCCs(i withCC) ([]*url.URL, error) {
+// ExtractCCs returns a list of URIs that the activity addresses as CC.
+func ExtractCCs(i WithCC) ([]*url.URL, error) {
 	cc := []*url.URL{}
 	ccProp := i.GetActivityStreamsCc()
 	if ccProp == nil {
@@ -107,7 +133,8 @@ func extractCCs(i withCC) ([]*url.URL, error) {
 	return cc, nil
 }
 
-func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
+// ExtractAttributedTo returns the URL of the actor that the withAttributedTo is attributed to.
+func ExtractAttributedTo(i WithAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
 	if attributedToProp == nil {
 		return nil, errors.New("attributedToProp was nil")
@@ -122,7 +149,8 @@ func extractAttributedTo(i withAttributedTo) (*url.URL, error) {
 	return nil, errors.New("couldn't find iri for attributed to")
 }
 
-func extractPublished(i withPublished) (time.Time, error) {
+// ExtractPublished extracts the publication time of an activity.
+func ExtractPublished(i WithPublished) (time.Time, error) {
 	publishedProp := i.GetActivityStreamsPublished()
 	if publishedProp == nil {
 		return time.Time{}, errors.New("published prop was nil")
@@ -139,13 +167,13 @@ func extractPublished(i withPublished) (time.Time, error) {
 	return t, nil
 }
 
-// extractIconURL extracts a URL to a supported image file from something like:
+// ExtractIconURL extracts a URL to a supported image file from something like:
 //   "icon": {
 //     "mediaType": "image/jpeg",
 //     "type": "Image",
 //     "url": "http://example.org/path/to/some/file.jpeg"
 //   },
-func extractIconURL(i withIcon) (*url.URL, error) {
+func ExtractIconURL(i WithIcon) (*url.URL, error) {
 	iconProp := i.GetActivityStreamsIcon()
 	if iconProp == nil {
 		return nil, errors.New("icon property was nil")
@@ -166,7 +194,7 @@ func extractIconURL(i withIcon) (*url.URL, error) {
 		}
 
 		// 2. has a URL so we can grab it
-		url, err := extractURL(imageValue)
+		url, err := ExtractURL(imageValue)
 		if err == nil && url != nil {
 			return url, nil
 		}
@@ -175,13 +203,13 @@ func extractIconURL(i withIcon) (*url.URL, error) {
 	return nil, errors.New("could not extract valid image from icon")
 }
 
-// extractImageURL extracts a URL to a supported image file from something like:
+// ExtractImageURL extracts a URL to a supported image file from something like:
 //   "image": {
 //     "mediaType": "image/jpeg",
 //     "type": "Image",
 //     "url": "http://example.org/path/to/some/file.jpeg"
 //   },
-func extractImageURL(i withImage) (*url.URL, error) {
+func ExtractImageURL(i WithImage) (*url.URL, error) {
 	imageProp := i.GetActivityStreamsImage()
 	if imageProp == nil {
 		return nil, errors.New("icon property was nil")
@@ -202,7 +230,7 @@ func extractImageURL(i withImage) (*url.URL, error) {
 		}
 
 		// 2. has a URL so we can grab it
-		url, err := extractURL(imageValue)
+		url, err := ExtractURL(imageValue)
 		if err == nil && url != nil {
 			return url, nil
 		}
@@ -211,7 +239,8 @@ func extractImageURL(i withImage) (*url.URL, error) {
 	return nil, errors.New("could not extract valid image from image property")
 }
 
-func extractSummary(i withSummary) (string, error) {
+// ExtractSummary extracts the summary/content warning of an interface.
+func ExtractSummary(i WithSummary) (string, error) {
 	summaryProp := i.GetActivityStreamsSummary()
 	if summaryProp == nil {
 		return "", errors.New("summary property was nil")
@@ -226,14 +255,16 @@ func extractSummary(i withSummary) (string, error) {
 	return "", errors.New("could not extract summary")
 }
 
-func extractDiscoverable(i withDiscoverable) (bool, error) {
+// ExtractDiscoverable extracts the Discoverable boolean of an interface.
+func ExtractDiscoverable(i WithDiscoverable) (bool, error) {
 	if i.GetTootDiscoverable() == nil {
 		return false, errors.New("discoverable was nil")
 	}
 	return i.GetTootDiscoverable().Get(), nil
 }
 
-func extractURL(i withURL) (*url.URL, error) {
+// ExtractURL extracts the URL property of an interface.
+func ExtractURL(i WithURL) (*url.URL, error) {
 	urlProp := i.GetActivityStreamsUrl()
 	if urlProp == nil {
 		return nil, errors.New("url property was nil")
@@ -248,7 +279,9 @@ func extractURL(i withURL) (*url.URL, error) {
 	return nil, errors.New("could not extract url")
 }
 
-func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKey, *url.URL, error) {
+// ExtractPublicKeyForOwner extracts the public key from an interface, as long as it belongs to the specified owner.
+// It will return the public key itself, the id/URL of the public key, or an error if something goes wrong.
+func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKey, *url.URL, error) {
 	publicKeyProp := i.GetW3IDSecurityV1PublicKey()
 	if publicKeyProp == nil {
 		return nil, nil, errors.New("public key property was nil")
@@ -298,7 +331,8 @@ func extractPublicKeyForOwner(i withPublicKey, forOwner *url.URL) (*rsa.PublicKe
 	return nil, nil, errors.New("couldn't find public key")
 }
 
-func extractContent(i withContent) (string, error) {
+// ExtractContent returns a string representation of the interface's Content property.
+func ExtractContent(i WithContent) (string, error) {
 	contentProperty := i.GetActivityStreamsContent()
 	if contentProperty == nil {
 		return "", errors.New("content property was nil")
@@ -311,7 +345,8 @@ func extractContent(i withContent) (string, error) {
 	return "", errors.New("no content found")
 }
 
-func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
+// ExtractAttachments returns a slice of attachments on the interface.
+func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	attachments := []*gtsmodel.MediaAttachment{}
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
@@ -326,7 +361,7 @@ func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
 		if !ok {
 			continue
 		}
-		attachment, err := extractAttachment(attachmentable)
+		attachment, err := ExtractAttachment(attachmentable)
 		if err != nil {
 			continue
 		}
@@ -335,12 +370,13 @@ func extractAttachments(i withAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	return attachments, nil
 }
 
-func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
+// ExtractAttachment returns a gts model of an attachment from an attachmentable interface.
+func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	attachment := &gtsmodel.MediaAttachment{
 		File: gtsmodel.File{},
 	}
 
-	attachmentURL, err := extractURL(i)
+	attachmentURL, err := ExtractURL(i)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +392,7 @@ func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	attachment.File.ContentType = mediaType.Get()
 	attachment.Type = gtsmodel.FileTypeImage
 
-	name, err := extractName(i)
+	name, err := ExtractName(i)
 	if err == nil {
 		attachment.Description = name
 	}
@@ -376,7 +412,8 @@ func extractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 // 	return i.GetTootBlurhashProperty().Get(), nil
 // }
 
-func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
+// ExtractHashtags returns a slice of tags on the interface.
+func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 	tags := []*gtsmodel.Tag{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
@@ -397,7 +434,7 @@ func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 			continue
 		}
 
-		tag, err := extractHashtag(hashtaggable)
+		tag, err := ExtractHashtag(hashtaggable)
 		if err != nil {
 			continue
 		}
@@ -407,7 +444,8 @@ func extractHashtags(i withTag) ([]*gtsmodel.Tag, error) {
 	return tags, nil
 }
 
-func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
+// ExtractHashtag returns a gtsmodel tag from a hashtaggable.
+func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	tag := &gtsmodel.Tag{}
 
 	hrefProp := i.GetActivityStreamsHref()
@@ -416,7 +454,7 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	}
 	tag.URL = hrefProp.GetIRI().String()
 
-	name, err := extractName(i)
+	name, err := ExtractName(i)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +463,8 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	return tag, nil
 }
 
-func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
+// ExtractEmojis returns a slice of emojis on the interface.
+func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 	emojis := []*gtsmodel.Emoji{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
@@ -446,7 +485,7 @@ func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
 			continue
 		}
 
-		emoji, err := extractEmoji(emojiable)
+		emoji, err := ExtractEmoji(emojiable)
 		if err != nil {
 			continue
 		}
@@ -456,7 +495,8 @@ func extractEmojis(i withTag) ([]*gtsmodel.Emoji, error) {
 	return emojis, nil
 }
 
-func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
+// ExtractEmoji ...
+func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	emoji := &gtsmodel.Emoji{}
 
 	idProp := i.GetJSONLDId()
@@ -467,7 +507,7 @@ func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	emoji.URI = uri.String()
 	emoji.Domain = uri.Host
 
-	name, err := extractName(i)
+	name, err := ExtractName(i)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +516,7 @@ func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	if i.GetActivityStreamsIcon() == nil {
 		return nil, errors.New("no icon for emoji")
 	}
-	imageURL, err := extractIconURL(i)
+	imageURL, err := ExtractIconURL(i)
 	if err != nil {
 		return nil, errors.New("no url for emoji image")
 	}
@@ -485,7 +525,8 @@ func extractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	return emoji, nil
 }
 
-func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
+// ExtractMentions extracts a slice of gtsmodel Mentions from a WithTag interface.
+func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 	mentions := []*gtsmodel.Mention{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
@@ -506,7 +547,7 @@ func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
 			continue
 		}
 
-		mention, err := extractMention(mentionable)
+		mention, err := ExtractMention(mentionable)
 		if err != nil {
 			continue
 		}
@@ -516,10 +557,11 @@ func extractMentions(i withTag) ([]*gtsmodel.Mention, error) {
 	return mentions, nil
 }
 
-func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
+// ExtractMention extracts a gts model mention from a Mentionable.
+func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	mention := &gtsmodel.Mention{}
 
-	mentionString, err := extractName(i)
+	mentionString, err := ExtractName(i)
 	if err != nil {
 		return nil, err
 	}
@@ -543,7 +585,8 @@ func extractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	return mention, nil
 }
 
-func extractActor(i withActor) (*url.URL, error) {
+// ExtractActor extracts the actor ID/IRI from an interface WithActor.
+func ExtractActor(i WithActor) (*url.URL, error) {
 	actorProp := i.GetActivityStreamsActor()
 	if actorProp == nil {
 		return nil, errors.New("actor property was nil")
@@ -556,7 +599,8 @@ func extractActor(i withActor) (*url.URL, error) {
 	return nil, errors.New("no iri found for actor prop")
 }
 
-func extractObject(i withObject) (*url.URL, error) {
+// ExtractObject extracts a URL object from a WithObject interface.
+func ExtractObject(i WithObject) (*url.URL, error) {
 	objectProp := i.GetActivityStreamsObject()
 	if objectProp == nil {
 		return nil, errors.New("object property was nil")

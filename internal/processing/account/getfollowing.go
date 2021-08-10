@@ -63,12 +63,6 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		// derefence account fields in case we haven't done it already
-		if err := p.federator.DereferenceAccountFields(a, requestingAccount.Username, false); err != nil {
-			// don't bail if we can't fetch them, we'll try another time
-			p.log.WithField("func", "AccountFollowingGet").Debugf("error dereferencing account fields: %s", err)
-		}
-
 		account, err := p.tc.AccountToMastoPublic(a)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)

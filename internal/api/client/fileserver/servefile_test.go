@@ -78,7 +78,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
@@ -95,7 +95,7 @@ func (suite *ServeFileTestSuite) TearDownSuite() {
 }
 
 func (suite *ServeFileTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()

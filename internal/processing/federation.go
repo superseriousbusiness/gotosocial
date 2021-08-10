@@ -31,64 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
-
-// dereferenceFediRequest authenticates the HTTP signature of an incoming federation request, using the given
-// username to perform the validation. It will *also* dereference the originator of the request and return it as a gtsmodel account
-// for further processing. NOTE that this function will have the side effect of putting the dereferenced account into the database,
-// and passing it into the processor through a channel for further asynchronous processing.
-func (p *processor) dereferenceFediRequest(username string, requestingAccountURI *url.URL) (*gtsmodel.Account, error) {
-	// OK now we can do the dereferencing part
-	// we might already have an entry for this account so check that first
-	requestingAccount := &gtsmodel.Account{}
-
-	err := p.db.GetWhere([]db.Where{{Key: "uri", Value: requestingAccountURI.String()}}, requestingAccount)
-	if err == nil {
-		// we do have it yay, return it
-		return requestingAccount, nil
-	}
-
-	if _, ok := err.(db.ErrNoEntries); !ok {
-		// something has actually gone wrong so bail
-		return nil, fmt.Errorf("database error getting account with uri %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// we just don't have an entry for this account yet
-	// what we do now should depend on our chosen federation method
-	// for now though, we'll just dereference it
-	// TODO: slow-fed
-	requestingPerson, err := p.federator.DereferenceRemoteAccount(username, requestingAccountURI)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't dereference %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// convert it to our internal account representation
-	requestingAccount, err = p.tc.ASRepresentationToAccount(requestingPerson, false)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't convert dereferenced uri %s to gtsmodel account: %s", requestingAccountURI.String(), err)
-	}
-
-	requestingAccountID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-	requestingAccount.ID = requestingAccountID
-
-	if err := p.db.Put(requestingAccount); err != nil {
-		return nil, fmt.Errorf("database error inserting account with uri %s: %s", requestingAccountURI.String(), err)
-	}
-
-	// put it in our channel to queue it for async processing
-	p.fromFederator <- gtsmodel.FromFederator{
-		APObjectType:   gtsmodel.ActivityStreamsProfile,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
-		GTSModel:       requestingAccount,
-	}
-
-	return requestingAccount, nil
-}
 
 func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
@@ -112,9 +56,9 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 			return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 		}
 
-		// if we're already handshaking/dereferencing a remote account, we can skip the dereferencing part
+		// if we're not already handshaking/dereferencing a remote account, dereference it now
 		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
-			requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+			requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}
@@ -158,7 +102,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -203,7 +147,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -248,7 +192,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, err := p.dereferenceFediRequest(requestedUsername, requestingAccountURI)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -290,6 +234,139 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 	data, err := streams.Serialize(asStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return data, nil
+}
+
+func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+	// get the account the request is referring to
+	requestedAccount := &gtsmodel.Account{}
+	if err := p.db.GetLocalAccountByUsername(requestedUsername, requestedAccount); err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
+
+	// authenticate the request
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	if err != nil || !authenticated {
+		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
+	}
+
+	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	if err != nil {
+		return nil, gtserror.NewErrorNotAuthorized(err)
+	}
+
+	// authorize the request:
+	// 1. check if a block exists between the requester and the requestee
+	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if blocked {
+		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
+
+	// get the status out of the database here
+	s := &gtsmodel.Status{}
+	if err := p.db.GetWhere([]db.Where{
+		{Key: "id", Value: requestedStatusID},
+		{Key: "account_id", Value: requestedAccount.ID},
+	}, s); err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
+	}
+
+	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	if !visible {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", s.ID, requestingAccount.ID))
+	}
+
+	var data map[string]interface{}
+
+	// now there are three scenarios:
+	// 1. we're asked for the whole collection and not a page -- we can just return the collection, with no items, but a link to 'first' page.
+	// 2. we're asked for a page but only_other_accounts has not been set in the query -- so we should just return the first page of the collection, with no items.
+	// 3. we're asked for a page, and only_other_accounts has been set, and min_id has optionally been set -- so we need to return some actual items!
+
+	if !page {
+		// scenario 1
+
+		// get the collection
+		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		data, err = streams.Serialize(collection)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else if page && requestURL.Query().Get("only_other_accounts") == "" {
+		// scenario 2
+
+		// get the collection
+		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		// but only return the first page
+		data, err = streams.Serialize(collection.GetActivityStreamsFirst().GetActivityStreamsCollectionPage())
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else {
+		// scenario 3
+		// get immediate children
+		replies, err := p.db.StatusChildren(s, true, minID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// filter children and extract URIs
+		replyURIs := map[string]*url.URL{}
+		for _, r := range replies {
+			// only show public or unlocked statuses as replies
+			if r.Visibility != gtsmodel.VisibilityPublic && r.Visibility != gtsmodel.VisibilityUnlocked {
+				continue
+			}
+
+			// respect onlyOtherAccounts parameter
+			if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
+				continue
+			}
+
+			// only show replies that the status owner can see
+			visibleToStatusOwner, err := p.filter.StatusVisible(r, requestedAccount)
+			if err != nil || !visibleToStatusOwner {
+				continue
+			}
+
+			// only show replies that the requester can see
+			visibleToRequester, err := p.filter.StatusVisible(r, requestingAccount)
+			if err != nil || !visibleToRequester {
+				continue
+			}
+
+			rURI, err := url.Parse(r.URI)
+			if err != nil {
+				continue
+			}
+
+			replyURIs[r.ID] = rURI
+		}
+
+		repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		data, err = streams.Serialize(repliesPage)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	return data, nil

@@ -84,7 +84,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 
 	// setup module being tested
@@ -98,7 +98,7 @@ func (suite *MediaCreateTestSuite) TearDownSuite() {
 }
 
 func (suite *MediaCreateTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()

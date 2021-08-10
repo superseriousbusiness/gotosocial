@@ -36,9 +36,9 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -443,9 +443,9 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
 			ActorType:             gtsmodel.ActivityStreamsPerson,
 			AlsoKnownAs:           "",
-			PrivateKey:            nil,
+			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
-			PublicKeyURI:          "http://fossbros-anonymous.io/users/foss_satan#main-key",
+			PublicKeyURI:          "http://fossbros-anonymous.io/users/foss_satan/main-key",
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
@@ -1033,6 +1033,32 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			},
 			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
+		"local_account_2_status_5": {
+			ID:                       "01FCQSQ667XHJ9AV9T27SJJSX5",
+			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
+			URL:                      "http://localhost:8080/@1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
+			Content:                  "🐢 hi zork! 🐢",
+			CreatedAt:                time.Now().Add(-1 * time.Minute),
+			UpdatedAt:                time.Now().Add(-1 * time.Minute),
+			Local:                    true,
+			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
+			InReplyToID:              "01F8MHAMCHF6Y650WCRSCP4WMY",
+			InReplyToAccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
+			InReplyToURI:             "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+			BoostOfID:                "",
+			ContentWarning:           "",
+			Visibility:               gtsmodel.VisibilityPublic,
+			Sensitive:                false,
+			Language:                 "en",
+			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
 	}
 }
 
@@ -1155,14 +1181,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 }
 
 // NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
-func NewTestFediPeople() map[string]typeutils.Accountable {
+func NewTestFediPeople() map[string]ap.Accountable {
 	newPerson1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 	newPerson1Pub := &newPerson1Priv.PublicKey
 
-	return map[string]typeutils.Accountable{
+	return map[string]ap.Accountable{
 		"new_person_1": newPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
@@ -1187,13 +1213,47 @@ func NewTestFediPeople() map[string]typeutils.Accountable {
 
 // NewTestDereferenceRequests returns a map of incoming dereference requests, with their signatures.
 func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
-	sig, digest, date := getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].URI))
+	var sig, digest, date string
+	var target *url.URL
+	statuses := NewTestStatuses()
+
+	target = URLMustParse(accounts["local_account_1"].URI)
+	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceZork := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
+	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true")
+	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1RepliesNext := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FCQSQ667XHJ9AV9T27SJJSX5")
+	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1RepliesLast := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
 	return map[string]ActivityWithSignature{
-		"foss_satan_dereference_zork": {
-			SignatureHeader: sig,
-			DigestHeader:    digest,
-			DateHeader:      date,
-		},
+		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
+		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
+		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
+		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
 	}
 }
 
@@ -1215,7 +1275,7 @@ func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 	}
 
 	// use the client to create a new transport
-	c := NewTestTransportController(client)
+	c := NewTestTransportController(client, NewTestDB())
 	tp, err := c.NewTransport(pubKeyID, privkey)
 	if err != nil {
 		panic(err)
@@ -1247,7 +1307,6 @@ func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
 			signatureHeader = req.Header.Get("Signature")
-			digestHeader = req.Header.Get("Digest")
 			dateHeader = req.Header.Get("Date")
 			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
 			return &http.Response{
@@ -1258,7 +1317,7 @@ func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 	}
 
 	// use the client to create a new transport
-	c := NewTestTransportController(client)
+	c := NewTestTransportController(client, NewTestDB())
 	tp, err := c.NewTransport(pubKeyID, privkey)
 	if err != nil {
 		panic(err)
@@ -1290,7 +1349,7 @@ func newPerson(
 	avatarURL *url.URL,
 	avatarContentType string,
 	headerURL *url.URL,
-	headerContentType string) typeutils.Accountable {
+	headerContentType string) ap.Accountable {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user

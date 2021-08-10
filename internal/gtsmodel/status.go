@@ -18,7 +18,9 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"time"
+)
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {

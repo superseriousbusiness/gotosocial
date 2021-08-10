@@ -86,7 +86,7 @@ func (suite *LinkTestSuite) SetupTest() {
 	suite.log = testrig.NewTestLog()
 	suite.formatter = text.NewFormatter(suite.config, suite.db, suite.log)
 
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *LinkTestSuite) TearDownTest() {

@@ -6,8 +6,6 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -35,7 +33,6 @@ import (
 // returned Transport so that any private credentials are able to be
 // garbage collected.
 func (f *federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
-
 	var username string
 	var err error
 
@@ -53,32 +50,5 @@ func (f *federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofe
 		return nil, fmt.Errorf("id %s was neither an inbox path nor an outbox path", actorBoxIRI.String())
 	}
 
-	account := &gtsmodel.Account{}
-	if err := f.db.GetLocalAccountByUsername(username, account); err != nil {
-		return nil, fmt.Errorf("error getting account with username %s from the db: %s", username, err)
-	}
-
-	return f.transportController.NewTransport(account.PublicKeyURI, account.PrivateKey)
-}
-
-func (f *federator) GetTransportForUser(username string) (transport.Transport, error) {
-	// We need an account to use to create a transport for dereferecing something.
-	// If a username has been given, we can fetch the account with that username and use it.
-	// Otherwise, we can take the instance account and use those credentials to make the request.
-	ourAccount := &gtsmodel.Account{}
-	var u string
-	if username == "" {
-		u = f.config.Host
-	} else {
-		u = username
-	}
-	if err := f.db.GetLocalAccountByUsername(u, ourAccount); err != nil {
-		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
-	}
-
-	transport, err := f.transportController.NewTransport(ourAccount.PublicKeyURI, ourAccount.PrivateKey)
-	if err != nil {
-		return nil, fmt.Errorf("error creating transport for user %s: %s", username, err)
-	}
-	return transport, nil
+	return f.transportController.NewTransportForUsername(username)
 }

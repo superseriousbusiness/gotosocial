@@ -28,6 +28,7 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -342,7 +343,7 @@ func (suite *ASToInternalTestSuite) SetupSuite() {
 }
 
 func (suite *ASToInternalTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *ASToInternalTestSuite) TestParsePerson() {
@@ -364,7 +365,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	t, err := streams.ToType(context.Background(), m)
 	assert.NoError(suite.T(), err)
 
-	rep, ok := t.(typeutils.Accountable)
+	rep, ok := t.(ap.Accountable)
 	assert.True(suite.T(), ok)
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(rep, false)
@@ -391,7 +392,7 @@ func (suite *ASToInternalTestSuite) TestParseStatus() {
 	first := obj.Begin()
 	assert.NotNil(suite.T(), first)
 
-	rep, ok := first.GetType().(typeutils.Statusable)
+	rep, ok := first.GetType().(ap.Statusable)
 	assert.True(suite.T(), ok)
 
 	status, err := suite.typeconverter.ASStatusToStatus(rep)
@@ -418,7 +419,7 @@ func (suite *ASToInternalTestSuite) TestParseStatusWithMention() {
 	first := obj.Begin()
 	assert.NotNil(suite.T(), first)
 
-	rep, ok := first.GetType().(typeutils.Statusable)
+	rep, ok := first.GetType().(ap.Statusable)
 	assert.True(suite.T(), ok)
 
 	status, err := suite.typeconverter.ASStatusToStatus(rep)

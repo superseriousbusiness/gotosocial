@@ -43,6 +43,10 @@ const (
 	ActivityStreamsTombstone = "Tombstone"
 	// ActivityStreamsVideo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
 	ActivityStreamsVideo = "Video"
+	//ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
+	ActivityStreamsCollection = "Collection"
+	// ActivityStreamsCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collectionpage
+	ActivityStreamsCollectionPage = "CollectionPage"
 )
 
 const (

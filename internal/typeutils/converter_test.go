@@ -21,6 +21,7 @@ package typeutils_test
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -34,7 +35,7 @@ type ConverterStandardTestSuite struct {
 	db       db.DB
 	log      *logrus.Logger
 	accounts map[string]*gtsmodel.Account
-	people   map[string]typeutils.Accountable
+	people   map[string]ap.Accountable
 
 	typeconverter typeutils.TypeConverter
 }

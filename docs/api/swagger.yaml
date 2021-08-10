@@ -1562,6 +1562,64 @@ definitions:
     type: string
     x-go-name: Visibility
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  swaggerStatusRepliesCollection:
+    properties:
+      '@context':
+        description: ActivityStreams context.
+        example: https://www.w3.org/ns/activitystreams
+        type: string
+        x-go-name: Context
+      first:
+        $ref: '#/definitions/swaggerStatusRepliesCollectionPage'
+      id:
+        description: ActivityStreams ID.
+        example: https://example.org/users/some_user/statuses/106717595988259568/replies
+        type: string
+        x-go-name: ID
+      type:
+        description: ActivityStreams type.
+        example: Collection
+        type: string
+        x-go-name: Type
+    title: SwaggerStatusRepliesCollection represents a response to GET /users/{username}/statuses/{status}/replies.
+    type: object
+    x-go-name: SwaggerStatusRepliesCollection
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
+  swaggerStatusRepliesCollectionPage:
+    properties:
+      id:
+        description: ActivityStreams ID.
+        example: https://example.org/users/some_user/statuses/106717595988259568/replies?page=true
+        type: string
+        x-go-name: ID
+      items:
+        description: Items on this page.
+        example:
+        - https://example.org/users/some_other_user/statuses/086417595981111564
+        - https://another.example.com/users/another_user/statuses/01FCN8XDV3YG7B4R42QA6YQZ9R
+        items:
+          type: string
+        type: array
+        x-go-name: Items
+      next:
+        description: Link to the next page.
+        example: https://example.org/users/some_user/statuses/106717595988259568/replies?only_other_accounts=true&page=true
+        type: string
+        x-go-name: Next
+      partOf:
+        description: Collection this page belongs to.
+        example: https://example.org/users/some_user/statuses/106717595988259568/replies
+        type: string
+        x-go-name: PartOf
+      type:
+        description: ActivityStreams type.
+        example: CollectionPage
+        type: string
+        x-go-name: Type
+    title: SwaggerStatusRepliesCollectionPage represents one page of a collection.
+    type: object
+    x-go-name: SwaggerStatusRepliesCollectionPage
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
   tag:
     properties:
       name:
@@ -1621,7 +1679,7 @@ info:
     name: AGPL3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
   title: GoToSocial
-  version: 0.1.0-SNAPSHOT
+  version: 0.1.0-SNAPSHOT-dereference_remote_replies
 paths:
   /api/v1/accounts:
     post:
@@ -2395,11 +2453,10 @@ paths:
       - blocks
   /api/v1/instance:
     get:
-      description: "This is mostly provided for Mastodon application compatibility,
-        since many apps that work with Mastodon use `/api/v1/instance` to inform their
-        connection parameters. \n\nHowever, it can also be used by other instances
-        for gathering instance information and representing instances in some UI or
-        other."
+      description: |-
+        This is mostly provided for Mastodon application compatibility, since many apps that work with Mastodon use `/api/v1/instance` to inform their connection parameters.
+
+        However, it can also be used by other instances for gathering instance information and representing instances in some UI or other.
       operationId: instanceGet
       produces:
       - application/json
@@ -3306,6 +3363,56 @@ paths:
       summary: See public statuses/posts that your instance is aware of.
       tags:
       - timelines
+  /users/{username}/statuses/{status}/replies:
+    get:
+      description: |-
+        Note that the response will be a Collection with a page as `first`, as shown below, if `page` is `false`.
+
+        If `page` is `true`, then the response will be a single `CollectionPage` without the wrapping `Collection`.
+
+        HTTP signature is required on the request.
+      operationId: s2sRepliesGet
+      parameters:
+      - description: Username of the account.
+        in: path
+        name: username
+        required: true
+        type: string
+      - description: ID of the status.
+        in: path
+        name: status
+        required: true
+        type: string
+      - default: false
+        description: Return response as a CollectionPage.
+        in: query
+        name: page
+        type: boolean
+      - default: false
+        description: Return replies only from accounts other than the status owner.
+        in: query
+        name: only_other_accounts
+        type: boolean
+      - description: Minimum ID of the next status, used for paging.
+        in: query
+        name: min_id
+        type: string
+      produces:
+      - application/activity+json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/swaggerStatusRepliesCollection'
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      summary: Get the replies collection for a status.
+      tags:
+      - s2s/federation
 schemes:
 - https
 - http

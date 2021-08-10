@@ -1,16 +1,11 @@
 package user_test
 
 import (
-	"bytes"
 	"context"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -42,10 +38,11 @@ func (suite *UserGetTestSuite) SetupTest() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	suite.log = testrig.NewTestLog()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil)), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
-	testrig.StandardDBSetup(suite.db)
+	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
@@ -56,48 +53,11 @@ func (suite *UserGetTestSuite) TearDownTest() {
 
 func (suite *UserGetTestSuite) TestGetUser() {
 	// the dereference we're gonna use
-	signedRequest := testrig.NewTestDereferenceRequests(suite.testAccounts)["foss_satan_dereference_zork"]
-
-	requestingAccount := suite.testAccounts["remote_account_1"]
+	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
+	signedRequest := derefRequests["foss_satan_dereference_zork"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	encodedPublicKey, err := x509.MarshalPKIXPublicKey(requestingAccount.PublicKey)
-	assert.NoError(suite.T(), err)
-	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: encodedPublicKey,
-	})
-	publicKeyString := strings.ReplaceAll(string(publicKeyBytes), "\n", "\\n")
-
-	// for this test we need the client to return the public key of the requester on the 'remote' instance
-	responseBodyString := fmt.Sprintf(`
-	{
-		"@context": [
-			"https://www.w3.org/ns/activitystreams",
-			"https://w3id.org/security/v1"
-		],
-
-		"id": "%s",
-		"type": "Person",
-		"preferredUsername": "%s",
-		"inbox": "%s",
-
-		"publicKey": {
-			"id": "%s",
-			"owner": "%s",
-			"publicKeyPem": "%s"
-		}
-	}`, requestingAccount.URI, requestingAccount.Username, requestingAccount.InboxURI, requestingAccount.PublicKeyURI, requestingAccount.URI, publicKeyString)
-
-	// create a transport controller whose client will just return the response body string we specified above
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := ioutil.NopCloser(bytes.NewReader([]byte(responseBodyString)))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	}))
-	// get this transport controller embedded right in the user module we're testing
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
 	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
@@ -105,7 +65,12 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:8080%s", strings.Replace(user.UsersBasePathWithUsername, ":username", targetAccount.Username, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
+	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.securityModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -115,11 +80,6 @@ func (suite *UserGetTestSuite) TestGetUser() {
 			Value: targetAccount.Username,
 		},
 	}
-
-	// we need these headers for the request to be validated
-	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
-	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
-	ctx.Request.Header.Set("Digest", signedRequest.DigestHeader)
 
 	// trigger the function being tested
 	userModule.UsersGETHandler(ctx)

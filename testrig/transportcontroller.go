@@ -24,6 +24,7 @@ import (
 	"net/http"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
@@ -37,8 +38,8 @@ import (
 // Unlike the other test interfaces provided in this package, you'll probably want to call this function
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
-func NewTestTransportController(client pub.HttpClient) transport.Controller {
-	return transport.NewController(NewTestConfig(), &federation.Clock{}, client, NewTestLog())
+func NewTestTransportController(client pub.HttpClient, db db.DB) transport.Controller {
+	return transport.NewController(NewTestConfig(), db, &federation.Clock{}, client, NewTestLog())
 }
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,

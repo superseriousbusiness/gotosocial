@@ -33,7 +33,7 @@ func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*
 		return nil, gtserror.NewErrorForbidden(fmt.Errorf("account with id %s does not have permission to view status %s", account.ID, targetStatusID))
 	}
 
-	parents, err := p.db.StatusParents(targetStatus)
+	parents, err := p.db.StatusParents(targetStatus, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -51,7 +51,7 @@ func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*
 		return context.Ancestors[i].ID < context.Ancestors[j].ID
 	})
 
-	children, err := p.db.StatusChildren(targetStatus)
+	children, err := p.db.StatusChildren(targetStatus, false, "")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -21,12 +21,13 @@ package federation
 import (
 	"context"
 	"net/url"
-	"sync"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -40,6 +41,7 @@ type Federator interface {
 	FederatingActor() pub.FederatingActor
 	// FederatingDB returns the underlying FederatingDB interface.
 	FederatingDB() federatingdb.DB
+
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
 	//
@@ -49,29 +51,21 @@ type Federator interface {
 	//
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
 	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, bool, error)
+
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
 	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
-	// DereferenceRemoteAccount can be used to get the representation of a remote account, based on the account ID (which is a URI).
-	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	DereferenceRemoteAccount(username string, remoteAccountID *url.URL) (typeutils.Accountable, error)
-	// DereferenceRemoteStatus can be used to get the representation of a remote status, based on its ID (which is a URI).
-	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	DereferenceRemoteStatus(username string, remoteStatusID *url.URL) (typeutils.Statusable, error)
-	// DereferenceRemoteInstance takes the URL of a remote instance, and a username (optional) to spin up a transport with. It then
-	// does its damnedest to get some kind of information back about the instance, trying /api/v1/instance, then /.well-known/nodeinfo
-	DereferenceRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
-	// DereferenceStatusFields does further dereferencing on a status.
-	DereferenceStatusFields(status *gtsmodel.Status, requestingUsername string) error
-	// DereferenceAccountFields does further dereferencing on an account.
-	DereferenceAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error
-	// DereferenceAnnounce does further dereferencing on an announce.
+
+	DereferenceRemoteThread(username string, statusURI *url.URL) error
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
-	// GetTransportForUser returns a new transport initialized with the key credentials belonging to the given username.
-	// This can be used for making signed http requests.
-	//
-	// If username is an empty string, our instance user's credentials will be used instead.
-	GetTransportForUser(username string) (transport.Transport, error)
+
+	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+
+	GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
+	EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
+
+	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
 	Handshaking(username string, remoteAccountID *url.URL) bool
 	pub.CommonBehavior
@@ -85,15 +79,16 @@ type federator struct {
 	clock               pub.Clock
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
+	dereferencer        dereferencing.Dereferencer
 	mediaHandler        media.Handler
 	actor               pub.FederatingActor
 	log                 *logrus.Logger
-	handshakes          map[string][]*url.URL
-	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewFederator returns a new federator
 func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
+
+	dereferencer := dereferencing.NewDereferencer(config, db, typeConverter, transportController, mediaHandler, log)
 
 	clock := &Clock{}
 	f := &federator{
@@ -103,9 +98,9 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		clock:               &Clock{},
 		typeConverter:       typeConverter,
 		transportController: transportController,
+		dereferencer:        dereferencer,
 		mediaHandler:        mediaHandler,
 		log:                 log,
-		handshakeSync:       &sync.Mutex{},
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

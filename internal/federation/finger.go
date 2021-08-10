@@ -34,7 +34,7 @@ func (f *federator) FingerRemoteAccount(requestingUsername string, targetUsernam
 		return nil, fmt.Errorf("FingerRemoteAccount: domain %s is blocked", targetDomain)
 	}
 
-	t, err := f.GetTransportForUser(requestingUsername)
+	t, err := f.transportController.NewTransportForUsername(requestingUsername)
 	if err != nil {
 		return nil, fmt.Errorf("FingerRemoteAccount: error getting transport for username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}

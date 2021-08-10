@@ -218,10 +218,14 @@ type DB interface {
 	GetFaveCountForStatus(status *gtsmodel.Status) (int, error)
 
 	// StatusParents get the parent statuses of a given status.
-	StatusParents(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
+	//
+	// If onlyDirect is true, only the immediate parent will be returned.
+	StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error)
 
 	// StatusChildren gets the child statuses of a given status.
-	StatusChildren(status *gtsmodel.Status) ([]*gtsmodel.Status, error)
+	//
+	// If onlyDirect is true, only the immediate children will be returned.
+	StatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
 
 	// StatusFavedBy checks if a given status has been faved by a given account ID
 	StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error)
