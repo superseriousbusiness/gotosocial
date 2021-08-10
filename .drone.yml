@@ -1,0 +1,20 @@
+---
+kind: pipeline
+type: docker
+name: dockerpublish
+steps:
+  - name: publish image
+    image: plugins/docker
+    settings:
+      auto_tag: true
+      username:
+        from_secret: gts_docker_username
+      password:
+        from_secret: gts_docker_password
+      repo: superseriousbusiness/gotosocial
+      tags: latest
+    when:
+      event:
+        exclude:
+          - pull_request
+---
