@@ -39,8 +39,9 @@ func (t *timeline) IndexBefore(statusID string, include bool, amount int) error 
 		filtered = append(filtered, s)
 	}
 
+	i := 0
 grabloop:
-	for len(filtered) < amount {
+	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
 		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, "", offsetStatus, "", amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
@@ -74,8 +75,9 @@ func (t *timeline) IndexBehind(statusID string, amount int) error {
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
 
+	i := 0
 grabloop:
-	for len(filtered) < amount {
+	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
 		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, offsetStatus, "", "", amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {

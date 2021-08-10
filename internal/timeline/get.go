@@ -27,6 +27,8 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
+const retries = 5
+
 func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":      "Get",
@@ -57,7 +59,8 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 
 	// maxID is defined but sinceID isn't so take from behind
 	if maxID != "" && sinceID == "" {
-		statuses, err = t.GetXBehindID(amount, maxID)
+		attempts := 0
+		statuses, err = t.GetXBehindID(amount, maxID, &attempts)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
@@ -79,10 +82,12 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
 	if maxID == "" && sinceID != "" {
-		statuses, err = t.GetXBeforeID(amount, sinceID, true)
+		attempts := 0
+		statuses, err = t.GetXBeforeID(amount, sinceID, true, &attempts)
 	}
 	if maxID == "" && minID != "" {
-		statuses, err = t.GetXBeforeID(amount, minID, true)
+		attempts := 0
+		statuses, err = t.GetXBeforeID(amount, minID, true, &attempts)
 	}
 
 	return statuses, err
@@ -120,7 +125,11 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 	return statuses, nil
 }
 
-func (t *timeline) GetXBehindID(amount int, behindID string) ([]*apimodel.Status, error) {
+func (t *timeline) GetXBehindID(amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
+	newAttempts := *attempts
+	newAttempts = newAttempts + 1
+	attempts = &newAttempts
+
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -158,12 +167,13 @@ findMarkLoop:
 		if err != nil {
 			return nil, err
 		}
-		if oldestID == "" || oldestID == behindID {
-			// there is no oldest prepared post, or the oldest prepared post is still the post we're looking for entries after
-			// this means we should just return the empty statuses slice since we don't have any more posts to offer
+		if oldestID == "" || oldestID == behindID || *attempts > retries {
+			// There is no oldest prepared post, or the oldest prepared post is still the post we're looking for entries after,
+			// or we've tried this loop too many times.
+			// This means we should just return the empty statuses slice since we don't have any more posts to offer.
 			return statuses, nil
 		}
-		return t.GetXBehindID(amount, behindID)
+		return t.GetXBehindID(amount, behindID, attempts)
 	}
 
 	// make sure we have enough posts prepared behind it to return what we're being asked for
@@ -193,7 +203,11 @@ serveloop:
 	return statuses, nil
 }
 
-func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool) ([]*apimodel.Status, error) {
+func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, attempts *int) ([]*apimodel.Status, error) {
+	newAttempts := *attempts
+	newAttempts = newAttempts + 1
+	attempts = &newAttempts
+	
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -224,7 +238,10 @@ findMarkLoop:
 		if err := t.PrepareBefore(beforeID, true, amount); err != nil {
 			return nil, fmt.Errorf("GetXBeforeID: error preparing before and including ID %s", beforeID)
 		}
-		return t.GetXBeforeID(amount, beforeID, startFromTop)
+		if *attempts > retries {
+			return statuses, nil
+		}
+		return t.GetXBeforeID(amount, beforeID, startFromTop, attempts)
 	}
 
 	var served int
