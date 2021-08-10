@@ -207,7 +207,7 @@ func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, 
 	newAttempts := *attempts
 	newAttempts = newAttempts + 1
 	attempts = &newAttempts
-	
+
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 

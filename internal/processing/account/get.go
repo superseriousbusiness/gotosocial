@@ -48,6 +48,9 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	var mastoAccount *apimodel.Account
 	if blocked {
 		mastoAccount, err = p.tc.AccountToMastoBlocked(targetAccount)
+		if err != nil {
+			return nil, fmt.Errorf("error converting account: %s", err)
+		}
 		return mastoAccount, nil
 	}
 
