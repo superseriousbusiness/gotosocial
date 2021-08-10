@@ -1250,8 +1250,8 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	return map[string]ActivityWithSignature{
-		"foss_satan_dereference_zork": fossSatanDereferenceZork,
-		"foss_satan_dereference_local_account_1_status_1_replies": fossSatanDereferenceLocalAccount1Status1Replies,
+		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
+		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
 		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
 		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
 	}

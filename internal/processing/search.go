@@ -141,7 +141,7 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 		if err == nil {
 			if err := p.federator.DereferenceRemoteThread(authed.Account.Username, uri); err != nil {
 				// try to deref the thread while we're here
-				l.Debug("searchStatusByURI: error dereferencing remote thread: %s", err)
+				l.Debugf("searchStatusByURI: error dereferencing remote thread: %s", err)
 			}
 			return status, nil
 		}

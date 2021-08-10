@@ -230,9 +230,8 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		if err := verifier.Verify(publicKey, algo); err == nil {
 			l.Tracef("authentication for %s PASSED with algorithm %s", pkOwnerURI, algo)
 			return pkOwnerURI, true, nil
-		} else {
-			l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 		}
+		l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 	}
 
 	l.Infof("authentication not passed for %s", pkOwnerURI)

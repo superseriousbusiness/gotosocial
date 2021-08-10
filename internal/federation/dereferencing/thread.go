@@ -229,7 +229,9 @@ pageLoop:
 			_, statusable, new, err := d.GetRemoteStatus(username, itemURI, false)
 			if new && err == nil && statusable != nil {
 				// now iterate descendants of *that* status
-				d.iterateDescendants(username, *itemURI, statusable)
+				if err := d.iterateDescendants(username, *itemURI, statusable); err != nil {
+					continue
+				}
 			}
 		}
 
