@@ -82,12 +82,10 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
 	if maxID == "" && sinceID != "" {
-		attempts := 0
-		statuses, err = t.GetXBeforeID(amount, sinceID, true, &attempts)
+		statuses, err = t.GetXBeforeID(amount, sinceID, true)
 	}
 	if maxID == "" && minID != "" {
-		attempts := 0
-		statuses, err = t.GetXBeforeID(amount, minID, true, &attempts)
+		statuses, err = t.GetXBeforeID(amount, minID, true)
 	}
 
 	return statuses, err
@@ -203,11 +201,7 @@ serveloop:
 	return statuses, nil
 }
 
-func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, attempts *int) ([]*apimodel.Status, error) {
-	newAttempts := *attempts
-	newAttempts = newAttempts + 1
-	attempts = &newAttempts
-
+func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool) ([]*apimodel.Status, error) {
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -215,7 +209,7 @@ func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, 
 		t.preparedPosts.data = &list.List{}
 	}
 
-	// iterate through the modified list until we hit the mark we're looking for
+	// iterate through the modified list until we hit the mark we're looking for, or as close as possible to it
 	var beforeIDMark *list.Element
 findMarkLoop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
@@ -224,24 +218,11 @@ findMarkLoop:
 			return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == beforeID {
+		if entry.statusID >= beforeID {
 			beforeIDMark = e
+		} else {
 			break findMarkLoop
 		}
-	}
-
-	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
-	if beforeIDMark == nil {
-		if err := t.IndexBefore(beforeID, true, amount); err != nil {
-			return nil, fmt.Errorf("GetXBeforeID: error indexing before and including ID %s", beforeID)
-		}
-		if err := t.PrepareBefore(beforeID, true, amount); err != nil {
-			return nil, fmt.Errorf("GetXBeforeID: error preparing before and including ID %s", beforeID)
-		}
-		if *attempts > retries {
-			return statuses, nil
-		}
-		return t.GetXBeforeID(amount, beforeID, startFromTop, attempts)
 	}
 
 	var served int
