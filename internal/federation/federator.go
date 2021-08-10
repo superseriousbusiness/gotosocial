@@ -60,6 +60,7 @@ type Federator interface {
 	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
 
 	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+	EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
 	GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
 	EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error)

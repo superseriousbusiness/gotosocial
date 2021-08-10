@@ -45,12 +45,12 @@ type Timeline interface {
 	// This will NOT include the status with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?max_id=WHATEVER
-	GetXBehindID(amount int, fromID string) ([]*apimodel.Status, error)
+	GetXBehindID(amount int, fromID string, attempts *int) ([]*apimodel.Status, error)
 	// GetXBeforeID returns x amount of posts up to the given id, from newest to oldest.
 	// This will NOT include the status with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER
-	GetXBeforeID(amount int, sinceID string, startFromTop bool) ([]*apimodel.Status, error)
+	GetXBeforeID(amount int, sinceID string, startFromTop bool, attempts *int) ([]*apimodel.Status, error)
 	// GetXBetweenID returns x amount of posts from the given maxID, up to the given id, from newest to oldest.
 	// This will NOT include the status with the given IDs.
 	//

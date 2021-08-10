@@ -41,7 +41,7 @@ import (
 // EnrichRemoteAccount is mostly useful for calling after an account has been initially created by
 // the federatingDB's Create function, or during the federated authorization flow.
 func (d *deref) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-	if err := d.populateAccountFields(account, username, false); err != nil {
+	if err := d.PopulateAccountFields(account, username, false); err != nil {
 		return nil, err
 	}
 
@@ -69,10 +69,10 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteAccountID.String()}}, maybeAccount); err == nil {
 		// we've seen this account before so it's not new
 		new = false
-
-		// if we're not being asked to refresh, we can just return the maybeAccount as-is and avoid doing any external calls
 		if !refresh {
-			return maybeAccount, new, nil
+			// we're not being asked to refresh, but just in case we don't have the avatar/header cached yet....
+			maybeAccount, err = d.EnrichRemoteAccount(username, maybeAccount)
+			return maybeAccount, new, err
 		}
 	}
 
@@ -81,7 +81,7 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error dereferencing accountable: %s", err)
 	}
 
-	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(accountable, false)
+	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(accountable, refresh)
 	if err != nil {
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error converting accountable to account: %s", err)
 	}
@@ -94,7 +94,7 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		}
 		gtsAccount.ID = ulid
 
-		if err := d.populateAccountFields(gtsAccount, username, refresh); err != nil {
+		if err := d.PopulateAccountFields(gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
 
@@ -105,7 +105,7 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		// take the id we already have and do an update
 		gtsAccount.ID = maybeAccount.ID
 
-		if err := d.populateAccountFields(gtsAccount, username, refresh); err != nil {
+		if err := d.PopulateAccountFields(gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
 
@@ -173,9 +173,9 @@ func (d *deref) dereferenceAccountable(username string, remoteAccountID *url.URL
 	return nil, fmt.Errorf("DereferenceAccountable: type name %s not supported", t.GetTypeName())
 }
 
-// populateAccountFields populates any fields on the given account that weren't populated by the initial
+// PopulateAccountFields populates any fields on the given account that weren't populated by the initial
 // dereferencing. This includes things like header and avatar etc.
-func (d *deref) populateAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error {
+func (d *deref) PopulateAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":               "PopulateAccountFields",
 		"requestingUsername": requestingUsername,

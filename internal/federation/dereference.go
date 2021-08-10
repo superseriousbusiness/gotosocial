@@ -11,6 +11,10 @@ func (f *federator) GetRemoteAccount(username string, remoteAccountID *url.URL, 
 	return f.dereferencer.GetRemoteAccount(username, remoteAccountID, refresh)
 }
 
+func (f *federator) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	return f.dereferencer.EnrichRemoteAccount(username, account)
+}
+
 func (f *federator) GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	return f.dereferencer.GetRemoteStatus(username, remoteStatusID, refresh)
 }

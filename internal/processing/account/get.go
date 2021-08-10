@@ -48,7 +48,21 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	var mastoAccount *apimodel.Account
 	if blocked {
 		mastoAccount, err = p.tc.AccountToMastoBlocked(targetAccount)
-	} else if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
+		if err != nil {
+			return nil, fmt.Errorf("error converting account: %s", err)
+		}
+		return mastoAccount, nil
+	}
+
+	// last-minute check to make sure we have remote account header/avi cached
+	if targetAccount.Domain != "" {
+		a, err := p.federator.EnrichRemoteAccount(requestingAccount.Username, targetAccount)
+		if err == nil {
+			targetAccount = a
+		}
+	}
+
+	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
 		mastoAccount, err = p.tc.AccountToMastoSensitive(targetAccount)
 	} else {
 		mastoAccount, err = p.tc.AccountToMastoPublic(targetAccount)
