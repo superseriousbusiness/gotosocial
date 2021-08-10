@@ -98,7 +98,7 @@ func (suite *MediaCreateTestSuite) TearDownSuite() {
 }
 
 func (suite *MediaCreateTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()

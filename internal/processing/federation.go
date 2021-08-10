@@ -285,79 +285,91 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", s.ID, requestingAccount.ID))
 	}
 
+	var data map[string]interface{}
+
 	// now there are three scenarios:
 	// 1. we're asked for the whole collection and not a page -- we can just return the collection, with no items, but a link to 'first' page.
 	// 2. we're asked for a page but only_other_accounts has not been set in the query -- so we should just return the first page of the collection, with no items.
 	// 3. we're asked for a page, and only_other_accounts has been set, and min_id has optionally been set -- so we need to return some actual items!
 
-	// scenario 1
 	if !page {
+		// scenario 1
+
 		// get the collection
 		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		// and return it
-		return collection, nil
-	}
 
-	// scenario 2
-	if page && requestURL.Query().Get("only_other_accounts") == "" {
+		data, err = streams.Serialize(collection)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else if page && requestURL.Query().Get("only_other_accounts") == "" {
+		// scenario 2
+
 		// get the collection
 		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 		// but only return the first page
-		return collection.GetActivityStreamsFirst(), nil
-	}
-
-	// scenario 3
-	// get immediate children
-	replies, err := p.db.StatusChildren(s, true, minID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// filter children and extract URIs
-	replyURIs := map[string]*url.URL{}
-	for _, r := range replies {
-		// only show public or unlocked statuses as replies
-		if r.Visibility != gtsmodel.VisibilityPublic && r.Visibility != gtsmodel.VisibilityUnlocked {
-			continue
-		}
-
-		// respect onlyOtherAccounts parameter
-		if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
-			continue
-		}
-
-		// only show replies that the status owner can see
-		visibleToStatusOwner, err := p.filter.StatusVisible(r, requestedAccount)
-		if err != nil || !visibleToStatusOwner {
-			continue
-		}
-
-		// only show replies that the requester can see
-		visibleToRequester, err := p.filter.StatusVisible(r, requestingAccount)
-		if err != nil || !visibleToRequester {
-			continue
-		}
-
-		rURI, err := url.Parse(r.URI)
+		data, err = streams.Serialize(collection.GetActivityStreamsFirst().GetActivityStreamsCollectionPage())
 		if err != nil {
-			continue
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else {
+		// scenario 3
+		// get immediate children
+		replies, err := p.db.StatusChildren(s, true, minID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		replyURIs[r.ID] = rURI
+		// filter children and extract URIs
+		replyURIs := map[string]*url.URL{}
+		for _, r := range replies {
+			// only show public or unlocked statuses as replies
+			if r.Visibility != gtsmodel.VisibilityPublic && r.Visibility != gtsmodel.VisibilityUnlocked {
+				continue
+			}
+
+			// respect onlyOtherAccounts parameter
+			if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
+				continue
+			}
+
+			// only show replies that the status owner can see
+			visibleToStatusOwner, err := p.filter.StatusVisible(r, requestedAccount)
+			if err != nil || !visibleToStatusOwner {
+				continue
+			}
+
+			// only show replies that the requester can see
+			visibleToRequester, err := p.filter.StatusVisible(r, requestingAccount)
+			if err != nil || !visibleToRequester {
+				continue
+			}
+
+			rURI, err := url.Parse(r.URI)
+			if err != nil {
+				continue
+			}
+
+			replyURIs[r.ID] = rURI
+		}
+
+		repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		data, err = streams.Serialize(repliesPage)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
-	repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return repliesPage, nil
+	return data, nil
 }
 
 func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode) {

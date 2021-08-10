@@ -916,8 +916,10 @@ func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOth
 	partOfProp.SetIRI(collectionIDURI)
 	firstPage.SetActivityStreamsPartOf(partOfProp)
 
-	// collection.first
 	first.SetActivityStreamsCollectionPage(firstPage)
+
+	// collection.first
+	collection.SetActivityStreamsFirst(first)
 
 	return collection, nil
 }
@@ -973,6 +975,7 @@ func (c *converter) StatusURIsToASRepliesPage(status *gtsmodel.Status, onlyOther
 			highestID = k
 		}
 	}
+	page.SetActivityStreamsItems(items)
 
 	// .next
 	nextProp := streams.NewActivityStreamsNextProperty()

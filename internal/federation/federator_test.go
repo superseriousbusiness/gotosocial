@@ -69,7 +69,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 }
 
 func (suite *ProtocolTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, suite.accounts)
 
 }
 

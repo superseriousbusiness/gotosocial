@@ -131,14 +131,14 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
 	}
 
-	status, err := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
+	replies, err := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
 	if err != nil {
 		l.Info(err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})
 		return
 	}
 
-	b, mErr := json.Marshal(status)
+	b, mErr := json.Marshal(replies)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
 		l.Error(err)

@@ -47,7 +47,7 @@ func (suite *InternalToASTestSuite) SetupSuite() {
 }
 
 func (suite *InternalToASTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
 // TearDownTest drops tables to make sure there's no data in the db

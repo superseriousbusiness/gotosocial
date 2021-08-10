@@ -46,7 +46,7 @@ import (
 var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
 	c := testrig.NewTestConfig()
 	dbService := testrig.NewTestDB()
-	testrig.StandardDBSetup(dbService)
+	testrig.StandardDBSetup(dbService, nil)
 	router := testrig.NewTestRouter(dbService)
 	storageBackend := testrig.NewTestStorage()
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")

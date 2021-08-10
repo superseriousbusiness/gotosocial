@@ -343,7 +343,7 @@ func (suite *ASToInternalTestSuite) SetupSuite() {
 }
 
 func (suite *ASToInternalTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *ASToInternalTestSuite) TestParsePerson() {

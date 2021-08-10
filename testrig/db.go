@@ -65,7 +65,14 @@ func NewTestDB() db.DB {
 }
 
 // StandardDBSetup populates a given db with all the necessary tables/models for perfoming tests.
-func StandardDBSetup(db db.DB) {
+//
+// The accounts parameter is provided in case the db should be populated with a certain set of accounts.
+// If accounts is nil, then the standard test accounts will be used.
+//
+// When testing http signatures, you should pass into this function the same accounts map that you generated
+// signatures with, otherwise this function will randomly generate new keys for accounts and signature
+// verification will fail.
+func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	for _, m := range testModels {
 		if err := db.CreateTable(m); err != nil {
 			panic(err)
@@ -96,9 +103,17 @@ func StandardDBSetup(db db.DB) {
 		}
 	}
 
-	for _, v := range NewTestAccounts() {
-		if err := db.Put(v); err != nil {
-			panic(err)
+	if accounts == nil {
+		for _, v := range NewTestAccounts() {
+			if err := db.Put(v); err != nil {
+				panic(err)
+			}
+		}
+	} else {
+		for _, v := range accounts {
+			if err := db.Put(v); err != nil {
+				panic(err)
+			}
 		}
 	}
 

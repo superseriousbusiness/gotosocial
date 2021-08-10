@@ -147,6 +147,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	if strings.EqualFold(requestingHost, f.config.Host) {
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
+		l.Tracef("proceeding without dereference for local public key %s", requestingPublicKeyID)
 		if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
 			return nil, false, fmt.Errorf("couldn't get local account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err)
 		}
@@ -158,6 +159,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	} else if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
 		// REMOTE ACCOUNT REQUEST WITH KEY CACHED LOCALLY
 		// this is a remote account and we already have the public key for it so use that
+		l.Tracef("proceeding without dereference for cached public key %s", requestingPublicKeyID)
 		publicKey = requestingRemoteAccount.PublicKey
 		pkOwnerURI, err = url.Parse(requestingRemoteAccount.URI)
 		if err != nil {
@@ -167,6 +169,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// REMOTE ACCOUNT REQUEST WITHOUT KEY CACHED LOCALLY
 		// the request is remote and we don't have the public key yet,
 		// so we need to authenticate the request properly by dereferencing the remote key
+		l.Tracef("proceeding with dereference for uncached public key %s", requestingPublicKeyID)
 		transport, err := f.transportController.NewTransportForUsername(requestedUsername)
 		if err != nil {
 			return nil, false, fmt.Errorf("transport err: %s", err)
@@ -209,6 +212,8 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 		pkOwnerURI = pkOwnerProp.GetIRI()
 	}
+
+	// after all that, public key should be defined
 	if publicKey == nil {
 		return nil, false, errors.New("returned public key was empty")
 	}
@@ -216,17 +221,20 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	// do the actual authentication here!
 	algos := []httpsig.Algorithm{
 		httpsig.RSA_SHA512,
-		httpsig.RSA_SHA256, // TODO: make this more robust
+		httpsig.RSA_SHA256,
 		httpsig.ED25519,
 	}
 
 	for _, algo := range algos {
-		l.Trace("trying algo: %s", algo)
+		l.Tracef("trying algo: %s", algo)
 		if err := verifier.Verify(publicKey, algo); err == nil {
+			l.Tracef("authentication for %s PASSED with algorithm %s", pkOwnerURI, algo)
 			return pkOwnerURI, true, nil
+		} else {
+			l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 		}
 	}
 
-	l.Infof("AuthenticateFederatedRequest: authentication not passed for %s", pkOwnerURI)
+	l.Infof("authentication not passed for %s", pkOwnerURI)
 	return nil, false, nil
 }

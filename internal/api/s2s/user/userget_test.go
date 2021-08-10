@@ -3,11 +3,9 @@ package user_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +42,7 @@ func (suite *UserGetTestSuite) SetupTest() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
 	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
-	testrig.StandardDBSetup(suite.db)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
@@ -55,19 +53,11 @@ func (suite *UserGetTestSuite) TearDownTest() {
 
 func (suite *UserGetTestSuite) TestGetUser() {
 	// the dereference we're gonna use
-	signedRequest := testrig.NewTestDereferenceRequests(suite.testAccounts)["foss_satan_dereference_zork"]
-
-	fmt.Println()
-	fmt.Println()
-	fmt.Printf("%+v", signedRequest)
-	fmt.Println()
-	fmt.Println()
-
+	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
+	signedRequest := derefRequests["foss_satan_dereference_zork"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	// create a transport controller whose client will just return the response body string we specified above
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	// get this transport controller embedded right in the user module we're testing
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
 	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
@@ -75,7 +65,12 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Request = httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:8080%s", strings.Replace(user.UsersBasePathWithUsername, ":username", targetAccount.Username, 1)), nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
+	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.securityModule.SignatureCheck(ctx)
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -85,18 +80,6 @@ func (suite *UserGetTestSuite) TestGetUser() {
 			Value: targetAccount.Username,
 		},
 	}
-
-	// we need these headers for the request to be validated
-	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
-	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
-	ctx.Request.Header.Set("Digest", signedRequest.DigestHeader)
-	ctx.Request.Header.Set("Host", signedRequest.HostHeader)
-	ctx.Request.Host = signedRequest.HostHeader
-
-	// we need to pass the context through signature check first to set appropriate values on it
-	suite.securityModule.SignatureCheck(ctx)
-
-	fmt.Println(ctx.Request.Header)
 
 	// trigger the function being tested
 	userModule.UsersGETHandler(ctx)
