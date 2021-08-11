@@ -20,6 +20,7 @@ package testrig
 
 import (
 	"context"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -52,9 +53,17 @@ var testModels []interface{} = []interface{}{
 	&oauth.Client{},
 }
 
-// NewTestDB returns a new initialized, empty database for testing
+// NewTestDB returns a new initialized, empty database for testing.
+//
+// If the environment variable GTS_DB_ADDRESS is set, it will take that
+// value as the database address instead.
 func NewTestDB() db.DB {
 	config := NewTestConfig()
+	alternateAddress := os.Getenv("GTS_DB_ADDRESS")
+	if alternateAddress != "" {
+		config.DBConfig.Address = alternateAddress
+	}
+
 	l := logrus.New()
 	l.SetLevel(logrus.TraceLevel)
 	testDB, err := pg.NewPostgresService(context.Background(), config, l)

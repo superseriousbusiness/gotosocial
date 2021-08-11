@@ -25,6 +25,7 @@ import (
 	"testing"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -115,25 +116,27 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	// now setup module being tested, with the mock transport controller
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
-	// setup request
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
+	// we need these headers for the request to be validated
+	request.Header.Set("Signature", activity.SignatureHeader)
+	request.Header.Set("Date", activity.DateHeader)
+	request.Header.Set("Digest", activity.DigestHeader)
+
+	verifier, err := httpsig.NewVerifier(request)
+	assert.NoError(suite.T(), err)
+
 	ctx := context.Background()
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
 	ctxWithAccount := context.WithValue(ctx, util.APAccount, inboxAccount)
 	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
+	ctxWithVerifier := context.WithValue(ctxWithActivity, util.APRequestingPublicKeyVerifier, verifier)
 
-
-aaaaaaaaaaaaaaaaaaaaa
-	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
-	// we need these headers for the request to be validated
-	request.Header.Set("Signature", activity.SignatureHeader)
-	request.Header.Set("Date", activity.DateHeader)
-	request.Header.Set("Digest", activity.DigestHeader)
 	// we can pass this recorder as a writer and read it back after
 	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithActivity, recorder, request)
+	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithVerifier, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 

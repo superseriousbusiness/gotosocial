@@ -1,18 +1,35 @@
 kind: pipeline
 type: docker
-name: dockerpublish
+name: default
 steps:
-  - name: publish image
-    image: plugins/docker
-    settings:
-      auto_tag: true
-      username:
-        from_secret: gts_docker_username
-      password:
-        from_secret: gts_docker_password
-      repo: superseriousbusiness/gotosocial
-      tags: latest
-    when:
-      event:
-        exclude:
-          - pull_request
+- name: lint
+  image: golang
+  commands:
+  - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+  - golangci-lint run
+- name: test
+  image: golang
+  environment:
+    GTS_DB_ADDRESS: postgres
+  commands:
+  - go test -count 1 -p 1 ./...
+- name: publish
+  image: plugins/docker
+  settings:
+    auto_tag: true
+    username:
+      from_secret: gts_docker_username
+    password:
+      from_secret: gts_docker_password
+    repo: superseriousbusiness/gotosocial
+    tags: latest
+  when:
+    event:
+      exclude:
+        - pull_request
+
+services:
+- name: postgres
+  image: postgres
+  environment:
+    POSTGRES_PASSWORD: postgres
