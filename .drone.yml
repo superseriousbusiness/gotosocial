@@ -5,7 +5,7 @@ steps:
 - name: lint
   image: golang
   commands:
-  - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
   - golangci-lint run
 - name: test
   image: golang
