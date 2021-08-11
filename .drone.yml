@@ -17,7 +17,7 @@ steps:
   - golangci-lint run --timeout 5m0s --tests=false
 
 - name: test
-  image: golang:1.16.4-alpine3.13
+  image: golang:1.16.4
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
