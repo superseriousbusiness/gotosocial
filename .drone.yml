@@ -1,23 +1,36 @@
+### Drone configuration file for GoToSocial.
+### Connects to https://drone.superseriousbusiness.org to perform testing, linting, and automatic builds/pushes to docker.
+###
+### For documentation on drone, see: https://docs.drone.io/
+### For documentation on drone docker pipelines in particular: https://docs.drone.io/pipeline/docker/overview/
+
 kind: pipeline
 type: docker
 name: default
 steps:
+
+# We use golangci-lint for linting.
+# See: https://golangci-lint.run/
 - name: lint
   image: golangci/golangci-lint:v1.41.1
   commands:
   - golangci-lint run --timeout 5m0s --tests=false
+
 - name: test
-  image: golang
+  image: golang:1.16.4-alpine3.13
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
+  # `-count 1`  => run all tests at least once
+  # `-p 1`      => run maximum one test at a time
+  # `./...`     => run all tests 
   - go test -count 1 -p 1 ./...
+
 - name: publish
   image: plugins/docker
   settings:
     auto_tag: true
-    username:
-      from_secret: gts_docker_username
+    username: gotosocial
     password:
       from_secret: gts_docker_password
     repo: superseriousbusiness/gotosocial
@@ -28,6 +41,8 @@ steps:
         - pull_request
 
 services:
+# We need this postgres service running for the test step.
+# See: https://docs.drone.io/pipeline/docker/syntax/services/
 - name: postgres
   image: postgres
   environment:

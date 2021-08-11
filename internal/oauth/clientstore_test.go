@@ -21,12 +21,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
@@ -51,50 +49,13 @@ func (suite *PgClientStoreTestSuite) SetupSuite() {
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test
 func (suite *PgClientStoreTestSuite) SetupTest() {
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-	c := config.Empty()
-	c.DBConfig = &config.DBConfig{
-		Type:            "postgres",
-		Address:         "localhost",
-		Port:            5432,
-		User:            "postgres",
-		Password:        "postgres",
-		Database:        "postgres",
-		ApplicationName: "gotosocial",
-	}
-	db, err := pg.NewPostgresService(context.Background(), c, log)
-	if err != nil {
-		logrus.Panicf("error creating database connection: %s", err)
-	}
-
-	suite.db = db
-
-	models := []interface{}{
-		&oauth.Client{},
-	}
-
-	for _, m := range models {
-		if err := suite.db.CreateTable(m); err != nil {
-			logrus.Panicf("db connection error: %s", err)
-		}
-	}
+	suite.db = testrig.NewTestDB()
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
 func (suite *PgClientStoreTestSuite) TearDownTest() {
-	models := []interface{}{
-		&oauth.Client{},
-	}
-	for _, m := range models {
-		if err := suite.db.DropTable(m); err != nil {
-			logrus.Panicf("error dropping table: %s", err)
-		}
-	}
-	if err := suite.db.Stop(context.Background()); err != nil {
-		logrus.Panicf("error closing db connection: %s", err)
-	}
-	suite.db = nil
+	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
