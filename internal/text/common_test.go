@@ -31,14 +31,26 @@ import (
 const (
 	replaceMentionsString = `Another test @foss_satan@fossbros-anonymous.io
 
-	#Hashtag
+#Hashtag
 
-	Text`
+Text`
 	replaceMentionsExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
 
-	#Hashtag
+#Hashtag
 
-	Text`
+Text`
+
+	replaceHashtagsExpected = `Another test @foss_satan@fossbros-anonymous.io
+
+<a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag">#<span>Hashtag</span></a>
+
+Text`
+
+	replaceHashtagsAfterMentionsExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
+
+<a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag">#<span>Hashtag</span></a>
+
+Text`
 )
 
 type CommonTestSuite struct {
@@ -77,6 +89,26 @@ func (suite *CommonTestSuite) TestReplaceMentions() {
 
 	f := suite.formatter.ReplaceMentions(replaceMentionsString, foundMentions)
 	assert.Equal(suite.T(), replaceMentionsExpected, f)
+}
+
+func (suite *CommonTestSuite) TestReplaceHashtags() {
+	foundTags := []*gtsmodel.Tag{
+		suite.testTags["Hashtag"],
+	}
+
+	f := suite.formatter.ReplaceTags(replaceMentionsString, foundTags)
+
+	assert.Equal(suite.T(), replaceHashtagsExpected, f)
+}
+
+func (suite *CommonTestSuite) TestReplaceHashtagsAfterReplaceMentions() {
+	foundTags := []*gtsmodel.Tag{
+		suite.testTags["Hashtag"],
+	}
+
+	f := suite.formatter.ReplaceTags(replaceMentionsExpected, foundTags)
+
+	assert.Equal(suite.T(), replaceHashtagsAfterMentionsExpected, f)
 }
 
 func TestCommonTestSuite(t *testing.T) {

@@ -1115,17 +1115,18 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 	}
 }
 
+// NewTestMentions returns a map of gts model mentions keyed by their name.
 func NewTestMentions() map[string]*gtsmodel.Mention {
 	return map[string]*gtsmodel.Mention{
 		"zork_mention_foss_satan": {
-			ID:               "01FCTA2Y6FGHXQA4ZE6N5NMNEX",
-			StatusID:         "01FCTA44PW9H1TB328S9AQXKDS",
-			CreatedAt:        time.Now().Add(-1 * time.Minute),
-			UpdatedAt:        time.Now().Add(-1 * time.Minute),
-			OriginAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
-			OriginAccountURI: "http://localhost:8080/users/the_mighty_zork",
-			TargetAccountID:  "01F8MH5ZK5VRH73AKHQM6Y9VNX",
-			NameString:       "@foss_satan@fossbros-anonymous.io",
+			ID:                  "01FCTA2Y6FGHXQA4ZE6N5NMNEX",
+			StatusID:            "01FCTA44PW9H1TB328S9AQXKDS",
+			CreatedAt:           time.Now().Add(-1 * time.Minute),
+			UpdatedAt:           time.Now().Add(-1 * time.Minute),
+			OriginAccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			OriginAccountURI:    "http://localhost:8080/users/the_mighty_zork",
+			TargetAccountID:     "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			NameString:          "@foss_satan@fossbros-anonymous.io",
 			MentionedAccountURI: "http://fossbros-anonymous.io/users/foss_satan",
 			MentionedAccountURL: "http://fossbros-anonymous.io/@foss_satan",
 		},

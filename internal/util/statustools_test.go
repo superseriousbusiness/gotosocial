@@ -79,7 +79,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
 	assert.Equal(suite.T(), "thisshouldwork", tags[2])
-	assert.Equal(suite.T(), "thisshouldalsowork", tags[3])
+	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[3])
 	assert.Equal(suite.T(), "111111", tags[4])
 }
 
@@ -123,7 +123,7 @@ func (suite *StatusTestSuite) TestDeriveMultiple() {
 	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", ms[0])
 
 	assert.Len(suite.T(), hs, 1)
-	assert.Equal(suite.T(), "hashtag", hs[0])
+	assert.Equal(suite.T(), "Hashtag", hs[0])
 
 	assert.Len(suite.T(), es, 0)
 }

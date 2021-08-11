@@ -50,16 +50,30 @@ func postformat(in string) string {
 
 func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
 	return util.HashtagFinderRegex.ReplaceAllStringFunc(in, func(match string) string {
+		// we have a match
+		matchTrimmed := strings.TrimSpace(match)
+		tagAsEntered := strings.Split(matchTrimmed, "#")[1]
+
+		// check through the tags to find what we're matching
 		for _, tag := range tags {
-			if strings.TrimSpace(match) == fmt.Sprintf("#%s", tag.Name) {
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
+
+			if strings.EqualFold(matchTrimmed, fmt.Sprintf("#%s", tag.Name)) {
+				// replace the #tag with the formatted tag content
+				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
+
+				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
 				if strings.HasPrefix(match, " ") {
 					tagContent = " " + tagContent
+				} else if strings.HasPrefix(match, "\n") {
+					tagContent = "\n" + tagContent
 				}
+
+				// done
 				return tagContent
 			}
 		}
-		return in
+		// the match wasn't in the list of tags for whatever reason, so just return the match as we found it so nothing changes
+		return match
 	})
 }
 
