@@ -3,10 +3,9 @@ type: docker
 name: default
 steps:
 - name: lint
-  image: golang
+  image: golangci/golangci-lint:v1.41.1
   commands:
-  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
-  - golangci-lint run
+  - golangci-lint run --timeout 5m0s --tests=false
 - name: test
   image: golang
   environment:
