@@ -39,39 +39,39 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 	}
 
 	// check if replyToID is ok
-	if err := p.processReplyToID(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessReplyToID(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// check if mediaIDs are ok
-	if err := p.processMediaIDs(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessMediaIDs(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// check if visibility settings are ok
-	if err := p.processVisibility(form, account.Privacy, newStatus); err != nil {
+	if err := p.ProcessVisibility(form, account.Privacy, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// handle language settings
-	if err := p.processLanguage(form, account.Language, newStatus); err != nil {
+	if err := p.ProcessLanguage(form, account.Language, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// handle mentions
-	if err := p.processMentions(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessMentions(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.processTags(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessTags(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.processEmojis(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessEmojis(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.processContent(form, account.ID, newStatus); err != nil {
+	if err := p.ProcessContent(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

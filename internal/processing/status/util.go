@@ -12,7 +12,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
+func (p *processor) ProcessVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
 		Federated: true,
@@ -83,7 +83,7 @@ func (p *processor) processVisibility(form *apimodel.AdvancedStatusCreateForm, a
 	return nil
 }
 
-func (p *processor) processReplyToID(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -132,7 +132,7 @@ func (p *processor) processReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 	return nil
 }
 
-func (p *processor) processMediaIDs(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessMediaIDs(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.MediaIDs == nil {
 		return nil
 	}
@@ -161,7 +161,7 @@ func (p *processor) processMediaIDs(form *apimodel.AdvancedStatusCreateForm, thi
 	return nil
 }
 
-func (p *processor) processLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
+func (p *processor) ProcessLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
 		status.Language = form.Language
 	} else {
@@ -173,7 +173,7 @@ func (p *processor) processLanguage(form *apimodel.AdvancedStatusCreateForm, acc
 	return nil
 }
 
-func (p *processor) processMentions(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessMentions(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	menchies := []string{}
 	gtsMenchies, err := p.db.MentionStringsToMentions(util.DeriveMentionsFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
@@ -198,7 +198,7 @@ func (p *processor) processMentions(form *apimodel.AdvancedStatusCreateForm, acc
 	return nil
 }
 
-func (p *processor) processTags(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessTags(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	tags := []string{}
 	gtsTags, err := p.db.TagStringsToTags(util.DeriveHashtagsFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
@@ -217,7 +217,7 @@ func (p *processor) processTags(form *apimodel.AdvancedStatusCreateForm, account
 	return nil
 }
 
-func (p *processor) processEmojis(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessEmojis(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	emojis := []string{}
 	gtsEmojis, err := p.db.EmojiStringsToEmojis(util.DeriveEmojisFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
@@ -233,7 +233,7 @@ func (p *processor) processEmojis(form *apimodel.AdvancedStatusCreateForm, accou
 	return nil
 }
 
-func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	// if there's nothing in the status at all we can just return early
 	if form.Status == "" {
 		status.Content = ""
@@ -249,15 +249,16 @@ func (p *processor) processContent(form *apimodel.AdvancedStatusCreateForm, acco
 	content := text.RemoveHTML(form.Status)
 
 	// parse content out of the status depending on what format has been submitted
+	var formatted string
 	switch form.Format {
 	case apimodel.StatusFormatPlain:
-		content = p.formatter.FromPlain(content, status.GTSMentions, status.GTSTags)
+		formatted = p.formatter.FromPlain(content, status.GTSMentions, status.GTSTags)
 	case apimodel.StatusFormatMarkdown:
-		content = p.formatter.FromMarkdown(content, status.GTSMentions, status.GTSTags)
+		formatted = p.formatter.FromMarkdown(content, status.GTSMentions, status.GTSTags)
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}
 
-	status.Content = content
+	status.Content = formatted
 	return nil
 }

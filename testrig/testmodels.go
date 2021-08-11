@@ -1126,6 +1126,8 @@ func NewTestMentions() map[string]*gtsmodel.Mention {
 			OriginAccountURI: "http://localhost:8080/users/the_mighty_zork",
 			TargetAccountID:  "01F8MH5ZK5VRH73AKHQM6Y9VNX",
 			NameString:       "@foss_satan@fossbros-anonymous.io",
+			MentionedAccountURI: "http://fossbros-anonymous.io/users/foss_satan",
+			MentionedAccountURL: "http://fossbros-anonymous.io/@foss_satan",
 		},
 	}
 }

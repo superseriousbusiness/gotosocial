@@ -65,11 +65,25 @@ func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
 
 func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) string {
 	for _, menchie := range mentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
+		// make sure we have a target account, either by getting one pinned on the mention,
+		// or by pulling it from the database
+		var targetAccount *gtsmodel.Account
+		if menchie.GTSAccount != nil {
+			// got it from the mention
+			targetAccount = menchie.GTSAccount
+		} else {
+			a := &gtsmodel.Account{}
+			if err := f.db.GetByID(menchie.TargetAccountID, a); err == nil {
+				// got it from the db
+				targetAccount = a
+			} else {
+				// couldn't get it so we can't do replacement
+				return in
+			}
 		}
+
+		mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
+		in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
 	}
 	return in
 }

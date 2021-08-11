@@ -34,6 +34,19 @@ type Processor interface {
 	Unfave(account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// Context returns the context (previous and following posts) from the given status ID
 	Context(account *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
+
+	/*
+		PROCESSING UTILS
+	*/
+
+	ProcessVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error
+	ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error
+	ProcessMediaIDs(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error
+	ProcessLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error
+	ProcessMentions(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error
+	ProcessTags(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error
+	ProcessEmojis(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error
+	ProcessContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error
 }
 
 type processor struct {

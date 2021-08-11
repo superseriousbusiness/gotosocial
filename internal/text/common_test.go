@@ -19,7 +19,6 @@
 package text_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,24 +29,23 @@ import (
 )
 
 const (
-	simple         = "this is a plain and simple status"
-	simpleExpected = "<p>this is a plain and simple status</p>"
+	replaceMentionsString = `Another test @foss_satan@fossbros-anonymous.io
 
-	withTag         = "this is a simple status that uses hashtag #welcome!"
-	withTagExpected = "<p>this is a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
+	#Hashtag
 
-	moreComplex = `Another test @foss_satan@fossbros-anonymous.io
+	Text`
+	replaceMentionsExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
 
-#Hashtag
+	#Hashtag
 
-Text`
+	Text`
 )
 
-type PlainTestSuite struct {
+type CommonTestSuite struct {
 	TextStandardTestSuite
 }
 
-func (suite *PlainTestSuite) SetupSuite() {
+func (suite *CommonTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -59,7 +57,7 @@ func (suite *PlainTestSuite) SetupSuite() {
 	suite.testMentions = testrig.NewTestMentions()
 }
 
-func (suite *PlainTestSuite) SetupTest() {
+func (suite *CommonTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
@@ -68,41 +66,19 @@ func (suite *PlainTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
-func (suite *PlainTestSuite) TearDownTest() {
+func (suite *CommonTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *PlainTestSuite) TestParseSimple() {
-	f := suite.formatter.FromPlain(simple, nil, nil)
-	assert.Equal(suite.T(), simpleExpected, f)
-}
-
-func (suite *PlainTestSuite) TestParseWithTag() {
-
-	foundTags := []*gtsmodel.Tag{
-		suite.testTags["welcome"],
-	}
-
-	f := suite.formatter.FromPlain(withTag, nil, foundTags)
-	assert.Equal(suite.T(), withTagExpected, f)
-}
-
-func (suite *PlainTestSuite) TestParseMoreComplex() {
-
-	foundTags := []*gtsmodel.Tag{
-		suite.testTags["Hashtag"],
-	}
-
+func (suite *CommonTestSuite) TestReplaceMentions() {
 	foundMentions := []*gtsmodel.Mention{
 		suite.testMentions["zork_mention_foss_satan"],
 	}
 
-	f := suite.formatter.FromPlain(moreComplex, foundMentions, foundTags)
-
-	fmt.Println(f)
-
+	f := suite.formatter.ReplaceMentions(replaceMentionsString, foundMentions)
+	assert.Equal(suite.T(), replaceMentionsExpected, f)
 }
 
-func TestPlainTestSuite(t *testing.T) {
-	suite.Run(t, new(PlainTestSuite))
+func TestCommonTestSuite(t *testing.T) {
+	suite.Run(t, new(CommonTestSuite))
 }
