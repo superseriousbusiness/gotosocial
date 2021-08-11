@@ -34,6 +34,12 @@ const (
 
 	withTag         = "this is a simple status that uses hashtag #welcome!"
 	withTagExpected = "<p>this is a simple status that uses hashtag <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a>!</p>"
+
+	moreComplex = `Another test @foss_satan@fossbros-anonymous.io
+
+	#Hashtag
+
+	Text`
 )
 
 type PlainTestSuite struct {
@@ -49,6 +55,7 @@ func (suite *PlainTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
+	suite.testMentions = testrig.NewTestMentions()
 }
 
 func (suite *PlainTestSuite) SetupTest() {
@@ -76,6 +83,20 @@ func (suite *PlainTestSuite) TestParseWithTag() {
 	}
 
 	f := suite.formatter.FromPlain(withTag, nil, foundTags)
+	assert.Equal(suite.T(), withTagExpected, f)
+}
+
+func (suite *PlainTestSuite) TestParseMoreComplex() {
+
+	foundTags := []*gtsmodel.Tag{
+		suite.testTags["Hashtag"],
+	}
+
+	foundMentions := []*gtsmodel.Mention{
+		suite.testMentions["zork_mention_foss_satan"],
+	}
+
+	f := suite.formatter.FromPlain(moreComplex, foundMentions, foundTags)
 	assert.Equal(suite.T(), withTagExpected, f)
 }
 

@@ -45,6 +45,7 @@ type TextStandardTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
+	testMentions     map[string]*gtsmodel.Mention
 
 	// module being tested
 	formatter text.Formatter

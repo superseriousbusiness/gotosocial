@@ -937,6 +937,31 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			},
 			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
 		},
+		"local_account_1_status_5": {
+			ID:                       "01FCTA44PW9H1TB328S9AQXKDS",
+			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
+			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
+			Content:                  "hi!",
+			Attachments:              []string{},
+			CreatedAt:                time.Now().Add(-1 * time.Minute),
+			UpdatedAt:                time.Now().Add(-1 * time.Minute),
+			Local:                    true,
+			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
+			InReplyToID:              "",
+			BoostOfID:                "",
+			ContentWarning:           "",
+			Visibility:               gtsmodel.VisibilityMutualsOnly,
+			Sensitive:                false,
+			Language:                 "en",
+			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
+			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		},
 		"local_account_2_status_1": {
 			ID:                       "01F8MHBQCBTDKN6X5VHGMMN4MA",
 			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01F8MHBQCBTDKN6X5VHGMMN4MA",
@@ -1075,6 +1100,32 @@ func NewTestTags() map[string]*gtsmodel.Tag {
 			Useable:                true,
 			Listable:               true,
 			LastStatusAt:           time.Now().Add(-71 * time.Hour),
+		},
+		"Hashtag": {
+			ID:                     "01FCT9SGYA71487N8D0S1M638G",
+			URL:                    "http://localhost:8080/tags/Hashtag",
+			Name:                   "Hashtag",
+			FirstSeenFromAccountID: "",
+			CreatedAt:              time.Now().Add(-71 * time.Hour),
+			UpdatedAt:              time.Now().Add(-71 * time.Hour),
+			Useable:                true,
+			Listable:               true,
+			LastStatusAt:           time.Now().Add(-71 * time.Hour),
+		},
+	}
+}
+
+func NewTestMentions() map[string]*gtsmodel.Mention {
+	return map[string]*gtsmodel.Mention{
+		"zork_mention_foss_satan": {
+			ID:               "01FCTA2Y6FGHXQA4ZE6N5NMNEX",
+			StatusID:         "01FCTA44PW9H1TB328S9AQXKDS",
+			CreatedAt:        time.Now().Add(-1 * time.Minute),
+			UpdatedAt:        time.Now().Add(-1 * time.Minute),
+			OriginAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
+			OriginAccountURI: "http://localhost:8080/users/the_mighty_zork",
+			TargetAccountID:  "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			NameString:       "@foss_satan@fossbros-anonymous.io",
 		},
 	}
 }
