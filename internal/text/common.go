@@ -50,26 +50,54 @@ func postformat(in string) string {
 
 func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
 	return util.HashtagFinderRegex.ReplaceAllStringFunc(in, func(match string) string {
+		// we have a match
+		matchTrimmed := strings.TrimSpace(match)
+		tagAsEntered := strings.Split(matchTrimmed, "#")[1]
+
+		// check through the tags to find what we're matching
 		for _, tag := range tags {
-			if strings.TrimSpace(match) == fmt.Sprintf("#%s", tag.Name) {
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tag.Name)
+
+			if strings.EqualFold(matchTrimmed, fmt.Sprintf("#%s", tag.Name)) {
+				// replace the #tag with the formatted tag content
+				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
+
+				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
 				if strings.HasPrefix(match, " ") {
 					tagContent = " " + tagContent
+				} else if strings.HasPrefix(match, "\n") {
+					tagContent = "\n" + tagContent
 				}
+
+				// done
 				return tagContent
 			}
 		}
-		return in
+		// the match wasn't in the list of tags for whatever reason, so just return the match as we found it so nothing changes
+		return match
 	})
 }
 
 func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) string {
 	for _, menchie := range mentions {
-		targetAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(menchie.TargetAccountID, targetAccount); err == nil {
-			mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-			in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
+		// make sure we have a target account, either by getting one pinned on the mention,
+		// or by pulling it from the database
+		var targetAccount *gtsmodel.Account
+		if menchie.GTSAccount != nil {
+			// got it from the mention
+			targetAccount = menchie.GTSAccount
+		} else {
+			a := &gtsmodel.Account{}
+			if err := f.db.GetByID(menchie.TargetAccountID, a); err == nil {
+				// got it from the db
+				targetAccount = a
+			} else {
+				// couldn't get it so we can't do replacement
+				return in
+			}
 		}
+
+		mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
+		in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
 	}
 	return in
 }

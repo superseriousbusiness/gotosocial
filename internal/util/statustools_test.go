@@ -79,7 +79,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
 	assert.Equal(suite.T(), "thisshouldwork", tags[2])
-	assert.Equal(suite.T(), "thisshouldalsowork", tags[3])
+	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[3])
 	assert.Equal(suite.T(), "111111", tags[4])
 }
 
@@ -106,6 +106,26 @@ Here's some normal text with an :emoji: at the end
 	assert.Equal(suite.T(), "emoji2", tags[4])
 	assert.Equal(suite.T(), "anotheremoji", tags[5])
 	assert.Equal(suite.T(), "underscores_ok_too", tags[6])
+}
+
+func (suite *StatusTestSuite) TestDeriveMultiple() {
+	statusText := `Another test @foss_satan@fossbros-anonymous.io
+
+	#Hashtag
+
+	Text`
+
+	ms := util.DeriveMentionsFromStatus(statusText)
+	hs := util.DeriveHashtagsFromStatus(statusText)
+	es := util.DeriveEmojisFromStatus(statusText)
+
+	assert.Len(suite.T(), ms, 1)
+	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", ms[0])
+
+	assert.Len(suite.T(), hs, 1)
+	assert.Equal(suite.T(), "Hashtag", hs[0])
+
+	assert.Len(suite.T(), es, 0)
 }
 
 func TestStatusTestSuite(t *testing.T) {

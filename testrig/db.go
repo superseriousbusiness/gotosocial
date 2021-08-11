@@ -141,6 +141,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestMentions() {
+		if err := db.Put(v); err != nil {
+			panic(err)
+		}
+	}
+
 	for _, v := range NewTestFaves() {
 		if err := db.Put(v); err != nil {
 			panic(err)

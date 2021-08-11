@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package text_test
+package status_test
 
 import (
 	"github.com/sirupsen/logrus"
@@ -25,16 +25,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // nolint
-type TextStandardTestSuite struct {
-	// standard suite interfaces
+type StatusStandardTestSuite struct {
 	suite.Suite
-	config *config.Config
-	db     db.DB
-	log    *logrus.Logger
+	config            *config.Config
+	db                db.DB
+	log               *logrus.Logger
+	typeConverter     typeutils.TypeConverter
+	fromClientAPIChan chan gtsmodel.FromClientAPI
 
 	// standard suite models
 	testTokens       map[string]*oauth.Token
@@ -48,5 +50,5 @@ type TextStandardTestSuite struct {
 	testMentions     map[string]*gtsmodel.Mention
 
 	// module being tested
-	formatter text.Formatter
+	status status.Processor
 }

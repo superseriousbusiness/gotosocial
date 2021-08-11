@@ -46,7 +46,7 @@ func DeriveHashtagsFromStatus(status string) []string {
 	for _, m := range HashtagFinderRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, strings.TrimPrefix(m[1], "#"))
 	}
-	return uniqueLower(tags)
+	return unique(tags)
 }
 
 // DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -88,20 +88,6 @@ func unique(s []string) []string {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
 			list = append(list, entry)
-		}
-	}
-	return list
-}
-
-// uniqueLower returns a deduplicated version of a given string slice, with all entries converted to lowercase
-func uniqueLower(s []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range s {
-		eLower := strings.ToLower(entry)
-		if _, value := keys[eLower]; !value {
-			keys[eLower] = true
-			list = append(list, eLower)
 		}
 	}
 	return list
