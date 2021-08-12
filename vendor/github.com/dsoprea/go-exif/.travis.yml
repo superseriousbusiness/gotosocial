@@ -1,0 +1,24 @@
+language: go
+go:
+  - master
+  - stable
+  - "1.14"
+  - "1.13"
+  - "1.12"
+env:
+  - GO111MODULE=on
+install:
+  - go get -t ./...
+script:
+# v1
+  - go test -v .
+  - go test -v ./exif-read-tool
+# v2
+  - cd v2
+  - go test -v ./...
+  - cd ..
+# v3. Coverage reports comes from this.
+  - cd v3
+  - go test -v ./... -coverprofile=coverage.txt -covermode=atomic
+after_success:
+  - curl -s https://codecov.io/bash | bash

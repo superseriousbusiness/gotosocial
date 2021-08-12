@@ -1,0 +1,491 @@
+# github.com/aymerick/douceur v0.2.0
+github.com/aymerick/douceur/css
+github.com/aymerick/douceur/parser
+# github.com/buckket/go-blurhash v1.1.0
+## explicit
+github.com/buckket/go-blurhash
+github.com/buckket/go-blurhash/base83
+# github.com/coreos/go-oidc/v3 v3.0.0
+## explicit
+github.com/coreos/go-oidc/v3/oidc
+# github.com/cpuguy83/go-md2man/v2 v2.0.1
+## explicit
+github.com/cpuguy83/go-md2man/v2/md2man
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/dsoprea/go-exif v0.0.0-20210625224831-a6301f85c82b
+## explicit
+github.com/dsoprea/go-exif
+# github.com/dsoprea/go-exif/v2 v2.0.0-20210625224831-a6301f85c82b
+## explicit
+github.com/dsoprea/go-exif/v2
+github.com/dsoprea/go-exif/v2/common
+github.com/dsoprea/go-exif/v2/undefined
+# github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413
+## explicit
+github.com/dsoprea/go-iptc
+# github.com/dsoprea/go-jpeg-image-structure v0.0.0-20210512043942-b434301c6836
+## explicit
+github.com/dsoprea/go-jpeg-image-structure
+# github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
+## explicit
+github.com/dsoprea/go-logging
+# github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d
+## explicit
+github.com/dsoprea/go-photoshop-info-format
+# github.com/dsoprea/go-png-image-structure v0.0.0-20210512210324-29b889a6093d
+## explicit
+github.com/dsoprea/go-png-image-structure
+# github.com/dsoprea/go-utility v0.0.0-20200717064901-2fccff4aa15e
+## explicit
+github.com/dsoprea/go-utility/image
+# github.com/gin-contrib/cors v1.3.1
+## explicit
+github.com/gin-contrib/cors
+# github.com/gin-contrib/sessions v0.0.3
+## explicit
+github.com/gin-contrib/sessions
+github.com/gin-contrib/sessions/memstore
+# github.com/gin-contrib/sse v0.1.0
+github.com/gin-contrib/sse
+# github.com/gin-gonic/gin v1.7.2-0.20210722225815-d4ca9a0fb121
+## explicit
+github.com/gin-gonic/gin
+github.com/gin-gonic/gin/binding
+github.com/gin-gonic/gin/internal/bytesconv
+github.com/gin-gonic/gin/internal/json
+github.com/gin-gonic/gin/render
+# github.com/go-errors/errors v1.4.0
+## explicit
+github.com/go-errors/errors
+# github.com/go-fed/activity v1.0.1-0.20210426194615-e0de0863dcc1
+## explicit
+github.com/go-fed/activity/pub
+github.com/go-fed/activity/streams
+github.com/go-fed/activity/streams/impl/activitystreams/property_accuracy
+github.com/go-fed/activity/streams/impl/activitystreams/property_actor
+github.com/go-fed/activity/streams/impl/activitystreams/property_altitude
+github.com/go-fed/activity/streams/impl/activitystreams/property_anyof
+github.com/go-fed/activity/streams/impl/activitystreams/property_attachment
+github.com/go-fed/activity/streams/impl/activitystreams/property_attributedto
+github.com/go-fed/activity/streams/impl/activitystreams/property_audience
+github.com/go-fed/activity/streams/impl/activitystreams/property_bcc
+github.com/go-fed/activity/streams/impl/activitystreams/property_bto
+github.com/go-fed/activity/streams/impl/activitystreams/property_cc
+github.com/go-fed/activity/streams/impl/activitystreams/property_closed
+github.com/go-fed/activity/streams/impl/activitystreams/property_content
+github.com/go-fed/activity/streams/impl/activitystreams/property_context
+github.com/go-fed/activity/streams/impl/activitystreams/property_current
+github.com/go-fed/activity/streams/impl/activitystreams/property_deleted
+github.com/go-fed/activity/streams/impl/activitystreams/property_describes
+github.com/go-fed/activity/streams/impl/activitystreams/property_duration
+github.com/go-fed/activity/streams/impl/activitystreams/property_endtime
+github.com/go-fed/activity/streams/impl/activitystreams/property_first
+github.com/go-fed/activity/streams/impl/activitystreams/property_followers
+github.com/go-fed/activity/streams/impl/activitystreams/property_following
+github.com/go-fed/activity/streams/impl/activitystreams/property_formertype
+github.com/go-fed/activity/streams/impl/activitystreams/property_generator
+github.com/go-fed/activity/streams/impl/activitystreams/property_height
+github.com/go-fed/activity/streams/impl/activitystreams/property_href
+github.com/go-fed/activity/streams/impl/activitystreams/property_hreflang
+github.com/go-fed/activity/streams/impl/activitystreams/property_icon
+github.com/go-fed/activity/streams/impl/activitystreams/property_image
+github.com/go-fed/activity/streams/impl/activitystreams/property_inbox
+github.com/go-fed/activity/streams/impl/activitystreams/property_inreplyto
+github.com/go-fed/activity/streams/impl/activitystreams/property_instrument
+github.com/go-fed/activity/streams/impl/activitystreams/property_items
+github.com/go-fed/activity/streams/impl/activitystreams/property_last
+github.com/go-fed/activity/streams/impl/activitystreams/property_latitude
+github.com/go-fed/activity/streams/impl/activitystreams/property_liked
+github.com/go-fed/activity/streams/impl/activitystreams/property_likes
+github.com/go-fed/activity/streams/impl/activitystreams/property_location
+github.com/go-fed/activity/streams/impl/activitystreams/property_longitude
+github.com/go-fed/activity/streams/impl/activitystreams/property_mediatype
+github.com/go-fed/activity/streams/impl/activitystreams/property_name
+github.com/go-fed/activity/streams/impl/activitystreams/property_next
+github.com/go-fed/activity/streams/impl/activitystreams/property_object
+github.com/go-fed/activity/streams/impl/activitystreams/property_oneof
+github.com/go-fed/activity/streams/impl/activitystreams/property_ordereditems
+github.com/go-fed/activity/streams/impl/activitystreams/property_origin
+github.com/go-fed/activity/streams/impl/activitystreams/property_outbox
+github.com/go-fed/activity/streams/impl/activitystreams/property_partof
+github.com/go-fed/activity/streams/impl/activitystreams/property_preferredusername
+github.com/go-fed/activity/streams/impl/activitystreams/property_prev
+github.com/go-fed/activity/streams/impl/activitystreams/property_preview
+github.com/go-fed/activity/streams/impl/activitystreams/property_published
+github.com/go-fed/activity/streams/impl/activitystreams/property_radius
+github.com/go-fed/activity/streams/impl/activitystreams/property_rel
+github.com/go-fed/activity/streams/impl/activitystreams/property_relationship
+github.com/go-fed/activity/streams/impl/activitystreams/property_replies
+github.com/go-fed/activity/streams/impl/activitystreams/property_result
+github.com/go-fed/activity/streams/impl/activitystreams/property_shares
+github.com/go-fed/activity/streams/impl/activitystreams/property_source
+github.com/go-fed/activity/streams/impl/activitystreams/property_startindex
+github.com/go-fed/activity/streams/impl/activitystreams/property_starttime
+github.com/go-fed/activity/streams/impl/activitystreams/property_streams
+github.com/go-fed/activity/streams/impl/activitystreams/property_subject
+github.com/go-fed/activity/streams/impl/activitystreams/property_summary
+github.com/go-fed/activity/streams/impl/activitystreams/property_tag
+github.com/go-fed/activity/streams/impl/activitystreams/property_target
+github.com/go-fed/activity/streams/impl/activitystreams/property_to
+github.com/go-fed/activity/streams/impl/activitystreams/property_totalitems
+github.com/go-fed/activity/streams/impl/activitystreams/property_units
+github.com/go-fed/activity/streams/impl/activitystreams/property_updated
+github.com/go-fed/activity/streams/impl/activitystreams/property_url
+github.com/go-fed/activity/streams/impl/activitystreams/property_width
+github.com/go-fed/activity/streams/impl/activitystreams/type_accept
+github.com/go-fed/activity/streams/impl/activitystreams/type_activity
+github.com/go-fed/activity/streams/impl/activitystreams/type_add
+github.com/go-fed/activity/streams/impl/activitystreams/type_announce
+github.com/go-fed/activity/streams/impl/activitystreams/type_application
+github.com/go-fed/activity/streams/impl/activitystreams/type_arrive
+github.com/go-fed/activity/streams/impl/activitystreams/type_article
+github.com/go-fed/activity/streams/impl/activitystreams/type_audio
+github.com/go-fed/activity/streams/impl/activitystreams/type_block
+github.com/go-fed/activity/streams/impl/activitystreams/type_collection
+github.com/go-fed/activity/streams/impl/activitystreams/type_collectionpage
+github.com/go-fed/activity/streams/impl/activitystreams/type_create
+github.com/go-fed/activity/streams/impl/activitystreams/type_delete
+github.com/go-fed/activity/streams/impl/activitystreams/type_dislike
+github.com/go-fed/activity/streams/impl/activitystreams/type_document
+github.com/go-fed/activity/streams/impl/activitystreams/type_event
+github.com/go-fed/activity/streams/impl/activitystreams/type_flag
+github.com/go-fed/activity/streams/impl/activitystreams/type_follow
+github.com/go-fed/activity/streams/impl/activitystreams/type_group
+github.com/go-fed/activity/streams/impl/activitystreams/type_ignore
+github.com/go-fed/activity/streams/impl/activitystreams/type_image
+github.com/go-fed/activity/streams/impl/activitystreams/type_intransitiveactivity
+github.com/go-fed/activity/streams/impl/activitystreams/type_invite
+github.com/go-fed/activity/streams/impl/activitystreams/type_join
+github.com/go-fed/activity/streams/impl/activitystreams/type_leave
+github.com/go-fed/activity/streams/impl/activitystreams/type_like
+github.com/go-fed/activity/streams/impl/activitystreams/type_link
+github.com/go-fed/activity/streams/impl/activitystreams/type_listen
+github.com/go-fed/activity/streams/impl/activitystreams/type_mention
+github.com/go-fed/activity/streams/impl/activitystreams/type_move
+github.com/go-fed/activity/streams/impl/activitystreams/type_note
+github.com/go-fed/activity/streams/impl/activitystreams/type_object
+github.com/go-fed/activity/streams/impl/activitystreams/type_offer
+github.com/go-fed/activity/streams/impl/activitystreams/type_orderedcollection
+github.com/go-fed/activity/streams/impl/activitystreams/type_orderedcollectionpage
+github.com/go-fed/activity/streams/impl/activitystreams/type_organization
+github.com/go-fed/activity/streams/impl/activitystreams/type_page
+github.com/go-fed/activity/streams/impl/activitystreams/type_person
+github.com/go-fed/activity/streams/impl/activitystreams/type_place
+github.com/go-fed/activity/streams/impl/activitystreams/type_profile
+github.com/go-fed/activity/streams/impl/activitystreams/type_question
+github.com/go-fed/activity/streams/impl/activitystreams/type_read
+github.com/go-fed/activity/streams/impl/activitystreams/type_reject
+github.com/go-fed/activity/streams/impl/activitystreams/type_relationship
+github.com/go-fed/activity/streams/impl/activitystreams/type_remove
+github.com/go-fed/activity/streams/impl/activitystreams/type_service
+github.com/go-fed/activity/streams/impl/activitystreams/type_tentativeaccept
+github.com/go-fed/activity/streams/impl/activitystreams/type_tentativereject
+github.com/go-fed/activity/streams/impl/activitystreams/type_tombstone
+github.com/go-fed/activity/streams/impl/activitystreams/type_travel
+github.com/go-fed/activity/streams/impl/activitystreams/type_undo
+github.com/go-fed/activity/streams/impl/activitystreams/type_update
+github.com/go-fed/activity/streams/impl/activitystreams/type_video
+github.com/go-fed/activity/streams/impl/activitystreams/type_view
+github.com/go-fed/activity/streams/impl/forgefed/property_assignedto
+github.com/go-fed/activity/streams/impl/forgefed/property_committed
+github.com/go-fed/activity/streams/impl/forgefed/property_committedby
+github.com/go-fed/activity/streams/impl/forgefed/property_dependants
+github.com/go-fed/activity/streams/impl/forgefed/property_dependedby
+github.com/go-fed/activity/streams/impl/forgefed/property_dependencies
+github.com/go-fed/activity/streams/impl/forgefed/property_dependson
+github.com/go-fed/activity/streams/impl/forgefed/property_description
+github.com/go-fed/activity/streams/impl/forgefed/property_earlyitems
+github.com/go-fed/activity/streams/impl/forgefed/property_filesadded
+github.com/go-fed/activity/streams/impl/forgefed/property_filesmodified
+github.com/go-fed/activity/streams/impl/forgefed/property_filesremoved
+github.com/go-fed/activity/streams/impl/forgefed/property_forks
+github.com/go-fed/activity/streams/impl/forgefed/property_hash
+github.com/go-fed/activity/streams/impl/forgefed/property_isresolved
+github.com/go-fed/activity/streams/impl/forgefed/property_ref
+github.com/go-fed/activity/streams/impl/forgefed/property_team
+github.com/go-fed/activity/streams/impl/forgefed/property_ticketstrackedby
+github.com/go-fed/activity/streams/impl/forgefed/property_tracksticketsfor
+github.com/go-fed/activity/streams/impl/forgefed/type_branch
+github.com/go-fed/activity/streams/impl/forgefed/type_commit
+github.com/go-fed/activity/streams/impl/forgefed/type_push
+github.com/go-fed/activity/streams/impl/forgefed/type_repository
+github.com/go-fed/activity/streams/impl/forgefed/type_ticket
+github.com/go-fed/activity/streams/impl/forgefed/type_ticketdependency
+github.com/go-fed/activity/streams/impl/jsonld/property_id
+github.com/go-fed/activity/streams/impl/jsonld/property_type
+github.com/go-fed/activity/streams/impl/toot/property_blurhash
+github.com/go-fed/activity/streams/impl/toot/property_discoverable
+github.com/go-fed/activity/streams/impl/toot/property_featured
+github.com/go-fed/activity/streams/impl/toot/property_signaturealgorithm
+github.com/go-fed/activity/streams/impl/toot/property_signaturevalue
+github.com/go-fed/activity/streams/impl/toot/property_voterscount
+github.com/go-fed/activity/streams/impl/toot/type_emoji
+github.com/go-fed/activity/streams/impl/toot/type_identityproof
+github.com/go-fed/activity/streams/impl/w3idsecurityv1/property_owner
+github.com/go-fed/activity/streams/impl/w3idsecurityv1/property_publickey
+github.com/go-fed/activity/streams/impl/w3idsecurityv1/property_publickeypem
+github.com/go-fed/activity/streams/impl/w3idsecurityv1/type_publickey
+github.com/go-fed/activity/streams/values/anyURI
+github.com/go-fed/activity/streams/values/bcp47
+github.com/go-fed/activity/streams/values/boolean
+github.com/go-fed/activity/streams/values/dateTime
+github.com/go-fed/activity/streams/values/duration
+github.com/go-fed/activity/streams/values/float
+github.com/go-fed/activity/streams/values/langString
+github.com/go-fed/activity/streams/values/nonNegativeInteger
+github.com/go-fed/activity/streams/values/rfc2045
+github.com/go-fed/activity/streams/values/rfc5988
+github.com/go-fed/activity/streams/values/string
+github.com/go-fed/activity/streams/vocab
+# github.com/go-fed/httpsig v1.1.0
+## explicit
+github.com/go-fed/httpsig
+# github.com/go-pg/pg/extra/pgdebug v0.2.0
+## explicit
+github.com/go-pg/pg/extra/pgdebug
+# github.com/go-pg/pg/v10 v10.10.3
+## explicit
+github.com/go-pg/pg/v10
+github.com/go-pg/pg/v10/internal
+github.com/go-pg/pg/v10/internal/parser
+github.com/go-pg/pg/v10/internal/pool
+github.com/go-pg/pg/v10/orm
+github.com/go-pg/pg/v10/pgjson
+github.com/go-pg/pg/v10/types
+# github.com/go-pg/zerochecker v0.2.0
+github.com/go-pg/zerochecker
+# github.com/go-playground/locales v0.13.0
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.17.0
+github.com/go-playground/universal-translator
+# github.com/go-playground/validator/v10 v10.7.0
+## explicit
+github.com/go-playground/validator/v10
+# github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b
+github.com/go-xmlfmt/xmlfmt
+# github.com/goccy/go-json v0.5.1
+github.com/goccy/go-json
+github.com/goccy/go-json/internal/encoder
+github.com/goccy/go-json/internal/encoder/vm
+github.com/goccy/go-json/internal/encoder/vm_escaped
+github.com/goccy/go-json/internal/encoder/vm_escaped_indent
+github.com/goccy/go-json/internal/encoder/vm_indent
+github.com/goccy/go-json/internal/errors
+github.com/goccy/go-json/internal/runtime
+# github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
+## explicit
+github.com/golang/geo/r1
+github.com/golang/geo/r2
+github.com/golang/geo/r3
+github.com/golang/geo/s1
+github.com/golang/geo/s2
+# github.com/golang/mock v1.6.0
+## explicit
+# github.com/golang/protobuf v1.5.2
+github.com/golang/protobuf/proto
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
+# github.com/gorilla/context v1.1.1
+github.com/gorilla/context
+# github.com/gorilla/css v1.0.0
+github.com/gorilla/css/scanner
+# github.com/gorilla/securecookie v1.1.1
+github.com/gorilla/securecookie
+# github.com/gorilla/sessions v1.2.1
+## explicit
+github.com/gorilla/sessions
+# github.com/gorilla/websocket v1.4.2
+## explicit
+github.com/gorilla/websocket
+# github.com/h2non/filetype v1.1.1
+## explicit
+github.com/h2non/filetype
+github.com/h2non/filetype/matchers
+github.com/h2non/filetype/matchers/isobmff
+github.com/h2non/filetype/types
+# github.com/jinzhu/inflection v1.0.0
+github.com/jinzhu/inflection
+# github.com/json-iterator/go v1.1.11
+## explicit
+github.com/json-iterator/go
+# github.com/leodido/go-urn v1.2.1
+## explicit
+github.com/leodido/go-urn
+# github.com/mattn/go-isatty v0.0.13
+## explicit
+github.com/mattn/go-isatty
+# github.com/microcosm-cc/bluemonday v1.0.15
+## explicit
+github.com/microcosm-cc/bluemonday
+github.com/microcosm-cc/bluemonday/css
+# github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+## explicit
+github.com/modern-go/concurrent
+# github.com/modern-go/reflect2 v1.0.1
+## explicit
+github.com/modern-go/reflect2
+# github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+## explicit
+github.com/nfnt/resize
+# github.com/oklog/ulid v1.3.1
+## explicit
+github.com/oklog/ulid
+# github.com/onsi/gomega v1.14.0
+## explicit
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b
+## explicit
+github.com/quasoft/memstore
+# github.com/russross/blackfriday/v2 v2.1.0
+## explicit
+github.com/russross/blackfriday/v2
+# github.com/sirupsen/logrus v1.8.1
+## explicit
+github.com/sirupsen/logrus
+# github.com/stretchr/testify v1.7.0
+## explicit
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+github.com/stretchr/testify/suite
+# github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
+## explicit
+github.com/superseriousbusiness/exifremove/pkg/exifremove
+# github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
+## explicit
+github.com/superseriousbusiness/oauth2/v4
+github.com/superseriousbusiness/oauth2/v4/errors
+github.com/superseriousbusiness/oauth2/v4/generates
+github.com/superseriousbusiness/oauth2/v4/manage
+github.com/superseriousbusiness/oauth2/v4/models
+github.com/superseriousbusiness/oauth2/v4/server
+# github.com/tidwall/buntdb v1.2.4
+## explicit
+# github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
+github.com/tmthrgd/go-hex
+# github.com/ugorji/go/codec v1.2.6
+github.com/ugorji/go/codec
+# github.com/urfave/cli/v2 v2.3.0
+## explicit
+github.com/urfave/cli/v2
+# github.com/vmihailenco/bufpool v0.1.11
+github.com/vmihailenco/bufpool
+# github.com/vmihailenco/msgpack/v5 v5.3.4
+## explicit
+github.com/vmihailenco/msgpack/v5
+github.com/vmihailenco/msgpack/v5/msgpcode
+# github.com/vmihailenco/tagparser v0.1.2
+github.com/vmihailenco/tagparser
+github.com/vmihailenco/tagparser/internal
+github.com/vmihailenco/tagparser/internal/parser
+# github.com/vmihailenco/tagparser/v2 v2.0.0
+github.com/vmihailenco/tagparser/v2
+github.com/vmihailenco/tagparser/v2/internal
+github.com/vmihailenco/tagparser/v2/internal/parser
+# github.com/wagslane/go-password-validator v0.3.0
+## explicit
+github.com/wagslane/go-password-validator
+# golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+## explicit
+golang.org/x/crypto/acme
+golang.org/x/crypto/acme/autocert
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blake2b
+golang.org/x/crypto/blake2s
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/poly1305
+golang.org/x/crypto/ripemd160
+golang.org/x/crypto/sha3
+golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+golang.org/x/net/context
+golang.org/x/net/context/ctxhttp
+golang.org/x/net/html
+golang.org/x/net/html/atom
+golang.org/x/net/idna
+# golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+## explicit
+golang.org/x/oauth2
+golang.org/x/oauth2/internal
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+## explicit
+golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.3.6
+## explicit
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
+golang.org/x/text/language
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# google.golang.org/appengine v1.6.7
+google.golang.org/appengine/internal
+google.golang.org/appengine/internal/base
+google.golang.org/appengine/internal/datastore
+google.golang.org/appengine/internal/log
+google.golang.org/appengine/internal/remote_api
+google.golang.org/appengine/internal/urlfetch
+google.golang.org/appengine/urlfetch
+# google.golang.org/protobuf v1.26.0
+google.golang.org/protobuf/encoding/prototext
+google.golang.org/protobuf/encoding/protowire
+google.golang.org/protobuf/internal/descfmt
+google.golang.org/protobuf/internal/descopts
+google.golang.org/protobuf/internal/detrand
+google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/messageset
+google.golang.org/protobuf/internal/encoding/tag
+google.golang.org/protobuf/internal/encoding/text
+google.golang.org/protobuf/internal/errors
+google.golang.org/protobuf/internal/filedesc
+google.golang.org/protobuf/internal/filetype
+google.golang.org/protobuf/internal/flags
+google.golang.org/protobuf/internal/genid
+google.golang.org/protobuf/internal/impl
+google.golang.org/protobuf/internal/order
+google.golang.org/protobuf/internal/pragma
+google.golang.org/protobuf/internal/set
+google.golang.org/protobuf/internal/strs
+google.golang.org/protobuf/internal/version
+google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
+google.golang.org/protobuf/reflect/protoreflect
+google.golang.org/protobuf/reflect/protoregistry
+google.golang.org/protobuf/runtime/protoiface
+google.golang.org/protobuf/runtime/protoimpl
+google.golang.org/protobuf/types/descriptorpb
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit
+# gopkg.in/square/go-jose.v2 v2.5.1
+gopkg.in/square/go-jose.v2
+gopkg.in/square/go-jose.v2/cipher
+gopkg.in/square/go-jose.v2/json
+# gopkg.in/yaml.v2 v2.4.0
+## explicit
+gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+## explicit
+gopkg.in/yaml.v3
+# mellium.im/sasl v0.2.1
+mellium.im/sasl
+# mvdan.cc/xurls/v2 v2.3.0
+## explicit
+mvdan.cc/xurls/v2
