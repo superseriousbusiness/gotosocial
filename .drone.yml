@@ -13,21 +13,30 @@ steps:
 # See: https://golangci-lint.run/
 - name: lint
   image: golangci/golangci-lint:v1.41.1
+  volumes:
+  - name: cache
+    path: /go
   commands:
   - golangci-lint run --timeout 5m0s --tests=false
 
 - name: test
   image: golang:1.16.4
+  volumes:
+  - name: cache
+    path: /go
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
   # `-count 1`  => run all tests at least once
   # `-p 1`      => run maximum one test at a time
-  # `./...`     => run all tests 
+  # `./...`     => run all tests
   - go test -count 1 -p 1 ./...
 
 - name: publish
   image: plugins/docker
+  volumes:
+  - name: cache
+    path: /go
   settings:
     auto_tag: true
     username: gotosocial
@@ -47,3 +56,10 @@ services:
   image: postgres
   environment:
     POSTGRES_PASSWORD: postgres
+
+volumes:
+# This volume is used to hold state between pipeline steps,
+# so that we don't need to reinstall everything between steps.
+# See: https://docs.drone.io/pipeline/docker/syntax/volumes/temporary/
+- name: cache
+  temp: {}
