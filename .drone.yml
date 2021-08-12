@@ -1,3 +1,4 @@
+---
 ### Drone configuration file for GoToSocial.
 ### Connects to https://drone.superseriousbusiness.org to perform testing, linting, and automatic builds/pushes to docker.
 ###
@@ -47,7 +48,8 @@ services:
   image: postgres
   environment:
     POSTGRES_PASSWORD: postgres
-
 ---
 kind: signature
 hmac: 78dd20d97444a9e2904552d56eb52f43ad30ba27e1d897a5ea6808971f9a0ae2
+
+...
