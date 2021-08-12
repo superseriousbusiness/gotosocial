@@ -16,6 +16,10 @@ steps:
   image: golangci/golangci-lint:v1.41.1
   commands:
   - golangci-lint run --timeout 5m0s --tests=false --verbose
+  when:
+    event:
+      include:
+        - pull_request
 
 - name: test
   image: golang:1.16.4
@@ -26,6 +30,10 @@ steps:
   # `-p 1`      => run maximum one test at a time
   # `./...`     => run all tests
   - go test -count 1 -p 1 ./...
+  when:
+    event:
+      include:
+        - pull_request
 
 - name: publish
   image: plugins/docker
@@ -50,6 +58,6 @@ services:
     POSTGRES_PASSWORD: postgres
 ---
 kind: signature
-hmac: 78dd20d97444a9e2904552d56eb52f43ad30ba27e1d897a5ea6808971f9a0ae2
+hmac: 888b0a9964be9bddad325a8eab0f54350f3cd36c333564ad4333811b4841b640
 
 ...
