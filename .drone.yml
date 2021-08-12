@@ -17,7 +17,7 @@ steps:
   - name: cache
     path: /go
   commands:
-  - golangci-lint run --timeout 5m0s --tests=false
+  - golangci-lint run --timeout 5m0s --tests=false --verbose
 
 - name: test
   image: golang:1.16.4
