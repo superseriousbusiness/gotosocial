@@ -10,9 +10,7 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
 
 ## Communications
 
-Before starting on something, please comment on an issue to say that you're working on it, and send a message to `@dumpsterqueer@ondergrond.org` (Mastodon) to let them know.
-
-You can also drop into the GoToSocial Matrix room [here](https://matrix.to/#/!mdShFtfScQvVSmjIKX:ondergrond.org?via=ondergrond.org).
+Before starting on something, please comment on an issue to say that you're working on it, and/or drop into the GoToSocial Matrix room [here](https://matrix.to/#/#gotosocial:superseriousbusiness.org).
 
 This is the recommended way of keeping in touch with other developers, asking direct questions about code, and letting everyone know what you're up to.
 
@@ -35,6 +33,38 @@ Once that's done, you can try building the project: `./build.sh`. This will buil
 If there are no errors, great, you're good to go!
 
 To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/source/`. Recompiling the bundle.css is `node build.js` but can be automated with [nodemon](https://www.npmjs.com/package/nodemon) on file change: `nodemon -w style.css build.js`.
+
+### Golang forking quirks
+
+One of the quirks of Golang is that it relies on the source management path being the same as the one used within `go.mod` and in package imports within individual Go files. This makes working with forks a bit awkward.
+
+Let's say you fork GoToSocial to `github.com/yourgithubname/gotosocial`, and then clone that repository to `~/go/src/github.com/yourgithubname/gotosocial`. You will probably run into errors trying to run tests or build, so you might change your `go.mod` file so that the module is called `github.com/yourgithubname/gotosocial` instead of `github.com/superseriousbusiness/gotosocial`. But then this breaks all the imports within the project. Nightmare! So now you have to go through the source files and painstakingly replace `github.com/superseriousbusiness/gotosocial` with `github.com/yourgithubname/gotosocial`. This works OK, but when you decide to make a pull request against the original repo, all the changed paths are included! Argh!
+
+The correct solution to this is to fork, then clone the upstream repository, then set `origin` of the upstream repository to that of your fork.
+
+See [this blogpost](https://blog.sgmansfield.com/2016/06/working-with-forks-in-go/) for more details.
+
+In case this post disappears, here are the steps (slightly modified):
+
+>
+> Pull the original package from the canonical place with the standard go get command:
+> 
+> `go get github.com/superseriousbusiness/gotosocial`
+> 
+> Fork the repository on Github or set up whatever other remote git repo you will be using. In this case, I would go to Github and fork the repository.
+> 
+> Navigate to the top level of the repository on your computer. Note that this might not be the specific package you’re using:
+> 
+> `cd $GOPATH/src/github.com/superseriousbusiness/gotosocial`
+> 
+> Rename the current origin remote to upstream:
+> 
+> `git remote rename origin upstream`
+> 
+> Add your fork as origin:
+> 
+> `git remote add origin git@github.com/yourgithubname/gotosocial`
+>
 
 ## Setting up your test environment
 

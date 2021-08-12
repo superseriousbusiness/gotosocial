@@ -13,17 +13,11 @@ steps:
 # See: https://golangci-lint.run/
 - name: lint
   image: golangci/golangci-lint:v1.41.1
-  volumes:
-  - name: cache
-    path: /go/pkg
   commands:
   - golangci-lint run --timeout 5m0s --tests=false --verbose
 
 - name: test
   image: golang:1.16.4
-  volumes:
-  - name: cache
-    path: /go/pkg
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
@@ -34,9 +28,6 @@ steps:
 
 - name: publish
   image: plugins/docker
-  volumes:
-  - name: cache
-    path: /go/pkg
   settings:
     auto_tag: true
     username: gotosocial
@@ -57,10 +48,6 @@ services:
   environment:
     POSTGRES_PASSWORD: postgres
 
-volumes:
-# This volume is used to hold state between runs,
-# so that we don't need to reinstall everything in gopkg.
-# See: https://docs.drone.io/pipeline/docker/syntax/volumes/temporary/
-- name: cache
-  host:
-    path: /drone/gotosocial/gopkg
+---
+kind: signature
+hmac: 78dd20d97444a9e2904552d56eb52f43ad30ba27e1d897a5ea6808971f9a0ae2
