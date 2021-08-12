@@ -19,18 +19,13 @@
 package federation_test
 
 import (
-	"bytes"
 	"context"
-	"crypto/x509"
-	"encoding/pem"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/go-fed/activity/pub"
+	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -117,63 +112,31 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	sendingAccount := suite.accounts["remote_account_1"]
 	inboxAccount := suite.accounts["local_account_1"]
 
-	encodedPublicKey, err := x509.MarshalPKIXPublicKey(sendingAccount.PublicKey)
-	assert.NoError(suite.T(), err)
-	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: encodedPublicKey,
-	})
-	publicKeyString := strings.ReplaceAll(string(publicKeyBytes), "\n", "\\n")
-
-	// for this test we need the client to return the public key of the activity creator on the 'remote' instance
-	responseBodyString := fmt.Sprintf(`
-	{
-		"@context": [
-			"https://www.w3.org/ns/activitystreams",
-			"https://w3id.org/security/v1"
-		],
-
-		"id": "%s",
-		"type": "Person",
-		"preferredUsername": "%s",
-		"inbox": "%s",
-
-		"publicKey": {
-			"id": "%s",
-			"owner": "%s",
-			"publicKeyPem": "%s"
-		}
-	}`, sendingAccount.URI, sendingAccount.Username, sendingAccount.InboxURI, sendingAccount.PublicKeyURI, sendingAccount.URI, publicKeyString)
-
-	// create a transport controller whose client will just return the response body string we specified above
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := ioutil.NopCloser(bytes.NewReader([]byte(responseBodyString)))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-		}, nil
-	}), suite.db)
-
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	// now setup module being tested, with the mock transport controller
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
-	// setup request
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
+	// we need these headers for the request to be validated
+	request.Header.Set("Signature", activity.SignatureHeader)
+	request.Header.Set("Date", activity.DateHeader)
+	request.Header.Set("Digest", activity.DigestHeader)
+
+	verifier, err := httpsig.NewVerifier(request)
+	assert.NoError(suite.T(), err)
+
 	ctx := context.Background()
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
 	ctxWithAccount := context.WithValue(ctx, util.APAccount, inboxAccount)
 	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
+	ctxWithVerifier := context.WithValue(ctxWithActivity, util.APRequestingPublicKeyVerifier, verifier)
 
-	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
-	// we need these headers for the request to be validated
-	request.Header.Set("Signature", activity.SignatureHeader)
-	request.Header.Set("Date", activity.DateHeader)
-	request.Header.Set("Digest", activity.DigestHeader)
 	// we can pass this recorder as a writer and read it back after
 	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithActivity, recorder, request)
+	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithVerifier, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 

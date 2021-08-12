@@ -156,7 +156,7 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	}
 
 	// check response
-	suite.EqualValues(http.StatusAccepted, recorder.Code)
+	suite.EqualValues(http.StatusOK, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()

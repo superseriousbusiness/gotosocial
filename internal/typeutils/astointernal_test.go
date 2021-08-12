@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	"github.com/go-fed/activity/streams"
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -373,62 +372,6 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 
 	fmt.Printf("%+v", acct)
 	// TODO: write assertions here, rn we're just eyeballing the output
-}
-
-func (suite *ASToInternalTestSuite) TestParseStatus() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(statusWithEmojisAndTagsAsActivityJson), &m)
-	assert.NoError(suite.T(), err)
-
-	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
-
-	create, ok := t.(vocab.ActivityStreamsCreate)
-	assert.True(suite.T(), ok)
-
-	obj := create.GetActivityStreamsObject()
-	assert.NotNil(suite.T(), obj)
-
-	first := obj.Begin()
-	assert.NotNil(suite.T(), first)
-
-	rep, ok := first.GetType().(ap.Statusable)
-	assert.True(suite.T(), ok)
-
-	status, err := suite.typeconverter.ASStatusToStatus(rep)
-	assert.NoError(suite.T(), err)
-
-	assert.Len(suite.T(), status.GTSEmojis, 3)
-	// assert.Len(suite.T(), status.GTSTags, 2) TODO: implement this first so that it can pick up tags
-}
-
-func (suite *ASToInternalTestSuite) TestParseStatusWithMention() {
-	m := make(map[string]interface{})
-	err := json.Unmarshal([]byte(statusWithMentionsActivityJson), &m)
-	assert.NoError(suite.T(), err)
-
-	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
-
-	create, ok := t.(vocab.ActivityStreamsCreate)
-	assert.True(suite.T(), ok)
-
-	obj := create.GetActivityStreamsObject()
-	assert.NotNil(suite.T(), obj)
-
-	first := obj.Begin()
-	assert.NotNil(suite.T(), first)
-
-	rep, ok := first.GetType().(ap.Statusable)
-	assert.True(suite.T(), ok)
-
-	status, err := suite.typeconverter.ASStatusToStatus(rep)
-	assert.NoError(suite.T(), err)
-
-	fmt.Printf("%+v", status)
-
-	assert.Len(suite.T(), status.GTSMentions, 1)
-	fmt.Println(status.GTSMentions[0])
 }
 
 func (suite *ASToInternalTestSuite) TearDownTest() {

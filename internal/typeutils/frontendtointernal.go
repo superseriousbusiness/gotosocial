@@ -32,6 +32,8 @@ func (c *converter) MastoVisToVis(m model.Visibility) gtsmodel.Visibility {
 		return gtsmodel.VisibilityUnlocked
 	case model.VisibilityPrivate:
 		return gtsmodel.VisibilityFollowersOnly
+	case model.VisibilityMutualsOnly:
+		return gtsmodel.VisibilityMutualsOnly
 	case model.VisibilityDirect:
 		return gtsmodel.VisibilityDirect
 	}

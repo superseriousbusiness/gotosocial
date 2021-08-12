@@ -93,13 +93,13 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
 	ctx.Request.Form = url.Values{
-		"status":              {"this is a brand new status! #helloworld"},
-		"spoiler_text":        {"hello hello"},
-		"sensitive":           {"true"},
-		"visibility_advanced": {"mutuals_only"},
-		"likeable":            {"false"},
-		"replyable":           {"false"},
-		"federated":           {"false"},
+		"status":       {"this is a brand new status! #helloworld"},
+		"spoiler_text": {"hello hello"},
+		"sensitive":    {"true"},
+		"visibility":   {string(model.VisibilityMutualsOnly)},
+		"likeable":     {"false"},
+		"replyable":    {"false"},
+		"federated":    {"false"},
 	}
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
 
@@ -120,7 +120,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility)
+	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because masto has no idea about mutuals_only
 	assert.Len(suite.T(), statusReply.Tags, 1)
 	assert.Equal(suite.T(), model.Tag{
 		Name: "helloworld",
@@ -161,13 +161,11 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	fmt.Println(string(b))
-
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), "<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let&#39;s see........<br/><br/><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br/><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br/><br/>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
+	assert.Equal(suite.T(), "\u003cp\u003e\u003ca href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003etest\u003c/span\u003e\u003c/a\u003e alright, should be able to post \u003ca href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003elinks\u003c/span\u003e\u003c/a\u003e with fragments in them now, let\u0026#39;s see........\u003cbr/\u003e\u003cbr/\u003e\u003ca href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\"\u003edocs.gotosocial.org/en/latest/user_guide/posts/#links\u003c/a\u003e\u003cbr/\u003e\u003cbr/\u003e\u003ca href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003egotosocial\u003c/span\u003e\u003c/a\u003e\u003cbr/\u003e\u003cbr/\u003e(tobi remember to pull the docker image challenge)\u003c/p\u003e", statusReply.Content)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
