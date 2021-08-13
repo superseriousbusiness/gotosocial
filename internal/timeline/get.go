@@ -44,11 +44,13 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	var err error
 
 	// no params are defined to just fetch from the top
+	// this is equivalent to a user asking for the top x posts from their timeline
 	if maxID == "" && sinceID == "" && minID == "" {
 		statuses, err = t.GetXFromTop(amount)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
+			// already cache the next query to speed up scrolling
 			go func() {
 				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
 					l.Errorf("error preparing next query: %s", err)
@@ -58,12 +60,14 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	}
 
 	// maxID is defined but sinceID isn't so take from behind
+	// this is equivalent to a user asking for the next x posts from their timeline, starting from maxID
 	if maxID != "" && sinceID == "" {
 		attempts := 0
 		statuses, err = t.GetXBehindID(amount, maxID, &attempts)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
+			// already cache the next query to speed up scrolling
 			go func() {
 				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
 					l.Errorf("error preparing next query: %s", err)
@@ -73,6 +77,7 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	}
 
 	// maxID is defined and sinceID || minID are as well, so take a slice between them
+	// this is equivalent to a user asking for posts older than x but newer than y
 	if maxID != "" && sinceID != "" {
 		statuses, err = t.GetXBetweenID(amount, maxID, minID)
 	}
@@ -81,6 +86,7 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	}
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
+	// this is equivalent to a user asking for posts newer than x (eg., refreshing the top of their timeline)
 	if maxID == "" && sinceID != "" {
 		statuses, err = t.GetXBeforeID(amount, sinceID, true)
 	}
@@ -147,13 +153,15 @@ findMarkLoop:
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == behindID {
+		if entry.statusID <= behindID {
 			behindIDMark = e
+		} else {
 			break findMarkLoop
 		}
 	}
 
 	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
+	// this can happen when a user asks for really old posts
 	if behindIDMark == nil {
 		if err := t.IndexBehind(behindID, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error indexing behind and including ID %s", behindID)
@@ -223,6 +231,10 @@ findMarkLoop:
 		} else {
 			break findMarkLoop
 		}
+	}
+
+	if beforeIDMark == nil {
+		return statuses, nil
 	}
 
 	var served int
