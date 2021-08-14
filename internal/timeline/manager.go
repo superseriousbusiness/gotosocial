@@ -160,7 +160,7 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 		return nil, err
 	}
 
-	statuses, err := t.Get(limit, maxID, sinceID, minID)
+	statuses, err := t.Get(limit, maxID, sinceID, minID, true)
 	if err != nil {
 		l.Errorf("error getting statuses: %s", err)
 	}

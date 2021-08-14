@@ -29,7 +29,7 @@ import (
 
 const retries = 5
 
-func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error) {
+func (t *timeline) Get(amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":      "Get",
 		"accountID": t.accountID,
@@ -50,12 +50,14 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			// already cache the next query to speed up scrolling
-			go func() {
-				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
-					l.Errorf("error preparing next query: %s", err)
-				}
-			}()
+			if prepareNext {
+				// already cache the next query to speed up scrolling
+				go func() {
+					if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+						l.Errorf("error preparing next query: %s", err)
+					}
+				}()
+			}
 		}
 	}
 
@@ -67,12 +69,14 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			// already cache the next query to speed up scrolling
-			go func() {
-				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
-					l.Errorf("error preparing next query: %s", err)
-				}
-			}()
+			if prepareNext {
+				// already cache the next query to speed up scrolling
+				go func() {
+					if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+						l.Errorf("error preparing next query: %s", err)
+					}
+				}()
+			}
 		}
 	}
 
@@ -130,6 +134,13 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 }
 
 func (t *timeline) GetXBehindID(amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
+	l := t.log.WithFields(logrus.Fields{
+		"func": "GetXBehindID",
+		"amount": amount,
+		"behindID": behindID,
+		"attempts": *attempts,
+	})
+
 	newAttempts := *attempts
 	newAttempts = newAttempts + 1
 	attempts = &newAttempts
@@ -154,8 +165,8 @@ findMarkLoop:
 		}
 
 		if entry.statusID <= behindID {
+			l.Trace("found behindID mark")
 			behindIDMark = e
-		} else {
 			break findMarkLoop
 		}
 	}
@@ -173,12 +184,19 @@ findMarkLoop:
 		if err != nil {
 			return nil, err
 		}
-		if oldestID == "" || oldestID == behindID || *attempts > retries {
-			// There is no oldest prepared post, or the oldest prepared post is still the post we're looking for entries after,
-			// or we've tried this loop too many times.
-			// This means we should just return the empty statuses slice since we don't have any more posts to offer.
+		if oldestID == "" {
+			l.Tracef("oldestID is empty so we can't return behindID %s", behindID)
 			return statuses, nil
 		}
+		if oldestID == behindID {
+			l.Tracef("given behindID %s is the same as oldestID %s so there's nothing to return behind it", behindID, oldestID)
+			return statuses, nil
+		}
+		if *attempts > retries {
+			l.Tracef("exceeded retries looking for behindID %s", behindID)
+			return statuses, nil
+		}
+		l.Trace("trying GetXBehindID again")
 		return t.GetXBehindID(amount, behindID, attempts)
 	}
 

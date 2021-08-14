@@ -38,7 +38,10 @@ type Timeline interface {
 		RETRIEVAL FUNCTIONS
 	*/
 
-	Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error)
+	// Get returns an amount of statuses with the given parameters.
+	// If prepareNext is true, then the next predicted query will be prepared already in a goroutine,
+	// to make the next call to Get faster.
+	Get(amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error)
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
 	// GetXBehindID returns x amount of posts from the given id onwards, from newest to oldest.
