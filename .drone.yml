@@ -14,6 +14,11 @@ steps:
 # See: https://golangci-lint.run/
 - name: lint
   image: golangci/golangci-lint:v1.41.1
+  volumes:
+  - name: go-build
+    path: /root/.cache/go-build
+  - name: golangci-lint-cache
+    path: /root/.cache/golangci-lint
   commands:
   - golangci-lint run --timeout 5m0s --tests=false --verbose
   when:
@@ -23,6 +28,9 @@ steps:
 
 - name: test
   image: golang:1.16.4
+  volumes:
+  - name: go-build
+    path: /root/.cache/go-build
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
@@ -49,15 +57,30 @@ steps:
       exclude:
         - pull_request
 
-services:
-# We need this postgres service running for the test step.
+# We need a postgres service running for the test step.
 # See: https://docs.drone.io/pipeline/docker/syntax/services/
+services:
 - name: postgres
   image: postgres
   environment:
     POSTGRES_PASSWORD: postgres
+  when:
+    event:
+      include:
+        - pull_request
+
+# We can speed up builds significantly by caching build artifacts between runs.
+# See: https://docs.drone.io/pipeline/docker/syntax/volumes/host/
+volumes:
+- name: go-build-cache
+  host:
+    path: /drone/gotosocial/go-build
+- name: golangci-lint-cache
+  host:
+    path: /drone/gotosocial/golangci-lint
+
 ---
 kind: signature
-hmac: 888b0a9964be9bddad325a8eab0f54350f3cd36c333564ad4333811b4841b640
+hmac: 0241187feb5302278e4e3d8460157e9ec6a2c57eb5d427719e712b8a1b6da8e0
 
 ...
