@@ -21,9 +21,7 @@ package processing
 import (
 	"fmt"
 	"net/url"
-	"sync"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -185,104 +183,4 @@ func (p *processor) filterFavedStatuses(authed *oauth.Auth, statuses []*gtsmodel
 	}
 
 	return apiStatuses, nil
-}
-
-func (p *processor) initTimelines() error {
-	// get all local accounts (ie., domain = nil) that aren't suspended (suspended_at = nil)
-	localAccounts := []*gtsmodel.Account{}
-	where := []db.Where{
-		{
-			Key: "domain", Value: nil,
-		},
-		{
-			Key: "suspended_at", Value: nil,
-		},
-	}
-	if err := p.db.GetWhere(where, &localAccounts); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil
-		}
-		return fmt.Errorf("initTimelines: db error initializing timelines: %s", err)
-	}
-
-	// we want to wait until all timelines are populated so created a waitgroup here
-	wg := &sync.WaitGroup{}
-	wg.Add(len(localAccounts))
-
-	for _, localAccount := range localAccounts {
-		// to save time we can populate the timelines asynchronously
-		// this will go heavy on the database, but since we're not actually serving yet it doesn't really matter
-		go p.initTimelineFor(localAccount, wg)
-	}
-
-	// wait for all timelines to be populated before we exit
-	wg.Wait()
-	return nil
-}
-
-func (p *processor) initTimelineFor(account *gtsmodel.Account, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	l := p.log.WithFields(logrus.Fields{
-		"func":      "initTimelineFor",
-		"accountID": account.ID,
-	})
-
-	desiredIndexLength := p.timelineManager.GetDesiredIndexLength()
-
-	statuses, err := p.db.GetHomeTimelineForAccount(account.ID, "", "", "", desiredIndexLength, false)
-	if err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			l.Error(fmt.Errorf("initTimelineFor: error getting statuses: %s", err))
-		}
-		return
-	}
-	p.indexAndIngest(statuses, account, desiredIndexLength)
-
-	lengthNow := p.timelineManager.GetIndexedLength(account.ID)
-	if lengthNow < desiredIndexLength {
-		// try and get more posts from the last ID onwards
-		rearmostStatusID, err := p.timelineManager.GetOldestIndexedID(account.ID)
-		if err != nil {
-			l.Error(fmt.Errorf("initTimelineFor: error getting id of rearmost status: %s", err))
-			return
-		}
-
-		if rearmostStatusID != "" {
-			moreStatuses, err := p.db.GetHomeTimelineForAccount(account.ID, rearmostStatusID, "", "", desiredIndexLength/2, false)
-			if err != nil {
-				l.Error(fmt.Errorf("initTimelineFor: error getting more statuses: %s", err))
-				return
-			}
-			p.indexAndIngest(moreStatuses, account, desiredIndexLength)
-		}
-	}
-
-	l.Debugf("prepared timeline of length %d for account %s", lengthNow, account.ID)
-}
-
-func (p *processor) indexAndIngest(statuses []*gtsmodel.Status, timelineAccount *gtsmodel.Account, desiredIndexLength int) {
-	l := p.log.WithFields(logrus.Fields{
-		"func":      "indexAndIngest",
-		"accountID": timelineAccount.ID,
-	})
-
-	for _, s := range statuses {
-		timelineable, err := p.filter.StatusHometimelineable(s, timelineAccount)
-		if err != nil {
-			l.Error(fmt.Errorf("initTimelineFor: error checking home timelineability of status %s: %s", s.ID, err))
-			continue
-		}
-		if timelineable {
-			if _, err := p.timelineManager.Ingest(s, timelineAccount.ID); err != nil {
-				l.Error(fmt.Errorf("initTimelineFor: error ingesting status %s: %s", s.ID, err))
-				continue
-			}
-
-			// check if we have enough posts now and return if we do
-			if p.timelineManager.GetIndexedLength(timelineAccount.ID) >= desiredIndexLength {
-				return
-			}
-		}
-	}
 }

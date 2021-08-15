@@ -304,7 +304,7 @@ func (p *processor) Start() error {
 			}
 		}
 	}()
-	return p.initTimelines()
+	return nil
 }
 
 // Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
