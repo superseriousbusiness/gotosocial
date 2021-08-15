@@ -28,31 +28,46 @@ import (
 
 func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
-
 	q := ps.conn.Model(&statuses)
 
 	q = q.ColumnExpr("status.*").
+		// Find out who accountID follows.
 		Join("LEFT JOIN follows AS f ON f.target_account_id = status.account_id").
-		Where("f.account_id = ?", accountID).
+		// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
+		// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
+		//
+		// This is equivalent to something like WHERE ... AND (... OR ...)
+		// See: https://pg.uptrace.dev/queries/#select
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.WhereOr("f.account_id = ?", accountID).
+				WhereOr("status.account_id = ?", accountID)
+			return q, nil
+		}).
+		// Sort by highest ID (newest) to lowest ID (oldest)
 		Order("status.id DESC")
 
 	if maxID != "" {
+		// return only statuses LOWER (ie., older) than maxID
 		q = q.Where("status.id < ?", maxID)
 	}
 
 	if sinceID != "" {
+		// return only statuses HIGHER (ie., newer) than sinceID
 		q = q.Where("status.id > ?", sinceID)
 	}
 
 	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
 		q = q.Where("status.id > ?", minID)
 	}
 
 	if local {
+		// return only statuses posted by local account havers
 		q = q.Where("status.local = ?", local)
 	}
 
 	if limit > 0 {
+		// limit amount of statuses returned
 		q = q.Limit(limit)
 	}
 

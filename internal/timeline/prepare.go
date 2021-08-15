@@ -23,23 +23,35 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, minID string) error {
+	l := t.log.WithFields(logrus.Fields{
+		"func":    "prepareNextQuery",
+		"amount":  amount,
+		"maxID":   maxID,
+		"sinceID": sinceID,
+		"minID":   minID,
+	})
+
 	var err error
 
 	// maxID is defined but sinceID isn't so take from behind
 	if maxID != "" && sinceID == "" {
+		l.Debug("preparing behind maxID")
 		err = t.PrepareBehind(maxID, amount)
 	}
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
 	if maxID == "" && sinceID != "" {
+		l.Debug("preparing before sinceID")
 		err = t.PrepareBefore(sinceID, false, amount)
 	}
 	if maxID == "" && minID != "" {
+		l.Debug("preparing before minID")
 		err = t.PrepareBefore(minID, false, amount)
 	}
 
@@ -47,13 +59,14 @@ func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, mi
 }
 
 func (t *timeline) PrepareBehind(statusID string, amount int) error {
-	t.Lock()
-	defer t.Unlock()
-
 	// lazily initialize prepared posts if it hasn't been done already
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 		t.preparedPosts.data.Init()
+	}
+
+	if err := t.IndexBehind(statusID, true, amount); err != nil {
+		return fmt.Errorf("PrepareBehind: error indexing behind id %s: %s", statusID, err)
 	}
 
 	// if the postindex is nil, nothing has been indexed yet so there's nothing to prepare
@@ -63,6 +76,8 @@ func (t *timeline) PrepareBehind(statusID string, amount int) error {
 
 	var prepared int
 	var preparing bool
+	t.Lock()
+	defer t.Unlock()
 prepareloop:
 	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
 		entry, ok := e.Value.(*postIndexEntry)
@@ -154,8 +169,10 @@ prepareloop:
 }
 
 func (t *timeline) PrepareFromTop(amount int) error {
-	t.Lock()
-	defer t.Unlock()
+	l := t.log.WithFields(logrus.Fields{
+		"func":   "PrepareFromTop",
+		"amount": amount,
+	})
 
 	// lazily initialize prepared posts if it hasn't been done already
 	if t.preparedPosts.data == nil {
@@ -163,11 +180,17 @@ func (t *timeline) PrepareFromTop(amount int) error {
 		t.preparedPosts.data.Init()
 	}
 
-	// if the postindex is nil, nothing has been indexed yet so there's nothing to prepare
+	// if the postindex is nil, nothing has been indexed yet so index from the highest ID possible
 	if t.postIndex.data == nil {
-		return nil
+		l.Debug("postindex.data was nil, indexing behind highest possible ID")
+		if err := t.IndexBehind("ZZZZZZZZZZZZZZZZZZZZZZZZZZ", false, amount); err != nil {
+			return fmt.Errorf("PrepareFromTop: error indexing behind id %s: %s", "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", err)
+		}
 	}
 
+	l.Trace("entering prepareloop")
+	t.Lock()
+	defer t.Unlock()
 	var prepared int
 prepareloop:
 	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
@@ -193,10 +216,12 @@ prepareloop:
 		prepared = prepared + 1
 		if prepared == amount {
 			// we're done
+			l.Trace("leaving prepareloop")
 			break prepareloop
 		}
 	}
 
+	l.Trace("leaving function")
 	return nil
 }
 

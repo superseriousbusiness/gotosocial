@@ -19,30 +19,38 @@
 package timeline
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (t *timeline) IndexBefore(statusID string, include bool, amount int) error {
+	// lazily initialize index if it hasn't been done already
+	if t.postIndex.data == nil {
+		t.postIndex.data = &list.List{}
+		t.postIndex.data.Init()
+	}
+
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
 
 	if include {
+		// if we have the status with given statusID in the database, include it in the results set as well
 		s := &gtsmodel.Status{}
-		if err := t.db.GetByID(statusID, s); err != nil {
-			return fmt.Errorf("IndexBefore: error getting initial status with id %s: %s", statusID, err)
+		if err := t.db.GetByID(statusID, s); err == nil {
+			filtered = append(filtered, s)
 		}
-		filtered = append(filtered, s)
 	}
 
 	i := 0
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
-		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, "", offsetStatus, "", amount, false)
+		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, "", "", offsetStatus, amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
@@ -71,24 +79,70 @@ grabloop:
 	return nil
 }
 
-func (t *timeline) IndexBehind(statusID string, amount int) error {
+func (t *timeline) IndexBehind(statusID string, include bool, amount int) error {
+	l := t.log.WithFields(logrus.Fields{
+		"func":    "IndexBehind",
+		"include": include,
+		"amount":  amount,
+	})
+
+	// lazily initialize index if it hasn't been done already
+	if t.postIndex.data == nil {
+		t.postIndex.data = &list.List{}
+		t.postIndex.data.Init()
+	}
+
+	// If we're already indexedBehind given statusID by the required amount, we can return nil.
+	// First find position of statusID (or as near as possible).
+	var position int
+positionLoop:
+	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*postIndexEntry)
+		if !ok {
+			return errors.New("IndexBehind: could not parse e as a postIndexEntry")
+		}
+
+		if entry.statusID <= statusID {
+			// we've found it
+			break positionLoop
+		}
+		position++
+	}
+	// now check if the length of indexed posts exceeds the amount of posts required (position of statusID, plus amount of posts requested after that)
+	if t.postIndex.data.Len() > position+amount {
+		// we have enough indexed behind already to satisfy amount, so don't need to make db calls
+		l.Trace("returning nil since we already have enough posts indexed")
+		return nil
+	}
+
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
+
+	if include {
+		// if we have the status with given statusID in the database, include it in the results set as well
+		s := &gtsmodel.Status{}
+		if err := t.db.GetByID(statusID, s); err == nil {
+			filtered = append(filtered, s)
+		}
+	}
 
 	i := 0
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
+		l.Tracef("entering grabloop; i is %d; len(filtered) is %d", i, len(filtered))
 		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, offsetStatus, "", "", amount, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
 			}
-			return fmt.Errorf("IndexBehindAndIncluding: error getting statuses from db: %s", err)
+			return fmt.Errorf("IndexBehind: error getting statuses from db: %s", err)
 		}
+		l.Tracef("got %d statuses", len(statuses))
 
 		for _, s := range statuses {
 			timelineable, err := t.filter.StatusHometimelineable(s, t.account)
 			if err != nil {
+				l.Tracef("status was not hometimelineable: %s", err)
 				continue
 			}
 			if timelineable {
@@ -97,6 +151,7 @@ grabloop:
 			offsetStatus = s.ID
 		}
 	}
+	l.Trace("left grabloop")
 
 	for _, s := range filtered {
 		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
@@ -104,10 +159,7 @@ grabloop:
 		}
 	}
 
-	return nil
-}
-
-func (t *timeline) IndexOneByID(statusID string) error {
+	l.Trace("exiting function")
 	return nil
 }
 
@@ -152,21 +204,30 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 
 func (t *timeline) OldestIndexedPostID() (string, error) {
 	var id string
-	if t.postIndex == nil || t.postIndex.data == nil {
+	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Back() == nil {
 		// return an empty string if postindex hasn't been initialized yet
 		return id, nil
 	}
 
 	e := t.postIndex.data.Back()
-
-	if e == nil {
-		// return an empty string if there's no back entry (ie., the index list hasn't been initialized yet)
-		return id, nil
-	}
-
 	entry, ok := e.Value.(*postIndexEntry)
 	if !ok {
 		return id, errors.New("OldestIndexedPostID: could not parse e as a postIndexEntry")
+	}
+	return entry.statusID, nil
+}
+
+func (t *timeline) NewestIndexedPostID() (string, error) {
+	var id string
+	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Front() == nil {
+		// return an empty string if postindex hasn't been initialized yet
+		return id, nil
+	}
+
+	e := t.postIndex.data.Front()
+	entry, ok := e.Value.(*postIndexEntry)
+	if !ok {
+		return id, errors.New("NewestIndexedPostID: could not parse e as a postIndexEntry")
 	}
 	return entry.statusID, nil
 }

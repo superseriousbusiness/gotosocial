@@ -38,7 +38,10 @@ type Timeline interface {
 		RETRIEVAL FUNCTIONS
 	*/
 
-	Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error)
+	// Get returns an amount of statuses with the given parameters.
+	// If prepareNext is true, then the next predicted query will be prepared already in a goroutine,
+	// to make the next call to Get faster.
+	Get(amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error)
 	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
 	GetXFromTop(amount int) ([]*apimodel.Status, error)
 	// GetXBehindID returns x amount of posts from the given id onwards, from newest to oldest.
@@ -50,7 +53,7 @@ type Timeline interface {
 	// This will NOT include the status with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER
-	GetXBeforeID(amount int, sinceID string, startFromTop bool, attempts *int) ([]*apimodel.Status, error)
+	GetXBeforeID(amount int, sinceID string, startFromTop bool) ([]*apimodel.Status, error)
 	// GetXBetweenID returns x amount of posts from the given maxID, up to the given id, from newest to oldest.
 	// This will NOT include the status with the given IDs.
 	//
@@ -70,6 +73,12 @@ type Timeline interface {
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestIndexedPostID() (string, error)
+	// NewestIndexedPostID returns the id of the frontmost (ie., the newest) indexed post, or an error if something goes wrong.
+	// If nothing goes wrong but there's no newest post, an empty string will be returned so make sure to check for this.
+	NewestIndexedPostID() (string, error)
+
+	IndexBefore(statusID string, include bool, amount int) error
+	IndexBehind(statusID string, include bool, amount int) error
 
 	/*
 		PREPARATION FUNCTIONS

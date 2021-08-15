@@ -75,11 +75,11 @@ type Manager interface {
 	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(timelineAccountID string, limit int) error
 	// Remove removes one status from the timeline of the given timelineAccountID
-	Remove(statusID string, timelineAccountID string) (int, error)
+	Remove(timelineAccountID string, statusID string) (int, error)
 	// WipeStatusFromAllTimelines removes one status from the index and prepared posts of all timelines
 	WipeStatusFromAllTimelines(statusID string) error
 	// WipeStatusesFromAccountID removes all statuses by the given accountID from the timelineAccountID's timelines.
-	WipeStatusesFromAccountID(accountID string, timelineAccountID string) error
+	WipeStatusesFromAccountID(timelineAccountID string, accountID string) error
 }
 
 // NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
@@ -133,7 +133,7 @@ func (m *manager) IngestAndPrepare(status *gtsmodel.Status, timelineAccountID st
 	return t.IndexAndPrepareOne(status.CreatedAt, status.ID, status.BoostOfID, status.AccountID, status.BoostOfAccountID)
 }
 
-func (m *manager) Remove(statusID string, timelineAccountID string) (int, error) {
+func (m *manager) Remove(timelineAccountID string, statusID string) (int, error) {
 	l := m.log.WithFields(logrus.Fields{
 		"func":              "Remove",
 		"timelineAccountID": timelineAccountID,
@@ -160,7 +160,7 @@ func (m *manager) HomeTimeline(timelineAccountID string, maxID string, sinceID s
 		return nil, err
 	}
 
-	statuses, err := t.Get(limit, maxID, sinceID, minID)
+	statuses, err := t.Get(limit, maxID, sinceID, minID, true)
 	if err != nil {
 		l.Errorf("error getting statuses: %s", err)
 	}
@@ -221,7 +221,7 @@ func (m *manager) WipeStatusFromAllTimelines(statusID string) error {
 	return err
 }
 
-func (m *manager) WipeStatusesFromAccountID(accountID string, timelineAccountID string) error {
+func (m *manager) WipeStatusesFromAccountID(timelineAccountID string, accountID string) error {
 	t, err := m.getOrCreateTimeline(timelineAccountID)
 	if err != nil {
 		return err

@@ -29,7 +29,7 @@ import (
 
 const retries = 5
 
-func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) ([]*apimodel.Status, error) {
+func (t *timeline) Get(amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":      "Get",
 		"accountID": t.accountID,
@@ -44,35 +44,44 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	var err error
 
 	// no params are defined to just fetch from the top
+	// this is equivalent to a user asking for the top x posts from their timeline
 	if maxID == "" && sinceID == "" && minID == "" {
 		statuses, err = t.GetXFromTop(amount)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			go func() {
-				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
-					l.Errorf("error preparing next query: %s", err)
-				}
-			}()
+			if prepareNext {
+				// already cache the next query to speed up scrolling
+				go func() {
+					if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+						l.Errorf("error preparing next query: %s", err)
+					}
+				}()
+			}
 		}
 	}
 
 	// maxID is defined but sinceID isn't so take from behind
+	// this is equivalent to a user asking for the next x posts from their timeline, starting from maxID
 	if maxID != "" && sinceID == "" {
 		attempts := 0
 		statuses, err = t.GetXBehindID(amount, maxID, &attempts)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
 		if len(statuses) != 0 {
 			nextMaxID := statuses[len(statuses)-1].ID
-			go func() {
-				if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
-					l.Errorf("error preparing next query: %s", err)
-				}
-			}()
+			if prepareNext {
+				// already cache the next query to speed up scrolling
+				go func() {
+					if err := t.prepareNextQuery(amount, nextMaxID, "", ""); err != nil {
+						l.Errorf("error preparing next query: %s", err)
+					}
+				}()
+			}
 		}
 	}
 
 	// maxID is defined and sinceID || minID are as well, so take a slice between them
+	// this is equivalent to a user asking for posts older than x but newer than y
 	if maxID != "" && sinceID != "" {
 		statuses, err = t.GetXBetweenID(amount, maxID, minID)
 	}
@@ -81,13 +90,12 @@ func (t *timeline) Get(amount int, maxID string, sinceID string, minID string) (
 	}
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
+	// this is equivalent to a user asking for posts newer than x (eg., refreshing the top of their timeline)
 	if maxID == "" && sinceID != "" {
-		attempts := 0
-		statuses, err = t.GetXBeforeID(amount, sinceID, true, &attempts)
+		statuses, err = t.GetXBeforeID(amount, sinceID, true)
 	}
 	if maxID == "" && minID != "" {
-		attempts := 0
-		statuses, err = t.GetXBeforeID(amount, minID, true, &attempts)
+		statuses, err = t.GetXBeforeID(amount, minID, true)
 	}
 
 	return statuses, err
@@ -126,6 +134,13 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 }
 
 func (t *timeline) GetXBehindID(amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
+	l := t.log.WithFields(logrus.Fields{
+		"func":     "GetXBehindID",
+		"amount":   amount,
+		"behindID": behindID,
+		"attempts": *attempts,
+	})
+
 	newAttempts := *attempts
 	newAttempts = newAttempts + 1
 	attempts = &newAttempts
@@ -149,17 +164,16 @@ findMarkLoop:
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == behindID {
+		if entry.statusID <= behindID {
+			l.Trace("found behindID mark")
 			behindIDMark = e
 			break findMarkLoop
 		}
 	}
 
 	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
+	// this can happen when a user asks for really old posts
 	if behindIDMark == nil {
-		if err := t.IndexBehind(behindID, amount); err != nil {
-			return nil, fmt.Errorf("GetXBehindID: error indexing behind and including ID %s", behindID)
-		}
 		if err := t.PrepareBehind(behindID, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error preparing behind and including ID %s", behindID)
 		}
@@ -167,12 +181,19 @@ findMarkLoop:
 		if err != nil {
 			return nil, err
 		}
-		if oldestID == "" || oldestID == behindID || *attempts > retries {
-			// There is no oldest prepared post, or the oldest prepared post is still the post we're looking for entries after,
-			// or we've tried this loop too many times.
-			// This means we should just return the empty statuses slice since we don't have any more posts to offer.
+		if oldestID == "" {
+			l.Tracef("oldestID is empty so we can't return behindID %s", behindID)
 			return statuses, nil
 		}
+		if oldestID == behindID {
+			l.Tracef("given behindID %s is the same as oldestID %s so there's nothing to return behind it", behindID, oldestID)
+			return statuses, nil
+		}
+		if *attempts > retries {
+			l.Tracef("exceeded retries looking for behindID %s", behindID)
+			return statuses, nil
+		}
+		l.Trace("trying GetXBehindID again")
 		return t.GetXBehindID(amount, behindID, attempts)
 	}
 
@@ -203,11 +224,7 @@ serveloop:
 	return statuses, nil
 }
 
-func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, attempts *int) ([]*apimodel.Status, error) {
-	newAttempts := *attempts
-	newAttempts = newAttempts + 1
-	attempts = &newAttempts
-
+func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool) ([]*apimodel.Status, error) {
 	// make a slice of statuses with the length we need to return
 	statuses := make([]*apimodel.Status, 0, amount)
 
@@ -215,7 +232,7 @@ func (t *timeline) GetXBeforeID(amount int, beforeID string, startFromTop bool, 
 		t.preparedPosts.data = &list.List{}
 	}
 
-	// iterate through the modified list until we hit the mark we're looking for
+	// iterate through the modified list until we hit the mark we're looking for, or as close as possible to it
 	var beforeIDMark *list.Element
 findMarkLoop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
@@ -224,24 +241,15 @@ findMarkLoop:
 			return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == beforeID {
+		if entry.statusID >= beforeID {
 			beforeIDMark = e
+		} else {
 			break findMarkLoop
 		}
 	}
 
-	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
 	if beforeIDMark == nil {
-		if err := t.IndexBefore(beforeID, true, amount); err != nil {
-			return nil, fmt.Errorf("GetXBeforeID: error indexing before and including ID %s", beforeID)
-		}
-		if err := t.PrepareBefore(beforeID, true, amount); err != nil {
-			return nil, fmt.Errorf("GetXBeforeID: error preparing before and including ID %s", beforeID)
-		}
-		if *attempts > retries {
-			return statuses, nil
-		}
-		return t.GetXBeforeID(amount, beforeID, startFromTop, attempts)
+		return statuses, nil
 	}
 
 	var served int
