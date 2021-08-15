@@ -19,6 +19,7 @@
 package timeline
 
 import (
+	"container/list"
 	"errors"
 	"fmt"
 	"time"
@@ -29,6 +30,12 @@ import (
 )
 
 func (t *timeline) IndexBefore(statusID string, include bool, amount int) error {
+	// lazily initialize index if it hasn't been done already
+	if t.postIndex.data == nil {
+		t.postIndex.data = &list.List{}
+		t.postIndex.data.Init()
+	}
+
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
 
@@ -78,6 +85,35 @@ func (t *timeline) IndexBehind(statusID string, include bool, amount int) error 
 		"include": include,
 		"amount":  amount,
 	})
+
+	// lazily initialize index if it hasn't been done already
+	if t.postIndex.data == nil {
+		t.postIndex.data = &list.List{}
+		t.postIndex.data.Init()
+	}
+
+	// If we're already indexedBehind given statusID by the required amount, we can return nil.
+	// First find position of statusID (or as near as possible).
+	var position int
+positionLoop:
+	for e := t.postIndex.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*postIndexEntry)
+		if !ok {
+			return errors.New("IndexBehind: could not parse e as a postIndexEntry")
+		}
+
+		if entry.statusID <= statusID {
+			// we've found it
+			break positionLoop
+		}
+		position++
+	}
+	// now check if the length of indexed posts exceeds the amount of posts required (position of statusID, plus amount of posts requested after that)
+	if t.postIndex.data.Len() > position+amount {
+		// we have enough indexed behind already to satisfy amount, so don't need to make db calls
+		l.Trace("returning nil since we already have enough posts indexed")
+		return nil
+	}
 
 	filtered := []*gtsmodel.Status{}
 	offsetStatus := statusID
@@ -168,7 +204,7 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 
 func (t *timeline) OldestIndexedPostID() (string, error) {
 	var id string
-	if t.postIndex == nil || t.postIndex.data == nil {
+	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Back() == nil {
 		// return an empty string if postindex hasn't been initialized yet
 		return id, nil
 	}
@@ -183,7 +219,7 @@ func (t *timeline) OldestIndexedPostID() (string, error) {
 
 func (t *timeline) NewestIndexedPostID() (string, error) {
 	var id string
-	if t.postIndex == nil || t.postIndex.data == nil {
+	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Front() == nil {
 		// return an empty string if postindex hasn't been initialized yet
 		return id, nil
 	}
