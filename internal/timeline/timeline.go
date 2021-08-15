@@ -73,6 +73,12 @@ type Timeline interface {
 	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
 	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
 	OldestIndexedPostID() (string, error)
+	// NewestIndexedPostID returns the id of the frontmost (ie., the newest) indexed post, or an error if something goes wrong.
+	// If nothing goes wrong but there's no newest post, an empty string will be returned so make sure to check for this.
+	NewestIndexedPostID() (string, error)
+
+	IndexBefore(statusID string, include bool, amount int) error
+	IndexBehind(statusID string, include bool, amount int) error
 
 	/*
 		PREPARATION FUNCTIONS

@@ -174,7 +174,7 @@ findMarkLoop:
 	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
 	// this can happen when a user asks for really old posts
 	if behindIDMark == nil {
-		if err := t.IndexBehind(behindID, amount); err != nil {
+		if err := t.IndexBehind(behindID, true, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error indexing behind and including ID %s", behindID)
 		}
 		if err := t.PrepareBehind(behindID, amount); err != nil {

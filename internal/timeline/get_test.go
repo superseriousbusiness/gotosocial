@@ -66,13 +66,14 @@ func (suite *GetTestSuite) TearDownTest() {
 }
 
 func (suite *GetTestSuite) TestGetDefault() {
-	// get 10 from the top and don't prepare the next query
-	statuses, err := suite.timeline.Get(10, "", "", "", false)
+	// get 10 20 the top and don't prepare the next query
+	statuses, err := suite.timeline.Get(20, "", "", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(statuses, 10)
+	// we only have 12 statuses in the test suite
+	suite.Len(statuses, 12)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string

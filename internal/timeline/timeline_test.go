@@ -39,4 +39,5 @@ type TimelineStandardTestSuite struct {
 	testStatuses map[string]*gtsmodel.Status
 
 	timeline timeline.Timeline
+	manager  timeline.Manager
 }
