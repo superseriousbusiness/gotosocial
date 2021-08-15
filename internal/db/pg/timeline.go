@@ -29,7 +29,7 @@ import (
 func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	statuses := []*gtsmodel.Status{}
 	q := ps.conn.Model(&statuses)
-	
+
 	q = q.ColumnExpr("status.*").
 		// Find out who accountID follows.
 		Join("LEFT JOIN follows AS f ON f.target_account_id = status.account_id").

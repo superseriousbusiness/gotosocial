@@ -135,8 +135,8 @@ func (t *timeline) GetXFromTop(amount int) ([]*apimodel.Status, error) {
 
 func (t *timeline) GetXBehindID(amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
 	l := t.log.WithFields(logrus.Fields{
-		"func": "GetXBehindID",
-		"amount": amount,
+		"func":     "GetXBehindID",
+		"amount":   amount,
 		"behindID": behindID,
 		"attempts": *attempts,
 	})

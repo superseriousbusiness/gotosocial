@@ -30,13 +30,12 @@ import (
 
 func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, minID string) error {
 	l := t.log.WithFields(logrus.Fields{
-		"func": "prepareNextQuery",
-		"amount": amount,
-		"maxID": maxID,
+		"func":    "prepareNextQuery",
+		"amount":  amount,
+		"maxID":   maxID,
 		"sinceID": sinceID,
-		"minID": minID,
+		"minID":   minID,
 	})
-
 
 	var err error
 
@@ -171,7 +170,7 @@ prepareloop:
 
 func (t *timeline) PrepareFromTop(amount int) error {
 	l := t.log.WithFields(logrus.Fields{
-		"func": "PrepareFromTop",
+		"func":   "PrepareFromTop",
 		"amount": amount,
 	})
 
