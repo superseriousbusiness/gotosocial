@@ -15,7 +15,7 @@ steps:
 - name: lint
   image: golangci/golangci-lint:v1.41.1
   volumes:
-  - name: go-build
+  - name: go-build-cache
     path: /root/.cache/go-build
   - name: golangci-lint-cache
     path: /root/.cache/golangci-lint
@@ -29,7 +29,7 @@ steps:
 - name: test
   image: golang:1.16.4
   volumes:
-  - name: go-build
+  - name: go-build-cache
     path: /root/.cache/go-build
   environment:
     GTS_DB_ADDRESS: postgres
@@ -81,6 +81,6 @@ volumes:
 
 ---
 kind: signature
-hmac: 0241187feb5302278e4e3d8460157e9ec6a2c57eb5d427719e712b8a1b6da8e0
+hmac: 9134975e238ab9f92a7f75ccc11279e8d5edddb87f10165ed3c7d23fdd9c8a11
 
 ...
