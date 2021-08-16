@@ -19,6 +19,7 @@
 package text
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -26,6 +27,9 @@ import (
 
 func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(plain)
+
+	// sanitize any html elements
+	content = RemoveHTML(content)
 
 	// format links nicely
 	content = f.ReplaceLinks(content)
@@ -38,6 +42,9 @@ func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags [
 
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")
+
+	// wrap the whole thing in a pee
+	content = fmt.Sprintf(`<p>%s</p>`, content)
 
 	return postformat(content)
 }

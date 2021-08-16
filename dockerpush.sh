@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker push "superseriousbusiness/gotosocial:$(cat version)"
+docker push "superseriousbusiness/gotosocial:$(git rev-parse --abbrev-ref HEAD)"

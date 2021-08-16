@@ -139,7 +139,7 @@ We use [golangci-lint](https://golangci-lint.run/) for linting. To run this loca
 Then, you can run the linter with:
 
 ```bash
-golangci-lint run
+golangci-lint run --tests=false
 ```
 
 Note that this linter also runs as a job on the Github repo, so if you make a PR that doesn't pass the linter, it will be rejected. As such, it's good practice to run the linter locally before pushing or opening a PR.
@@ -155,7 +155,7 @@ go get -u github.com/golang/lint/golint
 To run the linter, use:
 
 ```bash
-golint ./...
+golint ./internal/...
 ```
 
 Then make sure to run `go fmt ./...` to update whitespace and other opinionated formatting.

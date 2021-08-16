@@ -364,6 +364,15 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
+# github.com/tdewolff/minify/v2 v2.9.21
+## explicit
+github.com/tdewolff/minify/v2
+github.com/tdewolff/minify/v2/html
+# github.com/tdewolff/parse/v2 v2.5.19
+github.com/tdewolff/parse/v2
+github.com/tdewolff/parse/v2/buffer
+github.com/tdewolff/parse/v2/html
+github.com/tdewolff/parse/v2/strconv
 # github.com/tidwall/buntdb v1.2.4
 ## explicit
 # github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
