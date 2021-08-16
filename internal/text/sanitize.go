@@ -36,7 +36,8 @@ var regular *bluemonday.Policy = bluemonday.UGCPolicy().
 	AddTargetBlankToFullyQualifiedLinks(true).
 	AllowAttrs("class", "href", "rel").OnElements("a").
 	AllowAttrs("class").OnElements("span").
-	AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
+	AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code").
+	SkipElementsContent("code", "pre")
 
 // '[C]an be thought of as equivalent to stripping all HTML elements and their attributes as it has nothing on its allowlist.
 // An example usage scenario would be blog post titles where HTML tags are not expected at all

@@ -46,7 +46,5 @@ func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags [
 	// wrap the whole thing in a pee
 	content = fmt.Sprintf(`<p>%s</p>`, content)
 
-	content = SanitizeHTML(content)
-
 	return postformat(content)
 }

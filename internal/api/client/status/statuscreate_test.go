@@ -165,7 +165,7 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), "\u003cp\u003e\u003ca href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003etest\u003c/span\u003e\u003c/a\u003e alright, should be able to post \u003ca href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003elinks\u003c/span\u003e\u003c/a\u003e with fragments in them now, let\u0026#39;s see........\u003cbr/\u003e\u003cbr/\u003e\u003ca href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\"\u003edocs.gotosocial.org/en/latest/user_guide/posts/#links\u003c/a\u003e\u003cbr/\u003e\u003cbr/\u003e\u003ca href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003egotosocial\u003c/span\u003e\u003c/a\u003e\u003cbr/\u003e\u003cbr/\u003e(tobi remember to pull the docker image challenge)\u003c/p\u003e", statusReply.Content)
+	assert.Equal(suite.T(), "<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
@@ -198,7 +198,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: <br/> here&#39;s an emoji that isn&#39;t in the db: :test_emoji:</p>", statusReply.Content)
+	assert.Equal(suite.T(), "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
 
 	assert.Len(suite.T(), statusReply.Emojis, 1)
 	mastoEmoji := statusReply.Emojis[0]
@@ -314,7 +314,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), "", statusResponse.SpoilerText)
-	assert.Equal(suite.T(), "<p>here&#39;s an image attachment</p>", statusResponse.Content)
+	assert.Equal(suite.T(), "<p>here's an image attachment</p>", statusResponse.Content)
 	assert.False(suite.T(), statusResponse.Sensitive)
 	assert.Equal(suite.T(), model.VisibilityPublic, statusResponse.Visibility)
 

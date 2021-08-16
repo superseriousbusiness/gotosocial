@@ -19,21 +19,21 @@
 package text
 
 import (
-	"github.com/russross/blackfriday/v2"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/tdewolff/minify/v2"
+	"github.com/tdewolff/minify/v2/html"
 )
 
-func (f *formatter) FromMarkdown(md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
-	content := preformat(md)
+var m *minify.M
 
-	// do the markdown parsing *first*
-	contentBytes := blackfriday.Run([]byte(content))
-
-	// format tags nicely
-	content = f.ReplaceTags(string(contentBytes), tags)
-
-	// format mentions nicely
-	content = f.ReplaceMentions(content, mentions)
-
-	return postformat(content)
+// minifyHTML runs html through a minifier, reducing it in size.
+func minifyHTML(in string) (string, error) {
+	if m == nil {
+		m = minify.New()
+		m.Add("text/html", &html.Minifier{
+			KeepQuotes:       true,
+			KeepEndTags:      true,
+			KeepDocumentTags: true,
+		})
+	}
+	return m.String("text/html", in)
 }

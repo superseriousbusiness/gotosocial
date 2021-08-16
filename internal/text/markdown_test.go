@@ -19,6 +19,7 @@
 package text_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -36,11 +37,29 @@ Here's a [link](https://example.org).`
 
 	simpleMarkdownExpected = "<h1>Title</h1><p>Here’s a simple text in markdown.</p><p>Here’s a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
 
-	withCodeBlock         = "# Title\n\n``` text\nhere's some code!\n```\n\nthat was some code :)"
-	withCodeBlockExpected = "<h1>Title</h1><pre><code class=\"language-text\">here&#39;s some code!</code></pre><p>that was some code :)</p>"
+	withCodeBlockExpected = "<h1>Title</h1><p>Below is some JSON.</p><pre><code class=\"language-json\">{\n  \"key\": \"value\",\n  \"another_key\": [\n    \"value1\",\n    \"value2\"\n  ]\n}\n</code></pre><p>that was some JSON :)</p>"
 
 	withHashtag         = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
 	withHashtagExpected = "<h1>Title</h1><p>here’s a simple status that uses hashtag <a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
+)
+
+var (
+	withCodeBlock = `# Title
+
+Below is some JSON.
+
+` + "```" + `json
+{
+  "key": "value",
+  "another_key": [
+    "value1",
+    "value2"
+  ]
+}
+` + "```" + `
+
+that was some JSON :)
+`
 )
 
 type MarkdownTestSuite struct {
@@ -78,6 +97,7 @@ func (suite *MarkdownTestSuite) TestParseSimple() {
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCodeBlock() {
+	fmt.Println(withCodeBlock)
 	s := suite.formatter.FromMarkdown(withCodeBlock, nil, nil)
 	suite.Equal(withCodeBlockExpected, s)
 }
