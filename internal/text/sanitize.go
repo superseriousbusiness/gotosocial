@@ -19,6 +19,8 @@
 package text
 
 import (
+	"regexp"
+
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -31,12 +33,10 @@ var regular *bluemonday.Policy = bluemonday.UGCPolicy().
 	RequireNoReferrerOnLinks(true).
 	RequireNoFollowOnLinks(true).
 	RequireCrossOriginAnonymous(true).
-	AddTargetBlankToFullyQualifiedLinks(true)
-
-// outgoing policy should be used on statuses we've already parsed and added our own elements etc to. It is less strict than regular.
-var outgoing *bluemonday.Policy = regular.
+	AddTargetBlankToFullyQualifiedLinks(true).
 	AllowAttrs("class", "href", "rel").OnElements("a").
-	AllowAttrs("class").OnElements("span")
+	AllowAttrs("class").OnElements("span").
+	AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
 
 // '[C]an be thought of as equivalent to stripping all HTML elements and their attributes as it has nothing on its allowlist.
 // An example usage scenario would be blog post titles where HTML tags are not expected at all
@@ -53,10 +53,4 @@ func SanitizeHTML(in string) string {
 // RemoveHTML removes all HTML from the given string.
 func RemoveHTML(in string) string {
 	return strict.Sanitize(in)
-}
-
-// SanitizeOutgoing cleans up HTML in the given string, allowing through only safe elements and elements that were added during the parsing process.
-// This should be used on text that we've already converted into HTML, just to catch any weirdness.
-func SanitizeOutgoing(in string) string {
-	return outgoing.Sanitize(in)
 }

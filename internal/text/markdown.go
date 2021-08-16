@@ -23,21 +23,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-var bfExtensions = blackfriday.NoIntraEmphasis |
-	blackfriday.FencedCode |
-	blackfriday.Autolink |
-	blackfriday.Strikethrough |
-	blackfriday.SpaceHeadings |
-	blackfriday.BackslashLineBreak
-
 func (f *formatter) FromMarkdown(md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(md)
 
 	// do the markdown parsing *first*
-	content = string(blackfriday.Run([]byte(content), blackfriday.WithExtensions(bfExtensions)))
+	contentBytes := blackfriday.Run([]byte(md))
 
 	// format tags nicely
-	content = f.ReplaceTags(content, tags)
+	content = f.ReplaceTags(string(contentBytes), tags)
 
 	// format mentions nicely
 	content = f.ReplaceMentions(content, mentions)

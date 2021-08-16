@@ -37,14 +37,12 @@ func preformat(in string) string {
 // postformat contains some common logic for html sanitization of text, wrapping elements, and trimming newlines and whitespace
 func postformat(in string) string {
 	// do some postformatting of the text
-	// 1. sanitize html to remove any dodgy scripts or other disallowed elements
-	s := SanitizeOutgoing(in)
-	// 2. wrap the whole thing in a paragraph
-	s = fmt.Sprintf(`<p>%s</p>`, s)
-	// 3. remove any cheeky newlines
-	s = strings.ReplaceAll(s, "\n", "")
-	// 4. remove any whitespace added as a result of the formatting
+	// 1. remove any cheeky newlines
+	s := strings.ReplaceAll(in, "\n", "")
+	// 2. remove any whitespace added as a result of the formatting
 	s = strings.TrimSpace(s)
+	// 3. sanitize
+	s = regular.Sanitize(s)
 	return s
 }
 
