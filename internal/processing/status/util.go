@@ -99,7 +99,7 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 	repliedAccount := &gtsmodel.Account{}
 	// check replied status exists + is replyable
 	if err := p.db.GetByID(form.InReplyToID, repliedStatus); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
 		}
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
@@ -113,14 +113,14 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 
 	// check replied account is known to us
 	if err := p.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
 		}
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 	// check if a block exists
 	if blocked, err := p.db.Blocked(thisAccountID, repliedAccount.ID); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 		}
 	} else if blocked {

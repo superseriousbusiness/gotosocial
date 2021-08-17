@@ -29,7 +29,7 @@ func (p *processor) DomainBlocksGet(account *gtsmodel.Account, export bool) ([]*
 	domainBlocks := []*gtsmodel.DomainBlock{}
 
 	if err := p.db.GetAll(&domainBlocks); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)
 		}

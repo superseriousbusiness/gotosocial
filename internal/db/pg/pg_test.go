@@ -16,26 +16,32 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package dereferencing
+package pg_test
 
 import (
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (d *deref) blockedDomain(host string) (bool, error) {
-	b := &gtsmodel.DomainBlock{}
-	err := d.db.GetWhere([]db.Where{{Key: "domain", Value: host, CaseInsensitive: true}}, b)
-	if err == nil {
-		// block exists
-		return true, nil
-	}
+type PGStandardTestSuite struct {
+	// standard suite interfaces
+	suite.Suite
+	config *config.Config
+	db     db.DB
+	log    *logrus.Logger
 
-	if err == db.ErrNoEntries {
-		// there are no entries so there's no block
-		return false, nil
-	}
-
-	// there's an actual error
-	return false, err
+	// standard suite models
+	testTokens       map[string]*oauth.Token
+	testClients      map[string]*oauth.Client
+	testApplications map[string]*gtsmodel.Application
+	testUsers        map[string]*gtsmodel.User
+	testAccounts     map[string]*gtsmodel.Account
+	testAttachments  map[string]*gtsmodel.MediaAttachment
+	testStatuses     map[string]*gtsmodel.Status
+	testTags         map[string]*gtsmodel.Tag
+	testMentions     map[string]*gtsmodel.Mention
 }

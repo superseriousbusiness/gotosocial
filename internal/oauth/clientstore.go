@@ -27,11 +27,11 @@ import (
 )
 
 type clientStore struct {
-	db db.DB
+	db db.Basic
 }
 
 // NewClientStore returns an implementation of the oauth2 ClientStore interface, using the given db as a storage backend.
-func NewClientStore(db db.DB) oauth2.ClientStore {
+func NewClientStore(db db.Basic) oauth2.ClientStore {
 	pts := &clientStore{
 		db: db,
 	}

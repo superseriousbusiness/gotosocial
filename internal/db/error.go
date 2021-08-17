@@ -18,16 +18,12 @@
 
 package db
 
-// ErrNoEntries is to be returned from the DB interface when no entries are found for a given query.
-type ErrNoEntries struct{}
+import "fmt"
 
-func (e ErrNoEntries) Error() string {
-	return "no entries"
-}
+type DBError error
 
-// ErrAlreadyExists is to be returned from the DB interface when an entry already exists for a given query or its constraints.
-type ErrAlreadyExists struct{}
-
-func (e ErrAlreadyExists) Error() string {
-	return "already exists"
-}
+var (
+	ErrNoEntries     DBError = fmt.Errorf("no entries")
+	ErrAlreadyExists DBError = fmt.Errorf("already exists")
+	ErrUnknown       DBError = fmt.Errorf("unknown error")
+)

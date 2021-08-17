@@ -31,7 +31,7 @@ import (
 func (p *processor) GetMedia(account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment := &gtsmodel.MediaAttachment{}
 	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			// attachment doesn't exist
 			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
 		}

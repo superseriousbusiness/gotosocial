@@ -40,7 +40,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 	// check pending follow requests aimed at this account
 	fr := []gtsmodel.FollowRequest{}
 	if err := c.db.GetAccountFollowRequests(a.ID, &fr); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
 		}
 	}
@@ -63,41 +63,27 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 
 func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
 	// count followers
-	followers := []gtsmodel.Follow{}
-	if err := c.db.GetAccountFollowers(a.ID, &followers, false); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting followers: %s", err)
-		}
-	}
-	var followersCount int
-	if followers != nil {
-		followersCount = len(followers)
+	followersCount, err := c.db.CountAccountFollowers(a.ID, false)
+	if err != nil {
+		return nil, fmt.Errorf("error counting followers: %s", err)
 	}
 
 	// count following
-	following := []gtsmodel.Follow{}
-	if err := c.db.GetAccountFollowing(a.ID, &following); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting following: %s", err)
-		}
-	}
-	var followingCount int
-	if following != nil {
-		followingCount = len(following)
+	followingCount, err := c.db.CountAccountFollowing(a.ID, false)
+	if err != nil {
+		return nil, fmt.Errorf("error counting following: %s", err)
 	}
 
 	// count statuses
-	statusesCount, err := c.db.GetAccountStatusesCount(a.ID)
+	statusesCount, err := c.db.CountAccountStatuses(a.ID)
 	if err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting last statuses: %s", err)
-		}
+		return nil, fmt.Errorf("error getting last statuses: %s", err)
 	}
 
 	// check when the last status was
 	lastStatus := &gtsmodel.Status{}
 	if err := c.db.GetAccountLastStatus(a.ID, lastStatus); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, fmt.Errorf("error getting last status: %s", err)
 		}
 	}
@@ -107,23 +93,20 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}
 
 	// build the avatar and header URLs
-	avi := &gtsmodel.MediaAttachment{}
-	if err := c.db.GetAccountAvatar(avi, a.ID); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting avatar: %s", err)
-		}
-	}
-	aviURL := avi.URL
-	aviURLStatic := avi.Thumbnail.URL
 
-	header := &gtsmodel.MediaAttachment{}
-	if err := c.db.GetAccountHeader(header, a.ID); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, fmt.Errorf("error getting header: %s", err)
-		}
+	var aviURL string
+	var aviURLStatic string
+	if a.AvatarMediaAttachment != nil {
+		aviURL = a.AvatarMediaAttachment.URL
+		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
 	}
-	headerURL := header.URL
-	headerURLStatic := header.Thumbnail.URL
+
+	var headerURL string
+	var headerURLStatic string
+	if a.HeaderMediaAttachment != nil {
+		headerURL = a.HeaderMediaAttachment.URL
+		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
+	}
 
 	// get the fields set on this account
 	fields := []model.Field{}
@@ -585,13 +568,10 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 	}
 
 	// get the instance account if it exists and just skip if it doesn't
-	ia := &gtsmodel.Account{}
-	if err := c.db.GetWhere([]db.Where{{Key: "username", Value: i.Domain}}, ia); err == nil {
-		// instance account exists, get the header for the account if it exists
-		attachment := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetAccountHeader(attachment, ia.ID); err == nil {
-			// header exists, set it on the api model
-			mi.Thumbnail = attachment.URL
+	ia, err := c.db.GetInstanceAccount("")
+	if err == nil {
+		if ia.HeaderMediaAttachment != nil {
+			mi.Thumbnail = ia.HeaderMediaAttachment.URL
 		}
 	}
 

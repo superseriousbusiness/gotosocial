@@ -29,7 +29,7 @@ import (
 func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
 	frs := []gtsmodel.FollowRequest{}
 	if err := p.db.GetAccountFollowRequests(auth.Account.ID, &frs); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}

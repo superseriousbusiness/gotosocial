@@ -44,7 +44,7 @@ func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update
 			// we already know this account so we can skip generating it
 			return acct, nil
 		}
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// we don't know the account and there's been a real error
 			return nil, fmt.Errorf("error getting account with uri %s from the database: %s", uri.String(), err)
 		}

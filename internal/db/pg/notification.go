@@ -24,44 +24,30 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error) {
-	blocks := []*gtsmodel.Block{}
+func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.DBError) {
+	notifications := []*gtsmodel.Notification{}
 
-	fq := ps.conn.Model(&blocks).
-		Where("block.account_id = ?", accountID).
-		Relation("TargetAccount").
-		Order("block.id DESC")
+	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
 
 	if maxID != "" {
-		fq = fq.Where("block.id < ?", maxID)
+		q = q.Where("id < ?", maxID)
 	}
 
 	if sinceID != "" {
-		fq = fq.Where("block.id > ?", sinceID)
+		q = q.Where("id > ?", sinceID)
 	}
 
-	if limit > 0 {
-		fq = fq.Limit(limit)
+	if limit != 0 {
+		q = q.Limit(limit)
 	}
 
-	err := fq.Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, "", "", db.ErrNoEntries{}
+	q = q.Order("created_at DESC")
+
+	if err := q.Select(); err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
 		}
-		return nil, "", "", err
-	}
 
-	if len(blocks) == 0 {
-		return nil, "", "", db.ErrNoEntries{}
 	}
-
-	accounts := []*gtsmodel.Account{}
-	for _, b := range blocks {
-		accounts = append(accounts, b.TargetAccount)
-	}
-
-	nextMaxID := blocks[len(blocks)-1].ID
-	prevMinID := blocks[0].ID
-	return accounts, nextMaxID, prevMinID, nil
+	return notifications, nil
 }

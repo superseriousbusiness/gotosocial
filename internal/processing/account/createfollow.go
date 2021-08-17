@@ -42,7 +42,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
 	if err := p.db.GetByID(form.ID, targetAcct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.ID, err))
 		}
 	}

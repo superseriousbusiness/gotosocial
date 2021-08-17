@@ -20,39 +20,90 @@ package pg
 
 import (
 	"container/list"
+	"context"
 	"errors"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error) {
+type statusDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+}
+
+func (s *statusDB) newStatusQ(status *gtsmodel.Status) *orm.Query {
+	return s.conn.Model(status).
+		Relation("Account").
+		Relation("InReplyTo").
+		Relation("InReplyToAccount").
+		Relation("BoostOf").
+		Relation("BoostOfAccount").
+		Relation("CreatedWithApplication")
+}
+
+func (s *statusDB) processResponse(status *gtsmodel.Status, err error) (*gtsmodel.Status, db.DBError) {
+	switch err {
+	case pg.ErrNoRows:
+		return nil, db.ErrNoEntries
+	case nil:
+		return status, nil
+	default:
+		return nil, err
+	}
+}
+
+func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
+	status := &gtsmodel.Status{}
+
+	q := s.newStatusQ(status).
+		Where("status.id = ?", id)
+
+	return s.processResponse(status, q.Select())
+}
+
+func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
+	status := &gtsmodel.Status{}
+
+	q := s.newStatusQ(status).
+		Where("LOWER(status.uri) = LOWER(?)", uri)
+
+	return s.processResponse(status, q.Select())
+}
+
+func (s *statusDB) StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.DBError) {
 	parents := []*gtsmodel.Status{}
-	ps.statusParent(status, &parents, onlyDirect)
+	s.statusParent(status, &parents, onlyDirect)
 
 	return parents, nil
 }
 
-func (ps *postgresService) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
+func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
 	if status.InReplyToID == "" {
 		return
 	}
 
 	parentStatus := &gtsmodel.Status{}
-	if err := ps.conn.Model(parentStatus).Where("id = ?", status.InReplyToID).Select(); err == nil {
+	if err := s.conn.Model(parentStatus).Where("id = ?", status.InReplyToID).Select(); err == nil {
 		*foundStatuses = append(*foundStatuses, parentStatus)
 	}
 
 	if onlyDirect {
 		return
 	}
-	ps.statusParent(parentStatus, foundStatuses, false)
+	s.statusParent(parentStatus, foundStatuses, false)
 }
 
-func (ps *postgresService) StatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error) {
+func (s *statusDB) StatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.DBError) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
-	ps.statusChildren(status, foundStatuses, onlyDirect, minID)
+	s.statusChildren(status, foundStatuses, onlyDirect, minID)
 
 	children := []*gtsmodel.Status{}
 	for e := foundStatuses.Front(); e != nil; e = e.Next() {
@@ -70,10 +121,10 @@ func (ps *postgresService) StatusChildren(status *gtsmodel.Status, onlyDirect bo
 	return children, nil
 }
 
-func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
+func (s *statusDB) statusChildren(status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
 	immediateChildren := []*gtsmodel.Status{}
 
-	q := ps.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID)
+	q := s.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID)
 	if minID != "" {
 		q = q.Where("status.id > ?", minID)
 	}
@@ -100,43 +151,43 @@ func (ps *postgresService) statusChildren(status *gtsmodel.Status, foundStatuses
 		if onlyDirect {
 			return
 		}
-		ps.statusChildren(child, foundStatuses, false, minID)
+		s.statusChildren(child, foundStatuses, false, minID)
 	}
 }
 
-func (ps *postgresService) GetReplyCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
+func (s *statusDB) GetReplyCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+	return s.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
 }
 
-func (ps *postgresService) GetReblogCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
+func (s *statusDB) GetReblogCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
 }
 
-func (ps *postgresService) GetFaveCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
+func (s *statusDB) GetFaveCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
 }
 
-func (ps *postgresService) StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (ps *postgresService) StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (ps *postgresService) StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+	return s.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+	return s.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
+func (s *statusDB) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, db.DBError) {
 	accounts := []*gtsmodel.Account{}
 
 	faves := []*gtsmodel.StatusFave{}
-	if err := ps.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
+	if err := s.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return accounts, nil // no rows just means nobody has faved this status, so that's fine
 		}
@@ -145,7 +196,7 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 
 	for _, f := range faves {
 		acc := &gtsmodel.Account{}
-		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
+		if err := s.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
 			if err == pg.ErrNoRows {
 				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
 			}
@@ -156,11 +207,11 @@ func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.
 	return accounts, nil
 }
 
-func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
+func (s *statusDB) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, db.DBError) {
 	accounts := []*gtsmodel.Account{}
 
 	boosts := []*gtsmodel.Status{}
-	if err := ps.conn.Model(&boosts).Where("boost_of_id = ?", status.ID).Select(); err != nil {
+	if err := s.conn.Model(&boosts).Where("boost_of_id = ?", status.ID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return accounts, nil // no rows just means nobody has boosted this status, so that's fine
 		}
@@ -169,7 +220,7 @@ func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmode
 
 	for _, f := range boosts {
 		acc := &gtsmodel.Account{}
-		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
+		if err := s.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
 			if err == pg.ErrNoRows {
 				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
 			}

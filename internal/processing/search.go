@@ -196,7 +196,7 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 		return maybeAcct, nil
 	}
 
-	if _, ok := err.(db.ErrNoEntries); !ok {
+	if err != db.ErrNoEntries {
 		// if it's  not errNoEntries there's been a real database error so bail at this point
 		return nil, fmt.Errorf("searchAccountByMention: database error: %s", err)
 	}

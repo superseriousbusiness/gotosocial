@@ -288,7 +288,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 			attachmentIDs = append(attachmentIDs, maybeAttachment.ID)
 			continue
 		}
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// we have a real error
 			return fmt.Errorf("error checking db for existence of attachment with remote url %s: %s", a.RemoteURL, err)
 		}

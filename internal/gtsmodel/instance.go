@@ -20,6 +20,7 @@ type Instance struct {
 	SuspendedAt time.Time
 	// ID of any existing domain block for this instance in the database
 	DomainBlockID string `pg:"type:CHAR(26)"`
+	DomainBlock *DomainBlock `pg:"rel:has-one"`
 	// Short description of this instance
 	ShortDescription string
 	// Longer description of this instance
@@ -32,6 +33,7 @@ type Instance struct {
 	ContactAccountUsername string
 	// Contact account ID in the database for this instance
 	ContactAccountID string `pg:"type:CHAR(26)"`
+	ContactAccount *Account `pg:"rel:has-one"`
 	// Reputation score of this instance
 	Reputation int64 `pg:",notnull,default:0"`
 	// Version of the software used on this instance

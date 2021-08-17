@@ -45,7 +45,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		targetUser := &gtsmodel.User{}
 		if err := f.db.GetWhere([]db.Where{{Key: "account_id", Value: targetAccount.ID}}, targetUser); err != nil {
 			l.Debug("target user could not be selected")
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				return false, nil
 			}
 			return false, fmt.Errorf("StatusVisible: db error selecting user for local target account %s: %s", targetAccount.ID, err)
@@ -76,7 +76,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		if err := f.db.GetWhere([]db.Where{{Key: "account_id", Value: requestingAccount.ID}}, requestingUser); err != nil {
 			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
 			l.Debug("requesting user could not be selected")
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				return false, nil
 			}
 			return false, fmt.Errorf("StatusVisible: db error selecting user for local requesting account %s: %s", requestingAccount.ID, err)

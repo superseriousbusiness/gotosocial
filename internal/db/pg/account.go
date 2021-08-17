@@ -1,70 +1,108 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package pg
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) GetAccountHeader(header *gtsmodel.MediaAttachment, accountID string) error {
-	acct := &gtsmodel.Account{}
-	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
+type accountDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+}
+
+func (a *accountDB) newAccountQ(account *gtsmodel.Account) *orm.Query {
+	return a.conn.Model(account).
+		Relation("AvatarMediaAttachment").
+		Relation("HeaderMediaAttachment")
+}
+
+func (a *accountDB) processResponse(account *gtsmodel.Account, err error) (*gtsmodel.Account, db.DBError) {
+	switch err {
+	case pg.ErrNoRows:
+		return nil, db.ErrNoEntries
+	case nil:
+		return account, nil
+	default:
+		return nil, err
+	}
+}
+
+func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.DBError) {
+	account := &gtsmodel.Account{}
+
+	q := a.newAccountQ(account).
+		Where("account.id = ?", id)
+
+	return a.processResponse(account, q.Select())
+}
+
+func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) {
+	account := &gtsmodel.Account{}
+
+	q := a.newAccountQ(account).
+		Where("account.uri = ?", uri)
+
+	return a.processResponse(account, q.Select())
+}
+
+func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBError) {
+	account := &gtsmodel.Account{}
+
+	q := a.newAccountQ(account)
+
+	if domain == "" {
+		q = q.
+			Where("account.username = ?", domain).
+			Where("account.domain = ?", domain)
+	} else {
+		q = q.
+			Where("account.username = ?", domain).
+			Where("? IS NULL", pg.Ident("domain"))
 	}
 
-	if acct.HeaderMediaAttachmentID == "" {
-		return db.ErrNoEntries{}
-	}
+	return a.processResponse(account, q.Select())
+}
 
-	if err := ps.conn.Model(header).Where("id = ?", acct.HeaderMediaAttachmentID).Select(); err != nil {
+func (a *accountDB) GetAccountLastStatus(accountID string, status *gtsmodel.Status) db.DBError {
+	if err := a.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return db.ErrNoEntries
 		}
 		return err
 	}
 	return nil
-}
-
-func (ps *postgresService) GetAccountAvatar(avatar *gtsmodel.MediaAttachment, accountID string) error {
-	acct := &gtsmodel.Account{}
-	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-
-	if acct.AvatarMediaAttachmentID == "" {
-		return db.ErrNoEntries{}
-	}
-
-	if err := ps.conn.Model(avatar).Where("id = ?", acct.AvatarMediaAttachmentID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetAccountLastStatus(accountID string, status *gtsmodel.Status) error {
-	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
 
 }
 
-func (ps *postgresService) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
+func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.DBError {
 	if mediaAttachment.Avatar && mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
@@ -79,47 +117,47 @@ func (ps *postgresService) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.Me
 	}
 
 	// TODO: there are probably more side effects here that need to be handled
-	if _, err := ps.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+	if _, err := a.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
 		return err
 	}
 
-	if _, err := ps.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
+	if _, err := a.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
+func (a *accountDB) GetAccountByUserID(userID string, account *gtsmodel.Account) db.DBError {
 	user := &gtsmodel.User{
 		ID: userID,
 	}
-	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
+	if err := a.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return db.ErrNoEntries
 		}
 		return err
 	}
-	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
+	if err := a.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetLocalAccountByUsername(username string, account *gtsmodel.Account) error {
-	if err := ps.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
+			return db.ErrNoEntries
 		}
 		return err
 	}
 	return nil
 }
 
-func (ps *postgresService) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
-	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
+func (a *accountDB) GetLocalAccountByUsername(username string, account *gtsmodel.Account) db.DBError {
+	if err := a.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return db.ErrNoEntries
+		}
+		return err
+	}
+	return nil
+}
+
+func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) db.DBError {
+	if err := a.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
 		}
@@ -128,8 +166,8 @@ func (ps *postgresService) GetAccountFollowRequests(accountID string, followRequ
 	return nil
 }
 
-func (ps *postgresService) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) error {
-	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
+func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) db.DBError {
+	if err := a.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
 		}
@@ -138,9 +176,13 @@ func (ps *postgresService) GetAccountFollowing(accountID string, following *[]gt
 	return nil
 }
 
-func (ps *postgresService) GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error {
+func (a *accountDB) CountAccountFollowing(accountID string, localOnly bool) (int, db.DBError) {
+	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("account_id = ?", accountID).Count()
+}
 
-	q := ps.conn.Model(followers)
+func (a *accountDB) GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) db.DBError {
+
+	q := a.conn.Model(followers)
 
 	if localOnly {
 		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
@@ -168,8 +210,12 @@ func (ps *postgresService) GetAccountFollowers(accountID string, followers *[]gt
 	return nil
 }
 
-func (ps *postgresService) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) error {
-	if err := ps.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
+func (a *accountDB) CountAccountFollowers(accountID string, localOnly bool) (int, db.DBError) {
+	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("target_account_id = ?", accountID).Count()
+}
+
+func (a *accountDB) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) db.DBError {
+	if err := a.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
 		}
@@ -178,22 +224,15 @@ func (ps *postgresService) GetAccountFaves(accountID string, faves *[]gtsmodel.S
 	return nil
 }
 
-func (ps *postgresService) GetAccountStatusesCount(accountID string) (int, error) {
-	count, err := ps.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return 0, nil
-		}
-		return 0, err
-	}
-	return count, nil
+func (a *accountDB) CountAccountStatuses(accountID string) (int, db.DBError) {
+	return a.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
 }
 
-func (ps *postgresService) GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error) {
-	ps.log.Debugf("getting statuses for account %s", accountID)
+func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.DBError) {
+	a.log.Debugf("getting statuses for account %s", accountID)
 	statuses := []*gtsmodel.Status{}
 
-	q := ps.conn.Model(&statuses).Order("id DESC")
+	q := a.conn.Model(&statuses).Order("id DESC")
 	if accountID != "" {
 		q = q.Where("account_id = ?", accountID)
 	}
@@ -222,15 +261,57 @@ func (ps *postgresService) GetAccountStatuses(accountID string, limit int, exclu
 
 	if err := q.Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries{}
+			return nil, db.ErrNoEntries
 		}
 		return nil, err
 	}
 
 	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries{}
+		return nil, db.ErrNoEntries
 	}
 
-	ps.log.Debugf("returning statuses for account %s", accountID)
+	a.log.Debugf("returning statuses for account %s", accountID)
 	return statuses, nil
+}
+
+func (a *accountDB) GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.DBError) {
+	blocks := []*gtsmodel.Block{}
+
+	fq := a.conn.Model(&blocks).
+		Where("block.account_id = ?", accountID).
+		Relation("TargetAccount").
+		Order("block.id DESC")
+
+	if maxID != "" {
+		fq = fq.Where("block.id < ?", maxID)
+	}
+
+	if sinceID != "" {
+		fq = fq.Where("block.id > ?", sinceID)
+	}
+
+	if limit > 0 {
+		fq = fq.Limit(limit)
+	}
+
+	err := fq.Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, "", "", db.ErrNoEntries
+		}
+		return nil, "", "", err
+	}
+
+	if len(blocks) == 0 {
+		return nil, "", "", db.ErrNoEntries
+	}
+
+	accounts := []*gtsmodel.Account{}
+	for _, b := range blocks {
+		accounts = append(accounts, b.TargetAccount)
+	}
+
+	nextMaxID := blocks[len(blocks)-1].ID
+	prevMinID := blocks[0].ID
+	return accounts, nextMaxID, prevMinID, nil
 }

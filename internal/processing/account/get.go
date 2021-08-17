@@ -30,7 +30,7 @@ import (
 func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
 	targetAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, errors.New("account not found")
 		}
 		return nil, fmt.Errorf("db error: %s", err)

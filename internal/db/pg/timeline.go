@@ -19,16 +19,26 @@
 package pg
 
 import (
+	"context"
 	"sort"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
+type timelineDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+}
+
+func (t *timelineDB) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.DBError) {
 	statuses := []*gtsmodel.Status{}
-	q := ps.conn.Model(&statuses)
+	q := t.conn.Model(&statuses)
 
 	q = q.ColumnExpr("status.*").
 		// Find out who accountID follows.
@@ -74,22 +84,22 @@ func (ps *postgresService) GetHomeTimelineForAccount(accountID string, maxID str
 	err := q.Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries{}
+			return nil, db.ErrNoEntries
 		}
 		return nil, err
 	}
 
 	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries{}
+		return nil, db.ErrNoEntries
 	}
 
 	return statuses, nil
 }
 
-func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
+func (t *timelineDB) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.DBError) {
 	statuses := []*gtsmodel.Status{}
 
-	q := ps.conn.Model(&statuses).
+	q := t.conn.Model(&statuses).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
 		Where("? IS NULL", pg.Ident("in_reply_to_id")).
 		Where("? IS NULL", pg.Ident("in_reply_to_uri")).
@@ -119,13 +129,13 @@ func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID s
 	err := q.Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries{}
+			return nil, db.ErrNoEntries
 		}
 		return nil, err
 	}
 
 	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries{}
+		return nil, db.ErrNoEntries
 	}
 
 	return statuses, nil
@@ -133,11 +143,11 @@ func (ps *postgresService) GetPublicTimelineForAccount(accountID string, maxID s
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
-func (ps *postgresService) GetFavedTimelineForAccount(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, error) {
+func (t *timelineDB) GetFavedTimelineForAccount(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.DBError) {
 
 	faves := []*gtsmodel.StatusFave{}
 
-	fq := ps.conn.Model(&faves).
+	fq := t.conn.Model(&faves).
 		Where("account_id = ?", accountID).
 		Order("id DESC")
 
@@ -156,13 +166,13 @@ func (ps *postgresService) GetFavedTimelineForAccount(accountID string, maxID st
 	err := fq.Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, "", "", db.ErrNoEntries{}
+			return nil, "", "", db.ErrNoEntries
 		}
 		return nil, "", "", err
 	}
 
 	if len(faves) == 0 {
-		return nil, "", "", db.ErrNoEntries{}
+		return nil, "", "", db.ErrNoEntries
 	}
 
 	// map[statusID]faveID -- we need this to sort statuses by fave ID rather than their own ID
@@ -175,16 +185,16 @@ func (ps *postgresService) GetFavedTimelineForAccount(accountID string, maxID st
 	}
 
 	statuses := []*gtsmodel.Status{}
-	err = ps.conn.Model(&statuses).Where("id IN (?)", pg.In(in)).Select()
+	err = t.conn.Model(&statuses).Where("id IN (?)", pg.In(in)).Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
-			return nil, "", "", db.ErrNoEntries{}
+			return nil, "", "", db.ErrNoEntries
 		}
 		return nil, "", "", err
 	}
 
 	if len(statuses) == 0 {
-		return nil, "", "", db.ErrNoEntries{}
+		return nil, "", "", db.ErrNoEntries
 	}
 
 	// arrange statuses by fave ID

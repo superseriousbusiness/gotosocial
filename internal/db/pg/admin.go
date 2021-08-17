@@ -1,6 +1,25 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package pg
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
@@ -10,17 +29,27 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (ps *postgresService) IsUsernameAvailable(username string) error {
+type adminDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+}
+
+func (a *adminDB) IsUsernameAvailable(username string) db.DBError {
 	// if no error we fail because it means we found something
 	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := ps.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
+	if err := a.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
 		return fmt.Errorf("username %s already in use", username)
 	} else if err != pg.ErrNoRows {
 		return fmt.Errorf("db error: %s", err)
@@ -28,7 +57,7 @@ func (ps *postgresService) IsUsernameAvailable(username string) error {
 	return nil
 }
 
-func (ps *postgresService) IsEmailAvailable(email string) error {
+func (a *adminDB) IsEmailAvailable(email string) db.DBError {
 	// parse the domain from the email
 	m, err := mail.ParseAddress(email)
 	if err != nil {
@@ -37,7 +66,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
 	// check if the email domain is blocked
-	if err := ps.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
+	if err := a.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != pg.ErrNoRows {
@@ -46,7 +75,7 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	}
 
 	// check if this email is associated with a user already
-	if err := ps.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+	if err := a.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email %s already in use", email)
 	} else if err != pg.ErrNoRows {
@@ -56,16 +85,16 @@ func (ps *postgresService) IsEmailAvailable(email string) error {
 	return nil
 }
 
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, error) {
+func (a *adminDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.DBError) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		ps.log.Errorf("error creating new rsa key: %s", err)
+		a.log.Errorf("error creating new rsa key: %s", err)
 		return nil, err
 	}
 
 	// if something went wrong while creating a user, we might already have an account, so check here first...
-	a := &gtsmodel.Account{}
-	err = ps.conn.Model(a).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
+	acct := &gtsmodel.Account{}
+	err = a.conn.Model(acct).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
 	if err != nil {
 		// there's been an actual error
 		if err != pg.ErrNoRows {
@@ -73,13 +102,13 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		}
 
 		// we just don't have an account yet create one
-		newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
+		newAccountURIs := util.GenerateURIsForAccount(username, a.config.Protocol, a.config.Host)
 		newAccountID, err := id.NewRandomULID()
 		if err != nil {
 			return nil, err
 		}
 
-		a = &gtsmodel.Account{
+		acct = &gtsmodel.Account{
 			ID:                    newAccountID,
 			Username:              username,
 			DisplayName:           username,
@@ -96,7 +125,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 			FollowingURI:          newAccountURIs.FollowingURI,
 			FeaturedCollectionURI: newAccountURIs.CollectionURI,
 		}
-		if _, err = ps.conn.Model(a).Insert(); err != nil {
+		if _, err = a.conn.Model(acct).Insert(); err != nil {
 			return nil, err
 		}
 	}
@@ -113,7 +142,7 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 
 	u := &gtsmodel.User{
 		ID:                     newUserID,
-		AccountID:              a.ID,
+		AccountID:              acct.ID,
 		EncryptedPassword:      string(pw),
 		SignUpIP:               signUpIP.To4(),
 		Locale:                 locale,
@@ -132,18 +161,18 @@ func (ps *postgresService) NewSignup(username string, reason string, requireAppr
 		u.Moderator = true
 	}
 
-	if _, err = ps.conn.Model(u).Insert(); err != nil {
+	if _, err = a.conn.Model(u).Insert(); err != nil {
 		return nil, err
 	}
 
 	return u, nil
 }
 
-func (ps *postgresService) CreateInstanceAccount() error {
-	username := ps.config.Host
+func (a *adminDB) CreateInstanceAccount() db.DBError {
+	username := a.config.Host
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		ps.log.Errorf("error creating new rsa key: %s", err)
+		a.log.Errorf("error creating new rsa key: %s", err)
 		return err
 	}
 
@@ -152,10 +181,10 @@ func (ps *postgresService) CreateInstanceAccount() error {
 		return err
 	}
 
-	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
-	a := &gtsmodel.Account{
+	newAccountURIs := util.GenerateURIsForAccount(username, a.config.Protocol, a.config.Host)
+	acct := &gtsmodel.Account{
 		ID:                    aID,
-		Username:              ps.config.Host,
+		Username:              a.config.Host,
 		DisplayName:           username,
 		URL:                   newAccountURIs.UserURL,
 		PrivateKey:            key,
@@ -169,19 +198,19 @@ func (ps *postgresService) CreateInstanceAccount() error {
 		FollowingURI:          newAccountURIs.FollowingURI,
 		FeaturedCollectionURI: newAccountURIs.CollectionURI,
 	}
-	inserted, err := ps.conn.Model(a).Where("username = ?", username).SelectOrInsert()
+	inserted, err := a.conn.Model(acct).Where("username = ?", username).SelectOrInsert()
 	if err != nil {
 		return err
 	}
 	if inserted {
-		ps.log.Infof("created instance account %s with id %s", username, a.ID)
+		a.log.Infof("created instance account %s with id %s", username, acct.ID)
 	} else {
-		ps.log.Infof("instance account %s already exists with id %s", username, a.ID)
+		a.log.Infof("instance account %s already exists with id %s", username, acct.ID)
 	}
 	return nil
 }
 
-func (ps *postgresService) CreateInstanceInstance() error {
+func (a *adminDB) CreateInstanceInstance() db.DBError {
 	iID, err := id.NewRandomULID()
 	if err != nil {
 		return err
@@ -189,18 +218,18 @@ func (ps *postgresService) CreateInstanceInstance() error {
 
 	i := &gtsmodel.Instance{
 		ID:     iID,
-		Domain: ps.config.Host,
-		Title:  ps.config.Host,
-		URI:    fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
+		Domain: a.config.Host,
+		Title:  a.config.Host,
+		URI:    fmt.Sprintf("%s://%s", a.config.Protocol, a.config.Host),
 	}
-	inserted, err := ps.conn.Model(i).Where("domain = ?", ps.config.Host).SelectOrInsert()
+	inserted, err := a.conn.Model(i).Where("domain = ?", a.config.Host).SelectOrInsert()
 	if err != nil {
 		return err
 	}
 	if inserted {
-		ps.log.Infof("created instance instance %s with id %s", ps.config.Host, i.ID)
+		a.log.Infof("created instance instance %s with id %s", a.config.Host, i.ID)
 	} else {
-		ps.log.Infof("instance instance %s already exists with id %s", ps.config.Host, i.ID)
+		a.log.Infof("instance instance %s already exists with id %s", a.config.Host, i.ID)
 	}
 	return nil
 }

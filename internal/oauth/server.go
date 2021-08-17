@@ -66,7 +66,7 @@ type s struct {
 }
 
 // New returns a new oauth server that implements the Server interface
-func New(database db.DB, log *logrus.Logger) Server {
+func New(database db.Basic, log *logrus.Logger) Server {
 	ts := newTokenStore(context.Background(), database, log)
 	cs := NewClientStore(database)
 

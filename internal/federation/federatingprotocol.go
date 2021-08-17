@@ -132,7 +132,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	// authentication has passed, so add an instance entry for this instance if it hasn't been done already
 	i := &gtsmodel.Instance{}
 	if err := f.db.GetWhere([]db.Where{{Key: "domain", Value: publicKeyOwnerURI.Host, CaseInsensitive: true}}, i); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// there's been an actual error
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
@@ -202,8 +202,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 
 		requestingAccount := &gtsmodel.Account{}
 		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, requestingAccount); err != nil {
-			_, ok := err.(db.ErrNoEntries)
-			if ok {
+			if err == db.ErrNoEntries {
 				// we don't have an entry for this account so it's not blocked
 				// TODO: allow a different default to be set for this behavior
 				continue

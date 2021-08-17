@@ -62,7 +62,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())

@@ -19,7 +19,7 @@ func (p *processor) Context(account *gtsmodel.Account, targetStatusID string) (*
 
 	targetStatus := &gtsmodel.Status{}
 	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
 		}
 		return nil, gtserror.NewErrorInternalError(err)

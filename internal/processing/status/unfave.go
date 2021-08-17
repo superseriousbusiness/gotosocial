@@ -45,7 +45,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 	}
 	if err != nil {
 		// something went wrong in the db finding the fave
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching existing fave from database: %s", err))
 		}
 		// we just don't have a fave

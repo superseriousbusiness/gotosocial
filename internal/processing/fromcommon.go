@@ -74,7 +74,7 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 			// notification exists already so just continue
 			continue
 		}
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// there's a real error in the db
 			return fmt.Errorf("notifyStatus: error checking existence of notification for mention with id %s : %s", m.ID, err)
 		}

@@ -15,7 +15,7 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 	l.Tracef("going to search for target status %s", targetStatusID)
 	targetStatus := &gtsmodel.Status{}
 	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 		}
 		// status is already gone

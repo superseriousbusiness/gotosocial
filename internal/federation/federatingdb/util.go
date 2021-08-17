@@ -213,7 +213,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere([]db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
@@ -238,7 +238,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())

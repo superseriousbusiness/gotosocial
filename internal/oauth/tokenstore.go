@@ -34,7 +34,7 @@ import (
 // tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.
 type tokenStore struct {
 	oauth2.TokenStore
-	db  db.DB
+	db  db.Basic
 	log *logrus.Logger
 }
 
@@ -42,7 +42,7 @@ type tokenStore struct {
 //
 // In order to allow tokens to 'expire', it will also set off a goroutine that iterates through
 // the tokens in the DB once per minute and deletes any that have expired.
-func newTokenStore(ctx context.Context, db db.DB, log *logrus.Logger) oauth2.TokenStore {
+func newTokenStore(ctx context.Context, db db.Basic, log *logrus.Logger) oauth2.TokenStore {
 	pts := &tokenStore{
 		db:  db,
 		log: log,

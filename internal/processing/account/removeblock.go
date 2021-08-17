@@ -31,7 +31,7 @@ func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccou
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockRemove: account %s not found in the db: %s", targetAccountID, err))
 		}
 	}

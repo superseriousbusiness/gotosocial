@@ -57,7 +57,7 @@ func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.App
 
 	if err != nil {
 		// something went wrong in the db finding the boost
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching existing boost from database: %s", err))
 		}
 		// we just don't have a boost

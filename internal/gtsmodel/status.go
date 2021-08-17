@@ -47,24 +47,24 @@ type Status struct {
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
-	AccountID string `pg:"type:CHAR(26),notnull"`
-	Account *Account `pg:"rel:has-one"`
+	AccountID string   `pg:"type:CHAR(26),notnull"`
+	Account   *Account `pg:"rel:has-one"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
-	InReplyToID string `pg:"type:CHAR(26)"`
-	InReplyTo *Status `pg:"-"`
+	InReplyToID string  `pg:"type:CHAR(26)"`
+	InReplyTo   *Status `pg:"rel:has-one"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
-	InReplyToAccountID string `pg:"type:CHAR(26)"`
-	InReplyToAccount *Account `pg:"-"`
+	InReplyToAccountID string   `pg:"type:CHAR(26)"`
+	InReplyToAccount   *Account `pg:"rel:has-one"`
 	// id of the status this status is a boost of
-	BoostOfID string `pg:"type:CHAR(26)"`
-	BoostOf *Status `pg:"-"`
+	BoostOfID string  `pg:"type:CHAR(26)"`
+	BoostOf   *Status `pg:"rel:has-one"`
 	// id of the account that owns the boosted status
-	BoostOfAccountID string `pg:"type:CHAR(26)"`
-	BoostOfAccount *Account `pg:"-"`
+	BoostOfAccountID string   `pg:"type:CHAR(26)"`
+	BoostOfAccount   *Account `pg:"rel:has-one"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -74,8 +74,8 @@ type Status struct {
 	// what language is this status written in?
 	Language string
 	// Which application was used to create this status?
-	CreatedWithApplicationID string `pg:"type:CHAR(26)"`
-	CreatedWithApplication *Application `pg:"-"`
+	CreatedWithApplicationID string       `pg:"type:CHAR(26)"`
+	CreatedWithApplication   *Application `pg:"rel:has-one"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
@@ -103,13 +103,6 @@ type Status struct {
 	GTSEmojis []*Emoji `pg:"-"`
 	// MediaAttachments used in this status
 	GTSMediaAttachments []*MediaAttachment `pg:"-"`
-	// Status being replied to
-
-	// Account being replied to
-
-	// Status being boosted
-
-	// Account of the boosted status
 
 }
 

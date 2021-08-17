@@ -40,7 +40,7 @@ func (p *processor) FollowersGet(requestingAccount *gtsmodel.Account, targetAcco
 	followers := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
 	if err := p.db.GetAccountFollowers(targetAccountID, &followers, false); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return accounts, nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
@@ -57,7 +57,7 @@ func (p *processor) FollowersGet(requestingAccount *gtsmodel.Account, targetAcco
 
 		a := &gtsmodel.Account{}
 		if err := p.db.GetByID(f.AccountID, a); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				continue
 			}
 			return nil, gtserror.NewErrorInternalError(err)

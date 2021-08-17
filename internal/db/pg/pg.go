@@ -31,7 +31,6 @@ import (
 
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,6 +40,14 @@ import (
 
 // postgresService satisfies the DB interface
 type postgresService struct {
+	db.Account
+	db.Admin
+	db.Basic
+	db.Instance
+	db.Notification
+	db.Relationship
+	db.Status
+	db.Timeline
 	config *config.Config
 	conn   *pg.DB
 	log    *logrus.Logger
@@ -85,6 +92,48 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	log.Infof("connected to postgres version: %s", version)
 
 	ps := &postgresService{
+		Account: &accountDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Admin: &adminDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Basic: &basicDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Instance: &instanceDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Relationship: &relationshipDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Status: &statusDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Timeline: &timelineDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
 		config: c,
 		conn:   conn,
 		log:    log,
@@ -191,89 +240,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 	}
 
 	return options, nil
-}
-
-/*
-	BASIC DB FUNCTIONALITY
-*/
-
-func (ps *postgresService) CreateTable(i interface{}) error {
-	return ps.conn.Model(i).CreateTable(&orm.CreateTableOptions{
-		IfNotExists: true,
-	})
-}
-
-func (ps *postgresService) DropTable(i interface{}) error {
-	return ps.conn.Model(i).DropTable(&orm.DropTableOptions{
-		IfExists: true,
-	})
-}
-
-func (ps *postgresService) Stop(ctx context.Context) error {
-	ps.log.Info("closing db connection")
-	if err := ps.conn.Close(); err != nil {
-		// only cancel if there's a problem closing the db
-		ps.cancel()
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) IsHealthy(ctx context.Context) error {
-	return ps.conn.Ping(ctx)
-}
-
-func (ps *postgresService) CreateSchema(ctx context.Context) error {
-	models := []interface{}{
-		(*gtsmodel.Account)(nil),
-		(*gtsmodel.Status)(nil),
-		(*gtsmodel.User)(nil),
-	}
-	ps.log.Info("creating db schema")
-
-	for _, model := range models {
-		err := ps.conn.Model(model).CreateTable(&orm.CreateTableOptions{
-			IfNotExists: true,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	ps.log.Info("db schema created")
-	return nil
-}
-
-/*
-	HANDY SHORTCUTS
-*/
-
-func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error) {
-	notifications := []*gtsmodel.Notification{}
-
-	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if sinceID != "" {
-		q = q.Where("id > ?", sinceID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	q = q.Order("created_at DESC")
-
-	if err := q.Select(); err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-
-	}
-	return notifications, nil
 }
 
 /*

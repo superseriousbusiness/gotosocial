@@ -9,26 +9,26 @@ import (
 type Admin interface {
 	// IsUsernameAvailable checks whether a given username is available on our domain.
 	// Returns an error if the username is already taken, or something went wrong in the db.
-	IsUsernameAvailable(username string) error
+	IsUsernameAvailable(username string) DBError
 
 	// IsEmailAvailable checks whether a given email address for a new account is available to be used on our domain.
 	// Return an error if:
 	// A) the email is already associated with an account
 	// B) we block signups from this email domain
 	// C) something went wrong in the db
-	IsEmailAvailable(email string) error
+	IsEmailAvailable(email string) DBError
 
 	// NewSignup creates a new user in the database with the given parameters.
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
-	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, error)
+	NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, DBError)
 
 	// CreateInstanceAccount creates an account in the database with the same username as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance user will have a username of 'example.org'.
 	// This is needed for things like serving files that belong to the instance and not an individual user/account.
-	CreateInstanceAccount() error
+	CreateInstanceAccount() DBError
 
 	// CreateInstanceInstance creates an instance in the database with the same domain as the instance host value.
 	// Ie., if the instance is hosted at 'example.org' the instance will have a domain of 'example.org'.
 	// This is needed for things like serving instance information through /api/v1/instance
-	CreateInstanceInstance() error
+	CreateInstanceInstance() DBError
 }
