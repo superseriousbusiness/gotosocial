@@ -28,8 +28,11 @@ type StatusMute struct {
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the mute
 	AccountID string `pg:"type:CHAR(26),notnull"`
+	Account *Account `pg:"rel:belongs-to"`
 	// id the account owning the muted status (can be the same as accountID)
 	TargetAccountID string `pg:"type:CHAR(26),notnull"`
+	TargetAccount *Account `pg:"rel:has-one"`
 	// database id of the status that has been muted
 	StatusID string `pg:"type:CHAR(26),notnull"`
+	Status *Status `pg:"rel:has-one"`
 }

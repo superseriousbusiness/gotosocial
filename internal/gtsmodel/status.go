@@ -33,13 +33,17 @@ type Status struct {
 	// the html-formatted content of this status
 	Content string
 	// Database IDs of any media attachments associated with this status
-	Attachments []string `pg:",array"`
+	AttachmentIDs []string           `pg:"attachments,array"`
+	Attachments   []*MediaAttachment `pg:"rel:has-many"`
 	// Database IDs of any tags used in this status
-	Tags []string `pg:",array"`
+	TagIDs []string `pg:"tags,array"`
+	Tags   []*Tag   `pg:"rel:has-many"`
 	// Database IDs of any mentions in this status
-	Mentions []string `pg:",array"`
+	MentionIDs []string   `pg:"mentions,array"`
+	Mentions   []*Mention `pg:"rel:has-many"`
 	// Database IDs of any emojis used in this status
-	Emojis []string `pg:",array"`
+	EmojiIDs []string `pg:"emojis,array"`
+	Emojis   []*Emoji `pg:"rel:many2many"`
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
@@ -85,25 +89,6 @@ type Status struct {
 	Text string
 	// Has this status been pinned by its owner?
 	Pinned bool
-
-	/*
-		INTERNAL MODEL NON-DATABASE FIELDS
-
-		These are for convenience while passing the status around internally,
-		but these fields should *never* be put in the db.
-	*/
-
-	// Account that created this status
-
-	// Mentions created in this status
-	GTSMentions []*Mention `pg:"-"`
-	// Hashtags used in this status
-	GTSTags []*Tag `pg:"-"`
-	// Emojis used in this status
-	GTSEmojis []*Emoji `pg:"-"`
-	// MediaAttachments used in this status
-	GTSMediaAttachments []*MediaAttachment `pg:"-"`
-
 }
 
 // Visibility represents the visibility granularity of a status.

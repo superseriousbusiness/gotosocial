@@ -357,8 +357,8 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	mastoAttachments := []model.Attachment{}
 	// the status might already have some gts attachments on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts attachments into masto ones
-	if s.GTSMediaAttachments != nil {
-		for _, gtsAttachment := range s.GTSMediaAttachments {
+	if s.Attachments != nil {
+		for _, gtsAttachment := range s.Attachments {
 			mastoAttachment, err := c.AttachmentToMasto(gtsAttachment)
 			if err != nil {
 				return nil, fmt.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
@@ -368,7 +368,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts attachments on it, but it does have attachment IDs
 		// in this case, we need to pull the gts attachments from the db to convert them into masto ones
 	} else {
-		for _, a := range s.Attachments {
+		for _, a := range s.AttachmentIDs {
 			gtsAttachment := &gtsmodel.MediaAttachment{}
 			if err := c.db.GetByID(a, gtsAttachment); err != nil {
 				return nil, fmt.Errorf("error getting attachment with id %s: %s", a, err)
@@ -384,8 +384,8 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	mastoMentions := []model.Mention{}
 	// the status might already have some gts mentions on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts mentions into masto ones
-	if s.GTSMentions != nil {
-		for _, gtsMention := range s.GTSMentions {
+	if s.Mentions != nil {
+		for _, gtsMention := range s.Mentions {
 			mastoMention, err := c.MentionToMasto(gtsMention)
 			if err != nil {
 				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
@@ -395,7 +395,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts mentions on it, but it does have mention IDs
 		// in this case, we need to pull the gts mentions from the db to convert them into masto ones
 	} else {
-		for _, m := range s.Mentions {
+		for _, m := range s.MentionIDs {
 			gtsMention := &gtsmodel.Mention{}
 			if err := c.db.GetByID(m, gtsMention); err != nil {
 				return nil, fmt.Errorf("error getting mention with id %s: %s", m, err)
@@ -411,8 +411,8 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	mastoTags := []model.Tag{}
 	// the status might already have some gts tags on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts tags into masto ones
-	if s.GTSTags != nil {
-		for _, gtsTag := range s.GTSTags {
+	if s.Tags != nil {
+		for _, gtsTag := range s.Tags {
 			mastoTag, err := c.TagToMasto(gtsTag)
 			if err != nil {
 				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
@@ -422,7 +422,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts tags on it, but it does have tag IDs
 		// in this case, we need to pull the gts tags from the db to convert them into masto ones
 	} else {
-		for _, t := range s.Tags {
+		for _, t := range s.TagIDs {
 			gtsTag := &gtsmodel.Tag{}
 			if err := c.db.GetByID(t, gtsTag); err != nil {
 				return nil, fmt.Errorf("error getting tag with id %s: %s", t, err)
@@ -438,8 +438,8 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	mastoEmojis := []model.Emoji{}
 	// the status might already have some gts emojis on it if it's not been pulled directly from the database
 	// if so, we can directly convert the gts emojis into masto ones
-	if s.GTSEmojis != nil {
-		for _, gtsEmoji := range s.GTSEmojis {
+	if s.Emojis != nil {
+		for _, gtsEmoji := range s.Emojis {
 			mastoEmoji, err := c.EmojiToMasto(gtsEmoji)
 			if err != nil {
 				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
@@ -449,7 +449,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts emojis on it, but it does have emoji IDs
 		// in this case, we need to pull the gts emojis from the db to convert them into masto ones
 	} else {
-		for _, e := range s.Emojis {
+		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
 			if err := c.db.GetByID(e, gtsEmoji); err != nil {
 				return nil, fmt.Errorf("error getting emoji with id %s: %s", e, err)
@@ -609,46 +609,46 @@ func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relati
 
 func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error) {
 
-	if n.GTSTargetAccount == nil {
+	if n.TargetAccount == nil {
 		tAccount := &gtsmodel.Account{}
 		if err := c.db.GetByID(n.TargetAccountID, tAccount); err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
 		}
-		n.GTSTargetAccount = tAccount
+		n.TargetAccount = tAccount
 	}
 
-	if n.GTSOriginAccount == nil {
+	if n.OriginAccount == nil {
 		ogAccount := &gtsmodel.Account{}
 		if err := c.db.GetByID(n.OriginAccountID, ogAccount); err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
 		}
-		n.GTSOriginAccount = ogAccount
+		n.OriginAccount = ogAccount
 	}
-	mastoAccount, err := c.AccountToMastoPublic(n.GTSOriginAccount)
+	mastoAccount, err := c.AccountToMastoPublic(n.OriginAccount)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationToMasto: error converting account to masto: %s", err)
 	}
 
 	var mastoStatus *model.Status
 	if n.StatusID != "" {
-		if n.GTSStatus == nil {
+		if n.Status == nil {
 			status := &gtsmodel.Status{}
 			if err := c.db.GetByID(n.StatusID, status); err != nil {
 				return nil, fmt.Errorf("NotificationToMasto: error getting status with id %s from the db: %s", n.StatusID, err)
 			}
-			n.GTSStatus = status
+			n.Status = status
 		}
 
-		if n.GTSStatus.Account == nil {
-			if n.GTSStatus.AccountID == n.GTSTargetAccount.ID {
-				n.GTSStatus.Account = n.GTSTargetAccount
-			} else if n.GTSStatus.AccountID == n.GTSOriginAccount.ID {
-				n.GTSStatus.Account = n.GTSOriginAccount
+		if n.Status.Account == nil {
+			if n.Status.AccountID == n.TargetAccount.ID {
+				n.Status.Account = n.TargetAccount
+			} else if n.Status.AccountID == n.OriginAccount.ID {
+				n.Status.Account = n.OriginAccount
 			}
 		}
 
 		var err error
-		mastoStatus, err = c.StatusToMasto(n.GTSStatus, nil)
+		mastoStatus, err = c.StatusToMasto(n.Status, nil)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error converting status to masto: %s", err)
 		}

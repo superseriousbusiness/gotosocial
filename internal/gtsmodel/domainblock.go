@@ -32,6 +32,7 @@ type DomainBlock struct {
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Account ID of the creator of this block
 	CreatedByAccountID string `pg:"type:CHAR(26),notnull"`
+	CreatedByAccount *Account `pg:"rel:belongs-to"`
 	// Private comment on this block, viewable to admins
 	PrivateComment string
 	// Public comment on this block, viewable (optionally) by everyone

@@ -16,21 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package db
 
-import "time"
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-// EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
-type EmailDomainBlock struct {
-	// ID of this block in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
-	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
-	Domain string `pg:",notnull"`
-	// When was this block created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this block updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Account ID of the creator of this block
-	CreatedByAccountID string `pg:"type:CHAR(26),notnull"`
-   CreatedByAccount *Account `pg:"rel:belongs-to"`
+type Mention interface {
+	// GetMention gets a single mention by ID
+	GetMention(id string) (*gtsmodel.Mention, DBError)
+
+	// GetMentions gets multiple mentions.
+	GetMentions(ids []string) ([]*gtsmodel.Mention, DBError)
 }

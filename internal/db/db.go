@@ -35,6 +35,7 @@ type DB interface {
 	Admin
 	Basic
 	Instance
+	Mention
 	Notification
 	Relationship
 	Status

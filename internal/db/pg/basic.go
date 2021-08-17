@@ -185,6 +185,11 @@ func (b *basicDB) DropTable(i interface{}) db.DBError {
 	})
 }
 
+func (b *basicDB) RegisterTable(i interface{}) db.DBError {
+	orm.RegisterTable(i)
+	return nil
+}
+
 func (b *basicDB) IsHealthy(ctx context.Context) db.DBError {
 	return b.conn.Ping(ctx)
 }

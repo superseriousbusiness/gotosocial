@@ -102,7 +102,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
 	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
-	if blocked, err := f.db.Blocked(targetAccount.ID, requestingAccount.ID); err != nil {
+	if blocked, err := f.db.Blocked(targetAccount.ID, requestingAccount.ID, true); err != nil {
 		l.Debugf("something went wrong figuring out if the accounts have a block: %s", err)
 		return false, err
 	} else if blocked {
@@ -113,7 +113,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status replies to account id
 	if relevantAccounts.ReplyToAccount != nil && relevantAccounts.ReplyToAccount.ID != requestingAccount.ID {
-		if blocked, err := f.db.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID); err != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and reply to account")
@@ -135,7 +135,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status boosts accounts id
 	if relevantAccounts.BoostedStatusAuthor != nil {
-		if blocked, err := f.db.Blocked(relevantAccounts.BoostedStatusAuthor.ID, requestingAccount.ID); err != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.BoostedStatusAuthor.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted account")
@@ -145,7 +145,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status boosts a reply to account id
 	if relevantAccounts.BoostedReplyToAccount != nil {
-		if blocked, err := f.db.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID); err != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted reply to account")
@@ -155,7 +155,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status mentions accounts
 	for _, a := range relevantAccounts.MentionedAccounts {
-		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID); err != nil {
+		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and a mentioned account")
@@ -165,7 +165,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// boost mentions accounts
 	for _, a := range relevantAccounts.BoostedMentionedAccounts {
-		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID); err != nil {
+		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and a boosted mentioned account")

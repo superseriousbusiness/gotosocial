@@ -28,7 +28,7 @@ type StatusFave struct {
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the fave
 	AccountID string `pg:"type:CHAR(26),notnull"`
-	Account *Account `pg:"rel:has-one"`
+	Account *Account `pg:"rel:belongs-to"`
 	// id the account owning the faved status
 	TargetAccountID string `pg:"type:CHAR(26),notnull"`
 	TargetAccount *Account `pg:"rel:has-one"`

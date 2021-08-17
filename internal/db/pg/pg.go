@@ -44,6 +44,7 @@ type postgresService struct {
 	db.Admin
 	db.Basic
 	db.Instance
+	db.Mention
 	db.Notification
 	db.Relationship
 	db.Status
@@ -111,6 +112,12 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 			cancel: cancel,
 		},
 		Instance: &instanceDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Mention: &mentionDB{
 			config: c,
 			conn:   conn,
 			log:    log,
@@ -313,14 +320,14 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &gtsmodel.Mention{
-			StatusID:            statusID,
-			OriginAccountID:     ogAccount.ID,
-			OriginAccountURI:    ogAccount.URI,
-			TargetAccountID:     mentionedAccount.ID,
-			NameString:          a,
-			MentionedAccountURI: mentionedAccount.URI,
-			MentionedAccountURL: mentionedAccount.URL,
-			GTSAccount:          mentionedAccount,
+			StatusID:         statusID,
+			OriginAccountID:  ogAccount.ID,
+			OriginAccountURI: ogAccount.URI,
+			TargetAccountID:  mentionedAccount.ID,
+			NameString:       a,
+			TargetAccountURI: mentionedAccount.URI,
+			TargetAccountURL: mentionedAccount.URL,
+			OriginAccount:    mentionedAccount,
 		})
 	}
 	return menchies, nil

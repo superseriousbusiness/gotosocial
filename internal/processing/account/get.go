@@ -39,7 +39,7 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.Blocked(requestingAccount.ID, targetAccountID)
+		blocked, err = p.db.Blocked(requestingAccount.ID, targetAccountID, true)
 		if err != nil {
 			return nil, fmt.Errorf("error checking account block: %s", err)
 		}

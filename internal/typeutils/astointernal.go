@@ -188,22 +188,22 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 
 	// attachments to dereference and fetch later on (we don't do that here)
 	if attachments, err := ap.ExtractAttachments(statusable); err == nil {
-		status.GTSMediaAttachments = attachments
+		status.Attachments = attachments
 	}
 
 	// hashtags to dereference later on
 	if hashtags, err := ap.ExtractHashtags(statusable); err == nil {
-		status.GTSTags = hashtags
+		status.Tags = hashtags
 	}
 
 	// emojis to dereference and fetch later on
 	if emojis, err := ap.ExtractEmojis(statusable); err == nil {
-		status.GTSEmojis = emojis
+		status.Emojis = emojis
 	}
 
 	// mentions to dereference later on
 	if mentions, err := ap.ExtractMentions(statusable); err == nil {
-		status.GTSMentions = mentions
+		status.Mentions = mentions
 	}
 
 	// cw string for this status
@@ -515,10 +515,10 @@ func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.
 	status.AccountURI = boostingAccount.URI
 
 	// these will all be wrapped in the boosted status so set them empty here
-	status.Attachments = []string{}
-	status.Tags = []string{}
-	status.Mentions = []string{}
-	status.Emojis = []string{}
+	status.AttachmentIDs = []string{}
+	status.TagIDs = []string{}
+	status.MentionIDs = []string{}
+	status.EmojiIDs = []string{}
 
 	// parse the visibility from the To and CC entries
 	var visibility gtsmodel.Visibility

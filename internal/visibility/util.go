@@ -13,28 +13,71 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 		BoostedMentionedAccounts: []*gtsmodel.Account{},
 	}
 
-	// get the author account
+	// get the author account if it's not set on the status already
 	if targetStatus.Account == nil {
-		statusAuthor := &gtsmodel.Account{}
-		if err := f.db.GetByID(targetStatus.AccountID, statusAuthor); err != nil {
+		statusAuthor, err := f.db.GetAccountByID(targetStatus.AccountID)
+		if err != nil {
 			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting statusAuthor with id %s: %s", targetStatus.AccountID, err)
 		}
 		targetStatus.Account = statusAuthor
 	}
 	accounts.StatusAuthor = targetStatus.Account
 
-	// get the replied to account from the status and add it to the pile
-	if targetStatus.InReplyToAccountID != "" {
-		repliedToAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(targetStatus.InReplyToAccountID, repliedToAccount); err != nil {
+	// get the replied to account if it's not set on the status already
+	if targetStatus.InReplyToAccountID != "" && targetStatus.InReplyToAccount == nil {
+		repliedToAccount, err := f.db.GetAccountByID(targetStatus.InReplyToAccountID)
+		if err != nil {
 			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting repliedToAcount with id %s: %s", targetStatus.InReplyToAccountID, err)
 		}
-		accounts.ReplyToAccount = repliedToAccount
+		targetStatus.InReplyToAccount = repliedToAccount
+	}
+	accounts.ReplyToAccount = targetStatus.InReplyToAccount
+
+	// get the boosted status if it's not set on the status already
+	if targetStatus.BoostOfID != "" && targetStatus.BoostOf == nil {
+		boostedStatus, err := f.db.GetStatusByID(targetStatus.BoostOfID)
+		if err != nil {
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatus with id %s: %s", targetStatus.BoostOfID, err)
+		}
+		targetStatus.BoostOf = boostedStatus
+	}
+
+	// get the boosted account if it's not set on the status already
+	if targetStatus.BoostOfAccountID != "" && targetStatus.BoostOfAccount == nil {
+		if targetStatus.BoostOf != nil && targetStatus.BoostOf.Account != nil {
+			targetStatus.BoostOfAccount = targetStatus.BoostOf.Account
+		} else {
+			boostedAccount, err := f.db.GetAccountByID(targetStatus.BoostOfAccountID)
+			if err != nil {
+				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostOfAccount with id %s: %s", targetStatus.BoostOfAccountID, err)
+			}
+			targetStatus.BoostOfAccount = boostedAccount
+		}
+	}
+	accounts.BoostedStatusAuthor = targetStatus.BoostOfAccount
+
+	if targetStatus.BoostOf != nil {
+		// the boosted status might be a reply to another account so we should get that too
+		if targetStatus.BoostOf.InReplyToAccountID != "" && targetStatus.BoostOf.InReplyToAccount == nil {
+			boostOfInReplyToAccount, err := f.db.GetAccountByID(targetStatus.BoostOf.InReplyToAccountID)
+			if err != nil {
+				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostOfInReplyToAccount with id %s: %s", targetStatus.BoostOf.InReplyToAccountID, err)
+			}
+			targetStatus.BoostOf.InReplyToAccount = boostOfInReplyToAccount
+		}
+
+		// now get all accounts with IDs that are mentioned in the status
+		if targetStatus.BoostOf.MentionIDs != nil && targetStatus.BoostOf.Mentions == nil {
+			mentions, err := f.db.GetMentions(targetStatus.BoostOf.MentionIDs)
+			if err != nil {
+				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from boostOf status: %s", err)
+			}
+			targetStatus.BoostOf.Mentions = mentions
+		}
 	}
 
 	// now get all accounts with IDs that are mentioned in the status
-	for _, mentionID := range targetStatus.Mentions {
-
+	for _, mentionID := range targetStatus.MentionIDs {
 		mention := &gtsmodel.Mention{}
 		if err := f.db.GetByID(mentionID, mention); err != nil {
 			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mention with id %s: %s", mentionID, err)
@@ -45,43 +88,6 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentioned account: %s", err)
 		}
 		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
-	}
-
-	// get the boosted account from the status and add it to the pile
-	if targetStatus.BoostOfID != "" {
-		// retrieve the boosted status first
-		boostedStatus := &gtsmodel.Status{}
-		if err := f.db.GetByID(targetStatus.BoostOfID, boostedStatus); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatus with id %s: %s", targetStatus.BoostOfID, err)
-		}
-		boostedAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(boostedStatus.AccountID, boostedAccount); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedAccount with id %s: %s", boostedStatus.AccountID, err)
-		}
-		accounts.BoostedStatusAuthor = boostedAccount
-
-		// the boosted status might be a reply to another account so we should get that too
-		if boostedStatus.InReplyToAccountID != "" {
-			boostedStatusRepliedToAccount := &gtsmodel.Account{}
-			if err := f.db.GetByID(boostedStatus.InReplyToAccountID, boostedStatusRepliedToAccount); err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatusRepliedToAccount with id %s: %s", boostedStatus.InReplyToAccountID, err)
-			}
-			accounts.BoostedReplyToAccount = boostedStatusRepliedToAccount
-		}
-
-		// now get all accounts with IDs that are mentioned in the status
-		for _, mentionID := range boostedStatus.Mentions {
-			mention := &gtsmodel.Mention{}
-			if err := f.db.GetByID(mentionID, mention); err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boosted mention with id %s: %s", mentionID, err)
-			}
-
-			mentionedAccount := &gtsmodel.Account{}
-			if err := f.db.GetByID(mention.TargetAccountID, mentionedAccount); err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boosted mentioned account: %s", err)
-			}
-			accounts.BoostedMentionedAccounts = append(accounts.BoostedMentionedAccounts, mentionedAccount)
-		}
 	}
 
 	return accounts, nil

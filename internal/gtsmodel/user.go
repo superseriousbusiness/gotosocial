@@ -35,7 +35,8 @@ type User struct {
 	// confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
 	Email string `pg:"default:null,unique"`
 	// The id of the local gtsmodel.Account entry for this user, if it exists (unconfirmed users don't have an account yet)
-	AccountID string `pg:"type:CHAR(26),unique"`
+	AccountID string   `pg:"type:CHAR(26),unique"`
+	Account   *Account `pg:"rel:has-one"`
 	// The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables
 	EncryptedPassword string `pg:",notnull"`
 
@@ -68,7 +69,8 @@ type User struct {
 	// In what timezone/locale is this user located?
 	Locale string
 	// Which application id created this user? See gtsmodel.Application
-	CreatedByApplicationID string `pg:"type:CHAR(26)"`
+	CreatedByApplicationID string       `pg:"type:CHAR(26)"`
+	CreatedByApplication   *Application `pg:"rel:has-one"`
 	// When did we last contact this user
 	LastEmailedAt time.Time `pg:"type:timestamp"`
 

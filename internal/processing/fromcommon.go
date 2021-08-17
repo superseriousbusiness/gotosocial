@@ -30,35 +30,35 @@ import (
 
 func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 	// if there are no mentions in this status then just bail
-	if len(status.Mentions) == 0 {
+	if len(status.MentionIDs) == 0 {
 		return nil
 	}
 
-	if status.GTSMentions == nil {
+	if status.Mentions == nil {
 		// there are mentions but they're not fully populated on the status yet so do this
 		menchies := []*gtsmodel.Mention{}
-		for _, m := range status.Mentions {
+		for _, m := range status.MentionIDs {
 			gtsm := &gtsmodel.Mention{}
 			if err := p.db.GetByID(m, gtsm); err != nil {
 				return fmt.Errorf("notifyStatus: error getting mention with id %s from the db: %s", m, err)
 			}
 			menchies = append(menchies, gtsm)
 		}
-		status.GTSMentions = menchies
+		status.Mentions = menchies
 	}
 
 	// now we have mentions as full gtsmodel.Mention structs on the status we can continue
-	for _, m := range status.GTSMentions {
+	for _, m := range status.Mentions {
 		// make sure this is a local account, otherwise we don't need to create a notification for it
-		if m.GTSAccount == nil {
+		if m.OriginAccount == nil {
 			a := &gtsmodel.Account{}
 			if err := p.db.GetByID(m.TargetAccountID, a); err != nil {
 				// we don't have the account or there's been an error
 				return fmt.Errorf("notifyStatus: error getting account with id %s from the db: %s", m.TargetAccountID, err)
 			}
-			m.GTSAccount = a
+			m.OriginAccount = a
 		}
-		if m.GTSAccount.Domain != "" {
+		if m.OriginAccount.Domain != "" {
 			// not a local account so skip it
 			continue
 		}
@@ -103,7 +103,7 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 			return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 		}
 
-		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.GTSAccount); err != nil {
+		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.OriginAccount); err != nil {
 			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 		}
 	}

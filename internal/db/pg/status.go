@@ -40,6 +40,10 @@ type statusDB struct {
 
 func (s *statusDB) newStatusQ(status *gtsmodel.Status) *orm.Query {
 	return s.conn.Model(status).
+		Relation("Attachments").
+		Relation("Tags").
+		Relation("Mentions").
+		Relation("Emojis").
 		Relation("Account").
 		Relation("InReplyTo").
 		Relation("InReplyToAccount").
@@ -48,7 +52,7 @@ func (s *statusDB) newStatusQ(status *gtsmodel.Status) *orm.Query {
 		Relation("CreatedWithApplication")
 }
 
-func (s *statusDB) processResponse(status *gtsmodel.Status, err error) (*gtsmodel.Status, db.DBError) {
+func (s *statusDB) processStatusResponse(status *gtsmodel.Status, err error) (*gtsmodel.Status, db.DBError) {
 	switch err {
 	case pg.ErrNoRows:
 		return nil, db.ErrNoEntries
@@ -65,7 +69,7 @@ func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
 	q := s.newStatusQ(status).
 		Where("status.id = ?", id)
 
-	return s.processResponse(status, q.Select())
+	return s.processStatusResponse(status, q.Select())
 }
 
 func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
@@ -74,7 +78,7 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
 	q := s.newStatusQ(status).
 		Where("LOWER(status.uri) = LOWER(?)", uri)
 
-	return s.processResponse(status, q.Select())
+	return s.processStatusResponse(status, q.Select())
 }
 
 func (s *statusDB) StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.DBError) {

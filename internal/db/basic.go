@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package db
 
 import "context"
@@ -10,6 +28,10 @@ type Basic interface {
 	// DropTable drops the table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
 	DropTable(i interface{}) DBError
+
+	// RegisterTable registers a table for use in many2many relations.
+	// For implementations that don't use tables, or many2many relations, this can just return nil.
+	RegisterTable(i interface{}) DBError
 
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.

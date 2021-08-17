@@ -43,6 +43,7 @@ type MediaAttachment struct {
 	FileMeta FileMeta
 	// To which account does this attachment belong
 	AccountID string `pg:"type:CHAR(26),notnull"`
+	Account *Account `pg:"rel:belongs-to"`
 	// Description of the attachment (for screenreaders)
 	Description string
 	// To which scheduled status does this attachment belong

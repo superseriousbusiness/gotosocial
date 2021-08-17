@@ -10,27 +10,19 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	l := p.log.WithField("func", "Unboost")
-
-	l.Tracef("going to search for target status %s", targetStatusID)
-	targetStatus := &gtsmodel.Status{}
-	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
+func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(targetStatusID)
+	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
-
-	l.Tracef("going to search for target account %s", targetStatus.AccountID)
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetStatus.AccountID, targetAccount); err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err))
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	l.Trace("going to see if status is visible")
-	visible, err := p.filter.StatusVisible(targetStatus, account)
+	visible, err := p.filter.StatusVisible(targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
-
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
@@ -46,7 +38,7 @@ func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.App
 		},
 		{
 			Key:   "account_id",
-			Value: account.ID,
+			Value: requestingAccount.ID,
 		},
 	}
 	err = p.db.GetWhere(where, gtsBoost)
@@ -71,22 +63,23 @@ func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.App
 		}
 
 		// pin some stuff onto the boost while we have it out of the db
+		gtsBoost.Account = requestingAccount
+
 		gtsBoost.BoostOf = targetStatus
-		gtsBoost.BoostOf.Account = targetAccount
-		gtsBoost.BoostOfAccount = targetAccount
-		gtsBoost.Account = account
+		gtsBoost.BoostOfAccount = targetStatus.Account
+		gtsBoost.BoostOf.Account = targetStatus.Account
 
 		// send it back to the processor for async processing
 		p.fromClientAPI <- gtsmodel.FromClientAPI{
 			APObjectType:   gtsmodel.ActivityStreamsAnnounce,
 			APActivityType: gtsmodel.ActivityStreamsUndo,
 			GTSModel:       gtsBoost,
-			OriginAccount:  account,
-			TargetAccount:  targetAccount,
+			OriginAccount:  requestingAccount,
+			TargetAccount:  targetStatus.Account,
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account)
+	mastoStatus, err := p.tc.StatusToMasto(targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

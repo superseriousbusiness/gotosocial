@@ -81,7 +81,7 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 	}
 
 	// change the status ID of the media attachments to the new status
-	for _, a := range newStatus.GTSMediaAttachments {
+	for _, a := range newStatus.Attachments {
 		a.StatusID = newStatus.ID
 		a.UpdatedAt = time.Now()
 		if err := p.db.UpdateByID(a.ID, a); err != nil {

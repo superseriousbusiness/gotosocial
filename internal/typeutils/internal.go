@@ -54,10 +54,10 @@ func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.
 		InReplyToAccountID: "",
 
 		// these will all be wrapped in the boosted status so set them empty here
-		Attachments: []string{},
-		Tags:        []string{},
-		Mentions:    []string{},
-		Emojis:      []string{},
+		AttachmentIDs: []string{},
+		TagIDs:        []string{},
+		MentionIDs:    []string{},
+		EmojiIDs:      []string{},
 
 		// the below fields will be taken from the target status
 		Content:             s.Content,

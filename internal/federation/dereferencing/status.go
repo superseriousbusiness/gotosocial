@@ -276,7 +276,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	// * the remote URL (a.RemoteURL)
 	// This should be enough to pass along to the media processor.
 	attachmentIDs := []string{}
-	for _, a := range status.GTSMediaAttachments {
+	for _, a := range status.Attachments {
 		l.Tracef("dereferencing attachment: %+v", a)
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
@@ -307,7 +307,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
 	}
-	status.Attachments = attachmentIDs
+	status.AttachmentIDs = attachmentIDs
 
 	// 2. Hashtags
 
@@ -318,7 +318,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	//
 	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
 	mentions := []string{}
-	for _, m := range status.GTSMentions {
+	for _, m := range status.Mentions {
 
 		if m.ID != "" {
 			continue
@@ -331,9 +331,9 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 		m.ID = mID
 
-		uri, err := url.Parse(m.MentionedAccountURI)
+		uri, err := url.Parse(m.TargetAccountURI)
 		if err != nil {
-			l.Debugf("error parsing mentioned account uri %s: %s", m.MentionedAccountURI, err)
+			l.Debugf("error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
 			continue
 		}
 
@@ -353,7 +353,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 		mentions = append(mentions, m.ID)
 	}
-	status.Mentions = mentions
+	status.MentionIDs = mentions
 
 	// status has replyToURI but we don't have an ID yet for the status it replies to
 	if status.InReplyToURI != "" && status.InReplyToID == "" {

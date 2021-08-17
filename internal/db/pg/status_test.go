@@ -80,7 +80,18 @@ func (suite *PGStandardTestSuite) TestGetStatusByURI() {
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
 }
-
+func (suite *PGStandardTestSuite) TestGetStatusWithExtras() {
+	status, err := suite.db.GetStatusByID(suite.testStatuses["admin_account_status_1"].ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotNil(status)
+	suite.NotNil(status.Account)
+	suite.NotNil(status.CreatedWithApplication)
+	suite.NotEmpty(status.Tags)
+	suite.NotEmpty(status.Attachments)
+	suite.NotEmpty(status.Emojis)
+}
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(PGStandardTestSuite))
 }

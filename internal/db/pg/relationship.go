@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -36,21 +37,41 @@ type relationshipDB struct {
 	cancel context.CancelFunc
 }
 
-func (r *relationshipDB) Blocked(account1 string, account2 string) (bool, db.DBError) {
-	// TODO: check domain blocks as well
-	var blocked bool
-	if err := r.conn.Model(&gtsmodel.Block{}).
-		Where("account_id = ?", account1).Where("target_account_id = ?", account2).
-		WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2).
-		Select(); err != nil {
-		if err == pg.ErrNoRows {
-			blocked = false
-			return blocked, nil
-		}
-		return blocked, err
+func (r *relationshipDB) newBlockQ(block *gtsmodel.Block) *orm.Query {
+	return r.conn.Model(block).
+		Relation("Account").
+		Relation("TargetAccount")
+}
+
+func (r *relationshipDB) processResponse(block *gtsmodel.Block, err error) (*gtsmodel.Block, db.DBError) {
+	switch err {
+	case pg.ErrNoRows:
+		return nil, db.ErrNoEntries
+	case nil:
+		return block, nil
+	default:
+		return nil, err
 	}
-	blocked = true
-	return blocked, nil
+}
+
+func (r *relationshipDB) Blocked(account1 string, account2 string, eitherDirection bool) (bool, db.DBError) {
+	q := r.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", account1).Where("target_account_id = ?", account2)
+
+	if eitherDirection {
+		q = q.WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2)
+	}
+
+	return q.Exists()
+}
+
+func (r *relationshipDB) GetBlock(account1 string, account2 string) (*gtsmodel.Block, db.DBError) {
+	block := &gtsmodel.Block{}
+
+	q := r.newBlockQ(block).
+		Where("block.account_id = ?", account1).
+		Where("block.target_account_id = ?", account2)
+
+	return r.processResponse(block, q.Select())
 }
 
 func (r *relationshipDB) GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.DBError) {

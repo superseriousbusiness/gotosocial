@@ -29,11 +29,9 @@ import (
 
 func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
-	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
-		if err == db.ErrNoEntries {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockRemove: account %s not found in the db: %s", targetAccountID, err))
-		}
+	targetAccount, err := p.db.GetAccountByID(targetAccountID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
 	}
 
 	// check if a block exists, and remove it if it does (storing the URI for later)
@@ -44,7 +42,7 @@ func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccou
 		{Key: "target_account_id", Value: targetAccountID},
 	}, block); err == nil {
 		block.Account = requestingAccount
-		block.TargetAccount = targetAcct
+		block.TargetAccount = targetAccount
 		if err := p.db.DeleteByID(block.ID, &gtsmodel.Block{}); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error removing block from db: %s", err))
 		}
@@ -58,7 +56,7 @@ func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccou
 			APActivityType: gtsmodel.ActivityStreamsUndo,
 			GTSModel:       block,
 			OriginAccount:  requestingAccount,
-			TargetAccount:  targetAcct,
+			TargetAccount:  targetAccount,
 		}
 	}
 

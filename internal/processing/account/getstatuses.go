@@ -28,15 +28,14 @@ import (
 )
 
 func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
-		if err == db.ErrNoEntries {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("no entry found for account id %s", targetAccountID))
-		}
+	if blocked, err := p.db.Blocked(requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
+	} else if blocked {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	apiStatuses := []apimodel.Status{}
+	
 	statuses, err := p.db.GetAccountStatuses(targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {

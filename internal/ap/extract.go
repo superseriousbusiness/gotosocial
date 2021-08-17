@@ -581,7 +581,7 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	if hrefProp == nil || !hrefProp.IsIRI() {
 		return nil, errors.New("no href prop")
 	}
-	mention.MentionedAccountURI = hrefProp.GetIRI().String()
+	mention.TargetAccountURI = hrefProp.GetIRI().String()
 	return mention, nil
 }
 

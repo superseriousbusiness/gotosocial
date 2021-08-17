@@ -10,26 +10,19 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	l := p.log.WithField("func", "StatusUnfave")
-	l.Tracef("going to search for target status %s", targetStatusID)
-	targetStatus := &gtsmodel.Status{}
-	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
+func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(targetStatusID)
+	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
-
-	l.Tracef("going to search for target account %s", targetStatus.AccountID)
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetStatus.AccountID, targetAccount); err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching target account %s: %s", targetStatus.AccountID, err))
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	l.Trace("going to see if status is visible")
-	visible, err := p.filter.StatusVisible(targetStatus, account)
+	visible, err := p.filter.StatusVisible(targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
-
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
@@ -38,7 +31,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 	var toUnfave bool
 
 	gtsFave := &gtsmodel.StatusFave{}
-	err = p.db.GetWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: account.ID}}, gtsFave)
+	err = p.db.GetWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave)
 	if err == nil {
 		// we have a fave
 		toUnfave = true
@@ -54,7 +47,7 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 
 	if toUnfave {
 		// we had a fave, so take some action to get rid of it
-		if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: account.ID}}, gtsFave); err != nil {
+		if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
 		}
 
@@ -63,12 +56,12 @@ func (p *processor) Unfave(account *gtsmodel.Account, targetStatusID string) (*a
 			APObjectType:   gtsmodel.ActivityStreamsLike,
 			APActivityType: gtsmodel.ActivityStreamsUndo,
 			GTSModel:       gtsFave,
-			OriginAccount:  account,
-			TargetAccount:  targetAccount,
+			OriginAccount:  requestingAccount,
+			TargetAccount:  targetStatus.Account,
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account)
+	mastoStatus, err := p.tc.StatusToMasto(targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

@@ -164,14 +164,14 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 
 			// delete all attachments for this status
-			for _, a := range statusToDelete.Attachments {
+			for _, a := range statusToDelete.AttachmentIDs {
 				if err := p.mediaProcessor.Delete(a); err != nil {
 					return err
 				}
 			}
 
 			// delete all mentions for this status
-			for _, m := range statusToDelete.Mentions {
+			for _, m := range statusToDelete.MentionIDs {
 				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
 					return err
 				}

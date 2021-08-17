@@ -29,24 +29,16 @@ type Notification struct {
 	// Creation time of this notification
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Which account does this notification target (ie., who will receive the notification?)
-	TargetAccountID string `pg:"type:CHAR(26),notnull"`
+	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `pg:"rel:has-one"`
 	// Which account performed the action that created this notification?
-	OriginAccountID string `pg:"type:CHAR(26),notnull"`
+	OriginAccountID string   `pg:"type:CHAR(26),notnull"`
+	OriginAccount   *Account `pg:"rel:has-one"`
 	// If the notification pertains to a status, what is the database ID of that status?
-	StatusID string `pg:"type:CHAR(26)"`
+	StatusID string  `pg:"type:CHAR(26)"`
+	Status   *Status `pg:"rel:has-one"`
 	// Has this notification been read already?
 	Read bool
-
-	/*
-		NON-DATABASE fields
-	*/
-
-	// gts model of the target account, won't be put in the database, it's just for convenience when passing the notification around.
-	GTSTargetAccount *Account `pg:"-"`
-	// gts model of the origin account, won't be put in the database, it's just for convenience when passing the notification around.
-	GTSOriginAccount *Account `pg:"-"`
-	// gts model of the relevant status, won't be put in the database, it's just for convenience when passing the notification around.
-	GTSStatus *Status `pg:"-"`
 }
 
 // NotificationType describes the reason/type of this notification.
