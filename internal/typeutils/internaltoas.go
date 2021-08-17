@@ -330,12 +330,12 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 
 	// check if author account is already attached to status and attach it if not
 	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
-	if s.GTSAuthorAccount == nil {
+	if s.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := c.db.GetByID(s.AccountID, a); err != nil {
 			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
 		}
-		s.GTSAuthorAccount = a
+		s.Account = a
 	}
 
 	// create the Note!
@@ -361,16 +361,16 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	// inReplyTo
 	if s.InReplyToID != "" {
 		// fetch the replied status if we don't have it on hand already
-		if s.GTSReplyToStatus == nil {
+		if s.InReplyTo == nil {
 			rs := &gtsmodel.Status{}
 			if err := c.db.GetByID(s.InReplyToID, rs); err != nil {
 				return nil, fmt.Errorf("StatusToAS: error retrieving replied-to status from db: %s", err)
 			}
-			s.GTSReplyToStatus = rs
+			s.InReplyTo = rs
 		}
-		rURI, err := url.Parse(s.GTSReplyToStatus.URI)
+		rURI, err := url.Parse(s.InReplyTo.URI)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSReplyToStatus.URI, err)
+			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.InReplyTo.URI, err)
 		}
 
 		inReplyToProp := streams.NewActivityStreamsInReplyToProperty()
@@ -396,9 +396,9 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	}
 
 	// attributedTo
-	authorAccountURI, err := url.Parse(s.GTSAuthorAccount.URI)
+	authorAccountURI, err := url.Parse(s.Account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAuthorAccount.URI, err)
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.Account.URI, err)
 	}
 	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
 	attributedToProp.AppendIRI(authorAccountURI)
@@ -425,9 +425,9 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	status.SetActivityStreamsTag(tagProp)
 
 	// parse out some URIs we need here
-	authorFollowersURI, err := url.Parse(s.GTSAuthorAccount.FollowersURI)
+	authorFollowersURI, err := url.Parse(s.Account.FollowersURI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.GTSAuthorAccount.FollowersURI, err)
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.Account.FollowersURI, err)
 	}
 
 	publicURI, err := url.Parse(asPublicURI)
@@ -648,30 +648,30 @@ func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityS
 */
 func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
-	if f.GTSStatus == nil {
+	if f.Status == nil {
 		s := &gtsmodel.Status{}
 		if err := c.db.GetByID(f.StatusID, s); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
 		}
-		f.GTSStatus = s
+		f.Status = s
 	}
 
 	// check if the targetAccount is already pinned to this fave, and fetch it if not
-	if f.GTSTargetAccount == nil {
+	if f.TargetAccount == nil {
 		a := &gtsmodel.Account{}
 		if err := c.db.GetByID(f.TargetAccountID, a); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
 		}
-		f.GTSTargetAccount = a
+		f.TargetAccount = a
 	}
 
 	// check if the faving account is already pinned to this fave, and fetch it if not
-	if f.GTSFavingAccount == nil {
+	if f.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := c.db.GetByID(f.AccountID, a); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
 		}
-		f.GTSFavingAccount = a
+		f.Account = a
 	}
 
 	// create the like
@@ -679,9 +679,9 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 
 	// set the actor property to the fave-ing account's URI
 	actorProp := streams.NewActivityStreamsActorProperty()
-	actorIRI, err := url.Parse(f.GTSFavingAccount.URI)
+	actorIRI, err := url.Parse(f.Account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSFavingAccount.URI, err)
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.Account.URI, err)
 	}
 	actorProp.AppendIRI(actorIRI)
 	like.SetActivityStreamsActor(actorProp)
@@ -697,18 +697,18 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 
 	// set the object property to the target status's URI
 	objectProp := streams.NewActivityStreamsObjectProperty()
-	statusIRI, err := url.Parse(f.GTSStatus.URI)
+	statusIRI, err := url.Parse(f.Status.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSStatus.URI, err)
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.Status.URI, err)
 	}
 	objectProp.AppendIRI(statusIRI)
 	like.SetActivityStreamsObject(objectProp)
 
 	// set the TO property to the target account's IRI
 	toProp := streams.NewActivityStreamsToProperty()
-	toIRI, err := url.Parse(f.GTSTargetAccount.URI)
+	toIRI, err := url.Parse(f.TargetAccount.URI)
 	if err != nil {
-		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.GTSTargetAccount.URI, err)
+		return nil, fmt.Errorf("FaveToAS: error parsing uri %s: %s", f.TargetAccount.URI, err)
 	}
 	toProp.AppendIRI(toIRI)
 	like.SetActivityStreamsTo(toProp)
@@ -718,12 +718,12 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 
 func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
-	if boostWrapperStatus.GTSBoostedStatus == nil {
+	if boostWrapperStatus.BoostOf == nil {
 		b := &gtsmodel.Status{}
 		if err := c.db.GetByID(boostWrapperStatus.BoostOfID, b); err != nil {
 			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
 		}
-		boostWrapperStatus.GTSBoostedStatus = b
+		boostWrapperStatus.BoostOf = b
 	}
 
 	// create the announce
@@ -748,9 +748,9 @@ func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccou
 	announce.SetJSONLDId(idProp)
 
 	// set the object
-	boostedStatusURI, err := url.Parse(boostWrapperStatus.GTSBoostedStatus.URI)
+	boostedStatusURI, err := url.Parse(boostWrapperStatus.BoostOf.URI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.GTSBoostedStatus.URI, err)
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostWrapperStatus.BoostOf.URI, err)
 	}
 	objectProp := streams.NewActivityStreamsObjectProperty()
 	objectProp.AppendIRI(boostedStatusURI)

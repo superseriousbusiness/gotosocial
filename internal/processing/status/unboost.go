@@ -71,10 +71,10 @@ func (p *processor) Unboost(account *gtsmodel.Account, application *gtsmodel.App
 		}
 
 		// pin some stuff onto the boost while we have it out of the db
-		gtsBoost.GTSBoostedStatus = targetStatus
-		gtsBoost.GTSBoostedStatus.GTSAuthorAccount = targetAccount
-		gtsBoost.GTSBoostedAccount = targetAccount
-		gtsBoost.GTSAuthorAccount = account
+		gtsBoost.BoostOf = targetStatus
+		gtsBoost.BoostOf.Account = targetAccount
+		gtsBoost.BoostOfAccount = targetAccount
+		gtsBoost.Account = account
 
 		// send it back to the processor for async processing
 		p.fromClientAPI <- gtsmodel.FromClientAPI{

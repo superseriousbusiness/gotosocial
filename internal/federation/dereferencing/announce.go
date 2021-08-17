@@ -27,14 +27,14 @@ import (
 )
 
 func (d *deref) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error {
-	if announce.GTSBoostedStatus == nil || announce.GTSBoostedStatus.URI == "" {
+	if announce.BoostOf == nil || announce.BoostOf.URI == "" {
 		// we can't do anything unfortunately
 		return errors.New("DereferenceAnnounce: no URI to dereference")
 	}
 
-	boostedStatusURI, err := url.Parse(announce.GTSBoostedStatus.URI)
+	boostedStatusURI, err := url.Parse(announce.BoostOf.URI)
 	if err != nil {
-		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.GTSBoostedStatus.URI, err)
+		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.BoostOf.URI, err)
 	}
 	if blocked, err := d.blockedDomain(boostedStatusURI.Host); blocked || err != nil {
 		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedStatusURI.Host)
@@ -47,7 +47,7 @@ func (d *deref) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsernam
 
 	boostedStatus, _, _, err := d.GetRemoteStatus(requestingUsername, boostedStatusURI, false)
 	if err != nil {
-		return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.GTSBoostedStatus.URI, err)
+		return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
 	}
 
 	announce.Content = boostedStatus.Content
@@ -60,6 +60,6 @@ func (d *deref) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsernam
 	announce.BoostOfAccountID = boostedStatus.AccountID
 	announce.Visibility = boostedStatus.Visibility
 	announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
-	announce.GTSBoostedStatus = boostedStatus
+	announce.BoostOf = boostedStatus
 	return nil
 }

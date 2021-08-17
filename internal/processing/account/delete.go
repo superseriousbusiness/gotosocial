@@ -133,7 +133,7 @@ func (p *processor) Delete(account *gtsmodel.Account, origin string) error {
 	var maxID string
 selectStatusesLoop:
 	for {
-		statuses, err := p.db.GetStatusesForAccount(account.ID, 20, false, maxID, false, false)
+		statuses, err := p.db.GetAccountStatuses(account.ID, 20, false, maxID, false, false)
 		if err != nil {
 			if _, ok := err.(db.ErrNoEntries); ok {
 				// no statuses left for this instance so we're done
@@ -147,7 +147,7 @@ selectStatusesLoop:
 
 		for i, s := range statuses {
 			// pass the status delete through the client api channel for processing
-			s.GTSAuthorAccount = account
+			s.Account = account
 			l.Debug("putting status in the client api channel")
 			p.fromClientAPI <- gtsmodel.FromClientAPI{
 				APObjectType:   gtsmodel.ActivityStreamsNote,

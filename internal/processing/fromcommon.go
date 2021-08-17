@@ -297,22 +297,22 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 
 func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 	// make sure the author account is pinned onto the status
-	if status.GTSAuthorAccount == nil {
+	if status.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := p.db.GetByID(status.AccountID, a); err != nil {
 			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
 		}
-		status.GTSAuthorAccount = a
+		status.Account = a
 	}
 
 	// get local followers of the account that posted the status
 	followers := []gtsmodel.Follow{}
-	if err := p.db.GetFollowersByAccountID(status.AccountID, &followers, true); err != nil {
+	if err := p.db.GetAccountFollowers(status.AccountID, &followers, true); err != nil {
 		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
 	}
 
 	// if the poster is local, add a fake entry for them to the followers list so they can see their own status in their timeline
-	if status.GTSAuthorAccount.Domain == "" {
+	if status.Account.Domain == "" {
 		followers = append(followers, gtsmodel.Follow{
 			AccountID: status.AccountID,
 		})

@@ -338,8 +338,8 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 
 		m.StatusID = status.ID
-		m.OriginAccountID = status.GTSAuthorAccount.ID
-		m.OriginAccountURI = status.GTSAuthorAccount.URI
+		m.OriginAccountID = status.Account.ID
+		m.OriginAccountURI = status.Account.URI
 
 		targetAccount, _, err := d.GetRemoteAccount(requestingUsername, uri, false)
 		if err != nil {

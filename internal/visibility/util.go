@@ -14,14 +14,14 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 	}
 
 	// get the author account
-	if targetStatus.GTSAuthorAccount == nil {
+	if targetStatus.Account == nil {
 		statusAuthor := &gtsmodel.Account{}
 		if err := f.db.GetByID(targetStatus.AccountID, statusAuthor); err != nil {
 			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting statusAuthor with id %s: %s", targetStatus.AccountID, err)
 		}
-		targetStatus.GTSAuthorAccount = statusAuthor
+		targetStatus.Account = statusAuthor
 	}
-	accounts.StatusAuthor = targetStatus.GTSAuthorAccount
+	accounts.StatusAuthor = targetStatus.Account
 
 	// get the replied to account from the status and add it to the pile
 	if targetStatus.InReplyToAccountID != "" {

@@ -39,7 +39,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 
 	// check pending follow requests aimed at this account
 	fr := []gtsmodel.FollowRequest{}
-	if err := c.db.GetFollowRequestsForAccountID(a.ID, &fr); err != nil {
+	if err := c.db.GetAccountFollowRequests(a.ID, &fr); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
 		}
@@ -64,7 +64,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
 	// count followers
 	followers := []gtsmodel.Follow{}
-	if err := c.db.GetFollowersByAccountID(a.ID, &followers, false); err != nil {
+	if err := c.db.GetAccountFollowers(a.ID, &followers, false); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting followers: %s", err)
 		}
@@ -76,7 +76,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 
 	// count following
 	following := []gtsmodel.Follow{}
-	if err := c.db.GetFollowingByAccountID(a.ID, &following); err != nil {
+	if err := c.db.GetAccountFollowing(a.ID, &following); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting following: %s", err)
 		}
@@ -87,7 +87,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}
 
 	// count statuses
-	statusesCount, err := c.db.CountStatusesByAccountID(a.ID)
+	statusesCount, err := c.db.GetAccountStatusesCount(a.ID)
 	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last statuses: %s", err)
@@ -96,7 +96,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 
 	// check when the last status was
 	lastStatus := &gtsmodel.Status{}
-	if err := c.db.GetLastStatusForAccountID(a.ID, lastStatus); err != nil {
+	if err := c.db.GetAccountLastStatus(a.ID, lastStatus); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting last status: %s", err)
 		}
@@ -108,7 +108,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 
 	// build the avatar and header URLs
 	avi := &gtsmodel.MediaAttachment{}
-	if err := c.db.GetAvatarForAccountID(avi, a.ID); err != nil {
+	if err := c.db.GetAccountAvatar(avi, a.ID); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting avatar: %s", err)
 		}
@@ -117,7 +117,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	aviURLStatic := avi.Thumbnail.URL
 
 	header := &gtsmodel.MediaAttachment{}
-	if err := c.db.GetHeaderForAccountID(header, a.ID); err != nil {
+	if err := c.db.GetAccountHeader(header, a.ID); err != nil {
 		if _, ok := err.(db.ErrNoEntries); !ok {
 			return nil, fmt.Errorf("error getting header: %s", err)
 		}
@@ -320,27 +320,27 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	var mastoRebloggedStatus *model.Status
 	if s.BoostOfID != "" {
 		// the boosted status might have been set on this struct already so check first before doing db calls
-		if s.GTSBoostedStatus == nil {
+		if s.BoostOf == nil {
 			// it's not set so fetch it from the db
 			bs := &gtsmodel.Status{}
 			if err := c.db.GetByID(s.BoostOfID, bs); err != nil {
 				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
 			}
-			s.GTSBoostedStatus = bs
+			s.BoostOf = bs
 		}
 
 		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
-		if s.GTSBoostedAccount == nil {
+		if s.BoostOfAccount == nil {
 			// it's not set so fetch it from the db
 			ba := &gtsmodel.Account{}
-			if err := c.db.GetByID(s.GTSBoostedStatus.AccountID, ba); err != nil {
-				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.GTSBoostedStatus.AccountID, s.BoostOfID, err)
+			if err := c.db.GetByID(s.BoostOf.AccountID, ba); err != nil {
+				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.BoostOf.AccountID, s.BoostOfID, err)
 			}
-			s.GTSBoostedAccount = ba
-			s.GTSBoostedStatus.GTSAuthorAccount = ba
+			s.BoostOfAccount = ba
+			s.BoostOf.Account = ba
 		}
 
-		mastoRebloggedStatus, err = c.StatusToMasto(s.GTSBoostedStatus, requestingAccount)
+		mastoRebloggedStatus, err = c.StatusToMasto(s.BoostOf, requestingAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error converting boosted status to mastotype: %s", err)
 		}
@@ -358,15 +358,15 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		}
 	}
 
-	if s.GTSAuthorAccount == nil {
+	if s.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := c.db.GetByID(s.AccountID, a); err != nil {
 			return nil, fmt.Errorf("error getting status author: %s", err)
 		}
-		s.GTSAuthorAccount = a
+		s.Account = a
 	}
 
-	mastoAuthorAccount, err := c.AccountToMastoPublic(s.GTSAuthorAccount)
+	mastoAuthorAccount, err := c.AccountToMastoPublic(s.Account)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
@@ -589,7 +589,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 	if err := c.db.GetWhere([]db.Where{{Key: "username", Value: i.Domain}}, ia); err == nil {
 		// instance account exists, get the header for the account if it exists
 		attachment := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetHeaderForAccountID(attachment, ia.ID); err == nil {
+		if err := c.db.GetAccountHeader(attachment, ia.ID); err == nil {
 			// header exists, set it on the api model
 			mi.Thumbnail = attachment.URL
 		}
@@ -659,11 +659,11 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 			n.GTSStatus = status
 		}
 
-		if n.GTSStatus.GTSAuthorAccount == nil {
+		if n.GTSStatus.Account == nil {
 			if n.GTSStatus.AccountID == n.GTSTargetAccount.ID {
-				n.GTSStatus.GTSAuthorAccount = n.GTSTargetAccount
+				n.GTSStatus.Account = n.GTSTargetAccount
 			} else if n.GTSStatus.AccountID == n.GTSOriginAccount.ID {
-				n.GTSStatus.GTSAuthorAccount = n.GTSOriginAccount
+				n.GTSStatus.Account = n.GTSOriginAccount
 			}
 		}
 

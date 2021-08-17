@@ -29,7 +29,7 @@ import (
 )
 
 func (p *processor) BlocksGet(authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode) {
-	accounts, nextMaxID, prevMinID, err := p.db.GetBlocksForAccount(authed.Account.ID, maxID, sinceID, limit)
+	accounts, nextMaxID, prevMinID, err := p.db.GetAccountBlocks(authed.Account.ID, maxID, sinceID, limit)
 	if err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			// there are just no entries

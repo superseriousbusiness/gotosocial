@@ -74,7 +74,7 @@ func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.
 		// attach these here for convenience -- the boosted status/account won't go in the DB
 		// but they're needed in the processor and for the frontend. Since we have them, we can
 		// attach them so we don't need to fetch them again later (save some DB calls)
-		GTSBoostedStatus: s,
+		BoostOf: s,
 	}
 
 	return boostWrapperStatus, nil

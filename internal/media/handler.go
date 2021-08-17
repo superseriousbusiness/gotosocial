@@ -142,7 +142,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	}
 
 	// set it in the database
-	if err := mh.db.SetHeaderOrAvatarForAccountID(ma, accountID); err != nil {
+	if err := mh.db.SetAccountHeaderOrAvatar(ma, accountID); err != nil {
 		return nil, fmt.Errorf("error putting %s in database: %s", mediaType, err)
 	}
 

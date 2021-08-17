@@ -39,7 +39,7 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 
 	following := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
-	if err := p.db.GetFollowingByAccountID(targetAccountID, &following); err != nil {
+	if err := p.db.GetAccountFollowing(targetAccountID, &following); err != nil {
 		if _, ok := err.(db.ErrNoEntries); ok {
 			return accounts, nil
 		}

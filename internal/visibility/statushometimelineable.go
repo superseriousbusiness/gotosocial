@@ -37,21 +37,21 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineO
 	// if a status replies to an ID we know in the database, we need to make sure we also follow the replied-to status owner account
 	if targetStatus.InReplyToID != "" {
 		// pin the reply to status on to this status if it hasn't been done already
-		if targetStatus.GTSReplyToStatus == nil {
+		if targetStatus.InReplyTo == nil {
 			rs := &gtsmodel.Status{}
 			if err := f.db.GetByID(targetStatus.InReplyToID, rs); err != nil {
 				return false, fmt.Errorf("StatusHometimelineable: error getting replied to status with id %s: %s", targetStatus.InReplyToID, err)
 			}
-			targetStatus.GTSReplyToStatus = rs
+			targetStatus.InReplyTo = rs
 		}
 
 		// pin the reply to account on to this status if it hasn't been done already
-		if targetStatus.GTSReplyToAccount == nil {
+		if targetStatus.InReplyToAccount == nil {
 			ra := &gtsmodel.Account{}
 			if err := f.db.GetByID(targetStatus.InReplyToAccountID, ra); err != nil {
 				return false, fmt.Errorf("StatusHometimelineable: error getting replied to account with id %s: %s", targetStatus.InReplyToAccountID, err)
 			}
-			targetStatus.GTSReplyToAccount = ra
+			targetStatus.InReplyToAccount = ra
 		}
 
 		// if it's a reply to the timelineOwnerAccount, we don't need to check if the timelineOwnerAccount follows itself, just return true, they can see it
@@ -60,7 +60,7 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineO
 		}
 
 		// the replied-to account != timelineOwnerAccount, so make sure the timelineOwnerAccount follows the replied-to account
-		follows, err := f.db.Follows(timelineOwnerAccount, targetStatus.GTSReplyToAccount)
+		follows, err := f.db.Follows(timelineOwnerAccount, targetStatus.InReplyToAccount)
 		if err != nil {
 			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", timelineOwnerAccount.ID, targetStatus.InReplyToAccountID, err)
 		}

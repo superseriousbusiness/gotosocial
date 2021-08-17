@@ -47,7 +47,7 @@ func (p *processor) Boost(account *gtsmodel.Account, application *gtsmodel.Appli
 	}
 
 	boostWrapperStatus.CreatedWithApplicationID = application.ID
-	boostWrapperStatus.GTSBoostedAccount = targetAccount
+	boostWrapperStatus.BoostOfAccount = targetAccount
 
 	// put the boost in the database
 	if err := p.db.Put(boostWrapperStatus); err != nil {

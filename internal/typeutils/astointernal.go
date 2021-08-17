@@ -231,7 +231,7 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 	}
 	status.AccountID = statusOwner.ID
 	status.AccountURI = statusOwner.URI
-	status.GTSAuthorAccount = statusOwner
+	status.Account = statusOwner
 
 	// check if there's a post that this is a reply to
 	inReplyToURI := ap.ExtractInReplyToURI(statusable)
@@ -247,12 +247,12 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 			// so we can set these fields here and then...
 			status.InReplyToID = inReplyToStatus.ID
 			status.InReplyToAccountID = inReplyToStatus.AccountID
-			status.GTSReplyToStatus = inReplyToStatus
+			status.InReplyTo = inReplyToStatus
 
 			// ... check if we've seen the account already
 			inReplyToAccount := &gtsmodel.Account{}
 			if err := c.db.GetByID(inReplyToStatus.AccountID, inReplyToAccount); err == nil {
-				status.GTSReplyToAccount = inReplyToAccount
+				status.InReplyToAccount = inReplyToAccount
 			}
 		}
 	}
@@ -421,9 +421,9 @@ func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, er
 		StatusID:         targetStatus.ID,
 		AccountID:        originAccount.ID,
 		URI:              uri,
-		GTSStatus:        targetStatus,
-		GTSTargetAccount: targetAccount,
-		GTSFavingAccount: originAccount,
+		Status:        targetStatus,
+		TargetAccount: targetAccount,
+		Account: originAccount,
 	}, nil
 }
 
@@ -487,7 +487,7 @@ func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.
 	}
 
 	// set the URI on the new status for dereferencing later
-	status.GTSBoostedStatus = &gtsmodel.Status{
+	status.BoostOf = &gtsmodel.Status{
 		URI: boostedStatusURI.String(),
 	}
 

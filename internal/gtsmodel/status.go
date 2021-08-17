@@ -48,18 +48,23 @@ type Status struct {
 	Local bool
 	// which account posted this status?
 	AccountID string `pg:"type:CHAR(26),notnull"`
+	Account *Account `pg:"rel:has-one"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
 	InReplyToID string `pg:"type:CHAR(26)"`
+	InReplyTo *Status `pg:"-"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
 	InReplyToAccountID string `pg:"type:CHAR(26)"`
+	InReplyToAccount *Account `pg:"-"`
 	// id of the status this status is a boost of
 	BoostOfID string `pg:"type:CHAR(26)"`
+	BoostOf *Status `pg:"-"`
 	// id of the account that owns the boosted status
 	BoostOfAccountID string `pg:"type:CHAR(26)"`
+	BoostOfAccount *Account `pg:"-"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -70,6 +75,7 @@ type Status struct {
 	Language string
 	// Which application was used to create this status?
 	CreatedWithApplicationID string `pg:"type:CHAR(26)"`
+	CreatedWithApplication *Application `pg:"-"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
@@ -88,7 +94,7 @@ type Status struct {
 	*/
 
 	// Account that created this status
-	GTSAuthorAccount *Account `pg:"-"`
+
 	// Mentions created in this status
 	GTSMentions []*Mention `pg:"-"`
 	// Hashtags used in this status
@@ -98,13 +104,13 @@ type Status struct {
 	// MediaAttachments used in this status
 	GTSMediaAttachments []*MediaAttachment `pg:"-"`
 	// Status being replied to
-	GTSReplyToStatus *Status `pg:"-"`
+
 	// Account being replied to
-	GTSReplyToAccount *Account `pg:"-"`
+
 	// Status being boosted
-	GTSBoostedStatus *Status `pg:"-"`
+
 	// Account of the boosted status
-	GTSBoostedAccount *Account `pg:"-"`
+
 }
 
 // Visibility represents the visibility granularity of a status.

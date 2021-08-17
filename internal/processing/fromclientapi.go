@@ -187,8 +187,8 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			if statusToDelete.GTSAuthorAccount == nil {
-				statusToDelete.GTSAuthorAccount = clientMsg.OriginAccount
+			if statusToDelete.Account == nil {
+				statusToDelete.Account = clientMsg.OriginAccount
 			}
 
 			// delete all attachments for this status
@@ -237,16 +237,16 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 // TODO: move all the below functions into federation.Federator
 
 func (p *processor) federateStatus(status *gtsmodel.Status) error {
-	if status.GTSAuthorAccount == nil {
+	if status.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := p.db.GetByID(status.AccountID, a); err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
-		status.GTSAuthorAccount = a
+		status.Account = a
 	}
 
 	// do nothing if this isn't our status
-	if status.GTSAuthorAccount.Domain != "" {
+	if status.Account.Domain != "" {
 		return nil
 	}
 
@@ -255,9 +255,9 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
 	}
 
-	outboxIRI, err := url.Parse(status.GTSAuthorAccount.OutboxURI)
+	outboxIRI, err := url.Parse(status.Account.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.GTSAuthorAccount.OutboxURI, err)
+		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.Account.OutboxURI, err)
 	}
 
 	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)
@@ -265,16 +265,16 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 }
 
 func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
-	if status.GTSAuthorAccount == nil {
+	if status.Account == nil {
 		a := &gtsmodel.Account{}
 		if err := p.db.GetByID(status.AccountID, a); err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
-		status.GTSAuthorAccount = a
+		status.Account = a
 	}
 
 	// do nothing if this isn't our status
-	if status.GTSAuthorAccount.Domain != "" {
+	if status.Account.Domain != "" {
 		return nil
 	}
 
@@ -283,14 +283,14 @@ func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
 		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
 	}
 
-	outboxIRI, err := url.Parse(status.GTSAuthorAccount.OutboxURI)
+	outboxIRI, err := url.Parse(status.Account.OutboxURI)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", status.GTSAuthorAccount.OutboxURI, err)
+		return fmt.Errorf("federateStatusDelete: error parsing outboxURI %s: %s", status.Account.OutboxURI, err)
 	}
 
-	actorIRI, err := url.Parse(status.GTSAuthorAccount.URI)
+	actorIRI, err := url.Parse(status.Account.URI)
 	if err != nil {
-		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", status.GTSAuthorAccount.URI, err)
+		return fmt.Errorf("federateStatusDelete: error parsing actorIRI %s: %s", status.Account.URI, err)
 	}
 
 	// create a delete and set the appropriate actor on it

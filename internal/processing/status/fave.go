@@ -72,9 +72,9 @@ func (p *processor) Fave(account *gtsmodel.Account, targetStatusID string) (*api
 			TargetAccountID:  targetAccount.ID,
 			StatusID:         targetStatus.ID,
 			URI:              util.GenerateURIForLike(account.Username, p.config.Protocol, p.config.Host, thisFaveID),
-			GTSStatus:        targetStatus,
-			GTSTargetAccount: targetAccount,
-			GTSFavingAccount: account,
+			Status:        targetStatus,
+			TargetAccount: targetAccount,
+			Account: account,
 		}
 
 		if err := p.db.Put(gtsFave); err != nil {
