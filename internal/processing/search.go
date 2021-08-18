@@ -99,11 +99,6 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	}
 
 	for _, foundStatus := range foundStatuses {
-		statusOwner := &gtsmodel.Account{}
-		if err := p.db.GetByID(foundStatus.AccountID, statusOwner); err != nil {
-			continue
-		}
-
 		if visible, err := p.filter.StatusVisible(foundStatus, authed.Account); !visible || err != nil {
 			continue
 		}
@@ -126,12 +121,9 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 		"resolve": resolve,
 	})
 
-	maybeStatus := &gtsmodel.Status{}
-	if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String(), CaseInsensitive: true}}, maybeStatus); err == nil {
-		// we have it and it's a status
+	if maybeStatus, err := p.db.GetStatusByURI(uri.String()); err == nil {
 		return maybeStatus, nil
-	} else if err := p.db.GetWhere([]db.Where{{Key: "url", Value: uri.String(), CaseInsensitive: true}}, maybeStatus); err == nil {
-		// we have it and it's a status
+	} else if maybeStatus, err := p.db.GetStatusByURL(uri.String()); err == nil {
 		return maybeStatus, nil
 	}
 
@@ -150,14 +142,12 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 }
 
 func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	maybeAccount := &gtsmodel.Account{}
-	if err := p.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String(), CaseInsensitive: true}}, maybeAccount); err == nil {
-		// we have it and it's an account
+	if maybeAccount, err := p.db.GetAccountByURI(uri.String()); err == nil {
 		return maybeAccount, nil
-	} else if err = p.db.GetWhere([]db.Where{{Key: "url", Value: uri.String(), CaseInsensitive: true}}, maybeAccount); err == nil {
-		// we have it and it's an account
+	} else if maybeAccount, err := p.db.GetAccountByURL(uri.String()); err == nil {
 		return maybeAccount, nil
 	}
+
 	if resolve {
 		// we don't have it locally so try and dereference it
 		account, _, err := p.federator.GetRemoteAccount(authed.Account.Username, uri, true)
@@ -179,7 +169,8 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
 	if domain == p.config.Host {
-		if err = p.db.GetLocalAccountByUsername(username, maybeAcct); err != nil {
+		maybeAcct, err = p.db.GetLocalAccountByUsername(username)
+		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
 		}
 		return maybeAcct, nil

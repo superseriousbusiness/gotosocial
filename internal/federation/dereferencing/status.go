@@ -66,8 +66,8 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	new := true
 
 	// check if we already have the status in our db
-	maybeStatus := &gtsmodel.Status{}
-	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteStatusID.String()}}, maybeStatus); err == nil {
+	maybeStatus, err := d.db.GetStatusByURI(remoteStatusID.String())
+	if err == nil {
 		// we've seen this status before so it's not new
 		new = false
 
@@ -339,7 +339,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 
 		m.StatusID = status.ID
 		m.Status = status
-		
+
 		m.OriginAccountID = status.Account.ID
 		m.OriginAccount = status.Account
 		m.OriginAccountURI = status.Account.URI

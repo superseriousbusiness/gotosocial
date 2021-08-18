@@ -88,8 +88,8 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a := &gtsmodel.Account{}
-	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+	a, err := dbConn.GetLocalAccountByUsername(username)
+	if err != nil {
 		return err
 	}
 
@@ -123,8 +123,8 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a := &gtsmodel.Account{}
-	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+	a, err := dbConn.GetLocalAccountByUsername(username)
+	if err != nil {
 		return err
 	}
 
@@ -155,8 +155,8 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 		return err
 	}
 
-	a := &gtsmodel.Account{}
-	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+	a, err := dbConn.GetLocalAccountByUsername(username)
+	if err != nil {
 		return err
 	}
 
@@ -187,8 +187,8 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a := &gtsmodel.Account{}
-	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+	a, err := dbConn.GetLocalAccountByUsername(username)
+	if err != nil {
 		return err
 	}
 
@@ -233,8 +233,8 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 		return err
 	}
 
-	a := &gtsmodel.Account{}
-	if err := dbConn.GetLocalAccountByUsername(username, a); err != nil {
+	a, err := dbConn.GetLocalAccountByUsername(username)
+	if err != nil {
 		return err
 	}
 

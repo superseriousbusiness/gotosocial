@@ -113,8 +113,8 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, errors.New("username was empty")
 	}
 
-	requestedAccount := &gtsmodel.Account{}
-	if err := f.db.GetLocalAccountByUsername(username, requestedAccount); err != nil {
+	requestedAccount, err := f.db.GetLocalAccountByUsername(username)
+	if err != nil {
 		return nil, false, fmt.Errorf("could not fetch requested account with username %s: %s", username, err)
 	}
 

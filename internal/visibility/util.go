@@ -23,6 +23,26 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 	}
 	accounts.StatusAuthor = targetStatus.Account
 
+	// now get all accounts with IDs that are mentioned in the status
+	if targetStatus.MentionIDs != nil && targetStatus.Mentions == nil {
+		mentions, err := f.db.GetMentions(targetStatus.MentionIDs)
+		if err != nil {
+			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from status: %s", err)
+		}
+		targetStatus.Mentions = mentions
+	}
+
+	for _, m := range targetStatus.Mentions {
+		if m.TargetAccount == nil {
+			t, err := f.db.GetAccountByID(m.TargetAccountID)
+			if err != nil {
+				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from status: %s", err)
+			}
+			m.TargetAccount = t
+		}
+		accounts.MentionedAccounts = append(accounts.MentionedAccounts, m.TargetAccount)
+	}
+
 	// get the replied to account if it's not set on the status already
 	if targetStatus.InReplyToAccountID != "" && targetStatus.InReplyToAccount == nil {
 		repliedToAccount, err := f.db.GetAccountByID(targetStatus.InReplyToAccountID)
@@ -65,8 +85,9 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 			}
 			targetStatus.BoostOf.InReplyToAccount = boostOfInReplyToAccount
 		}
+		accounts.BoostedReplyToAccount = targetStatus.BoostOf.InReplyToAccount
 
-		// now get all accounts with IDs that are mentioned in the status
+		// now get all accounts with IDs that are mentioned in the boosted status
 		if targetStatus.BoostOf.MentionIDs != nil && targetStatus.BoostOf.Mentions == nil {
 			mentions, err := f.db.GetMentions(targetStatus.BoostOf.MentionIDs)
 			if err != nil {
@@ -74,20 +95,17 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 			}
 			targetStatus.BoostOf.Mentions = mentions
 		}
-	}
 
-	// now get all accounts with IDs that are mentioned in the status
-	for _, mentionID := range targetStatus.MentionIDs {
-		mention := &gtsmodel.Mention{}
-		if err := f.db.GetByID(mentionID, mention); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mention with id %s: %s", mentionID, err)
+		for _, m := range targetStatus.BoostOf.Mentions {
+			if m.TargetAccount == nil {
+				t, err := f.db.GetAccountByID(m.TargetAccountID)
+				if err != nil {
+					return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from boostOf status: %s", err)
+				}
+				m.TargetAccount = t
+			}
+			accounts.BoostedMentionedAccounts = append(accounts.BoostedMentionedAccounts, m.TargetAccount)
 		}
-
-		mentionedAccount := &gtsmodel.Account{}
-		if err := f.db.GetByID(mention.TargetAccountID, mentionedAccount); err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentioned account: %s", err)
-		}
-		accounts.MentionedAccounts = append(accounts.MentionedAccounts, mentionedAccount)
 	}
 
 	return accounts, nil

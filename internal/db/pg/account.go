@@ -67,6 +67,17 @@ func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) 
 	return account, err
 }
 
+func (a *accountDB) GetAccountByURL(uri string) (*gtsmodel.Account, db.DBError) {
+	account := &gtsmodel.Account{}
+
+	q := a.newAccountQ(account).
+		Where("account.url = ?", uri)
+
+	err := processErrorResponse(q.Select())
+
+	return account, err
+}
+
 func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBError) {
 	account := &gtsmodel.Account{}
 
@@ -126,14 +137,16 @@ func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAtta
 	return nil
 }
 
-func (a *accountDB) GetLocalAccountByUsername(username string, account *gtsmodel.Account) db.DBError {
-	if err := a.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries
-		}
-		return err
-	}
-	return nil
+func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Account, db.DBError) {
+	account := &gtsmodel.Account{}
+
+	q := a.newAccountQ(account).
+		Where("username = ?", username).
+		Where("? IS NULL", pg.Ident("domain"))
+
+	err := processErrorResponse(q.Select())
+
+	return account, err
 }
 
 func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) db.DBError {

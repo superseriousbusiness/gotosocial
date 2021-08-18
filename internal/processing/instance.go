@@ -51,8 +51,8 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 	}
 
 	// fetch the instance account from the db for processing
-	ia := &gtsmodel.Account{}
-	if err := p.db.GetLocalAccountByUsername(p.config.Host, ia); err != nil {
+	ia, err := p.db.GetInstanceAccount("")
+	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", p.config.Host, err))
 	}
 
@@ -67,8 +67,8 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 	// validate & update site contact account if it's set on the form
 	if form.ContactUsername != nil {
 		// make sure the account with the given username exists in the db
-		contactAccount := &gtsmodel.Account{}
-		if err := p.db.GetLocalAccountByUsername(*form.ContactUsername, contactAccount); err != nil {
+		contactAccount, err := p.db.GetLocalAccountByUsername(*form.ContactUsername)
+		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}
 		// make sure it has a user associated with it

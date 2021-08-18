@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -52,10 +51,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
-	where := []db.Where{{Key: "uri", Value: id.String()}}
-
-	s := &gtsmodel.Status{}
-	if err := f.db.GetWhere(where, s); err == nil {
+	s, err := f.db.GetStatusByURI(id.String())
+	if err == nil {
 		// it's a status
 		l.Debugf("uri is for status with id: %s", s.ID)
 		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
@@ -69,8 +66,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		}
 	}
 
-	a := &gtsmodel.Account{}
-	if err := f.db.GetWhere(where, a); err == nil {
+	a, err := f.db.GetAccountByURI(id.String())
+	if err == nil {
 		// it's an account
 		l.Debugf("uri is for an account with id: %s", s.ID)
 		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {

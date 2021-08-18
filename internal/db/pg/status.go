@@ -82,6 +82,17 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
 	return status, err
 }
 
+func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.DBError) {
+	status := &gtsmodel.Status{}
+
+	q := s.newStatusQ(status).
+		Where("LOWER(status.url) = LOWER(?)", uri)
+
+	err := processErrorResponse(q.Select())
+
+	return status, err
+}
+
 func (s *statusDB) PutStatus(status *gtsmodel.Status) db.DBError {
 	transaction := func(tx *pg.Tx) error {
 		// create links between this status and any emojis it uses
@@ -142,7 +153,7 @@ func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmo
 	if onlyDirect {
 		return
 	}
-	
+
 	s.statusParent(parentStatus, foundStatuses, false)
 }
 

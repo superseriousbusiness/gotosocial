@@ -31,11 +31,14 @@ type Account interface {
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
 	GetAccountByURI(uri string) (*gtsmodel.Account, DBError)
 
+	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
+	GetAccountByURL(uri string) (*gtsmodel.Account, DBError)
+
 	// GetLocalAccountByUsername is a shortcut for the common action of fetching an account ON THIS INSTANCE
 	// according to its username, which should be unique.
 	// The given account pointer will be set to the result of the query, whatever it is.
 	// In case of no entries, a 'no entries' error will be returned
-	GetLocalAccountByUsername(username string, account *gtsmodel.Account) DBError
+	GetLocalAccountByUsername(username string) (*gtsmodel.Account, DBError)
 
 	// GetAccountFollowRequests is a shortcut for the common action of fetching a list of follow requests targeting the given account ID.
 	// The given slice 'followRequests' will be set to the result of the query, whatever it is.

@@ -27,6 +27,9 @@ type Status interface {
 	// GetStatusByURI returns one status from the database, with all rel fields populated (if possible).
 	GetStatusByURI(uri string) (*gtsmodel.Status, DBError)
 
+	// GetStatusByURL returns one status from the database, with all rel fields populated (if possible).
+	GetStatusByURL(uri string) (*gtsmodel.Status, DBError)
+
 	// PutStatus stores one status in the database.
 	PutStatus(status *gtsmodel.Status) DBError
 
