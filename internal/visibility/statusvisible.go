@@ -33,6 +33,11 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	targetAccount := relevantAccounts.StatusAuthor
+	if targetAccount == nil {
+		l.Trace("target account is not set")
+		return false, nil
+	}
+
 	// if target account is suspended then don't show the status
 	if !targetAccount.SuspendedAt.IsZero() {
 		l.Trace("target account suspended at is not zero")
@@ -155,6 +160,9 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status mentions accounts
 	for _, a := range relevantAccounts.MentionedAccounts {
+		if a == nil {
+			continue
+		}
 		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
@@ -165,6 +173,9 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// boost mentions accounts
 	for _, a := range relevantAccounts.BoostedMentionedAccounts {
+		if a == nil {
+			continue
+		}
 		if blocked, err := f.db.Blocked(a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
@@ -175,6 +186,9 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// if the requesting account is mentioned in the status it should always be visible
 	for _, acct := range relevantAccounts.MentionedAccounts {
+		if acct == nil {
+			continue
+		}
 		if acct.ID == requestingAccount.ID {
 			return true, nil // yep it's mentioned!
 		}

@@ -1,8 +1,6 @@
 package visibility
 
 import (
-	"fmt"
-
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -16,29 +14,26 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 	// get the author account if it's not set on the status already
 	if targetStatus.Account == nil {
 		statusAuthor, err := f.db.GetAccountByID(targetStatus.AccountID)
-		if err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting statusAuthor with id %s: %s", targetStatus.AccountID, err)
+		if err == nil {
+			targetStatus.Account = statusAuthor
 		}
-		targetStatus.Account = statusAuthor
 	}
 	accounts.StatusAuthor = targetStatus.Account
 
 	// now get all accounts with IDs that are mentioned in the status
 	if targetStatus.MentionIDs != nil && targetStatus.Mentions == nil {
 		mentions, err := f.db.GetMentions(targetStatus.MentionIDs)
-		if err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from status: %s", err)
+		if err == nil {
+			targetStatus.Mentions = mentions
 		}
-		targetStatus.Mentions = mentions
 	}
 
 	for _, m := range targetStatus.Mentions {
 		if m.TargetAccount == nil {
 			t, err := f.db.GetAccountByID(m.TargetAccountID)
-			if err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from status: %s", err)
+			if err == nil {
+				m.TargetAccount = t
 			}
-			m.TargetAccount = t
 		}
 		accounts.MentionedAccounts = append(accounts.MentionedAccounts, m.TargetAccount)
 	}
@@ -46,20 +41,18 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 	// get the replied to account if it's not set on the status already
 	if targetStatus.InReplyToAccountID != "" && targetStatus.InReplyToAccount == nil {
 		repliedToAccount, err := f.db.GetAccountByID(targetStatus.InReplyToAccountID)
-		if err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting repliedToAcount with id %s: %s", targetStatus.InReplyToAccountID, err)
+		if err == nil {
+			targetStatus.InReplyToAccount = repliedToAccount
 		}
-		targetStatus.InReplyToAccount = repliedToAccount
 	}
 	accounts.ReplyToAccount = targetStatus.InReplyToAccount
 
 	// get the boosted status if it's not set on the status already
 	if targetStatus.BoostOfID != "" && targetStatus.BoostOf == nil {
 		boostedStatus, err := f.db.GetStatusByID(targetStatus.BoostOfID)
-		if err != nil {
-			return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostedStatus with id %s: %s", targetStatus.BoostOfID, err)
+		if err == nil {
+			targetStatus.BoostOf = boostedStatus
 		}
-		targetStatus.BoostOf = boostedStatus
 	}
 
 	// get the boosted account if it's not set on the status already
@@ -68,10 +61,9 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 			targetStatus.BoostOfAccount = targetStatus.BoostOf.Account
 		} else {
 			boostedAccount, err := f.db.GetAccountByID(targetStatus.BoostOfAccountID)
-			if err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostOfAccount with id %s: %s", targetStatus.BoostOfAccountID, err)
+			if err == nil {
+				targetStatus.BoostOfAccount = boostedAccount
 			}
-			targetStatus.BoostOfAccount = boostedAccount
 		}
 	}
 	accounts.BoostedStatusAuthor = targetStatus.BoostOfAccount
@@ -80,29 +72,26 @@ func (f *filter) pullRelevantAccountsFromStatus(targetStatus *gtsmodel.Status) (
 		// the boosted status might be a reply to another account so we should get that too
 		if targetStatus.BoostOf.InReplyToAccountID != "" && targetStatus.BoostOf.InReplyToAccount == nil {
 			boostOfInReplyToAccount, err := f.db.GetAccountByID(targetStatus.BoostOf.InReplyToAccountID)
-			if err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting boostOfInReplyToAccount with id %s: %s", targetStatus.BoostOf.InReplyToAccountID, err)
+			if err == nil {
+				targetStatus.BoostOf.InReplyToAccount = boostOfInReplyToAccount
 			}
-			targetStatus.BoostOf.InReplyToAccount = boostOfInReplyToAccount
 		}
 		accounts.BoostedReplyToAccount = targetStatus.BoostOf.InReplyToAccount
 
 		// now get all accounts with IDs that are mentioned in the boosted status
 		if targetStatus.BoostOf.MentionIDs != nil && targetStatus.BoostOf.Mentions == nil {
 			mentions, err := f.db.GetMentions(targetStatus.BoostOf.MentionIDs)
-			if err != nil {
-				return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from boostOf status: %s", err)
+			if err == nil {
+				targetStatus.BoostOf.Mentions = mentions
 			}
-			targetStatus.BoostOf.Mentions = mentions
 		}
 
 		for _, m := range targetStatus.BoostOf.Mentions {
 			if m.TargetAccount == nil {
 				t, err := f.db.GetAccountByID(m.TargetAccountID)
-				if err != nil {
-					return accounts, fmt.Errorf("PullRelevantAccountsFromStatus: error getting mentions from boostOf status: %s", err)
+				if err == nil {
+					m.TargetAccount = t
 				}
-				m.TargetAccount = t
 			}
 			accounts.BoostedMentionedAccounts = append(accounts.BoostedMentionedAccounts, m.TargetAccount)
 		}
@@ -172,6 +161,9 @@ func (f *filter) domainBlockedRelevant(r *relevantAccounts) (bool, error) {
 	}
 
 	for _, a := range r.MentionedAccounts {
+		if a == nil {
+			continue
+		}
 		b, err := f.blockedDomain(a.Domain)
 		if err != nil {
 			return false, err
@@ -202,6 +194,9 @@ func (f *filter) domainBlockedRelevant(r *relevantAccounts) (bool, error) {
 	}
 
 	for _, a := range r.BoostedMentionedAccounts {
+		if a == nil {
+			continue
+		}
 		b, err := f.blockedDomain(a.Domain)
 		if err != nil {
 			return false, err

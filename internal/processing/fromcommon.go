@@ -36,13 +36,9 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 
 	if status.Mentions == nil {
 		// there are mentions but they're not fully populated on the status yet so do this
-		menchies := []*gtsmodel.Mention{}
-		for _, m := range status.MentionIDs {
-			gtsm := &gtsmodel.Mention{}
-			if err := p.db.GetByID(m, gtsm); err != nil {
-				return fmt.Errorf("notifyStatus: error getting mention with id %s from the db: %s", m, err)
-			}
-			menchies = append(menchies, gtsm)
+		menchies, err := p.db.GetMentions(status.MentionIDs)
+		if err != nil {
+			return fmt.Errorf("notifyStatus: error getting mentions for status %s from the db: %s", status.ID, err)
 		}
 		status.Mentions = menchies
 	}
@@ -50,15 +46,15 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 	// now we have mentions as full gtsmodel.Mention structs on the status we can continue
 	for _, m := range status.Mentions {
 		// make sure this is a local account, otherwise we don't need to create a notification for it
-		if m.OriginAccount == nil {
-			a := &gtsmodel.Account{}
-			if err := p.db.GetByID(m.TargetAccountID, a); err != nil {
+		if m.TargetAccount == nil {
+			a, err := p.db.GetAccountByID(m.TargetAccountID)
+			if err != nil {
 				// we don't have the account or there's been an error
 				return fmt.Errorf("notifyStatus: error getting account with id %s from the db: %s", m.TargetAccountID, err)
 			}
-			m.OriginAccount = a
+			m.TargetAccount = a
 		}
-		if m.OriginAccount.Domain != "" {
+		if m.TargetAccount.Domain != "" {
 			// not a local account so skip it
 			continue
 		}
@@ -89,8 +85,11 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 			ID:               notifID,
 			NotificationType: gtsmodel.NotificationMention,
 			TargetAccountID:  m.TargetAccountID,
+			TargetAccount:    m.TargetAccount,
 			OriginAccountID:  status.AccountID,
+			OriginAccount:    status.Account,
 			StatusID:         status.ID,
+			Status:           status,
 		}
 
 		if err := p.db.Put(notif); err != nil {

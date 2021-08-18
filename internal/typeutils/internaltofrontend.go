@@ -633,22 +633,22 @@ func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relati
 }
 
 func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error) {
-
 	if n.TargetAccount == nil {
-		tAccount := &gtsmodel.Account{}
-		if err := c.db.GetByID(n.TargetAccountID, tAccount); err != nil {
+		tAccount, err := c.db.GetAccountByID(n.TargetAccountID)
+		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
 		}
 		n.TargetAccount = tAccount
 	}
 
 	if n.OriginAccount == nil {
-		ogAccount := &gtsmodel.Account{}
-		if err := c.db.GetByID(n.OriginAccountID, ogAccount); err != nil {
+		ogAccount, err := c.db.GetAccountByID(n.OriginAccountID)
+		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
 		}
 		n.OriginAccount = ogAccount
 	}
+
 	mastoAccount, err := c.AccountToMastoPublic(n.OriginAccount)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationToMasto: error converting account to masto: %s", err)
@@ -657,8 +657,8 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 	var mastoStatus *model.Status
 	if n.StatusID != "" {
 		if n.Status == nil {
-			status := &gtsmodel.Status{}
-			if err := c.db.GetByID(n.StatusID, status); err != nil {
+			status, err := c.db.GetStatusByID(n.StatusID)
+			if err != nil {
 				return nil, fmt.Errorf("NotificationToMasto: error getting status with id %s from the db: %s", n.StatusID, err)
 			}
 			n.Status = status
