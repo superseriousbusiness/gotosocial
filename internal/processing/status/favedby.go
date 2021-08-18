@@ -26,21 +26,20 @@ func (p *processor) FavedBy(requestingAccount *gtsmodel.Account, targetStatusID 
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	// get ALL accounts that faved a status -- doesn't take account of blocks and mutes and stuff
-	favingAccounts, err := p.db.WhoFavedStatus(targetStatus)
+	statusFaves, err := p.db.GetStatusFaves(targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing who faved status: %s", err))
 	}
 
 	// filter the list so the user doesn't see accounts they blocked or which blocked them
 	filteredAccounts := []*gtsmodel.Account{}
-	for _, acc := range favingAccounts {
-		blocked, err := p.db.Blocked(requestingAccount.ID, acc.ID, true)
+	for _, fave := range statusFaves {
+		blocked, err := p.db.Blocked(requestingAccount.ID, fave.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking blocks: %s", err))
 		}
 		if !blocked {
-			filteredAccounts = append(filteredAccounts, acc)
+			filteredAccounts = append(filteredAccounts, fave.Account)
 		}
 	}
 

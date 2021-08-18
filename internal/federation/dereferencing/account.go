@@ -29,7 +29,6 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -65,8 +64,8 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 	new := true
 
 	// check if we already have the account in our db
-	maybeAccount := &gtsmodel.Account{}
-	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteAccountID.String()}}, maybeAccount); err == nil {
+	maybeAccount, err := d.db.GetAccountByURI(remoteAccountID.String())
+	if err == nil {
 		// we've seen this account before so it's not new
 		new = false
 		if !refresh {

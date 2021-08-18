@@ -40,6 +40,8 @@ var testModels []interface{} = []interface{}{
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
 	&gtsmodel.Status{},
+	&gtsmodel.StatusToEmoji{},
+	&gtsmodel.StatusToTag{},
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.StatusMute{},
@@ -133,7 +135,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestStatuses() {
-		if err := db.Put(v); err != nil {
+		if err := db.PutStatus(v); err != nil {
 			panic(err)
 		}
 	}

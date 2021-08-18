@@ -77,23 +77,17 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	// count statuses
 	statusesCount, err := c.db.CountAccountStatuses(a.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting last statuses: %s", err)
+		return nil, fmt.Errorf("error counting statuses: %s", err)
 	}
 
 	// check when the last status was
-	lastStatus := &gtsmodel.Status{}
-	if err := c.db.GetAccountLastStatus(a.ID, lastStatus); err != nil {
-		if err != db.ErrNoEntries {
-			return nil, fmt.Errorf("error getting last status: %s", err)
-		}
-	}
 	var lastStatusAt string
-	if lastStatus != nil {
-		lastStatusAt = lastStatus.CreatedAt.Format(time.RFC3339)
+	lastPosted, err := c.db.GetAccountLastPosted(a.ID)
+	if err == nil && !lastPosted.IsZero() {
+		lastStatusAt = lastPosted.Format(time.RFC3339)
 	}
 
 	// build the avatar and header URLs
-
 	var aviURL string
 	var aviURLStatic string
 	if a.AvatarMediaAttachment != nil {
@@ -285,17 +279,17 @@ func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
 }
 
 func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
-	repliesCount, err := c.db.GetReplyCountForStatus(s)
+	repliesCount, err := c.db.CountStatusReplies(s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %s", err)
 	}
 
-	reblogsCount, err := c.db.GetReblogCountForStatus(s)
+	reblogsCount, err := c.db.CountStatusReblogs(s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting reblogs: %s", err)
 	}
 
-	favesCount, err := c.db.GetFaveCountForStatus(s)
+	favesCount, err := c.db.CountStatusFaves(s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting faves: %s", err)
 	}

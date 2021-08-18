@@ -32,7 +32,7 @@ func (p *processor) Context(requestingAccount *gtsmodel.Account, targetStatusID 
 		Descendants: []apimodel.Status{},
 	}
 
-	parents, err := p.db.StatusParents(targetStatus, false)
+	parents, err := p.db.GetStatusParents(targetStatus, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -50,7 +50,7 @@ func (p *processor) Context(requestingAccount *gtsmodel.Account, targetStatusID 
 		return context.Ancestors[i].ID < context.Ancestors[j].ID
 	})
 
-	children, err := p.db.StatusChildren(targetStatus, false, "")
+	children, err := p.db.GetStatusChildren(targetStatus, false, "")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

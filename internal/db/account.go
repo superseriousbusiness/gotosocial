@@ -18,14 +18,13 @@
 
 package db
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
 type Account interface {
-	// GetAccountByUserID is a shortcut for the common action of fetching an account corresponding to a user ID.
-	// The given account pointer will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountByUserID(userID string, account *gtsmodel.Account) DBError
-
 	// GetAccountByID returns one account with the given ID, or an error if something goes wrong.
 	GetAccountByID(id string) (*gtsmodel.Account, DBError)
 
@@ -75,10 +74,10 @@ type Account interface {
 
 	GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, DBError)
 
-	// GetAccountLastStatus simply gets the most recent status by the given account.
-	// The given slice 'status' pointer will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountLastStatus(accountID string, status *gtsmodel.Status) DBError
+	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
+	//
+	// The returned time will be zero if account has never posted anything.
+	GetAccountLastPosted(accountID string) (time.Time, DBError)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
 	SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) DBError

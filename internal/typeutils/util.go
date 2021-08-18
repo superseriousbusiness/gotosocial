@@ -10,25 +10,25 @@ func (c *converter) interactionsWithStatusForAccount(s *gtsmodel.Status, request
 	si := &statusInteractions{}
 
 	if requestingAccount != nil {
-		faved, err := c.db.StatusFavedBy(s, requestingAccount.ID)
+		faved, err := c.db.IsStatusFavedBy(s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
 		}
 		si.Faved = faved
 
-		reblogged, err := c.db.StatusRebloggedBy(s, requestingAccount.ID)
+		reblogged, err := c.db.IsStatusRebloggedBy(s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
 		}
 		si.Reblogged = reblogged
 
-		muted, err := c.db.StatusMutedBy(s, requestingAccount.ID)
+		muted, err := c.db.IsStatusMutedBy(s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
 		}
 		si.Muted = muted
 
-		bookmarked, err := c.db.StatusBookmarkedBy(s, requestingAccount.ID)
+		bookmarked, err := c.db.IsStatusBookmarkedBy(s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
 		}

@@ -80,6 +80,7 @@ func (suite *PGStandardTestSuite) TestGetStatusByURI() {
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
 }
+
 func (suite *PGStandardTestSuite) TestGetStatusWithExtras() {
 	status, err := suite.db.GetStatusByID(suite.testStatuses["admin_account_status_1"].ID)
 	if err != nil {
@@ -92,6 +93,7 @@ func (suite *PGStandardTestSuite) TestGetStatusWithExtras() {
 	suite.NotEmpty(status.Attachments)
 	suite.NotEmpty(status.Emojis)
 }
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(PGStandardTestSuite))
 }

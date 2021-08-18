@@ -97,8 +97,8 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 			for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
 				// take the IRI of the first actor we can find (there should only be one)
 				if iter.IsIRI() {
-					actorAccount := &gtsmodel.Account{}
-					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
+					// if there's an error here, just use the fallback behavior -- we don't need to return an error here
+					if actorAccount, err := f.db.GetAccountByURI(iter.GetIRI().String()); err == nil {
 						newID, err := id.NewRandomULID()
 						if err != nil {
 							return nil, err

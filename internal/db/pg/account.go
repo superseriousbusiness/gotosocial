@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -44,24 +45,15 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *orm.Query {
 		Relation("HeaderMediaAttachment")
 }
 
-func (a *accountDB) processResponse(account *gtsmodel.Account, err error) (*gtsmodel.Account, db.DBError) {
-	switch err {
-	case pg.ErrNoRows:
-		return nil, db.ErrNoEntries
-	case nil:
-		return account, nil
-	default:
-		return nil, err
-	}
-}
-
 func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.DBError) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
 		Where("account.id = ?", id)
 
-	return a.processResponse(account, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return account, err
 }
 
 func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) {
@@ -70,7 +62,9 @@ func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) 
 	q := a.newAccountQ(account).
 		Where("account.uri = ?", uri)
 
-	return a.processResponse(account, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return account, err
 }
 
 func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBError) {
@@ -88,18 +82,23 @@ func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBE
 			Where("? IS NULL", pg.Ident("domain"))
 	}
 
-	return a.processResponse(account, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return account, err
 }
 
-func (a *accountDB) GetAccountLastStatus(accountID string, status *gtsmodel.Status) db.DBError {
-	if err := a.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries
-		}
-		return err
-	}
-	return nil
+func (a *accountDB) GetAccountLastPosted(accountID string) (time.Time, db.DBError) {
+	status := &gtsmodel.Status{}
 
+	q := a.conn.Model(status).
+		Order("id DESC").
+		Limit(1).
+		Where("account_id = ?", accountID).
+		Column("created_at")
+
+	err := processErrorResponse(q.Select())
+
+	return status.CreatedAt, err
 }
 
 func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.DBError {
@@ -122,25 +121,6 @@ func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAtta
 	}
 
 	if _, err := a.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *accountDB) GetAccountByUserID(userID string, account *gtsmodel.Account) db.DBError {
-	user := &gtsmodel.User{
-		ID: userID,
-	}
-	if err := a.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries
-		}
-		return err
-	}
-	if err := a.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries
-		}
 		return err
 	}
 	return nil

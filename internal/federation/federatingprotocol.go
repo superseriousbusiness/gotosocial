@@ -200,8 +200,8 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			return true, nil
 		}
 
-		requestingAccount := &gtsmodel.Account{}
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uri.String()}}, requestingAccount); err != nil {
+		requestingAccount, err := f.db.GetAccountByURI(uri.String())
+		if err != nil {
 			if err == db.ErrNoEntries {
 				// we don't have an entry for this account so it's not blocked
 				// TODO: allow a different default to be set for this behavior

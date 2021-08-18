@@ -43,8 +43,8 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 	l.Debug("entering GET function")
 
 	if util.IsUserPath(id) {
-		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: id.String()}}, acct); err != nil {
+		acct, err := f.db.GetAccountByURI(id.String())
+		if err != nil {
 			return nil, err
 		}
 		l.Debug("is user path! returning account")

@@ -31,12 +31,18 @@ import (
 
 	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
+
+var registerTables []interface{} = []interface{}{
+	&gtsmodel.StatusToEmoji{},
+	&gtsmodel.StatusToTag{},
+}
 
 // postgresService satisfies the DB interface
 type postgresService struct {
@@ -58,6 +64,11 @@ type postgresService struct {
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
 func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
+	for _, t := range registerTables {
+		// https://pg.uptrace.dev/orm/many-to-many-relation/
+		orm.RegisterTable(t)
+	}
+
 	opts, err := derivePGOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)

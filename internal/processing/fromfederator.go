@@ -100,7 +100,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 			incomingAnnounce.ID = incomingAnnounceID
 
-			if err := p.db.Put(incomingAnnounce); err != nil {
+			if err := p.db.PutStatus(incomingAnnounce); err != nil {
 				if err != db.ErrNoEntries {
 					return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 				}

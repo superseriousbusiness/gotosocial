@@ -22,6 +22,7 @@ import (
 	"container/list"
 	"context"
 	"errors"
+	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -38,7 +39,7 @@ type statusDB struct {
 	cancel context.CancelFunc
 }
 
-func (s *statusDB) newStatusQ(status *gtsmodel.Status) *orm.Query {
+func (s *statusDB) newStatusQ(status interface{}) *orm.Query {
 	return s.conn.Model(status).
 		Relation("Attachments").
 		Relation("Tags").
@@ -52,15 +53,11 @@ func (s *statusDB) newStatusQ(status *gtsmodel.Status) *orm.Query {
 		Relation("CreatedWithApplication")
 }
 
-func (s *statusDB) processStatusResponse(status *gtsmodel.Status, err error) (*gtsmodel.Status, db.DBError) {
-	switch err {
-	case pg.ErrNoRows:
-		return nil, db.ErrNoEntries
-	case nil:
-		return status, nil
-	default:
-		return nil, err
-	}
+func (s *statusDB) newFaveQ(faves interface{}) *orm.Query {
+	return s.conn.Model(faves).
+		Relation("Account").
+		Relation("TargetAccount").
+		Relation("Status")
 }
 
 func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
@@ -69,7 +66,9 @@ func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
 	q := s.newStatusQ(status).
 		Where("status.id = ?", id)
 
-	return s.processStatusResponse(status, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return status, err
 }
 
 func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
@@ -78,10 +77,52 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
 	q := s.newStatusQ(status).
 		Where("LOWER(status.uri) = LOWER(?)", uri)
 
-	return s.processStatusResponse(status, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return status, err
 }
 
-func (s *statusDB) StatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.DBError) {
+func (s *statusDB) PutStatus(status *gtsmodel.Status) db.DBError {
+	transaction := func(tx *pg.Tx) error {
+		// create links between this status and any emojis it uses
+		for _, i := range status.EmojiIDs {
+			if _, err := tx.Model(&gtsmodel.StatusToEmoji{
+				StatusID: status.ID,
+				EmojiID:  i,
+			}).Insert(); err != nil {
+				return err
+			}
+		}
+
+		// create links between this status and any tags it uses
+		for _, i := range status.TagIDs {
+			if _, err := tx.Model(&gtsmodel.StatusToTag{
+				StatusID: status.ID,
+				TagID:    i,
+			}).Insert(); err != nil {
+				return err
+			}
+		}
+
+		// change the status ID of the media attachments to the new status
+		for _, a := range status.Attachments {
+			a.StatusID = status.ID
+			a.UpdatedAt = time.Now()
+			if _, err := s.conn.Model(a).
+				Where("id = ?", a.ID).
+				Update(); err != nil {
+				return err
+			}
+		}
+
+		_, err := tx.Model(status).Insert()
+		return err
+	}
+
+	return processErrorResponse(s.conn.RunInTransaction(context.Background(), transaction))
+}
+
+func (s *statusDB) GetStatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.DBError) {
 	parents := []*gtsmodel.Status{}
 	s.statusParent(status, &parents, onlyDirect)
 
@@ -93,18 +134,19 @@ func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmo
 		return
 	}
 
-	parentStatus := &gtsmodel.Status{}
-	if err := s.conn.Model(parentStatus).Where("id = ?", status.InReplyToID).Select(); err == nil {
+	parentStatus, err := s.GetStatusByID(status.InReplyToID)
+	if err == nil {
 		*foundStatuses = append(*foundStatuses, parentStatus)
 	}
 
 	if onlyDirect {
 		return
 	}
+	
 	s.statusParent(parentStatus, foundStatuses, false)
 }
 
-func (s *statusDB) StatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.DBError) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
 	s.statusChildren(status, foundStatuses, onlyDirect, minID)
@@ -159,78 +201,52 @@ func (s *statusDB) statusChildren(status *gtsmodel.Status, foundStatuses *list.L
 	}
 }
 
-func (s *statusDB) GetReplyCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusReplies(status *gtsmodel.Status) (int, db.DBError) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) GetReblogCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusReblogs(status *gtsmodel.Status) (int, db.DBError) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) GetFaveCountForStatus(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusFaves(status *gtsmodel.Status) (int, db.DBError) {
 	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
 	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
 	return s.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
 	return s.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, db.DBError) {
-	accounts := []*gtsmodel.Account{}
-
+func (s *statusDB) GetStatusFaves(status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.DBError) {
 	faves := []*gtsmodel.StatusFave{}
-	if err := s.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return accounts, nil // no rows just means nobody has faved this status, so that's fine
-		}
-		return nil, err // an actual error has occurred
-	}
 
-	for _, f := range faves {
-		acc := &gtsmodel.Account{}
-		if err := s.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
-			if err == pg.ErrNoRows {
-				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
-			}
-			return nil, err // an actual error has occurred
-		}
-		accounts = append(accounts, acc)
-	}
-	return accounts, nil
+	q := s.newFaveQ(&faves).
+		Where("status_id = ?", status.ID)
+
+	err := processErrorResponse(q.Select())
+
+	return faves, err
 }
 
-func (s *statusDB) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, db.DBError) {
-	accounts := []*gtsmodel.Account{}
+func (s *statusDB) GetStatusReblogs(status *gtsmodel.Status) ([]*gtsmodel.Status, db.DBError) {
+	reblogs := []*gtsmodel.Status{}
 
-	boosts := []*gtsmodel.Status{}
-	if err := s.conn.Model(&boosts).Where("boost_of_id = ?", status.ID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return accounts, nil // no rows just means nobody has boosted this status, so that's fine
-		}
-		return nil, err // an actual error has occurred
-	}
+	q := s.newStatusQ(&reblogs).
+		Where("boost_of_id = ?", status.ID)
 
-	for _, f := range boosts {
-		acc := &gtsmodel.Account{}
-		if err := s.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
-			if err == pg.ErrNoRows {
-				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
-			}
-			return nil, err // an actual error has occurred
-		}
-		accounts = append(accounts, acc)
-	}
-	return accounts, nil
+	err := processErrorResponse(q.Select())
+
+	return reblogs, err
 }

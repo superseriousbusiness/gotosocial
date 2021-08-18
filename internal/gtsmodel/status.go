@@ -37,13 +37,13 @@ type Status struct {
 	Attachments   []*MediaAttachment `pg:"rel:has-many"`
 	// Database IDs of any tags used in this status
 	TagIDs []string `pg:"tags,array"`
-	Tags   []*Tag   `pg:"rel:has-many"`
+	Tags   []*Tag   `pg:"many2many:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// Database IDs of any mentions in this status
 	MentionIDs []string   `pg:"mentions,array"`
 	Mentions   []*Mention `pg:"rel:has-many"`
 	// Database IDs of any emojis used in this status
 	EmojiIDs []string `pg:"emojis,array"`
-	Emojis   []*Emoji `pg:"rel:many2many"`
+	Emojis   []*Emoji `pg:"many2many:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
@@ -89,6 +89,18 @@ type Status struct {
 	Text string
 	// Has this status been pinned by its owner?
 	Pinned bool
+}
+
+// StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
+type StatusToTag struct {
+	StatusID string `pg:"unique:statustag"`
+	TagID    string `pg:"unique:statustag"`
+}
+
+// StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
+type StatusToEmoji struct {
+	StatusID string `pg:"unique:statusemoji"`
+	EmojiID  string `pg:"unique:statusemoji"`
 }
 
 // Visibility represents the visibility granularity of a status.

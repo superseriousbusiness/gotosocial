@@ -321,7 +321,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 	} else {
 		// scenario 3
 		// get immediate children
-		replies, err := p.db.StatusChildren(s, true, minID)
+		replies, err := p.db.GetStatusChildren(s, true, minID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

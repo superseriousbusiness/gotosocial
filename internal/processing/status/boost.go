@@ -41,7 +41,7 @@ func (p *processor) Boost(requestingAccount *gtsmodel.Account, application *gtsm
 	boostWrapperStatus.BoostOfAccount = targetStatus.Account
 
 	// put the boost in the database
-	if err := p.db.Put(boostWrapperStatus); err != nil {
+	if err := p.db.PutStatus(boostWrapperStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

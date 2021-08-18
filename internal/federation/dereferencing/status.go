@@ -109,7 +109,7 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
-		if err := d.db.Put(gtsStatus); err != nil {
+		if err := d.db.PutStatus(gtsStatus); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 		}
 	} else {
@@ -338,7 +338,10 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 
 		m.StatusID = status.ID
+		m.Status = status
+		
 		m.OriginAccountID = status.Account.ID
+		m.OriginAccount = status.Account
 		m.OriginAccountURI = status.Account.URI
 
 		targetAccount, _, err := d.GetRemoteAccount(requestingUsername, uri, false)
@@ -348,6 +351,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 
 		// by this point, we know the targetAccount exists in our database with an ID :)
 		m.TargetAccountID = targetAccount.ID
+		m.TargetAccount = targetAccount
 		if err := d.db.Put(m); err != nil {
 			return fmt.Errorf("error creating mention: %s", err)
 		}
@@ -357,11 +361,12 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 
 	// status has replyToURI but we don't have an ID yet for the status it replies to
 	if status.InReplyToURI != "" && status.InReplyToID == "" {
-		replyToStatus := &gtsmodel.Status{}
-		if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: status.InReplyToURI}}, replyToStatus); err == nil {
+		if replyToStatus, err := d.db.GetStatusByURI(status.InReplyToURI); err == nil {
 			// we have the status
 			status.InReplyToID = replyToStatus.ID
+			status.InReplyTo = replyToStatus
 			status.InReplyToAccountID = replyToStatus.AccountID
+			status.InReplyToAccount = replyToStatus.Account
 		}
 	}
 

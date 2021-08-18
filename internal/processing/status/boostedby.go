@@ -26,21 +26,20 @@ func (p *processor) BoostedBy(requestingAccount *gtsmodel.Account, targetStatusI
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	// get ALL accounts that faved a status -- doesn't take account of blocks and mutes and stuff
-	favingAccounts, err := p.db.WhoBoostedStatus(targetStatus)
+	statusReblogs, err := p.db.GetStatusReblogs(targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error seeing who boosted status: %s", err))
 	}
 
 	// filter the list so the user doesn't see accounts they blocked or which blocked them
 	filteredAccounts := []*gtsmodel.Account{}
-	for _, acc := range favingAccounts {
-		blocked, err := p.db.Blocked(requestingAccount.ID, acc.ID, true)
+	for _, s := range statusReblogs {
+		blocked, err := p.db.Blocked(requestingAccount.ID, s.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error checking blocks: %s", err))
 		}
 		if !blocked {
-			filteredAccounts = append(filteredAccounts, acc)
+			filteredAccounts = append(filteredAccounts, s.Account)
 		}
 	}
 

@@ -23,7 +23,8 @@ import "fmt"
 type DBError error
 
 var (
-	ErrNoEntries     DBError = fmt.Errorf("no entries")
-	ErrAlreadyExists DBError = fmt.Errorf("already exists")
-	ErrUnknown       DBError = fmt.Errorf("unknown error")
+	ErrNoEntries       DBError = fmt.Errorf("no entries")
+	ErrMultipleEntries DBError = fmt.Errorf("multiple entries")
+	ErrAlreadyExists   DBError = fmt.Errorf("already exists")
+	ErrUnknown         DBError = fmt.Errorf("unknown error")
 )
