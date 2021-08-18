@@ -18,31 +18,25 @@
 
 package cache
 
-import (
-	"sync"
-	"time"
-)
+import "time"
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
-}
-
-type cache struct {
-	stored *sync.Map
-}
-
-// New returns a new in-memory cache.
-func New() Cache {
-   cache := &cache{
-		stored: &sync.Map{},
+// sweep removes all entries more than 5 minutes old, on a loop.
+func (c *cache) sweep() {
+	t := time.NewTicker(5 * time.Minute)
+	for range t.C {
+		toRemove := []interface{}{}
+		c.stored.Range(func(key interface{}, value interface{}) bool {
+			ce, ok := value.(*cacheEntry)
+			if !ok {
+				panic("cache entry was not a *cacheEntry -- this should never happen")
+			}
+			if ce.updated.Add(5 * time.Minute).After(time.Now()) {
+				toRemove = append(toRemove, key)
+			}
+			return true
+		})
+		for _, r := range toRemove {
+			c.stored.Delete(r)
+		}
 	}
-   go cache.sweep()
-   return cache
-}
-
-type cacheEntry struct {
-	updated time.Time
-	value   interface{}
 }

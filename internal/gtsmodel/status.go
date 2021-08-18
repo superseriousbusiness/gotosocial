@@ -34,16 +34,16 @@ type Status struct {
 	Content string
 	// Database IDs of any media attachments associated with this status
 	AttachmentIDs []string           `pg:"attachments,array"`
-	Attachments   []*MediaAttachment `pg:"rel:has-many"`
+	Attachments   []*MediaAttachment `pg:"attached_media,rel:has-many"`
 	// Database IDs of any tags used in this status
 	TagIDs []string `pg:"tags,array"`
-	Tags   []*Tag   `pg:"many2many:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	Tags   []*Tag   `pg:"attached_tags,many2many:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// Database IDs of any mentions in this status
 	MentionIDs []string   `pg:"mentions,array"`
-	Mentions   []*Mention `pg:"rel:has-many"`
+	Mentions   []*Mention `pg:"attached_mentions,rel:has-many"`
 	// Database IDs of any emojis used in this status
 	EmojiIDs []string `pg:"emojis,array"`
-	Emojis   []*Emoji `pg:"many2many:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	Emojis   []*Emoji `pg:"attached_emojis,many2many:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?

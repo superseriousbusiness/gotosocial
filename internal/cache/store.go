@@ -18,31 +18,14 @@
 
 package cache
 
-import (
-	"sync"
-	"time"
-)
+import "time"
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
-}
-
-type cache struct {
-	stored *sync.Map
-}
-
-// New returns a new in-memory cache.
-func New() Cache {
-   cache := &cache{
-		stored: &sync.Map{},
+func (c *cache) Store(k string, v interface{}) error {
+	ce := &cacheEntry{
+		updated: time.Now(),
+		value:   v,
 	}
-   go cache.sweep()
-   return cache
-}
 
-type cacheEntry struct {
-	updated time.Time
-	value   interface{}
+	c.stored.Store(k, ce)
+	return nil
 }

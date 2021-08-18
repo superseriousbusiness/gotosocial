@@ -25,11 +25,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type StatusTestSuite struct {
+type AccountTestSuite struct {
 	PGStandardTestSuite
 }
 
-func (suite *StatusTestSuite) SetupSuite() {
+func (suite *AccountTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -41,7 +41,7 @@ func (suite *StatusTestSuite) SetupSuite() {
 	suite.testMentions = testrig.NewTestMentions()
 }
 
-func (suite *StatusTestSuite) SetupTest() {
+func (suite *AccountTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
@@ -49,51 +49,22 @@ func (suite *StatusTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 
-func (suite *StatusTestSuite) TearDownTest() {
+func (suite *AccountTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *StatusTestSuite) TestGetStatusByID() {
-	status, err := suite.db.GetStatusByID(suite.testStatuses["local_account_1_status_1"].ID)
+func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
+	account, err := suite.db.GetAccountByID(suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.NotNil(status)
-	suite.NotNil(status.Account)
-	suite.NotNil(status.CreatedWithApplication)
-	suite.Nil(status.BoostOf)
-	suite.Nil(status.BoostOfAccount)
-	suite.Nil(status.InReplyTo)
-	suite.Nil(status.InReplyToAccount)
+	suite.NotNil(account)
+	suite.NotNil(account.AvatarMediaAttachment)
+	suite.NotEmpty(account.AvatarMediaAttachment.URL)
+	suite.NotNil(account.HeaderMediaAttachment)
+	suite.NotEmpty(account.HeaderMediaAttachment.URL)
 }
 
-func (suite *StatusTestSuite) TestGetStatusByURI() {
-	status, err := suite.db.GetStatusByURI(suite.testStatuses["local_account_1_status_1"].URI)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.NotNil(status)
-	suite.NotNil(status.Account)
-	suite.NotNil(status.CreatedWithApplication)
-	suite.Nil(status.BoostOf)
-	suite.Nil(status.BoostOfAccount)
-	suite.Nil(status.InReplyTo)
-	suite.Nil(status.InReplyToAccount)
-}
-
-func (suite *StatusTestSuite) TestGetStatusWithExtras() {
-	status, err := suite.db.GetStatusByID(suite.testStatuses["admin_account_status_1"].ID)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.NotNil(status)
-	suite.NotNil(status.Account)
-	suite.NotNil(status.CreatedWithApplication)
-	suite.NotEmpty(status.Tags)
-	suite.NotEmpty(status.Attachments)
-	suite.NotEmpty(status.Emojis)
-}
-
-func TestStatusTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusTestSuite))
+func TestAccountTestSuite(t *testing.T) {
+	suite.Run(t, new(AccountTestSuite))
 }

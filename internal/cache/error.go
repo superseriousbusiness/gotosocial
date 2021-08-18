@@ -18,31 +18,10 @@
 
 package cache
 
-import (
-	"sync"
-	"time"
-)
+import "errors"
 
-// Cache defines an in-memory cache that is safe to be wiped when the application is restarted
-type Cache interface {
-	Store(k string, v interface{}) error
-	Fetch(k string) (interface{}, error)
-}
+// CacheError models an error returned by the in-memory cache.
+type CacheError error
 
-type cache struct {
-	stored *sync.Map
-}
-
-// New returns a new in-memory cache.
-func New() Cache {
-   cache := &cache{
-		stored: &sync.Map{},
-	}
-   go cache.sweep()
-   return cache
-}
-
-type cacheEntry struct {
-	updated time.Time
-	value   interface{}
-}
+// ErrNotFound means that a value for the requested key was not found in the cache.
+var ErrNotFound = errors.New("value not found in cache")

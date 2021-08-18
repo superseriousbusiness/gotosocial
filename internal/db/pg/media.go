@@ -29,42 +29,25 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-type mentionDB struct {
+type mediaDB struct {
 	config *config.Config
 	conn   *pg.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }
 
-func (m *mentionDB) newMentionQ(i interface{}) *orm.Query {
+func (m *mediaDB) newMediaQ(i interface{}) *orm.Query {
 	return m.conn.Model(i).
-		Relation("Status").
-		Relation("OriginAccount").
-		Relation("TargetAccount")
+		Relation("Account")
 }
 
-func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.DBError) {
-	mention := &gtsmodel.Mention{}
+func (m *mediaDB) GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, db.DBError) {
+	attachment := &gtsmodel.MediaAttachment{}
 
-	q := m.newMentionQ(mention).
-		Where("mention.id = ?", id)
+	q := m.newMediaQ(attachment).
+		Where("media_attachment.id = ?", id)
 
 	err := processErrorResponse(q.Select())
 
-	return mention, err
-}
-
-func (m *mentionDB) GetMentions(ids []string) ([]*gtsmodel.Mention, db.DBError) {
-	mentions := []*gtsmodel.Mention{}
-
-	if len(ids) == 0 {
-		return mentions, nil
-	}
-
-	q := m.newMentionQ(&mentions).
-		Where("mention.id in (?)", pg.In(ids))
-
-	err := processErrorResponse(q.Select())
-
-	return mentions, err
+	return attachment, err
 }

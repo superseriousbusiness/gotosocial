@@ -62,6 +62,14 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 }
 
 func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
+	// first check if we have this account in our frontEnd cache
+	if accountI, err := c.frontendCache.Fetch(a.ID); err == nil {
+		if account, ok := accountI.(*model.Account); ok {
+			// we have it, so just return it as-is
+			return account, nil
+		}
+	}
+
 	// count followers
 	followersCount, err := c.db.CountAccountFollowers(a.ID, false)
 	if err != nil {
@@ -90,14 +98,30 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	// build the avatar and header URLs
 	var aviURL string
 	var aviURLStatic string
-	if a.AvatarMediaAttachment != nil {
+	if a.AvatarMediaAttachmentID != "" {
+		// make sure avi is pinned to this account
+		if a.AvatarMediaAttachment == nil {
+			avi, err := c.db.GetAttachmentByID(a.AvatarMediaAttachmentID)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving avatar: %s", err)
+			}
+			a.AvatarMediaAttachment = avi
+		}
 		aviURL = a.AvatarMediaAttachment.URL
 		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
 	}
 
 	var headerURL string
 	var headerURLStatic string
-	if a.HeaderMediaAttachment != nil {
+	if a.HeaderMediaAttachmentID != "" {
+		// make sure header is pinned to this account
+		if a.HeaderMediaAttachment == nil {
+			avi, err := c.db.GetAttachmentByID(a.HeaderMediaAttachmentID)
+			if err != nil {
+				return nil, fmt.Errorf("error retrieving avatar: %s", err)
+			}
+			a.HeaderMediaAttachment = avi
+		}
 		headerURL = a.HeaderMediaAttachment.URL
 		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
 	}
@@ -132,7 +156,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		suspended = true
 	}
 
-	return &model.Account{
+	accountFrontend := &model.Account{
 		ID:             a.ID,
 		Username:       a.Username,
 		Acct:           acct,
@@ -153,7 +177,14 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
 		Suspended:      suspended,
-	}, nil
+	}
+
+	// put the account in our cache in case we need it again soon
+	if err := c.frontendCache.Store(a.ID, accountFrontend); err != nil {
+		return nil, err
+	}
+
+	return accountFrontend, nil
 }
 
 func (c *converter) AccountToMastoBlocked(a *gtsmodel.Account) (*model.Account, error) {
