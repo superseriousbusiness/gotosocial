@@ -19,15 +19,10 @@
 package cache
 
 func (c *cache) Fetch(k string) (interface{}, error) {
-	ceI, stored := c.stored.Load(k)
+	i, stored := c.c.Get(k)
 	if !stored {
 		return nil, ErrNotFound
 	}
 
-	ce, ok := ceI.(*cacheEntry)
-	if !ok {
-		panic("cache entry was not a *cacheEntry -- this should never happen")
-	}
-
-	return ce.value, nil
+	return i, nil
 }

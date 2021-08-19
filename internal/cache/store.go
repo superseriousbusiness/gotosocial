@@ -18,14 +18,7 @@
 
 package cache
 
-import "time"
-
 func (c *cache) Store(k string, v interface{}) error {
-	ce := &cacheEntry{
-		updated: time.Now(),
-		value:   v,
-	}
-
-	c.stored.Store(k, ce)
+	c.c.Set(k, v)
 	return nil
 }

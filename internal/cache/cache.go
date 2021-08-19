@@ -19,8 +19,9 @@
 package cache
 
 import (
-	"sync"
 	"time"
+
+	"github.com/ReneKroon/ttlcache"
 )
 
 // Cache defines an in-memory cache that is safe to be wiped when the application is restarted
@@ -30,19 +31,15 @@ type Cache interface {
 }
 
 type cache struct {
-	stored *sync.Map
+	c *ttlcache.Cache
 }
 
 // New returns a new in-memory cache.
 func New() Cache {
+	c := ttlcache.NewCache()
+	c.SetTTL(30 * time.Second)
 	cache := &cache{
-		stored: &sync.Map{},
+		c: c,
 	}
-	go cache.sweep()
 	return cache
-}
-
-type cacheEntry struct {
-	updated time.Time
-	value   interface{}
 }
