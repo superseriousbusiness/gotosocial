@@ -66,9 +66,9 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	err = suite.manager.PrepareXFromTop(testAccount.ID, 20)
 	suite.NoError(err)
 
-	// local_account_1 can see 11 statuses out of the testrig statuses in its home timeline
+	// local_account_1 can see 12 statuses out of the testrig statuses in its home timeline
 	indexedLen = suite.manager.GetIndexedLength(testAccount.ID)
-	suite.Equal(11, indexedLen)
+	suite.Equal(12, indexedLen)
 
 	// oldest should now be set
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(testAccount.ID)
@@ -78,7 +78,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	// get hometimeline
 	statuses, err := suite.manager.HomeTimeline(testAccount.ID, "", "", "", 20, false)
 	suite.NoError(err)
-	suite.Len(statuses, 11)
+	suite.Len(statuses, 12)
 
 	// now wipe the last status from all timelines, as though it had been deleted by the owner
 	err = suite.manager.WipeStatusFromAllTimelines("01F8MH75CBF9JFX4ZAD54N0W0R")
@@ -86,7 +86,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 
 	// timeline should be shorter
 	indexedLen = suite.manager.GetIndexedLength(testAccount.ID)
-	suite.Equal(10, indexedLen)
+	suite.Equal(11, indexedLen)
 
 	// oldest should now be different
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(testAccount.ID)
@@ -100,7 +100,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 
 	// timeline should be shorter
 	indexedLen = suite.manager.GetIndexedLength(testAccount.ID)
-	suite.Equal(9, indexedLen)
+	suite.Equal(10, indexedLen)
 
 	// oldest should now be different
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(testAccount.ID)

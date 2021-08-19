@@ -102,7 +102,7 @@ func (p *processor) notifyStatus(status *gtsmodel.Status) error {
 			return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 		}
 
-		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.OriginAccount); err != nil {
+		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.TargetAccount); err != nil {
 			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 		}
 	}
@@ -145,9 +145,9 @@ func (p *processor) notifyFollowRequest(followRequest *gtsmodel.FollowRequest, r
 	return nil
 }
 
-func (p *processor) notifyFollow(follow *gtsmodel.Follow, receivingAccount *gtsmodel.Account) error {
+func (p *processor) notifyFollow(follow *gtsmodel.Follow, targetAccount *gtsmodel.Account) error {
 	// return if this isn't a local account
-	if receivingAccount.Domain != "" {
+	if targetAccount.Domain != "" {
 		return nil
 	}
 
@@ -170,7 +170,9 @@ func (p *processor) notifyFollow(follow *gtsmodel.Follow, receivingAccount *gtsm
 		ID:               notifID,
 		NotificationType: gtsmodel.NotificationFollow,
 		TargetAccountID:  follow.TargetAccountID,
+		TargetAccount:    follow.TargetAccount,
 		OriginAccountID:  follow.AccountID,
+		OriginAccount:    follow.Account,
 	}
 	if err := p.db.Put(notif); err != nil {
 		return fmt.Errorf("notifyFollow: error putting notification in database: %s", err)
@@ -182,16 +184,16 @@ func (p *processor) notifyFollow(follow *gtsmodel.Follow, receivingAccount *gtsm
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
 	return nil
 }
 
-func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsmodel.Account) error {
+func (p *processor) notifyFave(fave *gtsmodel.StatusFave, targetAccount *gtsmodel.Account) error {
 	// return if this isn't a local account
-	if receivingAccount.Domain != "" {
+	if targetAccount.Domain != "" {
 		return nil
 	}
 
@@ -204,8 +206,11 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 		ID:               notifID,
 		NotificationType: gtsmodel.NotificationFave,
 		TargetAccountID:  fave.TargetAccountID,
+		TargetAccount:    fave.TargetAccount,
 		OriginAccountID:  fave.AccountID,
+		OriginAccount:    fave.Account,
 		StatusID:         fave.StatusID,
+		Status:           fave.Status,
 	}
 
 	if err := p.db.Put(notif); err != nil {
@@ -218,7 +223,7 @@ func (p *processor) notifyFave(fave *gtsmodel.StatusFave, receivingAccount *gtsm
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -231,22 +236,29 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 		return nil
 	}
 
-	boostedStatus := &gtsmodel.Status{}
-	if err := p.db.GetByID(status.BoostOfID, boostedStatus); err != nil {
-		return fmt.Errorf("notifyAnnounce: error getting status with id %s: %s", status.BoostOfID, err)
+	if status.BoostOf == nil {
+		boostedStatus, err := p.db.GetStatusByID(status.BoostOfID)
+		if err != nil {
+			return fmt.Errorf("notifyAnnounce: error getting status with id %s: %s", status.BoostOfID, err)
+		}
+		status.BoostOf = boostedStatus
 	}
 
-	boostedAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(boostedStatus.AccountID, boostedAcct); err != nil {
-		return fmt.Errorf("notifyAnnounce: error getting account with id %s: %s", boostedStatus.AccountID, err)
+	if status.BoostOfAccount == nil {
+		boostedAcct, err := p.db.GetAccountByID(status.BoostOfAccountID)
+		if err != nil {
+			return fmt.Errorf("notifyAnnounce: error getting account with id %s: %s", status.BoostOfAccountID, err)
+		}
+		status.BoostOf.Account = boostedAcct
+		status.BoostOfAccount = boostedAcct
 	}
 
-	if boostedAcct.Domain != "" {
+	if status.BoostOfAccount.Domain == "" {
 		// remote account, nothing to do
 		return nil
 	}
 
-	if boostedStatus.AccountID == status.AccountID {
+	if status.BoostOfAccountID == status.AccountID {
 		// it's a self boost, nothing to do
 		return nil
 	}
@@ -254,7 +266,7 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 	// make sure a notif doesn't already exist for this announce
 	err := p.db.GetWhere([]db.Where{
 		{Key: "notification_type", Value: gtsmodel.NotificationReblog},
-		{Key: "target_account_id", Value: boostedAcct.ID},
+		{Key: "target_account_id", Value: status.BoostOfAccountID},
 		{Key: "origin_account_id", Value: status.AccountID},
 		{Key: "status_id", Value: status.ID},
 	}, &gtsmodel.Notification{})
@@ -272,9 +284,12 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 	notif := &gtsmodel.Notification{
 		ID:               notifID,
 		NotificationType: gtsmodel.NotificationReblog,
-		TargetAccountID:  boostedAcct.ID,
+		TargetAccountID:  status.BoostOfAccountID,
+		TargetAccount:    status.BoostOfAccount,
 		OriginAccountID:  status.AccountID,
+		OriginAccount:    status.Account,
 		StatusID:         status.ID,
+		Status:           status,
 	}
 
 	if err := p.db.Put(notif); err != nil {
@@ -287,7 +302,7 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, boostedAcct); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, status.BoostOfAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -297,8 +312,8 @@ func (p *processor) notifyAnnounce(status *gtsmodel.Status) error {
 func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 	// make sure the author account is pinned onto the status
 	if status.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(status.AccountID, a); err != nil {
+		a, err := p.db.GetAccountByID(status.AccountID)
+		if err != nil {
 			return fmt.Errorf("timelineStatus: error getting author account with id %s: %s", status.AccountID, err)
 		}
 		status.Account = a
@@ -353,8 +368,8 @@ func (p *processor) timelineStatusForAccount(status *gtsmodel.Status, accountID 
 	defer wg.Done()
 
 	// get the timeline owner account
-	timelineAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(accountID, timelineAccount); err != nil {
+	timelineAccount, err := p.db.GetAccountByID(accountID)
+	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error getting account for timeline with id %s: %s", accountID, err)
 		return
 	}

@@ -67,9 +67,8 @@ func (suite *IndexTestSuite) TestIndexBeforeLowID() {
 	suite.NoError(err)
 	suite.Equal("01F8MHAAY43M6RJ473VQFCVH37", postID)
 
-	// indexLength should only be 9 because that's all this user has hometimelineable
 	indexLength := suite.timeline.PostIndexLength()
-	suite.Equal(9, indexLength)
+	suite.Equal(10, indexLength)
 }
 
 func (suite *IndexTestSuite) TestIndexBeforeHighID() {
@@ -97,9 +96,9 @@ func (suite *IndexTestSuite) TestIndexBehindHighID() {
 	suite.NoError(err)
 	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", postID)
 
-	// indexLength should only be 11 because that's all this user has hometimelineable
+	// indexLength should be 10 because that's all this user has hometimelineable
 	indexLength := suite.timeline.PostIndexLength()
-	suite.Equal(11, indexLength)
+	suite.Equal(10, indexLength)
 }
 
 func (suite *IndexTestSuite) TestIndexBehindLowID() {
