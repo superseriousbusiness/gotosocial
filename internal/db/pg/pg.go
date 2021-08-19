@@ -49,6 +49,7 @@ type postgresService struct {
 	db.Account
 	db.Admin
 	db.Basic
+	db.Domain
 	db.Instance
 	db.Media
 	db.Mention
@@ -118,6 +119,12 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 			cancel: cancel,
 		},
 		Basic: &basicDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Domain: &domainDB{
 			config: c,
 			conn:   conn,
 			log:    log,

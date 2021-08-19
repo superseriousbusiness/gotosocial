@@ -35,7 +35,7 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 	}
 
 	apiStatuses := []apimodel.Status{}
-	
+
 	statuses, err := p.db.GetAccountStatuses(targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {

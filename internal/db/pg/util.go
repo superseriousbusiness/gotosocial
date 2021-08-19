@@ -8,7 +8,7 @@ import (
 )
 
 // processErrorResponse parses the given error and returns an appropriate DBError.
-func processErrorResponse(err error) db.DBError {
+func processErrorResponse(err error) db.Error {
 	switch err {
 	case nil:
 		return nil

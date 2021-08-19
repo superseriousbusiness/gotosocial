@@ -27,6 +27,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -37,6 +38,36 @@ type statusDB struct {
 	conn   *pg.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
+	cache  cache.Cache
+}
+
+func (s *statusDB) cacheStatus(id string, status *gtsmodel.Status) {
+	if s.cache == nil {
+		s.cache = cache.New()
+	}
+
+	if err := s.cache.Store(id, status); err != nil {
+		s.log.Panicf("statusDB: error storing in cache: %s", err)
+	}
+}
+
+func (s *statusDB) statusCached(id string) (*gtsmodel.Status, bool) {
+	if s.cache == nil {
+		s.cache = cache.New()
+		return nil, false
+	}
+
+	sI, err := s.cache.Fetch(id)
+	if err != nil || sI == nil {
+		return nil, false
+	}
+
+	status, ok := sI.(*gtsmodel.Status)
+	if !ok {
+		s.log.Panicf("statusDB: cached interface with key %s was not a status", id)
+	}
+
+	return status, true
 }
 
 func (s *statusDB) newStatusQ(status interface{}) *orm.Query {
@@ -60,7 +91,11 @@ func (s *statusDB) newFaveQ(faves interface{}) *orm.Query {
 		Relation("Status")
 }
 
-func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.Error) {
+	if status, cached := s.statusCached(id); cached {
+		return status, nil
+	}
+
 	status := &gtsmodel.Status{}
 
 	q := s.newStatusQ(status).
@@ -68,10 +103,18 @@ func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.DBError) {
 
 	err := processErrorResponse(q.Select())
 
+	if err == nil && status != nil {
+		s.cacheStatus(id, status)
+	}
+
 	return status, err
 }
 
-func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.Error) {
+	if status, cached := s.statusCached(uri); cached {
+		return status, nil
+	}
+
 	status := &gtsmodel.Status{}
 
 	q := s.newStatusQ(status).
@@ -79,10 +122,18 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.DBError) {
 
 	err := processErrorResponse(q.Select())
 
+	if err == nil && status != nil {
+		s.cacheStatus(uri, status)
+	}
+
 	return status, err
 }
 
-func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.Error) {
+	if status, cached := s.statusCached(uri); cached {
+		return status, nil
+	}
+
 	status := &gtsmodel.Status{}
 
 	q := s.newStatusQ(status).
@@ -90,10 +141,14 @@ func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.DBError) {
 
 	err := processErrorResponse(q.Select())
 
+	if err == nil && status != nil {
+		s.cacheStatus(uri, status)
+	}
+
 	return status, err
 }
 
-func (s *statusDB) PutStatus(status *gtsmodel.Status) db.DBError {
+func (s *statusDB) PutStatus(status *gtsmodel.Status) db.Error {
 	transaction := func(tx *pg.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
@@ -133,7 +188,7 @@ func (s *statusDB) PutStatus(status *gtsmodel.Status) db.DBError {
 	return processErrorResponse(s.conn.RunInTransaction(context.Background(), transaction))
 }
 
-func (s *statusDB) GetStatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
 	parents := []*gtsmodel.Status{}
 	s.statusParent(status, &parents, onlyDirect)
 
@@ -157,7 +212,7 @@ func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmo
 	s.statusParent(parentStatus, foundStatuses, false)
 }
 
-func (s *statusDB) GetStatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.Error) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
 	s.statusChildren(status, foundStatuses, onlyDirect, minID)
@@ -212,35 +267,35 @@ func (s *statusDB) statusChildren(status *gtsmodel.Status, foundStatuses *list.L
 	}
 }
 
-func (s *statusDB) CountStatusReplies(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusReplies(status *gtsmodel.Status) (int, db.Error) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) CountStatusReblogs(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusReblogs(status *gtsmodel.Status) (int, db.Error) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) CountStatusFaves(status *gtsmodel.Status) (int, db.DBError) {
+func (s *statusDB) CountStatusFaves(status *gtsmodel.Status) (int, db.Error) {
 	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
 }
 
-func (s *statusDB) IsStatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) IsStatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) IsStatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	return s.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) IsStatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.DBError) {
+func (s *statusDB) IsStatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
 	return s.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
 }
 
-func (s *statusDB) GetStatusFaves(status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.DBError) {
+func (s *statusDB) GetStatusFaves(status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := []*gtsmodel.StatusFave{}
 
 	q := s.newFaveQ(&faves).
@@ -251,7 +306,7 @@ func (s *statusDB) GetStatusFaves(status *gtsmodel.Status) ([]*gtsmodel.StatusFa
 	return faves, err
 }
 
-func (s *statusDB) GetStatusReblogs(status *gtsmodel.Status) ([]*gtsmodel.Status, db.DBError) {
+func (s *statusDB) GetStatusReblogs(status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {
 	reblogs := []*gtsmodel.Status{}
 
 	q := s.newStatusQ(&reblogs).

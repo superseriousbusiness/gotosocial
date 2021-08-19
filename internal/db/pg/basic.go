@@ -38,7 +38,7 @@ type basicDB struct {
 	cancel context.CancelFunc
 }
 
-func (b *basicDB) Put(i interface{}) db.DBError {
+func (b *basicDB) Put(i interface{}) db.Error {
 	_, err := b.conn.Model(i).Insert(i)
 	if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 		return db.ErrAlreadyExists
@@ -46,7 +46,7 @@ func (b *basicDB) Put(i interface{}) db.DBError {
 	return err
 }
 
-func (b *basicDB) GetByID(id string, i interface{}) db.DBError {
+func (b *basicDB) GetByID(id string, i interface{}) db.Error {
 	if err := b.conn.Model(i).Where("id = ?", id).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries
@@ -57,7 +57,7 @@ func (b *basicDB) GetByID(id string, i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) GetWhere(where []db.Where, i interface{}) db.DBError {
+func (b *basicDB) GetWhere(where []db.Where, i interface{}) db.Error {
 	if len(where) == 0 {
 		return errors.New("no queries provided")
 	}
@@ -85,7 +85,7 @@ func (b *basicDB) GetWhere(where []db.Where, i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) GetAll(i interface{}) db.DBError {
+func (b *basicDB) GetAll(i interface{}) db.Error {
 	if err := b.conn.Model(i).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries
@@ -95,7 +95,7 @@ func (b *basicDB) GetAll(i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) DeleteByID(id string, i interface{}) db.DBError {
+func (b *basicDB) DeleteByID(id string, i interface{}) db.Error {
 	if _, err := b.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
 		// if there are no rows *anyway* then that's fine
 		// just return err if there's an actual error
@@ -106,7 +106,7 @@ func (b *basicDB) DeleteByID(id string, i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) DeleteWhere(where []db.Where, i interface{}) db.DBError {
+func (b *basicDB) DeleteWhere(where []db.Where, i interface{}) db.Error {
 	if len(where) == 0 {
 		return errors.New("no queries provided")
 	}
@@ -126,7 +126,7 @@ func (b *basicDB) DeleteWhere(where []db.Where, i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) Upsert(i interface{}, conflictColumn string) db.DBError {
+func (b *basicDB) Upsert(i interface{}, conflictColumn string) db.Error {
 	if _, err := b.conn.Model(i).OnConflict(fmt.Sprintf("(%s) DO UPDATE", conflictColumn)).Insert(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries
@@ -136,7 +136,7 @@ func (b *basicDB) Upsert(i interface{}, conflictColumn string) db.DBError {
 	return nil
 }
 
-func (b *basicDB) UpdateByID(id string, i interface{}) db.DBError {
+func (b *basicDB) UpdateByID(id string, i interface{}) db.Error {
 	if _, err := b.conn.Model(i).Where("id = ?", id).OnConflict("(id) DO UPDATE").Insert(); err != nil {
 		if err == pg.ErrNoRows {
 			return db.ErrNoEntries
@@ -146,12 +146,12 @@ func (b *basicDB) UpdateByID(id string, i interface{}) db.DBError {
 	return nil
 }
 
-func (b *basicDB) UpdateOneByID(id string, key string, value interface{}, i interface{}) db.DBError {
+func (b *basicDB) UpdateOneByID(id string, key string, value interface{}, i interface{}) db.Error {
 	_, err := b.conn.Model(i).Set("? = ?", pg.Safe(key), value).Where("id = ?", id).Update()
 	return err
 }
 
-func (b *basicDB) UpdateWhere(where []db.Where, key string, value interface{}, i interface{}) db.DBError {
+func (b *basicDB) UpdateWhere(where []db.Where, key string, value interface{}, i interface{}) db.Error {
 	q := b.conn.Model(i)
 
 	for _, w := range where {
@@ -173,28 +173,28 @@ func (b *basicDB) UpdateWhere(where []db.Where, key string, value interface{}, i
 	return err
 }
 
-func (b *basicDB) CreateTable(i interface{}) db.DBError {
+func (b *basicDB) CreateTable(i interface{}) db.Error {
 	return b.conn.Model(i).CreateTable(&orm.CreateTableOptions{
 		IfNotExists: true,
 	})
 }
 
-func (b *basicDB) DropTable(i interface{}) db.DBError {
+func (b *basicDB) DropTable(i interface{}) db.Error {
 	return b.conn.Model(i).DropTable(&orm.DropTableOptions{
 		IfExists: true,
 	})
 }
 
-func (b *basicDB) RegisterTable(i interface{}) db.DBError {
+func (b *basicDB) RegisterTable(i interface{}) db.Error {
 	orm.RegisterTable(i)
 	return nil
 }
 
-func (b *basicDB) IsHealthy(ctx context.Context) db.DBError {
+func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
 	return b.conn.Ping(ctx)
 }
 
-func (b *basicDB) Stop(ctx context.Context) db.DBError {
+func (b *basicDB) Stop(ctx context.Context) db.Error {
 	b.log.Info("closing db connection")
 	if err := b.conn.Close(); err != nil {
 		// only cancel if there's a problem closing the db

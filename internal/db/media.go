@@ -20,7 +20,8 @@ package db
 
 import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
+// Media contains functions related to creating/getting/removing media attachments.
 type Media interface {
 	// GetAttachmentByID gets a single attachment by its ID
-	GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, DBError)
+	GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, Error)
 }

@@ -20,34 +20,64 @@ package pg
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-type mediaDB struct {
+type domainDB struct {
 	config *config.Config
 	conn   *pg.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }
 
-func (m *mediaDB) newMediaQ(i interface{}) *orm.Query {
-	return m.conn.Model(i).
-		Relation("Account")
+func (d *domainDB) IsDomainBlocked(domain string) (bool, db.Error) {
+	if domain == "" {
+		return false, nil
+	}
+
+	blocked, err := d.conn.
+		Model(&gtsmodel.DomainBlock{}).
+		Where("LOWER(domain) = LOWER(?)", domain).
+		Exists()
+
+	err = processErrorResponse(err)
+
+	return blocked, err
 }
 
-func (m *mediaDB) GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, db.Error) {
-	attachment := &gtsmodel.MediaAttachment{}
+func (d *domainDB) AreDomainsBlocked(domains []string) (bool, db.Error) {
+	// filter out any doubles
+	uniqueDomains := util.UniqueStrings(domains)
 
-	q := m.newMediaQ(attachment).
-		Where("media_attachment.id = ?", id)
+	for _, domain := range uniqueDomains {
+		if blocked, err := d.IsDomainBlocked(domain); err != nil {
+			return false, err
+		} else if blocked {
+			return blocked, nil
+		}
+	}
 
-	err := processErrorResponse(q.Select())
+	// no blocks found
+	return false, nil
+}
 
-	return attachment, err
+func (d *domainDB) IsURIBlocked(uri *url.URL) (bool, db.Error) {
+	domain := uri.Hostname()
+	return d.IsDomainBlocked(domain)
+}
+
+func (d *domainDB) AreURIsBlocked(uris []*url.URL) (bool, db.Error) {
+	domains := []string{}
+	for _, uri := range uris {
+		domains = append(domains, uri.Hostname())
+	}
+
+	return d.AreDomainsBlocked(domains)
 }

@@ -20,8 +20,8 @@ package cache
 
 import "errors"
 
-// CacheError models an error returned by the in-memory cache.
-type CacheError error
+// Error models an error returned by the in-memory cache.
+type Error error
 
 // ErrNotFound means that a value for the requested key was not found in the cache.
 var ErrNotFound = errors.New("value not found in cache")

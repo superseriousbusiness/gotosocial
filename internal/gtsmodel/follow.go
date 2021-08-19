@@ -29,11 +29,11 @@ type Follow struct {
 	// When was this follow last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Who does this follow belong to?
-	AccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
-	Account *Account `pg:"rel:belongs-to"`
+	AccountID string   `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	Account   *Account `pg:"rel:belongs-to"`
 	// Who does AccountID follow?
-	TargetAccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
-	TargetAccount *Account `pg:"rel:has-one"`
+	TargetAccountID string   `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	TargetAccount   *Account `pg:"rel:has-one"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `pg:"default:true"`
 	// What is the activitypub URI of this follow?

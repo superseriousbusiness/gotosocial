@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package visibility
 
 import (
@@ -16,10 +34,11 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		"statusID": targetStatus.ID,
 	})
 
-	relevantAccounts, err := f.pullRelevantAccountsFromStatus(targetStatus)
+	getBoosted := true
+	relevantAccounts, err := f.relevantAccounts(targetStatus, getBoosted)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
-		return false, fmt.Errorf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
+		return false, fmt.Errorf("StatusVisible: error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
 
 	domainBlocked, err := f.domainBlockedRelevant(relevantAccounts)
@@ -32,7 +51,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		return false, nil
 	}
 
-	targetAccount := relevantAccounts.StatusAuthor
+	targetAccount := relevantAccounts.Account
 	if targetAccount == nil {
 		l.Trace("target account is not set")
 		return false, nil
@@ -117,8 +136,8 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	// status replies to account id
-	if relevantAccounts.ReplyToAccount != nil && relevantAccounts.ReplyToAccount.ID != requestingAccount.ID {
-		if blocked, err := f.db.Blocked(relevantAccounts.ReplyToAccount.ID, requestingAccount.ID, true); err != nil {
+	if relevantAccounts.InReplyToAccount != nil && relevantAccounts.InReplyToAccount.ID != requestingAccount.ID {
+		if blocked, err := f.db.Blocked(relevantAccounts.InReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and reply to account")
@@ -127,7 +146,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 		// check reply to ID
 		if targetStatus.InReplyToID != "" && (targetStatus.Visibility == gtsmodel.VisibilityFollowersOnly || targetStatus.Visibility == gtsmodel.VisibilityDirect) {
-			followsRepliedAccount, err := f.db.Follows(requestingAccount, relevantAccounts.ReplyToAccount)
+			followsRepliedAccount, err := f.db.Follows(requestingAccount, relevantAccounts.InReplyToAccount)
 			if err != nil {
 				return false, err
 			}
@@ -139,8 +158,8 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	// status boosts accounts id
-	if relevantAccounts.BoostedStatusAuthor != nil {
-		if blocked, err := f.db.Blocked(relevantAccounts.BoostedStatusAuthor.ID, requestingAccount.ID, true); err != nil {
+	if relevantAccounts.BoostedAccount != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted account")
@@ -149,8 +168,8 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	}
 
 	// status boosts a reply to account id
-	if relevantAccounts.BoostedReplyToAccount != nil {
-		if blocked, err := f.db.Blocked(relevantAccounts.BoostedReplyToAccount.ID, requestingAccount.ID, true); err != nil {
+	if relevantAccounts.BoostedInReplyToAccount != nil {
+		if blocked, err := f.db.Blocked(relevantAccounts.BoostedInReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted reply to account")

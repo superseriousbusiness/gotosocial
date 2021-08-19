@@ -35,11 +35,11 @@ type cache struct {
 
 // New returns a new in-memory cache.
 func New() Cache {
-   cache := &cache{
+	cache := &cache{
 		stored: &sync.Map{},
 	}
-   go cache.sweep()
-   return cache
+	go cache.sweep()
+	return cache
 }
 
 type cacheEntry struct {

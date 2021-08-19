@@ -20,7 +20,8 @@ package db
 
 import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
+// Notification contains functions for creating and getting notifications.
 type Notification interface {
 	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
-	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, DBError)
+	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
 }

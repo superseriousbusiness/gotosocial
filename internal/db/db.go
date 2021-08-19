@@ -27,13 +27,12 @@ const (
 	DBTypePostgres string = "POSTGRES"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism (for now, just postgres).
-// Note that in all of the functions below, the passed interface should be a pointer or a slice, which will then be populated
-// by whatever is returned from the database.
+// DB provides methods for interacting with an underlying database or other storage mechanism.
 type DB interface {
 	Account
 	Admin
 	Basic
+	Domain
 	Instance
 	Media
 	Mention

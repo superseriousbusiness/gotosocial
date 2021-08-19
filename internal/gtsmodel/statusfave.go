@@ -27,14 +27,14 @@ type StatusFave struct {
 	// when was this fave created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the fave
-	AccountID string `pg:"type:CHAR(26),notnull"`
-	Account *Account `pg:"rel:has-one"`
+	AccountID string   `pg:"type:CHAR(26),notnull"`
+	Account   *Account `pg:"rel:has-one"`
 	// id the account owning the faved status
-	TargetAccountID string `pg:"type:CHAR(26),notnull"`
-	TargetAccount *Account `pg:"rel:has-one"`
+	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `pg:"rel:has-one"`
 	// database id of the status that has been 'faved'
-	StatusID string `pg:"type:CHAR(26),notnull"`
-	Status *Status `pg:"rel:has-one"`
+	StatusID string  `pg:"type:CHAR(26),notnull"`
+	Status   *Status `pg:"rel:has-one"`
 	// ActivityPub URI of this fave
 	URI string `pg:",notnull"`
 }

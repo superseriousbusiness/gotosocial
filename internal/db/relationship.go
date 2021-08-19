@@ -20,32 +20,33 @@ package db
 
 import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
+// Relationship contains functions for getting or modifying the relationship between two accounts.
 type Relationship interface {
 	// Blocked checks whether account 1 has a block in place against block2.
 	// If eitherDirection is true, then the function returns true if account1 blocks account2, OR if account2 blocks account1.
-	Blocked(account1 string, account2 string, eitherDirection bool) (bool, DBError)
+	Blocked(account1 string, account2 string, eitherDirection bool) (bool, Error)
 
 	// GetBlock returns the block from account1 targeting account2, if it exists, or an error if it doesn't.
 	//
 	// Because this is slower than Blocked, only use it if you need the actual Block struct for some reason,
 	// not if you're just checking for the existence of a block.
-	GetBlock(account1 string, account2 string) (*gtsmodel.Block, DBError)
+	GetBlock(account1 string, account2 string) (*gtsmodel.Block, Error)
 
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
-	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, DBError)
+	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
 
 	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
-	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, DBError)
+	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
 
 	// FollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
-	FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, DBError)
+	FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
 
 	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
-	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, DBError)
+	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.
 	//
 	// It will return the newly created follow for further processing.
-	AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, DBError)
+	AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
 }

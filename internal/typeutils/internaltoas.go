@@ -34,6 +34,14 @@ import (
 // Converts a gts model account into an Activity Streams person type, following
 // the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
 func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+	// first check if we have this person in our asCache already
+	if personI, err := c.asCache.Fetch(a.ID); err == nil {
+		if person, ok := personI.(vocab.ActivityStreamsPerson); ok {
+			// we have it, so just return it as-is
+			return person, nil
+		}
+	}
+
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -256,6 +264,11 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 		person.SetActivityStreamsImage(headerProperty)
 	}
 
+	// put the person in our cache in case we need it again soon
+	if err := c.asCache.Store(a.ID, person); err != nil {
+		return nil, err
+	}
+
 	return person, nil
 }
 
@@ -326,13 +339,21 @@ func (c *converter) AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStrea
 }
 
 func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
+	// first check if we have this note in our asCache already
+	if noteI, err := c.asCache.Fetch(s.ID); err == nil {
+		if note, ok := noteI.(vocab.ActivityStreamsNote); ok {
+			// we have it, so just return it as-is
+			return note, nil
+		}
+	}
+
 	// ensure prerequisites here before we get stuck in
 
 	// check if author account is already attached to status and attach it if not
 	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
 	if s.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(s.AccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(s.AccountID)
+		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
 		}
 		s.Account = a
@@ -514,6 +535,11 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	repliesProp := streams.NewActivityStreamsRepliesProperty()
 	repliesProp.SetActivityStreamsCollection(repliesCollection)
 	status.SetActivityStreamsReplies(repliesProp)
+
+	// put the note in our cache in case we need it again soon
+	if err := c.asCache.Store(s.ID, status); err != nil {
+		return nil, err
+	}
 
 	return status, nil
 }

@@ -45,7 +45,7 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *orm.Query {
 		Relation("HeaderMediaAttachment")
 }
 
-func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.DBError) {
+func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
@@ -56,7 +56,7 @@ func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.DBError) {
 	return account, err
 }
 
-func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) {
+func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
@@ -67,7 +67,7 @@ func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.DBError) 
 	return account, err
 }
 
-func (a *accountDB) GetAccountByURL(uri string) (*gtsmodel.Account, db.DBError) {
+func (a *accountDB) GetAccountByURL(uri string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
@@ -78,7 +78,7 @@ func (a *accountDB) GetAccountByURL(uri string) (*gtsmodel.Account, db.DBError) 
 	return account, err
 }
 
-func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBError) {
+func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account)
@@ -98,7 +98,7 @@ func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.DBE
 	return account, err
 }
 
-func (a *accountDB) GetAccountLastPosted(accountID string) (time.Time, db.DBError) {
+func (a *accountDB) GetAccountLastPosted(accountID string) (time.Time, db.Error) {
 	status := &gtsmodel.Status{}
 
 	q := a.conn.Model(status).
@@ -112,7 +112,7 @@ func (a *accountDB) GetAccountLastPosted(accountID string) (time.Time, db.DBErro
 	return status.CreatedAt, err
 }
 
-func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.DBError {
+func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
 	if mediaAttachment.Avatar && mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
@@ -137,7 +137,7 @@ func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAtta
 	return nil
 }
 
-func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Account, db.DBError) {
+func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
@@ -149,7 +149,7 @@ func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Accoun
 	return account, err
 }
 
-func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) db.DBError {
+func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) db.Error {
 	if err := a.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
@@ -159,7 +159,7 @@ func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[
 	return nil
 }
 
-func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) db.DBError {
+func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) db.Error {
 	if err := a.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
@@ -169,11 +169,11 @@ func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.
 	return nil
 }
 
-func (a *accountDB) CountAccountFollowing(accountID string, localOnly bool) (int, db.DBError) {
+func (a *accountDB) CountAccountFollowing(accountID string, localOnly bool) (int, db.Error) {
 	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("account_id = ?", accountID).Count()
 }
 
-func (a *accountDB) GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) db.DBError {
+func (a *accountDB) GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) db.Error {
 
 	q := a.conn.Model(followers)
 
@@ -203,11 +203,11 @@ func (a *accountDB) GetAccountFollowers(accountID string, followers *[]gtsmodel.
 	return nil
 }
 
-func (a *accountDB) CountAccountFollowers(accountID string, localOnly bool) (int, db.DBError) {
+func (a *accountDB) CountAccountFollowers(accountID string, localOnly bool) (int, db.Error) {
 	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("target_account_id = ?", accountID).Count()
 }
 
-func (a *accountDB) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) db.DBError {
+func (a *accountDB) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) db.Error {
 	if err := a.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
 		if err == pg.ErrNoRows {
 			return nil
@@ -217,11 +217,11 @@ func (a *accountDB) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFa
 	return nil
 }
 
-func (a *accountDB) CountAccountStatuses(accountID string) (int, db.DBError) {
+func (a *accountDB) CountAccountStatuses(accountID string) (int, db.Error) {
 	return a.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
 }
 
-func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.DBError) {
+func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.Error) {
 	a.log.Debugf("getting statuses for account %s", accountID)
 	statuses := []*gtsmodel.Status{}
 
@@ -267,7 +267,7 @@ func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeRepli
 	return statuses, nil
 }
 
-func (a *accountDB) GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.DBError) {
+func (a *accountDB) GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
 	blocks := []*gtsmodel.Block{}
 
 	fq := a.conn.Model(&blocks).

@@ -16,21 +16,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package util
 
-import "time"
-
-// EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
-type EmailDomainBlock struct {
-	// ID of this block in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
-	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
-	Domain string `pg:",notnull"`
-	// When was this block created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// When was this block updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
-	// Account ID of the creator of this block
-	CreatedByAccountID string   `pg:"type:CHAR(26),notnull"`
-	CreatedByAccount   *Account `pg:"rel:belongs-to"`
+// UniqueStrings returns a deduplicated version of a given string slice.
+func UniqueStrings(s []string) []string {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range s {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }

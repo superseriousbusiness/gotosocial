@@ -20,11 +20,16 @@ package db
 
 import "fmt"
 
-type DBError error
+// Error denotes a database error.
+type Error error
 
 var (
-	ErrNoEntries       DBError = fmt.Errorf("no entries")
-	ErrMultipleEntries DBError = fmt.Errorf("multiple entries")
-	ErrAlreadyExists   DBError = fmt.Errorf("already exists")
-	ErrUnknown         DBError = fmt.Errorf("unknown error")
+	// ErrNoEntries is returned when a caller expected an entry for a query, but none was found.
+	ErrNoEntries Error = fmt.Errorf("no entries")
+	// ErrMultipleEntries is returned when a caller expected ONE entry for a query, but multiples were found.
+	ErrMultipleEntries Error = fmt.Errorf("multiple entries")
+	// ErrAlreadyExists is returned when a caller tries to insert a database entry that already exists in the db.
+	ErrAlreadyExists Error = fmt.Errorf("already exists")
+	// ErrUnknown denotes an unknown database error.
+	ErrUnknown Error = fmt.Errorf("unknown error")
 )

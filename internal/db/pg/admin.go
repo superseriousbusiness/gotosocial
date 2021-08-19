@@ -45,7 +45,7 @@ type adminDB struct {
 	cancel context.CancelFunc
 }
 
-func (a *adminDB) IsUsernameAvailable(username string) db.DBError {
+func (a *adminDB) IsUsernameAvailable(username string) db.Error {
 	// if no error we fail because it means we found something
 	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
@@ -57,7 +57,7 @@ func (a *adminDB) IsUsernameAvailable(username string) db.DBError {
 	return nil
 }
 
-func (a *adminDB) IsEmailAvailable(email string) db.DBError {
+func (a *adminDB) IsEmailAvailable(email string) db.Error {
 	// parse the domain from the email
 	m, err := mail.ParseAddress(email)
 	if err != nil {
@@ -85,7 +85,7 @@ func (a *adminDB) IsEmailAvailable(email string) db.DBError {
 	return nil
 }
 
-func (a *adminDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.DBError) {
+func (a *adminDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		a.log.Errorf("error creating new rsa key: %s", err)
@@ -168,7 +168,7 @@ func (a *adminDB) NewSignup(username string, reason string, requireApproval bool
 	return u, nil
 }
 
-func (a *adminDB) CreateInstanceAccount() db.DBError {
+func (a *adminDB) CreateInstanceAccount() db.Error {
 	username := a.config.Host
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -210,7 +210,7 @@ func (a *adminDB) CreateInstanceAccount() db.DBError {
 	return nil
 }
 
-func (a *adminDB) CreateInstanceInstance() db.DBError {
+func (a *adminDB) CreateInstanceInstance() db.Error {
 	iID, err := id.NewRandomULID()
 	if err != nil {
 		return err

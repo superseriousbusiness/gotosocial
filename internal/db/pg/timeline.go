@@ -36,7 +36,7 @@ type timelineDB struct {
 	cancel context.CancelFunc
 }
 
-func (t *timelineDB) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.DBError) {
+func (t *timelineDB) GetHomeTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
 	q := t.conn.Model(&statuses)
 
@@ -96,7 +96,7 @@ func (t *timelineDB) GetHomeTimelineForAccount(accountID string, maxID string, s
 	return statuses, nil
 }
 
-func (t *timelineDB) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.DBError) {
+func (t *timelineDB) GetPublicTimelineForAccount(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := t.conn.Model(&statuses).
@@ -143,7 +143,7 @@ func (t *timelineDB) GetPublicTimelineForAccount(accountID string, maxID string,
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
-func (t *timelineDB) GetFavedTimelineForAccount(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.DBError) {
+func (t *timelineDB) GetFavedTimelineForAccount(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
 
 	faves := []*gtsmodel.StatusFave{}
 

@@ -24,6 +24,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -34,6 +35,36 @@ type mentionDB struct {
 	conn   *pg.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
+	cache  cache.Cache
+}
+
+func (m *mentionDB) cacheMention(id string, mention *gtsmodel.Mention) {
+	if m.cache == nil {
+		m.cache = cache.New()
+	}
+
+	if err := m.cache.Store(id, mention); err != nil {
+		m.log.Panicf("mentionDB: error storing in cache: %s", err)
+	}
+}
+
+func (m *mentionDB) mentionCached(id string) (*gtsmodel.Mention, bool) {
+	if m.cache == nil {
+		m.cache = cache.New()
+		return nil, false
+	}
+
+	mI, err := m.cache.Fetch(id)
+	if err != nil || mI == nil {
+		return nil, false
+	}
+
+	mention, ok := mI.(*gtsmodel.Mention)
+	if !ok {
+		m.log.Panicf("mentionDB: cached interface with key %s was not a mention", id)
+	}
+
+	return mention, true
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *orm.Query {
@@ -43,7 +74,11 @@ func (m *mentionDB) newMentionQ(i interface{}) *orm.Query {
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.DBError) {
+func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.Error) {
+	if mention, cached := m.mentionCached(id); cached {
+		return mention, nil
+	}
+
 	mention := &gtsmodel.Mention{}
 
 	q := m.newMentionQ(mention).
@@ -51,20 +86,23 @@ func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.DBError) {
 
 	err := processErrorResponse(q.Select())
 
+	if err == nil && mention != nil {
+		m.cacheMention(id, mention)
+	}
+
 	return mention, err
 }
 
-func (m *mentionDB) GetMentions(ids []string) ([]*gtsmodel.Mention, db.DBError) {
+func (m *mentionDB) GetMentions(ids []string) ([]*gtsmodel.Mention, db.Error) {
 	mentions := []*gtsmodel.Mention{}
 
-	if len(ids) == 0 {
-		return mentions, nil
+	for _, i := range ids {
+		mention, err := m.GetMention(i)
+		if err != nil {
+			return nil, processErrorResponse(err)
+		}
+		mentions = append(mentions, mention)
 	}
 
-	q := m.newMentionQ(&mentions).
-		Where("mention.id in (?)", pg.In(ids))
-
-	err := processErrorResponse(q.Select())
-
-	return mentions, err
+	return mentions, nil
 }
