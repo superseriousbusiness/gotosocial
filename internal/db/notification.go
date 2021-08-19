@@ -22,6 +22,10 @@ import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
 // Notification contains functions for creating and getting notifications.
 type Notification interface {
-	// GetNotificationsForAccount returns a list of notifications that pertain to the given accountID.
-	GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
+	// GetNotifications returns a slice of notifications that pertain to the given accountID.
+   //
+   // Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
+	GetNotifications(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
+   // GetNotification returns one notification according to its id.
+   GetNotification(id string) (*gtsmodel.Notification, Error)
 }

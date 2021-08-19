@@ -27,8 +27,8 @@ import (
 )
 
 func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	frs := []gtsmodel.FollowRequest{}
-	if err := p.db.GetAccountFollowRequests(auth.Account.ID, &frs); err != nil {
+	frs, err := p.db.GetAccountFollowRequests(auth.Account.ID)
+	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

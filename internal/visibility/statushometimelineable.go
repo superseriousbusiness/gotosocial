@@ -85,7 +85,7 @@ func (f *filter) StatusHometimelineable(targetStatus *gtsmodel.Status, timelineO
 		}
 
 		// the replied-to account != timelineOwnerAccount, so make sure the timelineOwnerAccount follows the replied-to account
-		follows, err := f.db.Follows(timelineOwnerAccount, targetStatus.InReplyToAccount)
+		follows, err := f.db.IsFollowing(timelineOwnerAccount, targetStatus.InReplyToAccount)
 		if err != nil {
 			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", timelineOwnerAccount.ID, targetStatus.InReplyToAccountID, err)
 		}

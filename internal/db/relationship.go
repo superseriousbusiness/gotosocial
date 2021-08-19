@@ -22,9 +22,9 @@ import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
 // Relationship contains functions for getting or modifying the relationship between two accounts.
 type Relationship interface {
-	// Blocked checks whether account 1 has a block in place against block2.
+	// IsBlocked checks whether account 1 has a block in place against block2.
 	// If eitherDirection is true, then the function returns true if account1 blocks account2, OR if account2 blocks account1.
-	Blocked(account1 string, account2 string, eitherDirection bool) (bool, Error)
+	IsBlocked(account1 string, account2 string, eitherDirection bool) (bool, Error)
 
 	// GetBlock returns the block from account1 targeting account2, if it exists, or an error if it doesn't.
 	//
@@ -35,14 +35,14 @@ type Relationship interface {
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
 	GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
 
-	// Follows returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
-	Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
+	IsFollowing(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
 
-	// FollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
-	FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
+	// IsFollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
+	IsFollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, Error)
 
-	// Mutuals returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
-	Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
+	// IsMutualFollowing returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
+	IsMutualFollowing(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, Error)
 
 	// AcceptFollowRequest moves a follow request in the database from the follow_requests table to the follows table.
 	// In other words, it should create the follow, and delete the existing follow request.

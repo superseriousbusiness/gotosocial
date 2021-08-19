@@ -35,22 +35,16 @@ type Account interface {
 	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
 	GetAccountByURL(uri string) (*gtsmodel.Account, Error)
 
-	// GetLocalAccountByUsername is a shortcut for the common action of fetching an account ON THIS INSTANCE
-	// according to its username, which should be unique.
-	// The given account pointer will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
+	// GetLocalAccountByUsername returns an account on this instance by its username.
 	GetLocalAccountByUsername(username string) (*gtsmodel.Account, Error)
 
-	// GetAccountFollowRequests is a shortcut for the common action of fetching a list of follow requests targeting the given account ID.
-	// The given slice 'followRequests' will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) Error
+	// GetAccountFollowRequests returns all follow requests targeting the given account.
+	GetAccountFollowRequests(accountID string) ([]gtsmodel.FollowRequest, Error)
 
-	// GetAccountFollowing is a shortcut for the common action of fetching a list of accounts that accountID is following.
-	// The given slice 'following' will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) Error
+	// GetAccountFollows returns a slice of follows owned by the given accountID. 
+	GetAccountFollows(accountID string, following *[]gtsmodel.Follow) Error
 
+	// CountAccountFollowing returns the amount of accounts that the given accountID is following.
 	CountAccountFollowing(accountID string, localOnly bool) (int, Error)
 
 	// GetAccountFollowers is a shortcut for the common action of fetching a list of accounts that accountID is followed by.
@@ -60,6 +54,7 @@ type Account interface {
 	// If localOnly is set to true, then only followers from *this instance* will be returned.
 	GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) Error
 
+	// CountAccountFollowers returns the amounts that the given ID is followed by.
 	CountAccountFollowers(accountID string, localOnly bool) (int, Error)
 
 	// GetAccountFaves is a shortcut for the common action of fetching a list of faves made by the given accountID.

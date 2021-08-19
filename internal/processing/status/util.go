@@ -119,7 +119,7 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 	// check if a block exists
-	if blocked, err := p.db.Blocked(thisAccountID, repliedAccount.ID, true); err != nil {
+	if blocked, err := p.db.IsBlocked(thisAccountID, repliedAccount.ID, true); err != nil {
 		if err != db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 		}

@@ -62,7 +62,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}
 
-			blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID, true)
+			blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(err)
 			}
@@ -106,7 +106,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
-	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -151,7 +151,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
-	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -198,7 +198,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 
 	// authorize the request:
 	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -258,7 +258,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 
 	// authorize the request:
 	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.Blocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

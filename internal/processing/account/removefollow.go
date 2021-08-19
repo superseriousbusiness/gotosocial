@@ -29,7 +29,7 @@ import (
 
 func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't do anything
-	blocked, err := p.db.Blocked(requestingAccount.ID, targetAccountID, true)
+	blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

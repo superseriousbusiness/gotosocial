@@ -57,7 +57,7 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	}
 
 	acctFollowing := []gtsmodel.Follow{}
-	if err := f.db.GetAccountFollowing(acct.ID, &acctFollowing); err != nil {
+	if err := f.db.GetAccountFollows(acct.ID, &acctFollowing); err != nil {
 		return nil, fmt.Errorf("FOLLOWING: db error getting following for account id %s: %s", acct.ID, err)
 	}
 

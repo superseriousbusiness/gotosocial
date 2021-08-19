@@ -149,14 +149,16 @@ func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Accoun
 	return account, err
 }
 
-func (a *accountDB) GetAccountFollowRequests(accountID string, followRequests *[]gtsmodel.FollowRequest) db.Error {
-	if err := a.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
+func (a *accountDB) GetAccountFollowRequests(accountID string) ([]*gtsmodel.FollowRequest, db.Error) {
+	followRequests := []*gtsmodel.FollowRequest{}
+
+	q := a.conn.
+		Model(&followRequests).
+		Where("target_account_id = ?", accountID)]
+
+	err := processErrorResponse(q.Select())
+	
+	return followRequests, err
 }
 
 func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) db.Error {

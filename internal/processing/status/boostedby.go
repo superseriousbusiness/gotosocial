@@ -34,7 +34,7 @@ func (p *processor) BoostedBy(requestingAccount *gtsmodel.Account, targetStatusI
 	// filter the list so the user doesn't see accounts they blocked or which blocked them
 	filteredAccounts := []*gtsmodel.Account{}
 	for _, s := range statusReblogs {
-		blocked, err := p.db.Blocked(requestingAccount.ID, s.AccountID, true)
+		blocked, err := p.db.IsBlocked(requestingAccount.ID, s.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusBoostedBy: error checking blocks: %s", err))
 		}

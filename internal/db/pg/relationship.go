@@ -54,7 +54,7 @@ func (r *relationshipDB) processResponse(block *gtsmodel.Block, err error) (*gts
 	}
 }
 
-func (r *relationshipDB) Blocked(account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
+func (r *relationshipDB) IsBlocked(account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
 	q := r.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", account1).Where("target_account_id = ?", account2)
 
 	if eitherDirection {
@@ -128,7 +128,7 @@ func (r *relationshipDB) GetRelationship(requestingAccount string, targetAccount
 	return rel, nil
 }
 
-func (r *relationshipDB) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsFollowing(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
@@ -136,7 +136,7 @@ func (r *relationshipDB) Follows(sourceAccount *gtsmodel.Account, targetAccount 
 	return r.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
-func (r *relationshipDB) FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsFollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
 	if sourceAccount == nil || targetAccount == nil {
 		return false, nil
 	}
@@ -144,7 +144,7 @@ func (r *relationshipDB) FollowRequested(sourceAccount *gtsmodel.Account, target
 	return r.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
 }
 
-func (r *relationshipDB) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {
+func (r *relationshipDB) IsMutualFollowing(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {
 	if account1 == nil || account2 == nil {
 		return false, nil
 	}

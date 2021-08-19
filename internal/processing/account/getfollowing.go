@@ -28,7 +28,7 @@ import (
 )
 
 func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.db.Blocked(requestingAccount.ID, targetAccountID, true); err != nil {
+	if blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
@@ -36,7 +36,7 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 
 	following := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
-	if err := p.db.GetAccountFollowing(targetAccountID, &following); err != nil {
+	if err := p.db.GetAccountFollows(targetAccountID, &following); err != nil {
 		if err == db.ErrNoEntries {
 			return accounts, nil
 		}
@@ -44,7 +44,7 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 	}
 
 	for _, f := range following {
-		blocked, err := p.db.Blocked(requestingAccount.ID, f.AccountID, true)
+		blocked, err := p.db.IsBlocked(requestingAccount.ID, f.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

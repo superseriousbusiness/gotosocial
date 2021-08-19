@@ -31,7 +31,7 @@ import (
 
 func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
-	if blocked, err := p.db.Blocked(requestingAccount.ID, form.ID, true); err != nil {
+	if blocked, err := p.db.IsBlocked(requestingAccount.ID, form.ID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
@@ -47,7 +47,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// check if a follow exists already
-	if follows, err := p.db.Follows(requestingAccount, targetAcct); err != nil {
+	if follows, err := p.db.IsFollowing(requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
 	} else if follows {
 		// already follows so just return the relationship
@@ -55,7 +55,7 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// check if a follow request exists already
-	if followRequested, err := p.db.FollowRequested(requestingAccount, targetAcct); err != nil {
+	if followRequested, err := p.db.IsFollowRequested(requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
 	} else if followRequested {
 		// already follow requested so just return the relationship

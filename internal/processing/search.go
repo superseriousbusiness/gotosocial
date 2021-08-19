@@ -90,7 +90,7 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		if blocked, err := p.db.Blocked(authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
+		if blocked, err := p.db.IsBlocked(authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
 			// all good, convert it and add it to the results
 			if acctMasto, err := p.tc.AccountToMastoPublic(foundAccount); err == nil && acctMasto != nil {
 				results.Accounts = append(results.Accounts, *acctMasto)

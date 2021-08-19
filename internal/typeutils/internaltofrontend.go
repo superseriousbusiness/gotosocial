@@ -38,15 +38,15 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	fr := []gtsmodel.FollowRequest{}
-	if err := c.db.GetAccountFollowRequests(a.ID, &fr); err != nil {
+	frs, err := c.db.GetAccountFollowRequests(a.ID)
+	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
 		}
-	}
+	}		
 	var frc int
-	if fr != nil {
-		frc = len(fr)
+	if frs != nil {
+		frc = len(frs)
 	}
 
 	mastoAccount.Source = &model.Source{
@@ -567,17 +567,17 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		statusCountKey := "status_count"
 		domainCountKey := "domain_count"
 
-		userCount, err := c.db.GetUserCountForInstance(c.config.Host)
+		userCount, err := c.db.CountInstanceUsers(c.config.Host)
 		if err == nil {
 			mi.Stats[userCountKey] = userCount
 		}
 
-		statusCount, err := c.db.GetStatusCountForInstance(c.config.Host)
+		statusCount, err := c.db.CountInstanceStatuses(c.config.Host)
 		if err == nil {
 			mi.Stats[statusCountKey] = statusCount
 		}
 
-		domainCount, err := c.db.GetDomainCountForInstance(c.config.Host)
+		domainCount, err := c.db.CountInstanceDomains(c.config.Host)
 		if err == nil {
 			mi.Stats[domainCountKey] = domainCount
 		}

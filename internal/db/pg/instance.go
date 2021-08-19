@@ -35,7 +35,7 @@ type instanceDB struct {
 	cancel context.CancelFunc
 }
 
-func (i *instanceDB) GetUserCountForInstance(domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceUsers(domain string) (int, db.Error) {
 	q := i.conn.Model(&[]*gtsmodel.Account{})
 
 	if domain == i.config.Host {
@@ -51,7 +51,7 @@ func (i *instanceDB) GetUserCountForInstance(domain string) (int, db.Error) {
 	return q.Count()
 }
 
-func (i *instanceDB) GetStatusCountForInstance(domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceStatuses(domain string) (int, db.Error) {
 	q := i.conn.Model(&[]*gtsmodel.Status{})
 
 	if domain == i.config.Host {
@@ -66,7 +66,7 @@ func (i *instanceDB) GetStatusCountForInstance(domain string) (int, db.Error) {
 	return q.Count()
 }
 
-func (i *instanceDB) GetDomainCountForInstance(domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceDomains(domain string) (int, db.Error) {
 	q := i.conn.Model(&[]*gtsmodel.Instance{})
 
 	if domain == i.config.Host {
@@ -81,7 +81,7 @@ func (i *instanceDB) GetDomainCountForInstance(domain string) (int, db.Error) {
 	return q.Count()
 }
 
-func (i *instanceDB) GetAccountsForInstance(domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
+func (i *instanceDB) GetInstanceAccounts(domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
 	i.log.Debug("GetAccountsForInstance")
 
 	accounts := []*gtsmodel.Account{}

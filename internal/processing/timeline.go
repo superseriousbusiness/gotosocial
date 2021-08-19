@@ -74,7 +74,7 @@ func (p *processor) HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID st
 }
 
 func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
-	statuses, err := p.db.GetPublicTimelineForAccount(authed.Account.ID, maxID, sinceID, minID, limit, local)
+	statuses, err := p.db.GetPublicTimeline(authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -95,7 +95,7 @@ func (p *processor) PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID 
 }
 
 func (p *processor) FavedTimelineGet(authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
-	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimelineForAccount(authed.Account.ID, maxID, minID, limit)
+	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left

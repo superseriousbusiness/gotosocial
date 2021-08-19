@@ -123,7 +123,7 @@ func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, bl
 
 selectAccountsLoop:
 	for {
-		accounts, err := p.db.GetAccountsForInstance(block.Domain, maxID, limit)
+		accounts, err := p.db.GetInstanceAccounts(block.Domain, maxID, limit)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// no accounts left for this instance so we're done

@@ -148,6 +148,12 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 			log:    log,
 			cancel: cancel,
 		},
+		Notification: &notificationDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
 		Relationship: &relationshipDB{
 			config: c,
 			conn:   conn,

@@ -19,15 +19,88 @@
 package pg
 
 import (
+	"context"
+
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
-	notifications := []*gtsmodel.Notification{}
+type notificationDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
+	cache  cache.Cache
+}
 
-	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
+func (n *notificationDB) cacheNotification(id string, notification *gtsmodel.Notification) {
+	if n.cache == nil {
+		n.cache = cache.New()
+	}
+
+	if err := n.cache.Store(id, notification); err != nil {
+		n.log.Panicf("notificationDB: error storing in cache: %s", err)
+	}
+}
+
+func (n *notificationDB) notificationCached(id string) (*gtsmodel.Notification, bool) {
+	if n.cache == nil {
+		n.cache = cache.New()
+		return nil, false
+	}
+
+	nI, err := n.cache.Fetch(id)
+	if err != nil || nI == nil {
+		return nil, false
+	}
+
+	notification, ok := nI.(*gtsmodel.Notification)
+	if !ok {
+		n.log.Panicf("notificationDB: cached interface with key %s was not a notification", id)
+	}
+
+	return notification, true
+}
+
+func (n *notificationDB) newNotificationQ(i interface{}) *orm.Query {
+	return n.conn.Model(i).
+		Relation("OriginAccount").
+		Relation("TargetAccount").
+		Relation("Status")
+}
+
+func (n *notificationDB) GetNotification(id string) (*gtsmodel.Notification, db.Error) {
+	if notification, cached := n.notificationCached(id); cached {
+		return notification, nil
+	}
+
+	notification := &gtsmodel.Notification{}
+
+	q := n.newNotificationQ(notification).
+		Where("notification.id = ?", id)
+
+	err := processErrorResponse(q.Select())
+
+	if err == nil && notification != nil {
+		n.cacheNotification(id, notification)
+	}
+
+	return notification, err
+}
+
+func (n *notificationDB) GetNotifications(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
+	// begin by selecting just the IDs
+	notifIDs := []*gtsmodel.Notification{}
+	q := n.conn.
+		Model(&notifIDs).
+		Column("id").
+		Where("target_account_id = ?", accountID).
+		Order("id DESC")
 
 	if maxID != "" {
 		q = q.Where("id < ?", maxID)
@@ -41,13 +114,22 @@ func (ps *postgresService) GetNotificationsForAccount(accountID string, limit in
 		q = q.Limit(limit)
 	}
 
-	q = q.Order("created_at DESC")
-
-	if err := q.Select(); err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-
+	err := processErrorResponse(q.Select())
+	if err != nil {
+		return nil, err
 	}
+
+	// now we have the IDs, select the notifs one by one
+	// reason for this is that for each notif, we can instead get it from our cache if it's cached
+	notifications := []*gtsmodel.Notification{}
+	for _, notifID := range notifIDs {
+		notif, err := n.GetNotification(notifID.ID)
+		errP := processErrorResponse(err)
+		if errP != nil {
+			return nil, errP
+		}
+		notifications = append(notifications, notif)
+	}
+
 	return notifications, nil
 }
