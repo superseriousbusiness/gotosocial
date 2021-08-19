@@ -39,7 +39,7 @@ type Account interface {
 	GetLocalAccountByUsername(username string) (*gtsmodel.Account, Error)
 
 	// GetAccountFollowRequests returns all follow requests targeting the given account.
-	GetAccountFollowRequests(accountID string) ([]gtsmodel.FollowRequest, Error)
+	GetAccountFollowRequests(accountID string) ([]bbbbbbbbbbbbbbbbgtsmodel.FollowRequest, Error)
 
 	// GetAccountFollows returns a slice of follows owned by the given accountID. 
 	GetAccountFollows(accountID string, following *[]gtsmodel.Follow) Error
