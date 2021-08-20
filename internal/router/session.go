@@ -49,7 +49,7 @@ func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 	// check if we have a saved router session already
 	routerSessions := []*gtsmodel.RouterSession{}
 	if err := dbService.GetAll(&routerSessions); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// proper error occurred
 			return err
 		}

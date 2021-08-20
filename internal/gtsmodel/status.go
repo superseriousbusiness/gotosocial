@@ -33,13 +33,17 @@ type Status struct {
 	// the html-formatted content of this status
 	Content string
 	// Database IDs of any media attachments associated with this status
-	Attachments []string `pg:",array"`
+	AttachmentIDs []string           `pg:"attachments,array"`
+	Attachments   []*MediaAttachment `pg:"attached_media,rel:has-many"`
 	// Database IDs of any tags used in this status
-	Tags []string `pg:",array"`
+	TagIDs []string `pg:"tags,array"`
+	Tags   []*Tag   `pg:"attached_tags,many2many:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// Database IDs of any mentions in this status
-	Mentions []string `pg:",array"`
+	MentionIDs []string   `pg:"mentions,array"`
+	Mentions   []*Mention `pg:"attached_mentions,rel:has-many"`
 	// Database IDs of any emojis used in this status
-	Emojis []string `pg:",array"`
+	EmojiIDs []string `pg:"emojis,array"`
+	Emojis   []*Emoji `pg:"attached_emojis,many2many:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// when was this status created?
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
@@ -47,19 +51,24 @@ type Status struct {
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
-	AccountID string `pg:"type:CHAR(26),notnull"`
+	AccountID string   `pg:"type:CHAR(26),notnull"`
+	Account   *Account `pg:"rel:has-one"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
-	InReplyToID string `pg:"type:CHAR(26)"`
+	InReplyToID string  `pg:"type:CHAR(26)"`
+	InReplyTo   *Status `pg:"rel:has-one"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
-	InReplyToAccountID string `pg:"type:CHAR(26)"`
+	InReplyToAccountID string   `pg:"type:CHAR(26)"`
+	InReplyToAccount   *Account `pg:"rel:has-one"`
 	// id of the status this status is a boost of
-	BoostOfID string `pg:"type:CHAR(26)"`
+	BoostOfID string  `pg:"type:CHAR(26)"`
+	BoostOf   *Status `pg:"rel:has-one"`
 	// id of the account that owns the boosted status
-	BoostOfAccountID string `pg:"type:CHAR(26)"`
+	BoostOfAccountID string   `pg:"type:CHAR(26)"`
+	BoostOfAccount   *Account `pg:"rel:has-one"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -69,7 +78,8 @@ type Status struct {
 	// what language is this status written in?
 	Language string
 	// Which application was used to create this status?
-	CreatedWithApplicationID string `pg:"type:CHAR(26)"`
+	CreatedWithApplicationID string       `pg:"type:CHAR(26)"`
+	CreatedWithApplication   *Application `pg:"rel:has-one"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
@@ -79,32 +89,18 @@ type Status struct {
 	Text string
 	// Has this status been pinned by its owner?
 	Pinned bool
+}
 
-	/*
-		INTERNAL MODEL NON-DATABASE FIELDS
+// StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
+type StatusToTag struct {
+	StatusID string `pg:"unique:statustag"`
+	TagID    string `pg:"unique:statustag"`
+}
 
-		These are for convenience while passing the status around internally,
-		but these fields should *never* be put in the db.
-	*/
-
-	// Account that created this status
-	GTSAuthorAccount *Account `pg:"-"`
-	// Mentions created in this status
-	GTSMentions []*Mention `pg:"-"`
-	// Hashtags used in this status
-	GTSTags []*Tag `pg:"-"`
-	// Emojis used in this status
-	GTSEmojis []*Emoji `pg:"-"`
-	// MediaAttachments used in this status
-	GTSMediaAttachments []*MediaAttachment `pg:"-"`
-	// Status being replied to
-	GTSReplyToStatus *Status `pg:"-"`
-	// Account being replied to
-	GTSReplyToAccount *Account `pg:"-"`
-	// Status being boosted
-	GTSBoostedStatus *Status `pg:"-"`
-	// Account of the boosted status
-	GTSBoostedAccount *Account `pg:"-"`
+// StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
+type StatusToEmoji struct {
+	StatusID string `pg:"unique:statusemoji"`
+	EmojiID  string `pg:"unique:statusemoji"`
 }
 
 // Visibility represents the visibility granularity of a status.

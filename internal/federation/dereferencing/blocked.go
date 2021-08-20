@@ -31,7 +31,7 @@ func (d *deref) blockedDomain(host string) (bool, error) {
 		return true, nil
 	}
 
-	if _, ok := err.(db.ErrNoEntries); ok {
+	if err == db.ErrNoEntries {
 		// there are no entries so there's no block
 		return false, nil
 	}

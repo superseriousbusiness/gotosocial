@@ -54,16 +54,16 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: uid}}, &gtsmodel.Status{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		status, err := f.db.GetStatusByURI(uid)
+		if err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this status
 				return false, nil
 			}
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching status with id %s: %s", uid, err)
 		}
-		l.Debugf("we own url %s", id.String())
-		return true, nil
+		return status.Local, nil
 	}
 
 	if util.IsUserPath(id) {
@@ -71,8 +71,8 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		if _, err := f.db.GetLocalAccountByUsername(username); err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
 			}
@@ -88,8 +88,8 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		if _, err := f.db.GetLocalAccountByUsername(username); err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
 			}
@@ -105,8 +105,8 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		if _, err := f.db.GetLocalAccountByUsername(username); err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
 			}
@@ -122,8 +122,8 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		if _, err := f.db.GetLocalAccountByUsername(username); err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
 			}
@@ -131,7 +131,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
 		if err := f.db.GetByID(likeID, &gtsmodel.StatusFave{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				// there are no entries
 				return false, nil
 			}
@@ -147,8 +147,8 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 		if err != nil {
 			return false, fmt.Errorf("error parsing block path for url %s: %s", id.String(), err)
 		}
-		if err := f.db.GetLocalAccountByUsername(username, &gtsmodel.Account{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+		if _, err := f.db.GetLocalAccountByUsername(username); err != nil {
+			if err == db.ErrNoEntries {
 				// there are no entries for this username
 				return false, nil
 			}
@@ -156,7 +156,7 @@ func (f *federatingDB) Owns(c context.Context, id *url.URL) (bool, error) {
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
 		if err := f.db.GetByID(blockID, &gtsmodel.Block{}); err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				// there are no entries
 				return false, nil
 			}

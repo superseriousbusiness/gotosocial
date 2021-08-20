@@ -73,5 +73,6 @@ type Emoji struct {
 	// Is this emoji visible in the admin emoji picker?
 	VisibleInPicker bool `pg:",notnull,default:true"`
 	// In which emoji category is this emoji visible?
-	CategoryID string `pg:"type:CHAR(26)"`
+	CategoryID string  `pg:"type:CHAR(26)"`
+	Status     *Status `pg:"rel:belongs-to"`
 }

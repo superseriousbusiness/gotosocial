@@ -8,7 +8,6 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -28,21 +27,37 @@ func (f *federatingDB) Following(c context.Context, actorIRI *url.URL) (followin
 	)
 	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
 
-	acct := &gtsmodel.Account{}
+	var acct *gtsmodel.Account
 	if util.IsUserPath(actorIRI) {
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
+		username, err := util.ParseUserPath(actorIRI)
+		if err != nil {
+			return nil, fmt.Errorf("FOLLOWING: error parsing user path: %s", err)
+		}
+
+		a, err := f.db.GetLocalAccountByUsername(username)
+		if err != nil {
 			return nil, fmt.Errorf("FOLLOWING: db error getting account with uri %s: %s", actorIRI.String(), err)
 		}
+
+		acct = a
 	} else if util.IsFollowingPath(actorIRI) {
-		if err := f.db.GetWhere([]db.Where{{Key: "following_uri", Value: actorIRI.String()}}, acct); err != nil {
+		username, err := util.ParseFollowingPath(actorIRI)
+		if err != nil {
+			return nil, fmt.Errorf("FOLLOWING: error parsing following path: %s", err)
+		}
+
+		a, err := f.db.GetLocalAccountByUsername(username)
+		if err != nil {
 			return nil, fmt.Errorf("FOLLOWING: db error getting account with following uri %s: %s", actorIRI.String(), err)
 		}
+
+		acct = a
 	} else {
 		return nil, fmt.Errorf("FOLLOWING: could not parse actor IRI %s as users or following path", actorIRI.String())
 	}
 
-	acctFollowing := []gtsmodel.Follow{}
-	if err := f.db.GetFollowingByAccountID(acct.ID, &acctFollowing); err != nil {
+	acctFollowing, err := f.db.GetAccountFollows(acct.ID)
+	if err != nil {
 		return nil, fmt.Errorf("FOLLOWING: db error getting following for account id %s: %s", acct.ID, err)
 	}
 

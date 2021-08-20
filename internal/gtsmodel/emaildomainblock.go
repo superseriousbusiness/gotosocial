@@ -31,5 +31,6 @@ type EmailDomainBlock struct {
 	// When was this block updated
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Account ID of the creator of this block
-	CreatedByAccountID string `pg:"type:CHAR(26),notnull"`
+	CreatedByAccountID string   `pg:"type:CHAR(26),notnull"`
+	CreatedByAccount   *Account `pg:"rel:belongs-to"`
 }

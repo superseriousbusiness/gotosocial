@@ -5,36 +5,24 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	l := p.log.WithField("func", "StatusDelete")
-	l.Tracef("going to search for target status %s", targetStatusID)
-	targetStatus := &gtsmodel.Status{}
-	if err := p.db.GetByID(targetStatusID, targetStatus); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
-		}
-		// status is already gone
-		return nil, nil
+func (p *processor) Delete(requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(targetStatusID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
+	}
+	if targetStatus.Account == nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	if targetStatus.AccountID != account.ID {
+	if targetStatus.AccountID != requestingAccount.ID {
 		return nil, gtserror.NewErrorForbidden(errors.New("status doesn't belong to requesting account"))
 	}
 
-	var boostOfStatus *gtsmodel.Status
-	if targetStatus.BoostOfID != "" {
-		boostOfStatus = &gtsmodel.Status{}
-		if err := p.db.GetByID(targetStatus.BoostOfID, boostOfStatus); err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching boosted status %s: %s", targetStatus.BoostOfID, err))
-		}
-	}
-
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, account)
+	mastoStatus, err := p.tc.StatusToMasto(targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
@@ -48,8 +36,8 @@ func (p *processor) Delete(account *gtsmodel.Account, targetStatusID string) (*a
 		APObjectType:   gtsmodel.ActivityStreamsNote,
 		APActivityType: gtsmodel.ActivityStreamsDelete,
 		GTSModel:       targetStatus,
-		OriginAccount:  account,
-		TargetAccount:  account,
+		OriginAccount:  requestingAccount,
+		TargetAccount:  requestingAccount,
 	}
 
 	return mastoStatus, nil

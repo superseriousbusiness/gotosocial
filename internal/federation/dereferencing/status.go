@@ -66,8 +66,8 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	new := true
 
 	// check if we already have the status in our db
-	maybeStatus := &gtsmodel.Status{}
-	if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: remoteStatusID.String()}}, maybeStatus); err == nil {
+	maybeStatus, err := d.db.GetStatusByURI(remoteStatusID.String())
+	if err == nil {
 		// we've seen this status before so it's not new
 		new = false
 
@@ -109,7 +109,7 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
-		if err := d.db.Put(gtsStatus); err != nil {
+		if err := d.db.PutStatus(gtsStatus); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 		}
 	} else {
@@ -276,7 +276,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	// * the remote URL (a.RemoteURL)
 	// This should be enough to pass along to the media processor.
 	attachmentIDs := []string{}
-	for _, a := range status.GTSMediaAttachments {
+	for _, a := range status.Attachments {
 		l.Tracef("dereferencing attachment: %+v", a)
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
@@ -288,7 +288,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 			attachmentIDs = append(attachmentIDs, maybeAttachment.ID)
 			continue
 		}
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// we have a real error
 			return fmt.Errorf("error checking db for existence of attachment with remote url %s: %s", a.RemoteURL, err)
 		}
@@ -307,7 +307,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
 	}
-	status.Attachments = attachmentIDs
+	status.AttachmentIDs = attachmentIDs
 
 	// 2. Hashtags
 
@@ -317,53 +317,84 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	// At this point, mentions should have the namestring and mentionedAccountURI set on them.
 	//
 	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
-	mentions := []string{}
-	for _, m := range status.GTSMentions {
-
+	mentionIDs := []string{}
+	for _, m := range status.Mentions {
 		if m.ID != "" {
-			continue
 			// we've already populated this mention, since it has an ID
+			l.Debug("mention already populated")
+			continue
+		}
+
+		if m.TargetAccountURI == "" {
+			// can't do anything with this mention
+			l.Debug("target URI not set on mention")
+			continue
+		}
+
+		targetAccountURI, err := url.Parse(m.TargetAccountURI)
+		if err != nil {
+			l.Debugf("error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
+			continue
+		}
+
+		var targetAccount *gtsmodel.Account
+		if a, err := d.db.GetAccountByURL(targetAccountURI.String()); err == nil {
+			targetAccount = a
+		} else if a, _, err := d.GetRemoteAccount(requestingUsername, targetAccountURI, false); err == nil {
+			targetAccount = a
+		} else {
+			// we can't find the target account so bail
+			l.Debug("can't retrieve account targeted by mention")
+			continue
 		}
 
 		mID, err := id.NewRandomULID()
 		if err != nil {
 			return err
 		}
-		m.ID = mID
 
-		uri, err := url.Parse(m.MentionedAccountURI)
-		if err != nil {
-			l.Debugf("error parsing mentioned account uri %s: %s", m.MentionedAccountURI, err)
-			continue
+		m = &gtsmodel.Mention{
+			ID:               mID,
+			StatusID:         status.ID,
+			Status:           m.Status,
+			CreatedAt:        status.CreatedAt,
+			UpdatedAt:        status.UpdatedAt,
+			OriginAccountID:  status.Account.ID,
+			OriginAccountURI: status.AccountURI,
+			OriginAccount:    status.Account,
+			TargetAccountID:  targetAccount.ID,
+			TargetAccount:    targetAccount,
+			NameString:       m.NameString,
+			TargetAccountURI: targetAccount.URI,
+			TargetAccountURL: targetAccount.URL,
 		}
 
-		m.StatusID = status.ID
-		m.OriginAccountID = status.GTSAuthorAccount.ID
-		m.OriginAccountURI = status.GTSAuthorAccount.URI
-
-		targetAccount, _, err := d.GetRemoteAccount(requestingUsername, uri, false)
-		if err != nil {
-			continue
-		}
-
-		// by this point, we know the targetAccount exists in our database with an ID :)
-		m.TargetAccountID = targetAccount.ID
 		if err := d.db.Put(m); err != nil {
 			return fmt.Errorf("error creating mention: %s", err)
 		}
-		mentions = append(mentions, m.ID)
+		mentionIDs = append(mentionIDs, m.ID)
 	}
-	status.Mentions = mentions
+	status.MentionIDs = mentionIDs
 
 	// status has replyToURI but we don't have an ID yet for the status it replies to
 	if status.InReplyToURI != "" && status.InReplyToID == "" {
-		replyToStatus := &gtsmodel.Status{}
-		if err := d.db.GetWhere([]db.Where{{Key: "uri", Value: status.InReplyToURI}}, replyToStatus); err == nil {
+		statusURI, err := url.Parse(status.InReplyToURI)
+		if err != nil {
+			return err
+		}
+		if replyToStatus, err := d.db.GetStatusByURI(status.InReplyToURI); err == nil {
 			// we have the status
 			status.InReplyToID = replyToStatus.ID
+			status.InReplyTo = replyToStatus
 			status.InReplyToAccountID = replyToStatus.AccountID
+			status.InReplyToAccount = replyToStatus.Account
+		} else if replyToStatus, _, _, err := d.GetRemoteStatus(requestingUsername, statusURI, false); err == nil {
+			// we got the status
+			status.InReplyToID = replyToStatus.ID
+			status.InReplyTo = replyToStatus
+			status.InReplyToAccountID = replyToStatus.AccountID
+			status.InReplyToAccount = replyToStatus.Account
 		}
 	}
-
 	return nil
 }

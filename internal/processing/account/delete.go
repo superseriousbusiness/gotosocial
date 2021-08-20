@@ -133,9 +133,9 @@ func (p *processor) Delete(account *gtsmodel.Account, origin string) error {
 	var maxID string
 selectStatusesLoop:
 	for {
-		statuses, err := p.db.GetStatusesForAccount(account.ID, 20, false, maxID, false, false)
+		statuses, err := p.db.GetAccountStatuses(account.ID, 20, false, maxID, false, false)
 		if err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				// no statuses left for this instance so we're done
 				l.Infof("Delete: done iterating through statuses for account %s", account.Username)
 				break selectStatusesLoop
@@ -147,7 +147,7 @@ selectStatusesLoop:
 
 		for i, s := range statuses {
 			// pass the status delete through the client api channel for processing
-			s.GTSAuthorAccount = account
+			s.Account = account
 			l.Debug("putting status in the client api channel")
 			p.fromClientAPI <- gtsmodel.FromClientAPI{
 				APObjectType:   gtsmodel.ActivityStreamsNote,
@@ -158,7 +158,7 @@ selectStatusesLoop:
 			}
 
 			if err := p.db.DeleteByID(s.ID, s); err != nil {
-				if _, ok := err.(db.ErrNoEntries); !ok {
+				if err != db.ErrNoEntries {
 					// actual error has occurred
 					l.Errorf("Delete: db error status %s for account %s: %s", s.ID, account.Username, err)
 					break selectStatusesLoop
@@ -168,7 +168,7 @@ selectStatusesLoop:
 			// if there are any boosts of this status, delete them as well
 			boosts := []*gtsmodel.Status{}
 			if err := p.db.GetWhere([]db.Where{{Key: "boost_of_id", Value: s.ID}}, &boosts); err != nil {
-				if _, ok := err.(db.ErrNoEntries); !ok {
+				if err != db.ErrNoEntries {
 					// an actual error has occurred
 					l.Errorf("Delete: db error selecting boosts of status %s for account %s: %s", s.ID, account.Username, err)
 					break selectStatusesLoop
@@ -190,7 +190,7 @@ selectStatusesLoop:
 				}
 
 				if err := p.db.DeleteByID(b.ID, b); err != nil {
-					if _, ok := err.(db.ErrNoEntries); !ok {
+					if err != db.ErrNoEntries {
 						// actual error has occurred
 						l.Errorf("Delete: db error deleting boost with id %s: %s", b.ID, err)
 						break selectStatusesLoop

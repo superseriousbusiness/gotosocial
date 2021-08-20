@@ -12,7 +12,7 @@ import (
 func (p *processor) Delete(mediaAttachmentID string) gtserror.WithCode {
 	a := &gtsmodel.MediaAttachment{}
 	if err := p.db.GetByID(mediaAttachmentID, a); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			// attachment already gone
 			return nil
 		}
@@ -38,7 +38,7 @@ func (p *processor) Delete(mediaAttachmentID string) gtserror.WithCode {
 
 	// delete the attachment
 	if err := p.db.DeleteByID(mediaAttachmentID, a); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			errs = append(errs, fmt.Sprintf("remove attachment: %s", err))
 		}
 	}

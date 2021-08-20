@@ -95,7 +95,7 @@ prepareloop:
 		if preparing {
 			if err := t.prepare(entry.statusID); err != nil {
 				// there's been an error
-				if _, ok := err.(db.ErrNoEntries); !ok {
+				if err != db.ErrNoEntries {
 					// it's a real error
 					return fmt.Errorf("PrepareBehind: error preparing status with id %s: %s", entry.statusID, err)
 				}
@@ -150,7 +150,7 @@ prepareloop:
 		if preparing {
 			if err := t.prepare(entry.statusID); err != nil {
 				// there's been an error
-				if _, ok := err.(db.ErrNoEntries); !ok {
+				if err != db.ErrNoEntries {
 					// it's a real error
 					return fmt.Errorf("PrepareBefore: error preparing status with id %s: %s", entry.statusID, err)
 				}
@@ -205,7 +205,7 @@ prepareloop:
 
 		if err := t.prepare(entry.statusID); err != nil {
 			// there's been an error
-			if _, ok := err.(db.ErrNoEntries); !ok {
+			if err != db.ErrNoEntries {
 				// it's a real error
 				return fmt.Errorf("PrepareFromTop: error preparing status with id %s: %s", entry.statusID, err)
 			}

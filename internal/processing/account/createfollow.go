@@ -31,38 +31,33 @@ import (
 
 func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
-	blocked, err := p.db.Blocked(requestingAccount.ID, form.ID)
-	if err != nil {
+	if blocked, err := p.db.IsBlocked(requestingAccount.ID, form.ID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if blocked {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: block exists between accounts"))
+	} else if blocked {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	// make sure the target account actually exists in our db
-	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(form.ID, targetAcct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+	targetAcct, err := p.db.GetAccountByID(form.ID)
+	if err != nil {
+		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.ID, err))
 		}
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// check if a follow exists already
-	follows, err := p.db.Follows(requestingAccount, targetAcct)
-	if err != nil {
+	if follows, err := p.db.IsFollowing(requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
-	}
-	if follows {
+	} else if follows {
 		// already follows so just return the relationship
 		return p.RelationshipGet(requestingAccount, form.ID)
 	}
 
-	// check if a follow exists already
-	followRequested, err := p.db.FollowRequested(requestingAccount, targetAcct)
-	if err != nil {
+	// check if a follow request exists already
+	if followRequested, err := p.db.IsFollowRequested(requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
-	}
-	if followRequested {
+	} else if followRequested {
 		// already follow requested so just return the relationship
 		return p.RelationshipGet(requestingAccount, form.ID)
 	}

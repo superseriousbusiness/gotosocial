@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.16
 
 require (
+	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.0.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect

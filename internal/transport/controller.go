@@ -28,7 +28,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -95,14 +94,15 @@ func (c *controller) NewTransportForUsername(username string) (Transport, error)
 	// We need an account to use to create a transport for dereferecing something.
 	// If a username has been given, we can fetch the account with that username and use it.
 	// Otherwise, we can take the instance account and use those credentials to make the request.
-	ourAccount := &gtsmodel.Account{}
 	var u string
 	if username == "" {
 		u = c.config.Host
 	} else {
 		u = username
 	}
-	if err := c.db.GetLocalAccountByUsername(u, ourAccount); err != nil {
+
+	ourAccount, err := c.db.GetLocalAccountByUsername(u)
+	if err != nil {
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}
 

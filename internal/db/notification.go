@@ -16,18 +16,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package db
 
-import (
-	"strings"
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-)
-
-func (ps *postgresService) Put(i interface{}) error {
-	_, err := ps.conn.Model(i).Insert(i)
-	if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-		return db.ErrAlreadyExists{}
-	}
-	return err
+// Notification contains functions for creating and getting notifications.
+type Notification interface {
+	// GetNotifications returns a slice of notifications that pertain to the given accountID.
+	//
+	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
+	GetNotifications(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, Error)
+	// GetNotification returns one notification according to its id.
+	GetNotification(id string) (*gtsmodel.Notification, Error)
 }

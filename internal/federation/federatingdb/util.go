@@ -97,8 +97,8 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 			for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
 				// take the IRI of the first actor we can find (there should only be one)
 				if iter.IsIRI() {
-					actorAccount := &gtsmodel.Account{}
-					if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: iter.GetIRI().String()}}, actorAccount); err == nil { // if there's an error here, just use the fallback behavior -- we don't need to return an error here
+					// if there's an error here, just use the fallback behavior -- we don't need to return an error here
+					if actorAccount, err := f.db.GetAccountByURI(iter.GetIRI().String()); err == nil {
 						newID, err := id.NewRandomULID()
 						if err != nil {
 							return nil, err
@@ -213,7 +213,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere([]db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
@@ -238,7 +238,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 	}
 	acct := &gtsmodel.Account{}
 	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}
 		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())

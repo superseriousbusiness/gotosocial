@@ -93,9 +93,9 @@ func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) str
 		// make sure we have a target account, either by getting one pinned on the mention,
 		// or by pulling it from the database
 		var targetAccount *gtsmodel.Account
-		if menchie.GTSAccount != nil {
+		if menchie.OriginAccount != nil {
 			// got it from the mention
-			targetAccount = menchie.GTSAccount
+			targetAccount = menchie.OriginAccount
 		} else {
 			a := &gtsmodel.Account{}
 			if err := f.db.GetByID(menchie.TargetAccountID, a); err == nil {

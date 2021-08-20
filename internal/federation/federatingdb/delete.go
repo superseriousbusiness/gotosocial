@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package federatingdb
 
 import (
@@ -6,7 +24,6 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -52,10 +69,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
-	where := []db.Where{{Key: "uri", Value: id.String()}}
-
-	s := &gtsmodel.Status{}
-	if err := f.db.GetWhere(where, s); err == nil {
+	s, err := f.db.GetStatusByURI(id.String())
+	if err == nil {
 		// it's a status
 		l.Debugf("uri is for status with id: %s", s.ID)
 		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
@@ -69,8 +84,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		}
 	}
 
-	a := &gtsmodel.Account{}
-	if err := f.db.GetWhere(where, a); err == nil {
+	a, err := f.db.GetAccountByURI(id.String())
+	if err == nil {
 		// it's an account
 		l.Debugf("uri is for an account with id: %s", s.ID)
 		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {

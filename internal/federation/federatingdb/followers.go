@@ -31,7 +31,8 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	acct := &gtsmodel.Account{}
 
 	if util.IsUserPath(actorIRI) {
-		if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: actorIRI.String()}}, acct); err != nil {
+		acct, err = f.db.GetAccountByURI(actorIRI.String())
+		if err != nil {
 			return nil, fmt.Errorf("FOLLOWERS: db error getting account with uri %s: %s", actorIRI.String(), err)
 		}
 	} else if util.IsFollowersPath(actorIRI) {
@@ -42,8 +43,8 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 		return nil, fmt.Errorf("FOLLOWERS: could not parse actor IRI %s as users or followers path", actorIRI.String())
 	}
 
-	acctFollowers := []gtsmodel.Follow{}
-	if err := f.db.GetFollowersByAccountID(acct.ID, &acctFollowers, false); err != nil {
+	acctFollowers, err := f.db.GetAccountFollowedBy(acct.ID, false)
+	if err != nil {
 		return nil, fmt.Errorf("FOLLOWERS: db error getting followers for account id %s: %s", acct.ID, err)
 	}
 

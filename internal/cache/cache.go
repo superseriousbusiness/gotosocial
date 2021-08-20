@@ -18,8 +18,28 @@
 
 package cache
 
+import (
+	"time"
+
+	"github.com/ReneKroon/ttlcache"
+)
+
 // Cache defines an in-memory cache that is safe to be wiped when the application is restarted
 type Cache interface {
 	Store(k string, v interface{}) error
 	Fetch(k string) (interface{}, error)
+}
+
+type cache struct {
+	c *ttlcache.Cache
+}
+
+// New returns a new in-memory cache.
+func New() Cache {
+	c := ttlcache.NewCache()
+	c.SetTTL(30 * time.Second)
+	cache := &cache{
+		c: c,
+	}
+	return cache
 }

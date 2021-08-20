@@ -34,7 +34,7 @@ func DeriveMentionsFromStatus(status string) []string {
 	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
-	return unique(mentionedAccounts)
+	return UniqueStrings(mentionedAccounts)
 }
 
 // DeriveHashtagsFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -46,7 +46,7 @@ func DeriveHashtagsFromStatus(status string) []string {
 	for _, m := range HashtagFinderRegex.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, strings.TrimPrefix(m[1], "#"))
 	}
-	return unique(tags)
+	return UniqueStrings(tags)
 }
 
 // DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -57,7 +57,7 @@ func DeriveEmojisFromStatus(status string) []string {
 	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
-	return unique(emojis)
+	return UniqueStrings(emojis)
 }
 
 // ExtractMentionParts extracts the username test_user and the domain example.org
@@ -78,17 +78,4 @@ func ExtractMentionParts(mention string) (username, domain string, err error) {
 // IsMention returns true if the passed string looks like @whatever@example.org
 func IsMention(mention string) bool {
 	return mentionNameRegex.MatchString(strings.ToLower(mention))
-}
-
-// unique returns a deduplicated version of a given string slice.
-func unique(s []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-	for _, entry := range s {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
 }

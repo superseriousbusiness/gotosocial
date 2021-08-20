@@ -19,39 +19,35 @@
 package pg
 
 import (
-	"errors"
+	"context"
 
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (ps *postgresService) DeleteByID(id string, i interface{}) error {
-	if _, err := ps.conn.Model(i).Where("id = ?", id).Delete(); err != nil {
-		// if there are no rows *anyway* then that's fine
-		// just return err if there's an actual error
-		if err != pg.ErrNoRows {
-			return err
-		}
-	}
-	return nil
+type mediaDB struct {
+	config *config.Config
+	conn   *pg.DB
+	log    *logrus.Logger
+	cancel context.CancelFunc
 }
 
-func (ps *postgresService) DeleteWhere(where []db.Where, i interface{}) error {
-	if len(where) == 0 {
-		return errors.New("no queries provided")
-	}
+func (m *mediaDB) newMediaQ(i interface{}) *orm.Query {
+	return m.conn.Model(i).
+		Relation("Account")
+}
 
-	q := ps.conn.Model(i)
-	for _, w := range where {
-		q = q.Where("? = ?", pg.Safe(w.Key), w.Value)
-	}
+func (m *mediaDB) GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, db.Error) {
+	attachment := &gtsmodel.MediaAttachment{}
 
-	if _, err := q.Delete(); err != nil {
-		// if there are no rows *anyway* then that's fine
-		// just return err if there's an actual error
-		if err != pg.ErrNoRows {
-			return err
-		}
-	}
-	return nil
+	q := m.newMediaQ(attachment).
+		Where("media_attachment.id = ?", id)
+
+	err := processErrorResponse(q.Select())
+
+	return attachment, err
 }

@@ -29,7 +29,7 @@ import (
 
 func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't do anything
-	blocked, err := p.db.Blocked(requestingAccount.ID, targetAccountID)
+	blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -40,7 +40,7 @@ func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAcco
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
 		}
 	}

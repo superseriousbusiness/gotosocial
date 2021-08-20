@@ -45,11 +45,13 @@ type Account struct {
 	*/
 
 	// ID of the avatar as a media attachment
-	AvatarMediaAttachmentID string `pg:"type:CHAR(26)"`
+	AvatarMediaAttachmentID string           `pg:"type:CHAR(26)"`
+	AvatarMediaAttachment   *MediaAttachment `pg:"rel:has-one"`
 	// For a non-local account, where can the header be fetched?
 	AvatarRemoteURL string
 	// ID of the header as a media attachment
-	HeaderMediaAttachmentID string `pg:"type:CHAR(26)"`
+	HeaderMediaAttachmentID string           `pg:"type:CHAR(26)"`
+	HeaderMediaAttachment   *MediaAttachment `pg:"rel:has-one"`
 	// For a non-local account, where can the header be fetched?
 	HeaderRemoteURL string
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.

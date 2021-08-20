@@ -50,9 +50,9 @@ func (t *timeline) IndexBefore(statusID string, include bool, amount int) error 
 	i := 0
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
-		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, "", "", offsetStatus, amount, false)
+		statuses, err := t.db.GetHomeTimeline(t.accountID, "", "", offsetStatus, amount, false)
 		if err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
 			}
 			return fmt.Errorf("IndexBefore: error getting statuses from db: %s", err)
@@ -130,9 +130,9 @@ positionLoop:
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
 		l.Tracef("entering grabloop; i is %d; len(filtered) is %d", i, len(filtered))
-		statuses, err := t.db.GetHomeTimelineForAccount(t.accountID, offsetStatus, "", "", amount, false)
+		statuses, err := t.db.GetHomeTimeline(t.accountID, offsetStatus, "", "", amount, false)
 		if err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
 			}
 			return fmt.Errorf("IndexBehind: error getting statuses from db: %s", err)

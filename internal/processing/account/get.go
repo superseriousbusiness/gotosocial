@@ -30,7 +30,7 @@ import (
 func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
 	targetAccount := &gtsmodel.Account{}
 	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
+		if err == db.ErrNoEntries {
 			return nil, errors.New("account not found")
 		}
 		return nil, fmt.Errorf("db error: %s", err)
@@ -39,7 +39,7 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.Blocked(requestingAccount.ID, targetAccountID)
+		blocked, err = p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
 		if err != nil {
 			return nil, fmt.Errorf("error checking account block: %s", err)
 		}

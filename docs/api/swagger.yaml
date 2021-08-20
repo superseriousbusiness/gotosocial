@@ -1679,7 +1679,7 @@ info:
     name: AGPL3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
   title: GoToSocial
-  version: 0.1.0-SNAPSHOT-dereference_remote_replies
+  version: 0.1.0-SNAPSHOT
 paths:
   /api/v1/accounts:
     post:
@@ -3404,6 +3404,8 @@ paths:
           description: ""
           schema:
             $ref: '#/definitions/swaggerStatusRepliesCollection'
+        "400":
+          description: bad request
         "401":
           description: unauthorized
         "403":

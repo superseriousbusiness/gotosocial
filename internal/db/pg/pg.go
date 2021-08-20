@@ -20,15 +20,11 @@ package pg
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"net"
-	"net/mail"
 	"os"
 	"strings"
 	"time"
@@ -41,12 +37,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"golang.org/x/crypto/bcrypt"
 )
+
+var registerTables []interface{} = []interface{}{
+	&gtsmodel.StatusToEmoji{},
+	&gtsmodel.StatusToTag{},
+}
 
 // postgresService satisfies the DB interface
 type postgresService struct {
+	db.Account
+	db.Admin
+	db.Basic
+	db.Domain
+	db.Instance
+	db.Media
+	db.Mention
+	db.Notification
+	db.Relationship
+	db.Status
+	db.Timeline
 	config *config.Config
 	conn   *pg.DB
 	log    *logrus.Logger
@@ -56,6 +66,11 @@ type postgresService struct {
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
 func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
+	for _, t := range registerTables {
+		// https://pg.uptrace.dev/orm/many-to-many-relation/
+		orm.RegisterTable(t)
+	}
+
 	opts, err := derivePGOptions(c)
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres service: %s", err)
@@ -91,6 +106,72 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	log.Infof("connected to postgres version: %s", version)
 
 	ps := &postgresService{
+		Account: &accountDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Admin: &adminDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Basic: &basicDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Domain: &domainDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Instance: &instanceDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Media: &mediaDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Mention: &mentionDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Notification: &notificationDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Relationship: &relationshipDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Status: &statusDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
+		Timeline: &timelineDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+			cancel: cancel,
+		},
 		config: c,
 		conn:   conn,
 		log:    log,
@@ -200,724 +281,6 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 }
 
 /*
-	BASIC DB FUNCTIONALITY
-*/
-
-func (ps *postgresService) CreateTable(i interface{}) error {
-	return ps.conn.Model(i).CreateTable(&orm.CreateTableOptions{
-		IfNotExists: true,
-	})
-}
-
-func (ps *postgresService) DropTable(i interface{}) error {
-	return ps.conn.Model(i).DropTable(&orm.DropTableOptions{
-		IfExists: true,
-	})
-}
-
-func (ps *postgresService) Stop(ctx context.Context) error {
-	ps.log.Info("closing db connection")
-	if err := ps.conn.Close(); err != nil {
-		// only cancel if there's a problem closing the db
-		ps.cancel()
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) IsHealthy(ctx context.Context) error {
-	return ps.conn.Ping(ctx)
-}
-
-func (ps *postgresService) CreateSchema(ctx context.Context) error {
-	models := []interface{}{
-		(*gtsmodel.Account)(nil),
-		(*gtsmodel.Status)(nil),
-		(*gtsmodel.User)(nil),
-	}
-	ps.log.Info("creating db schema")
-
-	for _, model := range models {
-		err := ps.conn.Model(model).CreateTable(&orm.CreateTableOptions{
-			IfNotExists: true,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	ps.log.Info("db schema created")
-	return nil
-}
-
-/*
-	HANDY SHORTCUTS
-*/
-
-func (ps *postgresService) AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, error) {
-	// make sure the original follow request exists
-	fr := &gtsmodel.FollowRequest{}
-	if err := ps.conn.Model(fr).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Select(); err != nil {
-		if err == pg.ErrMultiRows {
-			return nil, db.ErrNoEntries{}
-		}
-		return nil, err
-	}
-
-	// create a new follow to 'replace' the request with
-	follow := &gtsmodel.Follow{
-		ID:              fr.ID,
-		AccountID:       originAccountID,
-		TargetAccountID: targetAccountID,
-		URI:             fr.URI,
-	}
-
-	// if the follow already exists, just update the URI -- we don't need to do anything else
-	if _, err := ps.conn.Model(follow).OnConflict("ON CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).Insert(); err != nil {
-		return nil, err
-	}
-
-	// now remove the follow request
-	if _, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", originAccountID).Where("target_account_id = ?", targetAccountID).Delete(); err != nil {
-		return nil, err
-	}
-
-	return follow, nil
-}
-
-func (ps *postgresService) CreateInstanceAccount() error {
-	username := ps.config.Host
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		ps.log.Errorf("error creating new rsa key: %s", err)
-		return err
-	}
-
-	aID, err := id.NewRandomULID()
-	if err != nil {
-		return err
-	}
-
-	newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
-	a := &gtsmodel.Account{
-		ID:                    aID,
-		Username:              ps.config.Host,
-		DisplayName:           username,
-		URL:                   newAccountURIs.UserURL,
-		PrivateKey:            key,
-		PublicKey:             &key.PublicKey,
-		PublicKeyURI:          newAccountURIs.PublicKeyURI,
-		ActorType:             gtsmodel.ActivityStreamsPerson,
-		URI:                   newAccountURIs.UserURI,
-		InboxURI:              newAccountURIs.InboxURI,
-		OutboxURI:             newAccountURIs.OutboxURI,
-		FollowersURI:          newAccountURIs.FollowersURI,
-		FollowingURI:          newAccountURIs.FollowingURI,
-		FeaturedCollectionURI: newAccountURIs.CollectionURI,
-	}
-	inserted, err := ps.conn.Model(a).Where("username = ?", username).SelectOrInsert()
-	if err != nil {
-		return err
-	}
-	if inserted {
-		ps.log.Infof("created instance account %s with id %s", username, a.ID)
-	} else {
-		ps.log.Infof("instance account %s already exists with id %s", username, a.ID)
-	}
-	return nil
-}
-
-func (ps *postgresService) CreateInstanceInstance() error {
-	iID, err := id.NewRandomULID()
-	if err != nil {
-		return err
-	}
-
-	i := &gtsmodel.Instance{
-		ID:     iID,
-		Domain: ps.config.Host,
-		Title:  ps.config.Host,
-		URI:    fmt.Sprintf("%s://%s", ps.config.Protocol, ps.config.Host),
-	}
-	inserted, err := ps.conn.Model(i).Where("domain = ?", ps.config.Host).SelectOrInsert()
-	if err != nil {
-		return err
-	}
-	if inserted {
-		ps.log.Infof("created instance instance %s with id %s", ps.config.Host, i.ID)
-	} else {
-		ps.log.Infof("instance instance %s already exists with id %s", ps.config.Host, i.ID)
-	}
-	return nil
-}
-
-func (ps *postgresService) GetAccountByUserID(userID string, account *gtsmodel.Account) error {
-	user := &gtsmodel.User{
-		ID: userID,
-	}
-	if err := ps.conn.Model(user).Where("id = ?", userID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	if err := ps.conn.Model(account).Where("id = ?", user.AccountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetLocalAccountByUsername(username string, account *gtsmodel.Account) error {
-	if err := ps.conn.Model(account).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetFollowRequestsForAccountID(accountID string, followRequests *[]gtsmodel.FollowRequest) error {
-	if err := ps.conn.Model(followRequests).Where("target_account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetFollowingByAccountID(accountID string, following *[]gtsmodel.Follow) error {
-	if err := ps.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetFollowersByAccountID(accountID string, followers *[]gtsmodel.Follow, localOnly bool) error {
-
-	q := ps.conn.Model(followers)
-
-	if localOnly {
-		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
-		whereGroup := func(q *pg.Query) (*pg.Query, error) {
-			q = q.
-				WhereOr("? IS NULL", pg.Ident("a.domain")).
-				WhereOr("a.domain = ?", "")
-			return q, nil
-		}
-
-		q = q.ColumnExpr("follow.*").
-			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
-			Where("follow.target_account_id = ?", accountID).
-			WhereGroup(whereGroup)
-	} else {
-		q = q.Where("target_account_id = ?", accountID)
-	}
-
-	if err := q.Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetFavesByAccountID(accountID string, faves *[]gtsmodel.StatusFave) error {
-	if err := ps.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) CountStatusesByAccountID(accountID string) (int, error) {
-	count, err := ps.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return 0, nil
-		}
-		return 0, err
-	}
-	return count, nil
-}
-
-func (ps *postgresService) GetStatusesForAccount(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, error) {
-	ps.log.Debugf("getting statuses for account %s", accountID)
-	statuses := []*gtsmodel.Status{}
-
-	q := ps.conn.Model(&statuses).Order("id DESC")
-	if accountID != "" {
-		q = q.Where("account_id = ?", accountID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	if excludeReplies {
-		q = q.Where("? IS NULL", pg.Ident("in_reply_to_id"))
-	}
-
-	if pinnedOnly {
-		q = q.Where("pinned = ?", true)
-	}
-
-	if mediaOnly {
-		q = q.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			return q.Where("? IS NOT NULL", pg.Ident("attachments")).Where("attachments != '{}'"), nil
-		})
-	}
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if err := q.Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries{}
-		}
-		return nil, err
-	}
-
-	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries{}
-	}
-
-	ps.log.Debugf("returning statuses for account %s", accountID)
-	return statuses, nil
-}
-
-func (ps *postgresService) GetLastStatusForAccountID(accountID string, status *gtsmodel.Status) error {
-	if err := ps.conn.Model(status).Order("created_at DESC").Limit(1).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-
-}
-
-func (ps *postgresService) IsUsernameAvailable(username string) error {
-	// if no error we fail because it means we found something
-	// if error but it's not pg.ErrNoRows then we fail
-	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := ps.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
-		return fmt.Errorf("username %s already in use", username)
-	} else if err != pg.ErrNoRows {
-		return fmt.Errorf("db error: %s", err)
-	}
-	return nil
-}
-
-func (ps *postgresService) IsEmailAvailable(email string) error {
-	// parse the domain from the email
-	m, err := mail.ParseAddress(email)
-	if err != nil {
-		return fmt.Errorf("error parsing email address %s: %s", email, err)
-	}
-	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
-
-	// check if the email domain is blocked
-	if err := ps.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
-		// fail because we found something
-		return fmt.Errorf("email domain %s is blocked", domain)
-	} else if err != pg.ErrNoRows {
-		// fail because we got an unexpected error
-		return fmt.Errorf("db error: %s", err)
-	}
-
-	// check if this email is associated with a user already
-	if err := ps.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
-		// fail because we found something
-		return fmt.Errorf("email %s already in use", email)
-	} else if err != pg.ErrNoRows {
-		// fail because we got an unexpected error
-		return fmt.Errorf("db error: %s", err)
-	}
-	return nil
-}
-
-func (ps *postgresService) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, error) {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		ps.log.Errorf("error creating new rsa key: %s", err)
-		return nil, err
-	}
-
-	// if something went wrong while creating a user, we might already have an account, so check here first...
-	a := &gtsmodel.Account{}
-	err = ps.conn.Model(a).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
-	if err != nil {
-		// there's been an actual error
-		if err != pg.ErrNoRows {
-			return nil, fmt.Errorf("db error checking existence of account: %s", err)
-		}
-
-		// we just don't have an account yet create one
-		newAccountURIs := util.GenerateURIsForAccount(username, ps.config.Protocol, ps.config.Host)
-		newAccountID, err := id.NewRandomULID()
-		if err != nil {
-			return nil, err
-		}
-
-		a = &gtsmodel.Account{
-			ID:                    newAccountID,
-			Username:              username,
-			DisplayName:           username,
-			Reason:                reason,
-			URL:                   newAccountURIs.UserURL,
-			PrivateKey:            key,
-			PublicKey:             &key.PublicKey,
-			PublicKeyURI:          newAccountURIs.PublicKeyURI,
-			ActorType:             gtsmodel.ActivityStreamsPerson,
-			URI:                   newAccountURIs.UserURI,
-			InboxURI:              newAccountURIs.InboxURI,
-			OutboxURI:             newAccountURIs.OutboxURI,
-			FollowersURI:          newAccountURIs.FollowersURI,
-			FollowingURI:          newAccountURIs.FollowingURI,
-			FeaturedCollectionURI: newAccountURIs.CollectionURI,
-		}
-		if _, err = ps.conn.Model(a).Insert(); err != nil {
-			return nil, err
-		}
-	}
-
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("error hashing password: %s", err)
-	}
-
-	newUserID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	u := &gtsmodel.User{
-		ID:                     newUserID,
-		AccountID:              a.ID,
-		EncryptedPassword:      string(pw),
-		SignUpIP:               signUpIP.To4(),
-		Locale:                 locale,
-		UnconfirmedEmail:       email,
-		CreatedByApplicationID: appID,
-		Approved:               !requireApproval, // if we don't require moderator approval, just pre-approve the user
-	}
-
-	if emailVerified {
-		u.ConfirmedAt = time.Now()
-		u.Email = email
-	}
-
-	if admin {
-		u.Admin = true
-		u.Moderator = true
-	}
-
-	if _, err = ps.conn.Model(u).Insert(); err != nil {
-		return nil, err
-	}
-
-	return u, nil
-}
-
-func (ps *postgresService) SetHeaderOrAvatarForAccountID(mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
-	if mediaAttachment.Avatar && mediaAttachment.Header {
-		return errors.New("one media attachment cannot be both header and avatar")
-	}
-
-	var headerOrAVI string
-	if mediaAttachment.Avatar {
-		headerOrAVI = "avatar"
-	} else if mediaAttachment.Header {
-		headerOrAVI = "header"
-	} else {
-		return errors.New("given media attachment was neither a header nor an avatar")
-	}
-
-	// TODO: there are probably more side effects here that need to be handled
-	if _, err := ps.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
-		return err
-	}
-
-	if _, err := ps.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetHeaderForAccountID(header *gtsmodel.MediaAttachment, accountID string) error {
-	acct := &gtsmodel.Account{}
-	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-
-	if acct.HeaderMediaAttachmentID == "" {
-		return db.ErrNoEntries{}
-	}
-
-	if err := ps.conn.Model(header).Where("id = ?", acct.HeaderMediaAttachmentID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) GetAvatarForAccountID(avatar *gtsmodel.MediaAttachment, accountID string) error {
-	acct := &gtsmodel.Account{}
-	if err := ps.conn.Model(acct).Where("id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-
-	if acct.AvatarMediaAttachmentID == "" {
-		return db.ErrNoEntries{}
-	}
-
-	if err := ps.conn.Model(avatar).Where("id = ?", acct.AvatarMediaAttachmentID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return db.ErrNoEntries{}
-		}
-		return err
-	}
-	return nil
-}
-
-func (ps *postgresService) Blocked(account1 string, account2 string) (bool, error) {
-	// TODO: check domain blocks as well
-	var blocked bool
-	if err := ps.conn.Model(&gtsmodel.Block{}).
-		Where("account_id = ?", account1).Where("target_account_id = ?", account2).
-		WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2).
-		Select(); err != nil {
-		if err == pg.ErrNoRows {
-			blocked = false
-			return blocked, nil
-		}
-		return blocked, err
-	}
-	blocked = true
-	return blocked, nil
-}
-
-func (ps *postgresService) GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error) {
-	r := &gtsmodel.Relationship{
-		ID: targetAccount,
-	}
-
-	// check if the requesting account follows the target account
-	follow := &gtsmodel.Follow{}
-	if err := ps.conn.Model(follow).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Select(); err != nil {
-		if err != pg.ErrNoRows {
-			// a proper error
-			return nil, fmt.Errorf("getrelationship: error checking follow existence: %s", err)
-		}
-		// no follow exists so these are all false
-		r.Following = false
-		r.ShowingReblogs = false
-		r.Notifying = false
-	} else {
-		// follow exists so we can fill these fields out...
-		r.Following = true
-		r.ShowingReblogs = follow.ShowReblogs
-		r.Notifying = follow.Notify
-	}
-
-	// check if the target account follows the requesting account
-	followedBy, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
-	if err != nil {
-		return nil, fmt.Errorf("getrelationship: error checking followed_by existence: %s", err)
-	}
-	r.FollowedBy = followedBy
-
-	// check if the requesting account blocks the target account
-	blocking, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
-	if err != nil {
-		return nil, fmt.Errorf("getrelationship: error checking blocking existence: %s", err)
-	}
-	r.Blocking = blocking
-
-	// check if the target account blocks the requesting account
-	blockedBy, err := ps.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", targetAccount).Where("target_account_id = ?", requestingAccount).Exists()
-	if err != nil {
-		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
-	}
-	r.BlockedBy = blockedBy
-
-	// check if there's a pending following request from requesting account to target account
-	requested, err := ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", requestingAccount).Where("target_account_id = ?", targetAccount).Exists()
-	if err != nil {
-		return nil, fmt.Errorf("getrelationship: error checking blocked existence: %s", err)
-	}
-	r.Requested = requested
-
-	return r, nil
-}
-
-func (ps *postgresService) Follows(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
-	if sourceAccount == nil || targetAccount == nil {
-		return false, nil
-	}
-
-	return ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
-}
-
-func (ps *postgresService) FollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, error) {
-	if sourceAccount == nil || targetAccount == nil {
-		return false, nil
-	}
-
-	return ps.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
-}
-
-func (ps *postgresService) Mutuals(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, error) {
-	if account1 == nil || account2 == nil {
-		return false, nil
-	}
-
-	// make sure account 1 follows account 2
-	f1, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account1.ID).Where("target_account_id = ?", account2.ID).Exists()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return false, nil
-		}
-		return false, err
-	}
-
-	// make sure account 2 follows account 1
-	f2, err := ps.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account2.ID).Where("target_account_id = ?", account1.ID).Exists()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return f1 && f2, nil
-}
-
-func (ps *postgresService) GetReplyCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
-}
-
-func (ps *postgresService) GetReblogCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
-}
-
-func (ps *postgresService) GetFaveCountForStatus(status *gtsmodel.Status) (int, error) {
-	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
-}
-
-func (ps *postgresService) StatusFavedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
-}
-
-func (ps *postgresService) StatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
-}
-
-func (ps *postgresService) StatusMutedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
-}
-
-func (ps *postgresService) StatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, error) {
-	return ps.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
-}
-
-func (ps *postgresService) WhoFavedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
-	accounts := []*gtsmodel.Account{}
-
-	faves := []*gtsmodel.StatusFave{}
-	if err := ps.conn.Model(&faves).Where("status_id = ?", status.ID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return accounts, nil // no rows just means nobody has faved this status, so that's fine
-		}
-		return nil, err // an actual error has occurred
-	}
-
-	for _, f := range faves {
-		acc := &gtsmodel.Account{}
-		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
-			if err == pg.ErrNoRows {
-				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
-			}
-			return nil, err // an actual error has occurred
-		}
-		accounts = append(accounts, acc)
-	}
-	return accounts, nil
-}
-
-func (ps *postgresService) WhoBoostedStatus(status *gtsmodel.Status) ([]*gtsmodel.Account, error) {
-	accounts := []*gtsmodel.Account{}
-
-	boosts := []*gtsmodel.Status{}
-	if err := ps.conn.Model(&boosts).Where("boost_of_id = ?", status.ID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return accounts, nil // no rows just means nobody has boosted this status, so that's fine
-		}
-		return nil, err // an actual error has occurred
-	}
-
-	for _, f := range boosts {
-		acc := &gtsmodel.Account{}
-		if err := ps.conn.Model(acc).Where("id = ?", f.AccountID).Select(); err != nil {
-			if err == pg.ErrNoRows {
-				continue // the account doesn't exist for some reason??? but this isn't the place to worry about that so just skip it
-			}
-			return nil, err // an actual error has occurred
-		}
-		accounts = append(accounts, acc)
-	}
-	return accounts, nil
-}
-
-func (ps *postgresService) GetNotificationsForAccount(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, error) {
-	notifications := []*gtsmodel.Notification{}
-
-	q := ps.conn.Model(&notifications).Where("target_account_id = ?", accountID)
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
-	}
-
-	if sinceID != "" {
-		q = q.Where("id > ?", sinceID)
-	}
-
-	if limit != 0 {
-		q = q.Limit(limit)
-	}
-
-	q = q.Order("created_at DESC")
-
-	if err := q.Select(); err != nil {
-		if err != pg.ErrNoRows {
-			return nil, err
-		}
-
-	}
-	return notifications, nil
-}
-
-/*
 	CONVERSION FUNCTIONS
 */
 
@@ -988,14 +351,14 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 
 		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
 		menchies = append(menchies, &gtsmodel.Mention{
-			StatusID:            statusID,
-			OriginAccountID:     ogAccount.ID,
-			OriginAccountURI:    ogAccount.URI,
-			TargetAccountID:     mentionedAccount.ID,
-			NameString:          a,
-			MentionedAccountURI: mentionedAccount.URI,
-			MentionedAccountURL: mentionedAccount.URL,
-			GTSAccount:          mentionedAccount,
+			StatusID:         statusID,
+			OriginAccountID:  ogAccount.ID,
+			OriginAccountURI: ogAccount.URI,
+			TargetAccountID:  mentionedAccount.ID,
+			NameString:       a,
+			TargetAccountURI: mentionedAccount.URI,
+			TargetAccountURL: mentionedAccount.URL,
+			OriginAccount:    mentionedAccount,
 		})
 	}
 	return menchies, nil

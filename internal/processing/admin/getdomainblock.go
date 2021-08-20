@@ -31,7 +31,7 @@ func (p *processor) DomainBlockGet(account *gtsmodel.Account, id string, export 
 	domainBlock := &gtsmodel.DomainBlock{}
 
 	if err := p.db.GetByID(id, domainBlock); err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)
 		}

@@ -91,19 +91,19 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
-	assert.Len(suite.T(), status.GTSMentions, 1)
-	newMention := status.GTSMentions[0]
+	assert.Len(suite.T(), status.Mentions, 1)
+	newMention := status.Mentions[0]
 	assert.Equal(suite.T(), mentionedAccount.ID, newMention.TargetAccountID)
 	assert.Equal(suite.T(), creatingAccount.ID, newMention.OriginAccountID)
 	assert.Equal(suite.T(), creatingAccount.URI, newMention.OriginAccountURI)
 	assert.Equal(suite.T(), status.ID, newMention.StatusID)
 	assert.Equal(suite.T(), fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
-	assert.Equal(suite.T(), mentionedAccount.URI, newMention.MentionedAccountURI)
-	assert.Equal(suite.T(), mentionedAccount.URL, newMention.MentionedAccountURL)
-	assert.NotNil(suite.T(), newMention.GTSAccount)
+	assert.Equal(suite.T(), mentionedAccount.URI, newMention.TargetAccountURI)
+	assert.Equal(suite.T(), mentionedAccount.URL, newMention.TargetAccountURL)
+	assert.NotNil(suite.T(), newMention.OriginAccount)
 
-	assert.Len(suite.T(), status.Mentions, 1)
-	assert.Equal(suite.T(), newMention.ID, status.Mentions[0])
+	assert.Len(suite.T(), status.MentionIDs, 1)
+	assert.Equal(suite.T(), newMention.ID, status.MentionIDs[0])
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull1() {
@@ -232,19 +232,19 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
-	assert.Len(suite.T(), status.GTSMentions, 1)
-	newMention := status.GTSMentions[0]
+	assert.Len(suite.T(), status.Mentions, 1)
+	newMention := status.Mentions[0]
 	assert.Equal(suite.T(), mentionedAccount.ID, newMention.TargetAccountID)
 	assert.Equal(suite.T(), creatingAccount.ID, newMention.OriginAccountID)
 	assert.Equal(suite.T(), creatingAccount.URI, newMention.OriginAccountURI)
 	assert.Equal(suite.T(), status.ID, newMention.StatusID)
 	assert.Equal(suite.T(), fmt.Sprintf("@%s@%s", mentionedAccount.Username, mentionedAccount.Domain), newMention.NameString)
-	assert.Equal(suite.T(), mentionedAccount.URI, newMention.MentionedAccountURI)
-	assert.Equal(suite.T(), mentionedAccount.URL, newMention.MentionedAccountURL)
-	assert.NotNil(suite.T(), newMention.GTSAccount)
+	assert.Equal(suite.T(), mentionedAccount.URI, newMention.TargetAccountURI)
+	assert.Equal(suite.T(), mentionedAccount.URL, newMention.TargetAccountURL)
+	assert.NotNil(suite.T(), newMention.OriginAccount)
 
-	assert.Len(suite.T(), status.Mentions, 1)
-	assert.Equal(suite.T(), newMention.ID, status.Mentions[0])
+	assert.Len(suite.T(), status.MentionIDs, 1)
+	assert.Equal(suite.T(), newMention.ID, status.MentionIDs[0])
 }
 
 func (suite *UtilTestSuite) TestProcessContentFull2() {

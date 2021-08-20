@@ -29,9 +29,11 @@ type FollowRequest struct {
 	// When was this follow request last updated?
 	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// Who does this follow request originate from?
-	AccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	AccountID string  `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	Account   Account `pg:"rel:has-one"`
 	// Who is the target of this follow request?
-	TargetAccountID string `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	TargetAccountID string  `pg:"type:CHAR(26),unique:srctarget,notnull"`
+	TargetAccount   Account `pg:"rel:has-one"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `pg:"default:true"`
 	// What is the activitypub URI of this follow request?

@@ -36,7 +36,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 	domainBlock := &gtsmodel.DomainBlock{}
 	err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain, CaseInsensitive: true}}, domainBlock)
 	if err != nil {
-		if _, ok := err.(db.ErrNoEntries); !ok {
+		if err != db.ErrNoEntries {
 			// something went wrong in the DB
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error checking for existence of domain block %s: %s", domain, err))
 		}
@@ -60,7 +60,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 
 		// put the new block in the database
 		if err := p.db.Put(domainBlock); err != nil {
-			if _, ok := err.(db.ErrAlreadyExists); !ok {
+			if err != db.ErrNoEntries {
 				// there's a real error creating the block
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
 			}
@@ -123,9 +123,9 @@ func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, bl
 
 selectAccountsLoop:
 	for {
-		accounts, err := p.db.GetAccountsForInstance(block.Domain, maxID, limit)
+		accounts, err := p.db.GetInstanceAccounts(block.Domain, maxID, limit)
 		if err != nil {
-			if _, ok := err.(db.ErrNoEntries); ok {
+			if err == db.ErrNoEntries {
 				// no accounts left for this instance so we're done
 				l.Infof("domainBlockProcessSideEffects: done iterating through accounts for domain %s", block.Domain)
 				break selectAccountsLoop

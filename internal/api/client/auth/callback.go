@@ -116,7 +116,7 @@ func (m *Module) parseUserFromClaims(claims *oidc.Claims, ip net.IP, appID strin
 		return user, nil
 	}
 
-	if _, ok := err.(db.ErrNoEntries); !ok {
+	if err != db.ErrNoEntries {
 		// we have an actual error in the database
 		return nil, fmt.Errorf("error checking database for email %s: %s", claims.Email, err)
 	}
@@ -128,7 +128,7 @@ func (m *Module) parseUserFromClaims(claims *oidc.Claims, ip net.IP, appID strin
 		return nil, fmt.Errorf("user with email address %s is unconfirmed", claims.Email)
 	}
 
-	if _, ok := err.(db.ErrNoEntries); !ok {
+	if err != db.ErrNoEntries {
 		// we have an actual error in the database
 		return nil, fmt.Errorf("error checking database for email %s: %s", claims.Email, err)
 	}

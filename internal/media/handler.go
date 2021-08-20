@@ -142,7 +142,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	}
 
 	// set it in the database
-	if err := mh.db.SetHeaderOrAvatarForAccountID(ma, accountID); err != nil {
+	if err := mh.db.SetAccountHeaderOrAvatar(ma, accountID); err != nil {
 		return nil, fmt.Errorf("error putting %s in database: %s", mediaType, err)
 	}
 
@@ -231,8 +231,8 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	// since emoji aren't 'owned' by an account, but we still want to use the same pattern for serving them through the filserver,
 	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
 	// with the same username as the instance hostname, which doesn't belong to any particular user.
-	instanceAccount := &gtsmodel.Account{}
-	if err := mh.db.GetLocalAccountByUsername(mh.config.Host, instanceAccount); err != nil {
+	instanceAccount, err := mh.db.GetInstanceAccount("")
+	if err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
 

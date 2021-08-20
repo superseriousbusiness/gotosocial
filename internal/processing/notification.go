@@ -27,7 +27,7 @@ import (
 func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
 	l := p.log.WithField("func", "NotificationsGet")
 
-	notifs, err := p.db.GetNotificationsForAccount(authed.Account.ID, limit, maxID, sinceID)
+	notifs, err := p.db.GetNotifications(authed.Account.ID, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

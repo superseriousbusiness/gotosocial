@@ -27,7 +27,7 @@ type Tag struct {
 	// Href of this tag, eg https://example.org/tags/somehashtag
 	URL string
 	// name of this tag -- the tag without the hash part
-	Name string `pg:",unique,pk,notnull"`
+	Name string `pg:",unique,notnull"`
 	// Which account ID is the first one we saw using this tag?
 	FirstSeenFromAccountID string `pg:"type:CHAR(26)"`
 	// when was this tag created

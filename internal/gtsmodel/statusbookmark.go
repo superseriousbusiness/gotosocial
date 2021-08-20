@@ -27,9 +27,11 @@ type StatusBookmark struct {
 	// when was this bookmark created
 	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the bookmarking
-	AccountID string `pg:"type:CHAR(26),notnull"`
+	AccountID string   `pg:"type:CHAR(26),notnull"`
+	Account   *Account `pg:"rel:belongs-to"`
 	// id the account owning the bookmarked status
-	TargetAccountID string `pg:"type:CHAR(26),notnull"`
+	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `pg:"rel:has-one"`
 	// database id of the status that has been bookmarked
 	StatusID string `pg:"type:CHAR(26),notnull"`
 }

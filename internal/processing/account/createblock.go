@@ -31,24 +31,20 @@ import (
 
 func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
-	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
-		if _, ok := err.(db.ErrNoEntries); ok {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: account %s not found in the db: %s", targetAccountID, err))
-		}
+	targetAccount, err := p.db.GetAccountByID(targetAccountID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
 	}
 
 	// if requestingAccount already blocks target account, we don't need to do anything
-	block := &gtsmodel.Block{}
-	if err := p.db.GetWhere([]db.Where{
-		{Key: "account_id", Value: requestingAccount.ID},
-		{Key: "target_account_id", Value: targetAccountID},
-	}, block); err == nil {
-		// block already exists, just return relationship
+	if blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, false); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error checking existence of block: %s", err))
+	} else if blocked {
 		return p.RelationshipGet(requestingAccount, targetAccountID)
 	}
 
 	// make the block
+	block := &gtsmodel.Block{}
 	newBlockID, err := id.NewULID()
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -57,7 +53,7 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 	block.AccountID = requestingAccount.ID
 	block.Account = requestingAccount
 	block.TargetAccountID = targetAccountID
-	block.TargetAccount = targetAcct
+	block.TargetAccount = targetAccount
 	block.URI = util.GenerateURIForBlock(requestingAccount.Username, p.config.Protocol, p.config.Host, newBlockID)
 
 	// whack it in the database
@@ -123,7 +119,7 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 				URI:             frURI,
 			},
 			OriginAccount: requestingAccount,
-			TargetAccount: targetAcct,
+			TargetAccount: targetAccount,
 		}
 	}
 
@@ -138,7 +134,7 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 				URI:             fURI,
 			},
 			OriginAccount: requestingAccount,
-			TargetAccount: targetAcct,
+			TargetAccount: targetAccount,
 		}
 	}
 
@@ -148,7 +144,7 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 		APActivityType: gtsmodel.ActivityStreamsCreate,
 		GTSModel:       block,
 		OriginAccount:  requestingAccount,
-		TargetAccount:  targetAcct,
+		TargetAccount:  targetAccount,
 	}
 
 	return p.RelationshipGet(requestingAccount, targetAccountID)

@@ -112,8 +112,8 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				}
 				status.ID = statusID
 
-				if err := f.db.Put(status); err != nil {
-					if _, ok := err.(db.ErrAlreadyExists); ok {
+				if err := f.db.PutStatus(status); err != nil {
+					if err == db.ErrAlreadyExists {
 						// the status already exists in the database, which means we've already handled everything else,
 						// so we can just return nil here and be done with it.
 						return nil

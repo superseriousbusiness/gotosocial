@@ -38,27 +38,22 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		Text:                     form.Status,
 	}
 
-	// check if replyToID is ok
 	if err := p.ProcessReplyToID(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// check if mediaIDs are ok
 	if err := p.ProcessMediaIDs(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// check if visibility settings are ok
 	if err := p.ProcessVisibility(form, account.Privacy, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// handle language settings
 	if err := p.ProcessLanguage(form, account.Language, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// handle mentions
 	if err := p.ProcessMentions(form, account.ID, newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -75,18 +70,9 @@ func (p *processor) Create(account *gtsmodel.Account, application *gtsmodel.Appl
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// put the new status in the database, generating an ID for it in the process
-	if err := p.db.Put(newStatus); err != nil {
+	// put the new status in the database
+	if err := p.db.PutStatus(newStatus); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// change the status ID of the media attachments to the new status
-	for _, a := range newStatus.GTSMediaAttachments {
-		a.StatusID = newStatus.ID
-		a.UpdatedAt = time.Now()
-		if err := p.db.UpdateByID(a.ID, a); err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
 	}
 
 	// send it back to the processor for async processing

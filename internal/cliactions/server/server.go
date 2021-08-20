@@ -62,6 +62,8 @@ var models []interface{} = []interface{}{
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
 	&gtsmodel.Status{},
+	&gtsmodel.StatusToEmoji{},
+	&gtsmodel.StatusToTag{},
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.StatusMute{},
