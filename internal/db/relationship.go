@@ -49,4 +49,23 @@ type Relationship interface {
 	//
 	// It will return the newly created follow for further processing.
 	AcceptFollowRequest(originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
+
+	// GetAccountFollowRequests returns all follow requests targeting the given account.
+	GetAccountFollowRequests(accountID string) ([]*gtsmodel.FollowRequest, Error)
+
+	// GetAccountFollows returns a slice of follows owned by the given accountID.
+	GetAccountFollows(accountID string) ([]*gtsmodel.Follow, Error)
+
+	// CountAccountFollows returns the amount of accounts that the given accountID is following.
+	//
+	// If localOnly is set to true, then only follows from *this instance* will be returned.
+	CountAccountFollows(accountID string, localOnly bool) (int, Error)
+
+	// GetAccountFollowedBy fetches follows that target given accountID.
+	//
+	// If localOnly is set to true, then only follows from *this instance* will be returned.
+	GetAccountFollowedBy(accountID string, localOnly bool) ([]*gtsmodel.Follow, Error)
+
+	// CountAccountFollowedBy returns the amounts that the given ID is followed by.
+	CountAccountFollowedBy(accountID string, localOnly bool) (int, Error)
 }

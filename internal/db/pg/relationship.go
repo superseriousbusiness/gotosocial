@@ -43,22 +43,22 @@ func (r *relationshipDB) newBlockQ(block *gtsmodel.Block) *orm.Query {
 		Relation("TargetAccount")
 }
 
-func (r *relationshipDB) processResponse(block *gtsmodel.Block, err error) (*gtsmodel.Block, db.Error) {
-	switch err {
-	case pg.ErrNoRows:
-		return nil, db.ErrNoEntries
-	case nil:
-		return block, nil
-	default:
-		return nil, err
-	}
+func (r *relationshipDB) newFollowQ(follow interface{}) *orm.Query {
+	return r.conn.Model(follow).
+		Relation("Account").
+		Relation("TargetAccount")
 }
 
 func (r *relationshipDB) IsBlocked(account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
-	q := r.conn.Model(&gtsmodel.Block{}).Where("account_id = ?", account1).Where("target_account_id = ?", account2)
+	q := r.conn.
+		Model(&gtsmodel.Block{}).
+		Where("account_id = ?", account1).
+		Where("target_account_id = ?", account2)
 
 	if eitherDirection {
-		q = q.WhereOr("target_account_id = ?", account1).Where("account_id = ?", account2)
+		q = q.
+			WhereOr("target_account_id = ?", account1).
+			Where("account_id = ?", account2)
 	}
 
 	return q.Exists()
@@ -71,7 +71,9 @@ func (r *relationshipDB) GetBlock(account1 string, account2 string) (*gtsmodel.B
 		Where("block.account_id = ?", account1).
 		Where("block.target_account_id = ?", account2)
 
-	return r.processResponse(block, q.Select())
+	err := processErrorResponse(q.Select())
+
+	return block, err
 }
 
 func (r *relationshipDB) GetRelationship(requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
@@ -133,7 +135,12 @@ func (r *relationshipDB) IsFollowing(sourceAccount *gtsmodel.Account, targetAcco
 		return false, nil
 	}
 
-	return r.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
+	q := r.conn.
+		Model(&gtsmodel.Follow{}).
+		Where("account_id = ?", sourceAccount.ID).
+		Where("target_account_id = ?", targetAccount.ID)
+
+	return q.Exists()
 }
 
 func (r *relationshipDB) IsFollowRequested(sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
@@ -141,7 +148,12 @@ func (r *relationshipDB) IsFollowRequested(sourceAccount *gtsmodel.Account, targ
 		return false, nil
 	}
 
-	return r.conn.Model(&gtsmodel.FollowRequest{}).Where("account_id = ?", sourceAccount.ID).Where("target_account_id = ?", targetAccount.ID).Exists()
+	q := r.conn.
+		Model(&gtsmodel.FollowRequest{}).
+		Where("account_id = ?", sourceAccount.ID).
+		Where("target_account_id = ?", targetAccount.ID)
+
+	return q.Exists()
 }
 
 func (r *relationshipDB) IsMutualFollowing(account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {
@@ -150,21 +162,15 @@ func (r *relationshipDB) IsMutualFollowing(account1 *gtsmodel.Account, account2 
 	}
 
 	// make sure account 1 follows account 2
-	f1, err := r.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account1.ID).Where("target_account_id = ?", account2.ID).Exists()
+	f1, err := r.IsFollowing(account1, account2)
 	if err != nil {
-		if err == pg.ErrNoRows {
-			return false, nil
-		}
-		return false, err
+		return false, processErrorResponse(err)
 	}
 
 	// make sure account 2 follows account 1
-	f2, err := r.conn.Model(&gtsmodel.Follow{}).Where("account_id = ?", account2.ID).Where("target_account_id = ?", account1.ID).Exists()
+	f2, err := r.IsFollowing(account2, account1)
 	if err != nil {
-		if err == pg.ErrNoRows {
-			return false, nil
-		}
-		return false, err
+		return false, processErrorResponse(err)
 	}
 
 	return f1 && f2, nil
@@ -199,4 +205,72 @@ func (r *relationshipDB) AcceptFollowRequest(originAccountID string, targetAccou
 	}
 
 	return follow, nil
+}
+
+func (r *relationshipDB) GetAccountFollowRequests(accountID string) ([]*gtsmodel.FollowRequest, db.Error) {
+	followRequests := []*gtsmodel.FollowRequest{}
+
+	q := r.newFollowQ(&followRequests).
+		Where("target_account_id = ?", accountID)
+
+	err := processErrorResponse(q.Select())
+
+	return followRequests, err
+}
+
+func (r *relationshipDB) GetAccountFollows(accountID string) ([]*gtsmodel.Follow, db.Error) {
+	follows := []*gtsmodel.Follow{}
+
+	q := r.newFollowQ(&follows).
+		Where("account_id = ?", accountID)
+
+	err := processErrorResponse(q.Select())
+
+	return follows, err
+}
+
+func (r *relationshipDB) CountAccountFollows(accountID string, localOnly bool) (int, db.Error) {
+	return r.conn.
+		Model(&[]*gtsmodel.Follow{}).
+		Where("account_id = ?", accountID).
+		Count()
+}
+
+func (r *relationshipDB) GetAccountFollowedBy(accountID string, localOnly bool) ([]*gtsmodel.Follow, db.Error) {
+
+	follows := []*gtsmodel.Follow{}
+
+	q := r.conn.Model(&follows)
+
+	if localOnly {
+		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
+		whereGroup := func(q *pg.Query) (*pg.Query, error) {
+			q = q.
+				WhereOr("? IS NULL", pg.Ident("a.domain")).
+				WhereOr("a.domain = ?", "")
+			return q, nil
+		}
+
+		q = q.ColumnExpr("follow.*").
+			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
+			Where("follow.target_account_id = ?", accountID).
+			WhereGroup(whereGroup)
+	} else {
+		q = q.Where("target_account_id = ?", accountID)
+	}
+
+	if err := q.Select(); err != nil {
+		if err == pg.ErrNoRows {
+			return follows, nil
+		}
+		return nil, err
+	}
+	return follows, nil
+}
+
+func (r *relationshipDB) CountAccountFollowedBy(accountID string, localOnly bool) (int, db.Error) {
+	return r.conn.
+		Model(&[]*gtsmodel.Follow{}).
+		Where("target_account_id = ?", accountID).
+		Count()
 }

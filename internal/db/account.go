@@ -38,29 +38,8 @@ type Account interface {
 	// GetLocalAccountByUsername returns an account on this instance by its username.
 	GetLocalAccountByUsername(username string) (*gtsmodel.Account, Error)
 
-	// GetAccountFollowRequests returns all follow requests targeting the given account.
-	GetAccountFollowRequests(accountID string) ([]bbbbbbbbbbbbbbbbgtsmodel.FollowRequest, Error)
-
-	// GetAccountFollows returns a slice of follows owned by the given accountID. 
-	GetAccountFollows(accountID string, following *[]gtsmodel.Follow) Error
-
-	// CountAccountFollowing returns the amount of accounts that the given accountID is following.
-	CountAccountFollowing(accountID string, localOnly bool) (int, Error)
-
-	// GetAccountFollowers is a shortcut for the common action of fetching a list of accounts that accountID is followed by.
-	// The given slice 'followers' will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	//
-	// If localOnly is set to true, then only followers from *this instance* will be returned.
-	GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) Error
-
-	// CountAccountFollowers returns the amounts that the given ID is followed by.
-	CountAccountFollowers(accountID string, localOnly bool) (int, Error)
-
-	// GetAccountFaves is a shortcut for the common action of fetching a list of faves made by the given accountID.
-	// The given slice 'faves' will be set to the result of the query, whatever it is.
-	// In case of no entries, a 'no entries' error will be returned
-	GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) Error
+	// GetAccountFaves fetches faves/likes created by the target accountID.
+	GetAccountFaves(accountID string) ([]*gtsmodel.StatusFave, Error)
 
 	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
 	CountAccountStatuses(accountID string) (int, Error)

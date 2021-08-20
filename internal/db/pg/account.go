@@ -149,74 +149,18 @@ func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Accoun
 	return account, err
 }
 
-func (a *accountDB) GetAccountFollowRequests(accountID string) ([]*gtsmodel.FollowRequest, db.Error) {
-	followRequests := []*gtsmodel.FollowRequest{}
+func (a *accountDB) GetAccountFaves(accountID string) ([]*gtsmodel.StatusFave, db.Error) {
+	faves := []*gtsmodel.StatusFave{}
 
-	q := a.conn.
-		Model(&followRequests).
-		Where("target_account_id = ?", accountID)]
-
-	err := processErrorResponse(q.Select())
-	
-	return followRequests, err
-}
-
-func (a *accountDB) GetAccountFollowing(accountID string, following *[]gtsmodel.Follow) db.Error {
-	if err := a.conn.Model(following).Where("account_id = ?", accountID).Select(); err != nil {
+	if err := a.conn.Model(&faves).
+		Where("account_id = ?", accountID).
+		Select(); err != nil {
 		if err == pg.ErrNoRows {
-			return nil
+			return faves, nil
 		}
-		return err
+		return nil, err
 	}
-	return nil
-}
-
-func (a *accountDB) CountAccountFollowing(accountID string, localOnly bool) (int, db.Error) {
-	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("account_id = ?", accountID).Count()
-}
-
-func (a *accountDB) GetAccountFollowers(accountID string, followers *[]gtsmodel.Follow, localOnly bool) db.Error {
-
-	q := a.conn.Model(followers)
-
-	if localOnly {
-		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
-		whereGroup := func(q *pg.Query) (*pg.Query, error) {
-			q = q.
-				WhereOr("? IS NULL", pg.Ident("a.domain")).
-				WhereOr("a.domain = ?", "")
-			return q, nil
-		}
-
-		q = q.ColumnExpr("follow.*").
-			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
-			Where("follow.target_account_id = ?", accountID).
-			WhereGroup(whereGroup)
-	} else {
-		q = q.Where("target_account_id = ?", accountID)
-	}
-
-	if err := q.Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-func (a *accountDB) CountAccountFollowers(accountID string, localOnly bool) (int, db.Error) {
-	return a.conn.Model(&[]*gtsmodel.Follow{}).Where("target_account_id = ?", accountID).Count()
-}
-
-func (a *accountDB) GetAccountFaves(accountID string, faves *[]gtsmodel.StatusFave) db.Error {
-	if err := a.conn.Model(faves).Where("account_id = ?", accountID).Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil
-		}
-		return err
-	}
-	return nil
+	return faves, nil
 }
 
 func (a *accountDB) CountAccountStatuses(accountID string) (int, db.Error) {

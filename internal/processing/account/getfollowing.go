@@ -34,16 +34,16 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
-	following := []gtsmodel.Follow{}
 	accounts := []apimodel.Account{}
-	if err := p.db.GetAccountFollows(targetAccountID, &following); err != nil {
+	follows, err := p.db.GetAccountFollows(targetAccountID)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			return accounts, nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	for _, f := range following {
+	for _, f := range follows {
 		blocked, err := p.db.IsBlocked(requestingAccount.ID, f.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -52,15 +52,18 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 			continue
 		}
 
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(f.TargetAccountID, a); err != nil {
-			if err == db.ErrNoEntries {
-				continue
+		if f.TargetAccount == nil {
+			a, err := p.db.GetAccountByID(f.TargetAccountID)
+			if err != nil {
+				if err == db.ErrNoEntries {
+					continue
+				}
+				return nil, gtserror.NewErrorInternalError(err)
 			}
-			return nil, gtserror.NewErrorInternalError(err)
+			f.TargetAccount = a
 		}
 
-		account, err := p.tc.AccountToMastoPublic(a)
+		account, err := p.tc.AccountToMastoPublic(f.TargetAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

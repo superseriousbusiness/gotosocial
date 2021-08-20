@@ -176,8 +176,6 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // Finally, if the authentication and authorization succeeds, then
 // blocked must be false and error nil. The request will continue
 // to be processed.
-//
-// TODO: implement domain block checking here as well
 func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func": "Blocked",
@@ -191,15 +189,15 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		return false, errors.New("requested account not set on request context, so couldn't determine blocks")
 	}
 
-	for _, uri := range actorIRIs {
-		blockedDomain, err := f.blockedDomain(uri.Host)
-		if err != nil {
-			return false, fmt.Errorf("error checking domain block: %s", err)
-		}
-		if blockedDomain {
-			return true, nil
-		}
+	blocked, err := f.db.AreURIsBlocked(actorIRIs)
+	if err != nil {
+		return false, fmt.Errorf("error checking domain blocks: %s", err)
+	}
+	if blocked {
+		return blocked, nil
+	}
 
+	for _, uri := range actorIRIs {
 		requestingAccount, err := f.db.GetAccountByURI(uri.String())
 		if err != nil {
 			if err == db.ErrNoEntries {
@@ -210,12 +208,11 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
 		}
 
-		// check if requested account blocks requesting account
-		if err := f.db.GetWhere([]db.Where{
-			{Key: "account_id", Value: requestedAccount.ID},
-			{Key: "target_account_id", Value: requestingAccount.ID},
-		}, &gtsmodel.Block{}); err == nil {
-			// a block exists
+		blocked, err = f.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+		if err != nil {
+			return false, fmt.Errorf("error checking account block: %s", err)
+		}
+		if blocked {
 			return true, nil
 		}
 	}

@@ -320,23 +320,24 @@ func (p *processor) timelineStatus(status *gtsmodel.Status) error {
 	}
 
 	// get local followers of the account that posted the status
-	followers := []gtsmodel.Follow{}
-	if err := p.db.GetAccountFollowers(status.AccountID, &followers, true); err != nil {
+	follows, err := p.db.GetAccountFollowedBy(status.AccountID, true)
+	if err != nil {
 		return fmt.Errorf("timelineStatus: error getting followers for account id %s: %s", status.AccountID, err)
 	}
 
 	// if the poster is local, add a fake entry for them to the followers list so they can see their own status in their timeline
 	if status.Account.Domain == "" {
-		followers = append(followers, gtsmodel.Follow{
+		follows = append(follows, &gtsmodel.Follow{
 			AccountID: status.AccountID,
+			Account:   status.Account,
 		})
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(len(followers))
-	errors := make(chan error, len(followers))
+	wg.Add(len(follows))
+	errors := make(chan error, len(follows))
 
-	for _, f := range followers {
+	for _, f := range follows {
 		go p.timelineStatusForAccount(status, f.AccountID, errors, &wg)
 	}
 

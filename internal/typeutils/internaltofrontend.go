@@ -43,7 +43,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 		if err != db.ErrNoEntries {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
 		}
-	}		
+	}
 	var frc int
 	if frs != nil {
 		frc = len(frs)
@@ -71,13 +71,13 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}
 
 	// count followers
-	followersCount, err := c.db.CountAccountFollowers(a.ID, false)
+	followersCount, err := c.db.CountAccountFollowedBy(a.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("error counting followers: %s", err)
 	}
 
 	// count following
-	followingCount, err := c.db.CountAccountFollowing(a.ID, false)
+	followingCount, err := c.db.CountAccountFollows(a.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("error counting following: %s", err)
 	}
