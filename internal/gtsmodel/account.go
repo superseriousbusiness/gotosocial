@@ -78,7 +78,7 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool `pg:",default:true"`
+	Locked bool `pg:",default:true,use_zero"`
 	// Should this account be shown in the instance's profile directory?
 	Discoverable bool `pg:",default:false"`
 	// Default post privacy for this account

@@ -1274,6 +1274,7 @@ func NewTestFediPeople() map[string]ap.Accountable {
 			"image/jpeg",
 			URLMustParse("https://unknown-instance.com/media/some_header_filename.jpeg"),
 			"image/png",
+			false,
 		),
 	}
 }
@@ -1416,7 +1417,8 @@ func newPerson(
 	avatarURL *url.URL,
 	avatarContentType string,
 	headerURL *url.URL,
-	headerContentType string) ap.Accountable {
+	headerContentType string,
+	manuallyApprovesFollowers bool) ap.Accountable {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -1489,8 +1491,9 @@ func newPerson(
 	person.SetActivityStreamsUrl(urlProp)
 
 	// manuallyApprovesFollowers
-	// Will be shown as a locked account.
-	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
+	manuallyApprovesFollowersProp.Set(manuallyApprovesFollowers)
+	person.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
 
 	// discoverable
 	// Will be shown in the profile directory.
@@ -1575,6 +1578,7 @@ func newPerson(
 	headerURLProperty.AppendIRI(headerURL)
 	headerImage.SetActivityStreamsUrl(headerURLProperty)
 	headerProperty.AppendActivityStreamsImage(headerImage)
+	person.SetActivityStreamsImage(headerProperty)
 
 	return person
 }

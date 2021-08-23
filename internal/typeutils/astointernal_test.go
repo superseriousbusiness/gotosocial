@@ -346,14 +346,26 @@ func (suite *ASToInternalTestSuite) SetupTest() {
 }
 
 func (suite *ASToInternalTestSuite) TestParsePerson() {
-
 	testPerson := suite.people["new_person_1"]
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(testPerson, false)
 	assert.NoError(suite.T(), err)
 
-	fmt.Printf("%+v", acct)
-	// TODO: write assertions here, rn we're just eyeballing the output
+	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/following", acct.FollowingURI)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/followers", acct.FollowersURI)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/inbox", acct.InboxURI)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/outbox", acct.OutboxURI)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/collections/featured", acct.FeaturedCollectionURI)
+	suite.Equal("brand_new_person", acct.Username)
+	suite.Equal("Geoff Brando New Personson", acct.DisplayName)
+	suite.Equal("hey I'm a new person, your instance hasn't seen me yet uwu", acct.Note)
+	suite.Equal("https://unknown-instance.com/@brand_new_person", acct.URL)
+	suite.True(acct.Discoverable)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person#main-key", acct.PublicKeyURI)
+	suite.Equal("https://unknown-instance.com/media/some_avatar_filename.jpeg", acct.AvatarRemoteURL)
+	suite.Equal("https://unknown-instance.com/media/some_header_filename.jpeg", acct.HeaderRemoteURL)
+	suite.False(acct.Locked)
 }
 
 func (suite *ASToInternalTestSuite) TestParseGargron() {
