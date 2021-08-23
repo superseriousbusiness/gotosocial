@@ -19,6 +19,8 @@
 package processing
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -26,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error) {
+func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error) {
 	// set default 'read' for scopes if it's not set, this follows the default of the mastodon api https://docs.joinmastodon.org/methods/apps/
 	var scopes string
 	if form.Scopes == "" {
@@ -61,7 +63,7 @@ func (p *processor) AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCrea
 	}
 
 	// chuck it in the db
-	if err := p.db.Put(app); err != nil {
+	if err := p.db.Put(ctx, app); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +76,7 @@ func (p *processor) AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCrea
 	}
 
 	// chuck it in the db
-	if err := p.db.Put(oc); err != nil {
+	if err := p.db.Put(ctx, oc); err != nil {
 		return nil, err
 	}
 

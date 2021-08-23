@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,14 +28,14 @@ import (
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
-func (p *processor) Create(applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
+func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
 	l := p.log.WithField("func", "accountCreate")
 
-	if err := p.db.IsEmailAvailable(form.Email); err != nil {
+	if err := p.db.IsEmailAvailable(ctx, form.Email); err != nil {
 		return nil, err
 	}
 
-	if err := p.db.IsUsernameAvailable(form.Username); err != nil {
+	if err := p.db.IsUsernameAvailable(ctx, form.Username); err != nil {
 		return nil, err
 	}
 
@@ -45,7 +46,7 @@ func (p *processor) Create(applicationToken oauth2.TokenInfo, application *gtsmo
 	}
 
 	l.Trace("creating new username and account")
-	user, err := p.db.NewSignup(form.Username, text.RemoveHTML(reason), p.config.AccountsConfig.RequireApproval, form.Email, form.Password, form.IP, form.Locale, application.ID, false, false)
+	user, err := p.db.NewSignup(ctx, form.Username, text.RemoveHTML(reason), p.config.AccountsConfig.RequireApproval, form.Email, form.Password, form.IP, form.Locale, application.ID, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new signup in the database: %s", err)
 	}

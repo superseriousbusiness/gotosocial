@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"mime/multipart"
 
 	"github.com/sirupsen/logrus"
@@ -38,40 +39,40 @@ import (
 // Processor wraps a bunch of functions for processing account actions.
 type Processor interface {
 	// Create processes the given form for creating a new account, returning an oauth token for that account if successful.
-	Create(applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
 	// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 	// The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
-	Delete(account *gtsmodel.Account, origin string) error
+	Delete(ctx context.Context, account *gtsmodel.Account, origin string) error
 	// Get processes the given request for account information.
-	Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
+	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
 	// Update processes the update of an account with the given form
-	Update(account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	StatusesGet(requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
+	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
 	// FollowersGet fetches a list of the target account's followers.
-	FollowersGet(requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
+	FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// FollowingGet fetches a list of the accounts that target account is following.
-	FollowingGet(requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
+	FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// RelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
-	RelationshipGet(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	RelationshipGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// FollowCreate handles a follow request to an account, either remote or local.
-	FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
+	FollowCreate(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
 	// FollowRemove handles the removal of a follow/follow request to an account, either remote or local.
-	FollowRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	FollowRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
-	BlockCreate(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// BlockRemove handles the removal of a block from requestingAccount to targetAccountID, either remote or local.
-	BlockRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// UpdateHeader does the dirty work of checking the header part of an account update form,
 	// parsing and checking the image, and doing the necessary updates in the database for this to become
 	// the account's new header image.
-	UpdateAvatar(avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
+	UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
 	// UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 	// parsing and checking the image, and doing the necessary updates in the database for this to become
 	// the account's new avatar image.
-	UpdateHeader(header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
+	UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type processor struct {

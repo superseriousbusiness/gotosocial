@@ -247,9 +247,6 @@ github.com/go-fed/activity/streams/vocab
 # github.com/go-fed/httpsig v1.1.0
 ## explicit
 github.com/go-fed/httpsig
-# github.com/go-pg/pg/extra/pgdebug v0.2.0
-## explicit
-github.com/go-pg/pg/extra/pgdebug
 # github.com/go-pg/pg/v10 v10.10.3
 ## explicit
 github.com/go-pg/pg/v10
@@ -383,13 +380,29 @@ github.com/tdewolff/parse/v2/strconv
 github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 github.com/ugorji/go/codec
+# github.com/uptrace/bun v0.4.3
+## explicit
+github.com/uptrace/bun
+github.com/uptrace/bun/dialect
+github.com/uptrace/bun/dialect/feature
+github.com/uptrace/bun/dialect/sqltype
+github.com/uptrace/bun/extra/bunjson
+github.com/uptrace/bun/internal
+github.com/uptrace/bun/internal/parser
+github.com/uptrace/bun/internal/tagparser
+github.com/uptrace/bun/schema
+# github.com/uptrace/bun/dialect/pgdialect v0.4.3
+## explicit
+github.com/uptrace/bun/dialect/pgdialect
+# github.com/uptrace/bun/driver/pgdriver v0.4.3
+## explicit
+github.com/uptrace/bun/driver/pgdriver
 # github.com/urfave/cli/v2 v2.3.0
 ## explicit
 github.com/urfave/cli/v2
 # github.com/vmihailenco/bufpool v0.1.11
 github.com/vmihailenco/bufpool
 # github.com/vmihailenco/msgpack/v5 v5.3.4
-## explicit
 github.com/vmihailenco/msgpack/v5
 github.com/vmihailenco/msgpack/v5/msgpcode
 # github.com/vmihailenco/tagparser v0.1.2
@@ -450,6 +463,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # google.golang.org/appengine v1.6.7
+## explicit
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore

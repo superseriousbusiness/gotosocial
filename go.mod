@@ -21,7 +21,6 @@ require (
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-fed/activity v1.0.1-0.20210803212804-d866ba75dd0f
 	github.com/go-fed/httpsig v1.1.0
-	github.com/go-pg/pg/extra/pgdebug v0.2.0
 	github.com/go-pg/pg/v10 v10.10.3
 	github.com/go-playground/validator/v10 v10.7.0 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
@@ -47,13 +46,16 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
+	github.com/uptrace/bun v0.4.3
+	github.com/uptrace/bun/dialect/pgdialect v0.4.3
+	github.com/uptrace/bun/driver/pgdriver v0.4.3
 	github.com/urfave/cli/v2 v2.3.0
-	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/text v0.3.6
+	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

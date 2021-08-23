@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,9 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't do anything
-	blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
+	blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -39,7 +40,7 @@ func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAcco
 
 	// make sure the target account actually exists in our db
 	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAcct); err != nil {
+	if err := p.db.GetByID(ctx, targetAccountID, targetAcct); err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
 		}
@@ -49,12 +50,12 @@ func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAcco
 	var frChanged bool
 	var frURI string
 	fr := &gtsmodel.FollowRequest{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "account_id", Value: requestingAccount.ID},
 		{Key: "target_account_id", Value: targetAccountID},
 	}, fr); err == nil {
 		frURI = fr.URI
-		if err := p.db.DeleteByID(fr.ID, fr); err != nil {
+		if err := p.db.DeleteByID(ctx, fr.ID, fr); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow request from db: %s", err))
 		}
 		frChanged = true
@@ -64,12 +65,12 @@ func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAcco
 	var fChanged bool
 	var fURI string
 	f := &gtsmodel.Follow{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "account_id", Value: requestingAccount.ID},
 		{Key: "target_account_id", Value: targetAccountID},
 	}, f); err == nil {
 		fURI = f.URI
-		if err := p.db.DeleteByID(f.ID, f); err != nil {
+		if err := p.db.DeleteByID(ctx, f.ID, f); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("AccountFollowRemove: error removing follow from db: %s", err))
 		}
 		fChanged = true
@@ -106,5 +107,5 @@ func (p *processor) FollowRemove(requestingAccount *gtsmodel.Account, targetAcco
 	}
 
 	// return whatever relationship results from all this
-	return p.RelationshipGet(requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

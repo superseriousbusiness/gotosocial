@@ -35,21 +35,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type adminDB struct {
 	config *config.Config
-	conn   *pg.DB
+	conn   *bun.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }
 
-func (a *adminDB) IsUsernameAvailable(username string) db.Error {
+func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) db.Error {
 	// if no error we fail because it means we found something
 	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := a.conn.Model(&gtsmodel.Account{}).Where("username = ?", username).Where("domain = ?", nil).Select(); err == nil {
+	if err := a.conn.
+		NewSelect().
+		Model(&gtsmodel.Account{}).
+		Where("username = ?", username).
+		Where("domain = ?", nil).
+		Scan(ctx); err == nil {
 		return fmt.Errorf("username %s already in use", username)
 	} else if err != pg.ErrNoRows {
 		return fmt.Errorf("db error: %s", err)

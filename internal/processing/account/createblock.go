@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -29,18 +30,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
-	targetAccount, err := p.db.GetAccountByID(targetAccountID)
+	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
 	}
 
 	// if requestingAccount already blocks target account, we don't need to do anything
-	if blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, false); err != nil {
+	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, false); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error checking existence of block: %s", err))
 	} else if blocked {
-		return p.RelationshipGet(requestingAccount, targetAccountID)
+		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 	}
 
 	// make the block
@@ -57,18 +58,18 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 	block.URI = util.GenerateURIForBlock(requestingAccount.Username, p.config.Protocol, p.config.Host, newBlockID)
 
 	// whack it in the database
-	if err := p.db.Put(block); err != nil {
+	if err := p.db.Put(ctx, block); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error creating block in db: %s", err))
 	}
 
 	// clear any follows or follow requests from the blocked account to the target account -- this is a simple delete
-	if err := p.db.DeleteWhere([]db.Where{
+	if err := p.db.DeleteWhere(ctx, []db.Where{
 		{Key: "account_id", Value: targetAccountID},
 		{Key: "target_account_id", Value: requestingAccount.ID},
 	}, &gtsmodel.Follow{}); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow in db: %s", err))
 	}
-	if err := p.db.DeleteWhere([]db.Where{
+	if err := p.db.DeleteWhere(ctx, []db.Where{
 		{Key: "account_id", Value: targetAccountID},
 		{Key: "target_account_id", Value: requestingAccount.ID},
 	}, &gtsmodel.FollowRequest{}); err != nil {
@@ -82,12 +83,12 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 	var frChanged bool
 	var frURI string
 	fr := &gtsmodel.FollowRequest{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "account_id", Value: requestingAccount.ID},
 		{Key: "target_account_id", Value: targetAccountID},
 	}, fr); err == nil {
 		frURI = fr.URI
-		if err := p.db.DeleteByID(fr.ID, fr); err != nil {
+		if err := p.db.DeleteByID(ctx, fr.ID, fr); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow request from db: %s", err))
 		}
 		frChanged = true
@@ -97,12 +98,12 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 	var fChanged bool
 	var fURI string
 	f := &gtsmodel.Follow{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "account_id", Value: requestingAccount.ID},
 		{Key: "target_account_id", Value: targetAccountID},
 	}, f); err == nil {
 		fURI = f.URI
-		if err := p.db.DeleteByID(f.ID, f); err != nil {
+		if err := p.db.DeleteByID(ctx, f.ID, f); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockCreate: error removing follow from db: %s", err))
 		}
 		fChanged = true
@@ -147,5 +148,5 @@ func (p *processor) BlockCreate(requestingAccount *gtsmodel.Account, targetAccou
 		TargetAccount:  targetAccount,
 	}
 
-	return p.RelationshipGet(requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

@@ -24,15 +24,15 @@ import "context"
 type Basic interface {
 	// CreateTable creates a table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
-	CreateTable(i interface{}) Error
+	CreateTable(ctx context.Context, i interface{}) Error
 
 	// DropTable drops the table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
-	DropTable(i interface{}) Error
+	DropTable(ctx context.Context, i interface{}) Error
 
 	// RegisterTable registers a table for use in many2many relations.
 	// For implementations that don't use tables, or many2many relations, this can just return nil.
-	RegisterTable(i interface{}) Error
+	RegisterTable(ctx context.Context, i interface{}) Error
 
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.
@@ -45,43 +45,43 @@ type Basic interface {
 	// for other implementations (for example, in-memory) it might just be the key of a map.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetByID(id string, i interface{}) Error
+	GetByID(ctx context.Context, id string, i interface{}) Error
 
 	// GetWhere gets one entry where key = value. This is similar to GetByID but allows the caller to specify the
 	// name of the key to select from.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetWhere(where []Where, i interface{}) Error
+	GetWhere(ctx context.Context, where []Where, i interface{}) Error
 
 	// GetAll will try to get all entries of type i.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetAll(i interface{}) Error
+	GetAll(ctx context.Context, i interface{}) Error
 
 	// Put simply stores i. It is up to the implementation to figure out how to store it, and using what key.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	Put(i interface{}) Error
+	Put(ctx context.Context, i interface{}) Error
 
 	// Upsert stores or updates i based on the given conflict column, as in https://www.postgresqltutorial.com/postgresql-upsert/
 	// It is up to the implementation to figure out how to store it, and using what key.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	Upsert(i interface{}, conflictColumn string) Error
+	Upsert(ctx context.Context, i interface{}, conflictColumn string) Error
 
 	// UpdateByID updates i with id id.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	UpdateByID(id string, i interface{}) Error
+	UpdateByID(ctx context.Context, id string, i interface{}) Error
 
 	// UpdateOneByID updates interface i with database the given database id. It will update one field of key key and value value.
-	UpdateOneByID(id string, key string, value interface{}, i interface{}) Error
+	UpdateOneByID(ctx context.Context, id string, key string, value interface{}, i interface{}) Error
 
 	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
-	UpdateWhere(where []Where, key string, value interface{}, i interface{}) Error
+	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) Error
 
 	// DeleteByID removes i with id id.
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteByID(id string, i interface{}) Error
+	DeleteByID(ctx context.Context, id string, i interface{}) Error
 
 	// DeleteWhere deletes i where key = value
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteWhere(where []Where, i interface{}) Error
+	DeleteWhere(ctx context.Context, where []Where, i interface{}) Error
 }

@@ -22,17 +22,17 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/uptrace/bun"
 )
 
 type domainDB struct {
 	config *config.Config
-	conn   *pg.DB
+	conn   *bun.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }

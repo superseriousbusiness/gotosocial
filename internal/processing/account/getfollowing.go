@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,15 +28,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true); err != nil {
+func (p *processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	accounts := []apimodel.Account{}
-	follows, err := p.db.GetAccountFollows(targetAccountID)
+	follows, err := p.db.GetAccountFollows(ctx, targetAccountID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return accounts, nil
@@ -44,7 +45,7 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 	}
 
 	for _, f := range follows {
-		blocked, err := p.db.IsBlocked(requestingAccount.ID, f.AccountID, true)
+		blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, f.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -53,7 +54,7 @@ func (p *processor) FollowingGet(requestingAccount *gtsmodel.Account, targetAcco
 		}
 
 		if f.TargetAccount == nil {
-			a, err := p.db.GetAccountByID(f.TargetAccountID)
+			a, err := p.db.GetAccountByID(ctx, f.TargetAccountID)
 			if err != nil {
 				if err == db.ErrNoEntries {
 					continue

@@ -19,6 +19,7 @@
 package db
 
 import (
+	"context"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -27,40 +28,40 @@ import (
 // Account contains functions related to account getting/setting/creation.
 type Account interface {
 	// GetAccountByID returns one account with the given ID, or an error if something goes wrong.
-	GetAccountByID(id string) (*gtsmodel.Account, Error)
+	GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, Error)
 
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
-	GetAccountByURI(uri string) (*gtsmodel.Account, Error)
+	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 
 	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
-	GetAccountByURL(uri string) (*gtsmodel.Account, Error)
+	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 
 	// GetLocalAccountByUsername returns an account on this instance by its username.
-	GetLocalAccountByUsername(username string) (*gtsmodel.Account, Error)
+	GetLocalAccountByUsername(ctx context.Context, username string) (*gtsmodel.Account, Error)
 
 	// GetAccountFaves fetches faves/likes created by the target accountID.
-	GetAccountFaves(accountID string) ([]*gtsmodel.StatusFave, Error)
+	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, Error)
 
 	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
-	CountAccountStatuses(accountID string) (int, Error)
+	CountAccountStatuses(ctx context.Context, accountID string) (int, Error)
 
 	// GetAccountStatuses is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
 	// In case of no entries, a 'no entries' error will be returned
-	GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, Error)
+	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, Error)
 
-	GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
+	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//
 	// The returned time will be zero if account has never posted anything.
-	GetAccountLastPosted(accountID string) (time.Time, Error)
+	GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, Error)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
-	SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) Error
+	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) Error
 
 	// GetInstanceAccount returns the instance account for the given domain.
 	// If domain is empty, this instance account will be returned.
-	GetInstanceAccount(domain string) (*gtsmodel.Account, Error)
+	GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, Error)
 }

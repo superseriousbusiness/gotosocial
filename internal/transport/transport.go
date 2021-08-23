@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package transport
 
 import (
@@ -17,11 +35,11 @@ import (
 type Transport interface {
 	pub.Transport
 	// DereferenceMedia fetches the bytes of the given media attachment IRI, with the expectedContentType.
-	DereferenceMedia(c context.Context, iri *url.URL, expectedContentType string) ([]byte, error)
+	DereferenceMedia(ctx context.Context, iri *url.URL, expectedContentType string) ([]byte, error)
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
-	DereferenceInstance(c context.Context, iri *url.URL) (*gtsmodel.Instance, error)
+	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
-	Finger(c context.Context, targetUsername string, targetDomains string) ([]byte, error)
+	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
 }
 
 // transport implements the Transport interface

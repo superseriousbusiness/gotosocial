@@ -19,6 +19,7 @@
 package admin
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,10 +28,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) DomainBlockGet(account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *processor) DomainBlockGet(ctx context.Context, account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
 	domainBlock := &gtsmodel.DomainBlock{}
 
-	if err := p.db.GetByID(id, domainBlock); err != nil {
+	if err := p.db.GetByID(ctx, id, domainBlock); err != nil {
 		if err != db.ErrNoEntries {
 			// something has gone really wrong
 			return nil, gtserror.NewErrorInternalError(err)

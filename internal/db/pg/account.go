@@ -24,61 +24,62 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
 type accountDB struct {
 	config *config.Config
-	conn   *pg.DB
+	conn   *bun.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }
 
-func (a *accountDB) newAccountQ(account *gtsmodel.Account) *orm.Query {
-	return a.conn.Model(account).
+func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
+	return a.conn.
+		NewSelect().
+		Model(account).
 		Relation("AvatarMediaAttachment").
 		Relation("HeaderMediaAttachment")
 }
 
-func (a *accountDB) GetAccountByID(id string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
 		Where("account.id = ?", id)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return account, err
 }
 
-func (a *accountDB) GetAccountByURI(uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
 		Where("account.uri = ?", uri)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return account, err
 }
 
-func (a *accountDB) GetAccountByURL(uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
 		Where("account.url = ?", uri)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return account, err
 }
 
-func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account)
@@ -90,29 +91,31 @@ func (a *accountDB) GetInstanceAccount(domain string) (*gtsmodel.Account, db.Err
 	} else {
 		q = q.
 			Where("account.username = ?", domain).
-			Where("? IS NULL", pg.Ident("domain"))
+			Where("? IS NULL", bun.Ident("domain"))
 	}
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return account, err
 }
 
-func (a *accountDB) GetAccountLastPosted(accountID string) (time.Time, db.Error) {
+func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, db.Error) {
 	status := &gtsmodel.Status{}
 
-	q := a.conn.Model(status).
+	q := a.conn.
+		NewSelect().
+		Model(status).
 		Order("id DESC").
 		Limit(1).
 		Where("account_id = ?", accountID).
 		Column("created_at")
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return status.CreatedAt, err
 }
 
-func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
+func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
 	if mediaAttachment.Avatar && mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
@@ -127,51 +130,58 @@ func (a *accountDB) SetAccountHeaderOrAvatar(mediaAttachment *gtsmodel.MediaAtta
 	}
 
 	// TODO: there are probably more side effects here that need to be handled
-	if _, err := a.conn.Model(mediaAttachment).OnConflict("(id) DO UPDATE").Insert(); err != nil {
+	if _, err := a.conn.NewInsert().Model(mediaAttachment).On("CONFLICT (id) DO UPDATE").Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := a.conn.Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Update(); err != nil {
+	if _, err := a.conn.NewInsert().Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a *accountDB) GetLocalAccountByUsername(username string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username string) (*gtsmodel.Account, db.Error) {
 	account := &gtsmodel.Account{}
 
 	q := a.newAccountQ(account).
 		Where("username = ?", username).
-		Where("? IS NULL", pg.Ident("domain"))
+		Where("? IS NULL", bun.Ident("domain"))
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return account, err
 }
 
-func (a *accountDB) GetAccountFaves(accountID string) ([]*gtsmodel.StatusFave, db.Error) {
+func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := []*gtsmodel.StatusFave{}
 
-	if err := a.conn.Model(&faves).
+	if err := a.conn.
+		NewSelect().
+		Model(&faves).
 		Where("account_id = ?", accountID).
-		Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return faves, nil
-		}
+		Scan(ctx); err != nil {
 		return nil, err
 	}
 	return faves, nil
 }
 
-func (a *accountDB) CountAccountStatuses(accountID string) (int, db.Error) {
-	return a.conn.Model(&gtsmodel.Status{}).Where("account_id = ?", accountID).Count()
+func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, db.Error) {
+	return a.conn.
+		NewSelect().
+		Model(&gtsmodel.Status{}).
+		Where("account_id = ?", accountID).
+		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.Error) {
 	a.log.Debugf("getting statuses for account %s", accountID)
 	statuses := []*gtsmodel.Status{}
 
-	q := a.conn.Model(&statuses).Order("id DESC")
+	q := a.conn.
+		NewSelect().
+		Model(&statuses).
+		Order("id DESC")
+
 	if accountID != "" {
 		q = q.Where("account_id = ?", accountID)
 	}
@@ -181,7 +191,7 @@ func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeRepli
 	}
 
 	if excludeReplies {
-		q = q.Where("? IS NULL", pg.Ident("in_reply_to_id"))
+		q = q.Where("? IS NULL", bun.Ident("in_reply_to_id"))
 	}
 
 	if pinnedOnly {
@@ -189,8 +199,10 @@ func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeRepli
 	}
 
 	if mediaOnly {
-		q = q.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			return q.Where("? IS NOT NULL", pg.Ident("attachments")).Where("attachments != '{}'"), nil
+		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				WhereOr("? IS NOT NULL", bun.Ident("attachments")).
+				WhereOr("attachments != '{}'")
 		})
 	}
 
@@ -198,10 +210,7 @@ func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeRepli
 		q = q.Where("id < ?", maxID)
 	}
 
-	if err := q.Select(); err != nil {
-		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries
-		}
+	if err := q.Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -213,10 +222,12 @@ func (a *accountDB) GetAccountStatuses(accountID string, limit int, excludeRepli
 	return statuses, nil
 }
 
-func (a *accountDB) GetAccountBlocks(accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
+func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
 	blocks := []*gtsmodel.Block{}
 
-	fq := a.conn.Model(&blocks).
+	fq := a.conn.
+		NewSelect().
+		Model(&blocks).
 		Where("block.account_id = ?", accountID).
 		Relation("TargetAccount").
 		Order("block.id DESC")
@@ -233,11 +244,8 @@ func (a *accountDB) GetAccountBlocks(accountID string, maxID string, sinceID str
 		fq = fq.Limit(limit)
 	}
 
-	err := fq.Select()
+	err := fq.Scan(ctx)
 	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, "", "", db.ErrNoEntries
-		}
 		return nil, "", "", err
 	}
 

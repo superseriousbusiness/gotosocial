@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -27,12 +28,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) RelationshipGet(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *processor) RelationshipGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	if requestingAccount == nil {
 		return nil, gtserror.NewErrorForbidden(errors.New("not authed"))
 	}
 
-	gtsR, err := p.db.GetRelationship(requestingAccount.ID, targetAccountID)
+	gtsR, err := p.db.GetRelationship(ctx, requestingAccount.ID, targetAccountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting relationship: %s", err))
 	}

@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package transport
 
 import (
@@ -16,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
+func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
 	l := t.log.WithField("func", "DereferenceInstance")
 
 	var i *gtsmodel.Instance
@@ -27,7 +45,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	//
 	// This will only work with Mastodon-api compatible instances: Mastodon, some Pleroma instances, GoToSocial.
 	l.Debugf("trying to dereference instance %s by /api/v1/instance", iri.Host)
-	i, err = dereferenceByAPIV1Instance(c, t, iri)
+	i, err = dereferenceByAPIV1Instance(ctx, t, iri)
 	if err == nil {
 		l.Debugf("successfully dereferenced instance using /api/v1/instance")
 		return i, nil
@@ -37,7 +55,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	// If that doesn't work, try to dereference using /.well-known/nodeinfo.
 	// This will involve two API calls and return less info overall, but should be more widely compatible.
 	l.Debugf("trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
-	i, err = dereferenceByNodeInfo(c, t, iri)
+	i, err = dereferenceByNodeInfo(ctx, t, iri)
 	if err == nil {
 		l.Debugf("successfully dereferenced instance using /.well-known/nodeinfo")
 		return i, nil
@@ -58,7 +76,7 @@ func (t *transport) DereferenceInstance(c context.Context, iri *url.URL) (*gtsmo
 	}, nil
 }
 
-func dereferenceByAPIV1Instance(c context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
+func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
 	l := t.log.WithField("func", "dereferenceByAPIV1Instance")
 
 	cleanIRI := &url.URL{
@@ -68,11 +86,10 @@ func dereferenceByAPIV1Instance(c context.Context, t *transport, iri *url.URL) (
 	}
 
 	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequest("GET", cleanIRI.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(c)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
@@ -216,7 +233,7 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 	return i, nil
 }
 
-func callNodeInfoWellKnown(c context.Context, t *transport, iri *url.URL) (*url.URL, error) {
+func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*url.URL, error) {
 	l := t.log.WithField("func", "callNodeInfoWellKnown")
 
 	cleanIRI := &url.URL{
@@ -226,11 +243,11 @@ func callNodeInfoWellKnown(c context.Context, t *transport, iri *url.URL) (*url.
 	}
 
 	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequest("GET", cleanIRI.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(c)
+	
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
@@ -281,15 +298,15 @@ func callNodeInfoWellKnown(c context.Context, t *transport, iri *url.URL) (*url.
 	return nodeinfoHref, nil
 }
 
-func callNodeInfo(c context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
+func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
 	l := t.log.WithField("func", "callNodeInfo")
 
 	l.Debugf("performing GET to %s", iri.String())
-	req, err := http.NewRequest("GET", iri.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(c)
+	
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))

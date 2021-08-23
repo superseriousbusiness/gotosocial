@@ -22,6 +22,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"database/sql"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -29,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg/extra/pgdebug"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
@@ -37,6 +37,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 var registerTables []interface{} = []interface{}{
@@ -77,105 +80,75 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	}
 	log.Debugf("using pg options: %+v", opts)
 
-	// create a connection
-	pgCtx, cancel := context.WithCancel(ctx)
-	conn := pg.Connect(opts).WithContext(pgCtx)
+	sqldb := sql.OpenDB(pgdriver.NewConnector(opts...))
 
-	// this will break the logfmt format we normally log in,
-	// since we can't choose where pg outputs to and it defaults to
-	// stdout. So use this option with care!
-	if log.GetLevel() >= logrus.TraceLevel {
-		conn.AddQueryHook(pgdebug.DebugHook{
-			// Print all queries.
-			Verbose: true,
-		})
-	}
+	conn := bun.NewDB(sqldb, pgdialect.New())
 
 	// actually *begin* the connection so that we can tell if the db is there and listening
-	if err := conn.Ping(ctx); err != nil {
-		cancel()
+	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
-
-	// print out discovered postgres version
-	var version string
-	if _, err = conn.QueryOneContext(ctx, pg.Scan(&version), "SELECT version()"); err != nil {
-		cancel()
-		return nil, fmt.Errorf("db connection error: %s", err)
-	}
-	log.Infof("connected to postgres version: %s", version)
+	log.Info("connected to postgres")
 
 	ps := &postgresService{
 		Account: &accountDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Admin: &adminDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Basic: &basicDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Domain: &domainDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Instance: &instanceDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Media: &mediaDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Mention: &mentionDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Notification: &notificationDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Relationship: &relationshipDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Status: &statusDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		Timeline: &timelineDB{
 			config: c,
 			conn:   conn,
 			log:    log,
-			cancel: cancel,
 		},
 		config: c,
 		conn:   conn,
 		log:    log,
-		cancel: cancel,
 	}
 
 	// we can confidently return this useable postgres service now
@@ -188,7 +161,7 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 
 // derivePGOptions takes an application config and returns either a ready-to-use *pg.Options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
-func derivePGOptions(c *config.Config) (*pg.Options, error) {
+func derivePGOptions(c *config.Config) ([]pgdriver.DriverOption, error) {
 	if strings.ToUpper(c.DBConfig.Type) != db.DBTypePostgres {
 		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, c.DBConfig.Type)
 	}
@@ -268,13 +241,13 @@ func derivePGOptions(c *config.Config) (*pg.Options, error) {
 
 	// We can rely on the pg library we're using to set
 	// sensible defaults for everything we don't set here.
-	options := &pg.Options{
-		Addr:            fmt.Sprintf("%s:%d", c.DBConfig.Address, c.DBConfig.Port),
-		User:            c.DBConfig.User,
-		Password:        c.DBConfig.Password,
-		Database:        c.DBConfig.Database,
-		ApplicationName: c.ApplicationName,
-		TLSConfig:       tlsConfig,
+	options := []pgdriver.DriverOption{
+		pgdriver.WithAddr(fmt.Sprintf("%s:%d", c.DBConfig.Address, c.DBConfig.Port)),
+		pgdriver.WithUser(c.DBConfig.User),
+		pgdriver.WithPassword(c.DBConfig.Password),
+		pgdriver.WithDatabase(c.DBConfig.Database),
+		pgdriver.WithApplicationName(c.ApplicationName),
+		pgdriver.WithTLSConfig(tlsConfig),
 	}
 
 	return options, nil

@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -27,9 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
+func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
 	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
+	if err := p.db.GetByID(ctx, targetAccountID, targetAccount); err != nil {
 		if err == db.ErrNoEntries {
 			return nil, errors.New("account not found")
 		}
@@ -39,7 +40,7 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	var blocked bool
 	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
+		blocked, err = p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true)
 		if err != nil {
 			return nil, fmt.Errorf("error checking account block: %s", err)
 		}

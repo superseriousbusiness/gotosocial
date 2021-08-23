@@ -18,19 +18,23 @@
 
 package db
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
 // Instance contains functions for instance-level actions (counting instance users etc.).
 type Instance interface {
 	// CountInstanceUsers returns the number of known accounts registered with the given domain.
-	CountInstanceUsers(domain string) (int, Error)
+	CountInstanceUsers(ctx context.Context, domain string) (int, Error)
 
 	// CountInstanceStatuses returns the number of known statuses posted from the given domain.
-	CountInstanceStatuses(domain string) (int, Error)
+	CountInstanceStatuses(ctx context.Context, domain string) (int, Error)
 
 	// CountInstanceDomains returns the number of known instances known that the given domain federates with.
-	CountInstanceDomains(domain string) (int, Error)
+	CountInstanceDomains(ctx context.Context, domain string) (int, Error)
 
 	// GetInstanceAccounts returns a slice of accounts from the given instance, arranged by ID.
-	GetInstanceAccounts(domain string, maxID string, limit int) ([]*gtsmodel.Account, Error)
+	GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, Error)
 }

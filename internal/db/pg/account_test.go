@@ -19,6 +19,7 @@
 package pg_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -54,7 +55,7 @@ func (suite *AccountTestSuite) TearDownTest() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
-	account, err := suite.db.GetAccountByID(suite.testAccounts["local_account_1"].ID)
+	account, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -64,108 +64,108 @@ type Processor interface {
 	*/
 
 	// AccountCreate processes the given form for creating a new account, returning an oauth token for that account if successful.
-	AccountCreate(authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
 	// AccountGet processes the given request for account information.
-	AccountGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
+	AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
 	// AccountUpdate processes the update of an account with the given form
-	AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
+	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
-	AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
+	AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountFollowingGet fetches a list of the accounts that target account is following.
-	AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
+	AccountFollowingGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountRelationshipGet returns a relationship model describing the relationship of the targetAccount to the Authed account.
-	AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	AccountRelationshipGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountFollowCreate handles a follow request to an account, either remote or local.
-	AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
+	AccountFollowCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountFollowRemove handles the removal of a follow/follow request to an account, either remote or local.
-	AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	AccountFollowRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountBlockCreate handles the creation of a block from authed account to target account, either remote or local.
-	AccountBlockCreate(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	AccountBlockCreate(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 	// AccountBlockRemove handles the removal of a block from authed account to target account, either remote or local.
-	AccountBlockRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
+	AccountBlockRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
-	AdminEmojiCreate(authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+	AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
-	AdminDomainBlockCreate(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
+	AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlocksImport handles the import of multiple domain blocks by an admin, using the given form.
-	AdminDomainBlocksImport(authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) ([]*apimodel.DomainBlock, gtserror.WithCode)
+	AdminDomainBlocksImport(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) ([]*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlocksGet returns a list of currently blocked domains.
-	AdminDomainBlocksGet(authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
+	AdminDomainBlocksGet(ctx context.Context, authed *oauth.Auth, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlockGet returns one domain block, specified by ID.
-	AdminDomainBlockGet(authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
+	AdminDomainBlockGet(ctx context.Context, authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlockDelete deletes one domain block, specified by ID, returning the deleted domain block.
-	AdminDomainBlockDelete(authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
+	AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 
 	// AppCreate processes the creation of a new API application
-	AppCreate(authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
+	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
 
 	// BlocksGet returns a list of accounts blocked by the requesting account.
-	BlocksGet(authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
+	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
 
 	// FileGet handles the fetching of a media attachment file via the fileserver.
-	FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
 
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
-	FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode)
+	FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode)
 	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
-	FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
+	FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
-	InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode)
+	InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)
 	// InstancePatch updates this instance according to the given form.
 	//
 	// It should already be ascertained that the requesting account is authenticated and an admin.
-	InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode)
+	InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode)
 
 	// MediaCreate handles the creation of a media attachment, using the given form.
-	MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	MediaCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
 	// MediaGet handles the GET of a media attachment with the given ID
-	MediaGet(authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, gtserror.WithCode)
+	MediaGet(ctx context.Context, authed *oauth.Auth, attachmentID string) (*apimodel.Attachment, gtserror.WithCode)
 	// MediaUpdate handles the PUT of a media attachment with the given ID and form
-	MediaUpdate(authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
+	MediaUpdate(ctx context.Context, authed *oauth.Auth, attachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 
 	// NotificationsGet
-	NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode)
+	NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode)
 
 	// SearchGet performs a search with the given params, resolving/dereferencing remotely as desired
-	SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
+	SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode)
 
 	// StatusCreate processes the given form to create a new status, returning the api model representation of that status if it's OK.
-	StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
+	StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error)
 	// StatusDelete processes the delete of a given status, returning the deleted status if the delete goes through.
-	StatusDelete(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusFave processes the faving of a given status, returning the updated status if the fave goes through.
-	StatusFave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusBoost processes the boost/reblog of a given status, returning the newly-created boost if all is well.
-	StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	StatusBoost(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusUnboost processes the unboost/unreblog of a given status, returning the status if all is well.
-	StatusUnboost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
+	StatusUnboost(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.
-	StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
+	StatusBoostedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode)
 	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
-	StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
+	StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
 	// StatusGet gets the given status, taking account of privacy settings and blocks etc.
-	StatusGet(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
-	StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID
-	StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
+	StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode)
 
 	// HomeTimelineGet returns statuses from the home timeline, with the given filters/parameters.
-	HomeTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
-	PublicTimelineGet(authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
-	FavedTimelineGet(authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
-	AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error)
+	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
 	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
-	OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
@@ -199,10 +199,10 @@ type Processor interface {
 	GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode)
 
 	// GetNodeInfoRel returns a well known response giving the path to node info.
-	GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
+	GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
 
 	// GetNodeInfo returns a node info struct in response to a node info request.
-	GetNodeInfo(request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
+	GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
 
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
@@ -280,7 +280,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 }
 
 // Start starts the Processor, reading from its channels and passing messages back and forth.
-func (p *processor) Start() error {
+func (p *processor) Start(ctx context.Context) error {
 	go func() {
 	DistLoop:
 		for {
@@ -288,14 +288,14 @@ func (p *processor) Start() error {
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Tracef("received message FROM client API: %+v", clientMsg)
 				go func() {
-					if err := p.processFromClientAPI(clientMsg); err != nil {
+					if err := p.processFromClientAPI(ctx, clientMsg); err != nil {
 						p.log.Error(err)
 					}
 				}()
 			case federatorMsg := <-p.fromFederator:
 				p.log.Tracef("received message FROM federator: %+v", federatorMsg)
 				go func() {
-					if err := p.processFromFederator(federatorMsg); err != nil {
+					if err := p.processFromFederator(ctx, federatorMsg); err != nil {
 						p.log.Error(err)
 					}
 				}()

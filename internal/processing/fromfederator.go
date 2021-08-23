@@ -19,6 +19,7 @@
 package processing
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) error {
+func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmodel.FromFederator) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":         "processFromFederator",
 		"federatorMsg": fmt.Sprintf("%+v", federatorMsg),
@@ -53,11 +54,11 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return err
 			}
 
-			if err := p.timelineStatus(status); err != nil {
+			if err := p.timelineStatus(ctx, status); err != nil {
 				return err
 			}
 
-			if err := p.notifyStatus(status); err != nil {
+			if err := p.notifyStatus(ctx, status); err != nil {
 				return err
 			}
 		case gtsmodel.ActivityStreamsProfile:
@@ -70,7 +71,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("like was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(incomingFave, federatorMsg.ReceivingAccount); err != nil {
+			if err := p.notifyFave(ctx, incomingFave, federatorMsg.ReceivingAccount); err != nil {
 				return err
 			}
 		case gtsmodel.ActivityStreamsFollow:
@@ -80,7 +81,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("incomingFollowRequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
-			if err := p.notifyFollowRequest(incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
+			if err := p.notifyFollowRequest(ctx, incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
 				return err
 			}
 		case gtsmodel.ActivityStreamsAnnounce:
@@ -100,17 +101,17 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 			}
 			incomingAnnounce.ID = incomingAnnounceID
 
-			if err := p.db.PutStatus(incomingAnnounce); err != nil {
+			if err := p.db.PutStatus(ctx, incomingAnnounce); err != nil {
 				if err != db.ErrNoEntries {
 					return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 				}
 			}
 
-			if err := p.timelineStatus(incomingAnnounce); err != nil {
+			if err := p.timelineStatus(ctx, incomingAnnounce); err != nil {
 				return err
 			}
 
-			if err := p.notifyAnnounce(incomingAnnounce); err != nil {
+			if err := p.notifyAnnounce(ctx, incomingAnnounce); err != nil {
 				return err
 			}
 		case gtsmodel.ActivityStreamsBlock:
@@ -172,13 +173,13 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 
 			// delete all mentions for this status
 			for _, m := range statusToDelete.MentionIDs {
-				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
+				if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
 					return err
 				}
 			}
 
 			// delete all notifications for this status
-			if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+			if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 				return err
 			}
 
@@ -198,7 +199,7 @@ func (p *processor) processFromFederator(federatorMsg gtsmodel.FromFederator) er
 				return errors.New("follow was not parseable as *gtsmodel.Follow")
 			}
 
-			if err := p.notifyFollow(follow, federatorMsg.ReceivingAccount); err != nil {
+			if err := p.notifyFollow(ctx, follow, federatorMsg.ReceivingAccount); err != nil {
 				return err
 			}
 		}

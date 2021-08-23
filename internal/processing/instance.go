@@ -19,6 +19,7 @@
 package processing
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -29,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.WithCode) {
+func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain}}, i); err != nil {
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, i); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
 	}
 
@@ -43,15 +44,15 @@ func (p *processor) InstanceGet(domain string) (*apimodel.Instance, gtserror.Wit
 	return ai, nil
 }
 
-func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
+func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: p.config.Host}}, i); err != nil {
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: p.config.Host}}, i); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
 	}
 
 	// fetch the instance account from the db for processing
-	ia, err := p.db.GetInstanceAccount("")
+	ia, err := p.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", p.config.Host, err))
 	}
@@ -67,13 +68,13 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 	// validate & update site contact account if it's set on the form
 	if form.ContactUsername != nil {
 		// make sure the account with the given username exists in the db
-		contactAccount, err := p.db.GetLocalAccountByUsername(*form.ContactUsername)
+		contactAccount, err := p.db.GetLocalAccountByUsername(ctx, *form.ContactUsername)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
 		}
 		// make sure it has a user associated with it
 		contactUser := &gtsmodel.User{}
-		if err := p.db.GetWhere([]db.Where{{Key: "account_id", Value: contactAccount.ID}}, contactUser); err != nil {
+		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: contactAccount.ID}}, contactUser); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.ContactUsername))
 		}
 		// suspended accounts cannot be contact accounts
@@ -132,7 +133,7 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 
 	// process avatar if provided
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		_, err := p.accountProcessor.UpdateAvatar(form.Avatar, ia.ID)
+		_, err := p.accountProcessor.UpdateAvatar(ctx, form.Avatar, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
@@ -140,13 +141,13 @@ func (p *processor) InstancePatch(form *apimodel.InstanceSettingsUpdateRequest) 
 
 	// process header if provided
 	if form.Header != nil && form.Header.Size != 0 {
-		_, err := p.accountProcessor.UpdateHeader(form.Header, ia.ID)
+		_, err := p.accountProcessor.UpdateHeader(ctx, form.Header, ia.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}
 	}
 
-	if err := p.db.UpdateByID(i.ID, i); err != nil {
+	if err := p.db.UpdateByID(ctx, i.ID, i); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", p.config.Host, err))
 	}
 

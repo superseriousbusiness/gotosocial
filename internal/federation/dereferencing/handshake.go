@@ -18,9 +18,12 @@
 
 package dereferencing
 
-import "net/url"
+import (
+	"context"
+	"net/url"
+)
 
-func (d *deref) Handshaking(username string, remoteAccountID *url.URL) bool {
+func (d *deref) Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool {
 	d.handshakeSync.Lock()
 	defer d.handshakeSync.Unlock()
 

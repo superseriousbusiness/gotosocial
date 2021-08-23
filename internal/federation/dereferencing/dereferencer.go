@@ -19,6 +19,7 @@
 package dereferencing
 
 import (
+	"context"
 	"net/url"
 	"sync"
 
@@ -34,18 +35,18 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
-	GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
-	EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
+	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
+	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
 
-	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
-	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
-	DereferenceThread(username string, statusIRI *url.URL) error
+	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
+	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error
 
-	Handshaking(username string, remoteAccountID *url.URL) bool
+	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 }
 
 type deref struct {

@@ -31,11 +31,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
 type statusDB struct {
 	config *config.Config
-	conn   *pg.DB
+	conn   *bun.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 	cache  cache.Cache

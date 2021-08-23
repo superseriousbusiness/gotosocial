@@ -20,6 +20,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
+func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
 	if user.Admin {
 		return nil, fmt.Errorf("user %s not an admin", user.ID)
 	}
@@ -65,7 +66,7 @@ func (p *processor) EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, 
 		return nil, fmt.Errorf("error converting emoji to mastotype: %s", err)
 	}
 
-	if err := p.db.Put(emoji); err != nil {
+	if err := p.db.Put(ctx, emoji); err != nil {
 		return nil, fmt.Errorf("database error while processing emoji: %s", err)
 	}
 
