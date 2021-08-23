@@ -41,6 +41,7 @@ import (
 	propertylikes "github.com/go-fed/activity/streams/impl/activitystreams/property_likes"
 	propertylocation "github.com/go-fed/activity/streams/impl/activitystreams/property_location"
 	propertylongitude "github.com/go-fed/activity/streams/impl/activitystreams/property_longitude"
+	propertymanuallyapprovesfollowers "github.com/go-fed/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/go-fed/activity/streams/impl/activitystreams/property_mediatype"
 	propertyname "github.com/go-fed/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/go-fed/activity/streams/impl/activitystreams/property_next"
@@ -303,6 +304,12 @@ func NewActivityStreamsLocationProperty() vocab.ActivityStreamsLocationProperty 
 // ActivityStreamsLongitudeProperty
 func NewActivityStreamsLongitudeProperty() vocab.ActivityStreamsLongitudeProperty {
 	return propertylongitude.NewActivityStreamsLongitudeProperty()
+}
+
+// NewActivityStreamsActivityStreamsManuallyApprovesFollowersProperty creates a
+// new ActivityStreamsManuallyApprovesFollowersProperty
+func NewActivityStreamsManuallyApprovesFollowersProperty() vocab.ActivityStreamsManuallyApprovesFollowersProperty {
+	return propertymanuallyapprovesfollowers.NewActivityStreamsManuallyApprovesFollowersProperty()
 }
 
 // NewActivityStreamsActivityStreamsMediaTypeProperty creates a new

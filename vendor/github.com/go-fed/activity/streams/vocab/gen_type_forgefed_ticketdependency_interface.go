@@ -12,12 +12,12 @@ package vocab
 //       "https://www.w3.org/ns/activitystreams",
 //       "https://forgefed.peers.community/ns"
 //     ],
-//     "attributedTo": "https://example.dev/alice",
-//     "id": "https://example.dev/ticket-deps/2342593",
-//     "object": "https://dev.community/bob/coolproj/issues/85",
+//     "attributedTo": "https://example.org/alice",
+//     "id": "https://example.org/ticket-deps/2342593",
+//     "object": "https://example.com/bob/coolproj/issues/85",
 //     "published": "2019-07-11T12:34:56Z",
 //     "relationship": "dependsOn",
-//     "subject": "https://example.dev/alice/myproj/issues/42",
+//     "subject": "https://example.org/alice/myproj/issues/42",
 //     "summary": "Alice's ticket depends on Bob's ticket",
 //     "type": [
 //       "Relationship",

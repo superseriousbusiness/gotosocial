@@ -105,7 +105,12 @@ func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update
 	}
 	acct.ActorType = accountable.GetTypeName()
 
-	// TODO: locked aka manuallyApprovesFollowers
+	// locked aka manuallyApprovesFollowers
+	acct.Locked = true // assume locked by default
+	maf := accountable.GetActivityStreamsManuallyApprovesFollowers()
+	if maf != nil && maf.IsXMLSchemaBoolean() {
+		acct.Locked = maf.Get()
+	}
 
 	// discoverable
 	// default to false -- take custom value if it's set though

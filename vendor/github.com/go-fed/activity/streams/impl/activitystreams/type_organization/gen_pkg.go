@@ -108,6 +108,11 @@ type privateManager interface {
 	// method for the "ActivityStreamsLocationProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeLocationPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsLocationProperty, error)
+	// DeserializeManuallyApprovesFollowersPropertyActivityStreams returns the
+	// deserialization method for the
+	// "ActivityStreamsManuallyApprovesFollowersProperty" non-functional
+	// property in the vocabulary "ActivityStreams"
+	DeserializeManuallyApprovesFollowersPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsManuallyApprovesFollowersProperty, error)
 	// DeserializeMediaTypePropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsMediaTypeProperty" non-functional
 	// property in the vocabulary "ActivityStreams"

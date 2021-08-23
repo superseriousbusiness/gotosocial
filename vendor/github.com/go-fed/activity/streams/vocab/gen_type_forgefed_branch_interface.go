@@ -11,8 +11,8 @@ package vocab
 //       "https://www.w3.org/ns/activitystreams",
 //       "https://forgefed.peers.community/ns"
 //     ],
-//     "context": "https://example.dev/luke/myrepo",
-//     "id": "https://example.dev/luke/myrepo/branches/master",
+//     "context": "https://example.org/luke/myrepo",
+//     "id": "https://example.org/luke/myrepo/branches/master",
 //     "name": "master",
 //     "ref": "refs/heads/master",
 //     "type": "Branch"

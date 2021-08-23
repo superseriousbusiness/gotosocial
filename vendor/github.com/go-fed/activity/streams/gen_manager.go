@@ -41,6 +41,7 @@ import (
 	propertylikes "github.com/go-fed/activity/streams/impl/activitystreams/property_likes"
 	propertylocation "github.com/go-fed/activity/streams/impl/activitystreams/property_location"
 	propertylongitude "github.com/go-fed/activity/streams/impl/activitystreams/property_longitude"
+	propertymanuallyapprovesfollowers "github.com/go-fed/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/go-fed/activity/streams/impl/activitystreams/property_mediatype"
 	propertyname "github.com/go-fed/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/go-fed/activity/streams/impl/activitystreams/property_next"
@@ -1316,6 +1317,20 @@ func (this Manager) DeserializeLocationPropertyActivityStreams() func(map[string
 func (this Manager) DeserializeLongitudePropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsLongitudeProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsLongitudeProperty, error) {
 		i, err := propertylongitude.DeserializeLongitudeProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeManuallyApprovesFollowersPropertyActivityStreams returns the
+// deserialization method for the
+// "ActivityStreamsManuallyApprovesFollowersProperty" non-functional property
+// in the vocabulary "ActivityStreams"
+func (this Manager) DeserializeManuallyApprovesFollowersPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsManuallyApprovesFollowersProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsManuallyApprovesFollowersProperty, error) {
+		i, err := propertymanuallyapprovesfollowers.DeserializeManuallyApprovesFollowersProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

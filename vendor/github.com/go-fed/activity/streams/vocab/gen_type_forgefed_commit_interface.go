@@ -13,17 +13,17 @@ package vocab
 //       "https://www.w3.org/ns/activitystreams",
 //       "https://forgefed.peers.community/ns"
 //     ],
-//     "attributedTo": "https://example.dev/bob",
+//     "attributedTo": "https://example.org/bob",
 //     "committed": "2019-07-26T23:45:01Z",
-//     "committedBy": "https://example.dev/alice",
-//     "context": "https://example.dev/alice/myrepo",
+//     "committedBy": "https://example.org/alice",
+//     "context": "https://example.org/alice/myrepo",
 //     "created": "2019-07-11T12:34:56Z",
 //     "description": {
 //       "content": "It's about time people can install on their computers!",
 //       "mediaType": "text/plain"
 //     },
 //     "hash": "109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
-//     "id": "https://example.dev/alice/myrepo/commits/109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
+//     "id": "https://example.org/alice/myrepo/commits/109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
 //     "summary": "Add an installation script, fixes issue #89",
 //     "type": "Commit"
 //   }

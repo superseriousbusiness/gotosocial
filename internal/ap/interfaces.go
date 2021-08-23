@@ -39,6 +39,7 @@ type Accountable interface {
 	WithFollowing
 	WithFollowers
 	WithFeatured
+	WithManuallyApprovesFollowers
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.
@@ -318,4 +319,9 @@ type WithPartOf interface {
 // WithItems represents an activity with ActivityStreamsItemsProperty
 type WithItems interface {
 	GetActivityStreamsItems() vocab.ActivityStreamsItemsProperty
+}
+
+// WithManuallyApprovesFollowers represents a Person or profile with the ManuallyApprovesFollowers property.
+type WithManuallyApprovesFollowers interface {
+	GetActivityStreamsManuallyApprovesFollowers() vocab.ActivityStreamsManuallyApprovesFollowersProperty
 }

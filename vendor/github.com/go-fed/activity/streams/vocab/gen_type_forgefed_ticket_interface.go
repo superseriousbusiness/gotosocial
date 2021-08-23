@@ -11,12 +11,12 @@ package vocab
 //       "https://www.w3.org/ns/activitystreams",
 //       "https://forgefed.peers.community/ns"
 //     ],
-//     "assignedTo": "https://example.dev/alice",
-//     "attributedTo": "https://dev.community/bob",
+//     "assignedTo": "https://example.org/alice",
+//     "attributedTo": "https://example.com/bob",
 //     "content": "\u003cp\u003ePlease fix.
 // \u003ci\u003eEverything\u003c/i\u003e is broken!\u003c/p\u003e",
-//     "context": "https://example.dev/alice/myrepo",
-//     "id": "https://example.dev/alice/myrepo/issues/42",
+//     "context": "https://example.org/alice/myrepo",
+//     "id": "https://example.org/alice/myrepo/issues/42",
 //     "isResolved": false,
 //     "mediaType": "text/html",
 //     "source": {

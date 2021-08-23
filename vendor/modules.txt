@@ -63,7 +63,7 @@ github.com/gin-gonic/gin/render
 # github.com/go-errors/errors v1.4.0
 ## explicit
 github.com/go-errors/errors
-# github.com/go-fed/activity v1.0.1-0.20210426194615-e0de0863dcc1
+# github.com/go-fed/activity v1.0.1-0.20210803212804-d866ba75dd0f
 ## explicit
 github.com/go-fed/activity/pub
 github.com/go-fed/activity/streams
@@ -105,6 +105,7 @@ github.com/go-fed/activity/streams/impl/activitystreams/property_liked
 github.com/go-fed/activity/streams/impl/activitystreams/property_likes
 github.com/go-fed/activity/streams/impl/activitystreams/property_location
 github.com/go-fed/activity/streams/impl/activitystreams/property_longitude
+github.com/go-fed/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers
 github.com/go-fed/activity/streams/impl/activitystreams/property_mediatype
 github.com/go-fed/activity/streams/impl/activitystreams/property_name
 github.com/go-fed/activity/streams/impl/activitystreams/property_next
