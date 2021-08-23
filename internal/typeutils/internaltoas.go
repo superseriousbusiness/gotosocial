@@ -143,7 +143,9 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 
 	// manuallyApprovesFollowers
 	// Will be shown as a locked account.
-	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
+	manuallyApprovesFollowersProp.Set(a.Locked)
+	person.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
 
 	// discoverable
 	// Will be shown in the profile directory.
