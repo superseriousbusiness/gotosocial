@@ -73,6 +73,10 @@ type ActivityStreamsOrganization interface {
 	// GetActivityStreamsLocation returns the "location" property if it
 	// exists, and nil otherwise.
 	GetActivityStreamsLocation() ActivityStreamsLocationProperty
+	// GetActivityStreamsManuallyApprovesFollowers returns the
+	// "manuallyApprovesFollowers" property if it exists, and nil
+	// otherwise.
+	GetActivityStreamsManuallyApprovesFollowers() ActivityStreamsManuallyApprovesFollowersProperty
 	// GetActivityStreamsMediaType returns the "mediaType" property if it
 	// exists, and nil otherwise.
 	GetActivityStreamsMediaType() ActivityStreamsMediaTypeProperty
@@ -212,6 +216,9 @@ type ActivityStreamsOrganization interface {
 	SetActivityStreamsLikes(i ActivityStreamsLikesProperty)
 	// SetActivityStreamsLocation sets the "location" property.
 	SetActivityStreamsLocation(i ActivityStreamsLocationProperty)
+	// SetActivityStreamsManuallyApprovesFollowers sets the
+	// "manuallyApprovesFollowers" property.
+	SetActivityStreamsManuallyApprovesFollowers(i ActivityStreamsManuallyApprovesFollowersProperty)
 	// SetActivityStreamsMediaType sets the "mediaType" property.
 	SetActivityStreamsMediaType(i ActivityStreamsMediaTypeProperty)
 	// SetActivityStreamsName sets the "name" property.

@@ -41,6 +41,7 @@ import (
 	propertylikes "github.com/go-fed/activity/streams/impl/activitystreams/property_likes"
 	propertylocation "github.com/go-fed/activity/streams/impl/activitystreams/property_location"
 	propertylongitude "github.com/go-fed/activity/streams/impl/activitystreams/property_longitude"
+	propertymanuallyapprovesfollowers "github.com/go-fed/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/go-fed/activity/streams/impl/activitystreams/property_mediatype"
 	propertyname "github.com/go-fed/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/go-fed/activity/streams/impl/activitystreams/property_next"
@@ -218,6 +219,7 @@ func init() {
 	propertylikes.SetManager(mgr)
 	propertylocation.SetManager(mgr)
 	propertylongitude.SetManager(mgr)
+	propertymanuallyapprovesfollowers.SetManager(mgr)
 	propertymediatype.SetManager(mgr)
 	propertyname.SetManager(mgr)
 	propertynext.SetManager(mgr)
