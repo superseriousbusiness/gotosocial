@@ -19,6 +19,7 @@
 package status_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -128,7 +129,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	}, statusReply.Tags[0])
 
 	gtsTag := &gtsmodel.Tag{}
-	err = suite.db.GetWhere([]db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
+	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
 }
@@ -323,11 +324,11 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 
 	// get the updated media attachment from the database
 	gtsAttachment := &gtsmodel.MediaAttachment{}
-	err = suite.db.GetByID(statusResponse.MediaAttachments[0].ID, gtsAttachment)
+	err = suite.db.GetByID(context.Background(), statusResponse.MediaAttachments[0].ID, gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// convert it to a masto attachment
-	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(gtsAttachment)
+	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(context.Background(), gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// compare it with what we have now

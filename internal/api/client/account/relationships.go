@@ -71,7 +71,7 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 	relationships := []model.Relationship{}
 
 	for _, targetAccountID := range targetAccountIDs {
-		r, errWithCode := m.processor.AccountRelationshipGet(authed, targetAccountID)
+		r, errWithCode := m.processor.AccountRelationshipGet(c.Request.Context(), authed, targetAccountID)
 		if err != nil {
 			c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 			return

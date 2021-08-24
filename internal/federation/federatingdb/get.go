@@ -33,7 +33,7 @@ import (
 // Get returns the database entry for the specified id.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, err error) {
+func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Get",
@@ -43,17 +43,17 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 	l.Debug("entering GET function")
 
 	if util.IsUserPath(id) {
-		acct, err := f.db.GetAccountByURI(id.String())
+		acct, err := f.db.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		l.Debug("is user path! returning account")
-		return f.typeConverter.AccountToAS(acct)
+		return f.typeConverter.AccountToAS(ctx, acct)
 	}
 
 	if util.IsFollowersPath(id) {
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere([]db.Where{{Key: "followers_uri", Value: id.String()}}, acct); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: id.String()}}, acct); err != nil {
 			return nil, err
 		}
 
@@ -62,12 +62,12 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 			return nil, err
 		}
 
-		return f.Followers(c, followersURI)
+		return f.Followers(ctx, followersURI)
 	}
 
 	if util.IsFollowingPath(id) {
 		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere([]db.Where{{Key: "following_uri", Value: id.String()}}, acct); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: id.String()}}, acct); err != nil {
 			return nil, err
 		}
 
@@ -76,7 +76,7 @@ func (f *federatingDB) Get(c context.Context, id *url.URL) (value vocab.Type, er
 			return nil, err
 		}
 
-		return f.Following(c, followingURI)
+		return f.Following(ctx, followingURI)
 	}
 
 	return nil, errors.New("could not get")

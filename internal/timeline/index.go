@@ -20,6 +20,7 @@ package timeline
 
 import (
 	"container/list"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (t *timeline) IndexBefore(statusID string, include bool, amount int) error {
+func (t *timeline) IndexBefore(ctx context.Context, statusID string, include bool, amount int) error {
 	// lazily initialize index if it hasn't been done already
 	if t.postIndex.data == nil {
 		t.postIndex.data = &list.List{}
@@ -42,7 +43,7 @@ func (t *timeline) IndexBefore(statusID string, include bool, amount int) error 
 	if include {
 		// if we have the status with given statusID in the database, include it in the results set as well
 		s := &gtsmodel.Status{}
-		if err := t.db.GetByID(statusID, s); err == nil {
+		if err := t.db.GetByID(ctx, statusID, s); err == nil {
 			filtered = append(filtered, s)
 		}
 	}
@@ -50,7 +51,7 @@ func (t *timeline) IndexBefore(statusID string, include bool, amount int) error 
 	i := 0
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
-		statuses, err := t.db.GetHomeTimeline(t.accountID, "", "", offsetStatus, amount, false)
+		statuses, err := t.db.GetHomeTimeline(ctx, t.accountID, "", "", offsetStatus, amount, false)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
@@ -59,7 +60,7 @@ grabloop:
 		}
 
 		for _, s := range statuses {
-			timelineable, err := t.filter.StatusHometimelineable(s, t.account)
+			timelineable, err := t.filter.StatusHometimelineable(ctx, s, t.account)
 			if err != nil {
 				continue
 			}
@@ -71,7 +72,7 @@ grabloop:
 	}
 
 	for _, s := range filtered {
-		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
+		if _, err := t.IndexOne(ctx, s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
 			return fmt.Errorf("IndexBefore: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -79,7 +80,7 @@ grabloop:
 	return nil
 }
 
-func (t *timeline) IndexBehind(statusID string, include bool, amount int) error {
+func (t *timeline) IndexBehind(ctx context.Context, statusID string, include bool, amount int) error {
 	l := t.log.WithFields(logrus.Fields{
 		"func":    "IndexBehind",
 		"include": include,
@@ -121,7 +122,7 @@ positionLoop:
 	if include {
 		// if we have the status with given statusID in the database, include it in the results set as well
 		s := &gtsmodel.Status{}
-		if err := t.db.GetByID(statusID, s); err == nil {
+		if err := t.db.GetByID(ctx, statusID, s); err == nil {
 			filtered = append(filtered, s)
 		}
 	}
@@ -130,7 +131,7 @@ positionLoop:
 grabloop:
 	for ; len(filtered) < amount && i < 5; i = i + 1 { // try the grabloop 5 times only
 		l.Tracef("entering grabloop; i is %d; len(filtered) is %d", i, len(filtered))
-		statuses, err := t.db.GetHomeTimeline(t.accountID, offsetStatus, "", "", amount, false)
+		statuses, err := t.db.GetHomeTimeline(ctx, t.accountID, offsetStatus, "", "", amount, false)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				break grabloop // we just don't have enough statuses left in the db so index what we've got and then bail
@@ -140,7 +141,7 @@ grabloop:
 		l.Tracef("got %d statuses", len(statuses))
 
 		for _, s := range statuses {
-			timelineable, err := t.filter.StatusHometimelineable(s, t.account)
+			timelineable, err := t.filter.StatusHometimelineable(ctx, s, t.account)
 			if err != nil {
 				l.Tracef("status was not hometimelineable: %s", err)
 				continue
@@ -154,7 +155,7 @@ grabloop:
 	l.Trace("left grabloop")
 
 	for _, s := range filtered {
-		if _, err := t.IndexOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
+		if _, err := t.IndexOne(ctx, s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID); err != nil {
 			return fmt.Errorf("IndexBehind: error indexing status with id %s: %s", s.ID, err)
 		}
 	}
@@ -163,7 +164,7 @@ grabloop:
 	return nil
 }
 
-func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
+func (t *timeline) IndexOne(ctx context.Context, statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -177,7 +178,7 @@ func (t *timeline) IndexOne(statusCreatedAt time.Time, statusID string, boostOfI
 	return t.postIndex.insertIndexed(postIndexEntry)
 }
 
-func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
+func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -194,7 +195,7 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 	}
 
 	if inserted {
-		if err := t.prepare(statusID); err != nil {
+		if err := t.prepare(ctx, statusID); err != nil {
 			return inserted, fmt.Errorf("IndexAndPrepareOne: error preparing: %s", err)
 		}
 	}
@@ -202,7 +203,7 @@ func (t *timeline) IndexAndPrepareOne(statusCreatedAt time.Time, statusID string
 	return inserted, nil
 }
 
-func (t *timeline) OldestIndexedPostID() (string, error) {
+func (t *timeline) OldestIndexedPostID(ctx context.Context) (string, error) {
 	var id string
 	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Back() == nil {
 		// return an empty string if postindex hasn't been initialized yet
@@ -217,7 +218,7 @@ func (t *timeline) OldestIndexedPostID() (string, error) {
 	return entry.statusID, nil
 }
 
-func (t *timeline) NewestIndexedPostID() (string, error) {
+func (t *timeline) NewestIndexedPostID(ctx context.Context) (string, error) {
 	var id string
 	if t.postIndex == nil || t.postIndex.data == nil || t.postIndex.data.Front() == nil {
 		// return an empty string if postindex hasn't been initialized yet

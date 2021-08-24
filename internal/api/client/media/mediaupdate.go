@@ -122,7 +122,7 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 		return
 	}
 
-	attachment, errWithCode := m.processor.MediaUpdate(authed, attachmentID, &form)
+	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed, attachmentID, &form)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return

@@ -19,26 +19,27 @@
 package text
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *formatter) FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
+func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(plain)
 
 	// sanitize any html elements
 	content = RemoveHTML(content)
 
 	// format links nicely
-	content = f.ReplaceLinks(content)
+	content = f.ReplaceLinks(ctx, content)
 
 	// format tags nicely
-	content = f.ReplaceTags(content, tags)
+	content = f.ReplaceTags(ctx, content, tags)
 
 	// format mentions nicely
-	content = f.ReplaceMentions(content, mentions)
+	content = f.ReplaceMentions(ctx, content, mentions)
 
 	// replace newlines with breaks
 	content = strings.ReplaceAll(content, "\n", "<br />")

@@ -41,7 +41,7 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	accts, errWithCode := m.processor.FollowRequestsGet(authed)
+	accts, errWithCode := m.processor.FollowRequestsGet(c.Request.Context(), authed)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return

@@ -25,8 +25,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -64,19 +62,5 @@ func New(config *config.Config, processor processing.Processor, log *logrus.Logg
 // Route satisfies the RESTAPIModule interface
 func (m *FileServer) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, AccountIDKey, MediaTypeKey, MediaSizeKey, FileNameKey), m.ServeFile)
-	return nil
-}
-
-// CreateTables populates necessary tables in the given DB
-func (m *FileServer) CreateTables(db db.DB) error {
-	models := []interface{}{
-		&gtsmodel.MediaAttachment{},
-	}
-
-	for _, m := range models {
-		if err := db.CreateTable(m); err != nil {
-			return fmt.Errorf("error creating table: %s", err)
-		}
-	}
 	return nil
 }

@@ -108,7 +108,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	}
 
 	l.Debug("calling processor media create func")
-	mastoAttachment, err := m.processor.MediaCreate(authed, form)
+	mastoAttachment, err := m.processor.MediaCreate(c.Request.Context(), authed, form)
 	if err != nil {
 		l.Debugf("error creating attachment: %s", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})

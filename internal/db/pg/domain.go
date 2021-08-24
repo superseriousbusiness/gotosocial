@@ -37,27 +37,34 @@ type domainDB struct {
 	cancel context.CancelFunc
 }
 
-func (d *domainDB) IsDomainBlocked(domain string) (bool, db.Error) {
+func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
 	if domain == "" {
 		return false, nil
 	}
 
-	blocked, err := d.conn.
+	count, err := d.conn.
+		NewSelect().
 		Model(&gtsmodel.DomainBlock{}).
 		Where("LOWER(domain) = LOWER(?)", domain).
-		Exists()
+		Limit(1).
+		Count(ctx)
 
+	blocked := count != 0
 	err = processErrorResponse(err)
 
-	return blocked, err
+	if err != db.ErrNoEntries {
+		return false, err
+	}
+
+	return blocked, nil
 }
 
-func (d *domainDB) AreDomainsBlocked(domains []string) (bool, db.Error) {
+func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, db.Error) {
 	// filter out any doubles
 	uniqueDomains := util.UniqueStrings(domains)
 
 	for _, domain := range uniqueDomains {
-		if blocked, err := d.IsDomainBlocked(domain); err != nil {
+		if blocked, err := d.IsDomainBlocked(ctx, domain); err != nil {
 			return false, err
 		} else if blocked {
 			return blocked, nil
@@ -68,16 +75,16 @@ func (d *domainDB) AreDomainsBlocked(domains []string) (bool, db.Error) {
 	return false, nil
 }
 
-func (d *domainDB) IsURIBlocked(uri *url.URL) (bool, db.Error) {
+func (d *domainDB) IsURIBlocked(ctx context.Context, uri *url.URL) (bool, db.Error) {
 	domain := uri.Hostname()
-	return d.IsDomainBlocked(domain)
+	return d.IsDomainBlocked(ctx, domain)
 }
 
-func (d *domainDB) AreURIsBlocked(uris []*url.URL) (bool, db.Error) {
+func (d *domainDB) AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, db.Error) {
 	domains := []string{}
 	for _, uri := range uris {
 		domains = append(domains, uri.Hostname())
 	}
 
-	return d.AreDomainsBlocked(domains)
+	return d.AreDomainsBlocked(ctx, domains)
 }

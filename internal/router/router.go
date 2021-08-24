@@ -103,7 +103,7 @@ func (r *router) Stop(ctx context.Context) error {
 //
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
-func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
+func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 
 	// gin has different log modes; for convenience, we match the gin log mode to
 	// whatever log mode has been set for logrus
@@ -141,7 +141,7 @@ func New(cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 	}
 
 	// enable session store middleware on the engine
-	if err := useSession(cfg, db, engine); err != nil {
+	if err := useSession(ctx, cfg, db, engine); err != nil {
 		return nil, err
 	}
 

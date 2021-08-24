@@ -67,27 +67,27 @@ type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 	// and then returns information to the caller about the attachment. It's the caller's responsibility to put the returned struct
 	// in the database.
-	ProcessAttachment(attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error)
+	ProcessAttachment(ctx context.Context, attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
 	// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 	// in the database.
-	ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
+	ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
 
 	// ProcessRemoteAttachment takes a transport, a bare-bones current attachment, and an accountID that the attachment belongs to.
 	// It then dereferences the attachment (ie., fetches the attachment bytes from the remote server), ensuring that the bytes are
 	// the correct content type. It stores the attachment in whatever storage backend the Handler has been initalized with, and returns
 	// information to the caller about the new attachment. It's the caller's responsibility to put the returned struct
 	// in the database.
-	ProcessRemoteAttachment(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
+	ProcessRemoteAttachment(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
 
-	ProcessRemoteHeaderOrAvatar(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
+	ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
 type mediaHandler struct {
@@ -114,7 +114,7 @@ func New(config *config.Config, database db.DB, storage blob.Storage, log *logru
 // ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	l := mh.log.WithField("func", "SetHeaderForAccountID")
 
 	if mediaType != Header && mediaType != Avatar {
@@ -142,7 +142,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 	}
 
 	// set it in the database
-	if err := mh.db.SetAccountHeaderOrAvatar(ma, accountID); err != nil {
+	if err := mh.db.SetAccountHeaderOrAvatar(ctx, ma, accountID); err != nil {
 		return nil, fmt.Errorf("error putting %s in database: %s", mediaType, err)
 	}
 
@@ -152,7 +152,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(attachment []byte, accountID strin
 // ProcessAttachment takes a new attachment and the owning account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 // and then returns information to the caller about the attachment.
-func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	contentType, err := parseContentType(attachment)
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (mh *mediaHandler) ProcessAttachment(attachment []byte, accountID string, r
 // ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
 // *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 // in the database.
-func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
+func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -231,7 +231,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	// since emoji aren't 'owned' by an account, but we still want to use the same pattern for serving them through the filserver,
 	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
 	// with the same username as the instance hostname, which doesn't belong to any particular user.
-	instanceAccount, err := mh.db.GetInstanceAccount("")
+	instanceAccount, err := mh.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
@@ -296,7 +296,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(emojiBytes []byte, shortcode string) (
 	return e, nil
 }
 
-func (mh *mediaHandler) ProcessRemoteAttachment(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessRemoteAttachment(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
 	if currentAttachment.RemoteURL == "" {
 		return nil, errors.New("no remote URL on media attachment to dereference")
 	}
@@ -317,10 +317,10 @@ func (mh *mediaHandler) ProcessRemoteAttachment(t transport.Transport, currentAt
 		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
 	}
 
-	return mh.ProcessAttachment(attachmentBytes, accountID, currentAttachment.RemoteURL)
+	return mh.ProcessAttachment(ctx, attachmentBytes, accountID, currentAttachment.RemoteURL)
 }
 
-func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
 
 	if !currentAttachment.Header && !currentAttachment.Avatar {
 		return nil, errors.New("provided attachment was set to neither header nor avatar")
@@ -357,5 +357,5 @@ func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(t transport.Transport, curre
 		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
 	}
 
-	return mh.ProcessHeaderOrAvatar(attachmentBytes, accountID, headerOrAvi, currentAttachment.RemoteURL)
+	return mh.ProcessHeaderOrAvatar(ctx, attachmentBytes, accountID, headerOrAvi, currentAttachment.RemoteURL)
 }

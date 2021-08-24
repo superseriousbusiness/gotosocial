@@ -21,7 +21,6 @@ package pg
 import (
 	"context"
 
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -67,14 +66,16 @@ func (n *notificationDB) notificationCached(id string) (*gtsmodel.Notification, 
 	return notification, true
 }
 
-func (n *notificationDB) newNotificationQ(i interface{}) *orm.Query {
-	return n.conn.Model(i).
+func (n *notificationDB) newNotificationQ(i interface{}) *bun.SelectQuery {
+	return n.conn.
+		NewSelect().
+		Model(i).
 		Relation("OriginAccount").
 		Relation("TargetAccount").
 		Relation("Status")
 }
 
-func (n *notificationDB) GetNotification(id string) (*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
 	if notification, cached := n.notificationCached(id); cached {
 		return notification, nil
 	}
@@ -84,7 +85,7 @@ func (n *notificationDB) GetNotification(id string) (*gtsmodel.Notification, db.
 	q := n.newNotificationQ(notification).
 		Where("notification.id = ?", id)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	if err == nil && notification != nil {
 		n.cacheNotification(id, notification)
@@ -93,10 +94,11 @@ func (n *notificationDB) GetNotification(id string) (*gtsmodel.Notification, db.
 	return notification, err
 }
 
-func (n *notificationDB) GetNotifications(accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
 	// begin by selecting just the IDs
 	notifIDs := []*gtsmodel.Notification{}
 	q := n.conn.
+		NewSelect().
 		Model(&notifIDs).
 		Column("id").
 		Where("target_account_id = ?", accountID).
@@ -114,7 +116,7 @@ func (n *notificationDB) GetNotifications(accountID string, limit int, maxID str
 		q = q.Limit(limit)
 	}
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +125,7 @@ func (n *notificationDB) GetNotifications(accountID string, limit int, maxID str
 	// reason for this is that for each notif, we can instead get it from our cache if it's cached
 	notifications := []*gtsmodel.Notification{}
 	for _, notifID := range notifIDs {
-		notif, err := n.GetNotification(notifID.ID)
+		notif, err := n.GetNotification(ctx, notifID.ID)
 		errP := processErrorResponse(err)
 		if errP != nil {
 			return nil, errP

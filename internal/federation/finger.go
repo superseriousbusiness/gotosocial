@@ -29,12 +29,12 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-func (f *federator) FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error) {
-	if blocked, err := f.db.IsDomainBlocked(targetDomain); blocked || err != nil {
+func (f *federator) FingerRemoteAccount(ctx context.Context, requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error) {
+	if blocked, err := f.db.IsDomainBlocked(ctx, targetDomain); blocked || err != nil {
 		return nil, fmt.Errorf("FingerRemoteAccount: domain %s is blocked", targetDomain)
 	}
 
-	t, err := f.transportController.NewTransportForUsername(requestingUsername)
+	t, err := f.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
 		return nil, fmt.Errorf("FingerRemoteAccount: error getting transport for username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}

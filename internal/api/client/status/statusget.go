@@ -83,7 +83,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	mastoStatus, err := m.processor.StatusGet(authed, targetStatusID)
+	mastoStatus, err := m.processor.StatusGet(c.Request.Context(), authed, targetStatusID)
 	if err != nil {
 		l.Debugf("error processing status get: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})

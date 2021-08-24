@@ -69,11 +69,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
-	s, err := f.db.GetStatusByURI(id.String())
+	s, err := f.db.GetStatusByURI(ctx, id.String())
 	if err == nil {
 		// it's a status
 		l.Debugf("uri is for status with id: %s", s.ID)
-		if err := f.db.DeleteByID(s.ID, &gtsmodel.Status{}); err != nil {
+		if err := f.db.DeleteByID(ctx, s.ID, &gtsmodel.Status{}); err != nil {
 			return fmt.Errorf("DELETE: err deleting status: %s", err)
 		}
 		fromFederatorChan <- gtsmodel.FromFederator{
@@ -84,11 +84,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		}
 	}
 
-	a, err := f.db.GetAccountByURI(id.String())
+	a, err := f.db.GetAccountByURI(ctx, id.String())
 	if err == nil {
 		// it's an account
 		l.Debugf("uri is for an account with id: %s", s.ID)
-		if err := f.db.DeleteByID(a.ID, &gtsmodel.Account{}); err != nil {
+		if err := f.db.DeleteByID(ctx, a.ID, &gtsmodel.Account{}); err != nil {
 			return fmt.Errorf("DELETE: err deleting account: %s", err)
 		}
 		fromFederatorChan <- gtsmodel.FromFederator{

@@ -35,7 +35,7 @@ import (
 // at the specified IRI, for prepending new items.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "GetOutbox",
@@ -51,7 +51,7 @@ func (f *federatingDB) GetOutbox(c context.Context, outboxIRI *url.URL) (inbox v
 // database entries. Separate calls to Create will do that.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "SetOutbox",
@@ -66,7 +66,7 @@ func (f *federatingDB) SetOutbox(c context.Context, outbox vocab.ActivityStreams
 // actor's inbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+func (f *federatingDB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":     "OutboxForInbox",
@@ -79,7 +79,7 @@ func (f *federatingDB) OutboxForInbox(c context.Context, inboxIRI *url.URL) (out
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
+	if err := f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}

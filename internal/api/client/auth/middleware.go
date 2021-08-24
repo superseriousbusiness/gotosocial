@@ -49,7 +49,7 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 
 		// fetch user's and account for this user id
 		user := &gtsmodel.User{}
-		if err := m.db.GetByID(uid, user); err != nil || user == nil {
+		if err := m.db.GetByID(c.Request.Context(), uid, user); err != nil || user == nil {
 			l.Warnf("no user found for validated uid %s", uid)
 			return
 		}
@@ -57,7 +57,7 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedUser, user)
 
 		acct := &gtsmodel.Account{}
-		if err := m.db.GetByID(user.AccountID, acct); err != nil || acct == nil {
+		if err := m.db.GetByID(c.Request.Context(), user.AccountID, acct); err != nil || acct == nil {
 			l.Warnf("no account found for validated user %s", uid)
 			return
 		}
@@ -69,7 +69,7 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 	if cid := ti.GetClientID(); cid != "" {
 		l.Tracef("authenticated client %s with bearer token, scope is %s", cid, ti.GetScope())
 		app := &gtsmodel.Application{}
-		if err := m.db.GetWhere([]db.Where{{Key: "client_id", Value: cid}}, app); err != nil {
+		if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: "client_id", Value: cid}}, app); err != nil {
 			l.Tracef("no app found for client %s", cid)
 		}
 		c.Set(oauth.SessionAuthorizedApplication, app)

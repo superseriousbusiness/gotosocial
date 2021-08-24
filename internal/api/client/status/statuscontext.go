@@ -86,7 +86,7 @@ func (m *Module) StatusContextGETHandler(c *gin.Context) {
 		return
 	}
 
-	statusContext, errWithCode := m.processor.StatusGetContext(authed, targetStatusID)
+	statusContext, errWithCode := m.processor.StatusGetContext(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
 		l.Debugf("error getting status context: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

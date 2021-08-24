@@ -148,7 +148,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
 		l.Tracef("proceeding without dereference for local public key %s", requestingPublicKeyID)
-		if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingLocalAccount); err != nil {
 			return nil, false, fmt.Errorf("couldn't get local account with public key uri %s from the database: %s", requestingPublicKeyID.String(), err)
 		}
 		publicKey = requestingLocalAccount.PublicKey
@@ -156,7 +156,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		if err != nil {
 			return nil, false, fmt.Errorf("error parsing url %s: %s", requestingLocalAccount.URI, err)
 		}
-	} else if err := f.db.GetWhere([]db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
+	} else if err := f.db.GetWhere(ctx, []db.Where{{Key: "public_key_uri", Value: requestingPublicKeyID.String()}}, requestingRemoteAccount); err == nil {
 		// REMOTE ACCOUNT REQUEST WITH KEY CACHED LOCALLY
 		// this is a remote account and we already have the public key for it so use that
 		l.Tracef("proceeding without dereference for cached public key %s", requestingPublicKeyID)
@@ -170,7 +170,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// the request is remote and we don't have the public key yet,
 		// so we need to authenticate the request properly by dereferencing the remote key
 		l.Tracef("proceeding with dereference for uncached public key %s", requestingPublicKeyID)
-		transport, err := f.transportController.NewTransportForUsername(requestedUsername)
+		transport, err := f.transportController.NewTransportForUsername(ctx, requestedUsername)
 		if err != nil {
 			return nil, false, fmt.Errorf("transport err: %s", err)
 		}

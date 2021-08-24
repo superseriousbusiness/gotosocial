@@ -164,7 +164,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		Following:         following,
 	}
 
-	results, errWithCode := m.processor.SearchGet(authed, searchQuery)
+	results, errWithCode := m.processor.SearchGet(c.Request.Context(), authed, searchQuery)
 	if errWithCode != nil {
 		l.Debugf("error searching: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

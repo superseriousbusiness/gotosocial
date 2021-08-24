@@ -20,6 +20,7 @@ package timeline
 
 import (
 	"container/list"
+	"context"
 	"errors"
 	"fmt"
 
@@ -28,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, minID string) error {
+func (t *timeline) prepareNextQuery(ctx context.Context, amount int, maxID string, sinceID string, minID string) error {
 	l := t.log.WithFields(logrus.Fields{
 		"func":    "prepareNextQuery",
 		"amount":  amount,
@@ -42,30 +43,30 @@ func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, mi
 	// maxID is defined but sinceID isn't so take from behind
 	if maxID != "" && sinceID == "" {
 		l.Debug("preparing behind maxID")
-		err = t.PrepareBehind(maxID, amount)
+		err = t.PrepareBehind(ctx, maxID, amount)
 	}
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
 	if maxID == "" && sinceID != "" {
 		l.Debug("preparing before sinceID")
-		err = t.PrepareBefore(sinceID, false, amount)
+		err = t.PrepareBefore(ctx, sinceID, false, amount)
 	}
 	if maxID == "" && minID != "" {
 		l.Debug("preparing before minID")
-		err = t.PrepareBefore(minID, false, amount)
+		err = t.PrepareBefore(ctx, minID, false, amount)
 	}
 
 	return err
 }
 
-func (t *timeline) PrepareBehind(statusID string, amount int) error {
+func (t *timeline) PrepareBehind(ctx context.Context, statusID string, amount int) error {
 	// lazily initialize prepared posts if it hasn't been done already
 	if t.preparedPosts.data == nil {
 		t.preparedPosts.data = &list.List{}
 		t.preparedPosts.data.Init()
 	}
 
-	if err := t.IndexBehind(statusID, true, amount); err != nil {
+	if err := t.IndexBehind(ctx, statusID, true, amount); err != nil {
 		return fmt.Errorf("PrepareBehind: error indexing behind id %s: %s", statusID, err)
 	}
 
@@ -93,7 +94,7 @@ prepareloop:
 		}
 
 		if preparing {
-			if err := t.prepare(entry.statusID); err != nil {
+			if err := t.prepare(ctx, entry.statusID); err != nil {
 				// there's been an error
 				if err != db.ErrNoEntries {
 					// it's a real error
@@ -113,7 +114,7 @@ prepareloop:
 	return nil
 }
 
-func (t *timeline) PrepareBefore(statusID string, include bool, amount int) error {
+func (t *timeline) PrepareBefore(ctx context.Context, statusID string, include bool, amount int) error {
 	t.Lock()
 	defer t.Unlock()
 
@@ -148,7 +149,7 @@ prepareloop:
 		}
 
 		if preparing {
-			if err := t.prepare(entry.statusID); err != nil {
+			if err := t.prepare(ctx, entry.statusID); err != nil {
 				// there's been an error
 				if err != db.ErrNoEntries {
 					// it's a real error
@@ -168,7 +169,7 @@ prepareloop:
 	return nil
 }
 
-func (t *timeline) PrepareFromTop(amount int) error {
+func (t *timeline) PrepareFromTop(ctx context.Context, amount int) error {
 	l := t.log.WithFields(logrus.Fields{
 		"func":   "PrepareFromTop",
 		"amount": amount,
@@ -183,7 +184,7 @@ func (t *timeline) PrepareFromTop(amount int) error {
 	// if the postindex is nil, nothing has been indexed yet so index from the highest ID possible
 	if t.postIndex.data == nil {
 		l.Debug("postindex.data was nil, indexing behind highest possible ID")
-		if err := t.IndexBehind("ZZZZZZZZZZZZZZZZZZZZZZZZZZ", false, amount); err != nil {
+		if err := t.IndexBehind(ctx, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", false, amount); err != nil {
 			return fmt.Errorf("PrepareFromTop: error indexing behind id %s: %s", "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", err)
 		}
 	}
@@ -203,7 +204,7 @@ prepareloop:
 			return errors.New("PrepareFromTop: could not parse e as a postIndexEntry")
 		}
 
-		if err := t.prepare(entry.statusID); err != nil {
+		if err := t.prepare(ctx, entry.statusID); err != nil {
 			// there's been an error
 			if err != db.ErrNoEntries {
 				// it's a real error
@@ -225,25 +226,25 @@ prepareloop:
 	return nil
 }
 
-func (t *timeline) prepare(statusID string) error {
+func (t *timeline) prepare(ctx context.Context, statusID string) error {
 
 	// start by getting the status out of the database according to its indexed ID
 	gtsStatus := &gtsmodel.Status{}
-	if err := t.db.GetByID(statusID, gtsStatus); err != nil {
+	if err := t.db.GetByID(ctx, statusID, gtsStatus); err != nil {
 		return err
 	}
 
 	// if the account pointer hasn't been set on this timeline already, set it lazily here
 	if t.account == nil {
 		timelineOwnerAccount := &gtsmodel.Account{}
-		if err := t.db.GetByID(t.accountID, timelineOwnerAccount); err != nil {
+		if err := t.db.GetByID(ctx, t.accountID, timelineOwnerAccount); err != nil {
 			return err
 		}
 		t.account = timelineOwnerAccount
 	}
 
 	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-	apiModelStatus, err := t.tc.StatusToMasto(gtsStatus, t.account)
+	apiModelStatus, err := t.tc.StatusToMasto(ctx, gtsStatus, t.account)
 	if err != nil {
 		return err
 	}
@@ -260,7 +261,7 @@ func (t *timeline) prepare(statusID string) error {
 	return t.preparedPosts.insertPrepared(preparedPostsEntry)
 }
 
-func (t *timeline) OldestPreparedPostID() (string, error) {
+func (t *timeline) OldestPreparedPostID(ctx context.Context) (string, error) {
 	var id string
 	if t.preparedPosts == nil || t.preparedPosts.data == nil {
 		// return an empty string if prepared posts hasn't been initialized yet

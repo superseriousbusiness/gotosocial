@@ -22,13 +22,13 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"database/sql"
 	"fmt"
 	"net"
 	"net/mail"
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -48,22 +48,31 @@ type adminDB struct {
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) db.Error {
 	// if no error we fail because it means we found something
-	// if error but it's not pg.ErrNoRows then we fail
 	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	if err := a.conn.
+	// if error but it's not sql.ErrNoRows then we fail
+	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.Account{}).
 		Where("username = ?", username).
-		Where("domain = ?", nil).
-		Scan(ctx); err == nil {
+		Where("domain = ?", nil)
+
+	err := q.Scan(ctx)
+
+	if err == nil {
+		// we got something, not good
 		return fmt.Errorf("username %s already in use", username)
-	} else if err != pg.ErrNoRows {
-		return fmt.Errorf("db error: %s", err)
 	}
-	return nil
+
+	if err == sql.ErrNoRows {
+		// no entries, we're happy
+		return nil
+	}
+
+	// another type of error occurred
+	return processErrorResponse(err)
 }
 
-func (a *adminDB) IsEmailAvailable(email string) db.Error {
+func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) db.Error {
 	// parse the domain from the email
 	m, err := mail.ParseAddress(email)
 	if err != nil {
@@ -72,26 +81,34 @@ func (a *adminDB) IsEmailAvailable(email string) db.Error {
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
 	// check if the email domain is blocked
-	if err := a.conn.Model(&gtsmodel.EmailDomainBlock{}).Where("domain = ?", domain).Select(); err == nil {
+	if err := a.conn.
+		NewSelect().
+		Model(&gtsmodel.EmailDomainBlock{}).
+		Where("domain = ?", domain).
+		Scan(ctx); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email domain %s is blocked", domain)
-	} else if err != pg.ErrNoRows {
-		// fail because we got an unexpected error
-		return fmt.Errorf("db error: %s", err)
+	} else if err != sql.ErrNoRows {
+		return processErrorResponse(err)
 	}
 
 	// check if this email is associated with a user already
-	if err := a.conn.Model(&gtsmodel.User{}).Where("email = ?", email).WhereOr("unconfirmed_email = ?", email).Select(); err == nil {
+	if err := a.conn.
+		NewSelect().
+		Model(&gtsmodel.User{}).
+		Where("email = ?", email).
+		WhereOr("unconfirmed_email = ?", email).
+		Scan(ctx); err == nil {
 		// fail because we found something
 		return fmt.Errorf("email %s already in use", email)
-	} else if err != pg.ErrNoRows {
-		// fail because we got an unexpected error
-		return fmt.Errorf("db error: %s", err)
+	} else if err != sql.ErrNoRows {
+		return processErrorResponse(err)
 	}
+
 	return nil
 }
 
-func (a *adminDB) NewSignup(username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
+func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		a.log.Errorf("error creating new rsa key: %s", err)
@@ -100,13 +117,12 @@ func (a *adminDB) NewSignup(username string, reason string, requireApproval bool
 
 	// if something went wrong while creating a user, we might already have an account, so check here first...
 	acct := &gtsmodel.Account{}
-	err = a.conn.Model(acct).Where("username = ?", username).Where("? IS NULL", pg.Ident("domain")).Select()
+	err = a.conn.NewSelect().
+		Model(acct).
+		Where("username = ?", username).
+		Where("? IS NULL", bun.Ident("domain")).
+		Scan(ctx)
 	if err != nil {
-		// there's been an actual error
-		if err != pg.ErrNoRows {
-			return nil, fmt.Errorf("db error checking existence of account: %s", err)
-		}
-
 		// we just don't have an account yet create one
 		newAccountURIs := util.GenerateURIsForAccount(username, a.config.Protocol, a.config.Host)
 		newAccountID, err := id.NewRandomULID()
@@ -131,7 +147,10 @@ func (a *adminDB) NewSignup(username string, reason string, requireApproval bool
 			FollowingURI:          newAccountURIs.FollowingURI,
 			FeaturedCollectionURI: newAccountURIs.CollectionURI,
 		}
-		if _, err = a.conn.Model(acct).Insert(); err != nil {
+		if _, err = a.conn.
+			NewInsert().
+			Model(acct).
+			Exec(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -167,15 +186,33 @@ func (a *adminDB) NewSignup(username string, reason string, requireApproval bool
 		u.Moderator = true
 	}
 
-	if _, err = a.conn.Model(u).Insert(); err != nil {
+	if _, err = a.conn.
+		NewInsert().
+		Model(u).
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
 	return u, nil
 }
 
-func (a *adminDB) CreateInstanceAccount() db.Error {
+func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 	username := a.config.Host
+
+	// check if instance account already exists
+	existsQ := a.conn.
+		NewSelect().
+		Model(&gtsmodel.Account{}).
+		Where("username = ?", username).
+		Where("? IS NULL", bun.Ident("domain"))
+	count, err := existsQ.Count(ctx)
+	if err != nil && count == 1 {
+		a.log.Infof("instance account %s already exists", username)
+		return nil
+	} else if err != sql.ErrNoRows {
+		return processErrorResponse(err)
+	}
+
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		a.log.Errorf("error creating new rsa key: %s", err)
@@ -204,19 +241,36 @@ func (a *adminDB) CreateInstanceAccount() db.Error {
 		FollowingURI:          newAccountURIs.FollowingURI,
 		FeaturedCollectionURI: newAccountURIs.CollectionURI,
 	}
-	inserted, err := a.conn.Model(acct).Where("username = ?", username).SelectOrInsert()
-	if err != nil {
+
+	insertQ := a.conn.
+		NewInsert().
+		Model(acct)
+
+	if _, err := insertQ.Exec(ctx); err != nil {
 		return err
 	}
-	if inserted {
-		a.log.Infof("created instance account %s with id %s", username, acct.ID)
-	} else {
-		a.log.Infof("instance account %s already exists with id %s", username, acct.ID)
-	}
+
+	a.log.Infof("instance account CREATED with id %s", username, acct.ID)
 	return nil
 }
 
-func (a *adminDB) CreateInstanceInstance() db.Error {
+func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
+	domain := a.config.Host
+
+	// check if instance entry already exists
+	existsQ := a.conn.
+		NewSelect().
+		Model(&gtsmodel.Instance{}).
+		Where("domain = ?", domain)
+
+	count, err := existsQ.Count(ctx)
+	if err != nil && count == 1 {
+		a.log.Infof("instance instance %s already exists", domain)
+		return nil
+	} else if err != sql.ErrNoRows {
+		return processErrorResponse(err)
+	}
+
 	iID, err := id.NewRandomULID()
 	if err != nil {
 		return err
@@ -224,18 +278,18 @@ func (a *adminDB) CreateInstanceInstance() db.Error {
 
 	i := &gtsmodel.Instance{
 		ID:     iID,
-		Domain: a.config.Host,
-		Title:  a.config.Host,
+		Domain: domain,
+		Title:  domain,
 		URI:    fmt.Sprintf("%s://%s", a.config.Protocol, a.config.Host),
 	}
-	inserted, err := a.conn.Model(i).Where("domain = ?", a.config.Host).SelectOrInsert()
-	if err != nil {
+
+	insertQ := a.conn.
+		NewInsert().
+		Model(i)
+
+	if _, err := insertQ.Exec(ctx); err != nil {
 		return err
 	}
-	if inserted {
-		a.log.Infof("created instance instance %s with id %s", a.config.Host, i.ID)
-	} else {
-		a.log.Infof("instance instance %s already exists with id %s", a.config.Host, i.ID)
-	}
+	a.log.Infof("created instance instance %s with id %s", domain, i.ID)
 	return nil
 }

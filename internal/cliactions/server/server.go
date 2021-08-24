@@ -85,22 +85,22 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	}
 
 	for _, m := range models {
-		if err := dbService.CreateTable(m); err != nil {
+		if err := dbService.CreateTable(ctx, m); err != nil {
 			return fmt.Errorf("table creation error: %s", err)
 		}
 	}
 
-	if err := dbService.CreateInstanceAccount(); err != nil {
+	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
 	}
 
-	if err := dbService.CreateInstanceInstance(); err != nil {
+	if err := dbService.CreateInstanceInstance(ctx); err != nil {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
 	federatingDB := federatingdb.New(dbService, c, log)
 
-	router, err := router.New(c, dbService, log)
+	router, err := router.New(ctx, c, dbService, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}

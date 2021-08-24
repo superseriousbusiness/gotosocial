@@ -30,10 +30,6 @@ type Basic interface {
 	// For implementations that don't use tables, this can just return nil.
 	DropTable(ctx context.Context, i interface{}) Error
 
-	// RegisterTable registers a table for use in many2many relations.
-	// For implementations that don't use tables, or many2many relations, this can just return nil.
-	RegisterTable(ctx context.Context, i interface{}) Error
-
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.
 	Stop(ctx context.Context) Error

@@ -21,7 +21,6 @@ package pg
 import (
 	"context"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -36,24 +35,32 @@ type instanceDB struct {
 	cancel context.CancelFunc
 }
 
-func (i *instanceDB) CountInstanceUsers(domain string) (int, db.Error) {
-	q := i.conn.Model(&[]*gtsmodel.Account{})
+func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, db.Error) {
+	q := i.conn.
+		NewSelect().
+		Model(&[]*gtsmodel.Account{})
 
 	if domain == i.config.Host {
 		// if the domain is *this* domain, just count where the domain field is null
-		q = q.Where("? IS NULL", pg.Ident("domain"))
+		q = q.Where("? IS NULL", bun.Ident("domain"))
 	} else {
 		q = q.Where("domain = ?", domain)
 	}
 
 	// don't count the instance account or suspended users
-	q = q.Where("username != ?", domain).Where("? IS NULL", pg.Ident("suspended_at"))
+	q = q.
+		Where("username != ?", domain).
+		Where("? IS NULL", bun.Ident("suspended_at"))
 
-	return q.Count()
+	count, err := q.Count(ctx)
+
+	return count, processErrorResponse(err)
 }
 
-func (i *instanceDB) CountInstanceStatuses(domain string) (int, db.Error) {
-	q := i.conn.Model(&[]*gtsmodel.Status{})
+func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, db.Error) {
+	q := i.conn.
+		NewSelect().
+		Model(&[]*gtsmodel.Status{})
 
 	if domain == i.config.Host {
 		// if the domain is *this* domain, just count where local is true
@@ -64,30 +71,39 @@ func (i *instanceDB) CountInstanceStatuses(domain string) (int, db.Error) {
 			Where("account.domain = ?", domain)
 	}
 
-	return q.Count()
+	count, err := q.Count(ctx)
+
+	return count, processErrorResponse(err)
 }
 
-func (i *instanceDB) CountInstanceDomains(domain string) (int, db.Error) {
-	q := i.conn.Model(&[]*gtsmodel.Instance{})
+func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, db.Error) {
+	q := i.conn.
+		NewSelect().
+		Model(&[]*gtsmodel.Instance{})
 
 	if domain == i.config.Host {
 		// if the domain is *this* domain, just count other instances it knows about
 		// exclude domains that are blocked
-		q = q.Where("domain != ?", domain).Where("? IS NULL", pg.Ident("suspended_at"))
+		q = q.Where("domain != ?", domain).Where("? IS NULL", bun.Ident("suspended_at"))
 	} else {
 		// TODO: implement federated domain counting properly for remote domains
 		return 0, nil
 	}
 
-	return q.Count()
+	count, err := q.Count(ctx)
+
+	return count, processErrorResponse(err)
 }
 
-func (i *instanceDB) GetInstanceAccounts(domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
+func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
 	i.log.Debug("GetAccountsForInstance")
 
 	accounts := []*gtsmodel.Account{}
 
-	q := i.conn.Model(&accounts).Where("domain = ?", domain).Order("id DESC")
+	q := i.conn.NewSelect().
+		Model(&accounts).
+		Where("domain = ?", domain).
+		Order("id DESC")
 
 	if maxID != "" {
 		q = q.Where("id < ?", maxID)
@@ -97,17 +113,7 @@ func (i *instanceDB) GetInstanceAccounts(domain string, maxID string, limit int)
 		q = q.Limit(limit)
 	}
 
-	err := q.Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries
-		}
-		return nil, err
-	}
+	err := processErrorResponse(q.Scan(ctx))
 
-	if len(accounts) == 0 {
-		return nil, db.ErrNoEntries
-	}
-
-	return accounts, nil
+	return accounts, err
 }

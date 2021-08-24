@@ -70,7 +70,7 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctInfo, err := m.processor.AccountGet(authed, targetAcctID)
+	acctInfo, err := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 		return

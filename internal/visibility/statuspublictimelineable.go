@@ -19,13 +19,14 @@
 package visibility
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *filter) StatusPublictimelineable(targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
+func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func":     "StatusPublictimelineable",
 		"statusID": targetStatus.ID,
@@ -41,7 +42,7 @@ func (f *filter) StatusPublictimelineable(targetStatus *gtsmodel.Status, timelin
 		return true, nil
 	}
 
-	v, err := f.StatusVisible(targetStatus, timelineOwnerAccount)
+	v, err := f.StatusVisible(ctx, targetStatus, timelineOwnerAccount)
 	if err != nil {
 		return false, fmt.Errorf("StatusPublictimelineable: error checking visibility of status with id %s: %s", targetStatus.ID, err)
 	}

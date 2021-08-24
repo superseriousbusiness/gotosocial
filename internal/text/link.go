@@ -19,6 +19,7 @@
 package text
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -82,7 +83,7 @@ func contains(urls []*url.URL, url *url.URL) bool {
 // Note: because Go doesn't allow negative lookbehinds in regex, it's possible that an already-formatted
 // href will end up double-formatted, if the text you pass here contains one or more hrefs already.
 // To avoid this, you should sanitize any HTML out of text before you pass it into this function.
-func (f *formatter) ReplaceLinks(in string) string {
+func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
 	rxStrict, err := xurls.StrictMatchingScheme(schemes)
 	if err != nil {
 		panic(err)

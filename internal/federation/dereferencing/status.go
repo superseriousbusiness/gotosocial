@@ -93,7 +93,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
 	}
 
-	gtsStatus, err := d.typeConverter.ASStatusToStatus(statusable)
+	gtsStatus, err := d.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
 	}
@@ -294,7 +294,7 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 		}
 		// it just doesn't exist yet so carry on
 		l.Debug("attachment doesn't exist yet, calling ProcessRemoteAttachment", a)
-		deferencedAttachment, err := d.mediaHandler.ProcessRemoteAttachment(t, a, status.AccountID)
+		deferencedAttachment, err := d.mediaHandler.ProcessRemoteAttachment(ctx, t, a, status.AccountID)
 		if err != nil {
 			l.Errorf("error dereferencing status attachment: %s", err)
 			continue

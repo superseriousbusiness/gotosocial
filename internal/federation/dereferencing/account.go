@@ -80,7 +80,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error dereferencing accountable: %s", err)
 	}
 
-	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(accountable, refresh)
+	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(ctx, accountable, refresh)
 	if err != nil {
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error converting accountable to account: %s", err)
 	}
@@ -218,7 +218,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 	}
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.AvatarRemoteURL,
 			Avatar:    true,
 		}, targetAccount.ID)
@@ -229,7 +229,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.HeaderRemoteURL,
 			Header:    true,
 		}, targetAccount.ID)

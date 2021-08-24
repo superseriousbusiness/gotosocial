@@ -84,7 +84,7 @@ func (m *Module) StatusUnboostPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoStatus, errWithCode := m.processor.StatusUnboost(authed, targetStatusID)
+	mastoStatus, errWithCode := m.processor.StatusUnboost(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
 		l.Debugf("error processing status unboost: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

@@ -19,6 +19,7 @@
 package text_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -74,7 +75,7 @@ func (suite *PlainTestSuite) TearDownTest() {
 }
 
 func (suite *PlainTestSuite) TestParseSimple() {
-	f := suite.formatter.FromPlain(simple, nil, nil)
+	f := suite.formatter.FromPlain(context.Background(), simple, nil, nil)
 	assert.Equal(suite.T(), simpleExpected, f)
 }
 
@@ -84,7 +85,7 @@ func (suite *PlainTestSuite) TestParseWithTag() {
 		suite.testTags["welcome"],
 	}
 
-	f := suite.formatter.FromPlain(withTag, nil, foundTags)
+	f := suite.formatter.FromPlain(context.Background(), withTag, nil, foundTags)
 	assert.Equal(suite.T(), withTagExpected, f)
 }
 
@@ -98,7 +99,7 @@ func (suite *PlainTestSuite) TestParseMoreComplex() {
 		suite.testMentions["zork_mention_foss_satan"],
 	}
 
-	f := suite.formatter.FromPlain(moreComplex, foundMentions, foundTags)
+	f := suite.formatter.FromPlain(context.Background(), moreComplex, foundMentions, foundTags)
 
 	fmt.Println(f)
 

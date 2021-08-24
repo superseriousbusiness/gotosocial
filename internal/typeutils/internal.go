@@ -1,6 +1,7 @@
 package typeutils
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (c *converter) FollowRequestToFollow(f *gtsmodel.FollowRequest) *gtsmodel.Follow {
+func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.FollowRequest) *gtsmodel.Follow {
 	return &gtsmodel.Follow{
 		ID:              f.ID,
 		CreatedAt:       f.CreatedAt,
@@ -22,7 +23,7 @@ func (c *converter) FollowRequestToFollow(f *gtsmodel.FollowRequest) *gtsmodel.F
 	}
 }
 
-func (c *converter) StatusToBoost(s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
+func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
 	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
 	uris := util.GenerateURIsForAccount(boostingAccount.Username, c.config.Protocol, c.config.Host)
 	boostWrapperStatusID, err := id.NewULID()

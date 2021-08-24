@@ -19,6 +19,7 @@
 package text_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -92,13 +93,13 @@ func (suite *MarkdownTestSuite) TearDownTest() {
 }
 
 func (suite *MarkdownTestSuite) TestParseSimple() {
-	s := suite.formatter.FromMarkdown(simpleMarkdown, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), simpleMarkdown, nil, nil)
 	suite.Equal(simpleMarkdownExpected, s)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithCodeBlock() {
 	fmt.Println(withCodeBlock)
-	s := suite.formatter.FromMarkdown(withCodeBlock, nil, nil)
+	s := suite.formatter.FromMarkdown(context.Background(), withCodeBlock, nil, nil)
 	suite.Equal(withCodeBlockExpected, s)
 }
 
@@ -107,7 +108,7 @@ func (suite *MarkdownTestSuite) TestParseWithHashtag() {
 		suite.testTags["Hashtag"],
 	}
 
-	s := suite.formatter.FromMarkdown(withHashtag, nil, foundTags)
+	s := suite.formatter.FromMarkdown(context.Background(), withHashtag, nil, foundTags)
 	suite.Equal(withHashtagExpected, s)
 }
 

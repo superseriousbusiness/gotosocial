@@ -122,7 +122,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	}
 
 	// make sure a valid token has been provided and obtain the associated account
-	account, err := m.processor.AuthorizeStreamingRequest(accessToken)
+	account, err := m.processor.AuthorizeStreamingRequest(c.Request.Context(), accessToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "could not authorize with given token"})
 		return
@@ -147,7 +147,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	defer conn.Close() // whatever happens, when we leave this function we want to close the websocket connection
 
 	// inform the processor that we have a new connection and want a stream for it
-	stream, errWithCode := m.processor.OpenStreamForAccount(account, streamType)
+	stream, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), errWithCode.Safe())
 		return

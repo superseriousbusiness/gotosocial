@@ -68,7 +68,7 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		sinceID = sinceIDString
 	}
 
-	notifs, errWithCode := m.processor.NotificationsGet(authed, limit, maxID, sinceID)
+	notifs, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
 	if errWithCode != nil {
 		l.Debugf("error processing notifications get: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

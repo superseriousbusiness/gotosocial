@@ -31,7 +31,7 @@ func (m *Module) SignatureCheck(c *gin.Context) {
 			// we managed to parse the url!
 
 			// if the domain is blocked we want to bail as early as possible
-			blocked, err := m.db.IsURIBlocked(requestingPublicKeyID)
+			blocked, err := m.db.IsURIBlocked(c.Request.Context(), requestingPublicKeyID)
 			if err != nil {
 				l.Errorf("could not tell if domain %s was blocked or not: %s", requestingPublicKeyID.Host, err)
 				c.AbortWithStatus(http.StatusInternalServerError)

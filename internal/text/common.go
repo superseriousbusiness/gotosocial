@@ -19,6 +19,7 @@
 package text
 
 import (
+	"context"
 	"fmt"
 	"html"
 	"strings"
@@ -59,7 +60,7 @@ func postformat(in string) string {
 	return mini
 }
 
-func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
+func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
 	return util.HashtagFinderRegex.ReplaceAllStringFunc(in, func(match string) string {
 		// we have a match
 		matchTrimmed := strings.TrimSpace(match)
@@ -88,7 +89,7 @@ func (f *formatter) ReplaceTags(in string, tags []*gtsmodel.Tag) string {
 	})
 }
 
-func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) string {
+func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string {
 	for _, menchie := range mentions {
 		// make sure we have a target account, either by getting one pinned on the mention,
 		// or by pulling it from the database
@@ -98,7 +99,7 @@ func (f *formatter) ReplaceMentions(in string, mentions []*gtsmodel.Mention) str
 			targetAccount = menchie.OriginAccount
 		} else {
 			a := &gtsmodel.Account{}
-			if err := f.db.GetByID(menchie.TargetAccountID, a); err == nil {
+			if err := f.db.GetByID(ctx, menchie.TargetAccountID, a); err == nil {
 				// got it from the db
 				targetAccount = a
 			} else {

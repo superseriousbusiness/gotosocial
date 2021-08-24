@@ -78,7 +78,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	content, err := m.processor.FileGet(authed, &model.GetContentRequestForm{
+	content, err := m.processor.FileGet(c.Request.Context(), authed, &model.GetContentRequestForm{
 		AccountID: accountID,
 		MediaType: mediaType,
 		MediaSize: mediaSize,

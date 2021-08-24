@@ -19,6 +19,7 @@
 package text_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,7 +95,7 @@ func (suite *LinkTestSuite) TearDownTest() {
 }
 
 func (suite *LinkTestSuite) TestParseSimple() {
-	f := suite.formatter.FromPlain(simple, nil, nil)
+	f := suite.formatter.FromPlain(context.Background(), simple, nil, nil)
 	assert.Equal(suite.T(), simpleExpected, f)
 }
 
@@ -126,7 +127,7 @@ func (suite *LinkTestSuite) TestParseURLsFromText3() {
 }
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText1() {
-	replaced := suite.formatter.ReplaceLinks(text1)
+	replaced := suite.formatter.ReplaceLinks(context.Background(), text1)
 	assert.Equal(suite.T(), `
 This is a text with some links in it. Here's link number one: <a href="https://example.org/link/to/something#fragment" rel="noopener">example.org/link/to/something#fragment</a>
 
@@ -141,7 +142,7 @@ really.cool.website <-- this one shouldn't be parsed as a link because it doesn'
 }
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText2() {
-	replaced := suite.formatter.ReplaceLinks(text2)
+	replaced := suite.formatter.ReplaceLinks(context.Background(), text2)
 	assert.Equal(suite.T(), `
 this is one link: <a href="https://example.org" rel="noopener">example.org</a>
 
@@ -153,14 +154,14 @@ these should be deduplicated
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText3() {
 	// we know mailto links won't be replaced with hrefs -- we only accept https and http
-	replaced := suite.formatter.ReplaceLinks(text3)
+	replaced := suite.formatter.ReplaceLinks(context.Background(), text3)
 	assert.Equal(suite.T(), `
 here's a mailto link: mailto:whatever@test.org
 `, replaced)
 }
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText4() {
-	replaced := suite.formatter.ReplaceLinks(text4)
+	replaced := suite.formatter.ReplaceLinks(context.Background(), text4)
 	assert.Equal(suite.T(), `
 two similar links:
 
@@ -172,7 +173,7 @@ two similar links:
 
 func (suite *LinkTestSuite) TestReplaceLinksFromText5() {
 	// we know this one doesn't work properly, which is why html should always be sanitized before being passed into the ReplaceLinks function
-	replaced := suite.formatter.ReplaceLinks(text5)
+	replaced := suite.formatter.ReplaceLinks(context.Background(), text5)
 	assert.Equal(suite.T(), `
 what happens when we already have a link within an href?
 

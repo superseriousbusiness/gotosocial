@@ -42,7 +42,7 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 	poc := &Client{
 		ID: clientID,
 	}
-	if err := cs.db.GetByID(clientID, poc); err != nil {
+	if err := cs.db.GetByID(ctx, clientID, poc); err != nil {
 		return nil, err
 	}
 	return models.New(poc.ID, poc.Secret, poc.Domain, poc.UserID), nil
@@ -55,14 +55,14 @@ func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo
 		Domain: cli.GetDomain(),
 		UserID: cli.GetUserID(),
 	}
-	return cs.db.UpdateByID(id, poc)
+	return cs.db.UpdateByID(ctx, id, poc)
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {
 	poc := &Client{
 		ID: id,
 	}
-	return cs.db.DeleteByID(id, poc)
+	return cs.db.DeleteByID(ctx, id, poc)
 }
 
 // Client is a handy little wrapper for typical oauth client details

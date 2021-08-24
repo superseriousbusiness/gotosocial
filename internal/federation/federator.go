@@ -54,21 +54,21 @@ type Federator interface {
 
 	// FingerRemoteAccount performs a webfinger lookup for a remote account, using the .well-known path. It will return the ActivityPub URI for that
 	// account, or an error if it doesn't exist or can't be retrieved.
-	FingerRemoteAccount(requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
+	FingerRemoteAccount(ctx context.Context, requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error)
 
-	DereferenceRemoteThread(username string, statusURI *url.URL) error
-	DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error
+	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL) error
+	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 
-	GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
+	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
-	GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
-	EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
+	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error)
+	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status) (*gtsmodel.Status, error)
 
-	GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
+	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	// Handshaking returns true if the given username is currently in the process of dereferencing the remoteAccountID.
-	Handshaking(username string, remoteAccountID *url.URL) bool
+	Handshaking(ctx context.Context, username string, remoteAccountID *url.URL) bool
 	pub.CommonBehavior
 	pub.FederatingProtocol
 }

@@ -105,7 +105,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 
 	// convert person to account
 	// since this account is already known, we should get a pretty full model of it from the conversion
-	a, err := suite.tc.ASRepresentationToAccount(person, false)
+	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, false)
 	assert.NoError(suite.T(), err)
 	assert.EqualValues(suite.T(), targetAccount.Username, a.Username)
 }

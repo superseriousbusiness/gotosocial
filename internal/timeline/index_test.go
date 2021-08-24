@@ -19,6 +19,7 @@
 package timeline_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -46,7 +47,7 @@ func (suite *IndexTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	// let's take local_account_1 as the timeline owner, and start with an empty timeline
-	tl, err := timeline.NewTimeline(suite.testAccounts["local_account_1"].ID, suite.db, suite.tc, suite.log)
+	tl, err := timeline.NewTimeline(context.Background(), suite.testAccounts["local_account_1"].ID, suite.db, suite.tc, suite.log)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -59,82 +60,82 @@ func (suite *IndexTestSuite) TearDownTest() {
 
 func (suite *IndexTestSuite) TestIndexBeforeLowID() {
 	// index 10 before the lowest status ID possible
-	err := suite.timeline.IndexBefore("00000000000000000000000000", true, 10)
+	err := suite.timeline.IndexBefore(context.Background(), "00000000000000000000000000", true, 10)
 	suite.NoError(err)
 
 	// the oldest indexed post should be the lowest one we have in our testrig
-	postID, err := suite.timeline.OldestIndexedPostID()
+	postID, err := suite.timeline.OldestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Equal("01F8MHAAY43M6RJ473VQFCVH37", postID)
 
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(10, indexLength)
 }
 
 func (suite *IndexTestSuite) TestIndexBeforeHighID() {
 	// index 10 before the highest status ID possible
-	err := suite.timeline.IndexBefore("ZZZZZZZZZZZZZZZZZZZZZZZZZZ", true, 10)
+	err := suite.timeline.IndexBefore(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", true, 10)
 	suite.NoError(err)
 
 	// the oldest indexed post should be empty
-	postID, err := suite.timeline.OldestIndexedPostID()
+	postID, err := suite.timeline.OldestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Empty(postID)
 
 	// indexLength should be 0
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(0, indexLength)
 }
 
 func (suite *IndexTestSuite) TestIndexBehindHighID() {
 	// index 10 behind the highest status ID possible
-	err := suite.timeline.IndexBehind("ZZZZZZZZZZZZZZZZZZZZZZZZZZ", true, 10)
+	err := suite.timeline.IndexBehind(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", true, 10)
 	suite.NoError(err)
 
 	// the newest indexed post should be the highest one we have in our testrig
-	postID, err := suite.timeline.NewestIndexedPostID()
+	postID, err := suite.timeline.NewestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", postID)
 
 	// indexLength should be 10 because that's all this user has hometimelineable
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(10, indexLength)
 }
 
 func (suite *IndexTestSuite) TestIndexBehindLowID() {
 	// index 10 behind the lowest status ID possible
-	err := suite.timeline.IndexBehind("00000000000000000000000000", true, 10)
+	err := suite.timeline.IndexBehind(context.Background(), "00000000000000000000000000", true, 10)
 	suite.NoError(err)
 
 	// the newest indexed post should be empty
-	postID, err := suite.timeline.NewestIndexedPostID()
+	postID, err := suite.timeline.NewestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Empty(postID)
 
 	// indexLength should be 0
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(0, indexLength)
 }
 
 func (suite *IndexTestSuite) TestOldestIndexedPostIDEmpty() {
 	// the oldest indexed post should be an empty string since there's nothing indexed yet
-	postID, err := suite.timeline.OldestIndexedPostID()
+	postID, err := suite.timeline.OldestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Empty(postID)
 
 	// indexLength should be 0
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(0, indexLength)
 }
 
 func (suite *IndexTestSuite) TestNewestIndexedPostIDEmpty() {
 	// the newest indexed post should be an empty string since there's nothing indexed yet
-	postID, err := suite.timeline.NewestIndexedPostID()
+	postID, err := suite.timeline.NewestIndexedPostID(context.Background())
 	suite.NoError(err)
 	suite.Empty(postID)
 
 	// indexLength should be 0
-	indexLength := suite.timeline.PostIndexLength()
+	indexLength := suite.timeline.PostIndexLength(context.Background())
 	suite.Equal(0, indexLength)
 }
 
@@ -142,12 +143,12 @@ func (suite *IndexTestSuite) TestIndexAlreadyIndexed() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
 	// index one post -- it should be indexed
-	indexed, err := suite.timeline.IndexOne(testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err := suite.timeline.IndexOne(context.Background(), testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.True(indexed)
 
 	// try to index the same post again -- it should not be indexed
-	indexed, err = suite.timeline.IndexOne(testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err = suite.timeline.IndexOne(context.Background(), testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.False(indexed)
 }
@@ -156,12 +157,12 @@ func (suite *IndexTestSuite) TestIndexAndPrepareAlreadyIndexedAndPrepared() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
 	// index and prepare one post -- it should be indexed
-	indexed, err := suite.timeline.IndexAndPrepareOne(testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err := suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.True(indexed)
 
 	// try to index and prepare the same post again -- it should not be indexed
-	indexed, err = suite.timeline.IndexAndPrepareOne(testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err = suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.False(indexed)
 }
@@ -177,12 +178,12 @@ func (suite *IndexTestSuite) TestIndexBoostOfAlreadyIndexed() {
 	}
 
 	// index one post -- it should be indexed
-	indexed, err := suite.timeline.IndexOne(testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err := suite.timeline.IndexOne(context.Background(), testStatus.CreatedAt, testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.True(indexed)
 
 	// try to index the a boost of that post -- it should not be indexed
-	indexed, err = suite.timeline.IndexOne(boostOfTestStatus.CreatedAt, boostOfTestStatus.ID, boostOfTestStatus.BoostOfID, boostOfTestStatus.AccountID, boostOfTestStatus.BoostOfAccountID)
+	indexed, err = suite.timeline.IndexOne(context.Background(), boostOfTestStatus.CreatedAt, boostOfTestStatus.ID, boostOfTestStatus.BoostOfID, boostOfTestStatus.AccountID, boostOfTestStatus.BoostOfAccountID)
 	suite.NoError(err)
 	suite.False(indexed)
 }

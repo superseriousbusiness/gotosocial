@@ -100,7 +100,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			case gtsmodel.ActivityStreamsNote:
 				// CREATE A NOTE
 				note := objectIter.GetActivityStreamsNote()
-				status, err := f.typeConverter.ASStatusToStatus(note)
+				status, err := f.typeConverter.ASStatusToStatus(ctx, note)
 				if err != nil {
 					return fmt.Errorf("CREATE: error converting note to status: %s", err)
 				}
@@ -112,7 +112,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 				}
 				status.ID = statusID
 
-				if err := f.db.PutStatus(status); err != nil {
+				if err := f.db.PutStatus(ctx, status); err != nil {
 					if err == db.ErrAlreadyExists {
 						// the status already exists in the database, which means we've already handled everything else,
 						// so we can just return nil here and be done with it.
@@ -137,7 +137,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return errors.New("CREATE: could not convert type to follow")
 		}
 
-		followRequest, err := f.typeConverter.ASFollowToFollowRequest(follow)
+		followRequest, err := f.typeConverter.ASFollowToFollowRequest(ctx, follow)
 		if err != nil {
 			return fmt.Errorf("CREATE: could not convert Follow to follow request: %s", err)
 		}
@@ -148,7 +148,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 		followRequest.ID = newID
 
-		if err := f.db.Put(followRequest); err != nil {
+		if err := f.db.Put(ctx, followRequest); err != nil {
 			return fmt.Errorf("CREATE: database error inserting follow request: %s", err)
 		}
 
@@ -165,7 +165,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return errors.New("CREATE: could not convert type to like")
 		}
 
-		fave, err := f.typeConverter.ASLikeToFave(like)
+		fave, err := f.typeConverter.ASLikeToFave(ctx, like)
 		if err != nil {
 			return fmt.Errorf("CREATE: could not convert Like to fave: %s", err)
 		}
@@ -176,7 +176,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 		fave.ID = newID
 
-		if err := f.db.Put(fave); err != nil {
+		if err := f.db.Put(ctx, fave); err != nil {
 			return fmt.Errorf("CREATE: database error inserting fave: %s", err)
 		}
 
@@ -193,7 +193,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return errors.New("CREATE: could not convert type to block")
 		}
 
-		block, err := f.typeConverter.ASBlockToBlock(blockable)
+		block, err := f.typeConverter.ASBlockToBlock(ctx, blockable)
 		if err != nil {
 			return fmt.Errorf("CREATE: could not convert Block to gts model block")
 		}
@@ -204,7 +204,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		}
 		block.ID = newID
 
-		if err := f.db.Put(block); err != nil {
+		if err := f.db.Put(ctx, block); err != nil {
 			return fmt.Errorf("CREATE: database error inserting block: %s", err)
 		}
 

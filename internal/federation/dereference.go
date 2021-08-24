@@ -19,36 +19,37 @@
 package federation
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *federator) GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error) {
-	return f.dereferencer.GetRemoteAccount(username, remoteAccountID, refresh)
+func (f *federator) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error) {
+	return f.dereferencer.GetRemoteAccount(ctx, username, remoteAccountID, refresh)
 }
 
-func (f *federator) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-	return f.dereferencer.EnrichRemoteAccount(username, account)
+func (f *federator) EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+	return f.dereferencer.EnrichRemoteAccount(ctx, username, account)
 }
 
-func (f *federator) GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
-	return f.dereferencer.GetRemoteStatus(username, remoteStatusID, refresh)
+func (f *federator) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
+	return f.dereferencer.GetRemoteStatus(ctx, username, remoteStatusID, refresh)
 }
 
-func (f *federator) EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error) {
-	return f.dereferencer.EnrichRemoteStatus(username, status)
+func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status) (*gtsmodel.Status, error) {
+	return f.dereferencer.EnrichRemoteStatus(ctx, username, status)
 }
 
-func (f *federator) DereferenceRemoteThread(username string, statusIRI *url.URL) error {
-	return f.dereferencer.DereferenceThread(username, statusIRI)
+func (f *federator) DereferenceRemoteThread(ctx context.Context, username string, statusIRI *url.URL) error {
+	return f.dereferencer.DereferenceThread(ctx, username, statusIRI)
 }
 
-func (f *federator) GetRemoteInstance(username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
-	return f.dereferencer.GetRemoteInstance(username, remoteInstanceURI)
+func (f *federator) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
+	return f.dereferencer.GetRemoteInstance(ctx, username, remoteInstanceURI)
 }
 
-func (f *federator) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error {
-	return f.dereferencer.DereferenceAnnounce(announce, requestingUsername)
+func (f *federator) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
+	return f.dereferencer.DereferenceAnnounce(ctx, announce, requestingUsername)
 }

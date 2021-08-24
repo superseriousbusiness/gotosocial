@@ -120,23 +120,23 @@ func (suite *AuthTestSuite) SetupTest() {
 	}
 
 	for _, m := range models {
-		if err := suite.db.CreateTable(m); err != nil {
+		if err := suite.db.CreateTable(context.Background(),m); err != nil {
 			logrus.Panicf("db connection error: %s", err)
 		}
 	}
 
 	suite.oauthServer = oauth.New(suite.db, log)
 
-	if err := suite.db.Put(suite.testAccount); err != nil {
+	if err := suite.db.Put(context.Background(),suite.testAccount); err != nil {
 		logrus.Panicf("could not insert test account into db: %s", err)
 	}
-	if err := suite.db.Put(suite.testUser); err != nil {
+	if err := suite.db.Put(context.Background(),suite.testUser); err != nil {
 		logrus.Panicf("could not insert test user into db: %s", err)
 	}
-	if err := suite.db.Put(suite.testClient); err != nil {
+	if err := suite.db.Put(context.Background(),suite.testClient); err != nil {
 		logrus.Panicf("could not insert test client into db: %s", err)
 	}
-	if err := suite.db.Put(suite.testApplication); err != nil {
+	if err := suite.db.Put(context.Background(),suite.testApplication); err != nil {
 		logrus.Panicf("could not insert test application into db: %s", err)
 	}
 
@@ -152,7 +152,7 @@ func (suite *AuthTestSuite) TearDownTest() {
 		&gtsmodel.Application{},
 	}
 	for _, m := range models {
-		if err := suite.db.DropTable(m); err != nil {
+		if err := suite.db.DropTable(context.Background(),m); err != nil {
 			logrus.Panicf("error dropping table: %s", err)
 		}
 	}

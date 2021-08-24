@@ -75,7 +75,7 @@ func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	relationship, errWithCode := m.processor.AccountFollowRemove(authed, targetAcctID)
+	relationship, errWithCode := m.processor.AccountFollowRemove(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
 		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

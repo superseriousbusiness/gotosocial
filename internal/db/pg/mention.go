@@ -21,7 +21,6 @@ package pg
 import (
 	"context"
 
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -67,14 +66,16 @@ func (m *mentionDB) mentionCached(id string) (*gtsmodel.Mention, bool) {
 	return mention, true
 }
 
-func (m *mentionDB) newMentionQ(i interface{}) *orm.Query {
-	return m.conn.Model(i).
+func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
+	return m.conn.
+		NewSelect().
+		Model(i).
 		Relation("Status").
 		Relation("OriginAccount").
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
 	if mention, cached := m.mentionCached(id); cached {
 		return mention, nil
 	}
@@ -84,7 +85,7 @@ func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.Error) {
 	q := m.newMentionQ(mention).
 		Where("mention.id = ?", id)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	if err == nil && mention != nil {
 		m.cacheMention(id, mention)
@@ -93,11 +94,11 @@ func (m *mentionDB) GetMention(id string) (*gtsmodel.Mention, db.Error) {
 	return mention, err
 }
 
-func (m *mentionDB) GetMentions(ids []string) ([]*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {
 	mentions := []*gtsmodel.Mention{}
 
 	for _, i := range ids {
-		mention, err := m.GetMention(i)
+		mention, err := m.GetMention(ctx, i)
 		if err != nil {
 			return nil, processErrorResponse(err)
 		}

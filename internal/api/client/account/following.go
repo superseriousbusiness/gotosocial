@@ -74,7 +74,7 @@ func (m *Module) AccountFollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	following, errWithCode := m.processor.AccountFollowingGet(authed, targetAcctID)
+	following, errWithCode := m.processor.AccountFollowingGet(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return

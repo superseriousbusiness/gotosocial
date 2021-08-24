@@ -30,8 +30,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -61,7 +59,7 @@ type postgresService struct {
 	db.Status
 	db.Timeline
 	config *config.Config
-	conn   *pg.DB
+	conn   *bun.DB
 	log    *logrus.Logger
 	cancel context.CancelFunc
 }
@@ -71,7 +69,7 @@ type postgresService struct {
 func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
 	for _, t := range registerTables {
 		// https://pg.uptrace.dev/orm/many-to-many-relation/
-		orm.RegisterTable(t)
+		bun.RegisterModel(t)
 	}
 
 	opts, err := derivePGOptions(c)

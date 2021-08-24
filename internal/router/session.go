@@ -19,6 +19,7 @@
 package router
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -45,10 +46,10 @@ func SessionOptions(cfg *config.Config) sessions.Options {
 	}
 }
 
-func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
+func useSession(ctx context.Context, cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 	// check if we have a saved router session already
 	routerSessions := []*gtsmodel.RouterSession{}
-	if err := dbService.GetAll(&routerSessions); err != nil {
+	if err := dbService.GetAll(ctx, &routerSessions); err != nil {
 		if err != db.ErrNoEntries {
 			// proper error occurred
 			return err
@@ -62,7 +63,7 @@ func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 	} else if len(routerSessions) == 0 {
 		// we have no router sessions so we need to create a new one
 		var err error
-		rs, err = routerSession(dbService)
+		rs, err = routerSession(ctx, dbService)
 		if err != nil {
 			return fmt.Errorf("error creating new router session: %s", err)
 		}
@@ -84,7 +85,7 @@ func useSession(cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
 
 // routerSession generates a new router session with random auth and crypt bytes,
 // puts it in the database for persistence, and returns it for use.
-func routerSession(dbService db.DB) (*gtsmodel.RouterSession, error) {
+func routerSession(ctx context.Context, dbService db.DB) (*gtsmodel.RouterSession, error) {
 	auth := make([]byte, 32)
 	crypt := make([]byte, 32)
 
@@ -106,7 +107,7 @@ func routerSession(dbService db.DB) (*gtsmodel.RouterSession, error) {
 		Crypt: crypt,
 	}
 
-	if err := dbService.Put(rs); err != nil {
+	if err := dbService.Put(ctx, rs); err != nil {
 		return nil, err
 	}
 

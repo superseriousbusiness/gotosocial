@@ -19,6 +19,7 @@
 package visibility
 
 import (
+	"context"
 	"errors"
 
 	"fmt"
@@ -28,20 +29,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
+func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
 	l := f.log.WithFields(logrus.Fields{
 		"func":     "StatusVisible",
 		"statusID": targetStatus.ID,
 	})
 
 	getBoosted := true
-	relevantAccounts, err := f.relevantAccounts(targetStatus, getBoosted)
+	relevantAccounts, err := f.relevantAccounts(ctx, targetStatus, getBoosted)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 		return false, fmt.Errorf("StatusVisible: error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
 
-	domainBlocked, err := f.domainBlockedRelevant(relevantAccounts)
+	domainBlocked, err := f.domainBlockedRelevant(ctx, relevantAccounts)
 	if err != nil {
 		l.Debugf("error checking domain block: %s", err)
 		return false, fmt.Errorf("error checking domain block: %s", err)
@@ -67,7 +68,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	// note: we only do this for local users
 	if targetAccount.Domain == "" {
 		targetUser := &gtsmodel.User{}
-		if err := f.db.GetWhere([]db.Where{{Key: "account_id", Value: targetAccount.ID}}, targetUser); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: targetAccount.ID}}, targetUser); err != nil {
 			l.Debug("target user could not be selected")
 			if err == db.ErrNoEntries {
 				return false, nil
@@ -97,7 +98,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 	// note: we only do this for local users
 	if requestingAccount.Domain == "" {
 		requestingUser := &gtsmodel.User{}
-		if err := f.db.GetWhere([]db.Where{{Key: "account_id", Value: requestingAccount.ID}}, requestingUser); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: requestingAccount.ID}}, requestingUser); err != nil {
 			// if the requesting account is local but doesn't have a corresponding user in the db this is a problem
 			l.Debug("requesting user could not be selected")
 			if err == db.ErrNoEntries {
@@ -126,7 +127,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// At this point we have a populated targetAccount, targetStatus, and requestingAccount, so we can check for blocks and whathaveyou
 	// First check if a block exists directly between the target account (which authored the status) and the requesting account.
-	if blocked, err := f.db.IsBlocked(targetAccount.ID, requestingAccount.ID, true); err != nil {
+	if blocked, err := f.db.IsBlocked(ctx, targetAccount.ID, requestingAccount.ID, true); err != nil {
 		l.Debugf("something went wrong figuring out if the accounts have a block: %s", err)
 		return false, err
 	} else if blocked {
@@ -137,7 +138,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status replies to account id
 	if relevantAccounts.InReplyToAccount != nil && relevantAccounts.InReplyToAccount.ID != requestingAccount.ID {
-		if blocked, err := f.db.IsBlocked(relevantAccounts.InReplyToAccount.ID, requestingAccount.ID, true); err != nil {
+		if blocked, err := f.db.IsBlocked(ctx, relevantAccounts.InReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and reply to account")
@@ -146,7 +147,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 		// check reply to ID
 		if targetStatus.InReplyToID != "" && (targetStatus.Visibility == gtsmodel.VisibilityFollowersOnly || targetStatus.Visibility == gtsmodel.VisibilityDirect) {
-			followsRepliedAccount, err := f.db.IsFollowing(requestingAccount, relevantAccounts.InReplyToAccount)
+			followsRepliedAccount, err := f.db.IsFollowing(ctx, requestingAccount, relevantAccounts.InReplyToAccount)
 			if err != nil {
 				return false, err
 			}
@@ -159,7 +160,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status boosts accounts id
 	if relevantAccounts.BoostedAccount != nil {
-		if blocked, err := f.db.IsBlocked(relevantAccounts.BoostedAccount.ID, requestingAccount.ID, true); err != nil {
+		if blocked, err := f.db.IsBlocked(ctx, relevantAccounts.BoostedAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted account")
@@ -169,7 +170,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 
 	// status boosts a reply to account id
 	if relevantAccounts.BoostedInReplyToAccount != nil {
-		if blocked, err := f.db.IsBlocked(relevantAccounts.BoostedInReplyToAccount.ID, requestingAccount.ID, true); err != nil {
+		if blocked, err := f.db.IsBlocked(ctx, relevantAccounts.BoostedInReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and boosted reply to account")
@@ -182,7 +183,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		if a == nil {
 			continue
 		}
-		if blocked, err := f.db.IsBlocked(a.ID, requestingAccount.ID, true); err != nil {
+		if blocked, err := f.db.IsBlocked(ctx, a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and a mentioned account")
@@ -195,7 +196,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		if a == nil {
 			continue
 		}
-		if blocked, err := f.db.IsBlocked(a.ID, requestingAccount.ID, true); err != nil {
+		if blocked, err := f.db.IsBlocked(ctx, a.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and a boosted mentioned account")
@@ -221,7 +222,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		return true, nil
 	case gtsmodel.VisibilityFollowersOnly:
 		// check one-way follow
-		follows, err := f.db.IsFollowing(requestingAccount, targetAccount)
+		follows, err := f.db.IsFollowing(ctx, requestingAccount, targetAccount)
 		if err != nil {
 			return false, err
 		}
@@ -232,7 +233,7 @@ func (f *filter) StatusVisible(targetStatus *gtsmodel.Status, requestingAccount 
 		return true, nil
 	case gtsmodel.VisibilityMutualsOnly:
 		// check mutual follow
-		mutuals, err := f.db.IsMutualFollowing(requestingAccount, targetAccount)
+		mutuals, err := f.db.IsMutualFollowing(ctx, requestingAccount, targetAccount)
 		if err != nil {
 			return false, err
 		}

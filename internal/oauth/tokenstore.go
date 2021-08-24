@@ -58,7 +58,7 @@ func newTokenStore(ctx context.Context, db db.Basic, log *logrus.Logger) oauth2.
 				break cleanloop
 			case <-time.After(1 * time.Minute):
 				log.Trace("sweeping out old oauth entries broom broom")
-				if err := pts.sweep(); err != nil {
+				if err := pts.sweep(ctx); err != nil {
 					log.Errorf("error while sweeping oauth entries: %s", err)
 				}
 			}
@@ -68,11 +68,11 @@ func newTokenStore(ctx context.Context, db db.Basic, log *logrus.Logger) oauth2.
 }
 
 // sweep clears out old tokens that have expired; it should be run on a loop about once per minute or so.
-func (pts *tokenStore) sweep() error {
+func (pts *tokenStore) sweep(ctx context.Context) error {
 	// select *all* tokens from the db
 	// todo: if this becomes expensive (ie., there are fucking LOADS of tokens) then figure out a better way.
 	tokens := new([]*Token)
-	if err := pts.db.GetAll(tokens); err != nil {
+	if err := pts.db.GetAll(ctx, tokens); err != nil {
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (pts *tokenStore) sweep() error {
 		// we only want to check if a token expired before now if the expiry time is *not zero*;
 		// ie., if it's been explicity set.
 		if !pgt.CodeExpiresAt.IsZero() && pgt.CodeExpiresAt.Before(now) || !pgt.RefreshExpiresAt.IsZero() && pgt.RefreshExpiresAt.Before(now) || !pgt.AccessExpiresAt.IsZero() && pgt.AccessExpiresAt.Before(now) {
-			if err := pts.db.DeleteByID(pgt.ID, pgt); err != nil {
+			if err := pts.db.DeleteByID(ctx, pgt.ID, pgt); err != nil {
 				return err
 			}
 		}
@@ -109,7 +109,7 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 		pgt.ID = pgtID
 	}
 
-	if err := pts.db.Put(pgt); err != nil {
+	if err := pts.db.Put(ctx, pgt); err != nil {
 		return fmt.Errorf("error in tokenstore create: %s", err)
 	}
 	return nil
@@ -117,17 +117,17 @@ func (pts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error 
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (pts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
-	return pts.db.DeleteWhere([]db.Where{{Key: "code", Value: code}}, &Token{})
+	return pts.db.DeleteWhere(ctx, []db.Where{{Key: "code", Value: code}}, &Token{})
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (pts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return pts.db.DeleteWhere([]db.Where{{Key: "access", Value: access}}, &Token{})
+	return pts.db.DeleteWhere(ctx, []db.Where{{Key: "access", Value: access}}, &Token{})
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (pts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return pts.db.DeleteWhere([]db.Where{{Key: "refresh", Value: refresh}}, &Token{})
+	return pts.db.DeleteWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, &Token{})
 }
 
 // GetByCode selects a token from the DB based on the Code field
@@ -138,7 +138,7 @@ func (pts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.Token
 	pgt := &Token{
 		Code: code,
 	}
-	if err := pts.db.GetWhere([]db.Where{{Key: "code", Value: code}}, pgt); err != nil {
+	if err := pts.db.GetWhere(ctx, []db.Where{{Key: "code", Value: code}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil
@@ -152,7 +152,7 @@ func (pts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.T
 	pgt := &Token{
 		Access: access,
 	}
-	if err := pts.db.GetWhere([]db.Where{{Key: "access", Value: access}}, pgt); err != nil {
+	if err := pts.db.GetWhere(ctx, []db.Where{{Key: "access", Value: access}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil
@@ -166,7 +166,7 @@ func (pts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2
 	pgt := &Token{
 		Refresh: refresh,
 	}
-	if err := pts.db.GetWhere([]db.Where{{Key: "refresh", Value: refresh}}, pgt); err != nil {
+	if err := pts.db.GetWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, pgt); err != nil {
 		return nil, err
 	}
 	return TokenToOauthToken(pgt), nil

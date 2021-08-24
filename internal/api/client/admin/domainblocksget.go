@@ -81,7 +81,7 @@ func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 		export = i
 	}
 
-	domainBlocks, err := m.processor.AdminDomainBlocksGet(authed, export)
+	domainBlocks, err := m.processor.AdminDomainBlocksGet(c.Request.Context(), authed, export)
 	if err != nil {
 		l.Debugf("error getting domain blocks: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

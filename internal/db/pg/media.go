@@ -21,7 +21,6 @@ package pg
 import (
 	"context"
 
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -36,18 +35,20 @@ type mediaDB struct {
 	cancel context.CancelFunc
 }
 
-func (m *mediaDB) newMediaQ(i interface{}) *orm.Query {
-	return m.conn.Model(i).
+func (m *mediaDB) newMediaQ(i interface{}) *bun.SelectQuery {
+	return m.conn.
+		NewSelect().
+		Model(i).
 		Relation("Account")
 }
 
-func (m *mediaDB) GetAttachmentByID(id string) (*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
 	attachment := &gtsmodel.MediaAttachment{}
 
 	q := m.newMediaQ(attachment).
 		Where("media_attachment.id = ?", id)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	return attachment, err
 }

@@ -3,6 +3,8 @@ package pg
 import (
 	"strings"
 
+	"database/sql"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -11,10 +13,8 @@ func processErrorResponse(err error) db.Error {
 	switch err {
 	case nil:
 		return nil
-	case bun.ErrNoRows:
+	case sql.ErrNoRows:
 		return db.ErrNoEntries
-	case bun.ErrMultiRows:
-		return db.ErrMultipleEntries
 	default:
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			return db.ErrAlreadyExists

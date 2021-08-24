@@ -153,7 +153,7 @@ func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
 		local = i
 	}
 
-	resp, errWithCode := m.processor.HomeTimelineGet(authed, maxID, sinceID, minID, limit, local)
+	resp, errWithCode := m.processor.HomeTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
 		l.Debugf("error from processor HomeTimelineGet: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
