@@ -37,38 +37,38 @@ type Status struct {
 	Attachments   []*MediaAttachment `bun:"attached_media,rel:has-many"`
 	// Database IDs of any tags used in this status
 	TagIDs []string `bun:"tags,array"`
-	Tags   []*Tag   `bun:"attached_tags,m2m:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	Tags   []*Tag   `bun:"attached_tags,m2m:status_to_tags"` // https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	// Database IDs of any mentions in this status
 	MentionIDs []string   `bun:"mentions,array"`
 	Mentions   []*Mention `bun:"attached_mentions,rel:has-many"`
 	// Database IDs of any emojis used in this status
 	EmojiIDs []string `bun:"emojis,array"`
-	Emojis   []*Emoji `bun:"attached_emojis,m2m:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	Emojis   []*Emoji `bun:"attached_emojis,m2m:status_to_emojis"` // https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	// when was this status created?
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// when was this status updated?
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
 	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
+	Account   *Account `bun:"-"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
 	InReplyToID string  `bun:"type:CHAR(26)"`
-	InReplyTo   *Status `bun:"rel:belongs-to"`
+	InReplyTo   *Status `bun:"-"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
 	InReplyToAccountID string   `bun:"type:CHAR(26)"`
-	InReplyToAccount   *Account `bun:"rel:belongs-to"`
+	InReplyToAccount   *Account `bun:"-"`
 	// id of the status this status is a boost of
 	BoostOfID string  `bun:"type:CHAR(26)"`
-	BoostOf   *Status `bun:"rel:belongs-to"`
+	BoostOf   *Status `bun:"-"`
 	// id of the account that owns the boosted status
 	BoostOfAccountID string   `bun:"type:CHAR(26)"`
-	BoostOfAccount   *Account `bun:"rel:belongs-to"`
+	BoostOfAccount   *Account `bun:"-"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -79,7 +79,7 @@ type Status struct {
 	Language string
 	// Which application was used to create this status?
 	CreatedWithApplicationID string       `bun:"type:CHAR(26)"`
-	CreatedWithApplication   *Application `bun:"rel:belongs-to"`
+	CreatedWithApplication   *Application `bun:"-"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
@@ -94,17 +94,17 @@ type Status struct {
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
 	StatusID string  `bun:"type:CHAR(26),unique:statustag"`
-	Status   *Status `bun:"rel:has-one"`
+	Status   *Status `bun:"rel:belongs-to"`
 	TagID    string  `bun:"type:CHAR(26),unique:statustag"`
-	Tag      *Tag    `bun:"rel:has-one"`
+	Tag      *Tag    `bun:"rel:belongs-to"`
 }
 
 // StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
 type StatusToEmoji struct {
 	StatusID string  `bun:"type:CHAR(26),unique:statusemoji"`
-	Status   *Status `bun:"rel:has-one"`
+	Status   *Status `bun:"rel:belongs-to"`
 	EmojiID  string  `bun:"type:CHAR(26),unique:statusemoji"`
-	Emoji    *Emoji  `bun:"rel:has-one"`
+	Emoji    *Emoji  `bun:"rel:belongs-to"`
 }
 
 // Visibility represents the visibility granularity of a status.

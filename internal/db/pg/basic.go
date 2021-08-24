@@ -21,7 +21,6 @@ package pg
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -113,23 +112,11 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 	return processErrorResponse(err)
 }
 
-func (b *basicDB) Upsert(ctx context.Context, i interface{}, conflictColumn string) db.Error {
-	q := b.conn.
-		NewInsert().
-		Model(i).
-		On(fmt.Sprintf("CONFLICT (%s) DO UPDATE", conflictColumn))
-
-	_, err := q.Exec(ctx)
-
-	return processErrorResponse(err)
-}
-
 func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.Error {
 	q := b.conn.
-		NewInsert().
+		NewUpdate().
 		Model(i).
-		Where("id = ?", id).
-		On("CONFLICT (id) DO UPDATE")
+		Where("id = ?", id)
 
 	_, err := q.Exec(ctx)
 
@@ -170,12 +157,12 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 }
 
 func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
-	_, err := b.conn.NewCreateTable().IfNotExists().Model(i).Exec(ctx)
+	_, err := b.conn.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
 	return err
 }
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
-	_, err := b.conn.NewDropTable().IfExists().Model(i).Exec(ctx)
+	_, err := b.conn.NewDropTable().Model(i).IfExists().Exec(ctx)
 	return processErrorResponse(err)
 }
 

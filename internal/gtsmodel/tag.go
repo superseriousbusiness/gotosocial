@@ -31,13 +31,13 @@ type Tag struct {
 	// Which account ID is the first one we saw using this tag?
 	FirstSeenFromAccountID string `bun:"type:CHAR(26)"`
 	// when was this tag created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// when was this tag last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// can our instance users use this tag?
 	Useable bool `bun:",notnull,default:true"`
 	// can our instance users look up this tag?
 	Listable bool `bun:",notnull,default:true"`
 	// when was this tag last used?
-	LastStatusAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	LastStatusAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 }

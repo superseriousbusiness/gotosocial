@@ -76,13 +76,7 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 		Relation("Attachments").
 		Relation("Tags").
 		Relation("Mentions").
-		Relation("Emojis").
-		Relation("Account").
-		Relation("InReplyTo").
-		Relation("InReplyToAccount").
-		Relation("BoostOf").
-		Relation("BoostOfAccount").
-		Relation("CreatedWithApplication")
+		Relation("Emojis")
 }
 
 func (s *statusDB) newFaveQ(faves interface{}) *bun.SelectQuery {
@@ -99,14 +93,18 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 		return status, nil
 	}
 
-	status := &gtsmodel.Status{}
+	status := new(gtsmodel.Status)
 
 	q := s.newStatusQ(status).
 		Where("status.id = ?", id)
 
 	err := processErrorResponse(q.Scan(ctx))
 
-	if err == nil && status != nil {
+	if err != nil {
+		return nil, err
+	}
+
+	if status != nil {
 		s.cacheStatus(id, status)
 	}
 

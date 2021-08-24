@@ -27,9 +27,9 @@ type DomainBlock struct {
 	// blocked domain
 	Domain string `bun:",pk,notnull,unique"`
 	// When was this block created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// When was this block updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// Account ID of the creator of this block
 	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
 	CreatedByAccount   *Account `bun:"rel:belongs-to"`

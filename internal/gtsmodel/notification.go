@@ -27,7 +27,7 @@ type Notification struct {
 	// Type of this notification
 	NotificationType NotificationType `bun:",notnull"`
 	// Creation time of this notification
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// Which account does this notification target (ie., who will receive the notification?)
 	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
 	TargetAccount   *Account `bun:"rel:belongs-to"`

@@ -65,9 +65,9 @@ type Account struct {
 	// This account has moved this account id in the database
 	MovedToAccountID string `bun:"type:CHAR(26)"`
 	// When was this account created?
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this account last updated?
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Does this account identify itself as a bot?
 	Bot bool
 	// What reason was given for signing up when this account was created?
@@ -97,7 +97,7 @@ type Account struct {
 	// At which URL can we see the user account in a web browser?
 	URL string `bun:",unique"`
 	// Last time this account was located using the webfinger API.
-	LastWebfingeredAt time.Time `bun:"type:timestamp"`
+	LastWebfingeredAt time.Time `bun:",nullzero"`
 	// Address of this account's activitypub inbox, for sending activity to
 	InboxURI string `bun:",unique"`
 	// Address of this account's activitypub outbox
@@ -129,11 +129,11 @@ type Account struct {
 	*/
 
 	// When was this account set to have all its media shown as sensitive?
-	SensitizedAt time.Time `bun:"type:timestamp"`
+	SensitizedAt time.Time `bun:",nullzero"`
 	// When was this account silenced (eg., statuses only visible to followers, not public)?
-	SilencedAt time.Time `bun:"type:timestamp"`
+	SilencedAt time.Time `bun:",nullzero"`
 	// When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
-	SuspendedAt time.Time `bun:"type:timestamp"`
+	SuspendedAt time.Time `bun:",nullzero"`
 	// Should we hide this account's collections?
 	HideCollections bool
 	// id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
@@ -146,5 +146,5 @@ type Account struct {
 type Field struct {
 	Name       string
 	Value      string
-	VerifiedAt time.Time `bun:"type:timestamp"`
+	VerifiedAt time.Time `bun:",nullzero"`
 }

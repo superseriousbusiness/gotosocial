@@ -47,7 +47,7 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
-	account := &gtsmodel.Account{}
+	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
 		Where("account.id = ?", id)
@@ -58,7 +58,7 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 }
 
 func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
-	account := &gtsmodel.Account{}
+	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
 		Where("account.uri = ?", uri)
@@ -69,7 +69,7 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 }
 
 func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
-	account := &gtsmodel.Account{}
+	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
 		Where("account.url = ?", uri)
@@ -80,7 +80,7 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.
 }
 
 func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
-	account := &gtsmodel.Account{}
+	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account)
 
@@ -100,7 +100,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 }
 
 func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) (time.Time, db.Error) {
-	status := &gtsmodel.Status{}
+	status := new(gtsmodel.Status)
 
 	q := a.conn.
 		NewSelect().
@@ -130,18 +130,26 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 	}
 
 	// TODO: there are probably more side effects here that need to be handled
-	if _, err := a.conn.NewInsert().Model(mediaAttachment).On("CONFLICT (id) DO UPDATE").Exec(ctx); err != nil {
+	if _, err := a.conn.
+		NewInsert().
+		Model(mediaAttachment).
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	if _, err := a.conn.NewInsert().Model(&gtsmodel.Account{}).Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).Where("id = ?", accountID).Exec(ctx); err != nil {
+	if _, err := a.conn.
+		NewUpdate().
+		Model(&gtsmodel.Account{}).
+		Set(fmt.Sprintf("%s_media_attachment_id = ?", headerOrAVI), mediaAttachment.ID).
+		Where("id = ?", accountID).
+		Exec(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username string) (*gtsmodel.Account, db.Error) {
-	account := &gtsmodel.Account{}
+	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
 		Where("username = ?", username).
@@ -153,16 +161,16 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 }
 
 func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, db.Error) {
-	faves := []*gtsmodel.StatusFave{}
+	faves := new([]*gtsmodel.StatusFave)
 
 	if err := a.conn.
 		NewSelect().
-		Model(&faves).
+		Model(faves).
 		Where("account_id = ?", accountID).
 		Scan(ctx); err != nil {
 		return nil, err
 	}
-	return faves, nil
+	return *faves, nil
 }
 
 func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, db.Error) {

@@ -55,7 +55,7 @@ func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo
 		Domain: cli.GetDomain(),
 		UserID: cli.GetUserID(),
 	}
-	return cs.db.UpdateByID(ctx, id, poc)
+	return cs.db.Put(ctx, poc)
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {

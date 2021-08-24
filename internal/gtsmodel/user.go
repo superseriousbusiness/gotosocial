@@ -45,19 +45,19 @@ type User struct {
 	*/
 
 	// When was this user created?
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// From what IP was this user created?
-	SignUpIP net.IP
+	SignUpIP net.IP `bun:",nullzero"`
 	// When was this user updated (eg., password changed, email address changed)?
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When did this user sign in for their current session?
-	CurrentSignInAt time.Time `bun:"type:timestamp"`
+	CurrentSignInAt time.Time `bun:",nullzero"`
 	// What's the most recent IP of this user
-	CurrentSignInIP net.IP
+	CurrentSignInIP net.IP `bun:",nullzero"`
 	// When did this user last sign in?
-	LastSignInAt time.Time `bun:"type:timestamp"`
+	LastSignInAt time.Time `bun:",nullzero"`
 	// What's the previous IP of this user?
-	LastSignInIP net.IP
+	LastSignInIP net.IP `bun:",nullzero"`
 	// How many times has this user signed in?
 	SignInCount int
 	// id of the user who invited this user (who let this guy in?)
@@ -70,9 +70,9 @@ type User struct {
 	Locale string
 	// Which application id created this user? See gtsmodel.Application
 	CreatedByApplicationID string       `bun:"type:CHAR(26)"`
-	CreatedByApplication   *Application `bun:"rel:belongs-to"`
+	CreatedByApplication   *Application `bun:"-"`
 	// When did we last contact this user
-	LastEmailedAt time.Time `bun:"type:timestamp"`
+	LastEmailedAt time.Time `bun:",nullzero"`
 
 	/*
 		USER CONFIRMATION
@@ -81,9 +81,9 @@ type User struct {
 	// What confirmation token did we send this user/what are we expecting back?
 	ConfirmationToken string
 	// When did the user confirm their email address
-	ConfirmedAt time.Time `bun:"type:timestamp"`
+	ConfirmedAt time.Time `bun:",nullzero"`
 	// When did we send email confirmation to this user?
-	ConfirmationSentAt time.Time `bun:"type:timestamp"`
+	ConfirmationSentAt time.Time `bun:",nullzero"`
 	// Email address that hasn't yet been confirmed
 	UnconfirmedEmail string
 

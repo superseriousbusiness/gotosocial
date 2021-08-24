@@ -25,7 +25,7 @@ type StatusMute struct {
 	// id of this mute in the database
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// when was this mute created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// id of the account that created ('did') the mute
 	AccountID string   `bun:"type:CHAR(26),notnull"`
 	Account   *Account `bun:"rel:belongs-to"`

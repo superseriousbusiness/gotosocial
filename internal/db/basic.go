@@ -58,11 +58,6 @@ type Basic interface {
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	Put(ctx context.Context, i interface{}) Error
 
-	// Upsert stores or updates i based on the given conflict column, as in https://www.postgresqltutorial.com/postgresql-upsert/
-	// It is up to the implementation to figure out how to store it, and using what key.
-	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	Upsert(ctx context.Context, i interface{}, conflictColumn string) Error
-
 	// UpdateByID updates i with id id.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	UpdateByID(ctx context.Context, id string, i interface{}) Error

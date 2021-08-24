@@ -7,15 +7,15 @@ type Block struct {
 	// id of this block in the database
 	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// When was this block created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// When was this block updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// Who created this block?
 	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
+	Account   *Account `bun:"-"`
 	// Who is targeted by this block?
 	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
+	TargetAccount   *Account `bun:"-"`
 	// Activitypub URI for this block
 	URI string `bun:",notnull"`
 }

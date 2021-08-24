@@ -46,8 +46,8 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
-	github.com/uptrace/bun v0.4.3
-	github.com/uptrace/bun/dialect/pgdialect v0.4.3
+	github.com/uptrace/bun v1.0.0-rc.1
+	github.com/uptrace/bun/dialect/pgdialect v1.0.0-rc.1
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97

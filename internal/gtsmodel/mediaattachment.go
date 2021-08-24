@@ -34,16 +34,16 @@ type MediaAttachment struct {
 	// Where can the attachment be retrieved on a remote server (empty for local media)
 	RemoteURL string
 	// When was the attachment created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// When was the attachment last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// Type of file (image/gif/audio/video)
 	Type FileType `bun:",notnull"`
 	// Metadata about the file
 	FileMeta FileMeta
 	// To which account does this attachment belong
 	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
+	Account   *Account `bun:"rel:has-one"`
 	// Description of the attachment (for screenreaders)
 	Description string
 	// To which scheduled status does this attachment belong
@@ -71,7 +71,7 @@ type File struct {
 	// What is the size of the file in bytes.
 	FileSize int
 	// When was the file last updated.
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
@@ -83,7 +83,7 @@ type Thumbnail struct {
 	// What is the size of the file in bytes
 	FileSize int
 	// When was the file last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// What is the URL of the thumbnail on the local server
 	URL string
 	// What is the remote URL of the thumbnail (empty for local media)

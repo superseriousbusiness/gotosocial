@@ -92,7 +92,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	for _, m := range testModels {
 		if err := db.CreateTable(ctx, m); err != nil {
-			logrus.Panic(err)
+			logrus.Panicf("error creating table for %+v: %s", m, err)
 		}
 	}
 

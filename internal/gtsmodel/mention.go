@@ -28,9 +28,9 @@ type Mention struct {
 	StatusID string  `bun:"type:CHAR(26),notnull"`
 	Status   *Status `bun:"rel:belongs-to"`
 	// When was this mention created?
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// When was this mention last updated?
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
 	// What's the internal account ID of the originator of the mention?
 	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
 	OriginAccount   *Account `bun:"rel:belongs-to"`
