@@ -28,15 +28,15 @@ type MediaAttachment struct {
 	// ID of the attachment in the database
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status to which this is attached
-	StatusID string `bun:"type:CHAR(26)"`
+	StatusID string `bun:"type:CHAR(26),nullzero"`
 	// Where can the attachment be retrieved on *this* server
 	URL string
 	// Where can the attachment be retrieved on a remote server (empty for local media)
 	RemoteURL string
 	// When was the attachment created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was the attachment last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Type of file (image/gif/audio/video)
 	Type FileType `bun:",notnull"`
 	// Metadata about the file
@@ -47,7 +47,7 @@ type MediaAttachment struct {
 	// Description of the attachment (for screenreaders)
 	Description string
 	// To which scheduled status does this attachment belong
-	ScheduledStatusID string `bun:"type:CHAR(26)"`
+	ScheduledStatusID string `bun:"type:CHAR(26),nullzero"`
 	// What is the generated blurhash of this attachment
 	Blurhash string
 	// What is the processing status of this attachment

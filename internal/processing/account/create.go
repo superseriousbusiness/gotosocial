@@ -31,12 +31,20 @@ import (
 func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
 	l := p.log.WithField("func", "accountCreate")
 
-	if err := p.db.IsEmailAvailable(ctx, form.Email); err != nil {
+	emailAvailable, err := p.db.IsEmailAvailable(ctx, form.Email)
+	if err != nil {
 		return nil, err
 	}
+	if !emailAvailable {
+		return nil, fmt.Errorf("email address %s in use", form.Email)
+	}
 
-	if err := p.db.IsUsernameAvailable(ctx, form.Username); err != nil {
+	usernameAvailable, err := p.db.IsUsernameAvailable(ctx, form.Username)
+	if err != nil {
 		return nil, err
+	}
+	if !usernameAvailable {
+		return nil, fmt.Errorf("username %s in use", form.Username)
 	}
 
 	// don't store a reason if we don't require one

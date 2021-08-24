@@ -27,9 +27,9 @@ type DomainBlock struct {
 	// blocked domain
 	Domain string `bun:",pk,notnull,unique"`
 	// When was this block created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this block updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Account ID of the creator of this block
 	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
 	CreatedByAccount   *Account `bun:"rel:belongs-to"`
@@ -40,5 +40,5 @@ type DomainBlock struct {
 	// whether the domain name should appear obfuscated when displaying it publicly
 	Obfuscate bool
 	// if this block was created through a subscription, what's the subscription ID?
-	SubscriptionID string `bun:"type:CHAR(26)"`
+	SubscriptionID string `bun:"type:CHAR(26),nullzero"`
 }

@@ -46,37 +46,21 @@ type adminDB struct {
 	cancel context.CancelFunc
 }
 
-func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) db.Error {
-	// if no error we fail because it means we found something
-	// if err is pg.ErrNoRows we're good, we found nothing so continue
-	// if error but it's not sql.ErrNoRows then we fail
+func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
 	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.Account{}).
 		Where("username = ?", username).
 		Where("domain = ?", nil)
 
-	err := q.Scan(ctx)
-
-	if err == nil {
-		// we got something, not good
-		return fmt.Errorf("username %s already in use", username)
-	}
-
-	if err == sql.ErrNoRows {
-		// no entries, we're happy
-		return nil
-	}
-
-	// another type of error occurred
-	return processErrorResponse(err)
+	return notExists(ctx, q)
 }
 
-func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) db.Error {
+func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.Error) {
 	// parse the domain from the email
 	m, err := mail.ParseAddress(email)
 	if err != nil {
-		return fmt.Errorf("error parsing email address %s: %s", email, err)
+		return false, fmt.Errorf("error parsing email address %s: %s", email, err)
 	}
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
@@ -87,25 +71,19 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) db.Error {
 		Where("domain = ?", domain).
 		Scan(ctx); err == nil {
 		// fail because we found something
-		return fmt.Errorf("email domain %s is blocked", domain)
+		return false, fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
+		return false, processErrorResponse(err)
 	}
 
 	// check if this email is associated with a user already
-	if err := a.conn.
+	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.User{}).
 		Where("email = ?", email).
-		WhereOr("unconfirmed_email = ?", email).
-		Scan(ctx); err == nil {
-		// fail because we found something
-		return fmt.Errorf("email %s already in use", email)
-	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
-	}
+		WhereOr("unconfirmed_email = ?", email)
 
-	return nil
+	return notExists(ctx, q)
 }
 
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {

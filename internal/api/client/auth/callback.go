@@ -138,8 +138,12 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	// however, because we trust the OIDC provider, we should now create a user + account with the provided claims
 
 	// check if the email address is available for use; if it's not there's nothing we can so
-	if err := m.db.IsEmailAvailable(ctx, claims.Email); err != nil {
+	emailAvailable, err := m.db.IsEmailAvailable(ctx, claims.Email)
+	if err != nil {
 		return nil, fmt.Errorf("email %s not available: %s", claims.Email, err)
+	}
+	if !emailAvailable {
+		return nil, fmt.Errorf("email %s in use", claims.Email)
 	}
 
 	// now we need a username
@@ -181,12 +185,11 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	// note that for the first iteration, iString is still "" when the check is made, so our first choice
 	// is still the raw username with no integer stuck on the end
 	for i := 1; !found; i = i + 1 {
-		if err := m.db.IsUsernameAvailable(ctx, username+iString); err != nil {
-			if strings.Contains(err.Error(), "db error") {
-				// if there's an actual db error we should return
-				return nil, fmt.Errorf("error checking username availability: %s", err)
-			}
-		} else {
+		usernameAvailable, err := m.db.IsUsernameAvailable(ctx, username+iString)
+		if err != nil {
+			return nil, err
+		}
+		if usernameAvailable {
 			// no error so we've found a username that works
 			found = true
 			username = username + iString

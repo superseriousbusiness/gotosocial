@@ -52,23 +52,23 @@ type Status struct {
 	Local bool
 	// which account posted this status?
 	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"-"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
-	InReplyToID string  `bun:"type:CHAR(26)"`
+	InReplyToID string  `bun:"type:CHAR(26),nullzero"`
 	InReplyTo   *Status `bun:"-"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
-	InReplyToAccountID string   `bun:"type:CHAR(26)"`
-	InReplyToAccount   *Account `bun:"-"`
+	InReplyToAccountID string   `bun:"type:CHAR(26),nullzero"`
+	InReplyToAccount   *Account `bun:"rel:belongs-to"`
 	// id of the status this status is a boost of
-	BoostOfID string  `bun:"type:CHAR(26)"`
+	BoostOfID string  `bun:"type:CHAR(26),nullzero"`
 	BoostOf   *Status `bun:"-"`
 	// id of the account that owns the boosted status
-	BoostOfAccountID string   `bun:"type:CHAR(26)"`
-	BoostOfAccount   *Account `bun:"-"`
+	BoostOfAccountID string   `bun:"type:CHAR(26),nullzero"`
+	BoostOfAccount   *Account `bun:"rel:belongs-to"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
@@ -78,8 +78,8 @@ type Status struct {
 	// what language is this status written in?
 	Language string
 	// Which application was used to create this status?
-	CreatedWithApplicationID string       `bun:"type:CHAR(26)"`
-	CreatedWithApplication   *Application `bun:"-"`
+	CreatedWithApplicationID string       `bun:"type:CHAR(26),nullzero"`
+	CreatedWithApplication   *Application `bun:"rel:belongs-to"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types

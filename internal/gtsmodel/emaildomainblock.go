@@ -27,9 +27,9 @@ type EmailDomainBlock struct {
 	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
 	Domain string `bun:",notnull"`
 	// When was this block created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this block updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Account ID of the creator of this block
 	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
 	CreatedByAccount   *Account `bun:"rel:belongs-to"`

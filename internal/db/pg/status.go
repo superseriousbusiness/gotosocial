@@ -76,7 +76,31 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 		Relation("Attachments").
 		Relation("Tags").
 		Relation("Mentions").
-		Relation("Emojis")
+		Relation("Emojis").
+		Relation("Account").
+		Relation("InReplyToAccount").
+		Relation("BoostOfAccount").
+		Relation("CreatedWithApplication")
+}
+
+func (s *statusDB) getAttachedStatuses(ctx context.Context, status *gtsmodel.Status) *gtsmodel.Status {
+	if status.InReplyToID != "" && status.InReplyTo == nil {
+		if inReplyTo, cached := s.statusCached(status.InReplyToID); cached {
+			status.InReplyTo = inReplyTo
+		} else if inReplyTo, err := s.GetStatusByID(ctx, status.InReplyToID); err == nil {
+			status.InReplyTo = inReplyTo
+		}
+	}
+
+	if status.BoostOfID != "" && status.BoostOf == nil {
+		if boostOf, cached := s.statusCached(status.BoostOfID); cached {
+			status.BoostOf = boostOf
+		} else if boostOf, err := s.GetStatusByID(ctx, status.BoostOfID); err == nil {
+			status.BoostOf = boostOf
+		}
+	}
+
+	return status
 }
 
 func (s *statusDB) newFaveQ(faves interface{}) *bun.SelectQuery {
@@ -108,7 +132,7 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 		s.cacheStatus(id, status)
 	}
 
-	return status, err
+	return s.getAttachedStatuses(ctx, status), err
 }
 
 func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
@@ -123,11 +147,15 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 
 	err := processErrorResponse(q.Scan(ctx))
 
-	if err == nil && status != nil {
+	if err != nil {
+		return nil, err
+	}
+
+	if status != nil {
 		s.cacheStatus(uri, status)
 	}
 
-	return status, err
+	return s.getAttachedStatuses(ctx, status), err
 }
 
 func (s *statusDB) GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
@@ -142,11 +170,15 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.St
 
 	err := processErrorResponse(q.Scan(ctx))
 
-	if err == nil && status != nil {
+	if err != nil {
+		return nil, err
+	}
+
+	if status != nil {
 		s.cacheStatus(uri, status)
 	}
 
-	return status, err
+	return s.getAttachedStatuses(ctx, status), err
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {

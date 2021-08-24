@@ -69,7 +69,6 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
-	suite.log.Debug("test finished")
 }
 
 func (suite *StatusTestSuite) TestGetStatusByURI() {
@@ -119,14 +118,14 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 	suite.NoError(err)
 	after1 := time.Now()
 	duration1 := after1.Sub(before1)
-	fmt.Println(duration1.Nanoseconds())
+	fmt.Println(duration1.Milliseconds())
 
 	before2 := time.Now()
 	_, err = suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
 	suite.NoError(err)
 	after2 := time.Now()
 	duration2 := after2.Sub(before2)
-	fmt.Println(duration2.Nanoseconds())
+	fmt.Println(duration2.Milliseconds())
 
 	// second retrieval should be several orders faster since it will be cached now
 	suite.Less(duration2, duration1)

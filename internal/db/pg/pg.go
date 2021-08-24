@@ -73,7 +73,6 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	if err != nil {
 		return nil, fmt.Errorf("could not create postgres options: %s", err)
 	}
-	log.Debugf("using opts %+v", opts)
 	sqldb := stdlib.OpenDB(*opts)
 	conn := bun.NewDB(sqldb, pgdialect.New())
 
@@ -87,7 +86,6 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		// https://bun.uptrace.dev/orm/many-to-many-relation/
 		conn.RegisterModel(t)
 	}
-	log.Info("models registered")
 
 	ps := &postgresService{
 		Account: &accountDB{

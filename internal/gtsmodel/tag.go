@@ -29,15 +29,15 @@ type Tag struct {
 	// name of this tag -- the tag without the hash part
 	Name string `bun:",unique,notnull"`
 	// Which account ID is the first one we saw using this tag?
-	FirstSeenFromAccountID string `bun:"type:CHAR(26)"`
+	FirstSeenFromAccountID string `bun:"type:CHAR(26),nullzero"`
 	// when was this tag created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// when was this tag last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// can our instance users use this tag?
 	Useable bool `bun:",notnull,default:true"`
 	// can our instance users look up this tag?
 	Listable bool `bun:",notnull,default:true"`
 	// when was this tag last used?
-	LastStatusAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	LastStatusAt time.Time `bun:",nullzero"`
 }

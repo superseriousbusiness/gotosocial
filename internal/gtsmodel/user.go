@@ -61,7 +61,7 @@ type User struct {
 	// How many times has this user signed in?
 	SignInCount int
 	// id of the user who invited this user (who let this guy in?)
-	InviteID string `bun:"type:CHAR(26)"`
+	InviteID string `bun:"type:CHAR(26),nullzero"`
 	// What languages does this user want to see?
 	ChosenLanguages []string
 	// What languages does this user not want to see?
@@ -69,8 +69,8 @@ type User struct {
 	// In what timezone/locale is this user located?
 	Locale string
 	// Which application id created this user? See gtsmodel.Application
-	CreatedByApplicationID string       `bun:"type:CHAR(26)"`
-	CreatedByApplication   *Application `bun:"-"`
+	CreatedByApplicationID string       `bun:"type:CHAR(26),nullzero"`
+	CreatedByApplication   *Application `bun:"rel:belongs-to"`
 	// When did we last contact this user
 	LastEmailedAt time.Time `bun:",nullzero"`
 
@@ -107,7 +107,7 @@ type User struct {
 	// The generated token that the user can use to reset their password
 	ResetPasswordToken string
 	// When did we email the user their reset-password email?
-	ResetPasswordSentAt time.Time `bun:"type:timestamp"`
+	ResetPasswordSentAt time.Time `bun:",nullzero"`
 
 	EncryptedOTPSecret     string
 	EncryptedOTPSecretIv   string
@@ -117,6 +117,6 @@ type User struct {
 	ConsumedTimestamp      int
 	RememberToken          string
 	SignInToken            string
-	SignInTokenSentAt      time.Time `bun:"type:timestamp"`
+	SignInTokenSentAt      time.Time `bun:",nullzero"`
 	WebauthnID             string
 }

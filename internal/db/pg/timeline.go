@@ -43,21 +43,9 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		NewSelect().
 		Model(&statuses)
 
-	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
-	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
-	//
-	// This is equivalent to something like WHERE ... AND (... OR ...)
-	// See: https://pg.uptrace.dev/queries/#select
-	whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
-		q = q.Where("f.account_id = ?", accountID).
-			WhereOr("status.account_id = ?", accountID)
-		return q
-	}
-
 	q = q.ColumnExpr("status.*").
 		// Find out who accountID follows.
 		Join("LEFT JOIN follows AS f ON f.target_account_id = status.account_id").
-		WhereGroup(" AND ", whereGroup).
 		// Sort by highest ID (newest) to lowest ID (oldest)
 		Order("status.id DESC")
 
@@ -85,6 +73,19 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		// limit amount of statuses returned
 		q = q.Limit(limit)
 	}
+
+	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
+	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
+	//
+	// This is equivalent to something like WHERE ... AND (... OR ...)
+	// See: https://pg.uptrace.dev/queries/#select
+	whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			WhereOr("f.account_id = ?", accountID).
+			WhereOr("status.account_id = ?", accountID)
+	}
+
+	q = q.WhereGroup(" AND ", whereGroup)
 
 	return statuses, processErrorResponse(q.Scan(ctx))
 }

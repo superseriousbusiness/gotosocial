@@ -45,12 +45,12 @@ type Account struct {
 	*/
 
 	// ID of the avatar as a media attachment
-	AvatarMediaAttachmentID string           `bun:"type:CHAR(26)"`
+	AvatarMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
 	AvatarMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
 	AvatarRemoteURL string
 	// ID of the header as a media attachment
-	HeaderMediaAttachmentID string           `bun:"type:CHAR(26)"`
+	HeaderMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
 	HeaderMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
 	HeaderRemoteURL string
@@ -63,7 +63,7 @@ type Account struct {
 	// Is this a memorial account, ie., has the user passed away?
 	Memorial bool
 	// This account has moved this account id in the database
-	MovedToAccountID string `bun:"type:CHAR(26)"`
+	MovedToAccountID string `bun:"type:CHAR(26),nullzero"`
 	// When was this account created?
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this account last updated?

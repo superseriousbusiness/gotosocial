@@ -21,6 +21,6 @@ package gtsmodel
 // RouterSession is used to store and retrieve settings for a router session.
 type RouterSession struct {
 	ID    string `bun:"type:CHAR(26),pk,notnull"`
-	Auth  []byte `bun:",notnull"`
-	Crypt []byte `bun:",notnull"`
+	Auth  []byte `bun:"type:bytea,notnull"`
+	Crypt []byte `bun:"type:bytea,notnull"`
 }

@@ -206,16 +206,16 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Where("pinned = ?", true)
 	}
 
+	if maxID != "" {
+		q = q.Where("id < ?", maxID)
+	}
+
 	if mediaOnly {
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.
 				WhereOr("? IS NOT NULL", bun.Ident("attachments")).
 				WhereOr("attachments != '{}'")
 		})
-	}
-
-	if maxID != "" {
-		q = q.Where("id < ?", maxID)
 	}
 
 	if err := q.Scan(ctx); err != nil {

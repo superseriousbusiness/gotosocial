@@ -25,7 +25,7 @@ type StatusFave struct {
 	// id of this fave in the database
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// when was this fave created
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// id of the account that created ('did') the fave
 	AccountID string   `bun:"type:CHAR(26),notnull"`
 	Account   *Account `bun:"rel:belongs-to"`

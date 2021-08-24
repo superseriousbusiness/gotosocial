@@ -25,15 +25,15 @@ type Follow struct {
 	// id of this follow in the database
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// When was this follow created?
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this follow last updated?
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Who does this follow belong to?
 	AccountID string   `bun:"type:CHAR(26),unique:srctarget,notnull"`
-	Account   *Account `bun:"-"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// Who does AccountID follow?
 	TargetAccountID string   `bun:"type:CHAR(26),unique:srctarget,notnull"`
-	TargetAccount   *Account `bun:"-"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `bun:"default:true"`
 	// What is the activitypub URI of this follow?

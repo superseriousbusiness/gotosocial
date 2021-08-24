@@ -27,7 +27,7 @@ type Notification struct {
 	// Type of this notification
 	NotificationType NotificationType `bun:",notnull"`
 	// Creation time of this notification
-	CreatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Which account does this notification target (ie., who will receive the notification?)
 	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
 	TargetAccount   *Account `bun:"rel:belongs-to"`
@@ -35,7 +35,7 @@ type Notification struct {
 	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
 	OriginAccount   *Account `bun:"rel:belongs-to"`
 	// If the notification pertains to a status, what is the database ID of that status?
-	StatusID string  `bun:"type:CHAR(26)"`
+	StatusID string  `bun:"type:CHAR(26),nullzero"`
 	Status   *Status `bun:"rel:belongs-to"`
 	// Has this notification been read already?
 	Read bool
