@@ -1,6 +1,25 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package status
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -10,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(targetStatusID)
+func (p *processor) Unboost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -19,7 +38,7 @@ func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gt
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	visible, err := p.filter.StatusVisible(targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -41,7 +60,7 @@ func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gt
 			Value: requestingAccount.ID,
 		},
 	}
-	err = p.db.GetWhere(where, gtsBoost)
+	err = p.db.GetWhere(ctx, where, gtsBoost)
 	if err == nil {
 		// we have a boost
 		toUnboost = true
@@ -58,7 +77,7 @@ func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gt
 
 	if toUnboost {
 		// we had a boost, so take some action to get rid of it
-		if err := p.db.DeleteWhere(where, &gtsmodel.Status{}); err != nil {
+		if err := p.db.DeleteWhere(ctx, where, &gtsmodel.Status{}); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unboosting status: %s", err))
 		}
 
@@ -79,7 +98,7 @@ func (p *processor) Unboost(requestingAccount *gtsmodel.Account, application *gt
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, requestingAccount)
+	mastoStatus, err := p.tc.StatusToMasto(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

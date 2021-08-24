@@ -34,24 +34,24 @@ type Account struct {
 	*/
 
 	// id of this account in the local database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
-	Username string `pg:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
+	Username string `bun:",notnull,unique:userdomain"` // username and domain should be unique *with* each other
 	// Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
-	Domain string `pg:",unique:userdomain"` // username and domain should be unique *with* each other
+	Domain string `bun:",unique:userdomain,nullzero"` // username and domain should be unique *with* each other
 
 	/*
 		ACCOUNT METADATA
 	*/
 
 	// ID of the avatar as a media attachment
-	AvatarMediaAttachmentID string           `pg:"type:CHAR(26)"`
-	AvatarMediaAttachment   *MediaAttachment `pg:"rel:has-one"`
+	AvatarMediaAttachmentID string           `bun:"type:CHAR(26)"`
+	AvatarMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
 	AvatarRemoteURL string
 	// ID of the header as a media attachment
-	HeaderMediaAttachmentID string           `pg:"type:CHAR(26)"`
-	HeaderMediaAttachment   *MediaAttachment `pg:"rel:has-one"`
+	HeaderMediaAttachmentID string           `bun:"type:CHAR(26)"`
+	HeaderMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
 	HeaderRemoteURL string
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
@@ -63,11 +63,11 @@ type Account struct {
 	// Is this a memorial account, ie., has the user passed away?
 	Memorial bool
 	// This account has moved this account id in the database
-	MovedToAccountID string `pg:"type:CHAR(26)"`
+	MovedToAccountID string `bun:"type:CHAR(26)"`
 	// When was this account created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was this account last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// Does this account identify itself as a bot?
 	Bot bool
 	// What reason was given for signing up when this account was created?
@@ -78,36 +78,36 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool `pg:",default:true,use_zero"`
+	Locked bool `bun:",default:true"`
 	// Should this account be shown in the instance's profile directory?
-	Discoverable bool `pg:",default:false"`
+	Discoverable bool `bun:",default:false"`
 	// Default post privacy for this account
-	Privacy Visibility `pg:",default:'public'"`
+	Privacy Visibility `bun:",default:'public'"`
 	// Set posts from this account to sensitive by default?
-	Sensitive bool `pg:",default:false"`
+	Sensitive bool `bun:",default:false"`
 	// What language does this account post in?
-	Language string `pg:",default:'en'"`
+	Language string `bun:",default:'en'"`
 
 	/*
 		ACTIVITYPUB THINGS
 	*/
 
 	// What is the activitypub URI for this account discovered by webfinger?
-	URI string `pg:",unique"`
+	URI string `bun:",unique"`
 	// At which URL can we see the user account in a web browser?
-	URL string `pg:",unique"`
+	URL string `bun:",unique"`
 	// Last time this account was located using the webfinger API.
-	LastWebfingeredAt time.Time `pg:"type:timestamp"`
+	LastWebfingeredAt time.Time `bun:"type:timestamp"`
 	// Address of this account's activitypub inbox, for sending activity to
-	InboxURI string `pg:",unique"`
+	InboxURI string `bun:",unique"`
 	// Address of this account's activitypub outbox
-	OutboxURI string `pg:",unique"`
+	OutboxURI string `bun:",unique"`
 	// URI for getting the following list of this account
-	FollowingURI string `pg:",unique"`
+	FollowingURI string `bun:",unique"`
 	// URI for getting the followers list of this account
-	FollowersURI string `pg:",unique"`
+	FollowersURI string `bun:",unique"`
 	// URL for getting the featured collection list of this account
-	FeaturedCollectionURI string `pg:",unique"`
+	FeaturedCollectionURI string `bun:",unique"`
 	// What type of activitypub actor is this account?
 	ActorType string
 	// This account is associated with x account id
@@ -129,15 +129,15 @@ type Account struct {
 	*/
 
 	// When was this account set to have all its media shown as sensitive?
-	SensitizedAt time.Time `pg:"type:timestamp"`
+	SensitizedAt time.Time `bun:"type:timestamp"`
 	// When was this account silenced (eg., statuses only visible to followers, not public)?
-	SilencedAt time.Time `pg:"type:timestamp"`
+	SilencedAt time.Time `bun:"type:timestamp"`
 	// When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
-	SuspendedAt time.Time `pg:"type:timestamp"`
+	SuspendedAt time.Time `bun:"type:timestamp"`
 	// Should we hide this account's collections?
 	HideCollections bool
 	// id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
-	SuspensionOrigin string `pg:"type:CHAR(26)"`
+	SuspensionOrigin string `bun:"type:CHAR(26)"`
 }
 
 // Field represents a key value field on an account, for things like pronouns, website, etc.
@@ -146,5 +146,5 @@ type Account struct {
 type Field struct {
 	Name       string
 	Value      string
-	VerifiedAt time.Time `pg:"type:timestamp"`
+	VerifiedAt time.Time `bun:"type:timestamp"`
 }

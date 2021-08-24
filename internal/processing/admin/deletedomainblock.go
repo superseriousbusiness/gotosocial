@@ -42,7 +42,7 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 	}
 
 	// prepare the domain block to return
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock, false)
+	mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, domainBlock, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

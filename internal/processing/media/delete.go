@@ -1,6 +1,7 @@
 package media
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,9 +10,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Delete(mediaAttachmentID string) gtserror.WithCode {
+func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode {
 	a := &gtsmodel.MediaAttachment{}
-	if err := p.db.GetByID(mediaAttachmentID, a); err != nil {
+	if err := p.db.GetByID(ctx, mediaAttachmentID, a); err != nil {
 		if err == db.ErrNoEntries {
 			// attachment already gone
 			return nil
@@ -37,7 +38,7 @@ func (p *processor) Delete(mediaAttachmentID string) gtserror.WithCode {
 	}
 
 	// delete the attachment
-	if err := p.db.DeleteByID(mediaAttachmentID, a); err != nil {
+	if err := p.db.DeleteByID(ctx, mediaAttachmentID, a); err != nil {
 		if err != db.ErrNoEntries {
 			errs = append(errs, fmt.Sprintf("remove attachment: %s", err))
 		}

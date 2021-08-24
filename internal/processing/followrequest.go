@@ -42,7 +42,7 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 		if err := p.db.GetByID(ctx, fr.AccountID, acct); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		mastoAcct, err := p.tc.AccountToMastoPublic(acct)
+		mastoAcct, err := p.tc.AccountToMastoPublic(ctx, acct)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -80,7 +80,7 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	r, err := p.tc.RelationshipToMasto(gtsR)
+	r, err := p.tc.RelationshipToMasto(ctx, gtsR)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

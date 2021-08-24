@@ -42,7 +42,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	if err != nil {
 		return nil, err
 	}
-	
+
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Accept", "application/jrd+json")
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")

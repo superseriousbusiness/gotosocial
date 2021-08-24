@@ -23,22 +23,22 @@ import "time"
 // Mention refers to the 'tagging' or 'mention' of a user within a status.
 type Mention struct {
 	// ID of this mention in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status this mention originates from
-	StatusID string  `pg:"type:CHAR(26),notnull"`
-	Status   *Status `pg:"rel:belongs-to"`
+	StatusID string  `bun:"type:CHAR(26),notnull"`
+	Status   *Status `bun:"rel:belongs-to"`
 	// When was this mention created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was this mention last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// What's the internal account ID of the originator of the mention?
-	OriginAccountID string   `pg:"type:CHAR(26),notnull"`
-	OriginAccount   *Account `pg:"rel:has-one"`
+	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
+	OriginAccount   *Account `bun:"rel:belongs-to"`
 	// What's the AP URI of the originator of the mention?
-	OriginAccountURI string `pg:",notnull"`
+	OriginAccountURI string `bun:",notnull"`
 	// What's the internal account ID of the mention target?
-	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `pg:"rel:has-one"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Prevent this mention from generating a notification?
 	Silent bool
 
@@ -54,15 +54,15 @@ type Mention struct {
 	// @whatever_username@example.org
 	//
 	// This will not be put in the database, it's just for convenience.
-	NameString string `pg:"-"`
+	NameString string `bun:"-"`
 	// TargetAccountURI is the AP ID (uri) of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
-	TargetAccountURI string `pg:"-"`
+	TargetAccountURI string `bun:"-"`
 	// TargetAccountURL is the web url of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
-	TargetAccountURL string `pg:"-"`
+	TargetAccountURL string `bun:"-"`
 	// A pointer to the gtsmodel account of the mentioned account.
 
 }

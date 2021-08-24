@@ -46,12 +46,12 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 	}
 
 	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(s, requestingAccount)
+		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 		if err != nil || !visible {
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(s, requestingAccount)
+		apiStatus, err := p.tc.StatusToMasto(ctx, s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
 		}

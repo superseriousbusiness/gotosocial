@@ -250,7 +250,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 
-	a.log.Infof("instance account CREATED with id %s", username, acct.ID)
+	a.log.Infof("instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }
 

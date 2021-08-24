@@ -80,7 +80,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		return nil, err
 	}
 
-	mastoApp, err := p.tc.AppToMastoSensitive(app)
+	mastoApp, err := p.tc.AppToMastoSensitive(ctx, app)
 	if err != nil {
 		return nil, err
 	}

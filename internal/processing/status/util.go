@@ -1,6 +1,25 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package status
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -12,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) ProcessVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
+func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
 		Federated: true,
@@ -83,7 +102,7 @@ func (p *processor) ProcessVisibility(form *apimodel.AdvancedStatusCreateForm, a
 	return nil
 }
 
-func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -98,7 +117,7 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 	repliedStatus := &gtsmodel.Status{}
 	repliedAccount := &gtsmodel.Account{}
 	// check replied status exists + is replyable
-	if err := p.db.GetByID(form.InReplyToID, repliedStatus); err != nil {
+	if err := p.db.GetByID(ctx, form.InReplyToID, repliedStatus); err != nil {
 		if err == db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
 		}
@@ -112,14 +131,14 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 	}
 
 	// check replied account is known to us
-	if err := p.db.GetByID(repliedStatus.AccountID, repliedAccount); err != nil {
+	if err := p.db.GetByID(ctx, repliedStatus.AccountID, repliedAccount); err != nil {
 		if err == db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
 		}
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
 	// check if a block exists
-	if blocked, err := p.db.IsBlocked(thisAccountID, repliedAccount.ID, true); err != nil {
+	if blocked, err := p.db.IsBlocked(ctx, thisAccountID, repliedAccount.ID, true); err != nil {
 		if err != db.ErrNoEntries {
 			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 		}
@@ -132,7 +151,7 @@ func (p *processor) ProcessReplyToID(form *apimodel.AdvancedStatusCreateForm, th
 	return nil
 }
 
-func (p *processor) ProcessMediaIDs(form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
 	if form.MediaIDs == nil {
 		return nil
 	}
@@ -142,7 +161,7 @@ func (p *processor) ProcessMediaIDs(form *apimodel.AdvancedStatusCreateForm, thi
 	for _, mediaID := range form.MediaIDs {
 		// check these attachments exist
 		a := &gtsmodel.MediaAttachment{}
-		if err := p.db.GetByID(mediaID, a); err != nil {
+		if err := p.db.GetByID(ctx, mediaID, a); err != nil {
 			return fmt.Errorf("invalid media type or media not found for media id %s", mediaID)
 		}
 		// check they belong to the requesting account id
@@ -161,7 +180,7 @@ func (p *processor) ProcessMediaIDs(form *apimodel.AdvancedStatusCreateForm, thi
 	return nil
 }
 
-func (p *processor) ProcessLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
+func (p *processor) ProcessLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
 		status.Language = form.Language
 	} else {
@@ -173,9 +192,9 @@ func (p *processor) ProcessLanguage(form *apimodel.AdvancedStatusCreateForm, acc
 	return nil
 }
 
-func (p *processor) ProcessMentions(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	menchies := []string{}
-	gtsMenchies, err := p.db.MentionStringsToMentions(util.DeriveMentionsFromStatus(form.Status), accountID, status.ID)
+	gtsMenchies, err := p.db.MentionStringsToMentions(ctx, util.DeriveMentionsFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
 		return fmt.Errorf("error generating mentions from status: %s", err)
 	}
@@ -186,7 +205,7 @@ func (p *processor) ProcessMentions(form *apimodel.AdvancedStatusCreateForm, acc
 		}
 		menchie.ID = menchieID
 
-		if err := p.db.Put(menchie); err != nil {
+		if err := p.db.Put(ctx, menchie); err != nil {
 			return fmt.Errorf("error putting mentions in db: %s", err)
 		}
 		menchies = append(menchies, menchie.ID)
@@ -198,14 +217,14 @@ func (p *processor) ProcessMentions(form *apimodel.AdvancedStatusCreateForm, acc
 	return nil
 }
 
-func (p *processor) ProcessTags(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	tags := []string{}
-	gtsTags, err := p.db.TagStringsToTags(util.DeriveHashtagsFromStatus(form.Status), accountID, status.ID)
+	gtsTags, err := p.db.TagStringsToTags(ctx, util.DeriveHashtagsFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
 		return fmt.Errorf("error generating hashtags from status: %s", err)
 	}
 	for _, tag := range gtsTags {
-		if err := p.db.Upsert(tag, "name"); err != nil {
+		if err := p.db.Upsert(ctx, tag, "name"); err != nil {
 			return fmt.Errorf("error putting tags in db: %s", err)
 		}
 		tags = append(tags, tag.ID)
@@ -217,9 +236,9 @@ func (p *processor) ProcessTags(form *apimodel.AdvancedStatusCreateForm, account
 	return nil
 }
 
-func (p *processor) ProcessEmojis(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	emojis := []string{}
-	gtsEmojis, err := p.db.EmojiStringsToEmojis(util.DeriveEmojisFromStatus(form.Status), accountID, status.ID)
+	gtsEmojis, err := p.db.EmojiStringsToEmojis(ctx, util.DeriveEmojisFromStatus(form.Status), accountID, status.ID)
 	if err != nil {
 		return fmt.Errorf("error generating emojis from status: %s", err)
 	}
@@ -233,7 +252,7 @@ func (p *processor) ProcessEmojis(form *apimodel.AdvancedStatusCreateForm, accou
 	return nil
 }
 
-func (p *processor) ProcessContent(form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessContent(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	// if there's nothing in the status at all we can just return early
 	if form.Status == "" {
 		status.Content = ""
@@ -252,9 +271,9 @@ func (p *processor) ProcessContent(form *apimodel.AdvancedStatusCreateForm, acco
 	var formatted string
 	switch form.Format {
 	case apimodel.StatusFormatPlain:
-		formatted = p.formatter.FromPlain(content, status.Mentions, status.Tags)
+		formatted = p.formatter.FromPlain(ctx, content, status.Mentions, status.Tags)
 	case apimodel.StatusFormatMarkdown:
-		formatted = p.formatter.FromMarkdown(content, status.Mentions, status.Tags)
+		formatted = p.formatter.FromMarkdown(ctx, content, status.Mentions, status.Tags)
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.Format)
 	}

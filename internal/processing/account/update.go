@@ -129,7 +129,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		OriginAccount:  updatedAccount,
 	}
 
-	acctSensitive, err := p.tc.AccountToMastoSensitive(updatedAccount)
+	acctSensitive, err := p.tc.AccountToMastoSensitive(ctx, updatedAccount)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert account into mastosensitive account: %s", err)
 	}
@@ -161,7 +161,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 	}
 
 	// do the setting
-	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Avatar, "")
+	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(ctx, buf.Bytes(), accountID, media.Avatar, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -194,7 +194,7 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	}
 
 	// do the setting
-	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Header, "")
+	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(ctx, buf.Bytes(), accountID, media.Header, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}

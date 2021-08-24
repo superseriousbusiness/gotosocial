@@ -120,7 +120,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter, mediaHandler)
 	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, timelineManager, dbService, log)
-	if err := processor.Start(); err != nil {
+	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 

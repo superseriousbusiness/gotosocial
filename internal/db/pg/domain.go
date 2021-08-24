@@ -42,21 +42,13 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 		return false, nil
 	}
 
-	count, err := d.conn.
+	q := d.conn.
 		NewSelect().
 		Model(&gtsmodel.DomainBlock{}).
 		Where("LOWER(domain) = LOWER(?)", domain).
-		Limit(1).
-		Count(ctx)
+		Limit(1)
 
-	blocked := count != 0
-	err = processErrorResponse(err)
-
-	if err != db.ErrNoEntries {
-		return false, err
-	}
-
-	return blocked, nil
+	return exists(ctx, q)
 }
 
 func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, db.Error) {

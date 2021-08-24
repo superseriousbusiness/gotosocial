@@ -20,6 +20,7 @@ package media
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) Create(account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
+func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
 	// open the attachment and extract the bytes from it
 	f, err := form.File.Open()
 	if err != nil {
@@ -45,7 +46,7 @@ func (p *processor) Create(account *gtsmodel.Account, form *apimodel.AttachmentR
 	}
 
 	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
-	attachment, err := p.mediaHandler.ProcessAttachment(buf.Bytes(), account.ID, "")
+	attachment, err := p.mediaHandler.ProcessAttachment(ctx, buf.Bytes(), account.ID, "")
 	if err != nil {
 		return nil, fmt.Errorf("error reading attachment: %s", err)
 	}
@@ -66,13 +67,13 @@ func (p *processor) Create(account *gtsmodel.Account, form *apimodel.AttachmentR
 
 	// prepare the frontend representation now -- if there are any errors here at least we can bail without
 	// having already put something in the database and then having to clean it up again (eugh)
-	mastoAttachment, err := p.tc.AttachmentToMasto(attachment)
+	mastoAttachment, err := p.tc.AttachmentToMasto(ctx, attachment)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing media attachment to frontend type: %s", err)
 	}
 
 	// now we can confidently put the attachment in the database
-	if err := p.db.Put(attachment); err != nil {
+	if err := p.db.Put(ctx, attachment); err != nil {
 		return nil, fmt.Errorf("error storing media attachment in db: %s", err)
 	}
 

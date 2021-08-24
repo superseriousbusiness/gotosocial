@@ -23,16 +23,16 @@ import "time"
 // StatusMute refers to one account having muted the status of another account or its own
 type StatusMute struct {
 	// id of this mute in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// when was this mute created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the mute
-	AccountID string   `pg:"type:CHAR(26),notnull"`
-	Account   *Account `pg:"rel:belongs-to"`
+	AccountID string   `bun:"type:CHAR(26),notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// id the account owning the muted status (can be the same as accountID)
-	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `pg:"rel:has-one"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// database id of the status that has been muted
-	StatusID string  `pg:"type:CHAR(26),notnull"`
-	Status   *Status `pg:"rel:has-one"`
+	StatusID string  `bun:"type:CHAR(26),notnull"`
+	Status   *Status `bun:"rel:belongs-to"`
 }

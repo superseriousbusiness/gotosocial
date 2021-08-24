@@ -70,7 +70,7 @@ func NewTestDB() db.DB {
 	l.SetLevel(logrus.TraceLevel)
 	testDB, err := pg.NewPostgresService(context.Background(), config, l)
 	if err != nil {
-		panic(err)
+		logrus.Panic(err)
 	}
 	return testDB
 }
@@ -84,115 +84,124 @@ func NewTestDB() db.DB {
 // signatures with, otherwise this function will randomly generate new keys for accounts and signature
 // verification will fail.
 func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
+	if db == nil {
+		logrus.Panic("db setup: db was nil")
+	}
+
 	ctx := context.Background()
-	
+
 	for _, m := range testModels {
 		if err := db.CreateTable(ctx, m); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestTokens() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestClients() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestApplications() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestUsers() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	if accounts == nil {
 		for _, v := range NewTestAccounts() {
 			if err := db.Put(ctx, v); err != nil {
-				panic(err)
+				logrus.Panic(err)
 			}
 		}
 	} else {
 		for _, v := range accounts {
 			if err := db.Put(ctx, v); err != nil {
-				panic(err)
+				logrus.Panic(err)
 			}
 		}
 	}
 
 	for _, v := range NewTestAttachments() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestStatuses() {
 		if err := db.PutStatus(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestEmojis() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestTags() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestMentions() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestFaves() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestFollows() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	for _, v := range NewTestNotifications() {
 		if err := db.Put(ctx, v); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 
 	if err := db.CreateInstanceAccount(ctx); err != nil {
-		panic(err)
+		logrus.Panic(err)
 	}
 
 	if err := db.CreateInstanceInstance(ctx); err != nil {
-		panic(err)
+		logrus.Panic(err)
 	}
+
+	logrus.Debug("testing db setup complete")
 }
 
 // StandardDBTeardown drops all the standard testing tables/models from the database to ensure it's clean for the next test.
 func StandardDBTeardown(db db.DB) {
 	ctx := context.Background()
+	if db == nil {
+		logrus.Panic("db teardown: db was nil")
+	}
 	for _, m := range testModels {
 		if err := db.DropTable(ctx, m); err != nil {
-			panic(err)
+			logrus.Panic(err)
 		}
 	}
 }

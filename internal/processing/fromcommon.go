@@ -98,7 +98,7 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 		}
 
 		// now stream the notification to the user
-		mastoNotif, err := p.tc.NotificationToMasto(notif)
+		mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
 		if err != nil {
 			return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 		}
@@ -134,7 +134,7 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
 	if err != nil {
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
@@ -180,7 +180,7 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
 	if err != nil {
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
@@ -219,7 +219,7 @@ func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave, t
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
 	if err != nil {
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
@@ -298,7 +298,7 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(notif)
+	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
 	if err != nil {
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
@@ -377,7 +377,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	}
 
 	// make sure the status is timelineable
-	timelineable, err := p.filter.StatusHometimelineable(status, timelineAccount)
+	timelineable, err := p.filter.StatusHometimelineable(ctx, status, timelineAccount)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %s", accountID, err)
 		return
@@ -388,7 +388,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	}
 
 	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
-	inserted, err := p.timelineManager.IngestAndPrepare(status, timelineAccount.ID)
+	inserted, err := p.timelineManager.IngestAndPrepare(ctx, status, timelineAccount.ID)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %s", status.ID, err)
 		return
@@ -396,7 +396,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 
 	// the status was inserted to stream it to the user
 	if inserted {
-		mastoStatus, err := p.tc.StatusToMasto(status, timelineAccount)
+		mastoStatus, err := p.tc.StatusToMasto(ctx, status, timelineAccount)
 		if err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 		} else {
@@ -406,7 +406,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(status, timelineAccount)
+	mastoStatus, err := p.tc.StatusToMasto(ctx, status, timelineAccount)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 	} else {
@@ -416,8 +416,8 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	}
 }
 
-func (p *processor) deleteStatusFromTimelines(status *gtsmodel.Status) error {
-	if err := p.timelineManager.WipeStatusFromAllTimelines(status.ID); err != nil {
+func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
+	if err := p.timelineManager.WipeStatusFromAllTimelines(ctx, status.ID); err != nil {
 		return err
 	}
 

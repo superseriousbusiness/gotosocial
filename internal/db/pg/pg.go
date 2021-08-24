@@ -30,6 +30,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,7 +39,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 var registerTables []interface{} = []interface{}{
@@ -67,19 +68,13 @@ type postgresService struct {
 // NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
 func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
-	for _, t := range registerTables {
-		// https://pg.uptrace.dev/orm/many-to-many-relation/
-		bun.RegisterModel(t)
-	}
 
 	opts, err := derivePGOptions(c)
 	if err != nil {
-		return nil, fmt.Errorf("could not create postgres service: %s", err)
+		return nil, fmt.Errorf("could not create postgres options: %s", err)
 	}
-	log.Debugf("using pg options: %+v", opts)
-
-	sqldb := sql.OpenDB(pgdriver.NewConnector(opts...))
-
+	log.Debugf("using opts %+v", opts)
+	sqldb := stdlib.OpenDB(*opts)
 	conn := bun.NewDB(sqldb, pgdialect.New())
 
 	// actually *begin* the connection so that we can tell if the db is there and listening
@@ -87,6 +82,12 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
 	log.Info("connected to postgres")
+
+	for _, t := range registerTables {
+		// https://bun.uptrace.dev/orm/many-to-many-relation/
+		conn.RegisterModel(t)
+	}
+	log.Info("models registered")
 
 	ps := &postgresService{
 		Account: &accountDB{
@@ -157,9 +158,9 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	HANDY STUFF
 */
 
-// derivePGOptions takes an application config and returns either a ready-to-use *pg.Options
+// derivePGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
-func derivePGOptions(c *config.Config) ([]pgdriver.DriverOption, error) {
+func derivePGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	if strings.ToUpper(c.DBConfig.Type) != db.DBTypePostgres {
 		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, c.DBConfig.Type)
 	}
@@ -237,18 +238,15 @@ func derivePGOptions(c *config.Config) ([]pgdriver.DriverOption, error) {
 		tlsConfig.RootCAs = certPool
 	}
 
-	// We can rely on the pg library we're using to set
-	// sensible defaults for everything we don't set here.
-	options := []pgdriver.DriverOption{
-		pgdriver.WithAddr(fmt.Sprintf("%s:%d", c.DBConfig.Address, c.DBConfig.Port)),
-		pgdriver.WithUser(c.DBConfig.User),
-		pgdriver.WithPassword(c.DBConfig.Password),
-		pgdriver.WithDatabase(c.DBConfig.Database),
-		pgdriver.WithApplicationName(c.ApplicationName),
-		pgdriver.WithTLSConfig(tlsConfig),
-	}
+	opts, _ := pgx.ParseConfig("")
+	opts.Host = c.DBConfig.Address
+	opts.Port = uint16(c.DBConfig.Port)
+	opts.User = c.DBConfig.User
+	opts.Password = c.DBConfig.Password
+	opts.TLSConfig = tlsConfig
+	opts.PreferSimpleProtocol = true
 
-	return options, nil
+	return opts, nil
 }
 
 /*
@@ -257,9 +255,9 @@ func derivePGOptions(c *config.Config) ([]pgdriver.DriverOption, error) {
 
 // TODO: move these to the type converter, it's bananas that they're here and not there
 
-func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+func (ps *postgresService) MentionStringsToMentions(ctx context.Context, targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
 	ogAccount := &gtsmodel.Account{}
-	if err := ps.conn.Model(ogAccount).Where("id = ?", originAccountID).Select(); err != nil {
+	if err := ps.conn.NewSelect().Model(ogAccount).Where("id = ?", originAccountID).Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -304,14 +302,14 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 		// match username + account, case insensitive
 		if local {
 			// local user -- should have a null domain
-			err = ps.conn.Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", pg.Ident("username"), username).Where("? IS NULL", pg.Ident("domain")).Select()
+			err = ps.conn.NewSelect().Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username).Where("? IS NULL", bun.Ident("domain")).Scan(ctx)
 		} else {
 			// remote user -- should have domain defined
-			err = ps.conn.Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", pg.Ident("username"), username).Where("LOWER(?) = LOWER(?)", pg.Ident("domain"), domain).Select()
+			err = ps.conn.NewSelect().Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username).Where("LOWER(?) = LOWER(?)", bun.Ident("domain"), domain).Scan(ctx)
 		}
 
 		if err != nil {
-			if err == pg.ErrNoRows {
+			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
 				ps.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
 				continue
@@ -335,14 +333,14 @@ func (ps *postgresService) MentionStringsToMentions(targetAccounts []string, ori
 	return menchies, nil
 }
 
-func (ps *postgresService) TagStringsToTags(tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+func (ps *postgresService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
 		tag := &gtsmodel.Tag{}
 		// we can use selectorinsert here to create the new tag if it doesn't exist already
 		// inserted will be true if this is a new tag we just created
-		if err := ps.conn.Model(tag).Where("LOWER(?) = LOWER(?)", pg.Ident("name"), t).Select(); err != nil {
-			if err == pg.ErrNoRows {
+		if err := ps.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil {
+			if err == sql.ErrNoRows {
 				// tag doesn't exist yet so populate it
 				newID, err := id.NewRandomULID()
 				if err != nil {
@@ -371,13 +369,13 @@ func (ps *postgresService) TagStringsToTags(tags []string, originAccountID strin
 	return newTags, nil
 }
 
-func (ps *postgresService) EmojiStringsToEmojis(emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+func (ps *postgresService) EmojiStringsToEmojis(ctx context.Context, emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
 	newEmojis := []*gtsmodel.Emoji{}
 	for _, e := range emojis {
 		emoji := &gtsmodel.Emoji{}
-		err := ps.conn.Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Select()
+		err := ps.conn.NewSelect().Model(emoji).Where("shortcode = ?", e).Where("visible_in_picker = true").Where("disabled = false").Scan(ctx)
 		if err != nil {
-			if err == pg.ErrNoRows {
+			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
 				ps.log.Debugf("no emoji found with shortcode %s, skipping it", e)
 				continue

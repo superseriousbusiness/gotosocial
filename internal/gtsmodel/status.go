@@ -25,61 +25,61 @@ import (
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	// id of the status in the database
-	ID string `pg:"type:CHAR(26),pk,notnull"`
+	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// uri at which this status is reachable
-	URI string `pg:",unique"`
+	URI string `bun:",unique"`
 	// web url for viewing this status
-	URL string `pg:",unique"`
+	URL string `bun:",unique"`
 	// the html-formatted content of this status
 	Content string
 	// Database IDs of any media attachments associated with this status
-	AttachmentIDs []string           `pg:"attachments,array"`
-	Attachments   []*MediaAttachment `pg:"attached_media,rel:has-many"`
+	AttachmentIDs []string           `bun:"attachments,array"`
+	Attachments   []*MediaAttachment `bun:"attached_media,rel:has-many"`
 	// Database IDs of any tags used in this status
-	TagIDs []string `pg:"tags,array"`
-	Tags   []*Tag   `pg:"attached_tags,many2many:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	TagIDs []string `bun:"tags,array"`
+	Tags   []*Tag   `bun:"attached_tags,m2m:status_to_tags"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// Database IDs of any mentions in this status
-	MentionIDs []string   `pg:"mentions,array"`
-	Mentions   []*Mention `pg:"attached_mentions,rel:has-many"`
+	MentionIDs []string   `bun:"mentions,array"`
+	Mentions   []*Mention `bun:"attached_mentions,rel:has-many"`
 	// Database IDs of any emojis used in this status
-	EmojiIDs []string `pg:"emojis,array"`
-	Emojis   []*Emoji `pg:"attached_emojis,many2many:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
+	EmojiIDs []string `bun:"emojis,array"`
+	Emojis   []*Emoji `bun:"attached_emojis,m2m:status_to_emojis"` // https://pg.uptrace.dev/orm/many-to-many-relation/
 	// when was this status created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// when was this status updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
-	AccountID string   `pg:"type:CHAR(26),notnull"`
-	Account   *Account `pg:"rel:has-one"`
+	AccountID string   `bun:"type:CHAR(26),notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// AP uri of the owner of this status
 	AccountURI string
 	// id of the status this status is a reply to
-	InReplyToID string  `pg:"type:CHAR(26)"`
-	InReplyTo   *Status `pg:"rel:has-one"`
+	InReplyToID string  `bun:"type:CHAR(26)"`
+	InReplyTo   *Status `bun:"rel:belongs-to"`
 	// AP uri of the status this status is a reply to
 	InReplyToURI string
 	// id of the account that this status replies to
-	InReplyToAccountID string   `pg:"type:CHAR(26)"`
-	InReplyToAccount   *Account `pg:"rel:has-one"`
+	InReplyToAccountID string   `bun:"type:CHAR(26)"`
+	InReplyToAccount   *Account `bun:"rel:belongs-to"`
 	// id of the status this status is a boost of
-	BoostOfID string  `pg:"type:CHAR(26)"`
-	BoostOf   *Status `pg:"rel:has-one"`
+	BoostOfID string  `bun:"type:CHAR(26)"`
+	BoostOf   *Status `bun:"rel:belongs-to"`
 	// id of the account that owns the boosted status
-	BoostOfAccountID string   `pg:"type:CHAR(26)"`
-	BoostOfAccount   *Account `pg:"rel:has-one"`
+	BoostOfAccountID string   `bun:"type:CHAR(26)"`
+	BoostOfAccount   *Account `bun:"rel:belongs-to"`
 	// cw string for this status
 	ContentWarning string
 	// visibility entry for this status
-	Visibility Visibility `pg:",notnull"`
+	Visibility Visibility `bun:",notnull"`
 	// mark the status as sensitive?
 	Sensitive bool
 	// what language is this status written in?
 	Language string
 	// Which application was used to create this status?
-	CreatedWithApplicationID string       `pg:"type:CHAR(26)"`
-	CreatedWithApplication   *Application `pg:"rel:has-one"`
+	CreatedWithApplicationID string       `bun:"type:CHAR(26)"`
+	CreatedWithApplication   *Application `bun:"rel:belongs-to"`
 	// advanced visibility for this status
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
@@ -93,14 +93,18 @@ type Status struct {
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
-	StatusID string `pg:"unique:statustag"`
-	TagID    string `pg:"unique:statustag"`
+	StatusID string  `bun:"type:CHAR(26),unique:statustag"`
+	Status   *Status `bun:"rel:has-one"`
+	TagID    string  `bun:"type:CHAR(26),unique:statustag"`
+	Tag      *Tag    `bun:"rel:has-one"`
 }
 
 // StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
 type StatusToEmoji struct {
-	StatusID string `pg:"unique:statusemoji"`
-	EmojiID  string `pg:"unique:statusemoji"`
+	StatusID string  `bun:"type:CHAR(26),unique:statusemoji"`
+	Status   *Status `bun:"rel:has-one"`
+	EmojiID  string  `bun:"type:CHAR(26),unique:statusemoji"`
+	Emoji    *Emoji  `bun:"rel:has-one"`
 }
 
 // Visibility represents the visibility granularity of a status.
@@ -134,11 +138,11 @@ const (
 // If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
 type VisibilityAdvanced struct {
 	// This status will be federated beyond the local timeline(s)
-	Federated bool `pg:"default:true"`
+	Federated bool `bun:"default:true"`
 	// This status can be boosted/reblogged
-	Boostable bool `pg:"default:true"`
+	Boostable bool `bun:"default:true"`
 	// This status can be replied to
-	Replyable bool `pg:"default:true"`
+	Replyable bool `bun:"default:true"`
 	// This status can be liked/faved
-	Likeable bool `pg:"default:true"`
+	Likeable bool `bun:"default:true"`
 }

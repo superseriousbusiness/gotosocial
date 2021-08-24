@@ -1,6 +1,25 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package status_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -88,7 +107,7 @@ func (suite *UtilTestSuite) TestProcessMentions1() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
 	assert.Len(suite.T(), status.Mentions, 1)
@@ -138,11 +157,11 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
-	err = suite.status.ProcessTags(form, creatingAccount.ID, status)
+	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
@@ -150,7 +169,7 @@ func (suite *UtilTestSuite) TestProcessContentFull1() {
 		ACTUAL TEST
 	*/
 
-	err = suite.status.ProcessContent(form, creatingAccount.ID, status)
+	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusText1ExpectedFull, status.Content)
 }
@@ -187,7 +206,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial1() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
@@ -195,7 +214,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial1() {
 		ACTUAL TEST
 	*/
 
-	err = suite.status.ProcessContent(form, creatingAccount.ID, status)
+	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusText1ExpectedPartial, status.Content)
 }
@@ -229,7 +248,7 @@ func (suite *UtilTestSuite) TestProcessMentions2() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
 	assert.Len(suite.T(), status.Mentions, 1)
@@ -279,11 +298,11 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
-	err = suite.status.ProcessTags(form, creatingAccount.ID, status)
+	err = suite.status.ProcessTags(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
@@ -291,7 +310,7 @@ func (suite *UtilTestSuite) TestProcessContentFull2() {
 		ACTUAL TEST
 	*/
 
-	err = suite.status.ProcessContent(form, creatingAccount.ID, status)
+	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
 	assert.Equal(suite.T(), status2TextExpectedFull, status.Content)
@@ -329,7 +348,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial2() {
 		ID: "01FCTDD78JJMX3K9KPXQ7ZQ8BJ",
 	}
 
-	err := suite.status.ProcessMentions(form, creatingAccount.ID, status)
+	err := suite.status.ProcessMentions(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 	assert.Empty(suite.T(), status.Content) // shouldn't be set yet
 
@@ -337,7 +356,7 @@ func (suite *UtilTestSuite) TestProcessContentPartial2() {
 		ACTUAL TEST
 	*/
 
-	err = suite.status.ProcessContent(form, creatingAccount.ID, status)
+	err = suite.status.ProcessContent(context.Background(), form, creatingAccount.ID, status)
 	assert.NoError(suite.T(), err)
 
 	fmt.Println(status.Content)

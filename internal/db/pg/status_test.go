@@ -19,6 +19,7 @@
 package pg_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -56,7 +57,7 @@ func (suite *StatusTestSuite) TearDownTest() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusByID() {
-	status, err := suite.db.GetStatusByID(suite.testStatuses["local_account_1_status_1"].ID)
+	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["local_account_1_status_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -67,10 +68,11 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
+	suite.log.Debug("test finished")
 }
 
 func (suite *StatusTestSuite) TestGetStatusByURI() {
-	status, err := suite.db.GetStatusByURI(suite.testStatuses["local_account_1_status_1"].URI)
+	status, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -84,7 +86,7 @@ func (suite *StatusTestSuite) TestGetStatusByURI() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithExtras() {
-	status, err := suite.db.GetStatusByID(suite.testStatuses["admin_account_status_1"].ID)
+	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["admin_account_status_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -97,7 +99,7 @@ func (suite *StatusTestSuite) TestGetStatusWithExtras() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithMention() {
-	status, err := suite.db.GetStatusByID(suite.testStatuses["local_account_2_status_5"].ID)
+	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["local_account_2_status_5"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -112,14 +114,14 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 
 func (suite *StatusTestSuite) TestGetStatusTwice() {
 	before1 := time.Now()
-	_, err := suite.db.GetStatusByURI(suite.testStatuses["local_account_1_status_1"].URI)
+	_, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
 	suite.NoError(err)
 	after1 := time.Now()
 	duration1 := after1.Sub(before1)
 	fmt.Println(duration1.Nanoseconds())
 
 	before2 := time.Now()
-	_, err = suite.db.GetStatusByURI(suite.testStatuses["local_account_1_status_1"].URI)
+	_, err = suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
 	suite.NoError(err)
 	after2 := time.Now()
 	duration2 := after2.Sub(before2)

@@ -51,7 +51,7 @@ import (
 // for clean distribution of messages without slowing down the client API and harming the user experience.
 type Processor interface {
 	// Start starts the Processor, reading from its channels and passing messages back and forth.
-	Start() error
+	Start(ctx context.Context) error
 	// Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
 	Stop() error
 

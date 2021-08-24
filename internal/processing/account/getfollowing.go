@@ -64,7 +64,7 @@ func (p *processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 			f.TargetAccount = a
 		}
 
-		account, err := p.tc.AccountToMastoPublic(f.TargetAccount)
+		account, err := p.tc.AccountToMastoPublic(ctx, f.TargetAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

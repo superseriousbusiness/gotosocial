@@ -175,7 +175,7 @@ func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
 }
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
-	_, err := b.conn.NewDropTable().Model(i).Exec(ctx)
+	_, err := b.conn.NewDropTable().IfExists().Model(i).Exec(ctx)
 	return processErrorResponse(err)
 }
 

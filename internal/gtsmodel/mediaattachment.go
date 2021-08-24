@@ -26,28 +26,28 @@ import (
 // somewhere in storage and that can be retrieved and served by the router.
 type MediaAttachment struct {
 	// ID of the attachment in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status to which this is attached
-	StatusID string `pg:"type:CHAR(26)"`
+	StatusID string `bun:"type:CHAR(26)"`
 	// Where can the attachment be retrieved on *this* server
 	URL string
 	// Where can the attachment be retrieved on a remote server (empty for local media)
 	RemoteURL string
 	// When was the attachment created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was the attachment last updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// Type of file (image/gif/audio/video)
-	Type FileType `pg:",notnull"`
+	Type FileType `bun:",notnull"`
 	// Metadata about the file
 	FileMeta FileMeta
 	// To which account does this attachment belong
-	AccountID string   `pg:"type:CHAR(26),notnull"`
-	Account   *Account `pg:"rel:belongs-to"`
+	AccountID string   `bun:"type:CHAR(26),notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// Description of the attachment (for screenreaders)
 	Description string
 	// To which scheduled status does this attachment belong
-	ScheduledStatusID string `pg:"type:CHAR(26)"`
+	ScheduledStatusID string `bun:"type:CHAR(26)"`
 	// What is the generated blurhash of this attachment
 	Blurhash string
 	// What is the processing status of this attachment
@@ -71,7 +71,7 @@ type File struct {
 	// What is the size of the file in bytes.
 	FileSize int
 	// When was the file last updated.
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
@@ -83,7 +83,7 @@ type Thumbnail struct {
 	// What is the size of the file in bytes
 	FileSize int
 	// When was the file last updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// What is the URL of the thumbnail on the local server
 	URL string
 	// What is the remote URL of the thumbnail (empty for local media)

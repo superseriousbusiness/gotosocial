@@ -67,16 +67,7 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 			Where("account_id = ?", account2)
 	}
 
-	count, err := q.Count(ctx)
-
-	blocked := count != 0
-	err = processErrorResponse(err)
-
-	if err != db.ErrNoEntries {
-		return false, err
-	}
-
-	return blocked, nil
+	return exists(ctx, q)
 }
 
 func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
@@ -186,16 +177,7 @@ func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccount *gtsmode
 		Where("target_account_id = ?", targetAccount.ID).
 		Limit(1)
 
-	count, err := q.Count(ctx)
-
-	following := count != 0
-	err = processErrorResponse(err)
-
-	if err != db.ErrNoEntries {
-		return false, err
-	}
-
-	return following, nil
+	return exists(ctx, q)
 }
 
 func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
@@ -209,16 +191,7 @@ func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *g
 		Where("account_id = ?", sourceAccount.ID).
 		Where("target_account_id = ?", targetAccount.ID)
 
-	count, err := q.Count(ctx)
-
-	followRequested := count != 0
-	err = processErrorResponse(err)
-
-	if err != db.ErrNoEntries {
-		return false, err
-	}
-
-	return followRequested, nil
+	return exists(ctx, q)
 }
 
 func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {

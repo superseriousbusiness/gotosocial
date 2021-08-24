@@ -5,17 +5,17 @@ import "time"
 // Block refers to the blocking of one account by another.
 type Block struct {
 	// id of this block in the database
-	ID string `pg:"type:CHAR(26),pk,notnull"`
+	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// When was this block created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was this block updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// Who created this block?
-	AccountID string   `pg:"type:CHAR(26),notnull"`
-	Account   *Account `pg:"rel:has-one"`
+	AccountID string   `bun:"type:CHAR(26),notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// Who is targeted by this block?
-	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `pg:"rel:has-one"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Activitypub URI for this block
-	URI string `pg:",notnull"`
+	URI string `bun:",notnull"`
 }

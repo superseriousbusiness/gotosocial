@@ -19,47 +19,49 @@
 package processing
 
 import (
+	"context"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) StatusCreate(authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error) {
-	return p.statusProcessor.Create(authed.Account, authed.Application, form)
+func (p *processor) StatusCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, error) {
+	return p.statusProcessor.Create(ctx, authed.Account, authed.Application, form)
 }
 
-func (p *processor) StatusDelete(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
-	return p.statusProcessor.Delete(authed.Account, targetStatusID)
+func (p *processor) StatusDelete(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+	return p.statusProcessor.Delete(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusFave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
-	return p.statusProcessor.Fave(authed.Account, targetStatusID)
+func (p *processor) StatusFave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+	return p.statusProcessor.Fave(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusBoost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	return p.statusProcessor.Boost(authed.Account, authed.Application, targetStatusID)
+func (p *processor) StatusBoost(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Boost(ctx, authed.Account, authed.Application, targetStatusID)
 }
 
-func (p *processor) StatusUnboost(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	return p.statusProcessor.Unboost(authed.Account, authed.Application, targetStatusID)
+func (p *processor) StatusUnboost(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	return p.statusProcessor.Unboost(ctx, authed.Account, authed.Application, targetStatusID)
 }
 
-func (p *processor) StatusBoostedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
-	return p.statusProcessor.BoostedBy(authed.Account, targetStatusID)
+func (p *processor) StatusBoostedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
+	return p.statusProcessor.BoostedBy(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusFavedBy(authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error) {
-	return p.statusProcessor.FavedBy(authed.Account, targetStatusID)
+func (p *processor) StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error) {
+	return p.statusProcessor.FavedBy(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusGet(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
-	return p.statusProcessor.Get(authed.Account, targetStatusID)
+func (p *processor) StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+	return p.statusProcessor.Get(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusUnfave(authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
-	return p.statusProcessor.Unfave(authed.Account, targetStatusID)
+func (p *processor) StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+	return p.statusProcessor.Unfave(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusGetContext(authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
-	return p.statusProcessor.Context(authed.Account, targetStatusID)
+func (p *processor) StatusGetContext(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+	return p.statusProcessor.Context(ctx, authed.Account, targetStatusID)
 }

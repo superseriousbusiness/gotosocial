@@ -31,37 +31,37 @@ type User struct {
 	*/
 
 	// id of this user in the local database; the end-user will never need to know this, it's strictly internal
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
-	Email string `pg:"default:null,unique"`
+	Email string `bun:"default:null,unique"`
 	// The id of the local gtsmodel.Account entry for this user, if it exists (unconfirmed users don't have an account yet)
-	AccountID string   `pg:"type:CHAR(26),unique"`
-	Account   *Account `pg:"rel:has-one"`
+	AccountID string   `bun:"type:CHAR(26),unique"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables
-	EncryptedPassword string `pg:",notnull"`
+	EncryptedPassword string `bun:",notnull"`
 
 	/*
 		USER METADATA
 	*/
 
 	// When was this user created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// From what IP was this user created?
 	SignUpIP net.IP
 	// When was this user updated (eg., password changed, email address changed)?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When did this user sign in for their current session?
-	CurrentSignInAt time.Time `pg:"type:timestamp"`
+	CurrentSignInAt time.Time `bun:"type:timestamp"`
 	// What's the most recent IP of this user
 	CurrentSignInIP net.IP
 	// When did this user last sign in?
-	LastSignInAt time.Time `pg:"type:timestamp"`
+	LastSignInAt time.Time `bun:"type:timestamp"`
 	// What's the previous IP of this user?
 	LastSignInIP net.IP
 	// How many times has this user signed in?
 	SignInCount int
 	// id of the user who invited this user (who let this guy in?)
-	InviteID string `pg:"type:CHAR(26)"`
+	InviteID string `bun:"type:CHAR(26)"`
 	// What languages does this user want to see?
 	ChosenLanguages []string
 	// What languages does this user not want to see?
@@ -69,10 +69,10 @@ type User struct {
 	// In what timezone/locale is this user located?
 	Locale string
 	// Which application id created this user? See gtsmodel.Application
-	CreatedByApplicationID string       `pg:"type:CHAR(26)"`
-	CreatedByApplication   *Application `pg:"rel:has-one"`
+	CreatedByApplicationID string       `bun:"type:CHAR(26)"`
+	CreatedByApplication   *Application `bun:"rel:belongs-to"`
 	// When did we last contact this user
-	LastEmailedAt time.Time `pg:"type:timestamp"`
+	LastEmailedAt time.Time `bun:"type:timestamp"`
 
 	/*
 		USER CONFIRMATION
@@ -81,9 +81,9 @@ type User struct {
 	// What confirmation token did we send this user/what are we expecting back?
 	ConfirmationToken string
 	// When did the user confirm their email address
-	ConfirmedAt time.Time `pg:"type:timestamp"`
+	ConfirmedAt time.Time `bun:"type:timestamp"`
 	// When did we send email confirmation to this user?
-	ConfirmationSentAt time.Time `pg:"type:timestamp"`
+	ConfirmationSentAt time.Time `bun:"type:timestamp"`
 	// Email address that hasn't yet been confirmed
 	UnconfirmedEmail string
 
@@ -107,7 +107,7 @@ type User struct {
 	// The generated token that the user can use to reset their password
 	ResetPasswordToken string
 	// When did we email the user their reset-password email?
-	ResetPasswordSentAt time.Time `pg:"type:timestamp"`
+	ResetPasswordSentAt time.Time `bun:"type:timestamp"`
 
 	EncryptedOTPSecret     string
 	EncryptedOTPSecretIv   string
@@ -117,6 +117,6 @@ type User struct {
 	ConsumedTimestamp      int
 	RememberToken          string
 	SignInToken            string
-	SignInTokenSentAt      time.Time `pg:"type:timestamp"`
+	SignInTokenSentAt      time.Time `bun:"type:timestamp"`
 	WebauthnID             string
 }

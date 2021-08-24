@@ -23,21 +23,21 @@ import "time"
 // FollowRequest represents one account requesting to follow another, and the metadata around that request.
 type FollowRequest struct {
 	// id of this follow request in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// When was this follow request created?
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was this follow request last updated?
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// Who does this follow request originate from?
-	AccountID string  `pg:"type:CHAR(26),unique:srctarget,notnull"`
-	Account   Account `pg:"rel:has-one"`
+	AccountID string  `bun:"type:CHAR(26),unique:srctarget,notnull"`
+	Account   Account `bun:"rel:belongs-to"`
 	// Who is the target of this follow request?
-	TargetAccountID string  `pg:"type:CHAR(26),unique:srctarget,notnull"`
-	TargetAccount   Account `pg:"rel:has-one"`
+	TargetAccountID string  `bun:"type:CHAR(26),unique:srctarget,notnull"`
+	TargetAccount   Account `bun:"rel:belongs-to"`
 	// Does this follow also want to see reblogs and not just posts?
-	ShowReblogs bool `pg:"default:true"`
+	ShowReblogs bool `bun:"default:true"`
 	// What is the activitypub URI of this follow request?
-	URI string `pg:",unique"`
+	URI string `bun:",unique"`
 	// does the following account want to be notified when the followed account posts?
 	Notify bool
 }

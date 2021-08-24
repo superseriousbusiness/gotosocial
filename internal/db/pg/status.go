@@ -24,8 +24,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/go-pg/pg/v10/orm"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -71,8 +69,10 @@ func (s *statusDB) statusCached(id string) (*gtsmodel.Status, bool) {
 	return status, true
 }
 
-func (s *statusDB) newStatusQ(status interface{}) *orm.Query {
-	return s.conn.Model(status).
+func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
+	return s.conn.
+		NewSelect().
+		Model(status).
 		Relation("Attachments").
 		Relation("Tags").
 		Relation("Mentions").
@@ -85,14 +85,16 @@ func (s *statusDB) newStatusQ(status interface{}) *orm.Query {
 		Relation("CreatedWithApplication")
 }
 
-func (s *statusDB) newFaveQ(faves interface{}) *orm.Query {
-	return s.conn.Model(faves).
+func (s *statusDB) newFaveQ(faves interface{}) *bun.SelectQuery {
+	return s.conn.
+		NewSelect().
+		Model(faves).
 		Relation("Account").
 		Relation("TargetAccount").
 		Relation("Status")
 }
 
-func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, db.Error) {
 	if status, cached := s.statusCached(id); cached {
 		return status, nil
 	}
@@ -102,7 +104,7 @@ func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.Error) {
 	q := s.newStatusQ(status).
 		Where("status.id = ?", id)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	if err == nil && status != nil {
 		s.cacheStatus(id, status)
@@ -111,7 +113,7 @@ func (s *statusDB) GetStatusByID(id string) (*gtsmodel.Status, db.Error) {
 	return status, err
 }
 
-func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
 	if status, cached := s.statusCached(uri); cached {
 		return status, nil
 	}
@@ -121,7 +123,7 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.Error) {
 	q := s.newStatusQ(status).
 		Where("LOWER(status.uri) = LOWER(?)", uri)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	if err == nil && status != nil {
 		s.cacheStatus(uri, status)
@@ -130,7 +132,7 @@ func (s *statusDB) GetStatusByURI(uri string) (*gtsmodel.Status, db.Error) {
 	return status, err
 }
 
-func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
 	if status, cached := s.statusCached(uri); cached {
 		return status, nil
 	}
@@ -140,7 +142,7 @@ func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.Error) {
 	q := s.newStatusQ(status).
 		Where("LOWER(status.url) = LOWER(?)", uri)
 
-	err := processErrorResponse(q.Select())
+	err := processErrorResponse(q.Scan(ctx))
 
 	if err == nil && status != nil {
 		s.cacheStatus(uri, status)
@@ -149,24 +151,24 @@ func (s *statusDB) GetStatusByURL(uri string) (*gtsmodel.Status, db.Error) {
 	return status, err
 }
 
-func (s *statusDB) PutStatus(status *gtsmodel.Status) db.Error {
-	transaction := func(tx *pg.Tx) error {
+func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
+	transaction := func(ctx context.Context, tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
-			if _, err := tx.Model(&gtsmodel.StatusToEmoji{
+			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
 				StatusID: status.ID,
 				EmojiID:  i,
-			}).Insert(); err != nil {
+			}).Exec(ctx); err != nil {
 				return err
 			}
 		}
 
 		// create links between this status and any tags it uses
 		for _, i := range status.TagIDs {
-			if _, err := tx.Model(&gtsmodel.StatusToTag{
+			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToTag{
 				StatusID: status.ID,
 				TagID:    i,
-			}).Insert(); err != nil {
+			}).Exec(ctx); err != nil {
 				return err
 			}
 		}
@@ -175,33 +177,33 @@ func (s *statusDB) PutStatus(status *gtsmodel.Status) db.Error {
 		for _, a := range status.Attachments {
 			a.StatusID = status.ID
 			a.UpdatedAt = time.Now()
-			if _, err := s.conn.Model(a).
+			if _, err := s.conn.NewUpdate().Model(a).
 				Where("id = ?", a.ID).
-				Update(); err != nil {
+				Exec(ctx); err != nil {
 				return err
 			}
 		}
 
-		_, err := tx.Model(status).Insert()
+		_, err := tx.NewInsert().Model(status).Exec(ctx)
 		return err
 	}
 
-	return processErrorResponse(s.conn.RunInTransaction(context.Background(), transaction))
+	return processErrorResponse(s.conn.RunInTx(ctx, nil, transaction))
 }
 
-func (s *statusDB) GetStatusParents(status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
 	parents := []*gtsmodel.Status{}
-	s.statusParent(status, &parents, onlyDirect)
+	s.statusParent(ctx, status, &parents, onlyDirect)
 
 	return parents, nil
 }
 
-func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
+func (s *statusDB) statusParent(ctx context.Context, status *gtsmodel.Status, foundStatuses *[]*gtsmodel.Status, onlyDirect bool) {
 	if status.InReplyToID == "" {
 		return
 	}
 
-	parentStatus, err := s.GetStatusByID(status.InReplyToID)
+	parentStatus, err := s.GetStatusByID(ctx, status.InReplyToID)
 	if err == nil {
 		*foundStatuses = append(*foundStatuses, parentStatus)
 	}
@@ -210,13 +212,13 @@ func (s *statusDB) statusParent(status *gtsmodel.Status, foundStatuses *[]*gtsmo
 		return
 	}
 
-	s.statusParent(parentStatus, foundStatuses, false)
+	s.statusParent(ctx, parentStatus, foundStatuses, false)
 }
 
-func (s *statusDB) GetStatusChildren(status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.Error) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
-	s.statusChildren(status, foundStatuses, onlyDirect, minID)
+	s.statusChildren(ctx, status, foundStatuses, onlyDirect, minID)
 
 	children := []*gtsmodel.Status{}
 	for e := foundStatuses.Front(); e != nil; e = e.Next() {
@@ -234,15 +236,18 @@ func (s *statusDB) GetStatusChildren(status *gtsmodel.Status, onlyDirect bool, m
 	return children, nil
 }
 
-func (s *statusDB) statusChildren(status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
+func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
 	immediateChildren := []*gtsmodel.Status{}
 
-	q := s.conn.Model(&immediateChildren).Where("in_reply_to_id = ?", status.ID)
+	q := s.conn.
+		NewSelect().
+		Model(&immediateChildren).
+		Where("in_reply_to_id = ?", status.ID)
 	if minID != "" {
 		q = q.Where("status.id > ?", minID)
 	}
 
-	if err := q.Select(); err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return
 	}
 
@@ -264,56 +269,78 @@ func (s *statusDB) statusChildren(status *gtsmodel.Status, foundStatuses *list.L
 		if onlyDirect {
 			return
 		}
-		s.statusChildren(child, foundStatuses, false, minID)
+		s.statusChildren(ctx, child, foundStatuses, false, minID)
 	}
 }
 
-func (s *statusDB) CountStatusReplies(status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count()
+func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+	return s.conn.NewSelect().Model(&gtsmodel.Status{}).Where("in_reply_to_id = ?", status.ID).Count(ctx)
 }
 
-func (s *statusDB) CountStatusReblogs(status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count()
+func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+	return s.conn.NewSelect().Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Count(ctx)
 }
 
-func (s *statusDB) CountStatusFaves(status *gtsmodel.Status) (int, db.Error) {
-	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count()
+func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+	return s.conn.NewSelect().Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Count(ctx)
 }
 
-func (s *statusDB) IsStatusFavedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
-	return s.conn.Model(&gtsmodel.StatusFave{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		Model(&gtsmodel.StatusFave{}).
+		Where("status_id = ?", status.ID).
+		Where("account_id = ?", accountID)
+
+	return exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusRebloggedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
-	return s.conn.Model(&gtsmodel.Status{}).Where("boost_of_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		Model(&gtsmodel.Status{}).
+		Where("boost_of_id = ?", status.ID).
+		Where("account_id = ?", accountID)
+
+	return exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusMutedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
-	return s.conn.Model(&gtsmodel.StatusMute{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		Model(&gtsmodel.StatusMute{}).
+		Where("status_id = ?", status.ID).
+		Where("account_id = ?", accountID)
+
+	return exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusBookmarkedBy(status *gtsmodel.Status, accountID string) (bool, db.Error) {
-	return s.conn.Model(&gtsmodel.StatusBookmark{}).Where("status_id = ?", status.ID).Where("account_id = ?", accountID).Exists()
+func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+	q := s.conn.
+		NewSelect().
+		Model(&gtsmodel.StatusBookmark{}).
+		Where("status_id = ?", status.ID).
+		Where("account_id = ?", accountID)
+
+	return exists(ctx, q)
 }
 
-func (s *statusDB) GetStatusFaves(status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
+func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
 	faves := []*gtsmodel.StatusFave{}
 
 	q := s.newFaveQ(&faves).
 		Where("status_id = ?", status.ID)
 
-	err := processErrorResponse(q.Select())
-
+	err := processErrorResponse(q.Scan(ctx))
 	return faves, err
 }
 
-func (s *statusDB) GetStatusReblogs(status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {
 	reblogs := []*gtsmodel.Status{}
 
 	q := s.newStatusQ(&reblogs).
 		Where("boost_of_id = ?", status.ID)
 
-	err := processErrorResponse(q.Select())
-
+	err := processErrorResponse(q.Scan(ctx))
 	return reblogs, err
 }

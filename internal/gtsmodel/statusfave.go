@@ -23,18 +23,18 @@ import "time"
 // StatusFave refers to a 'fave' or 'like' in the database, from one account, targeting the status of another account
 type StatusFave struct {
 	// id of this fave in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// when was this fave created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// id of the account that created ('did') the fave
-	AccountID string   `pg:"type:CHAR(26),notnull"`
-	Account   *Account `pg:"rel:has-one"`
+	AccountID string   `bun:"type:CHAR(26),notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// id the account owning the faved status
-	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `pg:"rel:has-one"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// database id of the status that has been 'faved'
-	StatusID string  `pg:"type:CHAR(26),notnull"`
-	Status   *Status `pg:"rel:has-one"`
+	StatusID string  `bun:"type:CHAR(26),notnull"`
+	Status   *Status `bun:"rel:belongs-to"`
 	// ActivityPub URI of this fave
-	URI string `pg:",notnull"`
+	URI string `bun:",notnull"`
 }

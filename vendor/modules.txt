@@ -247,17 +247,6 @@ github.com/go-fed/activity/streams/vocab
 # github.com/go-fed/httpsig v1.1.0
 ## explicit
 github.com/go-fed/httpsig
-# github.com/go-pg/pg/v10 v10.10.3
-## explicit
-github.com/go-pg/pg/v10
-github.com/go-pg/pg/v10/internal
-github.com/go-pg/pg/v10/internal/parser
-github.com/go-pg/pg/v10/internal/pool
-github.com/go-pg/pg/v10/orm
-github.com/go-pg/pg/v10/pgjson
-github.com/go-pg/pg/v10/types
-# github.com/go-pg/zerochecker v0.2.0
-github.com/go-pg/zerochecker
 # github.com/go-playground/locales v0.13.0
 github.com/go-playground/locales
 github.com/go-playground/locales/currency
@@ -287,6 +276,7 @@ github.com/golang/geo/s2
 # github.com/golang/mock v1.6.0
 ## explicit
 # github.com/golang/protobuf v1.5.2
+## explicit
 github.com/golang/protobuf/proto
 # github.com/google/uuid v1.3.0
 ## explicit
@@ -309,6 +299,27 @@ github.com/h2non/filetype
 github.com/h2non/filetype/matchers
 github.com/h2non/filetype/matchers/isobmff
 github.com/h2non/filetype/types
+# github.com/jackc/chunkreader/v2 v2.0.1
+github.com/jackc/chunkreader/v2
+# github.com/jackc/pgconn v1.10.0
+github.com/jackc/pgconn
+github.com/jackc/pgconn/internal/ctxwatch
+github.com/jackc/pgconn/stmtcache
+# github.com/jackc/pgio v1.0.0
+github.com/jackc/pgio
+# github.com/jackc/pgpassfile v1.0.0
+github.com/jackc/pgpassfile
+# github.com/jackc/pgproto3/v2 v2.1.1
+github.com/jackc/pgproto3/v2
+# github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b
+github.com/jackc/pgservicefile
+# github.com/jackc/pgtype v1.8.1
+github.com/jackc/pgtype
+# github.com/jackc/pgx/v4 v4.13.0
+## explicit
+github.com/jackc/pgx/v4
+github.com/jackc/pgx/v4/internal/sanitize
+github.com/jackc/pgx/v4/stdlib
 # github.com/jinzhu/inflection v1.0.0
 github.com/jinzhu/inflection
 # github.com/json-iterator/go v1.1.11
@@ -336,8 +347,6 @@ github.com/nfnt/resize
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
-# github.com/onsi/gomega v1.14.0
-## explicit
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b
@@ -394,21 +403,12 @@ github.com/uptrace/bun/schema
 # github.com/uptrace/bun/dialect/pgdialect v0.4.3
 ## explicit
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/driver/pgdriver v0.4.3
-## explicit
-github.com/uptrace/bun/driver/pgdriver
 # github.com/urfave/cli/v2 v2.3.0
 ## explicit
 github.com/urfave/cli/v2
-# github.com/vmihailenco/bufpool v0.1.11
-github.com/vmihailenco/bufpool
 # github.com/vmihailenco/msgpack/v5 v5.3.4
 github.com/vmihailenco/msgpack/v5
 github.com/vmihailenco/msgpack/v5/msgpcode
-# github.com/vmihailenco/tagparser v0.1.2
-github.com/vmihailenco/tagparser
-github.com/vmihailenco/tagparser/internal
-github.com/vmihailenco/tagparser/internal/parser
 # github.com/vmihailenco/tagparser/v2 v2.0.0
 github.com/vmihailenco/tagparser/v2
 github.com/vmihailenco/tagparser/v2/internal
@@ -454,14 +454,19 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.6
 ## explicit
+golang.org/x/text/cases
+golang.org/x/text/internal
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/language
+golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
+golang.org/x/text/secure/precis
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+golang.org/x/text/width
 # google.golang.org/appengine v1.6.7
 ## explicit
 google.golang.org/appengine/internal
@@ -511,8 +516,6 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
 gopkg.in/yaml.v3
-# mellium.im/sasl v0.2.1
-mellium.im/sasl
 # mvdan.cc/xurls/v2 v2.3.0
 ## explicit
 mvdan.cc/xurls/v2

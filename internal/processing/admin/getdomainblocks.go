@@ -39,7 +39,7 @@ func (p *processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Accou
 
 	mastoDomainBlocks := []*apimodel.DomainBlock{}
 	for _, b := range domainBlocks {
-		mastoDomainBlock, err := p.tc.DomainBlockToMasto(b, export)
+		mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, b, export)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

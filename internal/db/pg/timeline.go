@@ -20,9 +20,9 @@ package pg
 
 import (
 	"context"
+	"database/sql"
 	"sort"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,23 +37,27 @@ type timelineDB struct {
 	cancel context.CancelFunc
 }
 
-func (t *timelineDB) GetHomeTimeline(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
-	q := t.conn.Model(&statuses)
+	q := t.conn.
+		NewSelect().
+		Model(&statuses)
+
+	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
+	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
+	//
+	// This is equivalent to something like WHERE ... AND (... OR ...)
+	// See: https://pg.uptrace.dev/queries/#select
+	whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where("f.account_id = ?", accountID).
+			WhereOr("status.account_id = ?", accountID)
+		return q
+	}
 
 	q = q.ColumnExpr("status.*").
 		// Find out who accountID follows.
 		Join("LEFT JOIN follows AS f ON f.target_account_id = status.account_id").
-		// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
-		// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
-		//
-		// This is equivalent to something like WHERE ... AND (... OR ...)
-		// See: https://pg.uptrace.dev/queries/#select
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("f.account_id = ?", accountID).
-				WhereOr("status.account_id = ?", accountID)
-			return q, nil
-		}).
+		WhereGroup(" AND ", whereGroup).
 		// Sort by highest ID (newest) to lowest ID (oldest)
 		Order("status.id DESC")
 
@@ -82,29 +86,19 @@ func (t *timelineDB) GetHomeTimeline(accountID string, maxID string, sinceID str
 		q = q.Limit(limit)
 	}
 
-	err := q.Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries
-		}
-		return nil, err
-	}
-
-	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries
-	}
-
-	return statuses, nil
+	return statuses, processErrorResponse(q.Scan(ctx))
 }
 
-func (t *timelineDB) GetPublicTimeline(accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
 
-	q := t.conn.Model(&statuses).
+	q := t.conn.
+		NewSelect().
+		Model(&statuses).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
-		Where("? IS NULL", pg.Ident("in_reply_to_id")).
-		Where("? IS NULL", pg.Ident("in_reply_to_uri")).
-		Where("? IS NULL", pg.Ident("boost_of_id")).
+		Where("? IS NULL", bun.Ident("in_reply_to_id")).
+		Where("? IS NULL", bun.Ident("in_reply_to_uri")).
+		Where("? IS NULL", bun.Ident("boost_of_id")).
 		Order("status.id DESC")
 
 	if maxID != "" {
@@ -127,28 +121,18 @@ func (t *timelineDB) GetPublicTimeline(accountID string, maxID string, sinceID s
 		q = q.Limit(limit)
 	}
 
-	err := q.Select()
-	if err != nil {
-		if err == pg.ErrNoRows {
-			return nil, db.ErrNoEntries
-		}
-		return nil, err
-	}
-
-	if len(statuses) == 0 {
-		return nil, db.ErrNoEntries
-	}
-
-	return statuses, nil
+	return statuses, processErrorResponse(q.Scan(ctx))
 }
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
-func (t *timelineDB) GetFavedTimeline(accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
+func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
 
 	faves := []*gtsmodel.StatusFave{}
 
-	fq := t.conn.Model(&faves).
+	fq := t.conn.
+		NewSelect().
+		Model(&faves).
 		Where("account_id = ?", accountID).
 		Order("id DESC")
 
@@ -164,9 +148,9 @@ func (t *timelineDB) GetFavedTimeline(accountID string, maxID string, minID stri
 		fq = fq.Limit(limit)
 	}
 
-	err := fq.Select()
+	err := fq.Scan(ctx)
 	if err != nil {
-		if err == pg.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return nil, "", "", db.ErrNoEntries
 		}
 		return nil, "", "", err
@@ -186,9 +170,13 @@ func (t *timelineDB) GetFavedTimeline(accountID string, maxID string, minID stri
 	}
 
 	statuses := []*gtsmodel.Status{}
-	err = t.conn.Model(&statuses).Where("id IN (?)", pg.In(in)).Select()
+	err = t.conn.
+		NewSelect().
+		Model(&statuses).
+		Where("id IN (?)", bun.In(in)).
+		Scan(ctx)
 	if err != nil {
-		if err == pg.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return nil, "", "", db.ErrNoEntries
 		}
 		return nil, "", "", err

@@ -49,7 +49,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			status, err := p.federator.EnrichRemoteStatus(federatorMsg.ReceivingAccount.Username, incomingStatus)
+			status, err := p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, incomingStatus)
 			if err != nil {
 				return err
 			}
@@ -91,7 +91,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 				return errors.New("announce was not parseable as *gtsmodel.Status")
 			}
 
-			if err := p.federator.DereferenceAnnounce(incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
+			if err := p.federator.DereferenceAnnounce(ctx, incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
 				return fmt.Errorf("error dereferencing announce from federator: %s", err)
 			}
 
@@ -122,10 +122,10 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			}
 
 			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 				return err
 			}
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 				return err
 			}
 			// TODO: same with notifications
@@ -146,7 +146,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 				return err
 			}
 
-			if _, _, err := p.federator.GetRemoteAccount(federatorMsg.ReceivingAccount.Username, incomingAccountURI, true); err != nil {
+			if _, _, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccountURI, true); err != nil {
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
 		}
@@ -166,7 +166,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 
 			// delete all attachments for this status
 			for _, a := range statusToDelete.AttachmentIDs {
-				if err := p.mediaProcessor.Delete(a); err != nil {
+				if err := p.mediaProcessor.Delete(ctx, a); err != nil {
 					return err
 				}
 			}
@@ -184,7 +184,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			}
 
 			// remove this status from any and all timelines
-			return p.deleteStatusFromTimelines(statusToDelete)
+			return p.deleteStatusFromTimelines(ctx, statusToDelete)
 		case gtsmodel.ActivityStreamsProfile:
 			// DELETE A PROFILE/ACCOUNT
 			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account

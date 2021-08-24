@@ -19,6 +19,7 @@
 package media
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -28,9 +29,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) GetMedia(account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
+func (p *processor) GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
 	attachment := &gtsmodel.MediaAttachment{}
-	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
+	if err := p.db.GetByID(ctx, mediaAttachmentID, attachment); err != nil {
 		if err == db.ErrNoEntries {
 			// attachment doesn't exist
 			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
@@ -42,7 +43,7 @@ func (p *processor) GetMedia(account *gtsmodel.Account, mediaAttachmentID string
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
-	a, err := p.tc.AttachmentToMasto(attachment)
+	a, err := p.tc.AttachmentToMasto(ctx, attachment)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}

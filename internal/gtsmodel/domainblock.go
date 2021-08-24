@@ -23,16 +23,16 @@ import "time"
 // DomainBlock represents a federation block against a particular domain
 type DomainBlock struct {
 	// ID of this block in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// blocked domain
-	Domain string `pg:",pk,notnull,unique"`
+	Domain string `bun:",pk,notnull,unique"`
 	// When was this block created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// When was this block updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:now()"`
 	// Account ID of the creator of this block
-	CreatedByAccountID string   `pg:"type:CHAR(26),notnull"`
-	CreatedByAccount   *Account `pg:"rel:belongs-to"`
+	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
+	CreatedByAccount   *Account `bun:"rel:belongs-to"`
 	// Private comment on this block, viewable to admins
 	PrivateComment string
 	// Public comment on this block, viewable (optionally) by everyone
@@ -40,5 +40,5 @@ type DomainBlock struct {
 	// whether the domain name should appear obfuscated when displaying it publicly
 	Obfuscate bool
 	// if this block was created through a subscription, what's the subscription ID?
-	SubscriptionID string `pg:"type:CHAR(26)"`
+	SubscriptionID string `bun:"type:CHAR(26)"`
 }

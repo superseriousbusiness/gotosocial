@@ -1,6 +1,25 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package status
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -10,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.db.GetStatusByID(targetStatusID)
+func (p *processor) Unfave(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, err := p.db.GetStatusByID(ctx, targetStatusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
 	}
@@ -19,7 +38,7 @@ func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID s
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	visible, err := p.filter.StatusVisible(targetStatus, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
 	}
@@ -31,7 +50,7 @@ func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID s
 	var toUnfave bool
 
 	gtsFave := &gtsmodel.StatusFave{}
-	err = p.db.GetWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave)
+	err = p.db.GetWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave)
 	if err == nil {
 		// we have a fave
 		toUnfave = true
@@ -47,7 +66,7 @@ func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID s
 
 	if toUnfave {
 		// we had a fave, so take some action to get rid of it
-		if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err != nil {
+		if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: targetStatus.ID}, {Key: "account_id", Value: requestingAccount.ID}}, gtsFave); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error unfaveing status: %s", err))
 		}
 
@@ -61,7 +80,7 @@ func (p *processor) Unfave(requestingAccount *gtsmodel.Account, targetStatusID s
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(targetStatus, requestingAccount)
+	mastoStatus, err := p.tc.StatusToMasto(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}

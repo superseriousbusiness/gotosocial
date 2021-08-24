@@ -44,7 +44,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 	var requestedPerson vocab.ActivityStreamsPerson
 	if util.IsPublicKeyPath(requestURL) {
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
-		requestedPerson, err = p.tc.AccountToASMinimal(requestedAccount)
+		requestedPerson, err = p.tc.AccountToASMinimal(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -56,8 +56,8 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 		}
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
-		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
-			requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+		if !p.federator.Handshaking(ctx, requestedUsername, requestingAccountURI) {
+			requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}
@@ -72,7 +72,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 			}
 		}
 
-		requestedPerson, err = p.tc.AccountToAS(requestedAccount)
+		requestedPerson, err = p.tc.AccountToAS(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -101,7 +101,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -146,7 +146,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -191,7 +191,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -216,7 +216,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
 
-	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -225,7 +225,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 	}
 
 	// requester is authorized to view the status, so convert it to AP representation and serialize it
-	asStatus, err := p.tc.StatusToAS(s)
+	asStatus, err := p.tc.StatusToAS(ctx, s)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -251,7 +251,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
@@ -276,7 +276,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
 
-	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -295,7 +295,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		// scenario 1
 
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -308,7 +308,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		// scenario 2
 
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -339,13 +339,13 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 			}
 
 			// only show replies that the status owner can see
-			visibleToStatusOwner, err := p.filter.StatusVisible(r, requestedAccount)
+			visibleToStatusOwner, err := p.filter.StatusVisible(ctx, r, requestedAccount)
 			if err != nil || !visibleToStatusOwner {
 				continue
 			}
 
 			// only show replies that the requester can see
-			visibleToRequester, err := p.filter.StatusVisible(r, requestingAccount)
+			visibleToRequester, err := p.filter.StatusVisible(ctx, r, requestingAccount)
 			if err != nil || !visibleToRequester {
 				continue
 			}
@@ -358,7 +358,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 			replyURIs[r.ID] = rURI
 		}
 
-		repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
+		repliesPage, err := p.tc.StatusURIsToASRepliesPage(ctx, s, onlyOtherAccounts, minID, replyURIs)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

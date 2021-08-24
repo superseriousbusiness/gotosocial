@@ -181,7 +181,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	// note that for the first iteration, iString is still "" when the check is made, so our first choice
 	// is still the raw username with no integer stuck on the end
 	for i := 1; !found; i = i + 1 {
-		if err := m.db.IsUsernameAvailable(ctx, username + iString); err != nil {
+		if err := m.db.IsUsernameAvailable(ctx, username+iString); err != nil {
 			if strings.Contains(err.Error(), "db error") {
 				// if there's an actual db error we should return
 				return nil, fmt.Errorf("error checking username availability: %s", err)

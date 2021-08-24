@@ -100,10 +100,10 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 				return err
 			}
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 				return err
 			}
 
@@ -171,7 +171,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 				return errors.New("undo was not parseable as *gtsmodel.Status")
 			}
 
-			if err := p.deleteStatusFromTimelines(boost); err != nil {
+			if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
 				return err
 			}
 
@@ -193,7 +193,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 			// delete all attachments for this status
 			for _, a := range statusToDelete.AttachmentIDs {
-				if err := p.mediaProcessor.Delete(a); err != nil {
+				if err := p.mediaProcessor.Delete(ctx, a); err != nil {
 					return err
 				}
 			}
@@ -211,7 +211,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			// delete this status from any and all timelines
-			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
+			if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
 				return err
 			}
 
@@ -250,7 +250,7 @@ func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 		return nil
 	}
 
-	asStatus, err := p.tc.StatusToAS(status)
+	asStatus, err := p.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
 	}
@@ -278,7 +278,7 @@ func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.S
 		return nil
 	}
 
-	asStatus, err := p.tc.StatusToAS(status)
+	asStatus, err := p.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
 	}
@@ -320,9 +320,9 @@ func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.
 		return nil
 	}
 
-	follow := p.tc.FollowRequestToFollow(followRequest)
+	follow := p.tc.FollowRequestToFollow(ctx, followRequest)
 
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateFollow: error converting follow to as format: %s", err)
 	}
@@ -343,7 +343,7 @@ func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follo
 	}
 
 	// recreate the follow
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
 	}
@@ -384,7 +384,7 @@ func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFav
 	}
 
 	// create the AS fave
-	asFave, err := p.tc.FaveToAS(fave)
+	asFave, err := p.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
 	}
@@ -422,7 +422,7 @@ func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Stat
 		return nil
 	}
 
-	asAnnounce, err := p.tc.BoostToAS(boost, originAccount, targetAccount)
+	asAnnounce, err := p.tc.BoostToAS(ctx, boost, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnannounce: error converting status to announce: %s", err)
 	}
@@ -458,7 +458,7 @@ func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 	}
 
 	// recreate the AS follow
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
 	}
@@ -508,7 +508,7 @@ func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave,
 	}
 
 	// create the AS fave
-	asFave, err := p.tc.FaveToAS(fave)
+	asFave, err := p.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
 	}
@@ -522,7 +522,7 @@ func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave,
 }
 
 func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
-	announce, err := p.tc.BoostToAS(boostWrapperStatus, boostingAccount, boostedAccount)
+	announce, err := p.tc.BoostToAS(ctx, boostWrapperStatus, boostingAccount, boostedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAnnounce: error converting status to announce: %s", err)
 	}
@@ -537,7 +537,7 @@ func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gt
 }
 
 func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
-	person, err := p.tc.AccountToAS(updatedAccount)
+	person, err := p.tc.AccountToAS(ctx, updatedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAccountUpdate: error converting account to person: %s", err)
 	}
@@ -578,7 +578,7 @@ func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 		return nil
 	}
 
-	asBlock, err := p.tc.BlockToAS(block)
+	asBlock, err := p.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return fmt.Errorf("federateBlock: error converting block to AS format: %s", err)
 	}
@@ -614,7 +614,7 @@ func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) 
 		return nil
 	}
 
-	asBlock, err := p.tc.BlockToAS(block)
+	asBlock, err := p.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return fmt.Errorf("federateUnblock: error converting block to AS format: %s", err)
 	}
