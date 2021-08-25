@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
@@ -33,7 +33,6 @@ type basicDB struct {
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
 func (b *basicDB) Put(ctx context.Context, i interface{}) db.Error {
@@ -116,7 +115,7 @@ func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.E
 	q := b.conn.
 		NewUpdate().
 		Model(i).
-		Where("id = ?", id)
+		WherePK()
 
 	_, err := q.Exec(ctx)
 
@@ -127,7 +126,7 @@ func (b *basicDB) UpdateOneByID(ctx context.Context, id string, key string, valu
 	q := b.conn.NewUpdate().
 		Model(i).
 		Set("? = ?", bun.Safe(key), value).
-		Where("id = ?", id)
+		WherePK()
 
 	_, err := q.Exec(ctx)
 
@@ -174,7 +173,6 @@ func (b *basicDB) Stop(ctx context.Context) db.Error {
 	b.log.Info("closing db connection")
 	if err := b.conn.Close(); err != nil {
 		// only cancel if there's a problem closing the db
-		b.cancel()
 		return err
 	}
 	return nil

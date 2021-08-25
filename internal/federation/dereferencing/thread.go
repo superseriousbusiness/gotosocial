@@ -25,7 +25,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -87,8 +86,8 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 			return err
 		}
 
-		status := &gtsmodel.Status{}
-		if err := d.db.GetByID(ctx, id, status); err != nil {
+		status, err := d.db.GetStatusByID(ctx, id)
+		if err != nil {
 			return err
 		}
 

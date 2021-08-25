@@ -24,7 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -68,7 +68,7 @@ func NewTestDB() db.DB {
 
 	l := logrus.New()
 	l.SetLevel(logrus.TraceLevel)
-	testDB, err := pg.NewPostgresService(context.Background(), config, l)
+	testDB, err := bundb.NewBunDBService(context.Background(), config, l)
 	if err != nil {
 		logrus.Panic(err)
 	}

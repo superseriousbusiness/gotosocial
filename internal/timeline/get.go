@@ -54,7 +54,8 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 			if prepareNext {
 				// already cache the next query to speed up scrolling
 				go func() {
-					if err := t.prepareNextQuery(ctx, amount, nextMaxID, "", ""); err != nil {
+					// use context.Background() because we don't want the query to abort when the request finishes
+					if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
 						l.Errorf("error preparing next query: %s", err)
 					}
 				}()
@@ -73,7 +74,8 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 			if prepareNext {
 				// already cache the next query to speed up scrolling
 				go func() {
-					if err := t.prepareNextQuery(ctx, amount, nextMaxID, "", ""); err != nil {
+					// use context.Background() because we don't want the query to abort when the request finishes
+					if err := t.prepareNextQuery(context.Background(), amount, nextMaxID, "", ""); err != nil {
 						l.Errorf("error preparing next query: %s", err)
 					}
 				}()

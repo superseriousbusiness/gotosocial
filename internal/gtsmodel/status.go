@@ -27,9 +27,9 @@ type Status struct {
 	// id of the status in the database
 	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// uri at which this status is reachable
-	URI string `bun:",unique"`
+	URI string `bun:",unique,nullzero"`
 	// web url for viewing this status
-	URL string `bun:",unique"`
+	URL string `bun:",unique,nullzero"`
 	// the html-formatted content of this status
 	Content string
 	// Database IDs of any media attachments associated with this status
@@ -45,9 +45,9 @@ type Status struct {
 	EmojiIDs []string `bun:"emojis,array"`
 	Emojis   []*Emoji `bun:"attached_emojis,m2m:status_to_emojis"` // https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	// when was this status created?
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",notnull,default:current_timestamp"`
 	// when was this status updated?
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?
@@ -93,17 +93,17 @@ type Status struct {
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
-	StatusID string  `bun:"type:CHAR(26),unique:statustag"`
+	StatusID string  `bun:"type:CHAR(26),unique:statustag,nullzero"`
 	Status   *Status `bun:"rel:belongs-to"`
-	TagID    string  `bun:"type:CHAR(26),unique:statustag"`
+	TagID    string  `bun:"type:CHAR(26),unique:statustag,nullzero"`
 	Tag      *Tag    `bun:"rel:belongs-to"`
 }
 
 // StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
 type StatusToEmoji struct {
-	StatusID string  `bun:"type:CHAR(26),unique:statusemoji"`
+	StatusID string  `bun:"type:CHAR(26),unique:statusemoji,nullzero"`
 	Status   *Status `bun:"rel:belongs-to"`
-	EmojiID  string  `bun:"type:CHAR(26),unique:statusemoji"`
+	EmojiID  string  `bun:"type:CHAR(26),unique:statusemoji,nullzero"`
 	Emoji    *Emoji  `bun:"rel:belongs-to"`
 }
 

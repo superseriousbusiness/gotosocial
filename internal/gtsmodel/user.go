@@ -33,9 +33,9 @@ type User struct {
 	// id of this user in the local database; the end-user will never need to know this, it's strictly internal
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
-	Email string `bun:"default:null,unique"`
+	Email string `bun:"default:null,unique,nullzero"`
 	// The id of the local gtsmodel.Account entry for this user, if it exists (unconfirmed users don't have an account yet)
-	AccountID string   `bun:"type:CHAR(26),unique"`
+	AccountID string   `bun:"type:CHAR(26),unique,nullzero"`
 	Account   *Account `bun:"rel:belongs-to"`
 	// The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables
 	EncryptedPassword string `bun:",notnull"`

@@ -238,11 +238,11 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, status.AccountID, a); err != nil {
+		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
-		status.Account = a
+		status.Account = statusAccount
 	}
 
 	// do nothing if this isn't our status
@@ -266,11 +266,11 @@ func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 
 func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, status.AccountID, a); err != nil {
-			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
+		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
+			return fmt.Errorf("federateStatusDelete: error fetching status author account: %s", err)
 		}
-		status.Account = a
+		status.Account = statusAccount
 	}
 
 	// do nothing if this isn't our status
@@ -558,19 +558,19 @@ func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *g
 
 func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, block.AccountID, a); err != nil {
+		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block account from database: %s", err)
 		}
-		block.Account = a
+		block.Account = blockAccount
 	}
 
 	if block.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, block.TargetAccountID, a); err != nil {
+		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block target account from database: %s", err)
 		}
-		block.TargetAccount = a
+		block.TargetAccount = blockTargetAccount
 	}
 
 	// if both accounts are local there's nothing to do here
@@ -594,19 +594,19 @@ func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 
 func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, block.AccountID, a); err != nil {
+		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block account from database: %s", err)
 		}
-		block.Account = a
+		block.Account = blockAccount
 	}
 
 	if block.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, block.TargetAccountID, a); err != nil {
+		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block target account from database: %s", err)
 		}
-		block.TargetAccount = a
+		block.TargetAccount = blockTargetAccount
 	}
 
 	// if both accounts are local there's nothing to do here

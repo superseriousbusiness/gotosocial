@@ -16,12 +16,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -35,7 +36,6 @@ type accountDB struct {
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
@@ -75,6 +75,25 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.
 		Where("account.url = ?", uri)
 
 	err := processErrorResponse(q.Scan(ctx))
+
+	return account, err
+}
+
+func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
+	if strings.TrimSpace(account.ID) == "" {
+		return nil, errors.New("account had no ID")
+	}
+
+	account.UpdatedAt = time.Now()
+
+	q := a.conn.
+		NewUpdate().
+		Model(account).
+		WherePK()
+
+	_, err := q.Exec(ctx)
+
+	err = processErrorResponse(err)
 
 	return account, err
 }

@@ -63,6 +63,10 @@ func (c *converter) AccountToMastoSensitive(ctx context.Context, a *gtsmodel.Acc
 }
 
 func (c *converter) AccountToMastoPublic(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
+	if a == nil {
+		return nil, fmt.Errorf("given account was nil")
+	}
+
 	// first check if we have this account in our frontEnd cache
 	if accountI, err := c.frontendCache.Fetch(a.ID); err == nil {
 		if account, ok := accountI.(*model.Account); ok {
@@ -266,27 +270,30 @@ func (c *converter) AttachmentToMasto(ctx context.Context, a *gtsmodel.MediaAtta
 }
 
 func (c *converter) MentionToMasto(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error) {
-	target := &gtsmodel.Account{}
-	if err := c.db.GetByID(ctx, m.TargetAccountID, target); err != nil {
-		return model.Mention{}, err
+	if m.TargetAccount == nil {
+		targetAccount, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+		if err != nil {
+			return model.Mention{}, err
+		}
+		m.TargetAccount = targetAccount
 	}
 
 	var local bool
-	if target.Domain == "" {
+	if m.TargetAccount.Domain == "" {
 		local = true
 	}
 
 	var acct string
 	if local {
-		acct = target.Username
+		acct = m.TargetAccount.Username
 	} else {
-		acct = fmt.Sprintf("%s@%s", target.Username, target.Domain)
+		acct = fmt.Sprintf("%s@%s", m.TargetAccount.Username, m.TargetAccount.Domain)
 	}
 
 	return model.Mention{
-		ID:       target.ID,
-		Username: target.Username,
-		URL:      target.URL,
+		ID:       m.TargetAccount.ID,
+		Username: m.TargetAccount.Username,
+		URL:      m.TargetAccount.URL,
 		Acct:     acct,
 	}, nil
 }
@@ -302,11 +309,9 @@ func (c *converter) EmojiToMasto(ctx context.Context, e *gtsmodel.Emoji) (model.
 }
 
 func (c *converter) TagToMasto(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error) {
-	tagURL := fmt.Sprintf("%s://%s/tags/%s", c.config.Protocol, c.config.Host, t.Name)
-
 	return model.Tag{
 		Name: t.Name,
-		URL:  tagURL, // we don't serve URLs with collections of tagged statuses (FOR NOW) so this is purely for mastodon compatibility ¯\_(ツ)_/¯
+		URL:  t.URL,
 	}, nil
 }
 
@@ -331,8 +336,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		// the boosted status might have been set on this struct already so check first before doing db calls
 		if s.BoostOf == nil {
 			// it's not set so fetch it from the db
-			bs := &gtsmodel.Status{}
-			if err := c.db.GetByID(ctx, s.BoostOfID, bs); err != nil {
+			bs, err := c.db.GetStatusByID(ctx, s.BoostOfID)
+			if err != nil {
 				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
 			}
 			s.BoostOf = bs
@@ -341,8 +346,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
 		if s.BoostOfAccount == nil {
 			// it's not set so fetch it from the db
-			ba := &gtsmodel.Account{}
-			if err := c.db.GetByID(ctx, s.BoostOf.AccountID, ba); err != nil {
+			ba, err := c.db.GetAccountByID(ctx, s.BoostOf.AccountID)
+			if err != nil {
 				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.BoostOf.AccountID, s.BoostOfID, err)
 			}
 			s.BoostOfAccount = ba
@@ -368,8 +373,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 	}
 
 	if s.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, s.AccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(ctx, s.AccountID)
+		if err != nil {
 			return nil, fmt.Errorf("error getting status author: %s", err)
 		}
 		s.Account = a
@@ -394,14 +399,14 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		// the status doesn't have gts attachments on it, but it does have attachment IDs
 		// in this case, we need to pull the gts attachments from the db to convert them into masto ones
 	} else {
-		for _, a := range s.AttachmentIDs {
-			gtsAttachment := &gtsmodel.MediaAttachment{}
-			if err := c.db.GetByID(ctx, a, gtsAttachment); err != nil {
-				return nil, fmt.Errorf("error getting attachment with id %s: %s", a, err)
+		for _, aID := range s.AttachmentIDs {
+			gtsAttachment, err := c.db.GetAttachmentByID(ctx, aID)
+			if err != nil {
+				return nil, fmt.Errorf("error getting attachment with id %s: %s", aID, err)
 			}
 			mastoAttachment, err := c.AttachmentToMasto(ctx, gtsAttachment)
 			if err != nil {
-				return nil, fmt.Errorf("error converting attachment with id %s: %s", a, err)
+				return nil, fmt.Errorf("error converting attachment with id %s: %s", aID, err)
 			}
 			mastoAttachments = append(mastoAttachments, mastoAttachment)
 		}
@@ -421,10 +426,10 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		// the status doesn't have gts mentions on it, but it does have mention IDs
 		// in this case, we need to pull the gts mentions from the db to convert them into masto ones
 	} else {
-		for _, m := range s.MentionIDs {
-			gtsMention := &gtsmodel.Mention{}
-			if err := c.db.GetByID(ctx, m, gtsMention); err != nil {
-				return nil, fmt.Errorf("error getting mention with id %s: %s", m, err)
+		for _, mID := range s.MentionIDs {
+			gtsMention, err := c.db.GetMention(ctx, mID)
+			if err != nil {
+				return nil, fmt.Errorf("error getting mention with id %s: %s", mID, err)
 			}
 			mastoMention, err := c.MentionToMasto(ctx, gtsMention)
 			if err != nil {
@@ -603,12 +608,15 @@ func (c *converter) InstanceToMasto(ctx context.Context, i *gtsmodel.Instance) (
 
 	// contact account is optional but let's try to get it
 	if i.ContactAccountID != "" {
-		ia := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, i.ContactAccountID, ia); err == nil {
-			ma, err := c.AccountToMastoPublic(ctx, ia)
+		if i.ContactAccount == nil {
+			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
 			if err == nil {
-				mi.ContactAccount = ma
+				i.ContactAccount = contactAccount
 			}
+		}
+		ma, err := c.AccountToMastoPublic(ctx, i.ContactAccount)
+		if err == nil {
+			mi.ContactAccount = ma
 		}
 	}
 

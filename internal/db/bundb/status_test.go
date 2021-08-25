@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg_test
+package bundb_test
 
 import (
 	"context"
@@ -29,7 +29,7 @@ import (
 )
 
 type StatusTestSuite struct {
-	PGStandardTestSuite
+	BunDBStandardTestSuite
 }
 
 func (suite *StatusTestSuite) SetupSuite() {

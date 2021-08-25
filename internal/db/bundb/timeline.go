@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
@@ -34,7 +34,6 @@ type timelineDB struct {
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
 func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
@@ -78,7 +77,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
 	//
 	// This is equivalent to something like WHERE ... AND (... OR ...)
-	// See: https://pg.uptrace.dev/queries/#select
+	// See: https://bun.uptrace.dev/guide/queries.html#select
 	whereGroup := func(*bun.SelectQuery) *bun.SelectQuery {
 		return q.
 			WhereOr("f.account_id = ?", accountID).

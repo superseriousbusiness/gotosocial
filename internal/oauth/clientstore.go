@@ -39,9 +39,7 @@ func NewClientStore(db db.Basic) oauth2.ClientStore {
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	poc := &Client{
-		ID: clientID,
-	}
+	poc := &Client{}
 	if err := cs.db.GetByID(ctx, clientID, poc); err != nil {
 		return nil, err
 	}
@@ -67,7 +65,7 @@ func (cs *clientStore) Delete(ctx context.Context, id string) error {
 
 // Client is a handy little wrapper for typical oauth client details
 type Client struct {
-	ID     string `pg:"type:CHAR(26),pk,notnull"`
+	ID     string `bun:"type:CHAR(26),pk,notnull"`
 	Secret string
 	Domain string
 	UserID string

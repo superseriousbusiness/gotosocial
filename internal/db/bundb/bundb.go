@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
@@ -41,13 +41,18 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
+const (
+	dbTypePostgres = "postgres"
+	dbTypeSqlite   = "sqlite"
+)
+
 var registerTables []interface{} = []interface{}{
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
 }
 
-// postgresService satisfies the DB interface
-type postgresService struct {
+// bunDBService satisfies the DB interface
+type bunDBService struct {
 	db.Account
 	db.Admin
 	db.Basic
@@ -57,37 +62,49 @@ type postgresService struct {
 	db.Mention
 	db.Notification
 	db.Relationship
+	db.Session
 	db.Status
 	db.Timeline
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
-// NewPostgresService returns a postgresService derived from the provided config, which implements the go-fed DB interface.
-// Under the hood, it uses https://github.com/go-pg/pg to create and maintain a database connection.
-func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
+// NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
+// Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
+func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
+	var sqldb *sql.DB
+	var conn *bun.DB
 
-	opts, err := derivePGOptions(c)
-	if err != nil {
-		return nil, fmt.Errorf("could not create postgres options: %s", err)
+	// depending on the database type we're trying to create, we need to use a different driver...
+	switch strings.ToLower(c.DBConfig.Type) {
+	case dbTypePostgres:
+		// POSTGRES
+		opts, err := deriveBunDBPGOptions(c)
+		if err != nil {
+			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
+		}
+		sqldb = stdlib.OpenDB(*opts)
+		conn = bun.NewDB(sqldb, pgdialect.New())
+	case dbTypeSqlite:
+		// SQLITE
+		// TODO: https://bun.uptrace.dev/guide/drivers.html#sqlite
+	default:
+		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
-	sqldb := stdlib.OpenDB(*opts)
-	conn := bun.NewDB(sqldb, pgdialect.New())
 
 	// actually *begin* the connection so that we can tell if the db is there and listening
 	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
-	log.Info("connected to postgres")
+	log.Info("connected to database")
 
 	for _, t := range registerTables {
 		// https://bun.uptrace.dev/orm/many-to-many-relation/
 		conn.RegisterModel(t)
 	}
 
-	ps := &postgresService{
+	ps := &bunDBService{
 		Account: &accountDB{
 			config: c,
 			conn:   conn,
@@ -133,6 +150,11 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 			conn:   conn,
 			log:    log,
 		},
+		Session: &sessionDB{
+			config: c,
+			conn:   conn,
+			log:    log,
+		},
 		Status: &statusDB{
 			config: c,
 			conn:   conn,
@@ -148,7 +170,7 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 		log:    log,
 	}
 
-	// we can confidently return this useable postgres service now
+	// we can confidently return this useable service now
 	return ps, nil
 }
 
@@ -156,9 +178,9 @@ func NewPostgresService(ctx context.Context, c *config.Config, log *logrus.Logge
 	HANDY STUFF
 */
 
-// derivePGOptions takes an application config and returns either a ready-to-use set of options
+// deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
-func derivePGOptions(c *config.Config) (*pgx.ConnConfig, error) {
+func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	if strings.ToUpper(c.DBConfig.Type) != db.DBTypePostgres {
 		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, c.DBConfig.Type)
 	}
@@ -236,15 +258,16 @@ func derivePGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 		tlsConfig.RootCAs = certPool
 	}
 
-	opts, _ := pgx.ParseConfig("")
-	opts.Host = c.DBConfig.Address
-	opts.Port = uint16(c.DBConfig.Port)
-	opts.User = c.DBConfig.User
-	opts.Password = c.DBConfig.Password
-	opts.TLSConfig = tlsConfig
-	opts.PreferSimpleProtocol = true
+	cfg, _ := pgx.ParseConfig("")
+	cfg.Host = c.DBConfig.Address
+	cfg.Port = uint16(c.DBConfig.Port)
+	cfg.User = c.DBConfig.User
+	cfg.Password = c.DBConfig.Password
+	cfg.TLSConfig = tlsConfig
+	cfg.Database = c.DBConfig.Database
+	cfg.PreferSimpleProtocol = true
 
-	return opts, nil
+	return cfg, nil
 }
 
 /*
@@ -253,7 +276,7 @@ func derivePGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 
 // TODO: move these to the type converter, it's bananas that they're here and not there
 
-func (ps *postgresService) MentionStringsToMentions(ctx context.Context, targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
+func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
 	ogAccount := &gtsmodel.Account{}
 	if err := ps.conn.NewSelect().Model(ogAccount).Where("id = ?", originAccountID).Scan(ctx); err != nil {
 		return nil, err
@@ -331,7 +354,7 @@ func (ps *postgresService) MentionStringsToMentions(ctx context.Context, targetA
 	return menchies, nil
 }
 
-func (ps *postgresService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
 		tag := &gtsmodel.Tag{}
@@ -367,7 +390,7 @@ func (ps *postgresService) TagStringsToTags(ctx context.Context, tags []string, 
 	return newTags, nil
 }
 
-func (ps *postgresService) EmojiStringsToEmojis(ctx context.Context, emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
 	newEmojis := []*gtsmodel.Emoji{}
 	for _, e := range emojis {
 		emoji := &gtsmodel.Emoji{}

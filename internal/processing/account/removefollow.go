@@ -39,8 +39,8 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// make sure the target account actually exists in our db
-	targetAcct := &gtsmodel.Account{}
-	if err := p.db.GetByID(ctx, targetAccountID, targetAcct); err != nil {
+	targetAcct, err := p.db.GetAccountByID(ctx, targetAccountID)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("AccountFollowRemove: account %s not found in the db: %s", targetAccountID, err))
 		}

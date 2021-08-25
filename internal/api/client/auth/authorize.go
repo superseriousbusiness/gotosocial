@@ -80,20 +80,15 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	}
 
 	// we can also use the userid of the user to fetch their username from the db to greet them nicely <3
-	user := &gtsmodel.User{
-		ID: userID,
-	}
+	user := &gtsmodel.User{}
 	if err := m.db.GetByID(c.Request.Context(), user.ID, user); err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	acct := &gtsmodel.Account{
-		ID: user.AccountID,
-	}
-
-	if err := m.db.GetByID(c.Request.Context(), acct.ID, acct); err != nil {
+	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
+	if err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

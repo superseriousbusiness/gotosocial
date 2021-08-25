@@ -20,7 +20,6 @@ package router
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"net/http"
@@ -30,8 +29,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 // SessionOptions returns the standard set of options to use for each session.
@@ -46,34 +43,23 @@ func SessionOptions(cfg *config.Config) sessions.Options {
 	}
 }
 
-func useSession(ctx context.Context, cfg *config.Config, dbService db.DB, engine *gin.Engine) error {
+func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, engine *gin.Engine) error {
 	// check if we have a saved router session already
-	routerSessions := []*gtsmodel.RouterSession{}
-	if err := dbService.GetAll(ctx, &routerSessions); err != nil {
+	rs, err := sessionDB.GetSession(ctx)
+	if err != nil {
 		if err != db.ErrNoEntries {
 			// proper error occurred
 			return err
 		}
-	}
-
-	var rs *gtsmodel.RouterSession
-	if len(routerSessions) == 1 {
-		// we have a router session stored
-		rs = routerSessions[0]
-	} else if len(routerSessions) == 0 {
-		// we have no router sessions so we need to create a new one
-		var err error
-		rs, err = routerSession(ctx, dbService)
+		// no session saved so create a new one
+		rs, err = sessionDB.CreateSession(ctx)
 		if err != nil {
-			return fmt.Errorf("error creating new router session: %s", err)
+			return err
 		}
-	} else {
-		// we should only have one router session stored ever
-		return errors.New("we had more than one router session in the db")
 	}
 
 	if rs == nil {
-		return errors.New("error getting or creating router session: router session was nil")
+		return errors.New("router session was nil")
 	}
 
 	store := memstore.NewStore(rs.Auth, rs.Crypt)
@@ -81,35 +67,4 @@ func useSession(ctx context.Context, cfg *config.Config, dbService db.DB, engine
 	sessionName := fmt.Sprintf("gotosocial-%s", cfg.Host)
 	engine.Use(sessions.Sessions(sessionName, store))
 	return nil
-}
-
-// routerSession generates a new router session with random auth and crypt bytes,
-// puts it in the database for persistence, and returns it for use.
-func routerSession(ctx context.Context, dbService db.DB) (*gtsmodel.RouterSession, error) {
-	auth := make([]byte, 32)
-	crypt := make([]byte, 32)
-
-	if _, err := rand.Read(auth); err != nil {
-		return nil, err
-	}
-	if _, err := rand.Read(crypt); err != nil {
-		return nil, err
-	}
-
-	rid, err := id.NewULID()
-	if err != nil {
-		return nil, err
-	}
-
-	rs := &gtsmodel.RouterSession{
-		ID:    rid,
-		Auth:  auth,
-		Crypt: crypt,
-	}
-
-	if err := dbService.Put(ctx, rs); err != nil {
-		return nil, err
-	}
-
-	return rs, nil
 }

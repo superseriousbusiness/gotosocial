@@ -38,11 +38,15 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 
 	accts := []apimodel.Account{}
 	for _, fr := range frs {
-		acct := &gtsmodel.Account{}
-		if err := p.db.GetByID(ctx, fr.AccountID, acct); err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
+		if fr.Account == nil {
+			frAcct, err := p.db.GetAccountByID(ctx, fr.AccountID)
+			if err != nil {
+				return nil, gtserror.NewErrorInternalError(err)
+			}
+			fr.Account = frAcct
 		}
-		mastoAcct, err := p.tc.AccountToMastoPublic(ctx, acct)
+
+		mastoAcct, err := p.tc.AccountToMastoPublic(ctx, fr.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -57,22 +61,28 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	originAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(ctx, follow.AccountID, originAccount); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if follow.Account == nil {
+		followAccount, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		follow.Account = followAccount
 	}
 
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(ctx, follow.TargetAccountID, targetAccount); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if follow.TargetAccount == nil {
+		followTargetAccount, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		follow.TargetAccount = followTargetAccount
 	}
 
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsFollow,
 		APActivityType: gtsmodel.ActivityStreamsAccept,
 		GTSModel:       follow,
-		OriginAccount:  originAccount,
-		TargetAccount:  targetAccount,
+		OriginAccount:  follow.Account,
+		TargetAccount:  follow.TargetAccount,
 	}
 
 	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)

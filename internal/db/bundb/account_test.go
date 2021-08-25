@@ -16,18 +16,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg_test
+package bundb_test
 
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AccountTestSuite struct {
-	PGStandardTestSuite
+	BunDBStandardTestSuite
 }
 
 func (suite *AccountTestSuite) SetupSuite() {
@@ -64,6 +65,20 @@ func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
 	suite.NotEmpty(account.AvatarMediaAttachment.URL)
 	suite.NotNil(account.HeaderMediaAttachment)
 	suite.NotEmpty(account.HeaderMediaAttachment.URL)
+}
+
+func (suite *AccountTestSuite) TestUpdateAccount() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	testAccount.DisplayName = "new display name!"
+
+	_, err := suite.db.UpdateAccount(context.Background(), testAccount)
+	suite.NoError(err)
+
+	updated, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.Equal("new display name!", updated.DisplayName)
+	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
 }
 
 func TestAccountTestSuite(t *testing.T) {

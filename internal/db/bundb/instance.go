@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
@@ -32,7 +32,6 @@ type instanceDB struct {
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, db.Error) {

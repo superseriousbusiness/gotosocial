@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
@@ -34,7 +34,6 @@ type relationshipDB struct {
 	config *config.Config
 	conn   *bun.DB
 	log    *logrus.Logger
-	cancel context.CancelFunc
 }
 
 func (r *relationshipDB) newBlockQ(block *gtsmodel.Block) *bun.SelectQuery {

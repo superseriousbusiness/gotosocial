@@ -177,17 +177,21 @@ selectStatusesLoop:
 			}
 
 			for _, b := range boosts {
-				oa := &gtsmodel.Account{}
-				if err := p.db.GetByID(ctx, b.AccountID, oa); err == nil {
-
-					l.Debug("putting boost undo in the client api channel")
-					p.fromClientAPI <- gtsmodel.FromClientAPI{
-						APObjectType:   gtsmodel.ActivityStreamsAnnounce,
-						APActivityType: gtsmodel.ActivityStreamsUndo,
-						GTSModel:       s,
-						OriginAccount:  oa,
-						TargetAccount:  account,
+				if b.Account == nil {
+					bAccount, err := p.db.GetAccountByID(ctx, b.AccountID)
+					if err != nil {
+						continue
 					}
+					b.Account = bAccount
+				}
+
+				l.Debug("putting boost undo in the client api channel")
+				p.fromClientAPI <- gtsmodel.FromClientAPI{
+					APObjectType:   gtsmodel.ActivityStreamsAnnounce,
+					APActivityType: gtsmodel.ActivityStreamsUndo,
+					GTSModel:       s,
+					OriginAccount:  b.Account,
+					TargetAccount:  account,
 				}
 
 				if err := p.db.DeleteByID(ctx, b.ID, b); err != nil {
@@ -267,7 +271,8 @@ selectStatusesLoop:
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin
 
-	if err := p.db.UpdateByID(ctx, account.ID, account); err != nil {
+	account, err := p.db.UpdateAccount(ctx, account)
+	if err != nil {
 		return err
 	}
 

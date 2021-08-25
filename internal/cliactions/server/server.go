@@ -35,7 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
@@ -79,7 +79,7 @@ var models []interface{} = []interface{}{
 
 // Start creates and starts a gotosocial server
 var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := pg.NewPostgresService(ctx, c, log)
+	dbService, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}

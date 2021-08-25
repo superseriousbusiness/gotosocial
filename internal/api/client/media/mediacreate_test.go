@@ -121,7 +121,7 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 
 	// set up the context for the request
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])

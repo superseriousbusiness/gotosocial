@@ -98,8 +98,8 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 			// got it from the mention
 			targetAccount = menchie.OriginAccount
 		} else {
-			a := &gtsmodel.Account{}
-			if err := f.db.GetByID(ctx, menchie.TargetAccountID, a); err == nil {
+			a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
+			if err == nil {
 				// got it from the db
 				targetAccount = a
 			} else {

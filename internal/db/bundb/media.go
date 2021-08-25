@@ -16,59 +16,38 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package bundb
 
 import (
 	"context"
 
-	"database/sql"
-
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
-// processErrorResponse parses the given error and returns an appropriate DBError.
-func processErrorResponse(err error) db.Error {
-	switch err {
-	case nil:
-		return nil
-	case sql.ErrNoRows:
-		return db.ErrNoEntries
-	default:
-		return err
-	}
+type mediaDB struct {
+	config *config.Config
+	conn   *bun.DB
+	log    *logrus.Logger
 }
 
-func exists(ctx context.Context, q *bun.SelectQuery) (bool, db.Error) {
-	count, err := q.Count(ctx)
-
-	exists := count != 0
-
-	err = processErrorResponse(err)
-
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return false, nil
-		}
-		return false, err
-	}
-
-	return exists, nil
+func (m *mediaDB) newMediaQ(i interface{}) *bun.SelectQuery {
+	return m.conn.
+		NewSelect().
+		Model(i).
+		Relation("Account")
 }
 
-func notExists(ctx context.Context, q *bun.SelectQuery) (bool, db.Error) {
-	count, err := q.Count(ctx)
+func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
+	attachment := &gtsmodel.MediaAttachment{}
 
-	notExists := count == 0
+	q := m.newMediaQ(attachment).
+		Where("media_attachment.id = ?", id)
 
-	err = processErrorResponse(err)
+	err := processErrorResponse(q.Scan(ctx))
 
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return true, nil
-		}
-		return false, err
-	}
-
-	return notExists, nil
+	return attachment, err
 }

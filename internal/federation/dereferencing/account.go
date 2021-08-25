@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
@@ -34,18 +35,33 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+func instanceAccount(account *gtsmodel.Account) bool {
+	return strings.EqualFold(account.Username, account.Domain) ||
+		account.FollowersURI == "" ||
+		account.FollowingURI == "" ||
+		(account.Username == "internal.fetch" && strings.Contains(account.Note, "internal service actor"))
+}
+
 // EnrichRemoteAccount takes an account that's already been inserted into the database in a minimal form,
 // and populates it with additional fields, media, etc.
 //
 // EnrichRemoteAccount is mostly useful for calling after an account has been initially created by
 // the federatingDB's Create function, or during the federated authorization flow.
 func (d *deref) EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+
+	// if we're dealing with an instance account, we don't need to update anything
+	if instanceAccount(account) {
+		return account, nil
+	}
+
 	if err := d.PopulateAccountFields(ctx, account, username, false); err != nil {
 		return nil, err
 	}
 
-	if err := d.db.UpdateByID(ctx, account.ID, account); err != nil {
-		return nil, fmt.Errorf("EnrichRemoteAccount: error updating account: %s", err)
+	var err error
+	account, err = d.db.UpdateAccount(ctx, account)
+	if err != nil {
+		d.log.Errorf("EnrichRemoteAccount: error updating account: %s", err)
 	}
 
 	return account, nil
@@ -108,8 +124,9 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
 
-		if err := d.db.UpdateByID(ctx, gtsAccount.ID, gtsAccount); err != nil {
-			return nil, new, fmt.Errorf("FullyDereferenceAccount: error updating existing account: %s", err)
+		gtsAccount, err = d.db.UpdateAccount(ctx, gtsAccount)
+		if err != nil {
+			return nil, false, fmt.Errorf("EnrichRemoteAccount: error updating account: %s", err)
 		}
 	}
 

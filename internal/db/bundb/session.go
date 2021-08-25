@@ -16,32 +16,70 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg_test
+package bundb
 
 import (
+	"context"
+	"crypto/rand"
+
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/uptrace/bun"
 )
 
-type PGStandardTestSuite struct {
-	// standard suite interfaces
-	suite.Suite
+type sessionDB struct {
 	config *config.Config
-	db     db.DB
+	conn   *bun.DB
 	log    *logrus.Logger
+}
 
-	// standard suite models
-	testTokens       map[string]*oauth.Token
-	testClients      map[string]*oauth.Client
-	testApplications map[string]*gtsmodel.Application
-	testUsers        map[string]*gtsmodel.User
-	testAccounts     map[string]*gtsmodel.Account
-	testAttachments  map[string]*gtsmodel.MediaAttachment
-	testStatuses     map[string]*gtsmodel.Status
-	testTags         map[string]*gtsmodel.Tag
-	testMentions     map[string]*gtsmodel.Mention
+func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+	rs := new(gtsmodel.RouterSession)
+
+	q := s.conn.
+		NewSelect().
+		Model(rs).
+		Limit(1)
+
+	_, err := q.Exec(ctx)
+
+	err = processErrorResponse(err)
+
+	return rs, err
+}
+
+func (s *sessionDB) CreateSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+	auth := make([]byte, 32)
+	crypt := make([]byte, 32)
+
+	if _, err := rand.Read(auth); err != nil {
+		return nil, err
+	}
+	if _, err := rand.Read(crypt); err != nil {
+		return nil, err
+	}
+
+	rid, err := id.NewULID()
+	if err != nil {
+		return nil, err
+	}
+
+	rs := &gtsmodel.RouterSession{
+		ID:    rid,
+		Auth:  auth,
+		Crypt: crypt,
+	}
+
+	q := s.conn.
+		NewInsert().
+		Model(rs)
+
+	_, err = q.Exec(ctx)
+
+	err = processErrorResponse(err)
+
+	return rs, err
 }

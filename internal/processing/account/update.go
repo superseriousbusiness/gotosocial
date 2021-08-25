@@ -117,8 +117,8 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// fetch the account with all updated values set
-	updatedAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(ctx, account.ID, updatedAccount); err != nil {
+	updatedAccount, err := p.db.GetAccountByID(ctx, account.ID)
+	if err != nil {
 		return nil, fmt.Errorf("could not fetch updated account %s: %s", account.ID, err)
 	}
 

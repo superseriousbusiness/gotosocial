@@ -51,13 +51,17 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 	followers = streams.NewActivityStreamsCollection()
 	items := streams.NewActivityStreamsItemsProperty()
 	for _, follow := range acctFollowers {
-		gtsFollower := &gtsmodel.Account{}
-		if err := f.db.GetByID(ctx, follow.AccountID, gtsFollower); err != nil {
-			return nil, fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
+		if follow.Account == nil {
+			followAccount, err := f.db.GetAccountByID(ctx, follow.AccountID)
+			if err != nil {
+				return nil, fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
+			}
+			follow.Account = followAccount
 		}
-		uri, err := url.Parse(gtsFollower.URI)
+
+		uri, err := url.Parse(follow.Account.URI)
 		if err != nil {
-			return nil, fmt.Errorf("FOLLOWERS: error parsing %s as url: %s", gtsFollower.URI, err)
+			return nil, fmt.Errorf("FOLLOWERS: error parsing %s as url: %s", follow.Account.URI, err)
 		}
 		items.AppendIRI(uri)
 	}

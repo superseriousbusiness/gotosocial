@@ -73,5 +73,5 @@ type Emoji struct {
 	// Is this emoji visible in the admin emoji picker?
 	VisibleInPicker bool `bun:",notnull,default:true"`
 	// In which emoji category is this emoji visible?
-	CategoryID string  `bun:"type:CHAR(26),nullzero"`
+	CategoryID string `bun:"type:CHAR(26),nullzero"`
 }

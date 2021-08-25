@@ -214,9 +214,12 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// icon
 	// Used as profile avatar.
 	if a.AvatarMediaAttachmentID != "" {
-		avatar := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetByID(ctx, a.AvatarMediaAttachmentID, avatar); err != nil {
-			return nil, err
+		if a.AvatarMediaAttachment == nil {
+			avatar := &gtsmodel.MediaAttachment{}
+			if err := c.db.GetByID(ctx, a.AvatarMediaAttachmentID, avatar); err != nil {
+				return nil, err
+			}
+			a.AvatarMediaAttachment = avatar
 		}
 
 		iconProperty := streams.NewActivityStreamsIconProperty()
@@ -224,11 +227,11 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 		iconImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(avatar.File.ContentType)
+		mediaType.Set(a.AvatarMediaAttachment.File.ContentType)
 		iconImage.SetActivityStreamsMediaType(mediaType)
 
 		avatarURLProperty := streams.NewActivityStreamsUrlProperty()
-		avatarURL, err := url.Parse(avatar.URL)
+		avatarURL, err := url.Parse(a.AvatarMediaAttachment.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -242,9 +245,12 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// image
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
-		header := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetByID(ctx, a.HeaderMediaAttachmentID, header); err != nil {
-			return nil, err
+		if a.HeaderMediaAttachment == nil {
+			header := &gtsmodel.MediaAttachment{}
+			if err := c.db.GetByID(ctx, a.HeaderMediaAttachmentID, header); err != nil {
+				return nil, err
+			}
+			a.HeaderMediaAttachment = header
 		}
 
 		headerProperty := streams.NewActivityStreamsImageProperty()
@@ -252,11 +258,11 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 		headerImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(header.File.ContentType)
+		mediaType.Set(a.HeaderMediaAttachment.File.ContentType)
 		headerImage.SetActivityStreamsMediaType(mediaType)
 
 		headerURLProperty := streams.NewActivityStreamsUrlProperty()
-		headerURL, err := url.Parse(header.URL)
+		headerURL, err := url.Parse(a.HeaderMediaAttachment.URL)
 		if err != nil {
 			return nil, err
 		}

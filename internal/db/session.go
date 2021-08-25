@@ -16,39 +16,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package pg
+package db
 
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/uptrace/bun"
 )
 
-type mediaDB struct {
-	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
-	cancel context.CancelFunc
-}
-
-func (m *mediaDB) newMediaQ(i interface{}) *bun.SelectQuery {
-	return m.conn.
-		NewSelect().
-		Model(i).
-		Relation("Account")
-}
-
-func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
-	attachment := &gtsmodel.MediaAttachment{}
-
-	q := m.newMediaQ(attachment).
-		Where("media_attachment.id = ?", id)
-
-	err := processErrorResponse(q.Scan(ctx))
-
-	return attachment, err
+// Session handles getting/creation of router sessions.
+type Session interface {
+	GetSession(ctx context.Context) (*gtsmodel.RouterSession, Error)
+	CreateSession(ctx context.Context) (*gtsmodel.RouterSession, Error)
 }

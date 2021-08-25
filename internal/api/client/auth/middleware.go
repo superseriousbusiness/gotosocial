@@ -56,8 +56,8 @@ func (m *Module) OauthTokenMiddleware(c *gin.Context) {
 		c.Set(oauth.SessionAuthorizedUser, user)
 		l.Tracef("set gin context %s to %+v", oauth.SessionAuthorizedUser, user)
 
-		acct := &gtsmodel.Account{}
-		if err := m.db.GetByID(c.Request.Context(), user.AccountID, acct); err != nil || acct == nil {
+		acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
+		if err != nil || acct == nil {
 			l.Warnf("no account found for validated user %s", uid)
 			return
 		}

@@ -152,7 +152,8 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		}
 
 		updatedAcct.ID = requestingAcct.ID // set this here so the db will update properly instead of trying to PUT this and getting constraint issues
-		if err := f.db.UpdateByID(ctx, requestingAcct.ID, updatedAcct); err != nil {
+		updatedAcct, err = f.db.UpdateAccount(ctx, updatedAcct)
+		if err != nil {
 			return fmt.Errorf("UPDATE: database error inserting updated account: %s", err)
 		}
 

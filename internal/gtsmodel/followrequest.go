@@ -29,15 +29,15 @@ type FollowRequest struct {
 	// When was this follow request last updated?
 	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Who does this follow request originate from?
-	AccountID string  `bun:"type:CHAR(26),unique:frsrctarget,notnull"`
-	Account   Account `bun:"rel:belongs-to"`
+	AccountID string   `bun:"type:CHAR(26),unique:frsrctarget,notnull"`
+	Account   *Account `bun:"rel:belongs-to"`
 	// Who is the target of this follow request?
-	TargetAccountID string  `bun:"type:CHAR(26),unique:frsrctarget,notnull"`
-	TargetAccount   Account `bun:"rel:belongs-to"`
+	TargetAccountID string   `bun:"type:CHAR(26),unique:frsrctarget,notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `bun:"default:true"`
 	// What is the activitypub URI of this follow request?
-	URI string `bun:",unique"`
+	URI string `bun:",unique,nullzero"`
 	// does the following account want to be notified when the followed account posts?
 	Notify bool
 }

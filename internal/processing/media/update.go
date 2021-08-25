@@ -31,8 +31,8 @@ import (
 )
 
 func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	attachment := &gtsmodel.MediaAttachment{}
-	if err := p.db.GetByID(ctx, mediaAttachmentID, attachment); err != nil {
+	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			// attachment doesn't exist
 			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))

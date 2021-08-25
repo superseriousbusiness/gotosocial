@@ -389,7 +389,7 @@ github.com/tdewolff/parse/v2/strconv
 github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 github.com/ugorji/go/codec
-# github.com/uptrace/bun v1.0.0-rc.1
+# github.com/uptrace/bun v0.4.3
 ## explicit
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -400,7 +400,7 @@ github.com/uptrace/bun/internal
 github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.0.0-rc.1
+# github.com/uptrace/bun/dialect/pgdialect v0.4.3
 ## explicit
 github.com/uptrace/bun/dialect/pgdialect
 # github.com/urfave/cli/v2 v2.3.0
