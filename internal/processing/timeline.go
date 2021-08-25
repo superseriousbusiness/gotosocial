@@ -92,6 +92,12 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	if len(s) == 0 {
+		return &apimodel.StatusTimelineResponse{
+			Statuses: []*apimodel.Status{},
+		}, nil
+	}
+
 	return p.packageStatusResponse(s, "api/v1/timelines/public", s[len(s)-1].ID, s[0].ID, limit)
 }
 
@@ -111,6 +117,12 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	s, err := p.filterFavedStatuses(ctx, authed, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if len(s) == 0 {
+		return &apimodel.StatusTimelineResponse{
+			Statuses: []*apimodel.Status{},
+		}, nil
 	}
 
 	return p.packageStatusResponse(s, "api/v1/favourites", nextMaxID, prevMinID, limit)
