@@ -45,9 +45,9 @@ type Status struct {
 	EmojiIDs []string `bun:"emojis,array"`
 	Emojis   []*Emoji `bun:"attached_emojis,m2m:status_to_emojis"` // https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	// when was this status created?
-	CreatedAt time.Time `bun:",notnull,default:current_timestamp"`
+	CreatedAt time.Time `bun:",notnull,nullzero,default:current_timestamp"`
 	// when was this status updated?
-	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",notnull,nullzero,default:current_timestamp"`
 	// is this status from a local account?
 	Local bool
 	// which account posted this status?

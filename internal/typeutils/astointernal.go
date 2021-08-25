@@ -220,6 +220,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	published, err := ap.ExtractPublished(statusable)
 	if err == nil {
 		status.CreatedAt = published
+		status.UpdatedAt = published
 	}
 
 	// which account posted this status?

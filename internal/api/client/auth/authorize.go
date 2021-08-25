@@ -70,9 +70,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session"})
 		return
 	}
-	app := &gtsmodel.Application{
-		ClientID: clientID,
-	}
+	app := &gtsmodel.Application{}
 	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: app.ClientID}}, app); err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
