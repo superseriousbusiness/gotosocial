@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,8 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(requestingAccount.ID, targetAccountID, true); err != nil {
+func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
@@ -36,7 +37,7 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 
 	apiStatuses := []apimodel.Status{}
 
-	statuses, err := p.db.GetAccountStatuses(targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
+	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return apiStatuses, nil
@@ -45,12 +46,12 @@ func (p *processor) StatusesGet(requestingAccount *gtsmodel.Account, targetAccou
 	}
 
 	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(s, requestingAccount)
+		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 		if err != nil || !visible {
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(s, requestingAccount)
+		apiStatus, err := p.tc.StatusToMasto(ctx, s, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
 		}

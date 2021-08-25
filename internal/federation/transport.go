@@ -68,5 +68,5 @@ func (f *federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofe
 		return nil, fmt.Errorf("id %s was neither an inbox path nor an outbox path", actorBoxIRI.String())
 	}
 
-	return f.transportController.NewTransportForUsername(username)
+	return f.transportController.NewTransportForUsername(ctx, username)
 }

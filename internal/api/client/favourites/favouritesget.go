@@ -43,7 +43,7 @@ func (m *Module) FavouritesGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
-	resp, errWithCode := m.processor.FavedTimelineGet(authed, maxID, minID, limit)
+	resp, errWithCode := m.processor.FavedTimelineGet(c.Request.Context(), authed, maxID, minID, limit)
 	if errWithCode != nil {
 		l.Debugf("error from processor FavedTimelineGet: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

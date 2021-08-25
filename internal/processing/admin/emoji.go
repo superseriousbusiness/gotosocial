@@ -20,6 +20,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *processor) EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
+func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
 	if user.Admin {
 		return nil, fmt.Errorf("user %s not an admin", user.ID)
 	}
@@ -49,7 +50,7 @@ func (p *processor) EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, 
 	}
 
 	// allow the mediaHandler to work its magic of processing the emoji bytes, and putting them in whatever storage backend we're using
-	emoji, err := p.mediaHandler.ProcessLocalEmoji(buf.Bytes(), form.Shortcode)
+	emoji, err := p.mediaHandler.ProcessLocalEmoji(ctx, buf.Bytes(), form.Shortcode)
 	if err != nil {
 		return nil, fmt.Errorf("error reading emoji: %s", err)
 	}
@@ -60,12 +61,12 @@ func (p *processor) EmojiCreate(account *gtsmodel.Account, user *gtsmodel.User, 
 	}
 	emoji.ID = emojiID
 
-	mastoEmoji, err := p.tc.EmojiToMasto(emoji)
+	mastoEmoji, err := p.tc.EmojiToMasto(ctx, emoji)
 	if err != nil {
 		return nil, fmt.Errorf("error converting emoji to mastotype: %s", err)
 	}
 
-	if err := p.db.Put(emoji); err != nil {
+	if err := p.db.Put(ctx, emoji); err != nil {
 		return nil, fmt.Errorf("database error while processing emoji: %s", err)
 	}
 

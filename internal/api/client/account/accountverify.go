@@ -59,7 +59,7 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, err := m.processor.AccountGet(authed, authed.Account.ID)
+	acctSensitive, err := m.processor.AccountGet(c.Request.Context(), authed, authed.Account.ID)
 	if err != nil {
 		l.Debugf("error getting account from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

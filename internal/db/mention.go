@@ -18,13 +18,17 @@
 
 package db
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
 // Mention contains functions for getting/creating mentions in the database.
 type Mention interface {
 	// GetMention gets a single mention by ID
-	GetMention(id string) (*gtsmodel.Mention, Error)
+	GetMention(ctx context.Context, id string) (*gtsmodel.Mention, Error)
 
 	// GetMentions gets multiple mentions.
-	GetMentions(ids []string) ([]*gtsmodel.Mention, Error)
+	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, Error)
 }

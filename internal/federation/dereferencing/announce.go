@@ -19,6 +19,7 @@
 package dereferencing
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -26,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (d *deref) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsername string) error {
+func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
 	if announce.BoostOf == nil || announce.BoostOf.URI == "" {
 		// we can't do anything unfortunately
 		return errors.New("DereferenceAnnounce: no URI to dereference")
@@ -36,16 +37,16 @@ func (d *deref) DereferenceAnnounce(announce *gtsmodel.Status, requestingUsernam
 	if err != nil {
 		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.BoostOf.URI, err)
 	}
-	if blocked, err := d.blockedDomain(boostedStatusURI.Host); blocked || err != nil {
+	if blocked, err := d.db.IsDomainBlocked(ctx, boostedStatusURI.Host); blocked || err != nil {
 		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedStatusURI.Host)
 	}
 
 	// dereference statuses in the thread of the boosted status
-	if err := d.DereferenceThread(requestingUsername, boostedStatusURI); err != nil {
+	if err := d.DereferenceThread(ctx, requestingUsername, boostedStatusURI); err != nil {
 		return fmt.Errorf("DereferenceAnnounce: error dereferencing thread of boosted status: %s", err)
 	}
 
-	boostedStatus, _, _, err := d.GetRemoteStatus(requestingUsername, boostedStatusURI, false)
+	boostedStatus, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, boostedStatusURI, false)
 	if err != nil {
 		return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
 	}

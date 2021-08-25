@@ -18,19 +18,22 @@
 
 package db
 
-import "net/url"
+import (
+	"context"
+	"net/url"
+)
 
 // Domain contains DB functions related to domains and domain blocks.
 type Domain interface {
 	// IsDomainBlocked checks if an instance-level domain block exists for the given domain string (eg., `example.org`).
-	IsDomainBlocked(domain string) (bool, Error)
+	IsDomainBlocked(ctx context.Context, domain string) (bool, Error)
 
 	// AreDomainsBlocked checks if an instance-level domain block exists for any of the given domains strings, and returns true if even one is found.
-	AreDomainsBlocked(domains []string) (bool, Error)
+	AreDomainsBlocked(ctx context.Context, domains []string) (bool, Error)
 
 	// IsURIBlocked checks if an instance-level domain block exists for the `host` in the given URI (eg., `https://example.org/users/whatever`).
-	IsURIBlocked(uri *url.URL) (bool, Error)
+	IsURIBlocked(ctx context.Context, uri *url.URL) (bool, Error)
 
 	// AreURIsBlocked checks if an instance-level domain block exists for any `host` in the given URI slice, and returns true if even one is found.
-	AreURIsBlocked(uris []*url.URL) (bool, Error)
+	AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, Error)
 }

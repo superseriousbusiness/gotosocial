@@ -20,12 +20,13 @@ package timeline
 
 import (
 	"container/list"
+	"context"
 	"errors"
 
 	"github.com/sirupsen/logrus"
 )
 
-func (t *timeline) Remove(statusID string) (int, error) {
+func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":            "Remove",
 		"accountTimeline": t.accountID,
@@ -77,7 +78,7 @@ func (t *timeline) Remove(statusID string) (int, error) {
 	return removed, nil
 }
 
-func (t *timeline) RemoveAllBy(accountID string) (int, error) {
+func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, error) {
 	l := t.log.WithFields(logrus.Fields{
 		"func":            "RemoveAllBy",
 		"accountTimeline": t.accountID,

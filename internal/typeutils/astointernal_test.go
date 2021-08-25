@@ -348,7 +348,7 @@ func (suite *ASToInternalTestSuite) SetupTest() {
 func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.people["new_person_1"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(testPerson, false)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, false)
 	assert.NoError(suite.T(), err)
 
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
@@ -379,7 +379,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	rep, ok := t.(ap.Accountable)
 	assert.True(suite.T(), ok)
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(rep, false)
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
 	assert.NoError(suite.T(), err)
 
 	fmt.Printf("%+v", acct)

@@ -86,7 +86,7 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	mastoStatus, err := m.processor.StatusDelete(authed, targetStatusID)
+	mastoStatus, err := m.processor.StatusDelete(c.Request.Context(), authed, targetStatusID)
 	if err != nil {
 		l.Debugf("error processing status delete: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})

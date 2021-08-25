@@ -19,22 +19,24 @@
 package processing
 
 import (
+	"context"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) NotificationsGet(authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
+func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
 	l := p.log.WithField("func", "NotificationsGet")
 
-	notifs, err := p.db.GetNotifications(authed.Account.ID, limit, maxID, sinceID)
+	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, limit, maxID, sinceID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	mastoNotifs := []*apimodel.Notification{}
 	for _, n := range notifs {
-		mastoNotif, err := p.tc.NotificationToMasto(n)
+		mastoNotif, err := p.tc.NotificationToMasto(ctx, n)
 		if err != nil {
 			l.Debugf("got an error converting a notification to masto, will skip it: %s", err)
 			continue

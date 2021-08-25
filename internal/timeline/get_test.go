@@ -19,6 +19,7 @@
 package timeline_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -45,14 +46,14 @@ func (suite *GetTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 
 	// let's take local_account_1 as the timeline owner
-	tl, err := timeline.NewTimeline(suite.testAccounts["local_account_1"].ID, suite.db, suite.tc, suite.log)
+	tl, err := timeline.NewTimeline(context.Background(), suite.testAccounts["local_account_1"].ID, suite.db, suite.tc, suite.log)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
 	for _, s := range suite.testStatuses {
-		_, err := tl.IndexAndPrepareOne(s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID)
+		_, err := tl.IndexAndPrepareOne(context.Background(), s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -67,7 +68,7 @@ func (suite *GetTestSuite) TearDownTest() {
 
 func (suite *GetTestSuite) TestGetDefault() {
 	// get 10 20 the top and don't prepare the next query
-	statuses, err := suite.timeline.Get(20, "", "", "", false)
+	statuses, err := suite.timeline.Get(context.Background(), 20, "", "", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -89,7 +90,7 @@ func (suite *GetTestSuite) TestGetDefault() {
 
 func (suite *GetTestSuite) TestGetDefaultPrepareNext() {
 	// get 10 from the top and prepare the next query
-	statuses, err := suite.timeline.Get(10, "", "", "", true)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -113,7 +114,7 @@ func (suite *GetTestSuite) TestGetDefaultPrepareNext() {
 
 func (suite *GetTestSuite) TestGetMaxID() {
 	// ask for 10 with a max ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", false)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -135,7 +136,7 @@ func (suite *GetTestSuite) TestGetMaxID() {
 
 func (suite *GetTestSuite) TestGetMaxIDPrepareNext() {
 	// ask for 10 with a max ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", true)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHBQCBTDKN6X5VHGMMN4MA", "", "", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -160,7 +161,7 @@ func (suite *GetTestSuite) TestGetMaxIDPrepareNext() {
 
 func (suite *GetTestSuite) TestGetMinID() {
 	// ask for 10 with a min ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(10, "", "01F8MHBQCBTDKN6X5VHGMMN4MA", "", false)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", "01F8MHBQCBTDKN6X5VHGMMN4MA", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -182,7 +183,7 @@ func (suite *GetTestSuite) TestGetMinID() {
 
 func (suite *GetTestSuite) TestGetSinceID() {
 	// ask for 10 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -204,7 +205,7 @@ func (suite *GetTestSuite) TestGetSinceID() {
 
 func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
 	// ask for 10 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -229,7 +230,7 @@ func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
 
 func (suite *GetTestSuite) TestGetBetweenID() {
 	// ask for 10 between these two IDs
-	statuses, err := suite.timeline.Get(10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -251,7 +252,7 @@ func (suite *GetTestSuite) TestGetBetweenID() {
 
 func (suite *GetTestSuite) TestGetBetweenIDPrepareNext() {
 	// ask for 10 between these two IDs
-	statuses, err := suite.timeline.Get(10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+	statuses, err := suite.timeline.Get(context.Background(), 10, "01F8MHCP5P2NWYQ416SBA0XSEV", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -276,7 +277,7 @@ func (suite *GetTestSuite) TestGetBetweenIDPrepareNext() {
 
 func (suite *GetTestSuite) TestGetXFromTop() {
 	// get 5 from the top
-	statuses, err := suite.timeline.GetXFromTop(5)
+	statuses, err := suite.timeline.GetXFromTop(context.Background(), 5)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -300,7 +301,7 @@ func (suite *GetTestSuite) TestGetXBehindID() {
 	var attempts *int
 	a := 0
 	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(3, "01F8MHBQCBTDKN6X5VHGMMN4MA", attempts)
+	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", attempts)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -326,7 +327,7 @@ func (suite *GetTestSuite) TestGetXBehindID0() {
 	var attempts *int
 	a := 0
 	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(3, "0", attempts)
+	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "0", attempts)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -340,7 +341,7 @@ func (suite *GetTestSuite) TestGetXBehindNonexistentReasonableID() {
 	var attempts *int
 	a := 0
 	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(3, "01F8MHBQCBTDKN6X5VHGMMN4MB", attempts) // change the last A to a B
+	statuses, err := suite.timeline.GetXBehindID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MB", attempts) // change the last A to a B
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -365,7 +366,7 @@ func (suite *GetTestSuite) TestGetXBehindVeryHighID() {
 	var attempts *int
 	a := 0
 	attempts = &a
-	statuses, err := suite.timeline.GetXBehindID(7, "9998MHBQCBTDKN6X5VHGMMN4MA", attempts)
+	statuses, err := suite.timeline.GetXBehindID(context.Background(), 7, "9998MHBQCBTDKN6X5VHGMMN4MA", attempts)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -389,7 +390,7 @@ func (suite *GetTestSuite) TestGetXBehindVeryHighID() {
 
 func (suite *GetTestSuite) TestGetXBeforeID() {
 	// get 3 before the 'middle' id
-	statuses, err := suite.timeline.GetXBeforeID(3, "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+	statuses, err := suite.timeline.GetXBeforeID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -412,7 +413,7 @@ func (suite *GetTestSuite) TestGetXBeforeID() {
 
 func (suite *GetTestSuite) TestGetXBeforeIDNoStartFromTop() {
 	// get 3 before the 'middle' id
-	statuses, err := suite.timeline.GetXBeforeID(3, "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	statuses, err := suite.timeline.GetXBeforeID(context.Background(), 3, "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

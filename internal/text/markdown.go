@@ -19,21 +19,23 @@
 package text
 
 import (
+	"context"
+
 	"github.com/russross/blackfriday/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (f *formatter) FromMarkdown(md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
+func (f *formatter) FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
 	content := preformat(md)
 
 	// do the markdown parsing *first*
 	contentBytes := blackfriday.Run([]byte(content))
 
 	// format tags nicely
-	content = f.ReplaceTags(string(contentBytes), tags)
+	content = f.ReplaceTags(ctx, string(contentBytes), tags)
 
 	// format mentions nicely
-	content = f.ReplaceMentions(content, mentions)
+	content = f.ReplaceMentions(ctx, content, mentions)
 
 	return postformat(content)
 }

@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -27,9 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(targetAccountID, targetAccount); err != nil {
+func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error) {
+	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, errors.New("account not found")
 		}
@@ -37,9 +38,8 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 	}
 
 	var blocked bool
-	var err error
 	if requestingAccount != nil {
-		blocked, err = p.db.IsBlocked(requestingAccount.ID, targetAccountID, true)
+		blocked, err = p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true)
 		if err != nil {
 			return nil, fmt.Errorf("error checking account block: %s", err)
 		}
@@ -47,7 +47,7 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 
 	var mastoAccount *apimodel.Account
 	if blocked {
-		mastoAccount, err = p.tc.AccountToMastoBlocked(targetAccount)
+		mastoAccount, err = p.tc.AccountToMastoBlocked(ctx, targetAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error converting account: %s", err)
 		}
@@ -56,16 +56,16 @@ func (p *processor) Get(requestingAccount *gtsmodel.Account, targetAccountID str
 
 	// last-minute check to make sure we have remote account header/avi cached
 	if targetAccount.Domain != "" {
-		a, err := p.federator.EnrichRemoteAccount(requestingAccount.Username, targetAccount)
+		a, err := p.federator.EnrichRemoteAccount(ctx, requestingAccount.Username, targetAccount)
 		if err == nil {
 			targetAccount = a
 		}
 	}
 
 	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
-		mastoAccount, err = p.tc.AccountToMastoSensitive(targetAccount)
+		mastoAccount, err = p.tc.AccountToMastoSensitive(ctx, targetAccount)
 	} else {
-		mastoAccount, err = p.tc.AccountToMastoPublic(targetAccount)
+		mastoAccount, err = p.tc.AccountToMastoPublic(ctx, targetAccount)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error converting account: %s", err)

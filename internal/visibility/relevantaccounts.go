@@ -19,6 +19,7 @@
 package visibility
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -41,7 +42,7 @@ type relevantAccounts struct {
 	BoostedMentionedAccounts []*gtsmodel.Account
 }
 
-func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*relevantAccounts, error) {
+func (f *filter) relevantAccounts(ctx context.Context, status *gtsmodel.Status, getBoosted bool) (*relevantAccounts, error) {
 	relAccts := &relevantAccounts{
 		MentionedAccounts:        []*gtsmodel.Account{},
 		BoostedMentionedAccounts: []*gtsmodel.Account{},
@@ -77,7 +78,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 		relAccts.Account = status.Account
 	} else {
 		// it wasn't set, so get it from the db
-		account, err := f.db.GetAccountByID(status.AccountID)
+		account, err := f.db.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("relevantAccounts: error getting account with id %s: %s", status.AccountID, err)
 		}
@@ -96,7 +97,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 			relAccts.InReplyToAccount = status.InReplyToAccount
 		} else {
 			// it wasn't set, so get it from the db
-			inReplyToAccount, err := f.db.GetAccountByID(status.InReplyToAccountID)
+			inReplyToAccount, err := f.db.GetAccountByID(ctx, status.InReplyToAccountID)
 			if err != nil {
 				return nil, fmt.Errorf("relevantAccounts: error getting inReplyToAccount with id %s: %s", status.InReplyToAccountID, err)
 			}
@@ -115,7 +116,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 		}
 		if !idIn(mID, status.Mentions) {
 			// mention with ID isn't in status.Mentions
-			mention, err := f.db.GetMention(mID)
+			mention, err := f.db.GetMention(ctx, mID)
 			if err != nil {
 				return nil, fmt.Errorf("relevantAccounts: error getting mention with id %s: %s", mID, err)
 			}
@@ -146,7 +147,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 		// 4, 5, 6. Boosted status items
 		// get the boosted status if it's not set on the status already
 		if status.BoostOfID != "" && status.BoostOf == nil {
-			boostedStatus, err := f.db.GetStatusByID(status.BoostOfID)
+			boostedStatus, err := f.db.GetStatusByID(ctx, status.BoostOfID)
 			if err != nil {
 				return nil, fmt.Errorf("relevantAccounts: error getting boosted status with id %s: %s", status.BoostOfID, err)
 			}
@@ -155,7 +156,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 
 		if status.BoostOf != nil {
 			// return relevant accounts for the boosted status
-			boostedRelAccts, err := f.relevantAccounts(status.BoostOf, false) // false because we don't want to recurse
+			boostedRelAccts, err := f.relevantAccounts(ctx, status.BoostOf, false) // false because we don't want to recurse
 			if err != nil {
 				return nil, fmt.Errorf("relevantAccounts: error getting relevant accounts of boosted status %s: %s", status.BoostOf.ID, err)
 			}
@@ -170,7 +171,7 @@ func (f *filter) relevantAccounts(status *gtsmodel.Status, getBoosted bool) (*re
 
 // domainBlockedRelevant checks through all relevant accounts attached to a status
 // to make sure none of them are domain blocked by this instance.
-func (f *filter) domainBlockedRelevant(r *relevantAccounts) (bool, error) {
+func (f *filter) domainBlockedRelevant(ctx context.Context, r *relevantAccounts) (bool, error) {
 	domains := []string{}
 
 	if r.Account != nil {
@@ -201,7 +202,7 @@ func (f *filter) domainBlockedRelevant(r *relevantAccounts) (bool, error) {
 		}
 	}
 
-	return f.db.AreDomainsBlocked(domains)
+	return f.db.AreDomainsBlocked(ctx, domains)
 }
 
 func idIn(id string, mentions []*gtsmodel.Mention) bool {

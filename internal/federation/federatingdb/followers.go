@@ -19,7 +19,7 @@ import (
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
+func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":     "Followers",
@@ -31,19 +31,19 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	acct := &gtsmodel.Account{}
 
 	if util.IsUserPath(actorIRI) {
-		acct, err = f.db.GetAccountByURI(actorIRI.String())
+		acct, err = f.db.GetAccountByURI(ctx, actorIRI.String())
 		if err != nil {
 			return nil, fmt.Errorf("FOLLOWERS: db error getting account with uri %s: %s", actorIRI.String(), err)
 		}
 	} else if util.IsFollowersPath(actorIRI) {
-		if err := f.db.GetWhere([]db.Where{{Key: "followers_uri", Value: actorIRI.String()}}, acct); err != nil {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: actorIRI.String()}}, acct); err != nil {
 			return nil, fmt.Errorf("FOLLOWERS: db error getting account with followers uri %s: %s", actorIRI.String(), err)
 		}
 	} else {
 		return nil, fmt.Errorf("FOLLOWERS: could not parse actor IRI %s as users or followers path", actorIRI.String())
 	}
 
-	acctFollowers, err := f.db.GetAccountFollowedBy(acct.ID, false)
+	acctFollowers, err := f.db.GetAccountFollowedBy(ctx, acct.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("FOLLOWERS: db error getting followers for account id %s: %s", acct.ID, err)
 	}
@@ -51,13 +51,17 @@ func (f *federatingDB) Followers(c context.Context, actorIRI *url.URL) (follower
 	followers = streams.NewActivityStreamsCollection()
 	items := streams.NewActivityStreamsItemsProperty()
 	for _, follow := range acctFollowers {
-		gtsFollower := &gtsmodel.Account{}
-		if err := f.db.GetByID(follow.AccountID, gtsFollower); err != nil {
-			return nil, fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
+		if follow.Account == nil {
+			followAccount, err := f.db.GetAccountByID(ctx, follow.AccountID)
+			if err != nil {
+				return nil, fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
+			}
+			follow.Account = followAccount
 		}
-		uri, err := url.Parse(gtsFollower.URI)
+
+		uri, err := url.Parse(follow.Account.URI)
 		if err != nil {
-			return nil, fmt.Errorf("FOLLOWERS: error parsing %s as url: %s", gtsFollower.URI, err)
+			return nil, fmt.Errorf("FOLLOWERS: error parsing %s as url: %s", follow.Account.URI, err)
 		}
 		items.AppendIRI(uri)
 	}

@@ -19,6 +19,8 @@
 package text
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -28,16 +30,16 @@ import (
 // Formatter wraps some logic and functions for parsing statuses and other text input into nice html.
 type Formatter interface {
 	// FromMarkdown parses an HTML text from a markdown-formatted text.
-	FromMarkdown(md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
+	FromMarkdown(ctx context.Context, md string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
 	// FromPlain parses an HTML text from a plaintext.
-	FromPlain(plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
+	FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string
 
 	// ReplaceTags takes a piece of text and a slice of tags, and returns the same text with the tags nicely formatted as hrefs.
-	ReplaceTags(in string, tags []*gtsmodel.Tag) string
+	ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string
 	// ReplaceMentions takes a piece of text and a slice of mentions, and returns the same text with the mentions nicely formatted as hrefs.
-	ReplaceMentions(in string, mentions []*gtsmodel.Mention) string
+	ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string
 	// ReplaceLinks takes a piece of text, finds all recognizable links in that text, and replaces them with hrefs.
-	ReplaceLinks(in string) string
+	ReplaceLinks(ctx context.Context, in string) string
 }
 
 type formatter struct {

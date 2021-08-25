@@ -19,13 +19,15 @@
 package testrig
 
 import (
+	"context"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 // NewTestRouter returns a Router suitable for testing
 func NewTestRouter(db db.DB) router.Router {
-	r, err := router.New(NewTestConfig(), db, NewTestLog())
+	r, err := router.New(context.Background(), NewTestConfig(), db, NewTestLog())
 	if err != nil {
 		panic(err)
 	}

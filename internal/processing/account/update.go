@@ -20,6 +20,7 @@ package account
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -32,17 +33,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
+func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
 	l := p.log.WithField("func", "AccountUpdate")
 
 	if form.Discoverable != nil {
-		if err := p.db.UpdateOneByID(account.ID, "discoverable", *form.Discoverable, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByID(ctx, account.ID, "discoverable", *form.Discoverable, &gtsmodel.Account{}); err != nil {
 			return nil, fmt.Errorf("error updating discoverable: %s", err)
 		}
 	}
 
 	if form.Bot != nil {
-		if err := p.db.UpdateOneByID(account.ID, "bot", *form.Bot, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByID(ctx, account.ID, "bot", *form.Bot, &gtsmodel.Account{}); err != nil {
 			return nil, fmt.Errorf("error updating bot: %s", err)
 		}
 	}
@@ -52,7 +53,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 			return nil, err
 		}
 		displayName := text.RemoveHTML(*form.DisplayName) // no html allowed in display name
-		if err := p.db.UpdateOneByID(account.ID, "display_name", displayName, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByID(ctx, account.ID, "display_name", displayName, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
 	}
@@ -62,13 +63,13 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 			return nil, err
 		}
 		note := text.SanitizeHTML(*form.Note) // html OK in note but sanitize it
-		if err := p.db.UpdateOneByID(account.ID, "note", note, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByID(ctx, account.ID, "note", note, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		avatarInfo, err := p.UpdateAvatar(form.Avatar, account.ID)
+		avatarInfo, err := p.UpdateAvatar(ctx, form.Avatar, account.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +77,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
-		headerInfo, err := p.UpdateHeader(form.Header, account.ID)
+		headerInfo, err := p.UpdateHeader(ctx, form.Header, account.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +85,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 	}
 
 	if form.Locked != nil {
-		if err := p.db.UpdateOneByID(account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByID(ctx, account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
 			return nil, err
 		}
 	}
@@ -94,13 +95,13 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 			if err := util.ValidateLanguage(*form.Source.Language); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByID(account.ID, "language", *form.Source.Language, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByID(ctx, account.ID, "language", *form.Source.Language, &gtsmodel.Account{}); err != nil {
 				return nil, err
 			}
 		}
 
 		if form.Source.Sensitive != nil {
-			if err := p.db.UpdateOneByID(account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByID(ctx, account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
 				return nil, err
 			}
 		}
@@ -109,15 +110,15 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 			if err := util.ValidatePrivacy(*form.Source.Privacy); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByID(account.ID, "privacy", *form.Source.Privacy, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByID(ctx, account.ID, "privacy", *form.Source.Privacy, &gtsmodel.Account{}); err != nil {
 				return nil, err
 			}
 		}
 	}
 
 	// fetch the account with all updated values set
-	updatedAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(account.ID, updatedAccount); err != nil {
+	updatedAccount, err := p.db.GetAccountByID(ctx, account.ID)
+	if err != nil {
 		return nil, fmt.Errorf("could not fetch updated account %s: %s", account.ID, err)
 	}
 
@@ -128,7 +129,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 		OriginAccount:  updatedAccount,
 	}
 
-	acctSensitive, err := p.tc.AccountToMastoSensitive(updatedAccount)
+	acctSensitive, err := p.tc.AccountToMastoSensitive(ctx, updatedAccount)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert account into mastosensitive account: %s", err)
 	}
@@ -138,7 +139,7 @@ func (p *processor) Update(account *gtsmodel.Account, form *apimodel.UpdateCrede
 // UpdateAvatar does the dirty work of checking the avatar part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
-func (p *processor) UpdateAvatar(avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(avatar.Size) > p.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("avatar with size %d exceeded max image size of %d bytes", avatar.Size, p.config.MediaConfig.MaxImageSize)
@@ -160,7 +161,7 @@ func (p *processor) UpdateAvatar(avatar *multipart.FileHeader, accountID string)
 	}
 
 	// do the setting
-	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Avatar, "")
+	avatarInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(ctx, buf.Bytes(), accountID, media.Avatar, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing avatar: %s", err)
 	}
@@ -171,7 +172,7 @@ func (p *processor) UpdateAvatar(avatar *multipart.FileHeader, accountID string)
 // UpdateHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
-func (p *processor) UpdateHeader(header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
 	if int(header.Size) > p.config.MediaConfig.MaxImageSize {
 		err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", header.Size, p.config.MediaConfig.MaxImageSize)
@@ -193,7 +194,7 @@ func (p *processor) UpdateHeader(header *multipart.FileHeader, accountID string)
 	}
 
 	// do the setting
-	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(buf.Bytes(), accountID, media.Header, "")
+	headerInfo, err := p.mediaHandler.ProcessHeaderOrAvatar(ctx, buf.Bytes(), accountID, media.Header, "")
 	if err != nil {
 		return nil, fmt.Errorf("error processing header: %s", err)
 	}

@@ -19,6 +19,8 @@
 package media
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
@@ -33,12 +35,12 @@ import (
 // Processor wraps a bunch of functions for processing media actions.
 type Processor interface {
 	// Create creates a new media attachment belonging to the given account, using the request form.
-	Create(account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
+	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
 	// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
-	Delete(mediaAttachmentID string) gtserror.WithCode
-	GetFile(account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
-	GetMedia(account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
-	Update(account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
+	Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode
+	GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+	GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
+	Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 }
 
 type processor struct {

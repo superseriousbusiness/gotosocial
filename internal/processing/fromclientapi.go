@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error {
+func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel.FromClientAPI) error {
 	switch clientMsg.APActivityType {
 	case gtsmodel.ActivityStreamsCreate:
 		// CREATE
@@ -41,16 +41,16 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			if err := p.timelineStatus(status); err != nil {
+			if err := p.timelineStatus(ctx, status); err != nil {
 				return err
 			}
 
-			if err := p.notifyStatus(status); err != nil {
+			if err := p.notifyStatus(ctx, status); err != nil {
 				return err
 			}
 
 			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
-				return p.federateStatus(status)
+				return p.federateStatus(ctx, status)
 			}
 		case gtsmodel.ActivityStreamsFollow:
 			// CREATE FOLLOW REQUEST
@@ -59,11 +59,11 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
-			if err := p.notifyFollowRequest(followRequest, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFollowRequest(ctx, followRequest, clientMsg.TargetAccount); err != nil {
 				return err
 			}
 
-			return p.federateFollow(followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateFollow(ctx, followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsLike:
 			// CREATE LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
@@ -71,11 +71,11 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(fave, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFave(ctx, fave, clientMsg.TargetAccount); err != nil {
 				return err
 			}
 
-			return p.federateFave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsAnnounce:
 			// CREATE BOOST/ANNOUNCE
 			boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
@@ -83,15 +83,15 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("boost was not parseable as *gtsmodel.Status")
 			}
 
-			if err := p.timelineStatus(boostWrapperStatus); err != nil {
+			if err := p.timelineStatus(ctx, boostWrapperStatus); err != nil {
 				return err
 			}
 
-			if err := p.notifyAnnounce(boostWrapperStatus); err != nil {
+			if err := p.notifyAnnounce(ctx, boostWrapperStatus); err != nil {
 				return err
 			}
 
-			return p.federateAnnounce(boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsBlock:
 			// CREATE BLOCK
 			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
@@ -100,17 +100,17 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			}
 
 			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.AccountID, block.TargetAccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 				return err
 			}
-			if err := p.timelineManager.WipeStatusesFromAccountID(block.TargetAccountID, block.AccountID); err != nil {
+			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 				return err
 			}
 
 			// TODO: same with notifications
 			// TODO: same with bookmarks
 
-			return p.federateBlock(block)
+			return p.federateBlock(ctx, block)
 		}
 	case gtsmodel.ActivityStreamsUpdate:
 		// UPDATE
@@ -122,7 +122,7 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("account was not parseable as *gtsmodel.Account")
 			}
 
-			return p.federateAccountUpdate(account, clientMsg.OriginAccount)
+			return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
 		}
 	case gtsmodel.ActivityStreamsAccept:
 		// ACCEPT
@@ -134,11 +134,11 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("accept was not parseable as *gtsmodel.Follow")
 			}
 
-			if err := p.notifyFollow(follow, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFollow(ctx, follow, clientMsg.TargetAccount); err != nil {
 				return err
 			}
 
-			return p.federateAcceptFollowRequest(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateAcceptFollowRequest(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsUndo:
 		// UNDO
@@ -149,21 +149,21 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
 			}
-			return p.federateUnfollow(follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateUnfollow(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsBlock:
 			// UNDO BLOCK
 			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.Block")
 			}
-			return p.federateUnblock(block)
+			return p.federateUnblock(ctx, block)
 		case gtsmodel.ActivityStreamsLike:
 			// UNDO LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
 			}
-			return p.federateUnfave(fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		case gtsmodel.ActivityStreamsAnnounce:
 			// UNDO ANNOUNCE/BOOST
 			boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
@@ -171,11 +171,11 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				return errors.New("undo was not parseable as *gtsmodel.Status")
 			}
 
-			if err := p.deleteStatusFromTimelines(boost); err != nil {
+			if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
 				return err
 			}
 
-			return p.federateUnannounce(boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
 	case gtsmodel.ActivityStreamsDelete:
 		// DELETE
@@ -193,29 +193,29 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 
 			// delete all attachments for this status
 			for _, a := range statusToDelete.AttachmentIDs {
-				if err := p.mediaProcessor.Delete(a); err != nil {
+				if err := p.mediaProcessor.Delete(ctx, a); err != nil {
 					return err
 				}
 			}
 
 			// delete all mentions for this status
 			for _, m := range statusToDelete.MentionIDs {
-				if err := p.db.DeleteByID(m, &gtsmodel.Mention{}); err != nil {
+				if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
 					return err
 				}
 			}
 
 			// delete all notifications for this status
-			if err := p.db.DeleteWhere([]db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+			if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 				return err
 			}
 
 			// delete this status from any and all timelines
-			if err := p.deleteStatusFromTimelines(statusToDelete); err != nil {
+			if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
 				return err
 			}
 
-			return p.federateStatusDelete(statusToDelete)
+			return p.federateStatusDelete(ctx, statusToDelete)
 		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
 			// DELETE ACCOUNT/PROFILE
 
@@ -228,7 +228,7 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 				// origin is whichever account caused this message
 				origin = clientMsg.OriginAccount.ID
 			}
-			return p.accountProcessor.Delete(clientMsg.TargetAccount, origin)
+			return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
 		}
 	}
 	return nil
@@ -236,13 +236,13 @@ func (p *processor) processFromClientAPI(clientMsg gtsmodel.FromClientAPI) error
 
 // TODO: move all the below functions into federation.Federator
 
-func (p *processor) federateStatus(status *gtsmodel.Status) error {
+func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(status.AccountID, a); err != nil {
+		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
 		}
-		status.Account = a
+		status.Account = statusAccount
 	}
 
 	// do nothing if this isn't our status
@@ -250,7 +250,7 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 		return nil
 	}
 
-	asStatus, err := p.tc.StatusToAS(status)
+	asStatus, err := p.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
 	}
@@ -260,17 +260,17 @@ func (p *processor) federateStatus(status *gtsmodel.Status) error {
 		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.Account.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asStatus)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, asStatus)
 	return err
 }
 
-func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
+func (p *processor) federateStatusDelete(ctx context.Context, status *gtsmodel.Status) error {
 	if status.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(status.AccountID, a); err != nil {
-			return fmt.Errorf("federateStatus: error fetching status author account: %s", err)
+		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
+			return fmt.Errorf("federateStatusDelete: error fetching status author account: %s", err)
 		}
-		status.Account = a
+		status.Account = statusAccount
 	}
 
 	// do nothing if this isn't our status
@@ -278,7 +278,7 @@ func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
 		return nil
 	}
 
-	asStatus, err := p.tc.StatusToAS(status)
+	asStatus, err := p.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return fmt.Errorf("federateStatusDelete: error converting status to as format: %s", err)
 	}
@@ -310,19 +310,19 @@ func (p *processor) federateStatusDelete(status *gtsmodel.Status) error {
 	delete.SetActivityStreamsTo(asStatus.GetActivityStreamsTo())
 	delete.SetActivityStreamsCc(asStatus.GetActivityStreamsCc())
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, delete)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, delete)
 	return err
 }
 
-func (p *processor) federateFollow(followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateFollow(ctx context.Context, followRequest *gtsmodel.FollowRequest, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
 
-	follow := p.tc.FollowRequestToFollow(followRequest)
+	follow := p.tc.FollowRequestToFollow(ctx, followRequest)
 
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateFollow: error converting follow to as format: %s", err)
 	}
@@ -332,18 +332,18 @@ func (p *processor) federateFollow(followRequest *gtsmodel.FollowRequest, origin
 		return fmt.Errorf("federateFollow: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asFollow)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, asFollow)
 	return err
 }
 
-func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnfollow(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
 
 	// recreate the follow
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
 	}
@@ -373,18 +373,18 @@ func (p *processor) federateUnfollow(follow *gtsmodel.Follow, originAccount *gts
 	}
 
 	// send off the Undo
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, undo)
 	return err
 }
 
-func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnfave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
 
 	// create the AS fave
-	asFave, err := p.tc.FaveToAS(fave)
+	asFave, err := p.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
 	}
@@ -412,17 +412,17 @@ func (p *processor) federateUnfave(fave *gtsmodel.StatusFave, originAccount *gts
 	if err != nil {
 		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, undo)
 	return err
 }
 
-func (p *processor) federateUnannounce(boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Status, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	if originAccount.Domain != "" {
 		// nothing to do here
 		return nil
 	}
 
-	asAnnounce, err := p.tc.BoostToAS(boost, originAccount, targetAccount)
+	asAnnounce, err := p.tc.BoostToAS(ctx, boost, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnannounce: error converting status to announce: %s", err)
 	}
@@ -447,18 +447,18 @@ func (p *processor) federateUnannounce(boost *gtsmodel.Status, originAccount *gt
 		return fmt.Errorf("federateUnannounce: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, undo)
 	return err
 }
 
-func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
 
 	// recreate the AS follow
-	asFollow, err := p.tc.FollowToAS(follow, originAccount, targetAccount)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
 	if err != nil {
 		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
 	}
@@ -497,18 +497,18 @@ func (p *processor) federateAcceptFollowRequest(follow *gtsmodel.Follow, originA
 	}
 
 	// send off the accept using the accepter's outbox
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, accept)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, accept)
 	return err
 }
 
-func (p *processor) federateFave(fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateFave(ctx context.Context, fave *gtsmodel.StatusFave, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
 	}
 
 	// create the AS fave
-	asFave, err := p.tc.FaveToAS(fave)
+	asFave, err := p.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return fmt.Errorf("federateFave: error converting fave to as format: %s", err)
 	}
@@ -517,12 +517,12 @@ func (p *processor) federateFave(fave *gtsmodel.StatusFave, originAccount *gtsmo
 	if err != nil {
 		return fmt.Errorf("federateFave: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asFave)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, asFave)
 	return err
 }
 
-func (p *processor) federateAnnounce(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
-	announce, err := p.tc.BoostToAS(boostWrapperStatus, boostingAccount, boostedAccount)
+func (p *processor) federateAnnounce(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) error {
+	announce, err := p.tc.BoostToAS(ctx, boostWrapperStatus, boostingAccount, boostedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAnnounce: error converting status to announce: %s", err)
 	}
@@ -532,12 +532,12 @@ func (p *processor) federateAnnounce(boostWrapperStatus *gtsmodel.Status, boosti
 		return fmt.Errorf("federateAnnounce: error parsing outboxURI %s: %s", boostingAccount.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, announce)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, announce)
 	return err
 }
 
-func (p *processor) federateAccountUpdate(updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
-	person, err := p.tc.AccountToAS(updatedAccount)
+func (p *processor) federateAccountUpdate(ctx context.Context, updatedAccount *gtsmodel.Account, originAccount *gtsmodel.Account) error {
+	person, err := p.tc.AccountToAS(ctx, updatedAccount)
 	if err != nil {
 		return fmt.Errorf("federateAccountUpdate: error converting account to person: %s", err)
 	}
@@ -552,25 +552,25 @@ func (p *processor) federateAccountUpdate(updatedAccount *gtsmodel.Account, orig
 		return fmt.Errorf("federateAnnounce: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, update)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, update)
 	return err
 }
 
-func (p *processor) federateBlock(block *gtsmodel.Block) error {
+func (p *processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(block.AccountID, a); err != nil {
+		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block account from database: %s", err)
 		}
-		block.Account = a
+		block.Account = blockAccount
 	}
 
 	if block.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(block.TargetAccountID, a); err != nil {
+		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		if err != nil {
 			return fmt.Errorf("federateBlock: error getting block target account from database: %s", err)
 		}
-		block.TargetAccount = a
+		block.TargetAccount = blockTargetAccount
 	}
 
 	// if both accounts are local there's nothing to do here
@@ -578,7 +578,7 @@ func (p *processor) federateBlock(block *gtsmodel.Block) error {
 		return nil
 	}
 
-	asBlock, err := p.tc.BlockToAS(block)
+	asBlock, err := p.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return fmt.Errorf("federateBlock: error converting block to AS format: %s", err)
 	}
@@ -588,25 +588,25 @@ func (p *processor) federateBlock(block *gtsmodel.Block) error {
 		return fmt.Errorf("federateBlock: error parsing outboxURI %s: %s", block.Account.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, asBlock)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, asBlock)
 	return err
 }
 
-func (p *processor) federateUnblock(block *gtsmodel.Block) error {
+func (p *processor) federateUnblock(ctx context.Context, block *gtsmodel.Block) error {
 	if block.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(block.AccountID, a); err != nil {
+		blockAccount, err := p.db.GetAccountByID(ctx, block.AccountID)
+		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block account from database: %s", err)
 		}
-		block.Account = a
+		block.Account = blockAccount
 	}
 
 	if block.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := p.db.GetByID(block.TargetAccountID, a); err != nil {
+		blockTargetAccount, err := p.db.GetAccountByID(ctx, block.TargetAccountID)
+		if err != nil {
 			return fmt.Errorf("federateUnblock: error getting block target account from database: %s", err)
 		}
-		block.TargetAccount = a
+		block.TargetAccount = blockTargetAccount
 	}
 
 	// if both accounts are local there's nothing to do here
@@ -614,7 +614,7 @@ func (p *processor) federateUnblock(block *gtsmodel.Block) error {
 		return nil
 	}
 
-	asBlock, err := p.tc.BlockToAS(block)
+	asBlock, err := p.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return fmt.Errorf("federateUnblock: error converting block to AS format: %s", err)
 	}
@@ -642,6 +642,6 @@ func (p *processor) federateUnblock(block *gtsmodel.Block) error {
 	if err != nil {
 		return fmt.Errorf("federateUnblock: error parsing outboxURI %s: %s", block.Account.OutboxURI, err)
 	}
-	_, err = p.federator.FederatingActor().Send(context.Background(), outboxIRI, undo)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, undo)
 	return err
 }

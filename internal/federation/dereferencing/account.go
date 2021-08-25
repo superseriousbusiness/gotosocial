@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
@@ -34,18 +35,33 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+func instanceAccount(account *gtsmodel.Account) bool {
+	return strings.EqualFold(account.Username, account.Domain) ||
+		account.FollowersURI == "" ||
+		account.FollowingURI == "" ||
+		(account.Username == "internal.fetch" && strings.Contains(account.Note, "internal service actor"))
+}
+
 // EnrichRemoteAccount takes an account that's already been inserted into the database in a minimal form,
 // and populates it with additional fields, media, etc.
 //
 // EnrichRemoteAccount is mostly useful for calling after an account has been initially created by
 // the federatingDB's Create function, or during the federated authorization flow.
-func (d *deref) EnrichRemoteAccount(username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-	if err := d.PopulateAccountFields(account, username, false); err != nil {
+func (d *deref) EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
+
+	// if we're dealing with an instance account, we don't need to update anything
+	if instanceAccount(account) {
+		return account, nil
+	}
+
+	if err := d.PopulateAccountFields(ctx, account, username, false); err != nil {
 		return nil, err
 	}
 
-	if err := d.db.UpdateByID(account.ID, account); err != nil {
-		return nil, fmt.Errorf("EnrichRemoteAccount: error updating account: %s", err)
+	var err error
+	account, err = d.db.UpdateAccount(ctx, account)
+	if err != nil {
+		d.log.Errorf("EnrichRemoteAccount: error updating account: %s", err)
 	}
 
 	return account, nil
@@ -60,27 +76,27 @@ func (d *deref) EnrichRemoteAccount(username string, account *gtsmodel.Account) 
 // the remote instance again.
 //
 // SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
-func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error) {
+func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error) {
 	new := true
 
 	// check if we already have the account in our db
-	maybeAccount, err := d.db.GetAccountByURI(remoteAccountID.String())
+	maybeAccount, err := d.db.GetAccountByURI(ctx, remoteAccountID.String())
 	if err == nil {
 		// we've seen this account before so it's not new
 		new = false
 		if !refresh {
 			// we're not being asked to refresh, but just in case we don't have the avatar/header cached yet....
-			maybeAccount, err = d.EnrichRemoteAccount(username, maybeAccount)
+			maybeAccount, err = d.EnrichRemoteAccount(ctx, username, maybeAccount)
 			return maybeAccount, new, err
 		}
 	}
 
-	accountable, err := d.dereferenceAccountable(username, remoteAccountID)
+	accountable, err := d.dereferenceAccountable(ctx, username, remoteAccountID)
 	if err != nil {
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error dereferencing accountable: %s", err)
 	}
 
-	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(accountable, refresh)
+	gtsAccount, err := d.typeConverter.ASRepresentationToAccount(ctx, accountable, refresh)
 	if err != nil {
 		return nil, new, fmt.Errorf("FullyDereferenceAccount: error converting accountable to account: %s", err)
 	}
@@ -93,23 +109,24 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 		}
 		gtsAccount.ID = ulid
 
-		if err := d.PopulateAccountFields(gtsAccount, username, refresh); err != nil {
+		if err := d.PopulateAccountFields(ctx, gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
 
-		if err := d.db.Put(gtsAccount); err != nil {
+		if err := d.db.Put(ctx, gtsAccount); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error putting new account: %s", err)
 		}
 	} else {
 		// take the id we already have and do an update
 		gtsAccount.ID = maybeAccount.ID
 
-		if err := d.PopulateAccountFields(gtsAccount, username, refresh); err != nil {
+		if err := d.PopulateAccountFields(ctx, gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
 
-		if err := d.db.UpdateByID(gtsAccount.ID, gtsAccount); err != nil {
-			return nil, new, fmt.Errorf("FullyDereferenceAccount: error updating existing account: %s", err)
+		gtsAccount, err = d.db.UpdateAccount(ctx, gtsAccount)
+		if err != nil {
+			return nil, false, fmt.Errorf("EnrichRemoteAccount: error updating account: %s", err)
 		}
 	}
 
@@ -120,15 +137,15 @@ func (d *deref) GetRemoteAccount(username string, remoteAccountID *url.URL, refr
 // it finds as something that an account model can be constructed out of.
 //
 // Will work for Person, Application, or Service models.
-func (d *deref) dereferenceAccountable(username string, remoteAccountID *url.URL) (ap.Accountable, error) {
+func (d *deref) dereferenceAccountable(ctx context.Context, username string, remoteAccountID *url.URL) (ap.Accountable, error) {
 	d.startHandshake(username, remoteAccountID)
 	defer d.stopHandshake(username, remoteAccountID)
 
-	if blocked, err := d.blockedDomain(remoteAccountID.Host); blocked || err != nil {
+	if blocked, err := d.db.IsDomainBlocked(ctx, remoteAccountID.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceAccountable: domain %s is blocked", remoteAccountID.Host)
 	}
 
-	transport, err := d.transportController.NewTransportForUsername(username)
+	transport, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceAccountable: transport err: %s", err)
 	}
@@ -174,7 +191,7 @@ func (d *deref) dereferenceAccountable(username string, remoteAccountID *url.URL
 
 // PopulateAccountFields populates any fields on the given account that weren't populated by the initial
 // dereferencing. This includes things like header and avatar etc.
-func (d *deref) PopulateAccountFields(account *gtsmodel.Account, requestingUsername string, refresh bool) error {
+func (d *deref) PopulateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, refresh bool) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":               "PopulateAccountFields",
 		"requestingUsername": requestingUsername,
@@ -184,17 +201,17 @@ func (d *deref) PopulateAccountFields(account *gtsmodel.Account, requestingUsern
 	if err != nil {
 		return fmt.Errorf("PopulateAccountFields: couldn't parse account URI %s: %s", account.URI, err)
 	}
-	if blocked, err := d.blockedDomain(accountURI.Host); blocked || err != nil {
+	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
 		return fmt.Errorf("PopulateAccountFields: domain %s is blocked", accountURI.Host)
 	}
 
-	t, err := d.transportController.NewTransportForUsername(requestingUsername)
+	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
 		return fmt.Errorf("PopulateAccountFields: error getting transport for user: %s", err)
 	}
 
 	// fetch the header and avatar
-	if err := d.fetchHeaderAndAviForAccount(account, t, refresh); err != nil {
+	if err := d.fetchHeaderAndAviForAccount(ctx, account, t, refresh); err != nil {
 		// if this doesn't work, just skip it -- we can do it later
 		l.Debugf("error fetching header/avi for account: %s", err)
 	}
@@ -208,17 +225,17 @@ func (d *deref) PopulateAccountFields(account *gtsmodel.Account, requestingUsern
 // targetAccount's AvatarMediaAttachmentID and HeaderMediaAttachmentID will be updated as necessary.
 //
 // SIDE EFFECTS: remote header and avatar will be stored in local storage.
-func (d *deref) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t transport.Transport, refresh bool) error {
+func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, refresh bool) error {
 	accountURI, err := url.Parse(targetAccount.URI)
 	if err != nil {
 		return fmt.Errorf("fetchHeaderAndAviForAccount: couldn't parse account URI %s: %s", targetAccount.URI, err)
 	}
-	if blocked, err := d.blockedDomain(accountURI.Host); blocked || err != nil {
+	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
 		return fmt.Errorf("fetchHeaderAndAviForAccount: domain %s is blocked", accountURI.Host)
 	}
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.AvatarRemoteURL,
 			Avatar:    true,
 		}, targetAccount.ID)
@@ -229,7 +246,7 @@ func (d *deref) fetchHeaderAndAviForAccount(targetAccount *gtsmodel.Account, t t
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.HeaderRemoteURL,
 			Header:    true,
 		}, targetAccount.ID)

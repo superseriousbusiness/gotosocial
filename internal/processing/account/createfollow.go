@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -29,16 +30,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
 	// if there's a block between the accounts we shouldn't create the request ofc
-	if blocked, err := p.db.IsBlocked(requestingAccount.ID, form.ID, true); err != nil {
+	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, form.ID, true); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
 	}
 
 	// make sure the target account actually exists in our db
-	targetAcct, err := p.db.GetAccountByID(form.ID)
+	targetAcct, err := p.db.GetAccountByID(ctx, form.ID)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("accountfollowcreate: account %s not found in the db: %s", form.ID, err))
@@ -47,19 +48,19 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// check if a follow exists already
-	if follows, err := p.db.IsFollowing(requestingAccount, targetAcct); err != nil {
+	if follows, err := p.db.IsFollowing(ctx, requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow in db: %s", err))
 	} else if follows {
 		// already follows so just return the relationship
-		return p.RelationshipGet(requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// check if a follow request exists already
-	if followRequested, err := p.db.IsFollowRequested(requestingAccount, targetAcct); err != nil {
+	if followRequested, err := p.db.IsFollowRequested(ctx, requestingAccount, targetAcct); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error checking follow request in db: %s", err))
 	} else if followRequested {
 		// already follow requested so just return the relationship
-		return p.RelationshipGet(requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// make the follow request
@@ -84,17 +85,17 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// whack it in the database
-	if err := p.db.Put(fr); err != nil {
+	if err := p.db.Put(ctx, fr); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error creating follow request in db: %s", err))
 	}
 
 	// if it's a local account that's not locked we can just straight up accept the follow request
 	if !targetAcct.Locked && targetAcct.Domain == "" {
-		if _, err := p.db.AcceptFollowRequest(requestingAccount.ID, form.ID); err != nil {
+		if _, err := p.db.AcceptFollowRequest(ctx, requestingAccount.ID, form.ID); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("accountfollowcreate: error accepting folow request for local unlocked account: %s", err))
 		}
 		// return the new relationship
-		return p.RelationshipGet(requestingAccount, form.ID)
+		return p.RelationshipGet(ctx, requestingAccount, form.ID)
 	}
 
 	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
@@ -107,5 +108,5 @@ func (p *processor) FollowCreate(requestingAccount *gtsmodel.Account, form *apim
 	}
 
 	// return whatever relationship results from this
-	return p.RelationshipGet(requestingAccount, form.ID)
+	return p.RelationshipGet(ctx, requestingAccount, form.ID)
 }

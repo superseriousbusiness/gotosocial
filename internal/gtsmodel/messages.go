@@ -1,11 +1,22 @@
-package gtsmodel
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
 
-// // ToClientAPI wraps a message that travels from the processor into the client API
-// type ToClientAPI struct {
-// 	APObjectType   ActivityStreamsObject
-// 	APActivityType ActivityStreamsActivity
-// 	Activity       interface{}
-// }
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package gtsmodel
 
 // FromClientAPI wraps a message that travels from client API into the processor
 type FromClientAPI struct {
@@ -15,13 +26,6 @@ type FromClientAPI struct {
 	OriginAccount  *Account
 	TargetAccount  *Account
 }
-
-// // ToFederator wraps a message that travels from the processor into the federator
-// type ToFederator struct {
-// 	APObjectType   ActivityStreamsObject
-// 	APActivityType ActivityStreamsActivity
-// 	GTSModel       interface{}
-// }
 
 // FromFederator wraps a message that travels from the federator into the processor
 type FromFederator struct {

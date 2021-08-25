@@ -36,7 +36,7 @@ import (
 
 func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -44,7 +44,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 	var requestedPerson vocab.ActivityStreamsPerson
 	if util.IsPublicKeyPath(requestURL) {
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
-		requestedPerson, err = p.tc.AccountToASMinimal(requestedAccount)
+		requestedPerson, err = p.tc.AccountToASMinimal(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -56,13 +56,13 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 		}
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
-		if !p.federator.Handshaking(requestedUsername, requestingAccountURI) {
-			requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+		if !p.federator.Handshaking(ctx, requestedUsername, requestingAccountURI) {
+			requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}
 
-			blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+			blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(err)
 			}
@@ -72,7 +72,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 			}
 		}
 
-		requestedPerson, err = p.tc.AccountToAS(requestedAccount)
+		requestedPerson, err = p.tc.AccountToAS(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -90,7 +90,7 @@ func (p *processor) GetFediUser(ctx context.Context, requestedUsername string, r
 
 func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -101,12 +101,12 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
-	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -135,7 +135,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 
 func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -146,12 +146,12 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
-	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -180,7 +180,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 
 func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -191,14 +191,14 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
 	// authorize the request:
 	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -209,14 +209,14 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 
 	// get the status out of the database here
 	s := &gtsmodel.Status{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "id", Value: requestedStatusID},
 		{Key: "account_id", Value: requestedAccount.ID},
 	}, s); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
 
-	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -225,7 +225,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 	}
 
 	// requester is authorized to view the status, so convert it to AP representation and serialize it
-	asStatus, err := p.tc.StatusToAS(s)
+	asStatus, err := p.tc.StatusToAS(ctx, s)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -240,7 +240,7 @@ func (p *processor) GetFediStatus(ctx context.Context, requestedUsername string,
 
 func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -251,14 +251,14 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 	}
 
-	requestingAccount, _, err := p.federator.GetRemoteAccount(requestedUsername, requestingAccountURI, false)
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
 	if err != nil {
 		return nil, gtserror.NewErrorNotAuthorized(err)
 	}
 
 	// authorize the request:
 	// 1. check if a block exists between the requester and the requestee
-	blocked, err := p.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -269,14 +269,14 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 
 	// get the status out of the database here
 	s := &gtsmodel.Status{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "id", Value: requestedStatusID},
 		{Key: "account_id", Value: requestedAccount.ID},
 	}, s); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
 
-	visible, err := p.filter.StatusVisible(s, requestingAccount)
+	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -295,7 +295,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		// scenario 1
 
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -308,7 +308,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 		// scenario 2
 
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(s, onlyOtherAccounts)
+		collection, err := p.tc.StatusToASRepliesCollection(ctx, s, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -320,7 +320,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 	} else {
 		// scenario 3
 		// get immediate children
-		replies, err := p.db.GetStatusChildren(s, true, minID)
+		replies, err := p.db.GetStatusChildren(ctx, s, true, minID)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -339,13 +339,13 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 			}
 
 			// only show replies that the status owner can see
-			visibleToStatusOwner, err := p.filter.StatusVisible(r, requestedAccount)
+			visibleToStatusOwner, err := p.filter.StatusVisible(ctx, r, requestedAccount)
 			if err != nil || !visibleToStatusOwner {
 				continue
 			}
 
 			// only show replies that the requester can see
-			visibleToRequester, err := p.filter.StatusVisible(r, requestingAccount)
+			visibleToRequester, err := p.filter.StatusVisible(ctx, r, requestingAccount)
 			if err != nil || !visibleToRequester {
 				continue
 			}
@@ -358,7 +358,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 			replyURIs[r.ID] = rURI
 		}
 
-		repliesPage, err := p.tc.StatusURIsToASRepliesPage(s, onlyOtherAccounts, minID, replyURIs)
+		repliesPage, err := p.tc.StatusURIsToASRepliesPage(ctx, s, onlyOtherAccounts, minID, replyURIs)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -373,7 +373,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 
 func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// get the account the request is referring to
-	requestedAccount, err := p.db.GetLocalAccountByUsername(requestedUsername)
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
@@ -400,7 +400,7 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 	}, nil
 }
 
-func (p *processor) GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	return &apimodel.WellKnownResponse{
 		Links: []apimodel.Link{
 			{
@@ -411,7 +411,7 @@ func (p *processor) GetNodeInfoRel(request *http.Request) (*apimodel.WellKnownRe
 	}, nil
 }
 
-func (p *processor) GetNodeInfo(request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
+func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
 	return &apimodel.Nodeinfo{
 		Version: "2.0",
 		Software: apimodel.NodeInfoSoftware{

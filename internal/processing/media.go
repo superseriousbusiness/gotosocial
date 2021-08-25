@@ -19,23 +19,25 @@
 package processing
 
 import (
+	"context"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) MediaCreate(authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
-	return p.mediaProcessor.Create(authed.Account, form)
+func (p *processor) MediaCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
+	return p.mediaProcessor.Create(ctx, authed.Account, form)
 }
 
-func (p *processor) MediaGet(authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
-	return p.mediaProcessor.GetMedia(authed.Account, mediaAttachmentID)
+func (p *processor) MediaGet(ctx context.Context, authed *oauth.Auth, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode) {
+	return p.mediaProcessor.GetMedia(ctx, authed.Account, mediaAttachmentID)
 }
 
-func (p *processor) MediaUpdate(authed *oauth.Auth, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	return p.mediaProcessor.Update(authed.Account, mediaAttachmentID, form)
+func (p *processor) MediaUpdate(ctx context.Context, authed *oauth.Auth, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
+	return p.mediaProcessor.Update(ctx, authed.Account, mediaAttachmentID, form)
 }
 
-func (p *processor) FileGet(authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
-	return p.mediaProcessor.GetFile(authed.Account, form)
+func (p *processor) FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+	return p.mediaProcessor.GetFile(ctx, authed.Account, form)
 }

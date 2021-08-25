@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package transport
 
 import (
@@ -8,7 +26,7 @@ import (
 	"net/url"
 )
 
-func (t *transport) Finger(c context.Context, targetUsername string, targetDomain string) ([]byte, error) {
+func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
 	l := t.log.WithField("func", "Finger")
 	urlString := fmt.Sprintf("https://%s/.well-known/webfinger?resource=acct:%s@%s", targetDomain, targetUsername, targetDomain)
 	l.Debugf("performing GET to %s", urlString)
@@ -20,11 +38,11 @@ func (t *transport) Finger(c context.Context, targetUsername string, targetDomai
 
 	l.Debugf("performing GET to %s", iri.String())
 
-	req, err := http.NewRequest("GET", iri.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(c)
+
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Accept", "application/jrd+json")
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")

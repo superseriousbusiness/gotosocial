@@ -19,6 +19,7 @@
 package transport
 
 import (
+	"context"
 	"crypto"
 	"fmt"
 	"sync"
@@ -33,7 +34,7 @@ import (
 // Controller generates transports for use in making federation requests to other servers.
 type Controller interface {
 	NewTransport(pubKeyID string, privkey crypto.PrivateKey) (Transport, error)
-	NewTransportForUsername(username string) (Transport, error)
+	NewTransportForUsername(ctx context.Context, username string) (Transport, error)
 }
 
 type controller struct {
@@ -90,7 +91,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (T
 	}, nil
 }
 
-func (c *controller) NewTransportForUsername(username string) (Transport, error) {
+func (c *controller) NewTransportForUsername(ctx context.Context, username string) (Transport, error) {
 	// We need an account to use to create a transport for dereferecing something.
 	// If a username has been given, we can fetch the account with that username and use it.
 	// Otherwise, we can take the instance account and use those credentials to make the request.
@@ -101,7 +102,7 @@ func (c *controller) NewTransportForUsername(username string) (Transport, error)
 		u = username
 	}
 
-	ourAccount, err := c.db.GetLocalAccountByUsername(u)
+	ourAccount, err := c.db.GetLocalAccountByUsername(ctx, u)
 	if err != nil {
 		return nil, fmt.Errorf("error getting account %s from db: %s", username, err)
 	}

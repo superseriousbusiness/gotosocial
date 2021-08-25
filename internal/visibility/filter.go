@@ -19,6 +19,8 @@
 package visibility
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -29,17 +31,17 @@ type Filter interface {
 	// StatusVisible returns true if targetStatus is visible to requestingAccount, based on the
 	// privacy settings of the status, and any blocks/mutes that might exist between the two accounts
 	// or account domains, and other relevant accounts mentioned in or replied to by the status.
-	StatusVisible(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
+	StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
 
 	// StatusHometimelineable returns true if targetStatus should be in the home timeline of the requesting account.
 	//
 	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
-	StatusHometimelineable(targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
+	StatusHometimelineable(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
 
 	// StatusPublictimelineable returns true if targetStatus should be in the public timeline of the requesting account.
 	//
 	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
-	StatusPublictimelineable(targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error)
+	StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error)
 }
 
 type filter struct {

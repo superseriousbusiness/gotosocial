@@ -19,51 +19,53 @@
 package processing
 
 import (
+	"context"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) AccountCreate(authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
-	return p.accountProcessor.Create(authed.Token, authed.Application, form)
+func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
+	return p.accountProcessor.Create(ctx, authed.Token, authed.Application, form)
 }
 
-func (p *processor) AccountGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error) {
-	return p.accountProcessor.Get(authed.Account, targetAccountID)
+func (p *processor) AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error) {
+	return p.accountProcessor.Get(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountUpdate(authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
-	return p.accountProcessor.Update(authed.Account, form)
+func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
+	return p.accountProcessor.Update(ctx, authed.Account, form)
 }
 
-func (p *processor) AccountStatusesGet(authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
-	return p.accountProcessor.StatusesGet(authed.Account, targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
+func (p *processor) AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+	return p.accountProcessor.StatusesGet(ctx, authed.Account, targetAccountID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
 }
 
-func (p *processor) AccountFollowersGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	return p.accountProcessor.FollowersGet(authed.Account, targetAccountID)
+func (p *processor) AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+	return p.accountProcessor.FollowersGet(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountFollowingGet(authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
-	return p.accountProcessor.FollowingGet(authed.Account, targetAccountID)
+func (p *processor) AccountFollowingGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode) {
+	return p.accountProcessor.FollowingGet(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountRelationshipGet(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	return p.accountProcessor.RelationshipGet(authed.Account, targetAccountID)
+func (p *processor) AccountRelationshipGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.RelationshipGet(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountFollowCreate(authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
-	return p.accountProcessor.FollowCreate(authed.Account, form)
+func (p *processor) AccountFollowCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.FollowCreate(ctx, authed.Account, form)
 }
 
-func (p *processor) AccountFollowRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	return p.accountProcessor.FollowRemove(authed.Account, targetAccountID)
+func (p *processor) AccountFollowRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.FollowRemove(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountBlockCreate(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	return p.accountProcessor.BlockCreate(authed.Account, targetAccountID)
+func (p *processor) AccountBlockCreate(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.BlockCreate(ctx, authed.Account, targetAccountID)
 }
 
-func (p *processor) AccountBlockRemove(authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	return p.accountProcessor.BlockRemove(authed.Account, targetAccountID)
+func (p *processor) AccountBlockRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	return p.accountProcessor.BlockRemove(ctx, authed.Account, targetAccountID)
 }

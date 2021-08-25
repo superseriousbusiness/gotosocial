@@ -67,7 +67,7 @@ func (suite *StatusBoostTestSuite) TearDownTest() {
 func (suite *StatusBoostTestSuite) TestPostBoost() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	targetStatus := suite.testStatuses["admin_account_status_1"]
 
@@ -133,7 +133,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	targetStatus := suite.testStatuses["local_account_2_status_4"]
 
@@ -171,7 +171,7 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {
 
 	t := suite.testTokens["local_account_2"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	targetStatus := suite.testStatuses["local_account_1_status_3"] // this is a mutual only status and these accounts aren't mutuals
 

@@ -33,7 +33,7 @@ func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 		"user-agent": c.Request.UserAgent(),
 	})
 
-	niRel, err := m.processor.GetNodeInfoRel(c.Request)
+	niRel, err := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
 	if err != nil {
 		l.Debugf("error with get node info rel request: %s", err)
 		c.JSON(err.Code(), err.Safe())

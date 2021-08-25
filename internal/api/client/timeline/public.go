@@ -153,7 +153,7 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		local = i
 	}
 
-	resp, errWithCode := m.processor.PublicTimelineGet(authed, maxID, sinceID, minID, limit, local)
+	resp, errWithCode := m.processor.PublicTimelineGet(c.Request.Context(), authed, maxID, sinceID, minID, limit, local)
 	if errWithCode != nil {
 		l.Debugf("error from processor PublicTimelineGet: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

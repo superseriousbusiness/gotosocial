@@ -83,7 +83,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: follow actor and activity actor not the same")
 			}
 			// convert the follow to something we can understand
-			gtsFollow, err := f.typeConverter.ASFollowToFollow(ASFollow)
+			gtsFollow, err := f.typeConverter.ASFollowToFollow(ctx, ASFollow)
 			if err != nil {
 				return fmt.Errorf("UNDO: error converting asfollow to gtsfollow: %s", err)
 			}
@@ -92,11 +92,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: follow object account and inbox account were not the same")
 			}
 			// delete any existing FOLLOW
-			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
+			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.Follow{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow: %s", err)
 			}
 			// delete any existing FOLLOW REQUEST
-			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
+			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsFollow.URI}}, &gtsmodel.FollowRequest{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing follow request: %s", err)
 			}
 			l.Debug("follow undone")
@@ -116,7 +116,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: block actor and activity actor not the same")
 			}
 			// convert the block to something we can understand
-			gtsBlock, err := f.typeConverter.ASBlockToBlock(ASBlock)
+			gtsBlock, err := f.typeConverter.ASBlockToBlock(ctx, ASBlock)
 			if err != nil {
 				return fmt.Errorf("UNDO: error converting asblock to gtsblock: %s", err)
 			}
@@ -125,7 +125,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return errors.New("UNDO: block object account and inbox account were not the same")
 			}
 			// delete any existing BLOCK
-			if err := f.db.DeleteWhere([]db.Where{{Key: "uri", Value: gtsBlock.URI}}, &gtsmodel.Block{}); err != nil {
+			if err := f.db.DeleteWhere(ctx, []db.Where{{Key: "uri", Value: gtsBlock.URI}}, &gtsmodel.Block{}); err != nil {
 				return fmt.Errorf("UNDO: db error removing block: %s", err)
 			}
 			l.Debug("block undone")

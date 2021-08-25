@@ -48,7 +48,7 @@ func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	r, errWithCode := m.processor.FollowRequestAccept(authed, originAccountID)
+	r, errWithCode := m.processor.FollowRequestAccept(c.Request.Context(), authed, originAccountID)
 	if errWithCode != nil {
 		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

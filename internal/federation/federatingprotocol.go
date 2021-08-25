@@ -113,7 +113,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, errors.New("username was empty")
 	}
 
-	requestedAccount, err := f.db.GetLocalAccountByUsername(username)
+	requestedAccount, err := f.db.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return nil, false, fmt.Errorf("could not fetch requested account with username %s: %s", username, err)
 	}
@@ -131,14 +131,14 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 
 	// authentication has passed, so add an instance entry for this instance if it hasn't been done already
 	i := &gtsmodel.Instance{}
-	if err := f.db.GetWhere([]db.Where{{Key: "domain", Value: publicKeyOwnerURI.Host, CaseInsensitive: true}}, i); err != nil {
+	if err := f.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: publicKeyOwnerURI.Host, CaseInsensitive: true}}, i); err != nil {
 		if err != db.ErrNoEntries {
 			// there's been an actual error
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)
 		}
 
 		// we don't have an entry for this instance yet so dereference it
-		i, err = f.GetRemoteInstance(username, &url.URL{
+		i, err = f.GetRemoteInstance(ctx, username, &url.URL{
 			Scheme: publicKeyOwnerURI.Scheme,
 			Host:   publicKeyOwnerURI.Host,
 		})
@@ -147,12 +147,12 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 
 		// and put it in the db
-		if err := f.db.Put(i); err != nil {
+		if err := f.db.Put(ctx, i); err != nil {
 			return nil, false, fmt.Errorf("error inserting newly dereferenced instance %s: %s", publicKeyOwnerURI.Host, err)
 		}
 	}
 
-	requestingAccount, _, err := f.GetRemoteAccount(username, publicKeyOwnerURI, false)
+	requestingAccount, _, err := f.GetRemoteAccount(ctx, username, publicKeyOwnerURI, false)
 	if err != nil {
 		return nil, false, fmt.Errorf("couldn't get remote account: %s", err)
 	}
@@ -189,7 +189,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		return false, errors.New("requested account not set on request context, so couldn't determine blocks")
 	}
 
-	blocked, err := f.db.AreURIsBlocked(actorIRIs)
+	blocked, err := f.db.AreURIsBlocked(ctx, actorIRIs)
 	if err != nil {
 		return false, fmt.Errorf("error checking domain blocks: %s", err)
 	}
@@ -198,7 +198,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	}
 
 	for _, uri := range actorIRIs {
-		requestingAccount, err := f.db.GetAccountByURI(uri.String())
+		requestingAccount, err := f.db.GetAccountByURI(ctx, uri.String())
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// we don't have an entry for this account so it's not blocked
@@ -208,7 +208,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
 		}
 
-		blocked, err = f.db.IsBlocked(requestedAccount.ID, requestingAccount.ID, true)
+		blocked, err = f.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
 		if err != nil {
 			return false, fmt.Errorf("error checking account block: %s", err)
 		}

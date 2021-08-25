@@ -19,6 +19,7 @@
 package typeutils_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -58,7 +59,7 @@ func (suite *InternalToASTestSuite) TearDownTest() {
 func (suite *InternalToASTestSuite) TestAccountToAS() {
 	testAccount := suite.accounts["local_account_1"] // take zork for this test
 
-	asPerson, err := suite.typeconverter.AccountToAS(testAccount)
+	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	assert.NoError(suite.T(), err)
 
 	ser, err := streams.Serialize(asPerson)

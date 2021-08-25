@@ -19,6 +19,7 @@
 package admin
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -31,10 +32,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	// first check if we already have a block -- if err == nil we already had a block so we can skip a whole lot of work
 	domainBlock := &gtsmodel.DomainBlock{}
-	err := p.db.GetWhere([]db.Where{{Key: "domain", Value: domain, CaseInsensitive: true}}, domainBlock)
+	err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain, CaseInsensitive: true}}, domainBlock)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			// something went wrong in the DB
@@ -59,7 +60,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 		}
 
 		// put the new block in the database
-		if err := p.db.Put(domainBlock); err != nil {
+		if err := p.db.Put(ctx, domainBlock); err != nil {
 			if err != db.ErrNoEntries {
 				// there's a real error creating the block
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
@@ -67,10 +68,10 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 		}
 
 		// process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
+		go p.initiateDomainBlockSideEffects(ctx, account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(domainBlock, false)
+	mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, domainBlock, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/masto representation %s: %s", domain, err))
 	}
@@ -83,7 +84,7 @@ func (p *processor) DomainBlockCreate(account *gtsmodel.Account, domain string, 
 // 1. Strip most info away from the instance entry for the domain.
 // 2. Delete the instance account for that instance if it exists.
 // 3. Select all accounts from this instance and pass them through the delete functionality of the processor.
-func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
+func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account *gtsmodel.Account, block *gtsmodel.DomainBlock) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":   "domainBlockProcessSideEffects",
 		"domain": block.Domain,
@@ -93,7 +94,7 @@ func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, bl
 
 	// if we have an instance entry for this domain, update it with the new block ID and clear all fields
 	instance := &gtsmodel.Instance{}
-	if err := p.db.GetWhere([]db.Where{{Key: "domain", Value: block.Domain, CaseInsensitive: true}}, instance); err == nil {
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain, CaseInsensitive: true}}, instance); err == nil {
 		instance.Title = ""
 		instance.UpdatedAt = time.Now()
 		instance.SuspendedAt = time.Now()
@@ -105,14 +106,14 @@ func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, bl
 		instance.ContactAccountUsername = ""
 		instance.ContactAccountID = ""
 		instance.Version = ""
-		if err := p.db.UpdateByID(instance.ID, instance); err != nil {
+		if err := p.db.UpdateByID(ctx, instance.ID, instance); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
 		l.Debug("domainBlockProcessSideEffects: instance entry updated")
 	}
 
 	// if we have an instance account for this instance, delete it
-	if err := p.db.DeleteWhere([]db.Where{{Key: "username", Value: block.Domain, CaseInsensitive: true}}, &gtsmodel.Account{}); err != nil {
+	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "username", Value: block.Domain, CaseInsensitive: true}}, &gtsmodel.Account{}); err != nil {
 		l.Errorf("domainBlockProcessSideEffects: db error removing instance account: %s", err)
 	}
 
@@ -123,7 +124,7 @@ func (p *processor) initiateDomainBlockSideEffects(account *gtsmodel.Account, bl
 
 selectAccountsLoop:
 	for {
-		accounts, err := p.db.GetInstanceAccounts(block.Domain, maxID, limit)
+		accounts, err := p.db.GetInstanceAccounts(ctx, block.Domain, maxID, limit)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// no accounts left for this instance so we're done

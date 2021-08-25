@@ -20,6 +20,7 @@ package admin
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,7 +33,7 @@ import (
 )
 
 // DomainBlocksImport handles the import of a bunch of domain blocks at once, by calling the DomainBlockCreate function for each domain in the provided file.
-func (p *processor) DomainBlocksImport(account *gtsmodel.Account, domains *multipart.FileHeader) ([]*apimodel.DomainBlock, gtserror.WithCode) {
+func (p *processor) DomainBlocksImport(ctx context.Context, account *gtsmodel.Account, domains *multipart.FileHeader) ([]*apimodel.DomainBlock, gtserror.WithCode) {
 
 	f, err := domains.Open()
 	if err != nil {
@@ -54,7 +55,7 @@ func (p *processor) DomainBlocksImport(account *gtsmodel.Account, domains *multi
 
 	blocks := []*apimodel.DomainBlock{}
 	for _, d := range d {
-		block, err := p.DomainBlockCreate(account, d.Domain, false, d.PublicComment, "", "")
+		block, err := p.DomainBlockCreate(ctx, account, d.Domain, false, d.PublicComment, "", "")
 
 		if err != nil {
 			return nil, err

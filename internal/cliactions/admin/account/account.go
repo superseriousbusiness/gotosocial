@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
@@ -36,7 +36,7 @@ import (
 
 // Create creates a new account in the database using the provided flags.
 var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -65,7 +65,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 		return err
 	}
 
-	_, err = dbConn.NewSignup(username, "", false, email, password, nil, "", "", false, false)
+	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", false, false)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 
 // Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
 var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -88,20 +88,20 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(username)
+	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
 
 	u.Approved = true
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
-	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 
 // Promote sets a user to admin.
 var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -123,17 +123,17 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(username)
+	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
 	u.Admin = true
-	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
 		return err
 	}
 
@@ -142,7 +142,7 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 
 // Demote sets admin on a user to false.
 var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -155,17 +155,17 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(username)
+	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
 	u.Admin = false
-	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
 		return err
 	}
 
@@ -174,7 +174,7 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 
 // Disable sets Disabled to true on a user.
 var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -187,17 +187,17 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(username)
+	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
 	u.Disabled = true
-	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ var Suspend cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 
 // Password sets the password of target account.
 var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := pg.NewPostgresService(ctx, c, log)
+	dbConn, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -233,13 +233,13 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 		return err
 	}
 
-	a, err := dbConn.GetLocalAccountByUsername(username)
+	a, err := dbConn.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	u := &gtsmodel.User{}
-	if err := dbConn.GetWhere([]db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
+	if err := dbConn.GetWhere(ctx, []db.Where{{Key: "account_id", Value: a.ID}}, u); err != nil {
 		return err
 	}
 
@@ -250,7 +250,7 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 
 	u.EncryptedPassword = string(pw)
 
-	if err := dbConn.UpdateByID(u.ID, u); err != nil {
+	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
 		return err
 	}
 

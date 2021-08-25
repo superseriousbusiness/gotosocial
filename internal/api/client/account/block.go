@@ -72,7 +72,7 @@ func (m *Module) AccountBlockPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	relationship, errWithCode := m.processor.AccountBlockCreate(authed, targetAcctID)
+	relationship, errWithCode := m.processor.AccountBlockCreate(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return

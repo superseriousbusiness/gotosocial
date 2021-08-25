@@ -69,7 +69,7 @@ func (suite *StatusFavedByTestSuite) TearDownTest() {
 
 func (suite *StatusFavedByTestSuite) TestGetFavedBy() {
 	t := suite.testTokens["local_account_2"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	targetStatus := suite.testStatuses["admin_account_status_1"] // this status is faved by local_account_1
 

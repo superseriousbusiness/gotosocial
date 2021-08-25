@@ -19,6 +19,7 @@
 package typeutils
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -29,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update bool) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, update bool) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
@@ -38,7 +39,7 @@ func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update
 	uri := uriProp.GetIRI()
 
 	if !update {
-		acct, err := c.db.GetAccountByURI(uri.String())
+		acct, err := c.db.GetAccountByURI(ctx, uri.String())
 		if err == nil {
 			// we already know this account so we can skip generating it
 			return acct, nil
@@ -170,7 +171,7 @@ func (c *converter) ASRepresentationToAccount(accountable ap.Accountable, update
 	return acct, nil
 }
 
-func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status, error) {
+func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := &gtsmodel.Status{}
 
 	// uri at which this status is reachable
@@ -219,6 +220,7 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 	published, err := ap.ExtractPublished(statusable)
 	if err == nil {
 		status.CreatedAt = published
+		status.UpdatedAt = published
 	}
 
 	// which account posted this status?
@@ -229,7 +231,7 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 	}
 	status.AccountURI = attributedTo.String()
 
-	statusOwner, err := c.db.GetAccountByURI(attributedTo.String())
+	statusOwner, err := c.db.GetAccountByURI(ctx, attributedTo.String())
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
 	}
@@ -245,14 +247,14 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 		status.InReplyToURI = inReplyToURI.String()
 
 		// now we can check if we have the replied-to status in our db already
-		if inReplyToStatus, err := c.db.GetStatusByURI(inReplyToURI.String()); err == nil {
+		if inReplyToStatus, err := c.db.GetStatusByURI(ctx, inReplyToURI.String()); err == nil {
 			// we have the status in our database already
 			// so we can set these fields here and now...
 			status.InReplyToID = inReplyToStatus.ID
 			status.InReplyToAccountID = inReplyToStatus.AccountID
 			status.InReplyTo = inReplyToStatus
 			if status.InReplyToAccount == nil {
-				if inReplyToAccount, err := c.db.GetAccountByID(inReplyToStatus.AccountID); err == nil {
+				if inReplyToAccount, err := c.db.GetAccountByID(ctx, inReplyToStatus.AccountID); err == nil {
 					status.InReplyToAccount = inReplyToAccount
 				}
 			}
@@ -318,7 +320,7 @@ func (c *converter) ASStatusToStatus(statusable ap.Statusable) (*gtsmodel.Status
 	return status, nil
 }
 
-func (c *converter) ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel.FollowRequest, error) {
+func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
 
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -330,7 +332,7 @@ func (c *converter) ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
-	originAccount, err := c.db.GetAccountByURI(origin.String())
+	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -339,7 +341,7 @@ func (c *converter) ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
-	targetAccount, err := c.db.GetAccountByURI(target.String())
+	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -353,7 +355,7 @@ func (c *converter) ASFollowToFollowRequest(followable ap.Followable) (*gtsmodel
 	return followRequest, nil
 }
 
-func (c *converter) ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow, error) {
+func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on follow, or was not an iri")
@@ -364,7 +366,7 @@ func (c *converter) ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
-	originAccount, err := c.db.GetAccountByURI(origin.String())
+	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -373,7 +375,7 @@ func (c *converter) ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
-	targetAccount, err := c.db.GetAccountByURI(target.String())
+	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -387,7 +389,7 @@ func (c *converter) ASFollowToFollow(followable ap.Followable) (*gtsmodel.Follow
 	return follow, nil
 }
 
-func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
+func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
 	idProp := likeable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on like, or was not an iri")
@@ -398,7 +400,7 @@ func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, er
 	if err != nil {
 		return nil, errors.New("error extracting actor property from like")
 	}
-	originAccount, err := c.db.GetAccountByURI(origin.String())
+	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -408,7 +410,7 @@ func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, er
 		return nil, errors.New("error extracting object property from like")
 	}
 
-	targetStatus, err := c.db.GetStatusByURI(target.String())
+	targetStatus, err := c.db.GetStatusByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting status with uri %s from the database: %s", target.String(), err)
 	}
@@ -417,7 +419,7 @@ func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, er
 	if targetStatus.Account != nil {
 		targetAccount = targetStatus.Account
 	} else {
-		a, err := c.db.GetAccountByID(targetStatus.AccountID)
+		a, err := c.db.GetAccountByID(ctx, targetStatus.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("error extracting account with id %s from the database: %s", targetStatus.AccountID, err)
 		}
@@ -435,7 +437,7 @@ func (c *converter) ASLikeToFave(likeable ap.Likeable) (*gtsmodel.StatusFave, er
 	}, nil
 }
 
-func (c *converter) ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, error) {
+func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
 	idProp := blockable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("ASBlockToBlock: no id property set on block, or was not an iri")
@@ -446,7 +448,7 @@ func (c *converter) ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, err
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
 	}
-	originAccount, err := c.db.GetAccountByURI(origin.String())
+	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -456,7 +458,7 @@ func (c *converter) ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, err
 		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
 	}
 
-	targetAccount, err := c.db.GetAccountByURI(target.String())
+	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -470,7 +472,7 @@ func (c *converter) ASBlockToBlock(blockable ap.Blockable) (*gtsmodel.Block, err
 	}, nil
 }
 
-func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
+func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
 	status := &gtsmodel.Status{}
 	isNew := true
 
@@ -481,7 +483,7 @@ func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.
 	}
 	uri := idProp.GetIRI().String()
 
-	if status, err := c.db.GetStatusByURI(uri); err == nil {
+	if status, err := c.db.GetStatusByURI(ctx, uri); err == nil {
 		// we already have it, great, just return it as-is :)
 		isNew = false
 		return status, isNew, nil
@@ -515,7 +517,7 @@ func (c *converter) ASAnnounceToStatus(announceable ap.Announceable) (*gtsmodel.
 
 	// get the boosting account based on the URI
 	// this should have been dereferenced already before we hit this point so we can confidently error out if we don't have it
-	boostingAccount, err := c.db.GetAccountByURI(actor.String())
+	boostingAccount, err := c.db.GetAccountByURI(ctx, actor.String())
 	if err != nil {
 		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error in db fetching account with uri %s: %s", actor.String(), err)
 	}

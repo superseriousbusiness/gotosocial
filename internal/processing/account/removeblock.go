@@ -19,6 +19,7 @@
 package account
 
 import (
+	"context"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -27,9 +28,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
+func (p *processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
 	// make sure the target account actually exists in our db
-	targetAccount, err := p.db.GetAccountByID(targetAccountID)
+	targetAccount, err := p.db.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("BlockCreate: error getting account %s from the db: %s", targetAccountID, err))
 	}
@@ -37,13 +38,13 @@ func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccou
 	// check if a block exists, and remove it if it does (storing the URI for later)
 	var blockChanged bool
 	block := &gtsmodel.Block{}
-	if err := p.db.GetWhere([]db.Where{
+	if err := p.db.GetWhere(ctx, []db.Where{
 		{Key: "account_id", Value: requestingAccount.ID},
 		{Key: "target_account_id", Value: targetAccountID},
 	}, block); err == nil {
 		block.Account = requestingAccount
 		block.TargetAccount = targetAccount
-		if err := p.db.DeleteByID(block.ID, &gtsmodel.Block{}); err != nil {
+		if err := p.db.DeleteByID(ctx, block.ID, &gtsmodel.Block{}); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("BlockRemove: error removing block from db: %s", err))
 		}
 		blockChanged = true
@@ -61,5 +62,5 @@ func (p *processor) BlockRemove(requestingAccount *gtsmodel.Account, targetAccou
 	}
 
 	// return whatever relationship results from all this
-	return p.RelationshipGet(requestingAccount, targetAccountID)
+	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

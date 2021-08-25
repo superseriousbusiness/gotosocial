@@ -23,16 +23,16 @@ import "time"
 // Emoji represents a custom emoji that's been uploaded through the admin UI, and is useable by instance denizens.
 type Emoji struct {
 	// database ID of this emoji
-	ID string `pg:"type:CHAR(26),pk,notnull"`
+	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// String shortcode for this emoji -- the part that's between colons. This should be lowercase a-z_
 	// eg., 'blob_hug' 'purple_heart' Must be unique with domain.
-	Shortcode string `pg:",notnull,unique:shortcodedomain"`
+	Shortcode string `bun:",notnull,unique:shortcodedomain"`
 	// Origin domain of this emoji, eg 'example.org', 'queer.party'. empty string for local emojis.
-	Domain string `pg:",notnull,default:'',use_zero,unique:shortcodedomain"`
+	Domain string `bun:",notnull,default:'',unique:shortcodedomain"`
 	// When was this emoji created. Must be unique with shortcode.
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this emoji updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Where can this emoji be retrieved remotely? Null for local emojis.
 	// For remote emojis, it'll be something like:
 	// https://hackers.town/system/custom_emojis/images/000/049/842/original/1b74481204feabfd.png
@@ -51,28 +51,27 @@ type Emoji struct {
 	ImageStaticURL string
 	// Path of the emoji image in the server storage system. Will be something like:
 	// '/gotosocial/storage/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/original/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
-	ImagePath string `pg:",notnull"`
+	ImagePath string `bun:",notnull"`
 	// Path of a static version of the emoji image in the server storage system. Will be something like:
 	// '/gotosocial/storage/6339820e-ef65-4166-a262-5a9f46adb1a7/emoji/small/bfa6c9c5-6c25-4ea4-98b4-d78b8126fb52.png'
-	ImageStaticPath string `pg:",notnull"`
+	ImageStaticPath string `bun:",notnull"`
 	// MIME content type of the emoji image
 	// Probably "image/png"
-	ImageContentType string `pg:",notnull"`
+	ImageContentType string `bun:",notnull"`
 	// MIME content type of the static version of the emoji image.
-	ImageStaticContentType string `pg:",notnull"`
+	ImageStaticContentType string `bun:",notnull"`
 	// Size of the emoji image file in bytes, for serving purposes.
-	ImageFileSize int `pg:",notnull"`
+	ImageFileSize int `bun:",notnull"`
 	// Size of the static version of the emoji image file in bytes, for serving purposes.
-	ImageStaticFileSize int `pg:",notnull"`
+	ImageStaticFileSize int `bun:",notnull"`
 	// When was the emoji image last updated?
-	ImageUpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	ImageUpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Has a moderation action disabled this emoji from being shown?
-	Disabled bool `pg:",notnull,default:false"`
+	Disabled bool `bun:",notnull,default:false"`
 	// ActivityStreams uri of this emoji. Something like 'https://example.org/emojis/1234'
-	URI string `pg:",notnull,unique"`
+	URI string `bun:",notnull,unique"`
 	// Is this emoji visible in the admin emoji picker?
-	VisibleInPicker bool `pg:",notnull,default:true"`
+	VisibleInPicker bool `bun:",notnull,default:true"`
 	// In which emoji category is this emoji visible?
-	CategoryID string  `pg:"type:CHAR(26)"`
-	Status     *Status `pg:"rel:belongs-to"`
+	CategoryID string `bun:"type:CHAR(26),nullzero"`
 }

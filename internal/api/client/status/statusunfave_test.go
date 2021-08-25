@@ -71,7 +71,7 @@ func (suite *StatusUnfaveTestSuite) TearDownTest() {
 func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// this is the status we wanna unfave: in the testrig it's already faved by this account
 	targetStatus := suite.testStatuses["admin_account_status_1"]
@@ -120,7 +120,7 @@ func (suite *StatusUnfaveTestSuite) TestPostUnfave() {
 func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// this is the status we wanna unfave: in the testrig it's not faved by this account
 	targetStatus := suite.testStatuses["admin_account_status_2"]

@@ -39,12 +39,12 @@ import (
 //
 // EnrichRemoteStatus is mostly useful for calling after a status has been initially created by
 // the federatingDB's Create function, but additional dereferencing is needed on it.
-func (d *deref) EnrichRemoteStatus(username string, status *gtsmodel.Status) (*gtsmodel.Status, error) {
-	if err := d.populateStatusFields(status, username); err != nil {
+func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status) (*gtsmodel.Status, error) {
+	if err := d.populateStatusFields(ctx, status, username); err != nil {
 		return nil, err
 	}
 
-	if err := d.db.UpdateByID(status.ID, status); err != nil {
+	if err := d.db.UpdateByID(ctx, status.ID, status); err != nil {
 		return nil, fmt.Errorf("EnrichRemoteStatus: error updating status: %s", err)
 	}
 
@@ -62,11 +62,11 @@ func (d *deref) EnrichRemoteStatus(username string, status *gtsmodel.Status) (*g
 // If a dereference was performed, then the function also returns the ap.Statusable representation for further processing.
 //
 // SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
-func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
+func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	new := true
 
 	// check if we already have the status in our db
-	maybeStatus, err := d.db.GetStatusByURI(remoteStatusID.String())
+	maybeStatus, err := d.db.GetStatusByURI(ctx, remoteStatusID.String())
 	if err == nil {
 		// we've seen this status before so it's not new
 		new = false
@@ -77,7 +77,7 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 		}
 	}
 
-	statusable, err := d.dereferenceStatusable(username, remoteStatusID)
+	statusable, err := d.dereferenceStatusable(ctx, username, remoteStatusID)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
 	}
@@ -88,12 +88,12 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	}
 
 	// do this so we know we have the remote account of the status in the db
-	_, _, err = d.GetRemoteAccount(username, accountURI, false)
+	_, _, err = d.GetRemoteAccount(ctx, username, accountURI, false)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
 	}
 
-	gtsStatus, err := d.typeConverter.ASStatusToStatus(statusable)
+	gtsStatus, err := d.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
 	}
@@ -105,21 +105,21 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 		}
 		gtsStatus.ID = ulid
 
-		if err := d.populateStatusFields(gtsStatus, username); err != nil {
+		if err := d.populateStatusFields(ctx, gtsStatus, username); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
-		if err := d.db.PutStatus(gtsStatus); err != nil {
+		if err := d.db.PutStatus(ctx, gtsStatus); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
 		}
 	} else {
 		gtsStatus.ID = maybeStatus.ID
 
-		if err := d.populateStatusFields(gtsStatus, username); err != nil {
+		if err := d.populateStatusFields(ctx, gtsStatus, username); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
-		if err := d.db.UpdateByID(gtsStatus.ID, gtsStatus); err != nil {
+		if err := d.db.UpdateByID(ctx, gtsStatus.ID, gtsStatus); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error updating status: %s", err)
 		}
 	}
@@ -127,12 +127,12 @@ func (d *deref) GetRemoteStatus(username string, remoteStatusID *url.URL, refres
 	return gtsStatus, statusable, new, nil
 }
 
-func (d *deref) dereferenceStatusable(username string, remoteStatusID *url.URL) (ap.Statusable, error) {
-	if blocked, err := d.blockedDomain(remoteStatusID.Host); blocked || err != nil {
+func (d *deref) dereferenceStatusable(ctx context.Context, username string, remoteStatusID *url.URL) (ap.Statusable, error) {
+	if blocked, err := d.db.IsDomainBlocked(ctx, remoteStatusID.Host); blocked || err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: domain %s is blocked", remoteStatusID.Host)
 	}
 
-	transport, err := d.transportController.NewTransportForUsername(username)
+	transport, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: transport err: %s", err)
 	}
@@ -236,7 +236,7 @@ func (d *deref) dereferenceStatusable(username string, remoteStatusID *url.URL) 
 // This function will deference all of the above, insert them in the database as necessary,
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
-func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername string) error {
+func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
@@ -248,12 +248,12 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 	if err != nil {
 		return fmt.Errorf("DereferenceStatusFields: couldn't parse status URI %s: %s", status.URI, err)
 	}
-	if blocked, err := d.blockedDomain(statusURI.Host); blocked || err != nil {
+	if blocked, err := d.db.IsDomainBlocked(ctx, statusURI.Host); blocked || err != nil {
 		return fmt.Errorf("DereferenceStatusFields: domain %s is blocked", statusURI.Host)
 	}
 
 	// we can continue -- create a new transport here because we'll probably need it
-	t, err := d.transportController.NewTransportForUsername(requestingUsername)
+	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
 		return fmt.Errorf("error creating transport: %s", err)
 	}
@@ -281,7 +281,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 
 		// it might have been processed elsewhere so check first if it's already in the database or not
 		maybeAttachment := &gtsmodel.MediaAttachment{}
-		err := d.db.GetWhere([]db.Where{{Key: "remote_url", Value: a.RemoteURL}}, maybeAttachment)
+		err := d.db.GetWhere(ctx, []db.Where{{Key: "remote_url", Value: a.RemoteURL}}, maybeAttachment)
 		if err == nil {
 			// we already have it in the db, dereferenced, no need to do it again
 			l.Tracef("attachment already exists with id %s", maybeAttachment.ID)
@@ -294,7 +294,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 		// it just doesn't exist yet so carry on
 		l.Debug("attachment doesn't exist yet, calling ProcessRemoteAttachment", a)
-		deferencedAttachment, err := d.mediaHandler.ProcessRemoteAttachment(t, a, status.AccountID)
+		deferencedAttachment, err := d.mediaHandler.ProcessRemoteAttachment(ctx, t, a, status.AccountID)
 		if err != nil {
 			l.Errorf("error dereferencing status attachment: %s", err)
 			continue
@@ -302,7 +302,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		l.Debugf("dereferenced attachment: %+v", deferencedAttachment)
 		deferencedAttachment.StatusID = status.ID
 		deferencedAttachment.Description = a.Description
-		if err := d.db.Put(deferencedAttachment); err != nil {
+		if err := d.db.Put(ctx, deferencedAttachment); err != nil {
 			return fmt.Errorf("error inserting dereferenced attachment with remote url %s: %s", a.RemoteURL, err)
 		}
 		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
@@ -338,9 +338,9 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		}
 
 		var targetAccount *gtsmodel.Account
-		if a, err := d.db.GetAccountByURL(targetAccountURI.String()); err == nil {
+		if a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String()); err == nil {
 			targetAccount = a
-		} else if a, _, err := d.GetRemoteAccount(requestingUsername, targetAccountURI, false); err == nil {
+		} else if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err == nil {
 			targetAccount = a
 		} else {
 			// we can't find the target account so bail
@@ -369,7 +369,7 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 			TargetAccountURL: targetAccount.URL,
 		}
 
-		if err := d.db.Put(m); err != nil {
+		if err := d.db.Put(ctx, m); err != nil {
 			return fmt.Errorf("error creating mention: %s", err)
 		}
 		mentionIDs = append(mentionIDs, m.ID)
@@ -382,13 +382,13 @@ func (d *deref) populateStatusFields(status *gtsmodel.Status, requestingUsername
 		if err != nil {
 			return err
 		}
-		if replyToStatus, err := d.db.GetStatusByURI(status.InReplyToURI); err == nil {
+		if replyToStatus, err := d.db.GetStatusByURI(ctx, status.InReplyToURI); err == nil {
 			// we have the status
 			status.InReplyToID = replyToStatus.ID
 			status.InReplyTo = replyToStatus
 			status.InReplyToAccountID = replyToStatus.AccountID
 			status.InReplyToAccount = replyToStatus.Account
-		} else if replyToStatus, _, _, err := d.GetRemoteStatus(requestingUsername, statusURI, false); err == nil {
+		} else if replyToStatus, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false); err == nil {
 			// we got the status
 			status.InReplyToID = replyToStatus.ID
 			status.InReplyTo = replyToStatus

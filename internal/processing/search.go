@@ -19,6 +19,7 @@
 package processing
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -32,7 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
+func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":  "SearchGet",
 		"query": searchQuery.Query,
@@ -54,7 +55,7 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	// check if the query is something like @whatever_username@example.org -- this means it's a remote account
 	if !foundOne && util.IsMention(searchQuery.Query) {
 		l.Debug("search term is a mention, looking it up...")
-		foundAccount, err := p.searchAccountByMention(authed, searchQuery.Query, searchQuery.Resolve)
+		foundAccount, err := p.searchAccountByMention(ctx, authed, searchQuery.Query, searchQuery.Resolve)
 		if err == nil && foundAccount != nil {
 			foundAccounts = append(foundAccounts, foundAccount)
 			foundOne = true
@@ -65,14 +66,14 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	// check if the query is a URI and just do a lookup for that, straight up
 	if uri, err := url.Parse(query); err == nil && !foundOne {
 		// 1. check if it's a status
-		if foundStatus, err := p.searchStatusByURI(authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
+		if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
 			foundStatuses = append(foundStatuses, foundStatus)
 			foundOne = true
 			l.Debug("got a status by searching by URI")
 		}
 
 		// 2. check if it's an account
-		if foundAccount, err := p.searchAccountByURI(authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
+		if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
 			foundAccounts = append(foundAccounts, foundAccount)
 			foundOne = true
 			l.Debug("got an account by searching by URI")
@@ -90,20 +91,20 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	*/
 	for _, foundAccount := range foundAccounts {
 		// make sure there's no block in either direction between the account and the requester
-		if blocked, err := p.db.IsBlocked(authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
+		if blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
 			// all good, convert it and add it to the results
-			if acctMasto, err := p.tc.AccountToMastoPublic(foundAccount); err == nil && acctMasto != nil {
+			if acctMasto, err := p.tc.AccountToMastoPublic(ctx, foundAccount); err == nil && acctMasto != nil {
 				results.Accounts = append(results.Accounts, *acctMasto)
 			}
 		}
 	}
 
 	for _, foundStatus := range foundStatuses {
-		if visible, err := p.filter.StatusVisible(foundStatus, authed.Account); !visible || err != nil {
+		if visible, err := p.filter.StatusVisible(ctx, foundStatus, authed.Account); !visible || err != nil {
 			continue
 		}
 
-		statusMasto, err := p.tc.StatusToMasto(foundStatus, authed.Account)
+		statusMasto, err := p.tc.StatusToMasto(ctx, foundStatus, authed.Account)
 		if err != nil {
 			continue
 		}
@@ -114,24 +115,24 @@ func (p *processor) SearchGet(authed *oauth.Auth, searchQuery *apimodel.SearchQu
 	return results, nil
 }
 
-func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
+func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
 	l := p.log.WithFields(logrus.Fields{
 		"func":    "searchStatusByURI",
 		"uri":     uri.String(),
 		"resolve": resolve,
 	})
 
-	if maybeStatus, err := p.db.GetStatusByURI(uri.String()); err == nil {
+	if maybeStatus, err := p.db.GetStatusByURI(ctx, uri.String()); err == nil {
 		return maybeStatus, nil
-	} else if maybeStatus, err := p.db.GetStatusByURL(uri.String()); err == nil {
+	} else if maybeStatus, err := p.db.GetStatusByURL(ctx, uri.String()); err == nil {
 		return maybeStatus, nil
 	}
 
 	// we don't have it locally so dereference it if we're allowed to
 	if resolve {
-		status, _, _, err := p.federator.GetRemoteStatus(authed.Account.Username, uri, true)
+		status, _, _, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true)
 		if err == nil {
-			if err := p.federator.DereferenceRemoteThread(authed.Account.Username, uri); err != nil {
+			if err := p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri); err != nil {
 				// try to deref the thread while we're here
 				l.Debugf("searchStatusByURI: error dereferencing remote thread: %s", err)
 			}
@@ -141,16 +142,16 @@ func (p *processor) searchStatusByURI(authed *oauth.Auth, uri *url.URL, resolve 
 	return nil, nil
 }
 
-func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
-	if maybeAccount, err := p.db.GetAccountByURI(uri.String()); err == nil {
+func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Account, error) {
+	if maybeAccount, err := p.db.GetAccountByURI(ctx, uri.String()); err == nil {
 		return maybeAccount, nil
-	} else if maybeAccount, err := p.db.GetAccountByURL(uri.String()); err == nil {
+	} else if maybeAccount, err := p.db.GetAccountByURL(ctx, uri.String()); err == nil {
 		return maybeAccount, nil
 	}
 
 	if resolve {
 		// we don't have it locally so try and dereference it
-		account, _, err := p.federator.GetRemoteAccount(authed.Account.Username, uri, true)
+		account, _, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, uri, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
 		}
@@ -159,7 +160,7 @@ func (p *processor) searchAccountByURI(authed *oauth.Auth, uri *url.URL, resolve
 	return nil, nil
 }
 
-func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, resolve bool) (*gtsmodel.Account, error) {
+func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, mention string, resolve bool) (*gtsmodel.Account, error) {
 	// query is for a remote account
 	username, domain, err := util.ExtractMentionParts(mention)
 	if err != nil {
@@ -169,7 +170,7 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
 	if domain == p.config.Host {
-		maybeAcct, err = p.db.GetLocalAccountByUsername(username)
+		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
 		}
@@ -181,7 +182,7 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 		{Key: "username", Value: username, CaseInsensitive: true},
 		{Key: "domain", Value: domain, CaseInsensitive: true},
 	}
-	err = p.db.GetWhere(where, maybeAcct)
+	err = p.db.GetWhere(ctx, where, maybeAcct)
 	if err == nil {
 		// we've got it stored locally already!
 		return maybeAcct, nil
@@ -197,14 +198,14 @@ func (p *processor) searchAccountByMention(authed *oauth.Auth, mention string, r
 		// we're allowed to resolve it so let's try
 
 		// first we need to webfinger the remote account to convert the username and domain into the activitypub URI for the account
-		acctURI, err := p.federator.FingerRemoteAccount(authed.Account.Username, username, domain)
+		acctURI, err := p.federator.FingerRemoteAccount(ctx, authed.Account.Username, username, domain)
 		if err != nil {
 			// something went wrong doing the webfinger lookup so we can't process the request
 			return nil, fmt.Errorf("searchAccountByMention: error fingering remote account with username %s and domain %s: %s", username, domain, err)
 		}
 
 		// we don't have it locally so try and dereference it
-		account, _, err := p.federator.GetRemoteAccount(authed.Account.Username, acctURI, true)
+		account, _, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error dereferencing account with uri %s: %s", acctURI.String(), err)
 		}

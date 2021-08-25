@@ -19,6 +19,8 @@
 package processing
 
 import (
+	"context"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -26,8 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	frs, err := p.db.GetAccountFollowRequests(auth.Account.ID)
+func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
+	frs, err := p.db.GetAccountFollowRequests(ctx, auth.Account.ID)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -36,11 +38,15 @@ func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gts
 
 	accts := []apimodel.Account{}
 	for _, fr := range frs {
-		acct := &gtsmodel.Account{}
-		if err := p.db.GetByID(fr.AccountID, acct); err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
+		if fr.Account == nil {
+			frAcct, err := p.db.GetAccountByID(ctx, fr.AccountID)
+			if err != nil {
+				return nil, gtserror.NewErrorInternalError(err)
+			}
+			fr.Account = frAcct
 		}
-		mastoAcct, err := p.tc.AccountToMastoPublic(acct)
+
+		mastoAcct, err := p.tc.AccountToMastoPublic(ctx, fr.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -49,36 +55,42 @@ func (p *processor) FollowRequestsGet(auth *oauth.Auth) ([]apimodel.Account, gts
 	return accts, nil
 }
 
-func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
-	follow, err := p.db.AcceptFollowRequest(accountID, auth.Account.ID)
+func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	follow, err := p.db.AcceptFollowRequest(ctx, accountID, auth.Account.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	originAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(follow.AccountID, originAccount); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if follow.Account == nil {
+		followAccount, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		follow.Account = followAccount
 	}
 
-	targetAccount := &gtsmodel.Account{}
-	if err := p.db.GetByID(follow.TargetAccountID, targetAccount); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if follow.TargetAccount == nil {
+		followTargetAccount, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		follow.TargetAccount = followTargetAccount
 	}
 
 	p.fromClientAPI <- gtsmodel.FromClientAPI{
 		APObjectType:   gtsmodel.ActivityStreamsFollow,
 		APActivityType: gtsmodel.ActivityStreamsAccept,
 		GTSModel:       follow,
-		OriginAccount:  originAccount,
-		TargetAccount:  targetAccount,
+		OriginAccount:  follow.Account,
+		TargetAccount:  follow.TargetAccount,
 	}
 
-	gtsR, err := p.db.GetRelationship(auth.Account.ID, accountID)
+	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	r, err := p.tc.RelationshipToMasto(gtsR)
+	r, err := p.tc.RelationshipToMasto(ctx, gtsR)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -86,6 +98,6 @@ func (p *processor) FollowRequestAccept(auth *oauth.Auth, accountID string) (*ap
 	return r, nil
 }
 
-func (p *processor) FollowRequestDeny(auth *oauth.Auth) gtserror.WithCode {
+func (p *processor) FollowRequestDeny(ctx context.Context, auth *oauth.Auth) gtserror.WithCode {
 	return nil
 }

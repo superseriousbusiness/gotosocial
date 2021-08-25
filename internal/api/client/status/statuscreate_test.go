@@ -19,6 +19,7 @@
 package status_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -82,7 +83,7 @@ https://docs.gotosocial.org/en/latest/user_guide/posts/#links
 func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -128,7 +129,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	}, statusReply.Tags[0])
 
 	gtsTag := &gtsmodel.Tag{}
-	err = suite.db.GetWhere([]db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
+	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	assert.NoError(suite.T(), err)
 	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
 }
@@ -136,7 +137,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -171,7 +172,7 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -212,7 +213,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 // Try to reply to a status that doesn't exist
 func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -243,7 +244,7 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 // Post a reply to the status of a local user that allows replies.
 func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	// setup
 	recorder := httptest.NewRecorder()
@@ -283,7 +284,7 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 // Take a media file which is currently not associated with a status, and attach it to a new status.
 func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.TokenToOauthToken(t)
+	oauthToken := oauth.DBTokenToToken(t)
 
 	attachment := suite.testAttachments["local_account_1_unattached_1"]
 
@@ -322,12 +323,11 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	assert.Len(suite.T(), statusResponse.MediaAttachments, 1)
 
 	// get the updated media attachment from the database
-	gtsAttachment := &gtsmodel.MediaAttachment{}
-	err = suite.db.GetByID(statusResponse.MediaAttachments[0].ID, gtsAttachment)
+	gtsAttachment, err := suite.db.GetAttachmentByID(context.Background(), statusResponse.MediaAttachments[0].ID)
 	assert.NoError(suite.T(), err)
 
 	// convert it to a masto attachment
-	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(gtsAttachment)
+	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(context.Background(), gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// compare it with what we have now

@@ -60,7 +60,7 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 //
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
-func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, err error) {
+func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":   "NewID",
@@ -98,7 +98,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 				// take the IRI of the first actor we can find (there should only be one)
 				if iter.IsIRI() {
 					// if there's an error here, just use the fallback behavior -- we don't need to return an error here
-					if actorAccount, err := f.db.GetAccountByURI(iter.GetIRI().String()); err == nil {
+					if actorAccount, err := f.db.GetAccountByURI(ctx, iter.GetIRI().String()); err == nil {
 						newID, err := id.NewRandomULID()
 						if err != nil {
 							return nil, err
@@ -199,7 +199,7 @@ func (f *federatingDB) NewID(c context.Context, t vocab.Type) (idURL *url.URL, e
 // ActorForOutbox fetches the actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":     "ActorForOutbox",
@@ -212,7 +212,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere([]db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
+	if err := f.db.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
 		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
 		}
@@ -224,7 +224,7 @@ func (f *federatingDB) ActorForOutbox(c context.Context, outboxIRI *url.URL) (ac
 // ActorForInbox fetches the actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func":     "ActorForInbox",
@@ -237,7 +237,7 @@ func (f *federatingDB) ActorForInbox(c context.Context, inboxIRI *url.URL) (acto
 		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
 	}
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere([]db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
+	if err := f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
 		if err == db.ErrNoEntries {
 			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
 		}

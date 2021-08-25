@@ -23,14 +23,14 @@ import "time"
 // EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
 type EmailDomainBlock struct {
 	// ID of this block in the database
-	ID string `pg:"type:CHAR(26),pk,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
-	Domain string `pg:",notnull"`
+	Domain string `bun:",notnull"`
 	// When was this block created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this block updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Account ID of the creator of this block
-	CreatedByAccountID string   `pg:"type:CHAR(26),notnull"`
-	CreatedByAccount   *Account `pg:"rel:belongs-to"`
+	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
+	CreatedByAccount   *Account `bun:"rel:belongs-to"`
 }

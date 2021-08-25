@@ -101,7 +101,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 
 	form.IP = signUpIP
 
-	ti, err := m.processor.AccountCreate(authed, form)
+	ti, err := m.processor.AccountCreate(c.Request.Context(), authed, form)
 	if err != nil {
 		l.Errorf("internal server error while creating new account: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

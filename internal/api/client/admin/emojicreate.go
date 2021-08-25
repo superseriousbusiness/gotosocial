@@ -111,7 +111,7 @@ func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoEmoji, err := m.processor.AdminEmojiCreate(authed, form)
+	mastoEmoji, err := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
 	if err != nil {
 		l.Debugf("error creating emoji: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

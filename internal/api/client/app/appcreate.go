@@ -101,7 +101,7 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoApp, err := m.processor.AppCreate(authed, form)
+	mastoApp, err := m.processor.AppCreate(c.Request.Context(), authed, form)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

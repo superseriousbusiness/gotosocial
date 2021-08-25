@@ -35,7 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/pg"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
@@ -79,28 +79,28 @@ var models []interface{} = []interface{}{
 
 // Start creates and starts a gotosocial server
 var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbService, err := pg.NewPostgresService(ctx, c, log)
+	dbService, err := bundb.NewBunDBService(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
 	for _, m := range models {
-		if err := dbService.CreateTable(m); err != nil {
+		if err := dbService.CreateTable(ctx, m); err != nil {
 			return fmt.Errorf("table creation error: %s", err)
 		}
 	}
 
-	if err := dbService.CreateInstanceAccount(); err != nil {
+	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
 	}
 
-	if err := dbService.CreateInstanceInstance(); err != nil {
+	if err := dbService.CreateInstanceInstance(ctx); err != nil {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
 	federatingDB := federatingdb.New(dbService, c, log)
 
-	router, err := router.New(c, dbService, log)
+	router, err := router.New(ctx, c, dbService, log)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
@@ -120,7 +120,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter, mediaHandler)
 	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storageBackend, timelineManager, dbService, log)
-	if err := processor.Start(); err != nil {
+	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 

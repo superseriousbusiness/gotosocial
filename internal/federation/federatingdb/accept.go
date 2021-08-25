@@ -86,7 +86,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			if util.IsFollowPath(acceptedObjectIRI) {
 				// ACCEPT FOLLOW
 				gtsFollowRequest := &gtsmodel.FollowRequest{}
-				if err := f.db.GetWhere([]db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
+				if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {
 					return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", acceptedObjectIRI.String(), err)
 				}
 
@@ -94,7 +94,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				if gtsFollowRequest.AccountID != targetAcct.ID {
 					return errors.New("ACCEPT: follow object account and inbox account were not the same")
 				}
-				follow, err := f.db.AcceptFollowRequest(gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
+				follow, err := f.db.AcceptFollowRequest(ctx, gtsFollowRequest.AccountID, gtsFollowRequest.TargetAccountID)
 				if err != nil {
 					return err
 				}
@@ -123,7 +123,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return errors.New("ACCEPT: couldn't parse follow into vocab.ActivityStreamsFollow")
 			}
 			// convert the follow to something we can understand
-			gtsFollow, err := f.typeConverter.ASFollowToFollow(asFollow)
+			gtsFollow, err := f.typeConverter.ASFollowToFollow(ctx, asFollow)
 			if err != nil {
 				return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
 			}
@@ -131,7 +131,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			if gtsFollow.AccountID != targetAcct.ID {
 				return errors.New("ACCEPT: follow object account and inbox account were not the same")
 			}
-			follow, err := f.db.AcceptFollowRequest(gtsFollow.AccountID, gtsFollow.TargetAccountID)
+			follow, err := f.db.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
 			if err != nil {
 				return err
 			}

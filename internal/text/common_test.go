@@ -19,6 +19,7 @@
 package text_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -87,7 +88,7 @@ func (suite *CommonTestSuite) TestReplaceMentions() {
 		suite.testMentions["zork_mention_foss_satan"],
 	}
 
-	f := suite.formatter.ReplaceMentions(replaceMentionsString, foundMentions)
+	f := suite.formatter.ReplaceMentions(context.Background(), replaceMentionsString, foundMentions)
 	assert.Equal(suite.T(), replaceMentionsExpected, f)
 }
 
@@ -96,7 +97,7 @@ func (suite *CommonTestSuite) TestReplaceHashtags() {
 		suite.testTags["Hashtag"],
 	}
 
-	f := suite.formatter.ReplaceTags(replaceMentionsString, foundTags)
+	f := suite.formatter.ReplaceTags(context.Background(), replaceMentionsString, foundTags)
 
 	assert.Equal(suite.T(), replaceHashtagsExpected, f)
 }
@@ -106,7 +107,7 @@ func (suite *CommonTestSuite) TestReplaceHashtagsAfterReplaceMentions() {
 		suite.testTags["Hashtag"],
 	}
 
-	f := suite.formatter.ReplaceTags(replaceMentionsExpected, foundTags)
+	f := suite.formatter.ReplaceTags(context.Background(), replaceMentionsExpected, foundTags)
 
 	assert.Equal(suite.T(), replaceHashtagsAfterMentionsExpected, f)
 }

@@ -23,20 +23,20 @@ import "time"
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
 	// ID of this notification in the database
-	ID string `pg:"type:CHAR(26),pk,notnull"`
+	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// Type of this notification
-	NotificationType NotificationType `pg:",notnull"`
+	NotificationType NotificationType `bun:",notnull"`
 	// Creation time of this notification
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Which account does this notification target (ie., who will receive the notification?)
-	TargetAccountID string   `pg:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `pg:"rel:has-one"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Which account performed the action that created this notification?
-	OriginAccountID string   `pg:"type:CHAR(26),notnull"`
-	OriginAccount   *Account `pg:"rel:has-one"`
+	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
+	OriginAccount   *Account `bun:"rel:belongs-to"`
 	// If the notification pertains to a status, what is the database ID of that status?
-	StatusID string  `pg:"type:CHAR(26)"`
-	Status   *Status `pg:"rel:has-one"`
+	StatusID string  `bun:"type:CHAR(26),nullzero"`
+	Status   *Status `bun:"rel:belongs-to"`
 	// Has this notification been read already?
 	Read bool
 }

@@ -136,7 +136,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			accountable = i
 		}
 
-		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(accountable, true)
+		updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, true)
 		if err != nil {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}
@@ -152,7 +152,8 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		}
 
 		updatedAcct.ID = requestingAcct.ID // set this here so the db will update properly instead of trying to PUT this and getting constraint issues
-		if err := f.db.UpdateByID(requestingAcct.ID, updatedAcct); err != nil {
+		updatedAcct, err = f.db.UpdateAccount(ctx, updatedAcct)
+		if err != nil {
 			return fmt.Errorf("UPDATE: database error inserting updated account: %s", err)
 		}
 

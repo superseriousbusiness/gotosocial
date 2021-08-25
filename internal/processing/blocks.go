@@ -19,6 +19,7 @@
 package processing
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -28,8 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *processor) BlocksGet(authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode) {
-	accounts, nextMaxID, prevMinID, err := p.db.GetAccountBlocks(authed.Account.ID, maxID, sinceID, limit)
+func (p *processor) BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode) {
+	accounts, nextMaxID, prevMinID, err := p.db.GetAccountBlocks(ctx, authed.Account.ID, maxID, sinceID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries
@@ -43,7 +44,7 @@ func (p *processor) BlocksGet(authed *oauth.Auth, maxID string, sinceID string, 
 
 	apiAccounts := []*apimodel.Account{}
 	for _, a := range accounts {
-		apiAccount, err := p.tc.AccountToMastoBlocked(a)
+		apiAccount, err := p.tc.AccountToMastoBlocked(ctx, a)
 		if err != nil {
 			continue
 		}

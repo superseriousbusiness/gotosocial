@@ -19,6 +19,7 @@
 package media
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -29,9 +30,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-func (p *processor) Update(account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	attachment := &gtsmodel.MediaAttachment{}
-	if err := p.db.GetByID(mediaAttachmentID, attachment); err != nil {
+func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode) {
+	attachment, err := p.db.GetAttachmentByID(ctx, mediaAttachmentID)
+	if err != nil {
 		if err == db.ErrNoEntries {
 			// attachment doesn't exist
 			return nil, gtserror.NewErrorNotFound(errors.New("attachment doesn't exist in the db"))
@@ -45,7 +46,7 @@ func (p *processor) Update(account *gtsmodel.Account, mediaAttachmentID string, 
 
 	if form.Description != nil {
 		attachment.Description = text.RemoveHTML(*form.Description)
-		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
+		if err := p.db.UpdateByID(ctx, mediaAttachmentID, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
 		}
 	}
@@ -57,12 +58,12 @@ func (p *processor) Update(account *gtsmodel.Account, mediaAttachmentID string, 
 		}
 		attachment.FileMeta.Focus.X = focusx
 		attachment.FileMeta.Focus.Y = focusy
-		if err := p.db.UpdateByID(mediaAttachmentID, attachment); err != nil {
+		if err := p.db.UpdateByID(ctx, mediaAttachmentID, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
 		}
 	}
 
-	a, err := p.tc.AttachmentToMasto(attachment)
+	a, err := p.tc.AttachmentToMasto(ctx, attachment)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}

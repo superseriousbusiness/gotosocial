@@ -19,6 +19,7 @@
 package typeutils
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -28,9 +29,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account, error) {
+func (c *converter) AccountToMastoSensitive(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
-	mastoAccount, err := c.AccountToMastoPublic(a)
+	mastoAccount, err := c.AccountToMastoPublic(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +39,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	frs, err := c.db.GetAccountFollowRequests(a.ID)
+	frs, err := c.db.GetAccountFollowRequests(ctx, a.ID)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			return nil, fmt.Errorf("error getting follow requests: %s", err)
@@ -50,7 +51,7 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 	}
 
 	mastoAccount.Source = &model.Source{
-		Privacy:             c.VisToMasto(a.Privacy),
+		Privacy:             c.VisToMasto(ctx, a.Privacy),
 		Sensitive:           a.Sensitive,
 		Language:            a.Language,
 		Note:                a.Note,
@@ -61,7 +62,11 @@ func (c *converter) AccountToMastoSensitive(a *gtsmodel.Account) (*model.Account
 	return mastoAccount, nil
 }
 
-func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, error) {
+func (c *converter) AccountToMastoPublic(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
+	if a == nil {
+		return nil, fmt.Errorf("given account was nil")
+	}
+
 	// first check if we have this account in our frontEnd cache
 	if accountI, err := c.frontendCache.Fetch(a.ID); err == nil {
 		if account, ok := accountI.(*model.Account); ok {
@@ -71,26 +76,26 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	}
 
 	// count followers
-	followersCount, err := c.db.CountAccountFollowedBy(a.ID, false)
+	followersCount, err := c.db.CountAccountFollowedBy(ctx, a.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("error counting followers: %s", err)
 	}
 
 	// count following
-	followingCount, err := c.db.CountAccountFollows(a.ID, false)
+	followingCount, err := c.db.CountAccountFollows(ctx, a.ID, false)
 	if err != nil {
 		return nil, fmt.Errorf("error counting following: %s", err)
 	}
 
 	// count statuses
-	statusesCount, err := c.db.CountAccountStatuses(a.ID)
+	statusesCount, err := c.db.CountAccountStatuses(ctx, a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting statuses: %s", err)
 	}
 
 	// check when the last status was
 	var lastStatusAt string
-	lastPosted, err := c.db.GetAccountLastPosted(a.ID)
+	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID)
 	if err == nil && !lastPosted.IsZero() {
 		lastStatusAt = lastPosted.Format(time.RFC3339)
 	}
@@ -101,7 +106,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	if a.AvatarMediaAttachmentID != "" {
 		// make sure avi is pinned to this account
 		if a.AvatarMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(a.AvatarMediaAttachmentID)
+			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err != nil {
 				return nil, fmt.Errorf("error retrieving avatar: %s", err)
 			}
@@ -116,7 +121,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	if a.HeaderMediaAttachmentID != "" {
 		// make sure header is pinned to this account
 		if a.HeaderMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(a.HeaderMediaAttachmentID)
+			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err != nil {
 				return nil, fmt.Errorf("error retrieving avatar: %s", err)
 			}
@@ -187,7 +192,7 @@ func (c *converter) AccountToMastoPublic(a *gtsmodel.Account) (*model.Account, e
 	return accountFrontend, nil
 }
 
-func (c *converter) AccountToMastoBlocked(a *gtsmodel.Account) (*model.Account, error) {
+func (c *converter) AccountToMastoBlocked(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
 	var acct string
 	if a.Domain != "" {
 		// this is a remote user
@@ -214,7 +219,7 @@ func (c *converter) AccountToMastoBlocked(a *gtsmodel.Account) (*model.Account, 
 	}, nil
 }
 
-func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*model.Application, error) {
+func (c *converter) AppToMastoSensitive(ctx context.Context, a *gtsmodel.Application) (*model.Application, error) {
 	return &model.Application{
 		ID:           a.ID,
 		Name:         a.Name,
@@ -226,14 +231,14 @@ func (c *converter) AppToMastoSensitive(a *gtsmodel.Application) (*model.Applica
 	}, nil
 }
 
-func (c *converter) AppToMastoPublic(a *gtsmodel.Application) (*model.Application, error) {
+func (c *converter) AppToMastoPublic(ctx context.Context, a *gtsmodel.Application) (*model.Application, error) {
 	return &model.Application{
 		Name:    a.Name,
 		Website: a.Website,
 	}, nil
 }
 
-func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (model.Attachment, error) {
+func (c *converter) AttachmentToMasto(ctx context.Context, a *gtsmodel.MediaAttachment) (model.Attachment, error) {
 	return model.Attachment{
 		ID:               a.ID,
 		Type:             strings.ToLower(string(a.Type)),
@@ -264,33 +269,36 @@ func (c *converter) AttachmentToMasto(a *gtsmodel.MediaAttachment) (model.Attach
 	}, nil
 }
 
-func (c *converter) MentionToMasto(m *gtsmodel.Mention) (model.Mention, error) {
-	target := &gtsmodel.Account{}
-	if err := c.db.GetByID(m.TargetAccountID, target); err != nil {
-		return model.Mention{}, err
+func (c *converter) MentionToMasto(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error) {
+	if m.TargetAccount == nil {
+		targetAccount, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+		if err != nil {
+			return model.Mention{}, err
+		}
+		m.TargetAccount = targetAccount
 	}
 
 	var local bool
-	if target.Domain == "" {
+	if m.TargetAccount.Domain == "" {
 		local = true
 	}
 
 	var acct string
 	if local {
-		acct = target.Username
+		acct = m.TargetAccount.Username
 	} else {
-		acct = fmt.Sprintf("%s@%s", target.Username, target.Domain)
+		acct = fmt.Sprintf("%s@%s", m.TargetAccount.Username, m.TargetAccount.Domain)
 	}
 
 	return model.Mention{
-		ID:       target.ID,
-		Username: target.Username,
-		URL:      target.URL,
+		ID:       m.TargetAccount.ID,
+		Username: m.TargetAccount.Username,
+		URL:      m.TargetAccount.URL,
 		Acct:     acct,
 	}, nil
 }
 
-func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (model.Emoji, error) {
+func (c *converter) EmojiToMasto(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error) {
 	return model.Emoji{
 		Shortcode:       e.Shortcode,
 		URL:             e.ImageURL,
@@ -300,27 +308,25 @@ func (c *converter) EmojiToMasto(e *gtsmodel.Emoji) (model.Emoji, error) {
 	}, nil
 }
 
-func (c *converter) TagToMasto(t *gtsmodel.Tag) (model.Tag, error) {
-	tagURL := fmt.Sprintf("%s://%s/tags/%s", c.config.Protocol, c.config.Host, t.Name)
-
+func (c *converter) TagToMasto(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error) {
 	return model.Tag{
 		Name: t.Name,
-		URL:  tagURL, // we don't serve URLs with collections of tagged statuses (FOR NOW) so this is purely for mastodon compatibility ¯\_(ツ)_/¯
+		URL:  t.URL,
 	}, nil
 }
 
-func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
-	repliesCount, err := c.db.CountStatusReplies(s)
+func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
+	repliesCount, err := c.db.CountStatusReplies(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %s", err)
 	}
 
-	reblogsCount, err := c.db.CountStatusReblogs(s)
+	reblogsCount, err := c.db.CountStatusReblogs(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting reblogs: %s", err)
 	}
 
-	favesCount, err := c.db.CountStatusFaves(s)
+	favesCount, err := c.db.CountStatusFaves(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting faves: %s", err)
 	}
@@ -330,8 +336,8 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the boosted status might have been set on this struct already so check first before doing db calls
 		if s.BoostOf == nil {
 			// it's not set so fetch it from the db
-			bs := &gtsmodel.Status{}
-			if err := c.db.GetByID(s.BoostOfID, bs); err != nil {
+			bs, err := c.db.GetStatusByID(ctx, s.BoostOfID)
+			if err != nil {
 				return nil, fmt.Errorf("error getting boosted status with id %s: %s", s.BoostOfID, err)
 			}
 			s.BoostOf = bs
@@ -340,15 +346,15 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the boosted account might have been set on this struct already or passed as a param so check first before doing db calls
 		if s.BoostOfAccount == nil {
 			// it's not set so fetch it from the db
-			ba := &gtsmodel.Account{}
-			if err := c.db.GetByID(s.BoostOf.AccountID, ba); err != nil {
+			ba, err := c.db.GetAccountByID(ctx, s.BoostOf.AccountID)
+			if err != nil {
 				return nil, fmt.Errorf("error getting boosted account %s from status with id %s: %s", s.BoostOf.AccountID, s.BoostOfID, err)
 			}
 			s.BoostOfAccount = ba
 			s.BoostOf.Account = ba
 		}
 
-		mastoRebloggedStatus, err = c.StatusToMasto(s.BoostOf, requestingAccount)
+		mastoRebloggedStatus, err = c.StatusToMasto(ctx, s.BoostOf, requestingAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error converting boosted status to mastotype: %s", err)
 		}
@@ -357,24 +363,24 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	var mastoApplication *model.Application
 	if s.CreatedWithApplicationID != "" {
 		gtsApplication := &gtsmodel.Application{}
-		if err := c.db.GetByID(s.CreatedWithApplicationID, gtsApplication); err != nil {
+		if err := c.db.GetByID(ctx, s.CreatedWithApplicationID, gtsApplication); err != nil {
 			return nil, fmt.Errorf("error fetching application used to create status: %s", err)
 		}
-		mastoApplication, err = c.AppToMastoPublic(gtsApplication)
+		mastoApplication, err = c.AppToMastoPublic(ctx, gtsApplication)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing application used to create status: %s", err)
 		}
 	}
 
 	if s.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(s.AccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(ctx, s.AccountID)
+		if err != nil {
 			return nil, fmt.Errorf("error getting status author: %s", err)
 		}
 		s.Account = a
 	}
 
-	mastoAuthorAccount, err := c.AccountToMastoPublic(s.Account)
+	mastoAuthorAccount, err := c.AccountToMastoPublic(ctx, s.Account)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing account of status author: %s", err)
 	}
@@ -384,7 +390,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	// if so, we can directly convert the gts attachments into masto ones
 	if s.Attachments != nil {
 		for _, gtsAttachment := range s.Attachments {
-			mastoAttachment, err := c.AttachmentToMasto(gtsAttachment)
+			mastoAttachment, err := c.AttachmentToMasto(ctx, gtsAttachment)
 			if err != nil {
 				return nil, fmt.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
 			}
@@ -393,14 +399,14 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts attachments on it, but it does have attachment IDs
 		// in this case, we need to pull the gts attachments from the db to convert them into masto ones
 	} else {
-		for _, a := range s.AttachmentIDs {
-			gtsAttachment := &gtsmodel.MediaAttachment{}
-			if err := c.db.GetByID(a, gtsAttachment); err != nil {
-				return nil, fmt.Errorf("error getting attachment with id %s: %s", a, err)
-			}
-			mastoAttachment, err := c.AttachmentToMasto(gtsAttachment)
+		for _, aID := range s.AttachmentIDs {
+			gtsAttachment, err := c.db.GetAttachmentByID(ctx, aID)
 			if err != nil {
-				return nil, fmt.Errorf("error converting attachment with id %s: %s", a, err)
+				return nil, fmt.Errorf("error getting attachment with id %s: %s", aID, err)
+			}
+			mastoAttachment, err := c.AttachmentToMasto(ctx, gtsAttachment)
+			if err != nil {
+				return nil, fmt.Errorf("error converting attachment with id %s: %s", aID, err)
 			}
 			mastoAttachments = append(mastoAttachments, mastoAttachment)
 		}
@@ -411,7 +417,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	// if so, we can directly convert the gts mentions into masto ones
 	if s.Mentions != nil {
 		for _, gtsMention := range s.Mentions {
-			mastoMention, err := c.MentionToMasto(gtsMention)
+			mastoMention, err := c.MentionToMasto(ctx, gtsMention)
 			if err != nil {
 				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
 			}
@@ -420,12 +426,12 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		// the status doesn't have gts mentions on it, but it does have mention IDs
 		// in this case, we need to pull the gts mentions from the db to convert them into masto ones
 	} else {
-		for _, m := range s.MentionIDs {
-			gtsMention := &gtsmodel.Mention{}
-			if err := c.db.GetByID(m, gtsMention); err != nil {
-				return nil, fmt.Errorf("error getting mention with id %s: %s", m, err)
+		for _, mID := range s.MentionIDs {
+			gtsMention, err := c.db.GetMention(ctx, mID)
+			if err != nil {
+				return nil, fmt.Errorf("error getting mention with id %s: %s", mID, err)
 			}
-			mastoMention, err := c.MentionToMasto(gtsMention)
+			mastoMention, err := c.MentionToMasto(ctx, gtsMention)
 			if err != nil {
 				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
 			}
@@ -438,7 +444,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	// if so, we can directly convert the gts tags into masto ones
 	if s.Tags != nil {
 		for _, gtsTag := range s.Tags {
-			mastoTag, err := c.TagToMasto(gtsTag)
+			mastoTag, err := c.TagToMasto(ctx, gtsTag)
 			if err != nil {
 				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
 			}
@@ -449,10 +455,10 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	} else {
 		for _, t := range s.TagIDs {
 			gtsTag := &gtsmodel.Tag{}
-			if err := c.db.GetByID(t, gtsTag); err != nil {
+			if err := c.db.GetByID(ctx, t, gtsTag); err != nil {
 				return nil, fmt.Errorf("error getting tag with id %s: %s", t, err)
 			}
-			mastoTag, err := c.TagToMasto(gtsTag)
+			mastoTag, err := c.TagToMasto(ctx, gtsTag)
 			if err != nil {
 				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
 			}
@@ -465,7 +471,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	// if so, we can directly convert the gts emojis into masto ones
 	if s.Emojis != nil {
 		for _, gtsEmoji := range s.Emojis {
-			mastoEmoji, err := c.EmojiToMasto(gtsEmoji)
+			mastoEmoji, err := c.EmojiToMasto(ctx, gtsEmoji)
 			if err != nil {
 				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
 			}
@@ -476,10 +482,10 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	} else {
 		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
-			if err := c.db.GetByID(e, gtsEmoji); err != nil {
+			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
 				return nil, fmt.Errorf("error getting emoji with id %s: %s", e, err)
 			}
-			mastoEmoji, err := c.EmojiToMasto(gtsEmoji)
+			mastoEmoji, err := c.EmojiToMasto(ctx, gtsEmoji)
 			if err != nil {
 				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
 			}
@@ -491,7 +497,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 	var mastoPoll *model.Poll
 
 	statusInteractions := &statusInteractions{}
-	si, err := c.interactionsWithStatusForAccount(s, requestingAccount)
+	si, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 	if err == nil {
 		statusInteractions = si
 	}
@@ -503,7 +509,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 		InReplyToAccountID: s.InReplyToAccountID,
 		Sensitive:          s.Sensitive,
 		SpoilerText:        s.ContentWarning,
-		Visibility:         c.VisToMasto(s.Visibility),
+		Visibility:         c.VisToMasto(ctx, s.Visibility),
 		Language:           s.Language,
 		URI:                s.URI,
 		URL:                s.URL,
@@ -535,7 +541,7 @@ func (c *converter) StatusToMasto(s *gtsmodel.Status, requestingAccount *gtsmode
 }
 
 // VisToMasto converts a gts visibility into its mastodon equivalent
-func (c *converter) VisToMasto(m gtsmodel.Visibility) model.Visibility {
+func (c *converter) VisToMasto(ctx context.Context, m gtsmodel.Visibility) model.Visibility {
 	switch m {
 	case gtsmodel.VisibilityPublic:
 		return model.VisibilityPublic
@@ -549,7 +555,7 @@ func (c *converter) VisToMasto(m gtsmodel.Visibility) model.Visibility {
 	return ""
 }
 
-func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, error) {
+func (c *converter) InstanceToMasto(ctx context.Context, i *gtsmodel.Instance) (*model.Instance, error) {
 	mi := &model.Instance{
 		URI:              i.URI,
 		Title:            i.Title,
@@ -567,17 +573,17 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 		statusCountKey := "status_count"
 		domainCountKey := "domain_count"
 
-		userCount, err := c.db.CountInstanceUsers(c.config.Host)
+		userCount, err := c.db.CountInstanceUsers(ctx, c.config.Host)
 		if err == nil {
 			mi.Stats[userCountKey] = userCount
 		}
 
-		statusCount, err := c.db.CountInstanceStatuses(c.config.Host)
+		statusCount, err := c.db.CountInstanceStatuses(ctx, c.config.Host)
 		if err == nil {
 			mi.Stats[statusCountKey] = statusCount
 		}
 
-		domainCount, err := c.db.CountInstanceDomains(c.config.Host)
+		domainCount, err := c.db.CountInstanceDomains(ctx, c.config.Host)
 		if err == nil {
 			mi.Stats[domainCountKey] = domainCount
 		}
@@ -593,7 +599,7 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 	}
 
 	// get the instance account if it exists and just skip if it doesn't
-	ia, err := c.db.GetInstanceAccount("")
+	ia, err := c.db.GetInstanceAccount(ctx, "")
 	if err == nil {
 		if ia.HeaderMediaAttachment != nil {
 			mi.Thumbnail = ia.HeaderMediaAttachment.URL
@@ -602,19 +608,22 @@ func (c *converter) InstanceToMasto(i *gtsmodel.Instance) (*model.Instance, erro
 
 	// contact account is optional but let's try to get it
 	if i.ContactAccountID != "" {
-		ia := &gtsmodel.Account{}
-		if err := c.db.GetByID(i.ContactAccountID, ia); err == nil {
-			ma, err := c.AccountToMastoPublic(ia)
+		if i.ContactAccount == nil {
+			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
 			if err == nil {
-				mi.ContactAccount = ma
+				i.ContactAccount = contactAccount
 			}
+		}
+		ma, err := c.AccountToMastoPublic(ctx, i.ContactAccount)
+		if err == nil {
+			mi.ContactAccount = ma
 		}
 	}
 
 	return mi, nil
 }
 
-func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relationship, error) {
+func (c *converter) RelationshipToMasto(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error) {
 	return &model.Relationship{
 		ID:                  r.ID,
 		Following:           r.Following,
@@ -632,9 +641,9 @@ func (c *converter) RelationshipToMasto(r *gtsmodel.Relationship) (*model.Relati
 	}, nil
 }
 
-func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notification, error) {
+func (c *converter) NotificationToMasto(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error) {
 	if n.TargetAccount == nil {
-		tAccount, err := c.db.GetAccountByID(n.TargetAccountID)
+		tAccount, err := c.db.GetAccountByID(ctx, n.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
 		}
@@ -642,14 +651,14 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 	}
 
 	if n.OriginAccount == nil {
-		ogAccount, err := c.db.GetAccountByID(n.OriginAccountID)
+		ogAccount, err := c.db.GetAccountByID(ctx, n.OriginAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
 		}
 		n.OriginAccount = ogAccount
 	}
 
-	mastoAccount, err := c.AccountToMastoPublic(n.OriginAccount)
+	mastoAccount, err := c.AccountToMastoPublic(ctx, n.OriginAccount)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationToMasto: error converting account to masto: %s", err)
 	}
@@ -657,7 +666,7 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 	var mastoStatus *model.Status
 	if n.StatusID != "" {
 		if n.Status == nil {
-			status, err := c.db.GetStatusByID(n.StatusID)
+			status, err := c.db.GetStatusByID(ctx, n.StatusID)
 			if err != nil {
 				return nil, fmt.Errorf("NotificationToMasto: error getting status with id %s from the db: %s", n.StatusID, err)
 			}
@@ -673,7 +682,7 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 		}
 
 		var err error
-		mastoStatus, err = c.StatusToMasto(n.Status, nil)
+		mastoStatus, err = c.StatusToMasto(ctx, n.Status, nil)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToMasto: error converting status to masto: %s", err)
 		}
@@ -688,7 +697,7 @@ func (c *converter) NotificationToMasto(n *gtsmodel.Notification) (*model.Notifi
 	}, nil
 }
 
-func (c *converter) DomainBlockToMasto(b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
+func (c *converter) DomainBlockToMasto(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
 
 	domainBlock := &model.DomainBlock{
 		Domain:        b.Domain,

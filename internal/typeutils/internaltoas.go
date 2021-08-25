@@ -19,6 +19,7 @@
 package typeutils
 
 import (
+	"context"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -33,7 +34,7 @@ import (
 
 // Converts a gts model account into an Activity Streams person type, following
 // the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
-func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	// first check if we have this person in our asCache already
 	if personI, err := c.asCache.Fetch(a.ID); err == nil {
 		if person, ok := personI.(vocab.ActivityStreamsPerson); ok {
@@ -213,9 +214,12 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	// icon
 	// Used as profile avatar.
 	if a.AvatarMediaAttachmentID != "" {
-		avatar := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetByID(a.AvatarMediaAttachmentID, avatar); err != nil {
-			return nil, err
+		if a.AvatarMediaAttachment == nil {
+			avatar := &gtsmodel.MediaAttachment{}
+			if err := c.db.GetByID(ctx, a.AvatarMediaAttachmentID, avatar); err != nil {
+				return nil, err
+			}
+			a.AvatarMediaAttachment = avatar
 		}
 
 		iconProperty := streams.NewActivityStreamsIconProperty()
@@ -223,11 +227,11 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 		iconImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(avatar.File.ContentType)
+		mediaType.Set(a.AvatarMediaAttachment.File.ContentType)
 		iconImage.SetActivityStreamsMediaType(mediaType)
 
 		avatarURLProperty := streams.NewActivityStreamsUrlProperty()
-		avatarURL, err := url.Parse(avatar.URL)
+		avatarURL, err := url.Parse(a.AvatarMediaAttachment.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -241,9 +245,12 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 	// image
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
-		header := &gtsmodel.MediaAttachment{}
-		if err := c.db.GetByID(a.HeaderMediaAttachmentID, header); err != nil {
-			return nil, err
+		if a.HeaderMediaAttachment == nil {
+			header := &gtsmodel.MediaAttachment{}
+			if err := c.db.GetByID(ctx, a.HeaderMediaAttachmentID, header); err != nil {
+				return nil, err
+			}
+			a.HeaderMediaAttachment = header
 		}
 
 		headerProperty := streams.NewActivityStreamsImageProperty()
@@ -251,11 +258,11 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 		headerImage := streams.NewActivityStreamsImage()
 
 		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(header.File.ContentType)
+		mediaType.Set(a.HeaderMediaAttachment.File.ContentType)
 		headerImage.SetActivityStreamsMediaType(mediaType)
 
 		headerURLProperty := streams.NewActivityStreamsUrlProperty()
-		headerURL, err := url.Parse(header.URL)
+		headerURL, err := url.Parse(a.HeaderMediaAttachment.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -278,7 +285,7 @@ func (c *converter) AccountToAS(a *gtsmodel.Account) (vocab.ActivityStreamsPerso
 // the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
 //
 // The returned account will just have the Type, Username, PublicKey, and ID properties set.
-func (c *converter) AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+func (c *converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -340,7 +347,7 @@ func (c *converter) AccountToASMinimal(a *gtsmodel.Account) (vocab.ActivityStrea
 	return person, nil
 }
 
-func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
+func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
 	// first check if we have this note in our asCache already
 	if noteI, err := c.asCache.Fetch(s.ID); err == nil {
 		if note, ok := noteI.(vocab.ActivityStreamsNote); ok {
@@ -354,7 +361,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	// check if author account is already attached to status and attach it if not
 	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
 	if s.Account == nil {
-		a, err := c.db.GetAccountByID(s.AccountID)
+		a, err := c.db.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
 		}
@@ -386,7 +393,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 		// fetch the replied status if we don't have it on hand already
 		if s.InReplyTo == nil {
 			rs := &gtsmodel.Status{}
-			if err := c.db.GetByID(s.InReplyToID, rs); err != nil {
+			if err := c.db.GetByID(ctx, s.InReplyToID, rs); err != nil {
 				return nil, fmt.Errorf("StatusToAS: error retrieving replied-to status from db: %s", err)
 			}
 			s.InReplyTo = rs
@@ -432,7 +439,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 
 	// tag -- mentions
 	for _, m := range s.Mentions {
-		asMention, err := c.MentionToAS(m)
+		asMention, err := c.MentionToAS(ctx, m)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting mention to AS mention: %s", err)
 		}
@@ -520,7 +527,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	// attachment
 	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
 	for _, a := range s.Attachments {
-		doc, err := c.AttachmentToAS(a)
+		doc, err := c.AttachmentToAS(ctx, a)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToAS: error converting attachment: %s", err)
 		}
@@ -529,7 +536,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	status.SetActivityStreamsAttachment(attachmentProp)
 
 	// replies
-	repliesCollection, err := c.StatusToASRepliesCollection(s, false)
+	repliesCollection, err := c.StatusToASRepliesCollection(ctx, s, false)
 	if err != nil {
 		return nil, fmt.Errorf("error creating repliesCollection: %s", err)
 	}
@@ -546,7 +553,7 @@ func (c *converter) StatusToAS(s *gtsmodel.Status) (vocab.ActivityStreamsNote, e
 	return status, nil
 }
 
-func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
+func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
 	// parse out the various URIs we need for this
 	// origin account (who's doing the follow)
 	originAccountURI, err := url.Parse(originAccount.URI)
@@ -592,10 +599,10 @@ func (c *converter) FollowToAS(f *gtsmodel.Follow, originAccount *gtsmodel.Accou
 	return follow, nil
 }
 
-func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
+func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
 	if m.OriginAccount == nil {
 		a := &gtsmodel.Account{}
-		if err := c.db.GetWhere([]db.Where{{Key: "target_account_id", Value: m.TargetAccountID}}, a); err != nil {
+		if err := c.db.GetWhere(ctx, []db.Where{{Key: "target_account_id", Value: m.TargetAccountID}}, a); err != nil {
 			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
 		}
 		m.OriginAccount = a
@@ -629,7 +636,7 @@ func (c *converter) MentionToAS(m *gtsmodel.Mention) (vocab.ActivityStreamsMenti
 	return mention, nil
 }
 
-func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
+func (c *converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
 	// type -- Document
 	doc := streams.NewActivityStreamsDocument()
 
@@ -674,11 +681,11 @@ func (c *converter) AttachmentToAS(a *gtsmodel.MediaAttachment) (vocab.ActivityS
 	"type": "Like"
 	}
 */
-func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
+func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
 	if f.Status == nil {
 		s := &gtsmodel.Status{}
-		if err := c.db.GetByID(f.StatusID, s); err != nil {
+		if err := c.db.GetByID(ctx, f.StatusID, s); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
 		}
 		f.Status = s
@@ -687,7 +694,7 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 	// check if the targetAccount is already pinned to this fave, and fetch it if not
 	if f.TargetAccount == nil {
 		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(f.TargetAccountID, a); err != nil {
+		if err := c.db.GetByID(ctx, f.TargetAccountID, a); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
 		}
 		f.TargetAccount = a
@@ -696,7 +703,7 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 	// check if the faving account is already pinned to this fave, and fetch it if not
 	if f.Account == nil {
 		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(f.AccountID, a); err != nil {
+		if err := c.db.GetByID(ctx, f.AccountID, a); err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
 		}
 		f.Account = a
@@ -744,11 +751,11 @@ func (c *converter) FaveToAS(f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike,
 	return like, nil
 }
 
-func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
+func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
 	if boostWrapperStatus.BoostOf == nil {
 		b := &gtsmodel.Status{}
-		if err := c.db.GetByID(boostWrapperStatus.BoostOfID, b); err != nil {
+		if err := c.db.GetByID(ctx, boostWrapperStatus.BoostOfID, b); err != nil {
 			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
 		}
 		boostWrapperStatus.BoostOf = b
@@ -828,10 +835,10 @@ func (c *converter) BoostToAS(boostWrapperStatus *gtsmodel.Status, boostingAccou
 		"type":"Block"
 	}
 */
-func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
+func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
 	if b.Account == nil {
 		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(b.AccountID, a); err != nil {
+		if err := c.db.GetByID(ctx, b.AccountID, a); err != nil {
 			return nil, fmt.Errorf("BlockToAS: error getting block account from database: %s", err)
 		}
 		b.Account = a
@@ -839,7 +846,7 @@ func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, er
 
 	if b.TargetAccount == nil {
 		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(b.TargetAccountID, a); err != nil {
+		if err := c.db.GetByID(ctx, b.TargetAccountID, a); err != nil {
 			return nil, fmt.Errorf("BlockToAS: error getting block target account from database: %s", err)
 		}
 		b.TargetAccount = a
@@ -903,7 +910,7 @@ func (c *converter) BlockToAS(b *gtsmodel.Block) (vocab.ActivityStreamsBlock, er
 		}
 	}
 */
-func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
+func (c *converter) StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
 	collectionID := fmt.Sprintf("%s/replies", status.URI)
 	collectionIDURI, err := url.Parse(collectionID)
 	if err != nil {
@@ -966,7 +973,7 @@ func (c *converter) StatusToASRepliesCollection(status *gtsmodel.Status, onlyOth
 		]
 	}
 */
-func (c *converter) StatusURIsToASRepliesPage(status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
+func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
 	collectionID := fmt.Sprintf("%s/replies", status.URI)
 
 	page := streams.NewActivityStreamsCollectionPage()

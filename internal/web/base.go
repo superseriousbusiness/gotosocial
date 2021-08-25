@@ -50,7 +50,7 @@ func (m *Module) baseHandler(c *gin.Context) {
 	l := m.log.WithField("func", "BaseGETHandler")
 	l.Trace("serving index html")
 
-	instance, err := m.processor.InstanceGet(m.config.Host)
+	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -71,7 +71,7 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	l := m.log.WithField("func", "404")
 	l.Trace("serving 404 html")
 
-	instance, err := m.processor.InstanceGet(m.config.Host)
+	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

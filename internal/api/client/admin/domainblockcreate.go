@@ -141,7 +141,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	if imp {
 		// we're importing multiple blocks
-		domainBlocks, err := m.processor.AdminDomainBlocksImport(authed, form)
+		domainBlocks, err := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
 		if err != nil {
 			l.Debugf("error importing domain blocks: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -150,7 +150,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, domainBlocks)
 	} else {
 		// we're just creating one block
-		domainBlock, err := m.processor.AdminDomainBlockCreate(authed, form)
+		domainBlock, err := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
 		if err != nil {
 			l.Debugf("error creating domain block: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -19,14 +19,16 @@
 package processing
 
 import (
+	"context"
+
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) AuthorizeStreamingRequest(accessToken string) (*gtsmodel.Account, error) {
-	return p.streamingProcessor.AuthorizeStreamingRequest(accessToken)
+func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error) {
+	return p.streamingProcessor.AuthorizeStreamingRequest(ctx, accessToken)
 }
 
-func (p *processor) OpenStreamForAccount(account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode) {
-	return p.streamingProcessor.OpenStreamForAccount(account, streamType)
+func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode) {
+	return p.streamingProcessor.OpenStreamForAccount(ctx, account, streamType)
 }

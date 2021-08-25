@@ -19,12 +19,12 @@
 package dereferencing
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -34,7 +34,7 @@ import (
 // This process involves working up and down the chain of replies, and parsing through the collections of IDs
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
-func (d *deref) DereferenceThread(username string, statusIRI *url.URL) error {
+func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":      "DereferenceThread",
 		"username":  username,
@@ -49,18 +49,18 @@ func (d *deref) DereferenceThread(username string, statusIRI *url.URL) error {
 	}
 
 	// first make sure we have this status in our db
-	_, statusable, _, err := d.GetRemoteStatus(username, statusIRI, true)
+	_, statusable, _, err := d.GetRemoteStatus(ctx, username, statusIRI, true)
 	if err != nil {
 		return fmt.Errorf("DereferenceThread: error getting status with id %s: %s", statusIRI.String(), err)
 	}
 
 	// first iterate up through ancestors, dereferencing if necessary as we go
-	if err := d.iterateAncestors(username, *statusIRI); err != nil {
+	if err := d.iterateAncestors(ctx, username, *statusIRI); err != nil {
 		return fmt.Errorf("error iterating ancestors of status %s: %s", statusIRI.String(), err)
 	}
 
 	// now iterate down through descendants, again dereferencing as we go
-	if err := d.iterateDescendants(username, *statusIRI, statusable); err != nil {
+	if err := d.iterateDescendants(ctx, username, *statusIRI, statusable); err != nil {
 		return fmt.Errorf("error iterating descendants of status %s: %s", statusIRI.String(), err)
 	}
 
@@ -68,7 +68,7 @@ func (d *deref) DereferenceThread(username string, statusIRI *url.URL) error {
 }
 
 // iterateAncestors has the goal of reaching the oldest ancestor of a given status, and stashing all statuses along the way.
-func (d *deref) iterateAncestors(username string, statusIRI url.URL) error {
+func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI url.URL) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":      "iterateAncestors",
 		"username":  username,
@@ -86,8 +86,8 @@ func (d *deref) iterateAncestors(username string, statusIRI url.URL) error {
 			return err
 		}
 
-		status := &gtsmodel.Status{}
-		if err := d.db.GetByID(id, status); err != nil {
+		status, err := d.db.GetStatusByID(ctx, id)
+		if err != nil {
 			return err
 		}
 
@@ -99,12 +99,12 @@ func (d *deref) iterateAncestors(username string, statusIRI url.URL) error {
 		if err != nil {
 			return err
 		}
-		return d.iterateAncestors(username, *nextIRI)
+		return d.iterateAncestors(ctx, username, *nextIRI)
 	}
 
 	// If we reach here, we're looking at a remote status -- make sure we have it in our db by calling GetRemoteStatus
 	// We call it with refresh to true because we want the statusable representation to parse inReplyTo from.
-	status, statusable, _, err := d.GetRemoteStatus(username, &statusIRI, true)
+	status, statusable, _, err := d.GetRemoteStatus(ctx, username, &statusIRI, true)
 	if err != nil {
 		l.Debugf("error getting remote status: %s", err)
 		return nil
@@ -117,22 +117,22 @@ func (d *deref) iterateAncestors(username string, statusIRI url.URL) error {
 	}
 
 	// get the ancestor status into our database if we don't have it yet
-	if _, _, _, err := d.GetRemoteStatus(username, inReplyTo, false); err != nil {
+	if _, _, _, err := d.GetRemoteStatus(ctx, username, inReplyTo, false); err != nil {
 		l.Debugf("error getting remote status: %s", err)
 		return nil
 	}
 
 	// now enrich the current status, since we should have the ancestor in the db
-	if _, err := d.EnrichRemoteStatus(username, status); err != nil {
+	if _, err := d.EnrichRemoteStatus(ctx, username, status); err != nil {
 		l.Debugf("error enriching remote status: %s", err)
 		return nil
 	}
 
 	// now move up to the next ancestor
-	return d.iterateAncestors(username, *inReplyTo)
+	return d.iterateAncestors(ctx, username, *inReplyTo)
 }
 
-func (d *deref) iterateDescendants(username string, statusIRI url.URL, statusable ap.Statusable) error {
+func (d *deref) iterateDescendants(ctx context.Context, username string, statusIRI url.URL, statusable ap.Statusable) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":      "iterateDescendants",
 		"username":  username,
@@ -182,7 +182,7 @@ func (d *deref) iterateDescendants(username string, statusIRI url.URL, statusabl
 pageLoop:
 	for {
 		l.Debugf("dereferencing page %s", currentPageIRI)
-		nextPage, err := d.DereferenceCollectionPage(username, currentPageIRI)
+		nextPage, err := d.DereferenceCollectionPage(ctx, username, currentPageIRI)
 		if err != nil {
 			return nil
 		}
@@ -226,10 +226,10 @@ pageLoop:
 			foundReplies = foundReplies + 1
 
 			// get the remote statusable and put it in the db
-			_, statusable, new, err := d.GetRemoteStatus(username, itemURI, false)
+			_, statusable, new, err := d.GetRemoteStatus(ctx, username, itemURI, false)
 			if new && err == nil && statusable != nil {
 				// now iterate descendants of *that* status
-				if err := d.iterateDescendants(username, *itemURI, statusable); err != nil {
+				if err := d.iterateDescendants(ctx, username, *itemURI, statusable); err != nil {
 					continue
 				}
 			}

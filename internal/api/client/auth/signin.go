@@ -19,6 +19,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -74,7 +75,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	}
 	l.Tracef("parsed form: %+v", form)
 
-	userid, err := m.ValidatePassword(form.Email, form.Password)
+	userid, err := m.ValidatePassword(c.Request.Context(), form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
 		m.clearSession(s)
@@ -96,7 +97,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 // The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a ulid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (m *Module) ValidatePassword(email string, password string) (userid string, err error) {
+func (m *Module) ValidatePassword(ctx context.Context, email string, password string) (userid string, err error) {
 	l := m.log.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not
@@ -108,7 +109,7 @@ func (m *Module) ValidatePassword(email string, password string) (userid string,
 	// first we select the user from the database based on email address, bail if no user found for that email
 	gtsUser := &gtsmodel.User{}
 
-	if err := m.db.GetWhere([]db.Where{{Key: "email", Value: email}}, gtsUser); err != nil {
+	if err := m.db.GetWhere(ctx, []db.Where{{Key: "email", Value: email}}, gtsUser); err != nil {
 		l.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)
 		return incorrectPassword()
 	}

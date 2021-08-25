@@ -19,6 +19,7 @@
 package media
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -28,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
 	// parse the form fields
 	mediaSize, err := media.ParseMediaSize(form.MediaSize)
 	if err != nil {
@@ -47,8 +48,8 @@ func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContent
 	wantedMediaID := spl[0]
 
 	// get the account that owns the media and make sure it's not suspended
-	acct := &gtsmodel.Account{}
-	if err := p.db.GetByID(form.AccountID, acct); err != nil {
+	acct, err := p.db.GetAccountByID(ctx, form.AccountID)
+	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", form.AccountID, err))
 	}
 	if !acct.SuspendedAt.IsZero() {
@@ -57,7 +58,7 @@ func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContent
 
 	// make sure the requesting account and the media account don't block each other
 	if account != nil {
-		blocked, err := p.db.IsBlocked(account.ID, form.AccountID, true)
+		blocked, err := p.db.IsBlocked(ctx, account.ID, form.AccountID, true)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, account.ID, err))
 		}
@@ -73,7 +74,7 @@ func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContent
 	switch mediaType {
 	case media.Emoji:
 		e := &gtsmodel.Emoji{}
-		if err := p.db.GetByID(wantedMediaID, e); err != nil {
+		if err := p.db.GetByID(ctx, wantedMediaID, e); err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
 		}
 		if e.Disabled {
@@ -90,8 +91,8 @@ func (p *processor) GetFile(account *gtsmodel.Account, form *apimodel.GetContent
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
 		}
 	case media.Attachment, media.Header, media.Avatar:
-		a := &gtsmodel.MediaAttachment{}
-		if err := p.db.GetByID(wantedMediaID, a); err != nil {
+		a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
+		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
 		}
 		if a.AccountID != form.AccountID {

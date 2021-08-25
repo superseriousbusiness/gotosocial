@@ -122,7 +122,7 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, err := m.processor.AccountUpdate(authed, form)
+	acctSensitive, err := m.processor.AccountUpdate(c.Request.Context(), authed, form)
 	if err != nil {
 		l.Debugf("could not update account: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

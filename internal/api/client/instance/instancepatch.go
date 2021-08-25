@@ -116,7 +116,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	i, errWithCode := m.processor.InstancePatch(form)
+	i, errWithCode := m.processor.InstancePatch(c.Request.Context(), form)
 	if errWithCode != nil {
 		l.Debugf("error with instance patch request: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

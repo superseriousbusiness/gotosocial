@@ -19,14 +19,11 @@
 package media
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -61,19 +58,5 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, BasePath, m.MediaCreatePOSTHandler)
 	s.AttachHandler(http.MethodGet, BasePathWithID, m.MediaGETHandler)
 	s.AttachHandler(http.MethodPut, BasePathWithID, m.MediaPUTHandler)
-	return nil
-}
-
-// CreateTables populates necessary tables in the given DB
-func (m *Module) CreateTables(db db.DB) error {
-	models := []interface{}{
-		&gtsmodel.MediaAttachment{},
-	}
-
-	for _, m := range models {
-		if err := db.CreateTable(m); err != nil {
-			return fmt.Errorf("error creating table: %s", err)
-		}
-	}
 	return nil
 }

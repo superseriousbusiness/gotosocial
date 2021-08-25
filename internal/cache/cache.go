@@ -37,7 +37,7 @@ type cache struct {
 // New returns a new in-memory cache.
 func New() Cache {
 	c := ttlcache.NewCache()
-	c.SetTTL(30 * time.Second)
+	c.SetTTL(5 * time.Minute)
 	cache := &cache{
 		c: c,
 	}

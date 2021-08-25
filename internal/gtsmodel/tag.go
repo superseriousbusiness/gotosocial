@@ -23,21 +23,21 @@ import "time"
 // Tag represents a hashtag for gathering public statuses together
 type Tag struct {
 	// id of this tag in the database
-	ID string `pg:",unique,type:CHAR(26),pk,notnull"`
+	ID string `bun:",unique,type:CHAR(26),pk,notnull"`
 	// Href of this tag, eg https://example.org/tags/somehashtag
 	URL string
 	// name of this tag -- the tag without the hash part
-	Name string `pg:",unique,notnull"`
+	Name string `bun:",unique,notnull"`
 	// Which account ID is the first one we saw using this tag?
-	FirstSeenFromAccountID string `pg:"type:CHAR(26)"`
+	FirstSeenFromAccountID string `bun:"type:CHAR(26),nullzero"`
 	// when was this tag created
-	CreatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// when was this tag last updated
-	UpdatedAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// can our instance users use this tag?
-	Useable bool `pg:",notnull,default:true"`
+	Useable bool `bun:",notnull,default:true"`
 	// can our instance users look up this tag?
-	Listable bool `pg:",notnull,default:true"`
+	Listable bool `bun:",notnull,default:true"`
 	// when was this tag last used?
-	LastStatusAt time.Time `pg:"type:timestamp,notnull,default:now()"`
+	LastStatusAt time.Time `bun:",nullzero"`
 }
