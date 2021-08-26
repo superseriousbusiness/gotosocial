@@ -246,6 +246,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 	}
 	if exists {
 		a.log.Infof("instance entry already exists")
+		return nil
 	}
 
 	iID, err := id.NewRandomULID()
