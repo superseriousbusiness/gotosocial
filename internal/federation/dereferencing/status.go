@@ -318,6 +318,7 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 	//
 	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
 	mentionIDs := []string{}
+	newMentions := []*gtsmodel.Mention{}
 	for _, m := range status.Mentions {
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
@@ -338,15 +339,32 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 		}
 
 		var targetAccount *gtsmodel.Account
-		if a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String()); err == nil {
-			targetAccount = a
-		} else if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err == nil {
-			targetAccount = a
-		} else {
-			// we can't find the target account so bail
-			l.Debug("can't retrieve account targeted by mention")
-			continue
+		var found bool
+		errs := []string{}
+
+		if !found {
+			a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String())
+			aaaaaaaaaaaaaif err == nil && a != nil {
+				targetAccount = a
+				found = true
+			} else {
+				errs = append(errs, err.Error())
+			}
 		}
+
+		if !found {
+			if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err == nil && a != nil {
+				targetAccount = a
+				found = true
+			} else if err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+
+		if !found {
+
+		}
+
 
 		mID, err := id.NewRandomULID()
 		if err != nil {
@@ -373,8 +391,10 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 			return fmt.Errorf("error creating mention: %s", err)
 		}
 		mentionIDs = append(mentionIDs, m.ID)
+		newMentions = append(newMentions, m)
 	}
 	status.MentionIDs = mentionIDs
+	status.Mentions = newMentions
 
 	// status has replyToURI but we don't have an ID yet for the status it replies to
 	if status.InReplyToURI != "" && status.InReplyToID == "" {
