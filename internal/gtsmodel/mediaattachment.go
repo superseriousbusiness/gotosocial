@@ -30,9 +30,9 @@ type MediaAttachment struct {
 	// ID of the status to which this is attached
 	StatusID string `bun:"type:CHAR(26),nullzero"`
 	// Where can the attachment be retrieved on *this* server
-	URL string
+	URL string `bun:",nullzero"`
 	// Where can the attachment be retrieved on a remote server (empty for local media)
-	RemoteURL string
+	RemoteURL string `bun:",nullzero"`
 	// When was the attachment created
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was the attachment last updated
@@ -45,11 +45,11 @@ type MediaAttachment struct {
 	AccountID string   `bun:"type:CHAR(26),notnull"`
 	Account   *Account `bun:"rel:has-one"`
 	// Description of the attachment (for screenreaders)
-	Description string
+	Description string `bun:",nullzero"`
 	// To which scheduled status does this attachment belong
 	ScheduledStatusID string `bun:"type:CHAR(26),nullzero"`
 	// What is the generated blurhash of this attachment
-	Blurhash string
+	Blurhash string `bun:",nullzero"`
 	// What is the processing status of this attachment
 	Processing ProcessingStatus
 	// metadata for the whole file
@@ -65,29 +65,29 @@ type MediaAttachment struct {
 // File refers to the metadata for the whole file
 type File struct {
 	// What is the path of the file in storage.
-	Path string
+	Path string `bun:",nullzero"`
 	// What is the MIME content type of the file.
-	ContentType string
+	ContentType string `bun:",nullzero"`
 	// What is the size of the file in bytes.
 	FileSize int
 	// When was the file last updated.
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
 	// What is the path of the file in storage
-	Path string
+	Path string `bun:",nullzero"`
 	// What is the MIME content type of the file.
-	ContentType string
+	ContentType string `bun:",nullzero"`
 	// What is the size of the file in bytes
 	FileSize int
 	// When was the file last updated
-	UpdatedAt time.Time `bun:"type:timestamp,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
 	// What is the URL of the thumbnail on the local server
-	URL string
+	URL string `bun:",nullzero"`
 	// What is the remote URL of the thumbnail (empty for local media)
-	RemoteURL string
+	RemoteURL string `bun:",nullzero"`
 }
 
 // ProcessingStatus refers to how far along in the processing stage the attachment is.

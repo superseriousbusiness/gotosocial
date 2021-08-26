@@ -9,7 +9,7 @@ type Instance struct {
 	// Instance domain eg example.org
 	Domain string `bun:",pk,notnull,unique"`
 	// Title of this instance as it would like to be displayed.
-	Title string
+	Title string `bun:",nullzero"`
 	// base URI of this instance eg https://example.org
 	URI string `bun:",notnull,unique"`
 	// When was this instance created in the db?
@@ -22,20 +22,20 @@ type Instance struct {
 	DomainBlockID string       `bun:"type:CHAR(26),nullzero"`
 	DomainBlock   *DomainBlock `bun:"rel:belongs-to"`
 	// Short description of this instance
-	ShortDescription string
+	ShortDescription string `bun:",nullzero"`
 	// Longer description of this instance
-	Description string
+	Description string `bun:",nullzero"`
 	// Terms and conditions of this instance
-	Terms string
+	Terms string `bun:",nullzero"`
 	// Contact email address for this instance
-	ContactEmail string
+	ContactEmail string `bun:",nullzero"`
 	// Username of the contact account for this instance
-	ContactAccountUsername string
+	ContactAccountUsername string `bun:",nullzero"`
 	// Contact account ID in the database for this instance
 	ContactAccountID string   `bun:"type:CHAR(26),nullzero"`
 	ContactAccount   *Account `bun:"rel:belongs-to"`
 	// Reputation score of this instance
 	Reputation int64 `bun:",notnull,default:0"`
 	// Version of the software used on this instance
-	Version string
+	Version string `bun:",nullzero"`
 }

@@ -96,9 +96,9 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		NewSelect().
 		Model(&statuses).
 		Where("visibility = ?", gtsmodel.VisibilityPublic).
-		Where("? IS NULL", bun.Ident("in_reply_to_id")).
-		Where("? IS NULL", bun.Ident("in_reply_to_uri")).
-		Where("? IS NULL", bun.Ident("boost_of_id")).
+		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id")).
+		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
+		WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
 		Order("status.id DESC")
 
 	if maxID != "" {

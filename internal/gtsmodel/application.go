@@ -24,17 +24,17 @@ type Application struct {
 	// id of this application in the db
 	ID string `bun:"type:CHAR(26),pk,notnull"`
 	// name of the application given when it was created (eg., 'tusky')
-	Name string
+	Name string `bun:",nullzero"`
 	// website for the application given when it was created (eg., 'https://tusky.app')
-	Website string
+	Website string `bun:",nullzero"`
 	// redirect uri requested by the application for oauth2 flow
-	RedirectURI string
+	RedirectURI string `bun:",nullzero"`
 	// id of the associated oauth client entity in the db
-	ClientID string `bun:"type:CHAR(26)"`
+	ClientID string `bun:"type:CHAR(26),nullzero"`
 	// secret of the associated oauth client entity in the db
-	ClientSecret string
+	ClientSecret string `bun:",nullzero"`
 	// scopes requested when this app was created
-	Scopes string
+	Scopes string `bun:",nullzero"`
 	// a vapid key generated for this app when it was created
-	VapidKey string
+	VapidKey string `bun:",nullzero"`
 }

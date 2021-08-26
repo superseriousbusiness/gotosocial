@@ -23,15 +23,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type BasicTestSuite struct {
+type TimelineTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *BasicTestSuite) SetupSuite() {
+func (suite *TimelineTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -43,7 +42,7 @@ func (suite *BasicTestSuite) SetupSuite() {
 	suite.testMentions = testrig.NewTestMentions()
 }
 
-func (suite *BasicTestSuite) SetupTest() {
+func (suite *TimelineTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
@@ -51,25 +50,19 @@ func (suite *BasicTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 
-func (suite *BasicTestSuite) TearDownTest() {
+func (suite *TimelineTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *BasicTestSuite) TestGetAccountByID() {
-	testAccount := suite.testAccounts["local_account_1"]
+func (suite *TimelineTestSuite) TestGetPublicTimeline() {
+	viewingAccount := suite.testAccounts["local_account_1"]
 
-	a := &gtsmodel.Account{}
-	err := suite.db.GetByID(context.Background(), testAccount.ID, a)
+	s, err := suite.db.GetPublicTimeline(context.Background(), viewingAccount.ID, "", "", "", 20, false)
 	suite.NoError(err)
+
+	suite.Len(s, 6)
 }
 
-func (suite *BasicTestSuite) TestGetAllStatuses() {
-	s := []*gtsmodel.Status{}
-	err := suite.db.GetAll(context.Background(), &s)
-	suite.NoError(err)
-	suite.Len(s, 12)
-}
-
-func TestBasicTestSuite(t *testing.T) {
-	suite.Run(t, new(BasicTestSuite))
+func TestTimelineTestSuite(t *testing.T) {
+	suite.Run(t, new(TimelineTestSuite))
 }

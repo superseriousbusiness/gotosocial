@@ -37,7 +37,7 @@ type Follow struct {
 	// Does this follow also want to see reblogs and not just posts?
 	ShowReblogs bool `bun:"default:true"`
 	// What is the activitypub URI of this follow?
-	URI string `bun:",unique"`
+	URI string `bun:",unique,nullzero"`
 	// does the following account want to be notified when the followed account posts?
 	Notify bool
 }
