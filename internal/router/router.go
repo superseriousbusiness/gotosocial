@@ -21,6 +21,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -119,8 +120,26 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logge
 	}
 
 	// create the actual engine here -- this is the core request routing handler for gts
-	engine := gin.Default()
-	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
+	engine := gin.New()
+
+	// paths to not log requests to
+	dontLog := []string{
+		// don't print requests to the streaming API to avoid leaking tokens
+		"/api/v1/streaming",
+	}
+
+	// instruct gin to write out to our logger
+	loggingConfig := gin.LoggerConfig{
+		Formatter: logFormatter,
+		Output:    log.Writer(),
+		SkipPaths: dontLog,
+	}
+
+	engine.Use(gin.RecoveryWithWriter(logger.Writer()))
+	engine.Use(gin.LoggerWithConfig(loggingConfig))
+
+	// 8 MiB
+	engine.MaxMultipartMemory = 8 << 20
 
 	// set up IP forwarding via x-forward-* headers.
 	if err := engine.SetTrustedProxies(cfg.TrustedProxies); err != nil {
