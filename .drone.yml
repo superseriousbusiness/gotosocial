@@ -79,8 +79,13 @@ volumes:
   host:
     path: /drone/gotosocial/golangci-lint
 
+trigger:
+  repo:
+    - superseriousbusiness/gotosocial
+    - NyaaaWhatsUpDoc/gotosocial
+
 ---
 kind: signature
-hmac: 9134975e238ab9f92a7f75ccc11279e8d5edddb87f10165ed3c7d23fdd9c8a11
+hmac: 7fa6fa70be0a5c436ecb2f02f4b74bd1be5e90817e2d95a16898e3d29cbadf80
 
 ...
