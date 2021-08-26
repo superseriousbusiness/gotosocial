@@ -78,15 +78,15 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool `bun:",default:true"`
+	Locked bool `bun:",nullzero,notnull,default:true"`
 	// Should this account be shown in the instance's profile directory?
-	Discoverable bool `bun:",default:false"`
+	Discoverable bool `bun:",nullzero,notnull,default:false"`
 	// Default post privacy for this account
-	Privacy Visibility `bun:",default:'public'"`
+	Privacy Visibility `bun:",nullzero,notnull,default:'public'"`
 	// Set posts from this account to sensitive by default?
-	Sensitive bool `bun:",default:false"`
+	Sensitive bool `bun:",nullzero,notnull,default:false"`
 	// What language does this account post in?
-	Language string `bun:",default:'en'"`
+	Language string `bun:",nullzero,notnull,default:'en'"`
 
 	/*
 		ACTIVITYPUB THINGS

@@ -35,7 +35,7 @@ type Follow struct {
 	TargetAccountID string   `bun:"type:CHAR(26),unique:srctarget,notnull"`
 	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Does this follow also want to see reblogs and not just posts?
-	ShowReblogs bool `bun:"default:true"`
+	ShowReblogs bool `bun:",nullzero,notnull,default:true"`
 	// What is the activitypub URI of this follow?
 	URI string `bun:",unique,nullzero"`
 	// does the following account want to be notified when the followed account posts?

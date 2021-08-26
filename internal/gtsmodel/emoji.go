@@ -28,7 +28,7 @@ type Emoji struct {
 	// eg., 'blob_hug' 'purple_heart' Must be unique with domain.
 	Shortcode string `bun:",notnull,unique:shortcodedomain"`
 	// Origin domain of this emoji, eg 'example.org', 'queer.party'. empty string for local emojis.
-	Domain string `bun:",notnull,default:'',unique:shortcodedomain"`
+	Domain string `bun:",nullzero,notnull,default:'',unique:shortcodedomain"`
 	// When was this emoji created. Must be unique with shortcode.
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this emoji updated
@@ -67,11 +67,11 @@ type Emoji struct {
 	// When was the emoji image last updated?
 	ImageUpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Has a moderation action disabled this emoji from being shown?
-	Disabled bool `bun:",notnull,default:false"`
+	Disabled bool `bun:",nullzero,notnull,default:false"`
 	// ActivityStreams uri of this emoji. Something like 'https://example.org/emojis/1234'
 	URI string `bun:",notnull,unique"`
 	// Is this emoji visible in the admin emoji picker?
-	VisibleInPicker bool `bun:",notnull,default:true"`
+	VisibleInPicker bool `bun:",nullzero,notnull,default:true"`
 	// In which emoji category is this emoji visible?
 	CategoryID string `bun:"type:CHAR(26),nullzero"`
 }

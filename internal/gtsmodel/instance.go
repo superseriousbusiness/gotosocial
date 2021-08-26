@@ -35,7 +35,7 @@ type Instance struct {
 	ContactAccountID string   `bun:"type:CHAR(26),nullzero"`
 	ContactAccount   *Account `bun:"rel:belongs-to"`
 	// Reputation score of this instance
-	Reputation int64 `bun:",notnull,default:0"`
+	Reputation int64 `bun:",nullzero,notnull,default:0"`
 	// Version of the software used on this instance
 	Version string `bun:",nullzero"`
 }
