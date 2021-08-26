@@ -237,7 +237,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 	if _, err := r.conn.
 		NewInsert().
 		Model(follow).
-		On("CONFLICT ON CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).
+		On("CONFLICT (account_id,target_account_id) DO UPDATE SET uri = ?", follow.URI).
 		Exec(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
@@ -294,7 +294,7 @@ func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID str
 
 	if localOnly {
 		q = q.ColumnExpr("follow.*").
-			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
+			Join("JOIN accounts AS a ON follow.account_id = CAST(a.id as TEXT)").
 			Where("follow.target_account_id = ?", accountID).
 			WhereGroup(" AND ", whereEmptyOrNull("a.domain"))
 	} else {
