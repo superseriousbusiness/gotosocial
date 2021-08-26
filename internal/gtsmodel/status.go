@@ -138,11 +138,11 @@ const (
 // If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
 type VisibilityAdvanced struct {
 	// This status will be federated beyond the local timeline(s)
-	Federated bool `bun:",nullzero,notnull,default:true"`
+	Federated bool `bun:",nullzero,default:true"`
 	// This status can be boosted/reblogged
-	Boostable bool `bun:",nullzero,notnull,default:true"`
+	Boostable bool `bun:",nullzero,default:true"`
 	// This status can be replied to
-	Replyable bool `bun:",nullzero,notnull,default:true"`
+	Replyable bool `bun:",nullzero,default:true"`
 	// This status can be liked/faved
-	Likeable bool `bun:",nullzero,notnull,default:true"`
+	Likeable bool `bun:",nullzero,default:true"`
 }

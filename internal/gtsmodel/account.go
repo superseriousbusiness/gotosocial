@@ -78,13 +78,13 @@ type Account struct {
 	*/
 
 	// Does this account need an approval for new followers?
-	Locked bool `bun:",nullzero,notnull,default:true"`
+	Locked bool `bun:",nullzero,default:true"`
 	// Should this account be shown in the instance's profile directory?
-	Discoverable bool `bun:",nullzero,notnull,default:false"`
+	Discoverable bool `bun:",nullzero,default:false"`
 	// Default post privacy for this account
-	Privacy Visibility `bun:",nullzero,notnull,default:'public'"`
+	Privacy Visibility `bun:",nullzero,default:'public'"`
 	// Set posts from this account to sensitive by default?
-	Sensitive bool `bun:",nullzero,notnull,default:false"`
+	Sensitive bool `bun:",nullzero,default:false"`
 	// What language does this account post in?
 	Language string `bun:",nullzero,notnull,default:'en'"`
 
