@@ -19,7 +19,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -31,8 +30,7 @@ var skipPaths = map[string]interface{}{
 	"/api/v1/streaming": nil,
 }
 
-// LoggerWithConfig instance a Logger middleware with config.
-func LoggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
+func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 	logHandler := func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -54,12 +52,21 @@ func LoggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 			}
 
 			l := log.WithFields(logrus.Fields{
-				"latency": fmt.Sprintf("%13v", latency),
+				"latency":    latency,
+				"clientIP":   clientIP,
+				"method":     method,
+				"statusCode": statusCode,
+				"path":       path,
 			})
 
-			http.StatusText(statusCode)
+			if errorMessage != "" {
+				l.Error(errorMessage)
+				return
+			}
 
+			l.Infof("%s: wrote %d bytes in %v", http.StatusText(statusCode), bodySize, latency)
 		}
 	}
+
 	return logHandler
 }
