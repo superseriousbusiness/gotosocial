@@ -27,13 +27,13 @@ func databaseFlags(flagNames, envNames config.Flags, defaults config.Defaults) [
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    flagNames.DbType,
-			Usage:   "Database type: eg., postgres",
+			Usage:   "Database type: e.g. postgres, sqlite",
 			Value:   defaults.DbType,
 			EnvVars: []string{envNames.DbType},
 		},
 		&cli.StringFlag{
 			Name:    flagNames.DbAddress,
-			Usage:   "Database ipv4 address or hostname",
+			Usage:   "Database address: e.g. ipv4, hostname, file",
 			Value:   defaults.DbAddress,
 			EnvVars: []string{envNames.DbAddress},
 		},
