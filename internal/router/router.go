@@ -122,12 +122,6 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logge
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
 
-	// paths to not log requests to
-	dontLog := []string{
-		// don't print requests to the streaming API to avoid leaking tokens
-		"/api/v1/streaming",
-	}
-
 	// instruct gin to write out to our logger
 	loggingConfig := gin.LoggerConfig{
 		Formatter: logFormatter,
