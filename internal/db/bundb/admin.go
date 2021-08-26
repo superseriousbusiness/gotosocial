@@ -235,17 +235,17 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 	domain := a.config.Host
 
 	// check if instance entry already exists
-	existsQ := a.conn.
+	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.Instance{}).
 		Where("domain = ?", domain)
 
-	count, err := existsQ.Count(ctx)
-	if err != nil && count == 1 {
-		a.log.Infof("instance instance %s already exists", domain)
-		return nil
-	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
+	exists, err := exists(ctx, q)
+	if err != nil {
+		return err
+	}
+	if exists {
+		a.log.Infof("instance entry already exists")
 	}
 
 	iID, err := id.NewRandomULID()
@@ -264,9 +264,11 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		NewInsert().
 		Model(i)
 
-	if _, err := insertQ.Exec(ctx); err != nil {
-		return err
+	_, err = insertQ.Exec(ctx)
+	err = processErrorResponse(err)
+
+	if err == nil {
+		a.log.Infof("created instance instance %s with id %s", domain, i.ID)
 	}
-	a.log.Infof("created instance instance %s with id %s", domain, i.ID)
-	return nil
+	return err
 }
