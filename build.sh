@@ -2,7 +2,10 @@
 
 set -eu
 
-export COMMIT=$(git rev-list -1 HEAD)
-export VERSION=$(cat ./version)
+COMMIT=$(git rev-list -1 HEAD)
+VERSION=$(cat ./version)
 
-go build -ldflags="-X 'main.Commit=$COMMIT' -X 'main.Version=$VERSION'" ./cmd/gotosocial
+CGO_ENABLED=0 go build -trimpath \
+                       -tags 'netgo osusergo static_build' \
+                       -ldflags="-s -w -extldflags '-static' -X 'main.Commit=${COMMIT}' -X 'main.Version=${VERSION}'" \
+                       ./cmd/gotosocial
