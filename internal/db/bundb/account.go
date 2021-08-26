@@ -217,10 +217,6 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Limit(limit)
 	}
 
-	if excludeReplies {
-		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
-	}
-
 	if pinnedOnly {
 		q = q.Where("pinned = ?", true)
 	}
@@ -235,6 +231,10 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 				WhereOr("? IS NOT NULL", bun.Ident("attachments")).
 				WhereOr("attachments != '{}'")
 		})
+	}
+
+	if excludeReplies {
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
 	}
 
 	if err := q.Scan(ctx); err != nil {
