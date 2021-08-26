@@ -27,12 +27,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/uptrace/bun"
 )
 
 type sessionDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -46,7 +45,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 
 	_, err := q.Exec(ctx)
 
-	err = processErrorResponse(err)
+	err = s.conn.ProcessError(err)
 
 	return rs, err
 }
@@ -79,7 +78,7 @@ func (s *sessionDB) CreateSession(ctx context.Context) (*gtsmodel.RouterSession,
 
 	_, err = q.Exec(ctx)
 
-	err = processErrorResponse(err)
+	err = s.conn.ProcessError(err)
 
 	return rs, err
 }

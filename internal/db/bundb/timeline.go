@@ -32,7 +32,7 @@ import (
 
 type timelineDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -86,7 +86,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	q = q.WhereGroup(" AND ", whereGroup)
 
-	return statuses, processErrorResponse(q.Scan(ctx))
+	return statuses, t.conn.ProcessError(q.Scan(ctx))
 }
 
 func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
@@ -121,13 +121,12 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		q = q.Limit(limit)
 	}
 
-	return statuses, processErrorResponse(q.Scan(ctx))
+	return statuses, t.conn.ProcessError(q.Scan(ctx))
 }
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
 func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
-
 	faves := []*gtsmodel.StatusFave{}
 
 	fq := t.conn.

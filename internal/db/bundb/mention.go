@@ -31,7 +31,7 @@ import (
 
 type mentionDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 	cache  cache.Cache
 }
@@ -84,7 +84,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 	q := m.newMentionQ(mention).
 		Where("mention.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := m.conn.ProcessError(q.Scan(ctx))
 
 	if err == nil && mention != nil {
 		m.cacheMention(id, mention)
@@ -99,7 +99,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	for _, i := range ids {
 		mention, err := m.GetMention(ctx, i)
 		if err != nil {
-			return nil, processErrorResponse(err)
+			return nil, m.conn.ProcessError(err)
 		}
 		mentions = append(mentions, mention)
 	}

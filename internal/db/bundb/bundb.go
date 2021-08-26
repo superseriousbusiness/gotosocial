@@ -68,7 +68,7 @@ type bunDBService struct {
 	db.Status
 	db.Timeline
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -76,7 +76,7 @@ type bunDBService struct {
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
 	var sqldb *sql.DB
-	var conn *bun.DB
+	var conn *dbConn
 
 	// depending on the database type we're trying to create, we need to use a different driver...
 	switch strings.ToLower(c.DBConfig.Type) {
@@ -87,25 +87,30 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 		}
 		sqldb = stdlib.OpenDB(*opts)
-		conn = bun.NewDB(sqldb, pgdialect.New())
+		conn = &dbConn{
+			DB:      bun.NewDB(sqldb, pgdialect.New()),
+			errProc: processPostgresError,
+		}
 	case dbTypeSqlite:
 		// SQLITE
 		var err error
-
 		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
 		if err != nil {
 			return nil, fmt.Errorf("could not open sqlite db: %s", err)
 		}
-		conn = bun.NewDB(sqldb, sqlitedialect.New())
+		conn = &dbConn{
+			DB:      bun.NewDB(sqldb, sqlitedialect.New()),
+			errProc: processSQLiteError,
+		}
 
 		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
 			log.Warn("sqlite in-memory database should only be used for debugging")
 
-			// don't close connections on close -- otherwise
+			// don't close connections on disconnect -- otherwise
 			// the SQLite database will be deleted when there
 			// are no active connections
-			sqldb.SetConnMaxLifetime(0)
 			sqldb.SetMaxOpenConns(1000)
+			sqldb.SetConnMaxLifetime(0)
 		}
 	default:
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))

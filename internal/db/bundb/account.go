@@ -34,7 +34,7 @@ import (
 
 type accountDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -52,7 +52,7 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 	q := a.newAccountQ(account).
 		Where("account.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return account, err
 }
@@ -63,7 +63,7 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 	q := a.newAccountQ(account).
 		Where("account.uri = ?", uri)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return account, err
 }
@@ -74,7 +74,7 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.
 	q := a.newAccountQ(account).
 		Where("account.url = ?", uri)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return account, err
 }
@@ -93,7 +93,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 
 	_, err := q.Exec(ctx)
 
-	err = processErrorResponse(err)
+	err = a.conn.ProcessError(err)
 
 	return account, err
 }
@@ -113,7 +113,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return account, err
 }
@@ -129,7 +129,7 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) 
 		Where("account_id = ?", accountID).
 		Column("created_at")
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return status.CreatedAt, err
 }
@@ -174,7 +174,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 		Where("username = ?", username).
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := a.conn.ProcessError(q.Scan(ctx))
 
 	return account, err
 }

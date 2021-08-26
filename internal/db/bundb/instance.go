@@ -30,7 +30,7 @@ import (
 
 type instanceDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -53,7 +53,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 
 	count, err := q.Count(ctx)
 
-	return count, processErrorResponse(err)
+	return count, i.conn.ProcessError(err)
 }
 
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, db.Error) {
@@ -72,7 +72,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 
 	count, err := q.Count(ctx)
 
-	return count, processErrorResponse(err)
+	return count, i.conn.ProcessError(err)
 }
 
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, db.Error) {
@@ -93,7 +93,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 
 	count, err := q.Count(ctx)
 
-	return count, processErrorResponse(err)
+	return count, i.conn.ProcessError(err)
 }
 
 func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
@@ -114,7 +114,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 		q = q.Limit(limit)
 	}
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := i.conn.ProcessError(q.Scan(ctx))
 
 	return accounts, err
 }

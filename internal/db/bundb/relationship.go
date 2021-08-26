@@ -32,7 +32,7 @@ import (
 
 type relationshipDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -66,7 +66,7 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 			Where("account_id = ?", account2)
 	}
 
-	return exists(ctx, q)
+	return r.conn.Exists(ctx, q)
 }
 
 func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, db.Error) {
@@ -76,7 +76,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 		Where("block.account_id = ?", account1).
 		Where("block.target_account_id = ?", account2)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := r.conn.ProcessError(q.Scan(ctx))
 
 	return block, err
 }
@@ -176,7 +176,7 @@ func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccount *gtsmode
 		Where("target_account_id = ?", targetAccount.ID).
 		Limit(1)
 
-	return exists(ctx, q)
+	return r.conn.Exists(ctx, q)
 }
 
 func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (bool, db.Error) {
@@ -190,7 +190,7 @@ func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccount *g
 		Where("account_id = ?", sourceAccount.ID).
 		Where("target_account_id = ?", targetAccount.ID)
 
-	return exists(ctx, q)
+	return r.conn.Exists(ctx, q)
 }
 
 func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmodel.Account, account2 *gtsmodel.Account) (bool, db.Error) {
@@ -201,13 +201,13 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, account1 *gtsmod
 	// make sure account 1 follows account 2
 	f1, err := r.IsFollowing(ctx, account1, account2)
 	if err != nil {
-		return false, processErrorResponse(err)
+		return false, r.conn.ProcessError(err)
 	}
 
 	// make sure account 2 follows account 1
 	f2, err := r.IsFollowing(ctx, account2, account1)
 	if err != nil {
-		return false, processErrorResponse(err)
+		return false, r.conn.ProcessError(err)
 	}
 
 	return f1 && f2, nil
@@ -222,7 +222,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		Where("account_id = ?", originAccountID).
 		Where("target_account_id = ?", targetAccountID).
 		Scan(ctx); err != nil {
-		return nil, processErrorResponse(err)
+		return nil, r.conn.ProcessError(err)
 	}
 
 	// create a new follow to 'replace' the request with
@@ -239,7 +239,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		Model(follow).
 		On("CONFLICT CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).
 		Exec(ctx); err != nil {
-		return nil, processErrorResponse(err)
+		return nil, r.conn.ProcessError(err)
 	}
 
 	// now remove the follow request
@@ -249,7 +249,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 		Where("account_id = ?", originAccountID).
 		Where("target_account_id = ?", targetAccountID).
 		Exec(ctx); err != nil {
-		return nil, processErrorResponse(err)
+		return nil, r.conn.ProcessError(err)
 	}
 
 	return follow, nil
@@ -261,7 +261,7 @@ func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID
 	q := r.newFollowQ(&followRequests).
 		Where("target_account_id = ?", accountID)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := r.conn.ProcessError(q.Scan(ctx))
 
 	return followRequests, err
 }
@@ -272,7 +272,7 @@ func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string
 	q := r.newFollowQ(&follows).
 		Where("account_id = ?", accountID)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := r.conn.ProcessError(q.Scan(ctx))
 
 	return follows, err
 }
@@ -286,7 +286,6 @@ func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID stri
 }
 
 func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID string, localOnly bool) ([]*gtsmodel.Follow, db.Error) {
-
 	follows := []*gtsmodel.Follow{}
 
 	q := r.conn.
@@ -306,7 +305,7 @@ func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID str
 		if err == sql.ErrNoRows {
 			return follows, nil
 		}
-		return nil, processErrorResponse(err)
+		return nil, r.conn.ProcessError(err)
 	}
 	return follows, nil
 }

@@ -31,7 +31,7 @@ import (
 
 type basicDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -49,7 +49,7 @@ func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) db.Erro
 		Model(i).
 		Where("id = ?", id)
 
-	return processErrorResponse(q.Scan(ctx))
+	return b.conn.ProcessError(q.Scan(ctx))
 }
 
 func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{}) db.Error {
@@ -59,7 +59,6 @@ func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{})
 
 	q := b.conn.NewSelect().Model(i)
 	for _, w := range where {
-
 		if w.Value == nil {
 			q = q.Where("? IS NULL", bun.Ident(w.Key))
 		} else {
@@ -71,7 +70,7 @@ func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{})
 		}
 	}
 
-	return processErrorResponse(q.Scan(ctx))
+	return b.conn.ProcessError(q.Scan(ctx))
 }
 
 func (b *basicDB) GetAll(ctx context.Context, i interface{}) db.Error {
@@ -79,7 +78,7 @@ func (b *basicDB) GetAll(ctx context.Context, i interface{}) db.Error {
 		NewSelect().
 		Model(i)
 
-	return processErrorResponse(q.Scan(ctx))
+	return b.conn.ProcessError(q.Scan(ctx))
 }
 
 func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) db.Error {
@@ -90,7 +89,7 @@ func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) db.E
 
 	_, err := q.Exec(ctx)
 
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface{}) db.Error {
@@ -108,7 +107,7 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 
 	_, err := q.Exec(ctx)
 
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.Error {
@@ -119,7 +118,7 @@ func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.E
 
 	_, err := q.Exec(ctx)
 
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) UpdateOneByID(ctx context.Context, id string, key string, value interface{}, i interface{}) db.Error {
@@ -130,7 +129,7 @@ func (b *basicDB) UpdateOneByID(ctx context.Context, id string, key string, valu
 
 	_, err := q.Exec(ctx)
 
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) db.Error {
@@ -152,7 +151,7 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 
 	_, err := q.Exec(ctx)
 
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
@@ -162,7 +161,7 @@ func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
 	_, err := b.conn.NewDropTable().Model(i).IfExists().Exec(ctx)
-	return processErrorResponse(err)
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) IsHealthy(ctx context.Context) db.Error {

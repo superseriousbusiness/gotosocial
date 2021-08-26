@@ -30,7 +30,7 @@ import (
 
 type mediaDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -47,7 +47,7 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	q := m.newMediaQ(attachment).
 		Where("media_attachment.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := m.conn.ProcessError(q.Scan(ctx))
 
 	return attachment, err
 }

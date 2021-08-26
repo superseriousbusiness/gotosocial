@@ -31,7 +31,7 @@ import (
 
 type notificationDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 	cache  cache.Cache
 }
@@ -84,7 +84,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 	q := n.newNotificationQ(notification).
 		Where("notification.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := n.conn.ProcessError(q.Scan(ctx))
 
 	if err == nil && notification != nil {
 		n.cacheNotification(id, notification)
@@ -115,7 +115,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 		q = q.Limit(limit)
 	}
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := n.conn.ProcessError(q.Scan(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 	notifications := []*gtsmodel.Notification{}
 	for _, notifID := range notifIDs {
 		notif, err := n.GetNotification(ctx, notifID.ID)
-		errP := processErrorResponse(err)
+		errP := n.conn.ProcessError(err)
 		if errP != nil {
 			return nil, errP
 		}

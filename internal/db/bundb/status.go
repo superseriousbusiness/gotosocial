@@ -34,7 +34,7 @@ import (
 
 type statusDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 	cache  cache.Cache
 }
@@ -121,8 +121,7 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 	q := s.newStatusQ(status).
 		Where("status.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
-
+	err := s.conn.ProcessError(q.Scan(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +143,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 	q := s.newStatusQ(status).
 		Where("LOWER(status.uri) = LOWER(?)", uri)
 
-	err := processErrorResponse(q.Scan(ctx))
-
+	err := s.conn.ProcessError(q.Scan(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -167,8 +165,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.St
 	q := s.newStatusQ(status).
 		Where("LOWER(status.url) = LOWER(?)", uri)
 
-	err := processErrorResponse(q.Scan(ctx))
-
+	err := s.conn.ProcessError(q.Scan(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +214,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		return err
 	}
 
-	return processErrorResponse(s.conn.RunInTx(ctx, nil, transaction))
+	return s.conn.ProcessError(s.conn.RunInTx(ctx, nil, transaction))
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
@@ -321,7 +318,7 @@ func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status,
 		Where("status_id = ?", status.ID).
 		Where("account_id = ?", accountID)
 
-	return exists(ctx, q)
+	return s.conn.Exists(ctx, q)
 }
 
 func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
@@ -331,7 +328,7 @@ func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Sta
 		Where("boost_of_id = ?", status.ID).
 		Where("account_id = ?", accountID)
 
-	return exists(ctx, q)
+	return s.conn.Exists(ctx, q)
 }
 
 func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
@@ -341,7 +338,7 @@ func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status,
 		Where("status_id = ?", status.ID).
 		Where("account_id = ?", accountID)
 
-	return exists(ctx, q)
+	return s.conn.Exists(ctx, q)
 }
 
 func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
@@ -351,7 +348,7 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 		Where("status_id = ?", status.ID).
 		Where("account_id = ?", accountID)
 
-	return exists(ctx, q)
+	return s.conn.Exists(ctx, q)
 }
 
 func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.StatusFave, db.Error) {
@@ -360,7 +357,7 @@ func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) 
 	q := s.newFaveQ(&faves).
 		Where("status_id = ?", status.ID)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := s.conn.ProcessError(q.Scan(ctx))
 	return faves, err
 }
 
@@ -370,6 +367,6 @@ func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status
 	q := s.newStatusQ(&reblogs).
 		Where("boost_of_id = ?", status.ID)
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := s.conn.ProcessError(q.Scan(ctx))
 	return reblogs, err
 }

@@ -35,13 +35,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type adminDB struct {
 	config *config.Config
-	conn   *bun.DB
+	conn   *dbConn
 	log    *logrus.Logger
 }
 
@@ -52,7 +51,7 @@ func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (boo
 		Where("username = ?", username).
 		Where("domain = ?", nil)
 
-	return notExists(ctx, q)
+	return a.conn.NotExists(ctx, q)
 }
 
 func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.Error) {
@@ -72,7 +71,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 		// fail because we found something
 		return false, fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != sql.ErrNoRows {
-		return false, processErrorResponse(err)
+		return false, a.conn.ProcessError(err)
 	}
 
 	// check if this email is associated with a user already
@@ -82,7 +81,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 		Where("email = ?", email).
 		WhereOr("unconfirmed_email = ?", email)
 
-	return notExists(ctx, q)
+	return a.conn.NotExists(ctx, q)
 }
 
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
@@ -187,7 +186,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		a.log.Infof("instance account %s already exists", username)
 		return nil
 	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
+		return a.conn.ProcessError(err)
 	}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -245,7 +244,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		a.log.Infof("instance instance %s already exists", domain)
 		return nil
 	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
+		return a.conn.ProcessError(err)
 	}
 
 	iID, err := id.NewRandomULID()
