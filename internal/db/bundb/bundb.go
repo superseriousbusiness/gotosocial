@@ -90,7 +90,12 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn = bun.NewDB(sqldb, pgdialect.New())
 	case dbTypeSqlite:
 		// SQLITE
-		sqldb = mustOpenSQLite(c.DBConfig.Address)
+		var err error
+
+		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
+		if err != nil {
+			return nil, fmt.Errorf("could not open sqlite db: %s", err)
+		}
 		conn = bun.NewDB(sqldb, sqlitedialect.New())
 
 		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
@@ -281,15 +286,6 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	cfg.PreferSimpleProtocol = true
 
 	return cfg, nil
-}
-
-// mustOpenSQLite opens an SQLite sql.DB instance, panicking on error (indicates missing import)
-func mustOpenSQLite(dataSrc string) *sql.DB {
-	db, err := sql.Open("sqlite", dataSrc)
-	if err != nil {
-		panic(err)
-	}
-	return db
 }
 
 /*
