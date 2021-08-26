@@ -27,5 +27,4 @@ import (
 // Session handles getting/creation of router sessions.
 type Session interface {
 	GetSession(ctx context.Context) (*gtsmodel.RouterSession, Error)
-	CreateSession(ctx context.Context) (*gtsmodel.RouterSession, Error)
 }

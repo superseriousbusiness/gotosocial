@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -36,21 +37,34 @@ type sessionDB struct {
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
-	rs := new(gtsmodel.RouterSession)
+	rss := []*gtsmodel.RouterSession{}
 
-	q := s.conn.
+	_, err := s.conn.
 		NewSelect().
-		Model(rs).
-		Limit(1)
+		Model(&rss).
+		Limit(1).
+		Order("id DESC").
+		Exec(ctx)
+	if err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
 
-	_, err := q.Exec(ctx)
+	if len(rss) <= 0 {
+		// no session created yet, so make one
+		return s.createSession(ctx)
+	}
 
-	err = s.conn.ProcessError(err)
+	if len(rss) != 1 {
+		// we asked for 1 so we should get 1
+		return nil, errors.New("more than 1 router session was returned")
+	}
 
-	return rs, err
+	// return the one session found
+	rs := rss[0]
+	return rs, nil
 }
 
-func (s *sessionDB) CreateSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
 	auth := make([]byte, 32)
 	crypt := make([]byte, 32)
 
