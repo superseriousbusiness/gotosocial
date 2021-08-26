@@ -47,18 +47,9 @@ func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, e
 	// check if we have a saved router session already
 	rs, err := sessionDB.GetSession(ctx)
 	if err != nil {
-		if err != db.ErrNoEntries {
-			// proper error occurred
-			return err
-		}
-		// no session saved so create a new one
-		rs, err = sessionDB.CreateSession(ctx)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("error using session: %s", err)
 	}
-
-	if rs == nil {
+	if rs == nil || rs.Auth == nil || rs.Crypt == nil {
 		return errors.New("router session was nil")
 	}
 
