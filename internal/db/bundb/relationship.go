@@ -237,7 +237,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 	if _, err := r.conn.
 		NewInsert().
 		Model(follow).
-		On("CONFLICT CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).
+		On("CONFLICT ON CONSTRAINT follows_account_id_target_account_id_key DO UPDATE set uri = ?", follow.URI).
 		Exec(ctx); err != nil {
 		return nil, processErrorResponse(err)
 	}
