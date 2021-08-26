@@ -25,7 +25,7 @@ type Tag struct {
 	// id of this tag in the database
 	ID string `bun:",unique,type:CHAR(26),pk,notnull"`
 	// Href of this tag, eg https://example.org/tags/somehashtag
-	URL string
+	URL string `bun:",nullzero"`
 	// name of this tag -- the tag without the hash part
 	Name string `bun:",unique,notnull"`
 	// Which account ID is the first one we saw using this tag?

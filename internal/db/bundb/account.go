@@ -110,7 +110,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	} else {
 		q = q.
 			Where("account.username = ?", domain).
-			Where("? IS NULL", bun.Ident("domain"))
+			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 
 	err := processErrorResponse(q.Scan(ctx))
@@ -172,7 +172,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 
 	q := a.newAccountQ(account).
 		Where("username = ?", username).
-		Where("? IS NULL", bun.Ident("domain"))
+		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
 	err := processErrorResponse(q.Scan(ctx))
 
@@ -218,7 +218,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	}
 
 	if excludeReplies {
-		q = q.Where("? IS NULL", bun.Ident("in_reply_to_id"))
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
 	}
 
 	if pinnedOnly {

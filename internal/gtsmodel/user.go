@@ -67,7 +67,7 @@ type User struct {
 	// What languages does this user not want to see?
 	FilteredLanguages []string
 	// In what timezone/locale is this user located?
-	Locale string
+	Locale string `bun:",nullzero"`
 	// Which application id created this user? See gtsmodel.Application
 	CreatedByApplicationID string       `bun:"type:CHAR(26),nullzero"`
 	CreatedByApplication   *Application `bun:"rel:belongs-to"`
@@ -79,13 +79,13 @@ type User struct {
 	*/
 
 	// What confirmation token did we send this user/what are we expecting back?
-	ConfirmationToken string
+	ConfirmationToken string `bun:",nullzero"`
 	// When did the user confirm their email address
 	ConfirmedAt time.Time `bun:",nullzero"`
 	// When did we send email confirmation to this user?
 	ConfirmationSentAt time.Time `bun:",nullzero"`
 	// Email address that hasn't yet been confirmed
-	UnconfirmedEmail string
+	UnconfirmedEmail string `bun:",nullzero"`
 
 	/*
 		ACL FLAGS
@@ -105,18 +105,18 @@ type User struct {
 	*/
 
 	// The generated token that the user can use to reset their password
-	ResetPasswordToken string
+	ResetPasswordToken string `bun:",nullzero"`
 	// When did we email the user their reset-password email?
 	ResetPasswordSentAt time.Time `bun:",nullzero"`
 
-	EncryptedOTPSecret     string
-	EncryptedOTPSecretIv   string
-	EncryptedOTPSecretSalt string
+	EncryptedOTPSecret     string `bun:",nullzero"`
+	EncryptedOTPSecretIv   string `bun:",nullzero"`
+	EncryptedOTPSecretSalt string `bun:",nullzero"`
 	OTPRequiredForLogin    bool
 	OTPBackupCodes         []string
 	ConsumedTimestamp      int
-	RememberToken          string
-	SignInToken            string
+	RememberToken          string    `bun:",nullzero"`
+	SignInToken            string    `bun:",nullzero"`
 	SignInTokenSentAt      time.Time `bun:",nullzero"`
-	WebauthnID             string
+	WebauthnID             string    `bun:",nullzero"`
 }

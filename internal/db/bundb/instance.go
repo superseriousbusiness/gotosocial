@@ -41,7 +41,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 
 	if domain == i.config.Host {
 		// if the domain is *this* domain, just count where the domain field is null
-		q = q.Where("? IS NULL", bun.Ident("domain"))
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	} else {
 		q = q.Where("domain = ?", domain)
 	}
@@ -83,7 +83,9 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	if domain == i.config.Host {
 		// if the domain is *this* domain, just count other instances it knows about
 		// exclude domains that are blocked
-		q = q.Where("domain != ?", domain).Where("? IS NULL", bun.Ident("suspended_at"))
+		q = q.
+			Where("domain != ?", domain).
+			Where("? IS NULL", bun.Ident("suspended_at"))
 	} else {
 		// TODO: implement federated domain counting properly for remote domains
 		return 0, nil

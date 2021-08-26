@@ -48,20 +48,20 @@ type Account struct {
 	AvatarMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
 	AvatarMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
-	AvatarRemoteURL string
+	AvatarRemoteURL string `bun:",nullzero"`
 	// ID of the header as a media attachment
 	HeaderMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
 	HeaderMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
 	// For a non-local account, where can the header be fetched?
-	HeaderRemoteURL string
+	HeaderRemoteURL string `bun:",nullzero"`
 	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
-	DisplayName string
+	DisplayName string `bun:",nullzero"`
 	// a key/value map of fields that this account has added to their profile
 	Fields []Field
 	// A note that this account has on their profile (ie., the account's bio/description of themselves)
-	Note string
+	Note string `bun:",nullzero"`
 	// Is this a memorial account, ie., has the user passed away?
-	Memorial bool
+	Memorial bool `bun:",nullzero"`
 	// This account has moved this account id in the database
 	MovedToAccountID string `bun:"type:CHAR(26),nullzero"`
 	// When was this account created?
@@ -71,7 +71,7 @@ type Account struct {
 	// Does this account identify itself as a bot?
 	Bot bool
 	// What reason was given for signing up when this account was created?
-	Reason string
+	Reason string `bun:",nullzero"`
 
 	/*
 		USER AND PRIVACY PREFERENCES
@@ -109,9 +109,9 @@ type Account struct {
 	// URL for getting the featured collection list of this account
 	FeaturedCollectionURI string `bun:",unique,nullzero"`
 	// What type of activitypub actor is this account?
-	ActorType string
+	ActorType string `bun:",nullzero"`
 	// This account is associated with x account id
-	AlsoKnownAs string
+	AlsoKnownAs string `bun:",nullzero"`
 
 	/*
 		CRYPTO FIELDS
@@ -122,7 +122,7 @@ type Account struct {
 	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
 	PublicKey *rsa.PublicKey
 	// Web-reachable location of this account's public key
-	PublicKeyURI string
+	PublicKeyURI string `bun:",nullzero"`
 
 	/*
 		ADMIN FIELDS

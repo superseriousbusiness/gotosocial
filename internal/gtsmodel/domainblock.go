@@ -34,9 +34,9 @@ type DomainBlock struct {
 	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
 	CreatedByAccount   *Account `bun:"rel:belongs-to"`
 	// Private comment on this block, viewable to admins
-	PrivateComment string
+	PrivateComment string `bun:",nullzero"`
 	// Public comment on this block, viewable (optionally) by everyone
-	PublicComment string
+	PublicComment string `bun:",nullzero"`
 	// whether the domain name should appear obfuscated when displaying it publicly
 	Obfuscate bool
 	// if this block was created through a subscription, what's the subscription ID?

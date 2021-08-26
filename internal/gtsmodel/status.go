@@ -31,7 +31,7 @@ type Status struct {
 	// web url for viewing this status
 	URL string `bun:",unique,nullzero"`
 	// the html-formatted content of this status
-	Content string
+	Content string `bun:",nullzero"`
 	// Database IDs of any media attachments associated with this status
 	AttachmentIDs []string           `bun:"attachments,array"`
 	Attachments   []*MediaAttachment `bun:"attached_media,rel:has-many"`
@@ -54,12 +54,12 @@ type Status struct {
 	AccountID string   `bun:"type:CHAR(26),notnull"`
 	Account   *Account `bun:"rel:belongs-to"`
 	// AP uri of the owner of this status
-	AccountURI string
+	AccountURI string `bun:",nullzero"`
 	// id of the status this status is a reply to
 	InReplyToID string  `bun:"type:CHAR(26),nullzero"`
 	InReplyTo   *Status `bun:"-"`
 	// AP uri of the status this status is a reply to
-	InReplyToURI string
+	InReplyToURI string `bun:",nullzero"`
 	// id of the account that this status replies to
 	InReplyToAccountID string   `bun:"type:CHAR(26),nullzero"`
 	InReplyToAccount   *Account `bun:"rel:belongs-to"`
@@ -70,13 +70,13 @@ type Status struct {
 	BoostOfAccountID string   `bun:"type:CHAR(26),nullzero"`
 	BoostOfAccount   *Account `bun:"rel:belongs-to"`
 	// cw string for this status
-	ContentWarning string
+	ContentWarning string `bun:",nullzero"`
 	// visibility entry for this status
 	Visibility Visibility `bun:",notnull"`
 	// mark the status as sensitive?
 	Sensitive bool
 	// what language is this status written in?
-	Language string
+	Language string `bun:",nullzero"`
 	// Which application was used to create this status?
 	CreatedWithApplicationID string       `bun:"type:CHAR(26),nullzero"`
 	CreatedWithApplication   *Application `bun:"rel:belongs-to"`
@@ -84,9 +84,9 @@ type Status struct {
 	VisibilityAdvanced *VisibilityAdvanced
 	// What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types
 	// Will probably almost always be Note but who knows!.
-	ActivityStreamsType string
+	ActivityStreamsType string `bun:",nullzero"`
 	// Original text of the status without formatting
-	Text string
+	Text string `bun:",nullzero"`
 	// Has this status been pinned by its owner?
 	Pinned bool
 }

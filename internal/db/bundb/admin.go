@@ -97,7 +97,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	err = a.conn.NewSelect().
 		Model(acct).
 		Where("username = ?", username).
-		Where("? IS NULL", bun.Ident("domain")).
+		WhereGroup(" AND ", whereEmptyOrNull("domain")).
 		Scan(ctx)
 	if err != nil {
 		// we just don't have an account yet create one
@@ -181,7 +181,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		NewSelect().
 		Model(&gtsmodel.Account{}).
 		Where("username = ?", username).
-		Where("? IS NULL", bun.Ident("domain"))
+		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	count, err := existsQ.Count(ctx)
 	if err != nil && count == 1 {
 		a.log.Infof("instance account %s already exists", username)

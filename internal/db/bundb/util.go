@@ -76,3 +76,17 @@ func notExists(ctx context.Context, q *bun.SelectQuery) (bool, db.Error) {
 
 	return notExists, nil
 }
+
+// whereEmptyOrNull is a convenience function to return a bun WhereGroup that specifies
+// that the given column should be EITHER an empty string OR null.
+//
+// Use it as follows:
+//
+//   q = q.WhereGroup(" AND ", whereEmptyOrNull("whatever_column"))
+func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			WhereOr("? IS NULL", bun.Ident(column)).
+			WhereOr("? = ''", bun.Ident(column))
+	}
+}

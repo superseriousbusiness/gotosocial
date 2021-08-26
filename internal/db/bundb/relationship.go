@@ -294,18 +294,10 @@ func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID str
 		Model(&follows)
 
 	if localOnly {
-		// for local accounts let's get where domain is null OR where domain is an empty string, just to be safe
-		whereGroup := func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = q.
-				WhereOr("? IS NULL", bun.Ident("a.domain")).
-				WhereOr("a.domain = ?", "")
-			return q
-		}
-
 		q = q.ColumnExpr("follow.*").
 			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
 			Where("follow.target_account_id = ?", accountID).
-			WhereGroup(" AND ", whereGroup)
+			WhereGroup(" AND ", whereEmptyOrNull("a.domain"))
 	} else {
 		q = q.Where("target_account_id = ?", accountID)
 	}
