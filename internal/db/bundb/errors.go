@@ -38,6 +38,6 @@ func processSQLiteError(err error) db.Error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
 		return db.ErrAlreadyExists
 	default:
-		return nil
+		return err
 	}
 }
