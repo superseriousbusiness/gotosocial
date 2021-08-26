@@ -39,6 +39,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "modernc.org/sqlite"
 )
 
 const (
@@ -88,7 +90,18 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn = bun.NewDB(sqldb, pgdialect.New())
 	case dbTypeSqlite:
 		// SQLITE
-		// TODO: https://bun.uptrace.dev/guide/drivers.html#sqlite
+		sqldb = mustOpenSQLite(c.DBConfig.Address)
+		conn = bun.NewDB(sqldb, sqlitedialect.New())
+
+		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
+			log.Warn("sqlite in-memory database should only be used for debugging")
+
+			// don't close connections on close -- otherwise
+			// the SQLite database will be deleted when there
+			// are no active connections
+			sqldb.SetConnMaxLifetime(0)
+			sqldb.SetMaxOpenConns(1000)
+		}
 	default:
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
@@ -268,6 +281,15 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	cfg.PreferSimpleProtocol = true
 
 	return cfg, nil
+}
+
+// mustOpenSQLite opens an SQLite sql.DB instance, panicking on error (indicates missing import)
+func mustOpenSQLite(dataSrc string) *sql.DB {
+	db, err := sql.Open("sqlite", dataSrc)
+	if err != nil {
+		panic(err)
+	}
+	return db
 }
 
 /*

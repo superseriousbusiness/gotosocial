@@ -48,15 +48,21 @@ require (
 	github.com/tidwall/buntdb v1.2.4 // indirect
 	github.com/uptrace/bun v0.4.3
 	github.com/uptrace/bun/dialect/pgdialect v0.4.3
+	github.com/uptrace/bun/dialect/sqlitedialect v0.4.3
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
 	golang.org/x/text v0.3.6
+	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	modernc.org/ccgo/v3 v3.10.1 // indirect
+	modernc.org/libc v1.10.0 // indirect
+	modernc.org/sqlite v1.12.0
 	mvdan.cc/xurls/v2 v2.3.0
 )
