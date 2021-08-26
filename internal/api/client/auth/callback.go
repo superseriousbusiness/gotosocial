@@ -78,10 +78,8 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "no client_id found in session during callback"})
 		return
 	}
-	app := &gtsmodel.Application{
-		ClientID: clientID,
-	}
-	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: app.ClientID}}, app); err != nil {
+	app := &gtsmodel.Application{}
+	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
 		return
