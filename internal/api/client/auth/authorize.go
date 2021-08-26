@@ -71,7 +71,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 	app := &gtsmodel.Application{}
-	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: app.ClientID}}, app); err != nil {
+	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("no application found for client id %s", clientID)})
 		return
@@ -79,7 +79,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 
 	// we can also use the userid of the user to fetch their username from the db to greet them nicely <3
 	user := &gtsmodel.User{}
-	if err := m.db.GetByID(c.Request.Context(), user.ID, user); err != nil {
+	if err := m.db.GetByID(c.Request.Context(), userID, user); err != nil {
 		m.clearSession(s)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
