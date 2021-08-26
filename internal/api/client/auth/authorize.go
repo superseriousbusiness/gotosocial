@@ -55,7 +55,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		l.Debugf("parsed auth form: %+v", form)
 
 		if err := extractAuthForm(s, form); err != nil {
-			l.Debugf(fmt.Sprintf("error parsing form at /oauth/authorize: %s", err))
+			l.Debugf("error parsing form at /oauth/authorize: %s", err)
 			m.clearSession(s)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
