@@ -41,8 +41,9 @@ func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 
 		// Log only when path is not being skipped
 		if _, ok := skipPaths[path]; !ok {
-			latency := time.Now().Sub(start)
+			latency := time.Since(start)
 			clientIP := c.ClientIP()
+			userAgent := c.Request.UserAgent()
 			method := c.Request.Method
 			statusCode := c.Writer.Status()
 			errorMessage := c.Errors.ByType(gin.ErrorTypePrivate).String()
@@ -54,17 +55,17 @@ func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 			l := log.WithFields(logrus.Fields{
 				"latency":    latency,
 				"clientIP":   clientIP,
+				"userAgent":  userAgent,
 				"method":     method,
 				"statusCode": statusCode,
 				"path":       path,
 			})
 
-			if errorMessage != "" {
-				l.Error(errorMessage)
-				return
+			if errorMessage == "" {
+				l.Infof("%s: wrote %d bytes in %v", http.StatusText(statusCode), bodySize, latency)
+			} else {
+				l.Errorf("%s: %s", http.StatusText(statusCode), errorMessage)
 			}
-
-			l.Infof("%s: wrote %d bytes in %v", http.StatusText(statusCode), bodySize, latency)
 		}
 	}
 
