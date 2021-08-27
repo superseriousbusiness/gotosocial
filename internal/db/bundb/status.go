@@ -122,7 +122,6 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 		Where("status.id = ?", id)
 
 	err := processErrorResponse(q.Scan(ctx))
-
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +144,6 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 		Where("LOWER(status.uri) = LOWER(?)", uri)
 
 	err := processErrorResponse(q.Scan(ctx))
-
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +166,6 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.St
 		Where("LOWER(status.url) = LOWER(?)", uri)
 
 	err := processErrorResponse(q.Scan(ctx))
-
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +203,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 		for _, a := range status.Attachments {
 			a.StatusID = status.ID
 			a.UpdatedAt = time.Now()
-			if _, err := s.conn.NewUpdate().Model(a).
+			if _, err := tx.NewUpdate().Model(a).
 				Where("id = ?", a.ID).
 				Exec(ctx); err != nil {
 				return err
