@@ -34,8 +34,10 @@ func (conn *dbConn) Exists(ctx context.Context, query *bun.SelectQuery) (bool, d
 
 	// Process error as our own and check if it exists
 	switch err := conn.ProcessError(err); err {
-	case nil, db.ErrNoEntries:
+	case nil:
 		return (count != 0), nil
+	case db.ErrNoEntries:
+		return false, nil
 	default:
 		return false, err
 	}
