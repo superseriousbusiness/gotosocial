@@ -28,7 +28,7 @@ import (
 func NewTestLog() *logrus.Logger {
 	logger, err := log.New("trace")
 	if err != nil {
-      panic(err)
-   }
-   return logger
+		panic(err)
+	}
+	return logger
 }
