@@ -66,9 +66,7 @@ func NewTestDB() db.DB {
 		config.DBConfig.Address = alternateAddress
 	}
 
-	l := logrus.New()
-	l.SetLevel(logrus.TraceLevel)
-	testDB, err := bundb.NewBunDBService(context.Background(), config, l)
+	testDB, err := bundb.NewBunDBService(context.Background(), config, NewTestLog())
 	if err != nil {
 		logrus.Panic(err)
 	}
