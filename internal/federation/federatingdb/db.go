@@ -21,6 +21,7 @@ package federatingdb
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
@@ -41,7 +42,9 @@ type DB interface {
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
-	locks         *sync.Map
+	mutex         sync.Mutex
+	locks         map[string]*mutex
+	pool          sync.Pool
 	db            db.DB
 	config        *config.Config
 	log           *logrus.Logger
@@ -50,11 +53,32 @@ type federatingDB struct {
 
 // New returns a DB interface using the given database, config, and logger.
 func New(db db.DB, config *config.Config, log *logrus.Logger) DB {
-	return &federatingDB{
-		locks:         new(sync.Map),
+	fdb := federatingDB{
+		mutex:         sync.Mutex{},
+		locks:         make(map[string]*mutex, 100),
+		pool:          sync.Pool{New: func() interface{} { return &mutex{} }},
 		db:            db,
 		config:        config,
 		log:           log,
 		typeConverter: typeutils.NewConverter(config, db),
+	}
+	go fdb.cleanupLocks()
+	return &fdb
+}
+
+func (db *federatingDB) cleanupLocks() {
+	for {
+		// Sleep for a minute...
+		time.Sleep(time.Minute)
+
+		// Delete unused locks from map
+		db.mutex.Lock()
+		for id, mu := range db.locks {
+			if !mu.inUse() {
+				delete(db.locks, id)
+				db.pool.Put(mu)
+			}
+		}
+		db.mutex.Unlock()
 	}
 }
