@@ -21,7 +21,6 @@ package bundb
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -37,10 +36,7 @@ type basicDB struct {
 
 func (b *basicDB) Put(ctx context.Context, i interface{}) db.Error {
 	_, err := b.conn.NewInsert().Model(i).Exec(ctx)
-	if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-		return db.ErrAlreadyExists
-	}
-	return err
+	return b.conn.ProcessError(err)
 }
 
 func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) db.Error {
