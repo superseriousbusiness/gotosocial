@@ -67,11 +67,11 @@ type Emoji struct {
 	// When was the emoji image last updated?
 	ImageUpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// Has a moderation action disabled this emoji from being shown?
-	Disabled bool `bun:",nullzero,notnull,default:false"`
+	Disabled bool `bun:",notnull,default:false"`
 	// ActivityStreams uri of this emoji. Something like 'https://example.org/emojis/1234'
 	URI string `bun:",notnull,unique"`
 	// Is this emoji visible in the admin emoji picker?
-	VisibleInPicker bool `bun:",nullzero,notnull,default:true"`
+	VisibleInPicker bool `bun:",notnull,default:true"`
 	// In which emoji category is this emoji visible?
 	CategoryID string `bun:"type:CHAR(26),nullzero"`
 }

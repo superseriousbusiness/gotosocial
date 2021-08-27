@@ -35,9 +35,9 @@ type Tag struct {
 	// when was this tag last updated
 	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// can our instance users use this tag?
-	Useable bool `bun:",nullzero,notnull,default:true"`
+	Useable bool `bun:",notnull,default:true"`
 	// can our instance users look up this tag?
-	Listable bool `bun:",nullzero,notnull,default:true"`
+	Listable bool `bun:",notnull,default:true"`
 	// when was this tag last used?
 	LastStatusAt time.Time `bun:",nullzero"`
 }
