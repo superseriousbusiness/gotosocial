@@ -105,7 +105,7 @@ func (r *router) Stop(ctx context.Context) error {
 // pinned to the router.
 func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
 	gin.SetMode(gin.ReleaseMode)
-	
+
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
 
