@@ -18,11 +18,17 @@
 
 package testrig
 
-import "github.com/sirupsen/logrus"
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+
+	"github.com/sirupsen/logrus"
+)
 
 // NewTestLog returns a trace level logger for testing
 func NewTestLog() *logrus.Logger {
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-	return log
+	logger, err := log.New("trace")
+	if err != nil {
+		panic(err)
+	}
+	return logger
 }

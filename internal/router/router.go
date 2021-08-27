@@ -104,23 +104,16 @@ func (r *router) Stop(ctx context.Context) error {
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
 func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
-
-	// gin has different log modes; for convenience, we match the gin log mode to
-	// whatever log mode has been set for logrus
-	lvl, err := logrus.ParseLevel(cfg.LogLevel)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't parse log level %s to set router level: %s", cfg.LogLevel, err)
-	}
-	switch lvl {
-	case logrus.TraceLevel, logrus.DebugLevel:
-		gin.SetMode(gin.DebugMode)
-	default:
-		gin.SetMode(gin.ReleaseMode)
-	}
+	gin.SetMode(gin.ReleaseMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
-	engine := gin.Default()
-	engine.MaxMultipartMemory = 8 << 20 // 8 MiB
+	engine := gin.New()
+
+	engine.Use(gin.RecoveryWithWriter(logger.Writer()))
+	engine.Use(loggerWithConfig(logger))
+
+	// 8 MiB
+	engine.MaxMultipartMemory = 8 << 20
 
 	// set up IP forwarding via x-forward-* headers.
 	if err := engine.SetTrustedProxies(cfg.TrustedProxies); err != nil {
