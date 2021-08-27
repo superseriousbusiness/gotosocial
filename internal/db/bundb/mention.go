@@ -53,13 +53,13 @@ func (m *mentionDB) mentionCached(id string) (*gtsmodel.Mention, bool) {
 	}
 
 	mI, err := m.cache.Fetch(id)
-	if err != nil || mI == nil {
+	if err != nil {
 		return nil, false
 	}
 
 	mention, ok := mI.(*gtsmodel.Mention)
-	if !ok {
-		m.log.Panicf("mentionDB: cached interface with key %s was not a mention", id)
+	if !ok || mention == nil {
+		m.log.Panicf("mentionDB: cached interface with key %s (%T) was not a mention", id, mention)
 	}
 
 	return mention, true
@@ -85,12 +85,12 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 		Where("mention.id = ?", id)
 
 	err := m.conn.ProcessError(q.Scan(ctx))
-
-	if err == nil && mention != nil {
-		m.cacheMention(id, mention)
+	if err != nil {
+		return nil, err
 	}
 
-	return mention, err
+	m.cacheMention(id, mention)
+	return mention, nil
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {
@@ -99,7 +99,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	for _, i := range ids {
 		mention, err := m.GetMention(ctx, i)
 		if err != nil {
-			return nil, m.conn.ProcessError(err)
+			return nil, err
 		}
 		mentions = append(mentions, mention)
 	}
