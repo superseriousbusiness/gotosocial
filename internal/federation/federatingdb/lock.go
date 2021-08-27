@@ -23,6 +23,7 @@ import (
 	"errors"
 	"net/url"
 	"sync"
+	"sync/atomic"
 )
 
 // Lock takes a lock for the object at the specified id. If an error
@@ -45,14 +46,21 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 	if id == nil {
 		return errors.New("Lock: id was nil")
 	}
+	idStr := id.String()
 
-	mu := &sync.Mutex{}
-	mu.Lock() // Optimistically lock if we do store it.
-	i, loaded := f.locks.LoadOrStore(id.String(), mu)
-	if loaded {
-		mu = i.(*sync.Mutex)
-		mu.Lock()
+	// Acquire map lock
+	f.mutex.Lock()
+
+	// Get mutex, or create new
+	mu, ok := f.locks[idStr]
+	if !ok {
+		mu = f.pool.Get().(*mutex)
+		f.locks[idStr] = mu
 	}
+
+	// Unlock map, acquire mutex lock
+	f.mutex.Unlock()
+	mu.Lock()
 	return nil
 }
 
@@ -66,12 +74,43 @@ func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 	if id == nil {
 		return errors.New("Unlock: id was nil")
 	}
+	idStr := id.String()
 
-	i, ok := f.locks.Load(id.String())
+	// Check map for mutex
+	f.mutex.Lock()
+	mu, ok := f.locks[idStr]
+	f.mutex.Unlock()
+
 	if !ok {
 		return errors.New("missing an id in unlock")
 	}
-	mu := i.(*sync.Mutex)
+
+	// Unlock the mutex
 	mu.Unlock()
 	return nil
+}
+
+// mutex defines a mutex we can check the lock status of.
+// this is not perfect, but it's good enough for a semi
+// regular mutex cleanup routine
+type mutex struct {
+	mu sync.Mutex
+	st uint32
+}
+
+// inUse returns if the mutex is in use
+func (mu *mutex) inUse() bool {
+	return atomic.LoadUint32(&mu.st) == 1
+}
+
+// Lock acquire mutex lock
+func (mu *mutex) Lock() {
+	mu.mu.Lock()
+	atomic.StoreUint32(&mu.st, 1)
+}
+
+// Unlock releases mutex lock
+func (mu *mutex) Unlock() {
+	mu.mu.Unlock()
+	atomic.StoreUint32(&mu.st, 0)
 }
