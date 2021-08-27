@@ -24,12 +24,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
@@ -229,8 +229,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // 2. Hashtags.
 // 3. Emojis.
 // 4. Mentions.
-// 5. Posting account.
-// 6. Replied-to-status.
+// 5. Replied-to-status.
 //
 // SIDE EFFECTS:
 // This function will deference all of the above, insert them in the database as necessary,
@@ -243,135 +242,114 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 	})
 	l.Debug("entering function")
 
-	// make sure we have a status URI and that the domain in question isn't blocked
-	statusURI, err := url.Parse(status.URI)
+	statusIRI, err := url.Parse(status.URI)
 	if err != nil {
-		return fmt.Errorf("DereferenceStatusFields: couldn't parse status URI %s: %s", status.URI, err)
-	}
-	if blocked, err := d.db.IsDomainBlocked(ctx, statusURI.Host); blocked || err != nil {
-		return fmt.Errorf("DereferenceStatusFields: domain %s is blocked", statusURI.Host)
+		return fmt.Errorf("populateStatusFields: couldn't parse status URI %s: %s", status.URI, err)
 	}
 
-	// we can continue -- create a new transport here because we'll probably need it
-	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	blocked, err := d.db.IsURIBlocked(ctx, statusIRI)
 	if err != nil {
-		return fmt.Errorf("error creating transport: %s", err)
+		return fmt.Errorf("populateStatusFields: error checking blocked status of %s: %s", statusIRI, err)
+	}
+	if blocked {
+		return fmt.Errorf("populateStatusFields: domain %s is blocked", statusIRI)
 	}
 
 	// in case the status doesn't have an id yet (ie., it hasn't entered the database yet), then create one
 	if status.ID == "" {
 		newID, err := id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
-			return err
+			return fmt.Errorf("populateStatusFields: error creating ulid for status: %s", err)
 		}
 		status.ID = newID
 	}
 
 	// 1. Media attachments.
-	//
-	// At this point we should know:
-	// * the media type of the file we're looking for (a.File.ContentType)
-	// * the blurhash (a.Blurhash)
-	// * the file type (a.Type)
-	// * the remote URL (a.RemoteURL)
-	// This should be enough to pass along to the media processor.
-	attachmentIDs := []string{}
-	for _, a := range status.Attachments {
-		l.Tracef("dereferencing attachment: %+v", a)
-
-		// it might have been processed elsewhere so check first if it's already in the database or not
-		maybeAttachment := &gtsmodel.MediaAttachment{}
-		err := d.db.GetWhere(ctx, []db.Where{{Key: "remote_url", Value: a.RemoteURL}}, maybeAttachment)
-		if err == nil {
-			// we already have it in the db, dereferenced, no need to do it again
-			l.Tracef("attachment already exists with id %s", maybeAttachment.ID)
-			attachmentIDs = append(attachmentIDs, maybeAttachment.ID)
-			continue
-		}
-		if err != db.ErrNoEntries {
-			// we have a real error
-			return fmt.Errorf("error checking db for existence of attachment with remote url %s: %s", a.RemoteURL, err)
-		}
-		// it just doesn't exist yet so carry on
-		l.Debug("attachment doesn't exist yet, calling ProcessRemoteAttachment", a)
-		deferencedAttachment, err := d.mediaHandler.ProcessRemoteAttachment(ctx, t, a, status.AccountID)
-		if err != nil {
-			l.Errorf("error dereferencing status attachment: %s", err)
-			continue
-		}
-		l.Debugf("dereferenced attachment: %+v", deferencedAttachment)
-		deferencedAttachment.StatusID = status.ID
-		deferencedAttachment.Description = a.Description
-		if err := d.db.Put(ctx, deferencedAttachment); err != nil {
-			return fmt.Errorf("error inserting dereferenced attachment with remote url %s: %s", a.RemoteURL, err)
-		}
-		attachmentIDs = append(attachmentIDs, deferencedAttachment.ID)
+	if err := d.populateStatusAttachments(ctx, status, requestingUsername); err != nil {
+		return fmt.Errorf("populateStatusFields: error populating status attachments: %s", err)
 	}
-	status.AttachmentIDs = attachmentIDs
 
 	// 2. Hashtags
+	// TODO
 
 	// 3. Emojis
+	// TODO
 
 	// 4. Mentions
+	if err := d.populateStatusMentions(ctx, status, requestingUsername); err != nil {
+		return fmt.Errorf("populateStatusFields: error populating status mentions: %s", err)
+	}
+
+	// 5. Replied-to-status.
+	if err := d.populateStatusRepliedTo(ctx, status, requestingUsername); err != nil {
+		return fmt.Errorf("populateStatusFields: error populating status repliedTo: %s", err)
+	}
+
+	return nil
+}
+
+func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
+	l := d.log
+
 	// At this point, mentions should have the namestring and mentionedAccountURI set on them.
-	//
-	// We should dereference any accounts mentioned here which we don't have in our db yet, by their URI.
+	// We can use these to find the accounts.
+
 	mentionIDs := []string{}
 	newMentions := []*gtsmodel.Mention{}
 	for _, m := range status.Mentions {
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
-			l.Debug("mention already populated")
+			l.Debug("populateStatusMentions: mention already populated")
 			continue
 		}
 
 		if m.TargetAccountURI == "" {
-			// can't do anything with this mention
-			l.Debug("target URI not set on mention")
+			l.Debug("populateStatusMentions: target URI not set on mention")
 			continue
 		}
 
 		targetAccountURI, err := url.Parse(m.TargetAccountURI)
 		if err != nil {
-			l.Debugf("error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
+			l.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
 			continue
 		}
 
 		var targetAccount *gtsmodel.Account
-		var found bool
 		errs := []string{}
 
-		if !found {
+		if targetAccount == nil {
+			// check if account is in the db already
 			a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String())
-			aaaaaaaaaaaaaif err == nil && a != nil {
-				targetAccount = a
-				found = true
-			} else {
+			if err != nil {
 				errs = append(errs, err.Error())
+			}
+			if a != nil {
+				targetAccount = a
 			}
 		}
 
-		if !found {
-			if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err == nil && a != nil {
-				targetAccount = a
-				found = true
-			} else if err != nil {
+		if targetAccount == nil {
+			// check if we can get the account remotely (dereference it)
+			a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false)
+			if err != nil {
 				errs = append(errs, err.Error())
+			}
+			if a != nil {
+				targetAccount = a
 			}
 		}
 
-		if !found {
-
+		if targetAccount == nil {
+			l.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
+			continue
 		}
-
 
 		mID, err := id.NewRandomULID()
 		if err != nil {
-			return err
+			return fmt.Errorf("populateStatusMentions: error generating ulid: %s", err)
 		}
 
-		m = &gtsmodel.Mention{
+		newMention := &gtsmodel.Mention{
 			ID:               mID,
 			StatusID:         status.ID,
 			Status:           m.Status,
@@ -388,33 +366,94 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 		}
 
 		if err := d.db.Put(ctx, m); err != nil {
-			return fmt.Errorf("error creating mention: %s", err)
+			return fmt.Errorf("populateStatusMentions: error creating mention: %s", err)
 		}
-		mentionIDs = append(mentionIDs, m.ID)
-		newMentions = append(newMentions, m)
+
+		mentionIDs = append(mentionIDs, newMention.ID)
+		newMentions = append(newMentions, newMention)
 	}
+
 	status.MentionIDs = mentionIDs
 	status.Mentions = newMentions
 
-	// status has replyToURI but we don't have an ID yet for the status it replies to
+	return nil
+}
+
+func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
+	l := d.log
+
+	// At this point we should know:
+	// * the media type of the file we're looking for (a.File.ContentType)
+	// * the file type (a.Type)
+	// * the remote URL (a.RemoteURL)
+	// This should be enough to dereference the piece of media.
+
+	attachmentIDs := []string{}
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	for _, a := range status.Attachments {
+
+		aURL, err := url.Parse(a.RemoteURL)
+		if err != nil {
+			l.Errorf("populateStatusAttachments: couldn't parse attachment url %s: %s", a.RemoteURL, err)
+			continue
+		}
+
+		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, aURL, status.AccountID, status.ID, a.File.ContentType, false)
+		if err != nil {
+			l.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
+		}
+
+		attachmentIDs = append(attachmentIDs, attachment.ID)
+		attachments = append(attachments, attachment)
+	}
+
+	status.AttachmentIDs = attachmentIDs
+	status.Attachments = attachments
+
+	return nil
+}
+
+func (d *deref) populateStatusRepliedTo(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
 	if status.InReplyToURI != "" && status.InReplyToID == "" {
 		statusURI, err := url.Parse(status.InReplyToURI)
 		if err != nil {
 			return err
 		}
-		if replyToStatus, err := d.db.GetStatusByURI(ctx, status.InReplyToURI); err == nil {
-			// we have the status
-			status.InReplyToID = replyToStatus.ID
-			status.InReplyTo = replyToStatus
-			status.InReplyToAccountID = replyToStatus.AccountID
-			status.InReplyToAccount = replyToStatus.Account
-		} else if replyToStatus, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false); err == nil {
-			// we got the status
-			status.InReplyToID = replyToStatus.ID
-			status.InReplyTo = replyToStatus
-			status.InReplyToAccountID = replyToStatus.AccountID
-			status.InReplyToAccount = replyToStatus.Account
+
+		var replyToStatus *gtsmodel.Status
+		errs := []string{}
+
+		if replyToStatus == nil {
+			s, err := d.db.GetStatusByURI(ctx, status.InReplyToURI)
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+			if s != nil {
+				replyToStatus = s
+			}
 		}
+
+		if replyToStatus == nil {
+			s, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false)
+			if err != nil {
+				errs = append(errs, err.Error())
+			}
+			if s != nil {
+				replyToStatus = s
+			}
+		}
+
+		if replyToStatus == nil {
+			return fmt.Errorf("populateStatusRepliedTo: couldn't get reply to status with uri %s: %s", statusURI, strings.Join(errs, " : "))
+		}
+
+		// we have the status
+		status.InReplyToID = replyToStatus.ID
+		status.InReplyTo = replyToStatus
+		status.InReplyToAccountID = replyToStatus.AccountID
+		status.InReplyToAccount = replyToStatus.Account
 	}
+
 	return nil
 }

@@ -80,13 +80,6 @@ type Handler interface {
 	// in the database.
 	ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
 
-	// ProcessRemoteAttachment takes a transport, a bare-bones current attachment, and an accountID that the attachment belongs to.
-	// It then dereferences the attachment (ie., fetches the attachment bytes from the remote server), ensuring that the bytes are
-	// the correct content type. It stores the attachment in whatever storage backend the Handler has been initalized with, and returns
-	// information to the caller about the new attachment. It's the caller's responsibility to put the returned struct
-	// in the database.
-	ProcessRemoteAttachment(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
-
 	ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
 }
 
@@ -294,30 +287,6 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 		CategoryID:             "", // empty because this is a new emoji -- no category yet
 	}
 	return e, nil
-}
-
-func (mh *mediaHandler) ProcessRemoteAttachment(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
-	if currentAttachment.RemoteURL == "" {
-		return nil, errors.New("no remote URL on media attachment to dereference")
-	}
-	remoteIRI, err := url.Parse(currentAttachment.RemoteURL)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing attachment url %s: %s", currentAttachment.RemoteURL, err)
-	}
-
-	// for content type, we assume we don't know what to expect...
-	expectedContentType := "*/*"
-	if currentAttachment.File.ContentType != "" {
-		// ... and then narrow it down if we do
-		expectedContentType = currentAttachment.File.ContentType
-	}
-
-	attachmentBytes, err := t.DereferenceMedia(context.Background(), remoteIRI, expectedContentType)
-	if err != nil {
-		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
-	}
-
-	return mh.ProcessAttachment(ctx, attachmentBytes, accountID, currentAttachment.RemoteURL)
 }
 
 func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
