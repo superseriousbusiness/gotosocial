@@ -353,7 +353,7 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 			return err
 		}
 
-		m = &gtsmodel.Mention{
+		*m = gtsmodel.Mention{
 			ID:               mID,
 			StatusID:         status.ID,
 			Status:           m.Status,
