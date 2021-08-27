@@ -365,7 +365,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 			TargetAccountURL: targetAccount.URL,
 		}
 
-		if err := d.db.Put(ctx, m); err != nil {
+		if err := d.db.Put(ctx, newMention); err != nil {
 			return fmt.Errorf("populateStatusMentions: error creating mention: %s", err)
 		}
 

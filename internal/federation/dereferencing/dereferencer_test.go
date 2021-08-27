@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package typeutils_test
+package dereferencing_test
 
 import (
 	"github.com/go-fed/activity/streams/vocab"
@@ -24,18 +24,19 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// nolint
-type ConverterStandardTestSuite struct {
+type DereferencerStandardTestSuite struct {
 	suite.Suite
-	config   *config.Config
-	db       db.DB
-	log      *logrus.Logger
-	accounts map[string]*gtsmodel.Account
-	people   map[string]vocab.ActivityStreamsPerson
+	config *config.Config
+	db     db.DB
+	log    *logrus.Logger
 
-	typeconverter typeutils.TypeConverter
+	testRemoteStatuses map[string]vocab.ActivityStreamsNote
+	testRemoteAccounts map[string]vocab.ActivityStreamsPerson
+	testAccounts       map[string]*gtsmodel.Account
+
+	dereferencer dereferencing.Dereferencer
 }
