@@ -199,8 +199,8 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.Equal(account.ID, m.OriginAccountID)
 	suite.Equal(fetchingAccount.ID, m.TargetAccountID)
 	suite.Equal(account.URI, m.OriginAccountURI)
-	suite.WithinDuration(time.Now(), m.CreatedAt, 5*time.Second)
-	suite.WithinDuration(time.Now(), m.UpdatedAt, 5*time.Second)
+	suite.WithinDuration(time.Now(), m.CreatedAt, 5*time.Minute)
+	suite.WithinDuration(time.Now(), m.UpdatedAt, 5*time.Minute)
 	suite.False(m.Silent)
 }
 

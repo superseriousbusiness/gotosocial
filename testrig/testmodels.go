@@ -1722,43 +1722,6 @@ func newNote(
 
 	note.SetActivityStreamsTag(tag)
 
-	// func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
-	// 	if m.TargetAccount == nil {
-	// 		a, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
-	// 		if err != nil {
-	// 			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
-	// 		}
-	// 		m.TargetAccount = a
-	// 	}
-
-	// 	// create the mention
-	// 	mention := streams.NewActivityStreamsMention()
-
-	// 	// href -- this should be the URI of the mentioned user
-	// 	hrefProp := streams.NewActivityStreamsHrefProperty()
-	// 	hrefURI, err := url.Parse(m.TargetAccount.URI)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
-	// 	}
-	// 	hrefProp.SetIRI(hrefURI)
-	// 	mention.SetActivityStreamsHref(hrefProp)
-
-	// 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
-	// 	var domain string
-	// 	if m.TargetAccount.Domain == "" {
-	// 		domain = c.config.AccountDomain
-	// 	} else {
-	// 		domain = m.TargetAccount.Domain
-	// 	}
-	// 	username := m.TargetAccount.Username
-	// 	nameString := fmt.Sprintf("@%s@%s", username, domain)
-	// 	nameProp := streams.NewActivityStreamsNameProperty()
-	// 	nameProp.AppendXMLSchemaString(nameString)
-	// 	mention.SetActivityStreamsName(nameProp)
-
-	// 	return mention, nil
-	// }
-
 	return note
 }
 
