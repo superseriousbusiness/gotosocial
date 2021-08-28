@@ -242,7 +242,7 @@ func ExtractImageURL(i WithImage) (*url.URL, error) {
 // ExtractSummary extracts the summary/content warning of an interface.
 func ExtractSummary(i WithSummary) (string, error) {
 	summaryProp := i.GetActivityStreamsSummary()
-	if summaryProp == nil {
+	if summaryProp == nil || summaryProp.Len() == 0 {
 		// no summary to speak of
 		return "", nil
 	}

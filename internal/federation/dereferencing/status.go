@@ -300,6 +300,8 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
 			l.Debug("populateStatusMentions: mention already populated")
+			mentionIDs = append(mentionIDs, m.ID)
+			newMentions = append(newMentions, m)
 			continue
 		}
 
@@ -315,34 +317,28 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		}
 
 		var targetAccount *gtsmodel.Account
-		var found bool
 		errs := []string{}
 
-		if !found {
-			// check if account is in the db already
-			a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String())
-			if err != nil {
-				errs = append(errs, err.Error())
-			} else if a != nil {
-				l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURL", targetAccountURI, a.ID)
-				found = true
-				targetAccount = a
-			}
+		// check if account is in the db already
+		if a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String()); err != nil {
+			errs = append(errs, err.Error())
+		} else {
+			l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURL", targetAccountURI, a.ID)
+			targetAccount = a
 		}
 
-		if !found {
+		if targetAccount == nil {
+			// we didn't find the account in our database already
 			// check if we can get the account remotely (dereference it)
-			a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false)
-			if err != nil {
+			if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err != nil {
 				errs = append(errs, err.Error())
-			} else if a != nil {
+			} else {
 				l.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
-				found = true
 				targetAccount = a
 			}
 		}
 
-		if !found {
+		if targetAccount == nil {
 			l.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
 			continue
 		}
@@ -402,7 +398,7 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 			continue
 		}
 
-		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, aURL, status.AccountID, status.ID, a.File.ContentType, false)
+		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, aURL, status.AccountID, status.ID, a.File.ContentType)
 		if err != nil {
 			l.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
 		}
@@ -427,22 +423,18 @@ func (d *deref) populateStatusRepliedTo(ctx context.Context, status *gtsmodel.St
 		var replyToStatus *gtsmodel.Status
 		errs := []string{}
 
-		if replyToStatus == nil {
-			s, err := d.db.GetStatusByURI(ctx, status.InReplyToURI)
-			if err != nil {
-				errs = append(errs, err.Error())
-			}
-			if s != nil {
-				replyToStatus = s
-			}
+		// see if we have the status in our db already
+		if s, err := d.db.GetStatusByURI(ctx, status.InReplyToURI); err != nil {
+			errs = append(errs, err.Error())
+		} else {
+			replyToStatus = s
 		}
 
 		if replyToStatus == nil {
-			s, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false)
-			if err != nil {
+			// didn't find the status in our db, try to get it remotely
+			if s, _, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false); err != nil {
 				errs = append(errs, err.Error())
-			}
-			if s != nil {
+			} else {
 				replyToStatus = s
 			}
 		}

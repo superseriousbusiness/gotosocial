@@ -28,42 +28,29 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (d *deref) GetRemoteAttachment(ctx context.Context, username string, remoteAttachmentURI *url.URL, ownerAccountID string, statusID string, expectedContentType string, refresh bool) (*gtsmodel.MediaAttachment, error) {
+func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername string, remoteAttachmentURI *url.URL, ownerAccountID string, statusID string, expectedContentType string) (*gtsmodel.MediaAttachment, error) {
 	l := d.log.WithFields(logrus.Fields{
-		"username":            username,
+		"username":            requestingUsername,
 		"remoteAttachmentURI": remoteAttachmentURI,
 	})
 
-	if !refresh {
-		maybeAttachment := &gtsmodel.MediaAttachment{}
-		where := []db.Where{
-			{
-				Key:   "remote_url",
-				Value: remoteAttachmentURI.String(),
-			},
-		}
-
-		if err := d.db.GetWhere(ctx, where, maybeAttachment); err == nil {
-			// we already the attachment in the database
-			l.Debugf("GetRemoteAttachment: attachment already exists with id %s", maybeAttachment.ID)
-			return maybeAttachment, nil
-		}
+	maybeAttachment := &gtsmodel.MediaAttachment{}
+	where := []db.Where{
+		{
+			Key:   "remote_url",
+			Value: remoteAttachmentURI.String(),
+		},
 	}
 
-	// it just doesn't exist or we have to refresh
-	t, err := d.transportController.NewTransportForUsername(ctx, username)
-	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAttachment: error creating transport: %s", err)
+	if err := d.db.GetWhere(ctx, where, maybeAttachment); err == nil {
+		// we already the attachment in the database
+		l.Debugf("GetRemoteAttachment: attachment already exists with id %s", maybeAttachment.ID)
+		return maybeAttachment, nil
 	}
 
-	attachmentBytes, err := t.DereferenceMedia(ctx, remoteAttachmentURI, expectedContentType)
+	a, err := d.RefreshAttachment(ctx, requestingUsername, remoteAttachmentURI, ownerAccountID, expectedContentType)
 	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAttachment: error dereferencing media: %s", err)
-	}
-
-	a, err := d.mediaHandler.ProcessAttachment(ctx, attachmentBytes, ownerAccountID, remoteAttachmentURI.String())
-	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAttachment: error processing attachment: %s", err)
+		return nil, fmt.Errorf("GetRemoteAttachment: error refreshing attachment: %s", err)
 	}
 
 	a.StatusID = statusID
@@ -71,6 +58,26 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, username string, remote
 		if err != db.ErrAlreadyExists {
 			return nil, fmt.Errorf("GetRemoteAttachment: error inserting attachment: %s", err)
 		}
+	}
+
+	return a, nil
+}
+
+func (d *deref) RefreshAttachment(ctx context.Context, requestingUsername string, remoteAttachmentURI *url.URL, ownerAccountID string, expectedContentType string) (*gtsmodel.MediaAttachment, error) {
+	// it just doesn't exist or we have to refresh
+	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	if err != nil {
+		return nil, fmt.Errorf("RefreshAttachment: error creating transport: %s", err)
+	}
+
+	attachmentBytes, err := t.DereferenceMedia(ctx, remoteAttachmentURI, expectedContentType)
+	if err != nil {
+		return nil, fmt.Errorf("RefreshAttachment: error dereferencing media: %s", err)
+	}
+
+	a, err := d.mediaHandler.ProcessAttachment(ctx, attachmentBytes, ownerAccountID, remoteAttachmentURI.String())
+	if err != nil {
+		return nil, fmt.Errorf("RefreshAttachment: error processing attachment: %s", err)
 	}
 
 	return a, nil
