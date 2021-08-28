@@ -316,6 +316,8 @@ func (c *converter) TagToMasto(ctx context.Context, t *gtsmodel.Tag) (model.Tag,
 }
 
 func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
+	l := c.log
+
 	repliesCount, err := c.db.CountStatusReplies(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %s", err)
@@ -392,7 +394,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, gtsAttachment := range s.Attachments {
 			mastoAttachment, err := c.AttachmentToMasto(ctx, gtsAttachment)
 			if err != nil {
-				return nil, fmt.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
+				l.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
+				continue
 			}
 			mastoAttachments = append(mastoAttachments, mastoAttachment)
 		}
@@ -402,11 +405,13 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, aID := range s.AttachmentIDs {
 			gtsAttachment, err := c.db.GetAttachmentByID(ctx, aID)
 			if err != nil {
-				return nil, fmt.Errorf("error getting attachment with id %s: %s", aID, err)
+				l.Errorf("error getting attachment with id %s: %s", aID, err)
+				continue
 			}
 			mastoAttachment, err := c.AttachmentToMasto(ctx, gtsAttachment)
 			if err != nil {
-				return nil, fmt.Errorf("error converting attachment with id %s: %s", aID, err)
+				l.Errorf("error converting attachment with id %s: %s", aID, err)
+				continue
 			}
 			mastoAttachments = append(mastoAttachments, mastoAttachment)
 		}
@@ -419,7 +424,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, gtsMention := range s.Mentions {
 			mastoMention, err := c.MentionToMasto(ctx, gtsMention)
 			if err != nil {
-				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				l.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				continue
 			}
 			mastoMentions = append(mastoMentions, mastoMention)
 		}
@@ -429,11 +435,13 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, mID := range s.MentionIDs {
 			gtsMention, err := c.db.GetMention(ctx, mID)
 			if err != nil {
-				return nil, fmt.Errorf("error getting mention with id %s: %s", mID, err)
+				l.Errorf("error getting mention with id %s: %s", mID, err)
+				continue
 			}
 			mastoMention, err := c.MentionToMasto(ctx, gtsMention)
 			if err != nil {
-				return nil, fmt.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				l.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				continue
 			}
 			mastoMentions = append(mastoMentions, mastoMention)
 		}
@@ -446,7 +454,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, gtsTag := range s.Tags {
 			mastoTag, err := c.TagToMasto(ctx, gtsTag)
 			if err != nil {
-				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				l.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				continue
 			}
 			mastoTags = append(mastoTags, mastoTag)
 		}
@@ -456,11 +465,13 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, t := range s.TagIDs {
 			gtsTag := &gtsmodel.Tag{}
 			if err := c.db.GetByID(ctx, t, gtsTag); err != nil {
-				return nil, fmt.Errorf("error getting tag with id %s: %s", t, err)
+				l.Errorf("error getting tag with id %s: %s", t, err)
+				continue
 			}
 			mastoTag, err := c.TagToMasto(ctx, gtsTag)
 			if err != nil {
-				return nil, fmt.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				l.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				continue
 			}
 			mastoTags = append(mastoTags, mastoTag)
 		}
@@ -473,7 +484,8 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, gtsEmoji := range s.Emojis {
 			mastoEmoji, err := c.EmojiToMasto(ctx, gtsEmoji)
 			if err != nil {
-				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				l.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				continue
 			}
 			mastoEmojis = append(mastoEmojis, mastoEmoji)
 		}
@@ -483,11 +495,13 @@ func (c *converter) StatusToMasto(ctx context.Context, s *gtsmodel.Status, reque
 		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
 			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
-				return nil, fmt.Errorf("error getting emoji with id %s: %s", e, err)
+				l.Errorf("error getting emoji with id %s: %s", e, err)
+				continue
 			}
 			mastoEmoji, err := c.EmojiToMasto(ctx, gtsEmoji)
 			if err != nil {
-				return nil, fmt.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				l.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				continue
 			}
 			mastoEmojis = append(mastoEmojis, mastoEmoji)
 		}

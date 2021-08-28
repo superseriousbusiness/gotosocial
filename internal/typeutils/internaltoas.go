@@ -27,7 +27,6 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -600,12 +599,12 @@ func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAc
 }
 
 func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
-	if m.OriginAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetWhere(ctx, []db.Where{{Key: "target_account_id", Value: m.TargetAccountID}}, a); err != nil {
+	if m.TargetAccount == nil {
+		a, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+		if err != nil {
 			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
 		}
-		m.OriginAccount = a
+		m.TargetAccount = a
 	}
 
 	// create the mention
@@ -613,21 +612,21 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 
 	// href -- this should be the URI of the mentioned user
 	hrefProp := streams.NewActivityStreamsHrefProperty()
-	hrefURI, err := url.Parse(m.OriginAccount.URI)
+	hrefURI, err := url.Parse(m.TargetAccount.URI)
 	if err != nil {
-		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.OriginAccount.URI, err)
+		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
 	}
 	hrefProp.SetIRI(hrefURI)
 	mention.SetActivityStreamsHref(hrefProp)
 
 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
 	var domain string
-	if m.OriginAccount.Domain == "" {
+	if m.TargetAccount.Domain == "" {
 		domain = c.config.AccountDomain
 	} else {
-		domain = m.OriginAccount.Domain
+		domain = m.TargetAccount.Domain
 	}
-	username := m.OriginAccount.Username
+	username := m.TargetAccount.Username
 	nameString := fmt.Sprintf("@%s@%s", username, domain)
 	nameProp := streams.NewActivityStreamsNameProperty()
 	nameProp.AppendXMLSchemaString(nameString)
@@ -684,8 +683,8 @@ func (c *converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachm
 func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
 	if f.Status == nil {
-		s := &gtsmodel.Status{}
-		if err := c.db.GetByID(ctx, f.StatusID, s); err != nil {
+		s, err := c.db.GetStatusByID(ctx, f.StatusID)
+		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
 		}
 		f.Status = s
@@ -693,8 +692,8 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 
 	// check if the targetAccount is already pinned to this fave, and fetch it if not
 	if f.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, f.TargetAccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(ctx, f.TargetAccountID)
+		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
 		}
 		f.TargetAccount = a
@@ -702,8 +701,8 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 
 	// check if the faving account is already pinned to this fave, and fetch it if not
 	if f.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, f.AccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(ctx, f.AccountID)
+		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
 		}
 		f.Account = a
@@ -754,8 +753,8 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
 	if boostWrapperStatus.BoostOf == nil {
-		b := &gtsmodel.Status{}
-		if err := c.db.GetByID(ctx, boostWrapperStatus.BoostOfID, b); err != nil {
+		b, err := c.db.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
+		if err != nil {
 			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
 		}
 		boostWrapperStatus.BoostOf = b
@@ -837,16 +836,16 @@ func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 */
 func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
 	if b.Account == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, b.AccountID, a); err != nil {
-			return nil, fmt.Errorf("BlockToAS: error getting block account from database: %s", err)
+		a, err := c.db.GetAccountByID(ctx, b.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("BlockToAS: error getting block owner account from database: %s", err)
 		}
 		b.Account = a
 	}
 
 	if b.TargetAccount == nil {
-		a := &gtsmodel.Account{}
-		if err := c.db.GetByID(ctx, b.TargetAccountID, a); err != nil {
+		a, err := c.db.GetAccountByID(ctx, b.TargetAccountID)
+		if err != nil {
 			return nil, fmt.Errorf("BlockToAS: error getting block target account from database: %s", err)
 		}
 		b.TargetAccount = a

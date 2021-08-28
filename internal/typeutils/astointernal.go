@@ -181,44 +181,62 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
+	l := c.log.WithField("statusURI", status.URI)
+
 	// web url for viewing this status
-	if statusURL, err := ap.ExtractURL(statusable); err == nil {
+	if statusURL, err := ap.ExtractURL(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status URL: %s", err)
+	} else {
 		status.URL = statusURL.String()
 	}
 
 	// the html-formatted content of this status
-	if content, err := ap.ExtractContent(statusable); err == nil {
+	if content, err := ap.ExtractContent(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status content: %s", err)
+	} else {
 		status.Content = content
 	}
 
 	// attachments to dereference and fetch later on (we don't do that here)
-	if attachments, err := ap.ExtractAttachments(statusable); err == nil {
+	if attachments, err := ap.ExtractAttachments(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status attachments: %s", err)
+	} else {
 		status.Attachments = attachments
 	}
 
 	// hashtags to dereference later on
-	if hashtags, err := ap.ExtractHashtags(statusable); err == nil {
+	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status hashtags: %s", err)
+	} else {
 		status.Tags = hashtags
 	}
 
 	// emojis to dereference and fetch later on
-	if emojis, err := ap.ExtractEmojis(statusable); err == nil {
+	if emojis, err := ap.ExtractEmojis(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status emojis: %s", err)
+	} else {
 		status.Emojis = emojis
 	}
 
 	// mentions to dereference later on
-	if mentions, err := ap.ExtractMentions(statusable); err == nil {
+	if mentions, err := ap.ExtractMentions(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status mentions: %s", err)
+	} else {
 		status.Mentions = mentions
 	}
 
 	// cw string for this status
-	if cw, err := ap.ExtractSummary(statusable); err == nil {
+	if cw, err := ap.ExtractSummary(statusable); err != nil {
+		l.Infof("ASStatusToStatus: error extracting status summary: %s", err)
+	} else {
 		status.ContentWarning = cw
 	}
 
 	// when was this status created?
 	published, err := ap.ExtractPublished(statusable)
-	if err == nil {
+	if err != nil {
+		l.Infof("ASStatusToStatus: error extracting status published: %s", err)
+	} else {
 		status.CreatedAt = published
 		status.UpdatedAt = published
 	}

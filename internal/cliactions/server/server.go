@@ -111,7 +111,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	}
 
 	// build converters and util
-	typeConverter := typeutils.NewConverter(c, dbService)
+	typeConverter := typeutils.NewConverter(c, dbService, log)
 	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c, log)
 
 	// build backend handlers

@@ -315,31 +315,34 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		}
 
 		var targetAccount *gtsmodel.Account
+		var found bool
 		errs := []string{}
 
-		if targetAccount == nil {
+		if !found {
 			// check if account is in the db already
 			a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String())
 			if err != nil {
 				errs = append(errs, err.Error())
-			}
-			if a != nil {
+			} else if a != nil {
+				l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURL", targetAccountURI, a.ID)
+				found = true
 				targetAccount = a
 			}
 		}
 
-		if targetAccount == nil {
+		if !found {
 			// check if we can get the account remotely (dereference it)
 			a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false)
 			if err != nil {
 				errs = append(errs, err.Error())
-			}
-			if a != nil {
+			} else if a != nil {
+				l.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
+				found = true
 				targetAccount = a
 			}
 		}
 
-		if targetAccount == nil {
+		if !found {
 			l.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
 			continue
 		}

@@ -34,7 +34,7 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, username string, remote
 		"remoteAttachmentURI": remoteAttachmentURI,
 	})
 
-	if ! refresh {
+	if !refresh {
 		maybeAttachment := &gtsmodel.MediaAttachment{}
 		where := []db.Where{
 			{

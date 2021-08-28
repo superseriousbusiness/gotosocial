@@ -1229,7 +1229,8 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
 		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
 		nil,
-		true)
+		true,
+		[]vocab.ActivityStreamsMention{})
 	createDmForZork := wrapNoteInCreate(
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
@@ -1293,6 +1294,26 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			},
 			[]*url.URL{},
 			false,
+			[]vocab.ActivityStreamsMention{},
+		),
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": newNote(
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
+			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
+			time.Now(),
+			"Hey @the_mighty_zork@localhost:8080 how's it going?",
+			"",
+			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+			[]*url.URL{
+				URLMustParse("https://www.w3.org/ns/activitystreams#Public"),
+			},
+			[]*url.URL{},
+			false,
+			[]vocab.ActivityStreamsMention{
+				newMention(
+					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+					"@the_mighty_zork@localhost:8080",
+				),
+			},
 		),
 	}
 }
@@ -1601,6 +1622,20 @@ func newPerson(
 	return person
 }
 
+func newMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention {
+	mention := streams.NewActivityStreamsMention()
+
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	hrefProp.SetIRI(uri)
+	mention.SetActivityStreamsHref(hrefProp)
+
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(namestring)
+	mention.SetActivityStreamsName(nameProp)
+
+	return mention
+}
+
 // newNote returns a new activity streams note for the given parameters
 func newNote(
 	noteID *url.URL,
@@ -1611,7 +1646,8 @@ func newNote(
 	noteAttributedTo *url.URL,
 	noteTo []*url.URL,
 	noteCC []*url.URL,
-	noteSensitive bool) vocab.ActivityStreamsNote {
+	noteSensitive bool,
+	noteMentions []vocab.ActivityStreamsMention) vocab.ActivityStreamsNote {
 
 	// create the note itself
 	note := streams.NewActivityStreamsNote()
@@ -1675,6 +1711,53 @@ func newNote(
 		}
 		note.SetActivityStreamsCc(cc)
 	}
+
+	// set note tags
+	tag := streams.NewActivityStreamsTagProperty()
+
+	// mentions
+	for _, m := range noteMentions {
+		tag.AppendActivityStreamsMention(m)
+	}
+
+	note.SetActivityStreamsTag(tag)
+
+	// func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
+	// 	if m.TargetAccount == nil {
+	// 		a, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+	// 		if err != nil {
+	// 			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
+	// 		}
+	// 		m.TargetAccount = a
+	// 	}
+
+	// 	// create the mention
+	// 	mention := streams.NewActivityStreamsMention()
+
+	// 	// href -- this should be the URI of the mentioned user
+	// 	hrefProp := streams.NewActivityStreamsHrefProperty()
+	// 	hrefURI, err := url.Parse(m.TargetAccount.URI)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("MentionToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
+	// 	}
+	// 	hrefProp.SetIRI(hrefURI)
+	// 	mention.SetActivityStreamsHref(hrefProp)
+
+	// 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
+	// 	var domain string
+	// 	if m.TargetAccount.Domain == "" {
+	// 		domain = c.config.AccountDomain
+	// 	} else {
+	// 		domain = m.TargetAccount.Domain
+	// 	}
+	// 	username := m.TargetAccount.Username
+	// 	nameString := fmt.Sprintf("@%s@%s", username, domain)
+	// 	nameProp := streams.NewActivityStreamsNameProperty()
+	// 	nameProp.AppendXMLSchemaString(nameString)
+	// 	mention.SetActivityStreamsName(nameProp)
+
+	// 	return mention, nil
+	// }
 
 	return note
 }

@@ -338,7 +338,7 @@ func (suite *ASToInternalTestSuite) SetupSuite() {
 	suite.log = testrig.NewTestLog()
 	suite.accounts = testrig.NewTestAccounts()
 	suite.people = testrig.NewTestFediPeople()
-	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
+	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db, suite.log)
 }
 
 func (suite *ASToInternalTestSuite) SetupTest() {

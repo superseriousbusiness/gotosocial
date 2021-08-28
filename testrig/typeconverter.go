@@ -25,5 +25,5 @@ import (
 
 // NewTestTypeConverter returned a type converter with the given db and the default test config
 func NewTestTypeConverter(db db.DB) typeutils.TypeConverter {
-	return typeutils.NewConverter(NewTestConfig(), db)
+	return typeutils.NewConverter(NewTestConfig(), db, NewTestLog())
 }

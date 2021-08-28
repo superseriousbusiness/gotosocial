@@ -41,12 +41,12 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 		Where("username != ?", domain).
 		Where("? IS NULL", bun.Ident("suspended_at"))
 
-		if domain == i.config.Host {
-			// if the domain is *this* domain, just count where the domain field is null
-			q = q.WhereGroup(" AND ", whereEmptyOrNull("domain"))
-		} else {
-			q = q.Where("domain = ?", domain)
-		}
+	if domain == i.config.Host {
+		// if the domain is *this* domain, just count where the domain field is null
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("domain"))
+	} else {
+		q = q.Where("domain = ?", domain)
+	}
 
 	count, err := q.Count(ctx)
 
