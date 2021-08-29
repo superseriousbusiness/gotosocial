@@ -36,7 +36,6 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -1224,12 +1223,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	dmForZork := newNote(
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		URLMustParse("https://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		time.Now(),
 		"hey zork here's a new private note for you",
 		"new note for zork",
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
 		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
 		nil,
-		true)
+		true,
+		[]vocab.ActivityStreamsMention{})
 	createDmForZork := wrapNoteInCreate(
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
@@ -1248,15 +1249,15 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 }
 
 // NewTestFediPeople returns a bunch of activity pub Person representations for testing converters and so on.
-func NewTestFediPeople() map[string]ap.Accountable {
+func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 	newPerson1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		panic(err)
 	}
 	newPerson1Pub := &newPerson1Priv.PublicKey
 
-	return map[string]ap.Accountable{
-		"new_person_1": newPerson(
+	return map[string]vocab.ActivityStreamsPerson{
+		"https://unknown-instance.com/users/brand_new_person": newPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
@@ -1270,11 +1271,49 @@ func NewTestFediPeople() map[string]ap.Accountable {
 			true,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
 			newPerson1Pub,
-			URLMustParse("https://unknown-instance.com/media/some_avatar_filename.jpeg"),
+			nil,
 			"image/jpeg",
-			URLMustParse("https://unknown-instance.com/media/some_header_filename.jpeg"),
+			nil,
 			"image/png",
 			false,
+		),
+	}
+}
+
+func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
+	return map[string]vocab.ActivityStreamsNote{
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": newNote(
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
+			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),
+			time.Now(),
+			"Hello world!",
+			"",
+			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+			[]*url.URL{
+				URLMustParse("https://www.w3.org/ns/activitystreams#Public"),
+			},
+			[]*url.URL{},
+			false,
+			[]vocab.ActivityStreamsMention{},
+		),
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": newNote(
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
+			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
+			time.Now(),
+			"Hey @the_mighty_zork@localhost:8080 how's it going?",
+			"",
+			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+			[]*url.URL{
+				URLMustParse("https://www.w3.org/ns/activitystreams#Public"),
+			},
+			[]*url.URL{},
+			false,
+			[]vocab.ActivityStreamsMention{
+				newMention(
+					URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+					"@the_mighty_zork@localhost:8080",
+				),
+			},
 		),
 	}
 }
@@ -1418,7 +1457,7 @@ func newPerson(
 	avatarContentType string,
 	headerURL *url.URL,
 	headerContentType string,
-	manuallyApprovesFollowers bool) ap.Accountable {
+	manuallyApprovesFollowers bool) vocab.ActivityStreamsPerson {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -1583,16 +1622,32 @@ func newPerson(
 	return person
 }
 
+func newMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention {
+	mention := streams.NewActivityStreamsMention()
+
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	hrefProp.SetIRI(uri)
+	mention.SetActivityStreamsHref(hrefProp)
+
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(namestring)
+	mention.SetActivityStreamsName(nameProp)
+
+	return mention
+}
+
 // newNote returns a new activity streams note for the given parameters
 func newNote(
 	noteID *url.URL,
 	noteURL *url.URL,
+	noteCreatedAt time.Time,
 	noteContent string,
 	noteSummary string,
 	noteAttributedTo *url.URL,
 	noteTo []*url.URL,
 	noteCC []*url.URL,
-	noteSensitive bool) vocab.ActivityStreamsNote {
+	noteSensitive bool,
+	noteMentions []vocab.ActivityStreamsMention) vocab.ActivityStreamsNote {
 
 	// create the note itself
 	note := streams.NewActivityStreamsNote()
@@ -1610,6 +1665,13 @@ func newNote(
 		url.AppendIRI(noteURL)
 		note.SetActivityStreamsUrl(url)
 	}
+
+	if noteCreatedAt.IsZero() {
+		noteCreatedAt = time.Now()
+	}
+	published := streams.NewActivityStreamsPublishedProperty()
+	published.Set(noteCreatedAt)
+	note.SetActivityStreamsPublished(published)
 
 	// set noteContent
 	if noteContent != "" {
@@ -1631,6 +1693,34 @@ func newNote(
 		attributedTo.AppendIRI(noteAttributedTo)
 		note.SetActivityStreamsAttributedTo(attributedTo)
 	}
+
+	// set noteTO
+	if noteTo != nil {
+		to := streams.NewActivityStreamsToProperty()
+		for _, r := range noteTo {
+			to.AppendIRI(r)
+		}
+		note.SetActivityStreamsTo(to)
+	}
+
+	// set noteCC
+	if noteCC != nil {
+		cc := streams.NewActivityStreamsCcProperty()
+		for _, r := range noteCC {
+			cc.AppendIRI(r)
+		}
+		note.SetActivityStreamsCc(cc)
+	}
+
+	// set note tags
+	tag := streams.NewActivityStreamsTagProperty()
+
+	// mentions
+	for _, m := range noteMentions {
+		tag.AppendActivityStreamsMention(m)
+	}
+
+	note.SetActivityStreamsTag(tag)
 
 	return note
 }

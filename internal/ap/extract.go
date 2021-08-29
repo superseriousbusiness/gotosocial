@@ -242,8 +242,9 @@ func ExtractImageURL(i WithImage) (*url.URL, error) {
 // ExtractSummary extracts the summary/content warning of an interface.
 func ExtractSummary(i WithSummary) (string, error) {
 	summaryProp := i.GetActivityStreamsSummary()
-	if summaryProp == nil {
-		return "", errors.New("summary property was nil")
+	if summaryProp == nil || summaryProp.Len() == 0 {
+		// no summary to speak of
+		return "", nil
 	}
 
 	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
@@ -544,12 +545,12 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 
 		mentionable, ok := t.(Mentionable)
 		if !ok {
-			continue
+			return nil, errors.New("mention was not convertable to ap.Mentionable")
 		}
 
 		mention, err := ExtractMention(mentionable)
 		if err != nil {
-			continue
+			return nil, err
 		}
 
 		mentions = append(mentions, mention)

@@ -43,6 +43,9 @@ type Dereferencer interface {
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
+	GetRemoteAttachment(ctx context.Context, username string, remoteAttachmentURI *url.URL, ownerAccountID string, statusID string, expectedContentType string) (*gtsmodel.MediaAttachment, error)
+	RefreshAttachment(ctx context.Context, requestingUsername string, remoteAttachmentURI *url.URL, ownerAccountID string, expectedContentType string) (*gtsmodel.MediaAttachment, error)
+
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error
 

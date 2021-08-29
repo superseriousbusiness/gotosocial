@@ -338,7 +338,7 @@ func (suite *ASToInternalTestSuite) SetupSuite() {
 	suite.log = testrig.NewTestLog()
 	suite.accounts = testrig.NewTestAccounts()
 	suite.people = testrig.NewTestFediPeople()
-	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
+	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db, suite.log)
 }
 
 func (suite *ASToInternalTestSuite) SetupTest() {
@@ -346,7 +346,7 @@ func (suite *ASToInternalTestSuite) SetupTest() {
 }
 
 func (suite *ASToInternalTestSuite) TestParsePerson() {
-	testPerson := suite.people["new_person_1"]
+	testPerson := suite.people["https://unknown-instance.com/users/brand_new_person"]
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, false)
 	assert.NoError(suite.T(), err)
@@ -363,8 +363,6 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	suite.Equal("https://unknown-instance.com/@brand_new_person", acct.URL)
 	suite.True(acct.Discoverable)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person#main-key", acct.PublicKeyURI)
-	suite.Equal("https://unknown-instance.com/media/some_avatar_filename.jpeg", acct.AvatarRemoteURL)
-	suite.Equal("https://unknown-instance.com/media/some_header_filename.jpeg", acct.HeaderRemoteURL)
 	suite.False(acct.Locked)
 }
 

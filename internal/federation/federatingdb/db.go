@@ -60,7 +60,7 @@ func New(db db.DB, config *config.Config, log *logrus.Logger) DB {
 		db:            db,
 		config:        config,
 		log:           log,
-		typeConverter: typeutils.NewConverter(config, db),
+		typeConverter: typeutils.NewConverter(config, db, log),
 	}
 	go fdb.cleanupLocks()
 	return &fdb

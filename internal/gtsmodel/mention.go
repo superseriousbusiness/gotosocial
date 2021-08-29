@@ -25,19 +25,19 @@ type Mention struct {
 	// ID of this mention in the database
 	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
 	// ID of the status this mention originates from
-	StatusID string  `bun:"type:CHAR(26),notnull"`
+	StatusID string  `bun:"type:CHAR(26),notnull,nullzero"`
 	Status   *Status `bun:"rel:belongs-to"`
 	// When was this mention created?
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// When was this mention last updated?
 	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 	// What's the internal account ID of the originator of the mention?
-	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
+	OriginAccountID string   `bun:"type:CHAR(26),notnull,nullzero"`
 	OriginAccount   *Account `bun:"rel:belongs-to"`
 	// What's the AP URI of the originator of the mention?
 	OriginAccountURI string `bun:",notnull"`
 	// What's the internal account ID of the mention target?
-	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
+	TargetAccountID string   `bun:"type:CHAR(26),notnull,nullzero"`
 	TargetAccount   *Account `bun:"rel:belongs-to"`
 	// Prevent this mention from generating a notification?
 	Silent bool
