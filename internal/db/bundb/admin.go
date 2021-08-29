@@ -29,20 +29,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type adminDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
@@ -52,7 +49,7 @@ func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (boo
 		Where("username = ?", username).
 		Where("domain = ?", nil)
 
-	return notExists(ctx, q)
+	return a.conn.NotExists(ctx, q)
 }
 
 func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.Error) {
@@ -72,7 +69,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 		// fail because we found something
 		return false, fmt.Errorf("email domain %s is blocked", domain)
 	} else if err != sql.ErrNoRows {
-		return false, processErrorResponse(err)
+		return false, a.conn.ProcessError(err)
 	}
 
 	// check if this email is associated with a user already
@@ -82,13 +79,13 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 		Where("email = ?", email).
 		WhereOr("unconfirmed_email = ?", email)
 
-	return notExists(ctx, q)
+	return a.conn.NotExists(ctx, q)
 }
 
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		a.log.Errorf("error creating new rsa key: %s", err)
+		a.conn.log.Errorf("error creating new rsa key: %s", err)
 		return nil, err
 	}
 
@@ -128,7 +125,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 			NewInsert().
 			Model(acct).
 			Exec(ctx); err != nil {
-			return nil, err
+			return nil, a.conn.ProcessError(err)
 		}
 	}
 
@@ -167,7 +164,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		NewInsert().
 		Model(u).
 		Exec(ctx); err != nil {
-		return nil, err
+		return nil, a.conn.ProcessError(err)
 	}
 
 	return u, nil
@@ -184,15 +181,15 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	count, err := existsQ.Count(ctx)
 	if err != nil && count == 1 {
-		a.log.Infof("instance account %s already exists", username)
+		a.conn.log.Infof("instance account %s already exists", username)
 		return nil
 	} else if err != sql.ErrNoRows {
-		return processErrorResponse(err)
+		return a.conn.ProcessError(err)
 	}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		a.log.Errorf("error creating new rsa key: %s", err)
+		a.conn.log.Errorf("error creating new rsa key: %s", err)
 		return err
 	}
 
@@ -224,10 +221,10 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		Model(acct)
 
 	if _, err := insertQ.Exec(ctx); err != nil {
-		return err
+		return a.conn.ProcessError(err)
 	}
 
-	a.log.Infof("instance account %s CREATED with id %s", username, acct.ID)
+	a.conn.log.Infof("instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }
 
@@ -240,12 +237,12 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		Model(&gtsmodel.Instance{}).
 		Where("domain = ?", domain)
 
-	exists, err := exists(ctx, q)
+	exists, err := a.conn.Exists(ctx, q)
 	if err != nil {
 		return err
 	}
 	if exists {
-		a.log.Infof("instance entry already exists")
+		a.conn.log.Infof("instance entry already exists")
 		return nil
 	}
 
@@ -266,10 +263,10 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		Model(i)
 
 	_, err = insertQ.Exec(ctx)
-	err = processErrorResponse(err)
-
-	if err == nil {
-		a.log.Infof("created instance instance %s with id %s", domain, i.ID)
+	if err != nil {
+		return a.conn.ProcessError(err)
 	}
-	return err
+
+	a.conn.log.Infof("created instance instance %s with id %s", domain, i.ID)
+	return nil
 }

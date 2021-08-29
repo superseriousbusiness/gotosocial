@@ -21,7 +21,6 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -30,8 +29,7 @@ import (
 
 type mediaDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (m *mediaDB) newMediaQ(i interface{}) *bun.SelectQuery {
@@ -47,7 +45,9 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	q := m.newMediaQ(attachment).
 		Where("media_attachment.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
-
-	return attachment, err
+	err := q.Scan(ctx)
+	if err != nil {
+		return nil, m.conn.ProcessError(err)
+	}
+	return attachment, nil
 }

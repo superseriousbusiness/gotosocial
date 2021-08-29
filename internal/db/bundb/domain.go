@@ -22,18 +22,15 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/uptrace/bun"
 )
 
 type domainDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
@@ -47,7 +44,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 		Where("LOWER(domain) = LOWER(?)", domain).
 		Limit(1)
 
-	return exists(ctx, q)
+	return d.conn.Exists(ctx, q)
 }
 
 func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, db.Error) {
