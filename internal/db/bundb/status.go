@@ -53,8 +53,6 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 
 func (s *statusDB) getAttachedStatuses(ctx context.Context, status *gtsmodel.Status) *gtsmodel.Status {
 	if status.InReplyToID != "" && status.InReplyTo == nil {
-		// TODO: do we want to keep this possibly recursive strategy?
-
 		if inReplyTo, cached := s.cache.GetByID(status.InReplyToID); cached {
 			status.InReplyTo = inReplyTo
 		} else if inReplyTo, err := s.GetStatusByID(ctx, status.InReplyToID); err == nil {
@@ -63,8 +61,6 @@ func (s *statusDB) getAttachedStatuses(ctx context.Context, status *gtsmodel.Sta
 	}
 
 	if status.BoostOfID != "" && status.BoostOf == nil {
-		// TODO: do we want to keep this possibly recursive strategy?
-
 		if boostOf, cached := s.cache.GetByID(status.BoostOfID); cached {
 			status.BoostOf = boostOf
 		} else if boostOf, err := s.GetStatusByID(ctx, status.BoostOfID); err == nil {

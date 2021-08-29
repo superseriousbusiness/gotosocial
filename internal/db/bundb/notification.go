@@ -57,7 +57,7 @@ func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmo
 }
 
 func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
-	// Ensure sane value
+	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
 	}
