@@ -92,6 +92,9 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 		if err != nil {
 			return nil, err
 		}
+
+		// Append mention
+		mentions = append(mentions, mention)
 	}
 
 	return mentions, nil

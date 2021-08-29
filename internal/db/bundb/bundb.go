@@ -88,7 +88,6 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 		}
 		sqldb = stdlib.OpenDB(*opts)
-		sqldb = stdlib.OpenDB(*opts)
 		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
 	case dbTypeSqlite:
 		// SQLITE
