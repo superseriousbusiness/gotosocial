@@ -90,6 +90,7 @@ var (
 	followPathRegex = regexp.MustCompile(followPathRegexString)
 
 	ulidRegexString = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`
+	ulidRegex = regexp.MustCompile(fmt.Sprintf(`^%s$`, ulidRegexString))
 
 	likedPathRegexString = fmt.Sprintf(`^/?%s/(%s)/%s$`, UsersPath, usernameRegexString, LikedPath)
 	// likedPathRegex parses a path that validates and captures the username part from eg /users/example_username/liked

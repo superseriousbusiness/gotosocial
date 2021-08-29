@@ -10,6 +10,8 @@ import (
 
 const randomRange = 631152381 // ~20 years in seconds
 
+type ULID string
+
 // NewULID returns a new ULID string using the current time, or an error if something goes wrong.
 func NewULID() (string, error) {
 	newUlid, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
