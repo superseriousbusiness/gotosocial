@@ -171,3 +171,8 @@ func ValidateSiteTerms(t string) error {
 
 	return nil
 }
+
+// ValidateULID returns true if the passed string is a valid ULID.
+func ValidateULID(i string) bool {
+	return ulidRegex.MatchString(i)
+}

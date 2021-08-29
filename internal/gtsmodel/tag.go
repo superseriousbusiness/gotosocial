@@ -20,24 +20,15 @@ package gtsmodel
 
 import "time"
 
-// Tag represents a hashtag for gathering public statuses together
+// Tag represents a hashtag for gathering public statuses together.
 type Tag struct {
-	// id of this tag in the database
-	ID string `bun:",unique,type:CHAR(26),pk,notnull"`
-	// Href of this tag, eg https://example.org/tags/somehashtag
-	URL string `bun:",nullzero"`
-	// name of this tag -- the tag without the hash part
-	Name string `bun:",unique,notnull"`
-	// Which account ID is the first one we saw using this tag?
-	FirstSeenFromAccountID string `bun:"type:CHAR(26),nullzero"`
-	// when was this tag created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// when was this tag last updated
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// can our instance users use this tag?
-	Useable bool `bun:",notnull,default:true"`
-	// can our instance users look up this tag?
-	Listable bool `bun:",notnull,default:true"`
-	// when was this tag last used?
-	LastStatusAt time.Time `bun:",nullzero"`
+	ID                     string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	CreatedAt              time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
+	UpdatedAt              time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item last updated
+	URL                    string    `validate:"required,url" bun:",nullzero,notnull"`                         // Href of this tag, eg https://example.org/tags/somehashtag
+	Name                   string    `validate:"required" bun:",unique,nullzero,notnull"`                      // name of this tag -- the tag without the hash part
+	FirstSeenFromAccountID string    `validate:"ulid" bun:"type:CHAR(26),nullzero"`                            // Which account ID is the first one we saw using this tag?
+	Useable                bool      `validate:"-" bun:",nullzero,notnull,default:true"`                       // can our instance users use this tag?
+	Listable               bool      `validate:"-" bun:",nullzero,notnull,default:true"`                       // can our instance users look up this tag?
+	LastStatusAt           time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was this tag last used?
 }
