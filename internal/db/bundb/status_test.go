@@ -59,7 +59,6 @@ func (suite *StatusTestSuite) TearDownTest() {
 func (suite *StatusTestSuite) TestGetStatusByID() {
 	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["local_account_1_status_1"].ID)
 	if err != nil {
-		fmt.Println(err.Error())
 		suite.FailNow(err.Error())
 	}
 	suite.NotNil(status)

@@ -23,7 +23,6 @@ import (
 	"database/sql"
 	"sort"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -32,12 +31,18 @@ import (
 
 type timelineDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
-	statuses := []*gtsmodel.Status{}
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	statuses := make([]*gtsmodel.Status, 0, limit)
+
 	q := t.conn.
 		NewSelect().
 		Model(&statuses)
@@ -86,11 +91,21 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	q = q.WhereGroup(" AND ", whereGroup)
 
-	return statuses, processErrorResponse(q.Scan(ctx))
+	err := q.Scan(ctx)
+	if err != nil {
+		return nil, t.conn.ProcessError(err)
+	}
+	return statuses, nil
 }
 
 func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
-	statuses := []*gtsmodel.Status{}
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	statuses := make([]*gtsmodel.Status, 0, limit)
 
 	q := t.conn.
 		NewSelect().
@@ -121,14 +136,23 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		q = q.Limit(limit)
 	}
 
-	return statuses, processErrorResponse(q.Scan(ctx))
+	err := q.Scan(ctx)
+	if err != nil {
+		return nil, t.conn.ProcessError(err)
+	}
+	return statuses, nil
 }
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
 func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
 
-	faves := []*gtsmodel.StatusFave{}
+	// Make educated guess for slice size
+	faves := make([]*gtsmodel.StatusFave, 0, limit)
 
 	fq := t.conn.
 		NewSelect().
@@ -160,26 +184,23 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 		return nil, "", "", db.ErrNoEntries
 	}
 
-	// map[statusID]faveID -- we need this to sort statuses by fave ID rather than their own ID
-	statusesFavesMap := map[string]string{}
-
-	in := []string{}
+	// map[statusID]faveID -- we need this to sort statuses by fave ID rather than status ID
+	statusesFavesMap := make(map[string]string, len(faves))
+	statusIDs := make([]string, 0, len(faves))
 	for _, f := range faves {
 		statusesFavesMap[f.StatusID] = f.ID
-		in = append(in, f.StatusID)
+		statusIDs = append(statusIDs, f.StatusID)
 	}
 
-	statuses := []*gtsmodel.Status{}
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+
 	err = t.conn.
 		NewSelect().
 		Model(&statuses).
-		Where("id IN (?)", bun.In(in)).
+		Where("id IN (?)", bun.In(statusIDs)).
 		Scan(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, "", "", db.ErrNoEntries
-		}
-		return nil, "", "", err
+		return nil, "", "", t.conn.ProcessError(err)
 	}
 
 	if len(statuses) == 0 {

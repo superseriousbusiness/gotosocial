@@ -21,8 +21,7 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/ReneKroon/ttlcache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -31,38 +30,8 @@ import (
 
 type mentionDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
-	cache  cache.Cache
-}
-
-func (m *mentionDB) cacheMention(id string, mention *gtsmodel.Mention) {
-	if m.cache == nil {
-		m.cache = cache.New()
-	}
-
-	if err := m.cache.Store(id, mention); err != nil {
-		m.log.Panicf("mentionDB: error storing in cache: %s", err)
-	}
-}
-
-func (m *mentionDB) mentionCached(id string) (*gtsmodel.Mention, bool) {
-	if m.cache == nil {
-		m.cache = cache.New()
-		return nil, false
-	}
-
-	mI, err := m.cache.Fetch(id)
-	if err != nil || mI == nil {
-		return nil, false
-	}
-
-	mention, ok := mI.(*gtsmodel.Mention)
-	if !ok {
-		m.log.Panicf("mentionDB: cached interface with key %s was not a mention", id)
-	}
-
-	return mention, true
+	conn   *DBConn
+	cache  *ttlcache.Cache
 }
 
 func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
@@ -74,33 +43,57 @@ func (m *mentionDB) newMentionQ(i interface{}) *bun.SelectQuery {
 		Relation("TargetAccount")
 }
 
-func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
-	if mention, cached := m.mentionCached(id); cached {
-		return mention, nil
+func (m *mentionDB) getMentionCached(id string) (*gtsmodel.Mention, bool) {
+	v, ok := m.cache.Get(id)
+	if !ok {
+		return nil, false
 	}
+	return v.(*gtsmodel.Mention), true
+}
 
+func (m *mentionDB) putMentionCache(mention *gtsmodel.Mention) {
+	m.cache.Set(mention.ID, mention)
+}
+
+func (m *mentionDB) getMentionDB(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
 	mention := &gtsmodel.Mention{}
 
 	q := m.newMentionQ(mention).
 		Where("mention.id = ?", id)
 
-	err := processErrorResponse(q.Scan(ctx))
-
-	if err == nil && mention != nil {
-		m.cacheMention(id, mention)
+	err := q.Scan(ctx)
+	if err != nil {
+		return nil, m.conn.ProcessError(err)
 	}
 
-	return mention, err
+	m.putMentionCache(mention)
+	return mention, nil
+}
+
+func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
+	if mention, cached := m.getMentionCached(id); cached {
+		return mention, nil
+	}
+	return m.getMentionDB(ctx, id)
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {
-	mentions := []*gtsmodel.Mention{}
+	mentions := make([]*gtsmodel.Mention, 0, len(ids))
 
-	for _, i := range ids {
-		mention, err := m.GetMention(ctx, i)
-		if err != nil {
-			return nil, processErrorResponse(err)
+	for _, id := range ids {
+		// Attempt fetch from cache
+		mention, cached := m.getMentionCached(id)
+		if cached {
+			mentions = append(mentions, mention)
 		}
+
+		// Attempt fetch from DB
+		mention, err := m.getMentionDB(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		// Append mention
 		mentions = append(mentions, mention)
 	}
 

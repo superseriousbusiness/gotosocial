@@ -30,15 +30,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ReneKroon/ttlcache"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/dialect/sqlitedialect"
+	_ "modernc.org/sqlite"
 )
 
 const (
@@ -66,15 +70,14 @@ type bunDBService struct {
 	db.Status
 	db.Timeline
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
 	var sqldb *sql.DB
-	var conn *bun.DB
+	var conn *DBConn
 
 	// depending on the database type we're trying to create, we need to use a different driver...
 	switch strings.ToLower(c.DBConfig.Type) {
@@ -85,10 +88,24 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 		}
 		sqldb = stdlib.OpenDB(*opts)
-		conn = bun.NewDB(sqldb, pgdialect.New())
+		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
 	case dbTypeSqlite:
 		// SQLITE
-		// TODO: https://bun.uptrace.dev/guide/drivers.html#sqlite
+		var err error
+		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
+		if err != nil {
+			return nil, fmt.Errorf("could not open sqlite db: %s", err)
+		}
+		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()), log)
+
+		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
+			log.Warn("sqlite in-memory database should only be used for debugging")
+
+			// don't close connections on disconnect -- otherwise
+			// the SQLite database will be deleted when there
+			// are no active connections
+			sqldb.SetConnMaxLifetime(0)
+		}
 	default:
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
@@ -108,66 +125,56 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		Account: &accountDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Admin: &adminDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Basic: &basicDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Domain: &domainDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Instance: &instanceDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Media: &mediaDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Mention: &mentionDB{
 			config: c,
 			conn:   conn,
-			log:    log,
+			cache:  ttlcache.NewCache(),
 		},
 		Notification: &notificationDB{
 			config: c,
 			conn:   conn,
-			log:    log,
+			cache:  ttlcache.NewCache(),
 		},
 		Relationship: &relationshipDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Session: &sessionDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		Status: &statusDB{
 			config: c,
 			conn:   conn,
-			log:    log,
+			cache:  cache.NewStatusCache(),
 		},
 		Timeline: &timelineDB{
 			config: c,
 			conn:   conn,
-			log:    log,
 		},
 		config: c,
 		conn:   conn,
-		log:    log,
 	}
 
 	// we can confidently return this useable service now
@@ -332,7 +339,7 @@ func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAcco
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
-				ps.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
+				ps.conn.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
 				continue
 			}
 			// a serious error has happened so bail
@@ -398,7 +405,7 @@ func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []strin
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
-				ps.log.Debugf("no emoji found with shortcode %s, skipping it", e)
+				ps.conn.log.Debugf("no emoji found with shortcode %s, skipping it", e)
 				continue
 			}
 			// a serious error has happened so bail

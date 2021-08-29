@@ -21,8 +21,7 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/ReneKroon/ttlcache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -31,38 +30,8 @@ import (
 
 type notificationDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
-	cache  cache.Cache
-}
-
-func (n *notificationDB) cacheNotification(id string, notification *gtsmodel.Notification) {
-	if n.cache == nil {
-		n.cache = cache.New()
-	}
-
-	if err := n.cache.Store(id, notification); err != nil {
-		n.log.Panicf("notificationDB: error storing in cache: %s", err)
-	}
-}
-
-func (n *notificationDB) notificationCached(id string) (*gtsmodel.Notification, bool) {
-	if n.cache == nil {
-		n.cache = cache.New()
-		return nil, false
-	}
-
-	nI, err := n.cache.Fetch(id)
-	if err != nil || nI == nil {
-		return nil, false
-	}
-
-	notification, ok := nI.(*gtsmodel.Notification)
-	if !ok {
-		n.log.Panicf("notificationDB: cached interface with key %s was not a notification", id)
-	}
-
-	return notification, true
+	conn   *DBConn
+	cache  *ttlcache.Cache
 }
 
 func (n *notificationDB) newNotificationQ(i interface{}) *bun.SelectQuery {
@@ -75,30 +44,30 @@ func (n *notificationDB) newNotificationQ(i interface{}) *bun.SelectQuery {
 }
 
 func (n *notificationDB) GetNotification(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
-	if notification, cached := n.notificationCached(id); cached {
+	if notification, cached := n.getNotificationCache(id); cached {
 		return notification, nil
 	}
 
-	notification := &gtsmodel.Notification{}
-
-	q := n.newNotificationQ(notification).
-		Where("notification.id = ?", id)
-
-	err := processErrorResponse(q.Scan(ctx))
-
-	if err == nil && notification != nil {
-		n.cacheNotification(id, notification)
+	notif := &gtsmodel.Notification{}
+	err := n.getNotificationDB(ctx, id, notif)
+	if err != nil {
+		return nil, err
 	}
-
-	return notification, err
+	return notif, nil
 }
 
 func (n *notificationDB) GetNotifications(ctx context.Context, accountID string, limit int, maxID string, sinceID string) ([]*gtsmodel.Notification, db.Error) {
-	// begin by selecting just the IDs
-	notifIDs := []*gtsmodel.Notification{}
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make a guess for slice size
+	notifications := make([]*gtsmodel.Notification, 0, limit)
+
 	q := n.conn.
 		NewSelect().
-		Model(&notifIDs).
+		Model(&notifications).
 		Column("id").
 		Where("target_account_id = ?", accountID).
 		Order("id DESC")
@@ -115,22 +84,52 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 		q = q.Limit(limit)
 	}
 
-	err := processErrorResponse(q.Scan(ctx))
+	err := q.Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, n.conn.ProcessError(err)
 	}
 
 	// now we have the IDs, select the notifs one by one
 	// reason for this is that for each notif, we can instead get it from our cache if it's cached
-	notifications := []*gtsmodel.Notification{}
-	for _, notifID := range notifIDs {
-		notif, err := n.GetNotification(ctx, notifID.ID)
-		errP := processErrorResponse(err)
-		if errP != nil {
-			return nil, errP
+	for i, notif := range notifications {
+		// Check cache for notification
+		nn, cached := n.getNotificationCache(notif.ID)
+		if cached {
+			notifications[i] = nn
+			continue
 		}
-		notifications = append(notifications, notif)
+
+		// Check DB for notification
+		err := n.getNotificationDB(ctx, notif.ID, notif)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return notifications, nil
+}
+
+func (n *notificationDB) getNotificationCache(id string) (*gtsmodel.Notification, bool) {
+	v, ok := n.cache.Get(id)
+	if !ok {
+		return nil, false
+	}
+	return v.(*gtsmodel.Notification), true
+}
+
+func (n *notificationDB) putNotificationCache(notif *gtsmodel.Notification) {
+	n.cache.Set(notif.ID, notif)
+}
+
+func (n *notificationDB) getNotificationDB(ctx context.Context, id string, dst *gtsmodel.Notification) error {
+	q := n.newNotificationQ(dst).
+		Where("notification.id = ?", id)
+
+	err := q.Scan(ctx)
+	if err != nil {
+		return n.conn.ProcessError(err)
+	}
+
+	n.putNotificationCache(dst)
+	return nil
 }

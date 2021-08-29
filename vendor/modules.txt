@@ -302,6 +302,7 @@ github.com/h2non/filetype/types
 # github.com/jackc/chunkreader/v2 v2.0.1
 github.com/jackc/chunkreader/v2
 # github.com/jackc/pgconn v1.10.0
+## explicit
 github.com/jackc/pgconn
 github.com/jackc/pgconn/internal/ctxwatch
 github.com/jackc/pgconn/stmtcache
@@ -325,6 +326,8 @@ github.com/jinzhu/inflection
 # github.com/json-iterator/go v1.1.11
 ## explicit
 github.com/json-iterator/go
+# github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+github.com/kballard/go-shellquote
 # github.com/leodido/go-urn v1.2.1
 ## explicit
 github.com/leodido/go-urn
@@ -352,6 +355,8 @@ github.com/pmezard/go-difflib/difflib
 # github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b
 ## explicit
 github.com/quasoft/memstore
+# github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
+github.com/remyoudompheng/bigfft
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
@@ -403,6 +408,9 @@ github.com/uptrace/bun/schema
 # github.com/uptrace/bun/dialect/pgdialect v0.4.3
 ## explicit
 github.com/uptrace/bun/dialect/pgdialect
+# github.com/uptrace/bun/dialect/sqlitedialect v0.4.3
+## explicit
+github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/urfave/cli/v2 v2.3.0
 ## explicit
 github.com/urfave/cli/v2
@@ -436,6 +444,9 @@ golang.org/x/crypto/ripemd160
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+# golang.org/x/mod v0.5.0
+## explicit
+golang.org/x/mod/semver
 # golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -446,9 +457,10 @@ golang.org/x/net/idna
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+# golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 ## explicit
 golang.org/x/sys/cpu
+golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -467,6 +479,22 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
+# golang.org/x/tools v0.1.5
+## explicit
+golang.org/x/tools/go/gcexportdata
+golang.org/x/tools/go/internal/gcimporter
+golang.org/x/tools/go/internal/packagesdriver
+golang.org/x/tools/go/packages
+golang.org/x/tools/internal/event
+golang.org/x/tools/internal/event/core
+golang.org/x/tools/internal/event/keys
+golang.org/x/tools/internal/event/label
+golang.org/x/tools/internal/gocommand
+golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/typesinternal
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+golang.org/x/xerrors
+golang.org/x/xerrors/internal
 # google.golang.org/appengine v1.6.7
 ## explicit
 google.golang.org/appengine/internal
@@ -516,6 +544,52 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
 gopkg.in/yaml.v3
+# lukechampine.com/uint128 v1.1.1
+lukechampine.com/uint128
+# modernc.org/cc/v3 v3.33.11
+modernc.org/cc/v3
+# modernc.org/ccgo/v3 v3.10.1
+## explicit
+modernc.org/ccgo/v3/lib
+# modernc.org/libc v1.10.0
+## explicit
+modernc.org/libc
+modernc.org/libc/errno
+modernc.org/libc/fcntl
+modernc.org/libc/fts
+modernc.org/libc/grp
+modernc.org/libc/honnef.co/go/netdb
+modernc.org/libc/langinfo
+modernc.org/libc/limits
+modernc.org/libc/netdb
+modernc.org/libc/netinet/in
+modernc.org/libc/poll
+modernc.org/libc/pthread
+modernc.org/libc/pwd
+modernc.org/libc/signal
+modernc.org/libc/stdio
+modernc.org/libc/sys/socket
+modernc.org/libc/sys/stat
+modernc.org/libc/sys/types
+modernc.org/libc/termios
+modernc.org/libc/time
+modernc.org/libc/unistd
+modernc.org/libc/utime
+modernc.org/libc/uuid/uuid
+# modernc.org/mathutil v1.4.1
+modernc.org/mathutil
+# modernc.org/memory v1.0.5
+modernc.org/memory
+# modernc.org/opt v0.1.1
+modernc.org/opt
+# modernc.org/sqlite v1.12.0
+## explicit
+modernc.org/sqlite
+modernc.org/sqlite/lib
+# modernc.org/strutil v1.1.1
+modernc.org/strutil
+# modernc.org/token v1.0.0
+modernc.org/token
 # mvdan.cc/xurls/v2 v2.3.0
 ## explicit
 mvdan.cc/xurls/v2

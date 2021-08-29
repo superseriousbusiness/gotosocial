@@ -23,22 +23,19 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/uptrace/bun"
 )
 
 type sessionDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
-	rss := []*gtsmodel.RouterSession{}
+	rss := make([]*gtsmodel.RouterSession, 0, 1)
 
 	_, err := s.conn.
 		NewSelect().
@@ -47,7 +44,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 		Order("id DESC").
 		Exec(ctx)
 	if err != nil {
-		return nil, processErrorResponse(err)
+		return nil, s.conn.ProcessError(err)
 	}
 
 	if len(rss) <= 0 {
@@ -92,8 +89,8 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		Model(rs)
 
 	_, err = q.Exec(ctx)
-
-	err = processErrorResponse(err)
-
-	return rs, err
+	if err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
+	return rs, nil
 }

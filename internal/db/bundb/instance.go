@@ -21,7 +21,6 @@ package bundb
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -30,8 +29,7 @@ import (
 
 type instanceDB struct {
 	config *config.Config
-	conn   *bun.DB
-	log    *logrus.Logger
+	conn   *DBConn
 }
 
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, db.Error) {
@@ -49,8 +47,10 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 	}
 
 	count, err := q.Count(ctx)
-
-	return count, processErrorResponse(err)
+	if err != nil {
+		return 0, i.conn.ProcessError(err)
+	}
+	return count, nil
 }
 
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, db.Error) {
@@ -68,8 +68,10 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	}
 
 	count, err := q.Count(ctx)
-
-	return count, processErrorResponse(err)
+	if err != nil {
+		return 0, i.conn.ProcessError(err)
+	}
+	return count, nil
 }
 
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, db.Error) {
@@ -89,12 +91,14 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	}
 
 	count, err := q.Count(ctx)
-
-	return count, processErrorResponse(err)
+	if err != nil {
+		return 0, i.conn.ProcessError(err)
+	}
+	return count, nil
 }
 
 func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
-	i.log.Debug("GetAccountsForInstance")
+	i.conn.log.Debug("GetAccountsForInstance")
 
 	accounts := []*gtsmodel.Account{}
 
@@ -111,7 +115,9 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 		q = q.Limit(limit)
 	}
 
-	err := processErrorResponse(q.Scan(ctx))
-
-	return accounts, err
+	err := q.Scan(ctx)
+	if err != nil {
+		return nil, i.conn.ProcessError(err)
+	}
+	return accounts, nil
 }
