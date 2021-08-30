@@ -46,7 +46,7 @@ func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionHappyPath(
 
 func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionAuth() {
 	r := happyRouterSession()
-	
+
 	// remove auth struct
 	r.Auth = nil
 	err := gtsmodel.ValidateStruct(*r)
@@ -65,7 +65,7 @@ func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionAuth() {
 
 func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionCrypt() {
 	r := happyRouterSession()
-	
+
 	// remove crypt struct
 	r.Crypt = nil
 	err := gtsmodel.ValidateStruct(*r)

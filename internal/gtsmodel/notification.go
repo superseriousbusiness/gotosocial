@@ -31,7 +31,7 @@ type Notification struct {
 	OriginAccount    *Account         `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Account corresponding to originAccountID
 	StatusID         string           `validate:"required_if=NotificationType mention,required_if=NotificationType reblog,required_if=NotificationType favourite,required_if=NotificationType status,omitempty,ulid" bun:"type:CHAR(26),nullzero"` // If the notification pertains to a status, what is the database ID of that status?
 	Status           *Status          `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Status corresponding to statusID
-	Read             bool             `validate:"-" bun:",notnull,default:false"`                                                                                                                                                         // Notification has been seen/read
+	Read             bool             `validate:"-" bun:",notnull,default:false"`                                                                                                                                                                  // Notification has been seen/read
 }
 
 // NotificationType describes the reason/type of this notification.
