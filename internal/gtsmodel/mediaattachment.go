@@ -25,24 +25,24 @@ import (
 // MediaAttachment represents a user-uploaded media attachment: an image/video/audio/gif that is
 // somewhere in storage and that can be retrieved and served by the router.
 type MediaAttachment struct {
-	ID                string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                                                           // id of this item in the database
-	CreatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                                                                             // when was item created
-	UpdatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                                                                             // when was item last updated
-	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                                            // ID of the status to which this is attached
-	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                                                                               // Where can the attachment be retrieved on *this* server
-	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                                                                     // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",notnull"`                                                                                     // Type of file (image/gif/audio/video)
-	FileMeta          FileMeta         `validate:"required" bun:",nullzero,notnull"`                                                                                                       // Metadata about the file
-	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                     // To which account does this attachment belong
-	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                                                                    // Account corresponding to accountID
-	Description       string           `validate:"-" bun:",nullzero"`                                                                                                                      // Description of the attachment (for screenreaders)
-	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                                            // To which scheduled status does this attachment belong
+	ID                string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                       // id of this item in the database
+	CreatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                         // when was item created
+	UpdatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                         // when was item last updated
+	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // ID of the status to which this is attached
+	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
+	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
+	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",notnull"`                                 // Type of file (image/gif/audio/video)
+	FileMeta          FileMeta         `validate:"required" bun:",nullzero,notnull"`                                                   // Metadata about the file
+	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
+	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                // Account corresponding to accountID
+	Description       string           `validate:"-" bun:",nullzero"`                                                                  // Description of the attachment (for screenreaders)
+	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // To which scheduled status does this attachment belong
 	Blurhash          string           `validate:"required_if=Type Image,required_if=Type Gif,required_if=Type Video" bun:",nullzero"` // What is the generated blurhash of this attachment
-	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                                                                      // What is the processing status of this attachment
-	File              File             `validate:"required" bun:",notnull,nullzero"`                                                                                                       // metadata for the whole file
-	Thumbnail         Thumbnail        `validate:"required" bun:",notnull,nullzero"`                                                                                                       // small image thumbnail derived from a larger image, video, or audio file.
-	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                                                                         // Is this attachment being used as an avatar?
-	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                                                                         // Is this attachment being used as a header?
+	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                           // What is the processing status of this attachment
+	File              File             `validate:"required" bun:",notnull,nullzero"`                                                   // metadata for the whole file
+	Thumbnail         Thumbnail        `validate:"required" bun:",notnull,nullzero"`                                                   // small image thumbnail derived from a larger image, video, or audio file.
+	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as an avatar?
+	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as a header?
 }
 
 // File refers to the metadata for the whole file
