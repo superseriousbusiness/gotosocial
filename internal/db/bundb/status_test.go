@@ -105,10 +105,9 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 	suite.NotNil(status)
 	suite.NotNil(status.Account)
 	suite.NotNil(status.CreatedWithApplication)
-	suite.NotEmpty(status.Mentions)
 	suite.NotEmpty(status.MentionIDs)
-	suite.NotNil(status.InReplyTo)
-	suite.NotNil(status.InReplyToAccount)
+	suite.NotEmpty(status.InReplyToID)
+	suite.NotEmpty(status.InReplyToAccountID)
 }
 
 func (suite *StatusTestSuite) TestGetStatusTwice() {

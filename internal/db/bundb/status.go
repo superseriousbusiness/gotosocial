@@ -78,7 +78,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 			return s.cache.GetByURI(uri)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("LOWER(status.uri) = LOWER(?)").Scan(ctx)
+			return s.newStatusQ(status).Where("LOWER(status.uri) = LOWER(?)", uri).Scan(ctx)
 		},
 	)
 }
@@ -100,6 +100,8 @@ func (s *statusDB) getStatus(ctx context.Context, cacheGet func() (*gtsmodel.Sta
 	status, cached := cacheGet()
 
 	if !cached {
+		status = &gtsmodel.Status{}
+
 		// Not cached! Perform database query
 		err := dbQuery(status)
 		if err != nil {
