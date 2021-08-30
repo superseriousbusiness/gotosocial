@@ -22,19 +22,13 @@ import "time"
 
 // StatusFave refers to a 'fave' or 'like' in the database, from one account, targeting the status of another account
 type StatusFave struct {
-	// id of this fave in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// when was this fave created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// id of the account that created ('did') the fave
-	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
-	// id the account owning the faved status
-	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
-	// database id of the status that has been 'faved'
-	StatusID string  `bun:"type:CHAR(26),notnull"`
-	Status   *Status `bun:"rel:belongs-to"`
-	// ActivityPub URI of this fave
-	URI string `bun:",notnull"`
+	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	CreatedAt       time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id of the account that created ('did') the fave
+	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                       // account that created the fave
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id the account owning the faved status
+	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                       // account owning the faved status
+	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // database id of the status that has been 'faved'
+	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                       // the faved status
+	URI             string    `validate:"required,url" bun:",nullzero,notnull"`                         // ActivityPub URI of this fave
 }

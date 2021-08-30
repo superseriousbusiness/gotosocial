@@ -33,7 +33,7 @@ import (
 
 func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
-	gtsAdvancedVis := &gtsmodel.VisibilityAdvanced{
+	gtsAdvancedVis := gtsmodel.VisibilityAdvanced{
 		Federated: true,
 		Boostable: true,
 		Replyable: true,
@@ -123,11 +123,8 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 		}
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
-
-	if repliedStatus.VisibilityAdvanced != nil {
-		if !repliedStatus.VisibilityAdvanced.Replyable {
-			return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
-		}
+	if !repliedStatus.VisibilityAdvanced.Replyable {
+		return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
 	}
 
 	// check replied account is known to us

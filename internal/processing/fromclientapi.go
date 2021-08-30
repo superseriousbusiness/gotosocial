@@ -49,7 +49,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 				return err
 			}
 
-			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
+			if status.VisibilityAdvanced.Federated {
 				return p.federateStatus(ctx, status)
 			}
 		case gtsmodel.ActivityStreamsFollow:
