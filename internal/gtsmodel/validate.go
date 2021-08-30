@@ -32,20 +32,15 @@ const (
 	InvalidValidationPanic = "validate function was passed invalid item"
 )
 
-var ulidValidator = func(fl validator.FieldLevel) bool {
-	value, kind, _ := fl.ExtractType(fl.Field())
+func ulidValidator(fl validator.FieldLevel) bool {
+	field := fl.Field()
 
-	if kind != reflect.String {
+	switch field.Kind() {
+	case reflect.String:
+		return util.ValidateULID(field.String())
+	default:
 		return false
 	}
-
-	// we want either an empty string, or a proper ULID, nothing else
-	// if the string is empty, the `required` tag will take care of it so we don't need to worry about it here
-	s := value.String()
-	if len(s) == 0 {
-		return true
-	}
-	return util.ValidateULID(s)
 }
 
 func init() {

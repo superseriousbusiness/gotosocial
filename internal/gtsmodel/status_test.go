@@ -101,7 +101,7 @@ func (suite *StatusValidateTestSuite) TestValidateStatusAttachmentIDs() {
 
 	s.AttachmentIDs[0] = ""
 	err := gtsmodel.ValidateStruct(*s)
-	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'required' tag")
+	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag")
 
 	s.AttachmentIDs[0] = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
 	err = gtsmodel.ValidateStruct(*s)
@@ -109,7 +109,7 @@ func (suite *StatusValidateTestSuite) TestValidateStatusAttachmentIDs() {
 
 	s.AttachmentIDs[1] = ""
 	err = gtsmodel.ValidateStruct(*s)
-	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag\nKey: 'Status.AttachmentIDs[1]' Error:Field validation for 'AttachmentIDs[1]' failed on the 'required' tag")
+	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag\nKey: 'Status.AttachmentIDs[1]' Error:Field validation for 'AttachmentIDs[1]' failed on the 'ulid' tag")
 
 	s.AttachmentIDs = []string{}
 	err = gtsmodel.ValidateStruct(*s)
