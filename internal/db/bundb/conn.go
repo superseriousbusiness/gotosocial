@@ -12,6 +12,8 @@ import (
 
 // dbConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
 type DBConn struct {
+	// TODO: move *Config here, no need to be in each struct type
+
 	errProc func(error) db.Error // errProc is the SQL-type specific error processor
 	log     *logrus.Logger       // log is the logger passed with this DBConn
 	*bun.DB                      // DB is the underlying bun.DB connection

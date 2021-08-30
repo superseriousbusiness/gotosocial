@@ -130,11 +130,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn.RegisterModel(t)
 	}
 
+	accounts := &accountDB{config: c, conn: conn, cache: cache.NewAccountCache()}
+
 	ps := &bunDBService{
-		Account: &accountDB{
-			config: c,
-			conn:   conn,
-		},
+		Account: accounts,
 		Admin: &adminDB{
 			config: c,
 			conn:   conn,
@@ -174,9 +173,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			conn:   conn,
 		},
 		Status: &statusDB{
-			config: c,
-			conn:   conn,
-			cache:  cache.NewStatusCache(),
+			config:   c,
+			conn:     conn,
+			cache:    cache.NewStatusCache(),
+			accounts: accounts,
 		},
 		Timeline: &timelineDB{
 			config: c,

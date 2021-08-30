@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -34,6 +35,7 @@ import (
 type accountDB struct {
 	config *config.Config
 	conn   *DBConn
+	cache  *cache.AccountCache
 }
 
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
@@ -83,22 +85,45 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.
 	return account, nil
 }
 
+func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.Account, bool), dbQuery func(*gtsmodel.Account) error) (*gtsmodel.Account, db.Error) {
+	// Attempt to fetch cached account
+	account, cached := cacheGet()
+
+	if !cached {
+		account = &gtsmodel.Account{}
+
+		// Not cached! Perform database query
+		err := dbQuery(account)
+		if err != nil {
+			return nil, a.conn.ProcessError(err)
+		}
+
+		// Place in the cache
+		a.cache.Put(account)
+	}
+
+	return account, nil
+}
+
 func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
 	if strings.TrimSpace(account.ID) == "" {
+		// TODO: we should not need this check here
 		return nil, errors.New("account had no ID")
 	}
 
+	// Update the account's last-used
 	account.UpdatedAt = time.Now()
 
-	q := a.conn.
-		NewUpdate().
-		Model(account).
-		WherePK()
-
-	_, err := q.Exec(ctx)
+	// Update the account model in the DB
+	_, err := a.conn.NewUpdate().Model(account).WherePK().Exec(ctx)
 	if err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
+
+	// Place updated account in cache
+	// (this will replace existing, i.e. invalidating)
+	a.cache.Put(account)
+
 	return account, nil
 }
 

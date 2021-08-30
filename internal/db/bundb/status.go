@@ -34,6 +34,11 @@ type statusDB struct {
 	config *config.Config
 	conn   *DBConn
 	cache  *cache.StatusCache
+
+	// TODO: keep method definitions in same place but instead have receiver
+	//       all point to one single "db" type, so they can all share methods
+	//       and caches where necessary
+	accounts *accountDB
 }
 
 func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
@@ -120,6 +125,14 @@ func (s *statusDB) getStatus(ctx context.Context, cacheGet func() (*gtsmodel.Sta
 		s.cache.Put(status)
 	}
 
+	// Set the status author account
+	author, err := s.accounts.GetAccountByID(ctx, status.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the prepared status
+	status.Account = author
 	return status, nil
 }
 
