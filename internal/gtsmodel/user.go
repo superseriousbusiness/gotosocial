@@ -39,28 +39,28 @@ type User struct {
 	LastSignInAt           time.Time    `validate:"-" bun:",nullzero"`                                            // When did this user last sign in?
 	LastSignInIP           net.IP       `validate:"-" bun:",nullzero"`                                            // What's the previous IP of this user?
 	SignInCount            int          `validate:"-" bun:",nullzero,notnull,default:0"`                          // How many times has this user signed in?
-	InviteID               string       `validate:"ulid" bun:"type:CHAR(26),nullzero"`                            // id of the user who invited this user (who let this joker in?)
+	InviteID               string       `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                  // id of the user who invited this user (who let this joker in?)
 	ChosenLanguages        []string     `validate:"-" bun:",nullzero"`                                            // What languages does this user want to see?
 	FilteredLanguages      []string     `validate:"-" bun:",nullzero"`                                            // What languages does this user not want to see?
 	Locale                 string       `validate:"-" bun:",nullzero"`                                            // In what timezone/locale is this user located?
-	CreatedByApplicationID string       `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                    // Which application id created this user? See gtsmodel.Application
+	CreatedByApplicationID string       `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // Which application id created this user? See gtsmodel.Application
 	CreatedByApplication   *Application `validate:"-" bun:"rel:belongs-to"`                                       // Pointer to the application corresponding to createdbyapplicationID.
 	LastEmailedAt          time.Time    `validate:"-" bun:",nullzero"`                                            // When was this user last contacted by email.
 	ConfirmationToken      string       `validate:"required_with=ConfirmationSentAt" bun:",nullzero"`             // What confirmation token did we send this user/what are we expecting back?
 	ConfirmationSentAt     time.Time    `validate:"required_with=ConfirmationToken" bun:",nullzero"`              // When did we send email confirmation to this user?
 	ConfirmedAt            time.Time    `validate:"required_with=Email" bun:",nullzero"`                          // When did the user confirm their email address
 	UnconfirmedEmail       string       `validate:"required_without=Email" bun:",nullzero"`                       // Email address that hasn't yet been confirmed
-	Moderator              bool         `validate:"-" bun:",nullzero,notnull,default:false"`                      // Is this user a moderator?
-	Admin                  bool         `validate:"-" bun:",nullzero,notnull,default:false"`                      // Is this user an admin?
-	Disabled               bool         `validate:"-" bun:",nullzero,notnull,default:false"`                      // Is this user disabled from posting?
-	Approved               bool         `validate:"-" bun:",nullzero,notnull,default:false"`                      // Has this user been approved by a moderator?
+	Moderator              bool         `validate:"-" bun:",notnull,default:false"`                               // Is this user a moderator?
+	Admin                  bool         `validate:"-" bun:",notnull,default:false"`                               // Is this user an admin?
+	Disabled               bool         `validate:"-" bun:",notnull,default:false"`                               // Is this user disabled from posting?
+	Approved               bool         `validate:"-" bun:",notnull,default:false"`                               // Has this user been approved by a moderator?
 	ResetPasswordToken     string       `validate:"required_with=ResetPasswordSentAt" bun:",nullzero"`            // The generated token that the user can use to reset their password
 	ResetPasswordSentAt    time.Time    `validate:"required_with=ResetPasswordToken" bun:",nullzero"`             // When did we email the user their reset-password email?
 
 	EncryptedOTPSecret     string    `validate:"-" bun:",nullzero"`
 	EncryptedOTPSecretIv   string    `validate:"-" bun:",nullzero"`
 	EncryptedOTPSecretSalt string    `validate:"-" bun:",nullzero"`
-	OTPRequiredForLogin    bool      `validate:"-" bun:",nullzero"`
+	OTPRequiredForLogin    bool      `validate:"-" bun:",notnull,default:false"`
 	OTPBackupCodes         []string  `validate:"-" bun:",nullzero"`
 	ConsumedTimestamp      int       `validate:"-" bun:",nullzero"`
 	RememberToken          string    `validate:"-" bun:",nullzero"`

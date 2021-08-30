@@ -27,8 +27,8 @@ type Tag struct {
 	UpdatedAt              time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item last updated
 	URL                    string    `validate:"required,url" bun:",nullzero,notnull"`                         // Href of this tag, eg https://example.org/tags/somehashtag
 	Name                   string    `validate:"required" bun:",unique,nullzero,notnull"`                      // name of this tag -- the tag without the hash part
-	FirstSeenFromAccountID string    `validate:"ulid" bun:"type:CHAR(26),nullzero"`                            // Which account ID is the first one we saw using this tag?
-	Useable                bool      `validate:"-" bun:",nullzero,notnull,default:true"`                       // can our instance users use this tag?
-	Listable               bool      `validate:"-" bun:",nullzero,notnull,default:true"`                       // can our instance users look up this tag?
+	FirstSeenFromAccountID string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                  // Which account ID is the first one we saw using this tag?
+	Useable                bool      `validate:"-" bun:",notnull,default:true"`                                // can our instance users use this tag?
+	Listable               bool      `validate:"-" bun:",notnull,default:true"`                                // can our instance users look up this tag?
 	LastStatusAt           time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was this tag last used?
 }
