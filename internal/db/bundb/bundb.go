@@ -95,13 +95,9 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		// Drop anything fancy from DB address
 		c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
 		c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
-		if c.DBConfig.Address == ":memory:" {
-			// Actually, reappend that "file:"...
-			c.DBConfig.Address = "file:" + c.DBConfig.Address
-		}
 
 		// Append our own SQLite preferences
-		c.DBConfig.Address += "?cache=shared"
+		c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
 
 		// Open new DB instance
 		var err error
