@@ -44,7 +44,7 @@ func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) db.Error
 
 	// Perform supplied transaction
 	if err = fn(tx); err != nil {
-		tx.Rollback()
+		tx.Rollback() //nolint
 		return conn.ProcessError(err)
 	}
 
