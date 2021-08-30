@@ -91,6 +91,19 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
 	case dbTypeSqlite:
 		// SQLITE
+
+		// Drop anything fancy from DB address
+		c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
+		c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
+		if c.DBConfig.Address == ":memory:" {
+			// Actually, reappend that "file:"...
+			c.DBConfig.Address = "file:" + c.DBConfig.Address
+		}
+
+		// Append our own SQLite preferences
+		c.DBConfig.Address += "?cache=shared"
+
+		// Open new DB instance
 		var err error
 		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
 		if err != nil {
@@ -98,7 +111,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		}
 		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()), log)
 
-		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
+		if c.DBConfig.Address == "file::memory:?cache=shared" {
 			log.Warn("sqlite in-memory database should only be used for debugging")
 
 			// don't close connections on disconnect -- otherwise
