@@ -92,16 +92,18 @@ func (c *StatusCache) getByID(id string) (*gtsmodel.Status, bool) {
 
 // Put places a status in the cache, ensuring that the object place is a copy for thread-safety
 func (c *StatusCache) Put(status *gtsmodel.Status) {
-	if status == nil || status.ID == "" ||
-		status.URL == "" ||
-		status.URI == "" {
+	if status == nil || status.ID == "" {
 		panic("invalid status")
 	}
 
 	c.mutex.Lock()
 	c.cache.Set(status.ID, copyStatus(status))
-	c.urls[status.URL] = status.ID
-	c.uris[status.URI] = status.ID
+	if status.URL != "" {
+		c.urls[status.URL] = status.ID
+	}
+	if status.URI != "" {
+		c.uris[status.URI] = status.ID
+	}
 	c.mutex.Unlock()
 }
 
