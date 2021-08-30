@@ -49,7 +49,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 				return errors.New("note was not parseable as *gtsmodel.Status")
 			}
 
-			status, err := p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, incomingStatus)
+			status, err := p.federator.EnrichRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, incomingStatus, false, false)
 			if err != nil {
 				return err
 			}
