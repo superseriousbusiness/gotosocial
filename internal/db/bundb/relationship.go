@@ -298,7 +298,7 @@ func (r *relationshipDB) GetAccountFollowedBy(ctx context.Context, accountID str
 
 	if localOnly {
 		q = q.ColumnExpr("follow.*").
-			Join("JOIN accounts AS a ON follow.account_id = TEXT(a.id)").
+			Join("JOIN accounts AS a ON follow.account_id = CAST(a.id as TEXT)").
 			Where("follow.target_account_id = ?", accountID).
 			WhereGroup(" AND ", whereEmptyOrNull("a.domain"))
 	} else {
