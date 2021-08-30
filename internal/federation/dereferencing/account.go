@@ -48,7 +48,6 @@ func instanceAccount(account *gtsmodel.Account) bool {
 // EnrichRemoteAccount is mostly useful for calling after an account has been initially created by
 // the federatingDB's Create function, or during the federated authorization flow.
 func (d *deref) EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error) {
-
 	// if we're dealing with an instance account, we don't need to update anything
 	if instanceAccount(account) {
 		return account, nil
@@ -58,13 +57,13 @@ func (d *deref) EnrichRemoteAccount(ctx context.Context, username string, accoun
 		return nil, err
 	}
 
-	var err error
-	account, err = d.db.UpdateAccount(ctx, account)
+	updated, err := d.db.UpdateAccount(ctx, account)
 	if err != nil {
 		d.log.Errorf("EnrichRemoteAccount: error updating account: %s", err)
+		return account, nil
 	}
 
-	return account, nil
+	return updated, nil
 }
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
