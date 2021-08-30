@@ -149,7 +149,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			LastEmailedAt:          time.Time{},
 			ConfirmationToken:      "a5a280bd-34be-44a3-8330-a57eaf61b8dd",
 			ConfirmedAt:            time.Time{},
@@ -179,7 +179,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{"en"},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			LastEmailedAt:          time.Now().Add(-30 * time.Minute),
 			ConfirmationToken:      "",
 			ConfirmedAt:            time.Now().Add(-72 * time.Hour),
@@ -239,7 +239,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{"en"},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			LastEmailedAt:          time.Now().Add(-55 * time.Minute),
 			ConfirmationToken:      "",
 			ConfirmedAt:            time.Now().Add(-34 * time.Hour),
@@ -799,6 +799,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-71 * time.Hour),
 			UpdatedAt:                time.Now().Add(-71 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -807,7 +808,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -823,6 +824,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-70 * time.Hour),
 			UpdatedAt:                time.Now().Add(-70 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -831,7 +833,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -847,6 +849,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-47 * time.Hour),
 			UpdatedAt:                time.Now().Add(-47 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -855,7 +858,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -871,6 +874,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-46 * time.Hour),
 			UpdatedAt:                time.Now().Add(-46 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -879,7 +883,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: true,
 				Replyable: true,
@@ -895,6 +899,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-45 * time.Hour),
 			UpdatedAt:                time.Now().Add(-45 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -903,7 +908,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: false,
 				Replyable: false,
@@ -920,6 +925,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Hour),
 			UpdatedAt:                time.Now().Add(-1 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -928,7 +934,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -945,6 +951,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -953,7 +960,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -969,6 +976,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-189 * time.Hour),
 			UpdatedAt:                time.Now().Add(-189 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -977,7 +985,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
@@ -993,6 +1001,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1001,7 +1010,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: false,
@@ -1017,6 +1026,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-2 * time.Minute),
 			UpdatedAt:                time.Now().Add(-2 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1025,7 +1035,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: false,
@@ -1041,6 +1051,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1049,7 +1060,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: false,
 				Replyable: true,
@@ -1065,6 +1076,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			MentionIDs:               []string{"01FDF2HM2NF6FSRZCDEDV451CN"},
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -1076,7 +1088,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,

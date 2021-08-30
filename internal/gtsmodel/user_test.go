@@ -33,7 +33,7 @@ func happyUser() *gtsmodel.User {
 		LastEmailedAt:          time.Now(),
 		ConfirmationToken:      "",
 		ConfirmedAt:            time.Now(),
-		ConfirmationSentAt:     time.Now(),
+		ConfirmationSentAt:     time.Time{},
 		UnconfirmedEmail:       "",
 		Moderator:              false,
 		Admin:                  false,
