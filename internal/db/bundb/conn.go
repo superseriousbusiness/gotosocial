@@ -35,6 +35,24 @@ func WrapDBConn(dbConn *bun.DB, log *logrus.Logger) *DBConn {
 	}
 }
 
+func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) db.Error {
+	// Acquire a new transaction
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return conn.ProcessError(err)
+	}
+
+	// Perform supplied transaction
+	if err = fn(tx); err != nil {
+		tx.Rollback()
+		return conn.ProcessError(err)
+	}
+
+	// Finally, commit transaction
+	err = tx.Commit()
+	return conn.ProcessError(err)
+}
+
 // ProcessError processes an error to replace any known values with our own db.Error types,
 // making it easier to catch specific situations (e.g. no rows, already exists, etc)
 func (conn *DBConn) ProcessError(err error) db.Error {

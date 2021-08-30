@@ -124,7 +124,7 @@ func (s *statusDB) getStatus(ctx context.Context, cacheGet func() (*gtsmodel.Sta
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
-	transaction := func(ctx context.Context, tx bun.Tx) error {
+	return s.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// create links between this status and any emojis it uses
 		for _, i := range status.EmojiIDs {
 			if _, err := tx.NewInsert().Model(&gtsmodel.StatusToEmoji{
@@ -156,10 +156,10 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 			}
 		}
 
+		// Finally, insert the status
 		_, err := tx.NewInsert().Model(status).Exec(ctx)
 		return err
-	}
-	return s.conn.ProcessError(s.conn.RunInTx(ctx, nil, transaction))
+	})
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
