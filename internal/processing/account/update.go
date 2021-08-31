@@ -26,9 +26,11 @@ import (
 	"io"
 	"mime/multipart"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -122,9 +124,9 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, fmt.Errorf("could not fetch updated account %s: %s", account.ID, err)
 	}
 
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsProfile,
-		APActivityType: gtsmodel.ActivityStreamsUpdate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityUpdate,
 		GTSModel:       updatedAccount,
 		OriginAccount:  updatedAccount,
 	}

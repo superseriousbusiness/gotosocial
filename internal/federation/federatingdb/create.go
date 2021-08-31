@@ -27,9 +27,11 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -81,14 +83,14 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		l.Error("CREATE: from federator channel wasn't set on context")
 		return nil
 	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
 	if !ok {
 		l.Error("CREATE: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 
 	switch asType.GetTypeName() {
-	case gtsmodel.ActivityStreamsCreate:
+	case ap.ActivityCreate:
 		// CREATE SOMETHING
 		create, ok := asType.(vocab.ActivityStreamsCreate)
 		if !ok {
@@ -97,7 +99,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		object := create.GetActivityStreamsObject()
 		for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
 			switch objectIter.GetType().GetTypeName() {
-			case gtsmodel.ActivityStreamsNote:
+			case ap.ObjectNote:
 				// CREATE A NOTE
 				note := objectIter.GetActivityStreamsNote()
 				status, err := f.typeConverter.ASStatusToStatus(ctx, note)
@@ -122,15 +124,15 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 					return fmt.Errorf("CREATE: database error inserting status: %s", err)
 				}
 
-				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:     gtsmodel.ActivityStreamsNote,
-					APActivityType:   gtsmodel.ActivityStreamsCreate,
+				fromFederatorChan <- messages.FromFederator{
+					APObjectType:     ap.ObjectNote,
+					APActivityType:   ap.ActivityCreate,
 					GTSModel:         status,
 					ReceivingAccount: targetAcct,
 				}
 			}
 		}
-	case gtsmodel.ActivityStreamsFollow:
+	case ap.ActivityFollow:
 		// FOLLOW SOMETHING
 		follow, ok := asType.(vocab.ActivityStreamsFollow)
 		if !ok {
@@ -152,13 +154,13 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("CREATE: database error inserting follow request: %s", err)
 		}
 
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsFollow,
-			APActivityType:   gtsmodel.ActivityStreamsCreate,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ActivityFollow,
+			APActivityType:   ap.ActivityCreate,
 			GTSModel:         followRequest,
 			ReceivingAccount: targetAcct,
 		}
-	case gtsmodel.ActivityStreamsLike:
+	case ap.ActivityLike:
 		// LIKE SOMETHING
 		like, ok := asType.(vocab.ActivityStreamsLike)
 		if !ok {
@@ -180,13 +182,13 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("CREATE: database error inserting fave: %s", err)
 		}
 
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsLike,
-			APActivityType:   gtsmodel.ActivityStreamsCreate,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ActivityLike,
+			APActivityType:   ap.ActivityCreate,
 			GTSModel:         fave,
 			ReceivingAccount: targetAcct,
 		}
-	case gtsmodel.ActivityStreamsBlock:
+	case ap.ActivityBlock:
 		// BLOCK SOMETHING
 		blockable, ok := asType.(vocab.ActivityStreamsBlock)
 		if !ok {
@@ -208,9 +210,9 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("CREATE: database error inserting block: %s", err)
 		}
 
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsBlock,
-			APActivityType:   gtsmodel.ActivityStreamsCreate,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ActivityBlock,
+			APActivityType:   ap.ActivityCreate,
 			GTSModel:         block,
 			ReceivingAccount: targetAcct,
 		}

@@ -23,8 +23,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -150,9 +152,9 @@ selectStatusesLoop:
 			// pass the status delete through the client api channel for processing
 			s.Account = account
 			l.Debug("putting status in the client api channel")
-			p.fromClientAPI <- gtsmodel.FromClientAPI{
-				APObjectType:   gtsmodel.ActivityStreamsNote,
-				APActivityType: gtsmodel.ActivityStreamsDelete,
+			p.fromClientAPI <- messages.FromClientAPI{
+				APObjectType:   ap.ObjectNote,
+				APActivityType: ap.ActivityDelete,
 				GTSModel:       s,
 				OriginAccount:  account,
 				TargetAccount:  account,
@@ -186,9 +188,9 @@ selectStatusesLoop:
 				}
 
 				l.Debug("putting boost undo in the client api channel")
-				p.fromClientAPI <- gtsmodel.FromClientAPI{
-					APObjectType:   gtsmodel.ActivityStreamsAnnounce,
-					APActivityType: gtsmodel.ActivityStreamsUndo,
+				p.fromClientAPI <- messages.FromClientAPI{
+					APObjectType:   ap.ActivityAnnounce,
+					APActivityType: ap.ActivityUndo,
 					GTSModel:       s,
 					OriginAccount:  b.Account,
 					TargetAccount:  account,

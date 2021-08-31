@@ -25,8 +25,8 @@ import (
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
-	CreatedAt                time.Time          `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                                // when was item created
-	UpdatedAt                time.Time          `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                                // when was item last updated
+	CreatedAt                time.Time          `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                       // when was item created
+	UpdatedAt                time.Time          `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                       // when was item last updated
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
 	Content                  string             `validate:"-" bun:",nullzero"`                                                                         // content of this status; likely html-formatted but not guaranteed

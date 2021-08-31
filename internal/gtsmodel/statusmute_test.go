@@ -79,7 +79,7 @@ func (suite *StatusMuteValidateTestSuite) TestValidateStatusMuteNoCreatedAt() {
 
 	m.CreatedAt = time.Time{}
 	err := gtsmodel.ValidateStruct(*m)
-	suite.EqualError(err, "Key: 'StatusMute.CreatedAt' Error:Field validation for 'CreatedAt' failed on the 'required' tag")
+	suite.NoError(err)
 }
 
 func TestStatusMuteValidateTestSuite(t *testing.T) {

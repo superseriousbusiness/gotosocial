@@ -23,7 +23,7 @@ import "time"
 // StatusMute refers to one account having muted the status of another account or its own.
 type StatusMute struct {
 	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	CreatedAt       time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
+	CreatedAt       time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
 	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id of the account that created ('did') the mute
 	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                       // pointer to the account specified by accountID
 	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id the account owning the muted status (can be the same as accountID)

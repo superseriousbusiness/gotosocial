@@ -27,8 +27,10 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -67,7 +69,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		l.Error("ACCEPT: from federator channel wasn't set on context")
 		return nil
 	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
 	if !ok {
 		l.Error("ACCEPT: from federator channel was set on context but couldn't be parsed")
 		return nil
@@ -99,9 +101,9 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					return err
 				}
 
-				fromFederatorChan <- gtsmodel.FromFederator{
-					APObjectType:     gtsmodel.ActivityStreamsFollow,
-					APActivityType:   gtsmodel.ActivityStreamsAccept,
+				fromFederatorChan <- messages.FromFederator{
+					APObjectType:     ap.ActivityFollow,
+					APActivityType:   ap.ActivityAccept,
 					GTSModel:         follow,
 					ReceivingAccount: targetAcct,
 				}
@@ -116,7 +118,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		}
 		switch iter.GetType().GetTypeName() {
 		// we have the whole object so we can figure out what we're accepting
-		case string(gtsmodel.ActivityStreamsFollow):
+		case string(ap.ActivityFollow):
 			// ACCEPT FOLLOW
 			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
 			if !ok {
@@ -136,9 +138,9 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return err
 			}
 
-			fromFederatorChan <- gtsmodel.FromFederator{
-				APObjectType:     gtsmodel.ActivityStreamsFollow,
-				APActivityType:   gtsmodel.ActivityStreamsAccept,
+			fromFederatorChan <- messages.FromFederator{
+				APObjectType:     ap.ActivityFollow,
+				APActivityType:   ap.ActivityAccept,
 				GTSModel:         follow,
 				ReceivingAccount: targetAcct,
 			}

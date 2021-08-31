@@ -22,11 +22,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -111,9 +113,9 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 
 	// follow request status changed so send the UNDO activity to the channel for async processing
 	if frChanged {
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsFollow,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccountID,
@@ -126,9 +128,9 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 
 	// follow status changed so send the UNDO activity to the channel for async processing
 	if fChanged {
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsFollow,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccountID,
@@ -140,9 +142,9 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 	}
 
 	// handle the rest of the block process asynchronously
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsBlock,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ActivityBlock,
+		APActivityType: ap.ActivityCreate,
 		GTSModel:       block,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetAccount,

@@ -21,20 +21,12 @@ package gtsmodel
 // Application represents an application that can perform actions on behalf of a user.
 // It is used to authorize tokens etc, and is associated with an oauth client id in the database.
 type Application struct {
-	// id of this application in the db
-	ID string `bun:"type:CHAR(26),pk,notnull"`
-	// name of the application given when it was created (eg., 'tusky')
-	Name string `bun:",nullzero"`
-	// website for the application given when it was created (eg., 'https://tusky.app')
-	Website string `bun:",nullzero"`
-	// redirect uri requested by the application for oauth2 flow
-	RedirectURI string `bun:",nullzero"`
-	// id of the associated oauth client entity in the db
-	ClientID string `bun:"type:CHAR(26),nullzero"`
-	// secret of the associated oauth client entity in the db
-	ClientSecret string `bun:",nullzero"`
-	// scopes requested when this app was created
-	Scopes string `bun:",nullzero"`
-	// a vapid key generated for this app when it was created
-	VapidKey string `bun:",nullzero"`
+	ID           string `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull"` // id of this application in the db
+	Name         string `validate:"required" bun:",nullzero,notnull"`                      // name of the application given when it was created (eg., 'tusky')
+	Website      string `validate:"omitempty,url" bun:",nullzero"`                         // website for the application given when it was created (eg., 'https://tusky.app')
+	RedirectURI  string `validate:"required" bun:",nullzero,notnull"`                      // redirect uri requested by the application for oauth2 flow
+	ClientID     string `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`           // id of the associated oauth client entity in the db
+	ClientSecret string `validate:"required,uuid" bun:",nullzero,notnull"`                 // secret of the associated oauth client entity in the db
+	Scopes       string `validate:"required" bun:",nullzero,default:'read'"`               // scopes requested when this app was created
+	VapidKey     string `validate:"-" bun:",nullzero"`                                     // a vapid key generated for this app when it was created
 }

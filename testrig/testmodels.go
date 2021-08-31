@@ -36,6 +36,7 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -291,7 +292,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/weed_lord420/followers",
 			FollowingURI:            "http://localhost:8080/users/weed_lord420/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/weed_lord420/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -330,7 +331,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/admin/followers",
 			FollowingURI:            "http://localhost:8080/users/admin/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/admin/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -367,7 +368,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/the_mighty_zork/followers",
 			FollowingURI:            "http://localhost:8080/users/the_mighty_zork/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/the_mighty_zork/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -405,7 +406,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/1happyturtle/followers",
 			FollowingURI:            "http://localhost:8080/users/1happyturtle/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/1happyturtle/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -440,7 +441,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
 			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
-			ActorType:             gtsmodel.ActivityStreamsPerson,
+			ActorType:             ap.ActorPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -814,7 +815,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"admin_account_status_2": {
 			ID:                       "01F8MHAAY43M6RJ473VQFCVH37",
@@ -839,7 +840,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_1": {
 			ID:                       "01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -864,7 +865,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_2": {
 			ID:                       "01F8MHAYFKS4KMXF8K5Y1C0KRN",
@@ -889,7 +890,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_3": {
 			ID:                       "01F8MHBBN8120SYH7D5S050MGK",
@@ -914,7 +915,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: false,
 				Likeable:  false,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_4": {
 			ID:                       "01F8MH82FYRXD2RC6108DAJ5HB",
@@ -940,7 +941,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_5": {
 			ID:                       "01FCTA44PW9H1TB328S9AQXKDS",
@@ -966,7 +967,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_1": {
 			ID:                       "01F8MHBQCBTDKN6X5VHGMMN4MA",
@@ -991,7 +992,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_2": {
 			ID:                       "01F8MHC0H0A7XHTVH5F596ZKBM",
@@ -1016,7 +1017,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: false,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_3": {
 			ID:                       "01F8MHC8VWDRBQR0N1BATDDEM5",
@@ -1041,7 +1042,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: false,
 				Likeable:  false,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_4": {
 			ID:                       "01F8MHCP5P2NWYQ416SBA0XSEV",
@@ -1066,7 +1067,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_5": {
 			ID:                       "01FCQSQ667XHJ9AV9T27SJJSX5",
@@ -1094,7 +1095,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 	}
 }

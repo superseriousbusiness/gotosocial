@@ -27,6 +27,7 @@ import (
 
 var v *validator.Validate
 
+// Validation Panic messages
 const (
 	PointerValidationPanic = "validate function was passed pointer"
 	InvalidValidationPanic = "validate function was passed invalid item"
@@ -48,6 +49,7 @@ func init() {
 	v.RegisterValidation("ulid", ulidValidator)
 }
 
+// ValidateStruct validates the passed struct, returning validator.ValidationErrors if invalid, or nil if OK.
 func ValidateStruct(s interface{}) error {
 	switch reflect.ValueOf(s).Kind() {
 	case reflect.Invalid:

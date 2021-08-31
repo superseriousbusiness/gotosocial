@@ -24,11 +24,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
@@ -140,9 +142,9 @@ selectAccountsLoop:
 			l.Debugf("putting delete for account %s in the clientAPI channel", a.Username)
 
 			// pass the account delete through the client api channel for processing
-			p.fromClientAPI <- gtsmodel.FromClientAPI{
-				APObjectType:   gtsmodel.ActivityStreamsPerson,
-				APActivityType: gtsmodel.ActivityStreamsDelete,
+			p.fromClientAPI <- messages.FromClientAPI{
+				APObjectType:   ap.ActorPerson,
+				APActivityType: ap.ActivityDelete,
 				GTSModel:       block,
 				OriginAccount:  account,
 				TargetAccount:  a,

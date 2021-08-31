@@ -154,55 +154,55 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 
 	// Article, Document, Image, Video, Note, Page, Event, Place, Mention, Profile
 	switch t.GetTypeName() {
-	case gtsmodel.ActivityStreamsArticle:
+	case ap.ObjectArticle:
 		p, ok := t.(vocab.ActivityStreamsArticle)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsArticle")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsDocument:
+	case ap.ObjectDocument:
 		p, ok := t.(vocab.ActivityStreamsDocument)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsDocument")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsImage:
+	case ap.ObjectImage:
 		p, ok := t.(vocab.ActivityStreamsImage)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsImage")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsVideo:
+	case ap.ObjectVideo:
 		p, ok := t.(vocab.ActivityStreamsVideo)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsVideo")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsNote:
+	case ap.ObjectNote:
 		p, ok := t.(vocab.ActivityStreamsNote)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsNote")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsPage:
+	case ap.ObjectPage:
 		p, ok := t.(vocab.ActivityStreamsPage)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsPage")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsEvent:
+	case ap.ObjectEvent:
 		p, ok := t.(vocab.ActivityStreamsEvent)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsEvent")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsPlace:
+	case ap.ObjectPlace:
 		p, ok := t.(vocab.ActivityStreamsPlace)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsPlace")
 		}
 		return p, nil
-	case gtsmodel.ActivityStreamsProfile:
+	case ap.ObjectProfile:
 		p, ok := t.(vocab.ActivityStreamsProfile)
 		if !ok {
 			return nil, errors.New("DereferenceStatusable: error resolving type as ActivityStreamsProfile")

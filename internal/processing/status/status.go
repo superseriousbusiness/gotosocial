@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -75,12 +76,12 @@ type processor struct {
 	db            db.DB
 	filter        visibility.Filter
 	formatter     text.Formatter
-	fromClientAPI chan gtsmodel.FromClientAPI
+	fromClientAPI chan messages.FromClientAPI
 	log           *logrus.Logger
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClientAPI chan gtsmodel.FromClientAPI, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClientAPI chan messages.FromClientAPI, log *logrus.Logger) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,

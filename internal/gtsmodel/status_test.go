@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -67,7 +68,7 @@ func happyStatus() *gtsmodel.Status {
 			Replyable: true,
 			Likeable:  true,
 		},
-		ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+		ActivityStreamsType: ap.ObjectNote,
 		Text:                "Test status! #hello",
 		Pinned:              false,
 	}

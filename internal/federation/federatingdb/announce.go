@@ -26,7 +26,9 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -65,7 +67,7 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		l.Error("ANNOUNCE: from federator channel wasn't set on context")
 		return nil
 	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
 	if !ok {
 		l.Error("ANNOUNCE: from federator channel was set on context but couldn't be parsed")
 		return nil
@@ -82,9 +84,9 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	}
 
 	// it's a new announce so pass it back to the processor async for dereferencing etc
-	fromFederatorChan <- gtsmodel.FromFederator{
-		APObjectType:     gtsmodel.ActivityStreamsAnnounce,
-		APActivityType:   gtsmodel.ActivityStreamsCreate,
+	fromFederatorChan <- messages.FromFederator{
+		APObjectType:     ap.ActivityAnnounce,
+		APActivityType:   ap.ActivityCreate,
 		GTSModel:         boost,
 		ReceivingAccount: targetAcct,
 	}

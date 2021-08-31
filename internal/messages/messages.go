@@ -16,21 +16,23 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package messages
 
-// FromClientAPI wraps a message that travels from client API into the processor
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+
+// FromClientAPI wraps a message that travels from the client API into the processor.
 type FromClientAPI struct {
 	APObjectType   string
 	APActivityType string
 	GTSModel       interface{}
-	OriginAccount  *Account
-	TargetAccount  *Account
+	OriginAccount  *gtsmodel.Account
+	TargetAccount  *gtsmodel.Account
 }
 
-// FromFederator wraps a message that travels from the federator into the processor
+// FromFederator wraps a message that travels from the federator into the processor.
 type FromFederator struct {
 	APObjectType     string
 	APActivityType   string
 	GTSModel         interface{}
-	ReceivingAccount *Account
+	ReceivingAccount *gtsmodel.Account
 }

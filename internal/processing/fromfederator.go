@@ -25,12 +25,14 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmodel.FromFederator) error {
+func (p *processor) processFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":         "processFromFederator",
 		"federatorMsg": fmt.Sprintf("%+v", federatorMsg),
@@ -39,10 +41,10 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 	l.Trace("entering function PROCESS FROM FEDERATOR")
 
 	switch federatorMsg.APActivityType {
-	case gtsmodel.ActivityStreamsCreate:
+	case ap.ActivityCreate:
 		// CREATE
 		switch federatorMsg.APObjectType {
-		case gtsmodel.ActivityStreamsNote:
+		case ap.ObjectNote:
 			// CREATE A STATUS
 			incomingStatus, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -61,10 +63,10 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			if err := p.notifyStatus(ctx, status); err != nil {
 				return err
 			}
-		case gtsmodel.ActivityStreamsProfile:
+		case ap.ObjectProfile:
 			// CREATE AN ACCOUNT
 			// nothing to do here
-		case gtsmodel.ActivityStreamsLike:
+		case ap.ActivityLike:
 			// CREATE A FAVE
 			incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
 			if !ok {
@@ -74,7 +76,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			if err := p.notifyFave(ctx, incomingFave, federatorMsg.ReceivingAccount); err != nil {
 				return err
 			}
-		case gtsmodel.ActivityStreamsFollow:
+		case ap.ActivityFollow:
 			// CREATE A FOLLOW REQUEST
 			incomingFollowRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
 			if !ok {
@@ -84,7 +86,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			if err := p.notifyFollowRequest(ctx, incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
 				return err
 			}
-		case gtsmodel.ActivityStreamsAnnounce:
+		case ap.ActivityAnnounce:
 			// CREATE AN ANNOUNCE
 			incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -114,7 +116,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			if err := p.notifyAnnounce(ctx, incomingAnnounce); err != nil {
 				return err
 			}
-		case gtsmodel.ActivityStreamsBlock:
+		case ap.ActivityBlock:
 			// CREATE A BLOCK
 			block, ok := federatorMsg.GTSModel.(*gtsmodel.Block)
 			if !ok {
@@ -131,10 +133,10 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 			// TODO: same with notifications
 			// TODO: same with bookmarks
 		}
-	case gtsmodel.ActivityStreamsUpdate:
+	case ap.ActivityUpdate:
 		// UPDATE
 		switch federatorMsg.APObjectType {
-		case gtsmodel.ActivityStreamsProfile:
+		case ap.ObjectProfile:
 			// UPDATE AN ACCOUNT
 			incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
 			if !ok {
@@ -150,10 +152,10 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 				return fmt.Errorf("error dereferencing account from federator: %s", err)
 			}
 		}
-	case gtsmodel.ActivityStreamsDelete:
+	case ap.ActivityDelete:
 		// DELETE
 		switch federatorMsg.APObjectType {
-		case gtsmodel.ActivityStreamsNote:
+		case ap.ObjectNote:
 			// DELETE A STATUS
 			// TODO: handle side effects of status deletion here:
 			// 1. delete all media associated with status
@@ -185,14 +187,14 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg gtsmo
 
 			// remove this status from any and all timelines
 			return p.deleteStatusFromTimelines(ctx, statusToDelete)
-		case gtsmodel.ActivityStreamsProfile:
+		case ap.ObjectProfile:
 			// DELETE A PROFILE/ACCOUNT
 			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account
 		}
-	case gtsmodel.ActivityStreamsAccept:
+	case ap.ActivityAccept:
 		// ACCEPT
 		switch federatorMsg.APObjectType {
-		case gtsmodel.ActivityStreamsFollow:
+		case ap.ActivityFollow:
 			// ACCEPT A FOLLOW
 			follow, ok := federatorMsg.GTSModel.(*gtsmodel.Follow)
 			if !ok {

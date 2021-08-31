@@ -79,7 +79,7 @@ func (suite *StatusBookmarkValidateTestSuite) TestValidateStatusBookmarkNoCreate
 
 	m.CreatedAt = time.Time{}
 	err := gtsmodel.ValidateStruct(*m)
-	suite.EqualError(err, "Key: 'StatusBookmark.CreatedAt' Error:Field validation for 'CreatedAt' failed on the 'required' tag")
+	suite.NoError(err)
 }
 
 func TestStatusBookmarkValidateTestSuite(t *testing.T) {

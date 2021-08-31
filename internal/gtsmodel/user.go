@@ -27,8 +27,8 @@ import (
 // To cross reference this local user with their account (which can be local or remote), use the AccountID field.
 type User struct {
 	ID                     string       `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	CreatedAt              time.Time    `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
-	UpdatedAt              time.Time    `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item last updated
+	CreatedAt              time.Time    `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
+	UpdatedAt              time.Time    `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item last updated
 	Email                  string       `validate:"required_with=ConfirmedAt" bun:",nullzero,unique"`             // confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
 	AccountID              string       `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull,unique"`    // The id of the local gtsmodel.Account entry for this user.
 	Account                *Account     `validate:"-" bun:"rel:belongs-to"`                                       // Pointer to the account of this user that corresponds to AccountID.

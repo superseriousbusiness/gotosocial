@@ -22,10 +22,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
@@ -52,9 +54,9 @@ func (p *processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 
 	// block status changed so send the UNDO activity to the channel for async processing
 	if blockChanged {
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsBlock,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityBlock,
+			APActivityType: ap.ActivityUndo,
 			GTSModel:       block,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetAccount,

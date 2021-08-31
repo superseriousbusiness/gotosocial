@@ -23,7 +23,7 @@ import "time"
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
 	ID               string           `validate:"ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                                                                                                                             // id of this item in the database
-	CreatedAt        time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                                                                                                                                      // when was item created
+	CreatedAt        time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                                                                                                                             // when was item created
 	NotificationType NotificationType `validate:"oneof=follow follow_request mention reblog favourite poll status" bun:",nullzero,notnull"`                                                                                                        // Type of this notification
 	TargetAccountID  string           `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                                                                                       // Which account does this notification target (ie., who will receive the notification?)
 	TargetAccount    *Account         `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Which account performed the action that created this notification?
@@ -37,6 +37,7 @@ type Notification struct {
 // NotificationType describes the reason/type of this notification.
 type NotificationType string
 
+// Notification Types
 const (
 	NotificationFollow        NotificationType = "follow"         // NotificationFollow -- someone followed you
 	NotificationFollowRequest NotificationType = "follow_request" // NotificationFollowRequest -- someone requested to follow you

@@ -26,8 +26,8 @@ import (
 // somewhere in storage and that can be retrieved and served by the router.
 type MediaAttachment struct {
 	ID                string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                       // id of this item in the database
-	CreatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                         // when was item created
-	UpdatedAt         time.Time        `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`                         // when was item last updated
+	CreatedAt         time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                // when was item created
+	UpdatedAt         time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                // when was item last updated
 	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // ID of the status to which this is attached
 	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
@@ -47,25 +47,26 @@ type MediaAttachment struct {
 
 // File refers to the metadata for the whole file
 type File struct {
-	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                      // Path of the file in storage.
-	ContentType string    `validate:"required" bun:",nullzero,notnull"`                           // MIME content type of the file.
-	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                           // File size in bytes
-	UpdatedAt   time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"` // When was the file last updated.
+	Path        string    `validate:"required,file" bun:",nullzero,notnull"`               // Path of the file in storage.
+	ContentType string    `validate:"required" bun:",nullzero,notnull"`                    // MIME content type of the file.
+	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                    // File size in bytes
+	UpdatedAt   time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
-	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                      // Path of the file in storage.
-	ContentType string    `validate:"required" bun:",nullzero,notnull"`                           // MIME content type of the file.
-	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                           // File size in bytes
-	UpdatedAt   time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"` // When was the file last updated.
-	URL         string    `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`   // What is the URL of the thumbnail on the local server
-	RemoteURL   string    `validate:"required_without=URL,omitempty,url" bun:",nullzero"`         // What is the remote URL of the thumbnail (empty for local media)
+	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                    // Path of the file in storage.
+	ContentType string    `validate:"required" bun:",nullzero,notnull"`                         // MIME content type of the file.
+	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                         // File size in bytes
+	UpdatedAt   time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`      // When was the file last updated.
+	URL         string    `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"` // What is the URL of the thumbnail on the local server
+	RemoteURL   string    `validate:"required_without=URL,omitempty,url" bun:",nullzero"`       // What is the remote URL of the thumbnail (empty for local media)
 }
 
 // ProcessingStatus refers to how far along in the processing stage the attachment is.
 type ProcessingStatus int
 
+// MediaAttachment processing states.
 const (
 	ProcessingStatusReceived   ProcessingStatus = 0   // ProcessingStatusReceived indicates the attachment has been received and is awaiting processing. No thumbnail available yet.
 	ProcessingStatusProcessing ProcessingStatus = 1   // ProcessingStatusProcessing indicates the attachment is currently being processed. Thumbnail is available but full media is not.
@@ -76,6 +77,7 @@ const (
 // FileType refers to the file type of the media attaachment.
 type FileType string
 
+// MediaAttachment file types.
 const (
 	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs and pngs
 	FileTypeGif     FileType = "Gif"     // FileTypeGif is for native gifs and soundless videos that have been converted to gifs

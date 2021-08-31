@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -68,7 +69,7 @@ func (suite *UtilTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
-	suite.fromClientAPIChan = make(chan gtsmodel.FromClientAPI, 100)
+	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
 	suite.status = status.New(suite.db, suite.typeConverter, suite.config, suite.fromClientAPIChan, suite.log)
 
 	testrig.StandardDBSetup(suite.db, nil)
