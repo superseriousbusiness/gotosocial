@@ -24,7 +24,9 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -61,7 +63,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		l.Error("DELETE: from federator channel wasn't set on context")
 		return nil
 	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
 	if !ok {
 		l.Error("DELETE: from federator channel was set on context but couldn't be parsed")
 		return nil
@@ -76,9 +78,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		if err := f.db.DeleteByID(ctx, s.ID, &gtsmodel.Status{}); err != nil {
 			return fmt.Errorf("DELETE: err deleting status: %s", err)
 		}
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsNote,
-			APActivityType:   gtsmodel.ActivityStreamsDelete,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ObjectNote,
+			APActivityType:   ap.ActivityDelete,
 			GTSModel:         s,
 			ReceivingAccount: targetAcct,
 		}
@@ -91,9 +93,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		if err := f.db.DeleteByID(ctx, a.ID, &gtsmodel.Account{}); err != nil {
 			return fmt.Errorf("DELETE: err deleting account: %s", err)
 		}
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsProfile,
-			APActivityType:   gtsmodel.ActivityStreamsDelete,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ObjectProfile,
+			APActivityType:   ap.ActivityDelete,
 			GTSModel:         a,
 			ReceivingAccount: targetAcct,
 		}

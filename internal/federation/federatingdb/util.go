@@ -28,6 +28,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -78,7 +79,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 	l.Debugf("received NEWID request for asType %s", string(b))
 
 	switch t.GetTypeName() {
-	case gtsmodel.ActivityStreamsFollow:
+	case ap.ActivityFollow:
 		// FOLLOW
 		// ID might already be set on a follow we've created, so check it here and return it if it is
 		follow, ok := t.(vocab.ActivityStreamsFollow)
@@ -108,7 +109,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				}
 			}
 		}
-	case gtsmodel.ActivityStreamsNote:
+	case ap.ObjectNote:
 		// NOTE aka STATUS
 		// ID might already be set on a note we've created, so check it here and return it if it is
 		note, ok := t.(vocab.ActivityStreamsNote)
@@ -121,7 +122,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
-	case gtsmodel.ActivityStreamsLike:
+	case ap.ActivityLike:
 		// LIKE aka FAVE
 		// ID might already be set on a fave we've created, so check it here and return it if it is
 		fave, ok := t.(vocab.ActivityStreamsLike)
@@ -134,7 +135,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
-	case gtsmodel.ActivityStreamsAnnounce:
+	case ap.ActivityAnnounce:
 		// ANNOUNCE aka BOOST
 		// ID might already be set on an announce we've created, so check it here and return it if it is
 		announce, ok := t.(vocab.ActivityStreamsAnnounce)
@@ -147,7 +148,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
-	case gtsmodel.ActivityStreamsUpdate:
+	case ap.ActivityUpdate:
 		// UPDATE
 		// ID might already be set on an update we've created, so check it here and return it if it is
 		update, ok := t.(vocab.ActivityStreamsUpdate)
@@ -160,7 +161,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
-	case gtsmodel.ActivityStreamsBlock:
+	case ap.ActivityBlock:
 		// BLOCK
 		// ID might already be set on a block we've created, so check it here and return it if it is
 		block, ok := t.(vocab.ActivityStreamsBlock)
@@ -173,7 +174,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
-	case gtsmodel.ActivityStreamsUndo:
+	case ap.ActivityUndo:
 		// UNDO
 		// ID might already be set on an undo we've created, so check it here and return it if it is
 		undo, ok := t.(vocab.ActivityStreamsUndo)

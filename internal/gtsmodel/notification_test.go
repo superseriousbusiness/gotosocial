@@ -89,7 +89,7 @@ func (suite *NotificationValidateTestSuite) TestValidateNotificationNoCreatedAt(
 
 	m.CreatedAt = time.Time{}
 	err := gtsmodel.ValidateStruct(*m)
-	suite.EqualError(err, "Key: 'Notification.CreatedAt' Error:Field validation for 'CreatedAt' failed on the 'required' tag")
+	suite.NoError(err)
 }
 
 func TestNotificationValidateTestSuite(t *testing.T) {

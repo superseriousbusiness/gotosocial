@@ -212,6 +212,18 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBlurha
 	suite.NoError(err)
 }
 
+func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentProcessing() {
+	m := happyMediaAttachment()
+
+	m.Processing = 420
+	err := gtsmodel.ValidateStruct(*m)
+	suite.EqualError(err, "Key: 'MediaAttachment.Processing' Error:Field validation for 'Processing' failed on the 'oneof' tag")
+
+	m.Processing = -5
+	err = gtsmodel.ValidateStruct(*m)
+	suite.EqualError(err, "Key: 'MediaAttachment.Processing' Error:Field validation for 'Processing' failed on the 'oneof' tag")
+}
+
 func TestMediaAttachmentValidateTestSuite(t *testing.T) {
 	suite.Run(t, new(MediaAttachmentValidateTestSuite))
 }

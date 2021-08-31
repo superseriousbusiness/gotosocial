@@ -23,7 +23,7 @@ import "time"
 // StatusFave refers to a 'fave' or 'like' in the database, from one account, targeting the status of another account
 type StatusFave struct {
 	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	CreatedAt       time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
+	CreatedAt       time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
 	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id of the account that created ('did') the fave
 	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                       // account that created the fave
 	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id the account owning the faved status

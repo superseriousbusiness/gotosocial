@@ -23,10 +23,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) Unfave(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
@@ -71,9 +73,9 @@ func (p *processor) Unfave(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		// send it back to the processor for async processing
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsLike,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityLike,
+			APActivityType: ap.ActivityUndo,
 			GTSModel:       gtsFave,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,

@@ -23,10 +23,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -50,7 +52,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
 		ContentWarning:           text.RemoveHTML(form.SpoilerText),
-		ActivityStreamsType:      gtsmodel.ActivityStreamsNote,
+		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                form.Sensitive,
 		Language:                 form.Language,
 		CreatedWithApplicationID: application.ID,
@@ -95,9 +97,9 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 	}
 
 	// send it back to the processor for async processing
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsNote,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityCreate,
 		GTSModel:       newStatus,
 		OriginAccount:  account,
 	}

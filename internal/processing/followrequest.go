@@ -21,10 +21,11 @@ package processing
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -77,9 +78,9 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		follow.TargetAccount = followTargetAccount
 	}
 
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsFollow,
-		APActivityType: gtsmodel.ActivityStreamsAccept,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityAccept,
 		GTSModel:       follow,
 		OriginAccount:  follow.Account,
 		TargetAccount:  follow.TargetAccount,

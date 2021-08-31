@@ -29,6 +29,7 @@ import (
 
 	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -133,7 +134,7 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	suite.False(status.Local)
 	suite.Empty(status.ContentWarning)
 	suite.Equal(gtsmodel.VisibilityPublic, status.Visibility)
-	suite.Equal(gtsmodel.ActivityStreamsNote, status.ActivityStreamsType)
+	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
 
 	// status should be in the database
 	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
@@ -171,7 +172,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.False(status.Local)
 	suite.Empty(status.ContentWarning)
 	suite.Equal(gtsmodel.VisibilityPublic, status.Visibility)
-	suite.Equal(gtsmodel.ActivityStreamsNote, status.ActivityStreamsType)
+	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
 
 	// status should be in the database
 	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)

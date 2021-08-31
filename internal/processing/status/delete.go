@@ -23,9 +23,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
@@ -51,9 +53,9 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	// send it back to the processor for async processing
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsNote,
-		APActivityType: gtsmodel.ActivityStreamsDelete,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityDelete,
 		GTSModel:       targetStatus,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  requestingAccount,

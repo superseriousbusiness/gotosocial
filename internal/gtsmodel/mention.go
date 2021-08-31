@@ -23,8 +23,8 @@ import "time"
 // Mention refers to the 'tagging' or 'mention' of a user within a status.
 type Mention struct {
 	ID               string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	CreatedAt        time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item created
-	UpdatedAt        time.Time `validate:"required" bun:",nullzero,notnull,default:current_timestamp"`   // when was item last updated
+	CreatedAt        time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
+	UpdatedAt        time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item last updated
 	StatusID         string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // ID of the status this mention originates from
 	Status           *Status   `validate:"-" bun:"rel:belongs-to"`                                       // status referred to by statusID
 	OriginAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // ID of the mention creator account

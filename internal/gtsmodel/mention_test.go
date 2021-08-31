@@ -93,7 +93,7 @@ func (suite *MentionValidateTestSuite) TestValidateMentionNoCreatedAt() {
 
 	m.CreatedAt = time.Time{}
 	err := gtsmodel.ValidateStruct(*m)
-	suite.EqualError(err, "Key: 'Mention.CreatedAt' Error:Field validation for 'CreatedAt' failed on the 'required' tag")
+	suite.NoError(err)
 }
 
 func TestMentionValidateTestSuite(t *testing.T) {

@@ -22,11 +22,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -99,9 +101,9 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsFollow,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityCreate,
 		GTSModel:       fr,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetAcct,

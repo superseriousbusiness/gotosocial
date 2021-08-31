@@ -10,6 +10,7 @@ import (
 
 const randomRange = 631152381 // ~20 years in seconds
 
+// ULID represents a Universally Unique Lexicographically Sortable Identifier of 26 characters. See https://github.com/oklog/ulid
 type ULID string
 
 // NewULID returns a new ULID string using the current time, or an error if something goes wrong.

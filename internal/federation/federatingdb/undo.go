@@ -27,6 +27,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -72,7 +73,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			continue
 		}
 		switch iter.GetType().GetTypeName() {
-		case string(gtsmodel.ActivityStreamsFollow):
+		case string(ap.ActivityFollow):
 			// UNDO FOLLOW
 			ASFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
 			if !ok {
@@ -101,11 +102,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			}
 			l.Debug("follow undone")
 			return nil
-		case string(gtsmodel.ActivityStreamsLike):
+		case string(ap.ActivityLike):
 			// UNDO LIKE
-		case string(gtsmodel.ActivityStreamsAnnounce):
+		case string(ap.ActivityAnnounce):
 			// UNDO BOOST/REBLOG/ANNOUNCE
-		case string(gtsmodel.ActivityStreamsBlock):
+		case string(ap.ActivityBlock):
 			// UNDO BLOCK
 			ASBlock, ok := iter.GetType().(vocab.ActivityStreamsBlock)
 			if !ok {

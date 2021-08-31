@@ -22,15 +22,10 @@ import "time"
 
 // EmailDomainBlock represents a domain that the server should automatically reject sign-up requests from.
 type EmailDomainBlock struct {
-	// ID of this block in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
-	Domain string `bun:",notnull"`
-	// When was this block created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this block updated
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Account ID of the creator of this block
-	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
-	CreatedByAccount   *Account `bun:"rel:belongs-to"`
+	ID                 string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	CreatedAt          time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
+	UpdatedAt          time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item last updated
+	Domain             string    `validate:"required,fqdn" bun:",nullzero,notnull"`                        // Email domain to block. Eg. 'gmail.com' or 'hotmail.com'
+	CreatedByAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // Account ID of the creator of this block
+	CreatedByAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                       // Account corresponding to createdByAccountID
 }

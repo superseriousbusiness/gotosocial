@@ -94,15 +94,15 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// check for bot and actor type
 	switch accountable.GetTypeName() {
-	case gtsmodel.ActivityStreamsPerson, gtsmodel.ActivityStreamsGroup, gtsmodel.ActivityStreamsOrganization:
+	case ap.ActorPerson, ap.ActorGroup, ap.ActorOrganization:
 		// people, groups, and organizations aren't bots
 		acct.Bot = false
 		// apps and services are
-	case gtsmodel.ActivityStreamsApplication, gtsmodel.ActivityStreamsService:
+	case ap.ActorApplication, ap.ActorService:
 		acct.Bot = true
 	default:
 		// we don't know what this is!
-		return nil, fmt.Errorf("type name %s not recognised or not convertible to gtsmodel.ActivityStreamsActor", accountable.GetTypeName())
+		return nil, fmt.Errorf("type name %s not recognised or not convertible to ap.ActivityStreamsActor", accountable.GetTypeName())
 	}
 	acct.ActorType = accountable.GetTypeName()
 

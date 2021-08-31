@@ -20,30 +20,17 @@ package gtsmodel
 
 // Relationship describes a requester's relationship with another account.
 type Relationship struct {
-	// The account id.
-	ID string
-	// Are you following this user?
-	Following bool
-	// Are you receiving this user's boosts in your home timeline?
-	ShowingReblogs bool
-	// Have you enabled notifications for this user?
-	Notifying bool
-	// Are you followed by this user?
-	FollowedBy bool
-	// Are you blocking this user?
-	Blocking bool
-	// Is this user blocking you?
-	BlockedBy bool
-	// Are you muting this user?
-	Muting bool
-	// Are you muting notifications from this user?
-	MutingNotifications bool
-	// Do you have a pending follow request for this user?
-	Requested bool
-	// Are you blocking this user's domain?
-	DomainBlocking bool
-	// Are you featuring this user on your profile?
-	Endorsed bool
-	// Your note on this account.
-	Note string
+	ID                  string // The account id.
+	Following           bool   // Are you following this user?
+	ShowingReblogs      bool   // Are you receiving this user's boosts in your home timeline?
+	Notifying           bool   // Have you enabled notifications for this user?
+	FollowedBy          bool   // Are you followed by this user?
+	Blocking            bool   // Are you blocking this user?
+	BlockedBy           bool   // Is this user blocking you?
+	Muting              bool   // Are you muting this user?
+	MutingNotifications bool   // Are you muting notifications from this user?
+	Requested           bool   // Do you have a pending follow request for this user?
+	DomainBlocking      bool   // Are you blocking this user's domain?
+	Endorsed            bool   // Are you featuring this user on your profile?
+	Note                string // Your note on this account.
 }

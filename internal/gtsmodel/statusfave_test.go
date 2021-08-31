@@ -80,7 +80,7 @@ func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveNoCreatedAt() {
 
 	f.CreatedAt = time.Time{}
 	err := gtsmodel.ValidateStruct(*f)
-	suite.EqualError(err, "Key: 'StatusFave.CreatedAt' Error:Field validation for 'CreatedAt' failed on the 'required' tag")
+	suite.NoError(err)
 }
 
 func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveNoURI() {

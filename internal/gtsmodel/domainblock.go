@@ -22,23 +22,14 @@ import "time"
 
 // DomainBlock represents a federation block against a particular domain
 type DomainBlock struct {
-	// ID of this block in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// blocked domain
-	Domain string `bun:",pk,notnull,unique"`
-	// When was this block created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this block updated
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Account ID of the creator of this block
-	CreatedByAccountID string   `bun:"type:CHAR(26),notnull"`
-	CreatedByAccount   *Account `bun:"rel:belongs-to"`
-	// Private comment on this block, viewable to admins
-	PrivateComment string `bun:",nullzero"`
-	// Public comment on this block, viewable (optionally) by everyone
-	PublicComment string `bun:",nullzero"`
-	// whether the domain name should appear obfuscated when displaying it publicly
-	Obfuscate bool
-	// if this block was created through a subscription, what's the subscription ID?
-	SubscriptionID string `bun:"type:CHAR(26),nullzero"`
+	ID                 string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	CreatedAt          time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
+	UpdatedAt          time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item last updated
+	Domain             string    `validate:"required,fqdn" bun:",nullzero,notnull"`                        // domain to block. Eg. 'whatever.com'
+	CreatedByAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // Account ID of the creator of this block
+	CreatedByAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                       // Account corresponding to createdByAccountID
+	PrivateComment     string    `validate:"-" bun:",nullzero"`                                            // Private comment on this block, viewable to admins
+	PublicComment      string    `validate:"-" bun:",nullzero"`                                            // Public comment on this block, viewable (optionally) by everyone
+	Obfuscate          bool      `validate:"-" bun:",nullzero,default:false"`                              // whether the domain name should appear obfuscated when displaying it publicly
+	SubscriptionID     string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                  // if this block was created through a subscription, what's the subscription ID?
 }
