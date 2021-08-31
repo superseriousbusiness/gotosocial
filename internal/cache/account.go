@@ -145,7 +145,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		FeaturedCollectionURI:   account.FeaturedCollectionURI,
 		ActorType:               account.ActorType,
 		AlsoKnownAs:             account.AlsoKnownAs,
-		PrivateKey:              nil,
+		PrivateKey:              account.PrivateKey,
 		PublicKey:               account.PublicKey,
 		PublicKeyURI:            account.PublicKeyURI,
 		SensitizedAt:            account.SensitizedAt,

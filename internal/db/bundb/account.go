@@ -47,42 +47,39 @@ func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
 }
 
 func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
-	account := new(gtsmodel.Account)
-
-	q := a.newAccountQ(account).
-		Where("account.id = ?", id)
-
-	err := q.Scan(ctx)
-	if err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-	return account, nil
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByID(id)
+		},
+		func(account *gtsmodel.Account) error {
+			return a.newAccountQ(account).Where("account.id = ?", id).Scan(ctx)
+		},
+	)
 }
 
 func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
-	account := new(gtsmodel.Account)
-
-	q := a.newAccountQ(account).
-		Where("account.uri = ?", uri)
-
-	err := q.Scan(ctx)
-	if err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-	return account, nil
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByURI(uri)
+		},
+		func(account *gtsmodel.Account) error {
+			return a.newAccountQ(account).Where("account.uri = ?", uri).Scan(ctx)
+		},
+	)
 }
 
-func (a *accountDB) GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
-	account := new(gtsmodel.Account)
-
-	q := a.newAccountQ(account).
-		Where("account.url = ?", uri)
-
-	err := q.Scan(ctx)
-	if err != nil {
-		return nil, a.conn.ProcessError(err)
-	}
-	return account, nil
+func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, db.Error) {
+	return a.getAccount(
+		ctx,
+		func() (*gtsmodel.Account, bool) {
+			return a.cache.GetByURL(url)
+		},
+		func(account *gtsmodel.Account) error {
+			return a.newAccountQ(account).Where("account.url = ?", url).Scan(ctx)
+		},
+	)
 }
 
 func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.Account, bool), dbQuery func(*gtsmodel.Account) error) (*gtsmodel.Account, db.Error) {
