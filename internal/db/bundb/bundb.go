@@ -37,11 +37,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/migrate"
 	_ "modernc.org/sqlite"
 )
 
@@ -71,6 +73,29 @@ type bunDBService struct {
 	db.Timeline
 	config *config.Config
 	conn   *DBConn
+}
+
+func doMigration(ctx context.Context, db *bun.DB, log *logrus.Logger) error {
+	l := log.WithField("func", "doMigration")
+
+	migrator := migrate.NewMigrator(db, migrations.Migrations)
+
+	if err := migrator.Init(ctx); err != nil {
+		return err
+	}
+
+	group, err := migrator.Migrate(ctx)
+	if err != nil {
+		return err
+	}
+
+	if group.ID == 0 {
+		l.Info("there are no new migrations to run")
+		return nil
+	}
+
+	l.Infof("MIGRATED DATABASE TO %s", group)
+	return nil
 }
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
@@ -119,6 +144,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 	for _, t := range registerTables {
 		// https://bun.uptrace.dev/orm/many-to-many-relation/
 		conn.RegisterModel(t)
+	}
+
+	if err := doMigration(ctx, conn.DB, log); err != nil {
+		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
 	ps := &bunDBService{

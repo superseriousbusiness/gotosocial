@@ -261,10 +261,6 @@ func NewTestUsers() map[string]*gtsmodel.User {
 // NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
-		"instance_account": {
-			ID:       "01F8MH261H1KSV3GW3016GZRY3",
-			Username: "localhost:8080",
-		},
 		"unconfirmed_account": {
 			ID:                      "01F8MH0BBE4FHXPH513MBVFHB0",
 			Username:                "weed_lord420",

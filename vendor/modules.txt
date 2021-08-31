@@ -404,6 +404,7 @@ github.com/uptrace/bun/extra/bunjson
 github.com/uptrace/bun/internal
 github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
+github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
 # github.com/uptrace/bun/dialect/pgdialect v0.4.3
 ## explicit
