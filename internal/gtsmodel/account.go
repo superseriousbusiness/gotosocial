@@ -27,124 +27,56 @@ import (
 	"time"
 )
 
-// Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc)
+// Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
 type Account struct {
-	/*
-		BASIC INFO
-	*/
-
-	// id of this account in the local database
-	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
-	// Username of the account, should just be a string of [a-z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``
-	Username string `bun:",notnull,unique:userdomain,nullzero"` // username and domain should be unique *with* each other
-	// Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
-	Domain string `bun:",unique:userdomain,nullzero"` // username and domain should be unique *with* each other
-
-	/*
-		ACCOUNT METADATA
-	*/
-
-	// ID of the avatar as a media attachment
-	AvatarMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
-	AvatarMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
-	// For a non-local account, where can the header be fetched?
-	AvatarRemoteURL string `bun:",nullzero"`
-	// ID of the header as a media attachment
-	HeaderMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
-	HeaderMediaAttachment   *MediaAttachment `bun:"rel:belongs-to"`
-	// For a non-local account, where can the header be fetched?
-	HeaderRemoteURL string `bun:",nullzero"`
-	// DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
-	DisplayName string `bun:",nullzero"`
-	// a key/value map of fields that this account has added to their profile
-	Fields []Field
-	// A note that this account has on their profile (ie., the account's bio/description of themselves)
-	Note string `bun:",nullzero"`
-	// Is this a memorial account, ie., has the user passed away?
-	Memorial bool `bun:",nullzero"`
-	// This account has moved this account id in the database
-	MovedToAccountID string `bun:"type:CHAR(26),nullzero"`
-	// When was this account created?
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this account last updated?
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Does this account identify itself as a bot?
-	Bot bool
-	// What reason was given for signing up when this account was created?
-	Reason string `bun:",nullzero"`
-
-	/*
-		USER AND PRIVACY PREFERENCES
-	*/
-
-	// Does this account need an approval for new followers?
-	Locked bool `bun:",default:true"`
-	// Should this account be shown in the instance's profile directory?
-	Discoverable bool `bun:",default:false"`
-	// Default post privacy for this account
-	Privacy Visibility `bun:",default:'public'"`
-	// Set posts from this account to sensitive by default?
-	Sensitive bool `bun:",default:false"`
-	// What language does this account post in?
-	Language string `bun:",default:'en'"`
-
-	/*
-		ACTIVITYPUB THINGS
-	*/
-
-	// What is the activitypub URI for this account discovered by webfinger?
-	URI string `bun:",unique,nullzero"`
-	// At which URL can we see the user account in a web browser?
-	URL string `bun:",unique,nullzero"`
-	// Last time this account was located using the webfinger API.
-	LastWebfingeredAt time.Time `bun:",nullzero"`
-	// Address of this account's activitypub inbox, for sending activity to
-	InboxURI string `bun:",unique,nullzero"`
-	// Address of this account's activitypub outbox
-	OutboxURI string `bun:",unique,nullzero"`
-	// URI for getting the following list of this account
-	FollowingURI string `bun:",unique,nullzero"`
-	// URI for getting the followers list of this account
-	FollowersURI string `bun:",unique,nullzero"`
-	// URL for getting the featured collection list of this account
-	FeaturedCollectionURI string `bun:",unique,nullzero"`
-	// What type of activitypub actor is this account?
-	ActorType string `bun:",nullzero"`
-	// This account is associated with x account id
-	AlsoKnownAs string `bun:",nullzero"`
-
-	/*
-		CRYPTO FIELDS
-	*/
-
-	// Privatekey for validating activitypub requests, will only be defined for local accounts
-	PrivateKey *rsa.PrivateKey
-	// Publickey for encoding activitypub requests, will be defined for both local and remote accounts
-	PublicKey *rsa.PublicKey
-	// Web-reachable location of this account's public key
-	PublicKeyURI string `bun:",nullzero"`
-
-	/*
-		ADMIN FIELDS
-	*/
-
-	// When was this account set to have all its media shown as sensitive?
-	SensitizedAt time.Time `bun:",nullzero"`
-	// When was this account silenced (eg., statuses only visible to followers, not public)?
-	SilencedAt time.Time `bun:",nullzero"`
-	// When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
-	SuspendedAt time.Time `bun:",nullzero"`
-	// Should we hide this account's collections?
-	HideCollections bool
-	// id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
-	SuspensionOrigin string `bun:"type:CHAR(26),nullzero"`
+	ID                      string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                      // id of this item in the database
+	CreatedAt               time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                               // when was item created
+	UpdatedAt               time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                               // when was item last updated
+	Username                string           `validate:"required" bun:",nullzero,notnull,unique:userdomain"`                                                // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
+	Domain                  string           `validate:"omitempty,fqdn" bun:",nullzero,unique:userdomain"`                                                  // Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
+	AvatarMediaAttachmentID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                       // Database ID of the media attachment, if present
+	AvatarMediaAttachment   *MediaAttachment `validate:"-" bun:"rel:belongs-to"`                                                                            // MediaAttachment corresponding to avatarMediaAttachmentID
+	AvatarRemoteURL         string           `validate:"omitempty,url" bun:",nullzero"`                                                                     // For a non-local account, where can the header be fetched?
+	HeaderMediaAttachmentID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                       // Database ID of the media attachment, if present
+	HeaderMediaAttachment   *MediaAttachment `validate:"-" bun:"rel:belongs-to"`                                                                            // MediaAttachment corresponding to headerMediaAttachmentID
+	HeaderRemoteURL         string           `validate:"omitempty,url" bun:",nullzero"`                                                                     // For a non-local account, where can the header be fetched?
+	DisplayName             string           `validate:"-" bun:",nullzero"`                                                                                 // DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
+	Fields                  []Field          `validate:"-"`                                                                                                 // a key/value map of fields that this account has added to their profile
+	Note                    string           `validate:"-" bun:",nullzero"`                                                                                 // A note that this account has on their profile (ie., the account's bio/description of themselves)
+	Memorial                bool             `validate:"-" bun:",nullzero,default:false"`                                                                   // Is this a memorial account, ie., has the user passed away?
+	AlsoKnownAs             string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                       // This account is associated with x account id
+	MovedToAccountID        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                       // This account has moved this account id in the database
+	Bot                     bool             `validate:"-" bun:",nullzero,default:false"`                                                                   // Does this account identify itself as a bot?
+	Reason                  string           `validate:"-" bun:",nullzero"`                                                                                 // What reason was given for signing up when this account was created?
+	Locked                  bool             `validate:"-" bun:",nullzero,default:true"`                                                                    // Does this account need an approval for new followers?
+	Discoverable            bool             `validate:"-" bun:",nullzero,default:false"`                                                                   // Should this account be shown in the instance's profile directory?
+	Privacy                 Visibility       `validate:"oneof=public unlocked followers_only mutuals_only direct" bun:",nullzero,notnull,default:'public'"` // Default post privacy for this account
+	Sensitive               bool             `validate:"-" bun:",nullzero,default:false"`                                                                   // Set posts from this account to sensitive by default?
+	Language                string           `validate:"-" bun:",nullzero,notnull,default:'en'"`                                                            // What language does this account post in?
+	URI                     string           `validate:"required,url" bun:",nullzero,notnull,unique"`                                                       // ActivityPub URI for this account.
+	URL                     string           `validate:"omitempty,url" bun:",unique,nullzero"`                                                              // Web URL for this account's profile
+	LastWebfingeredAt       time.Time        `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                               // Last time this account was refreshed/located with webfinger.
+	InboxURI                string           `validate:"omitempty,url" bun:",nullzero,unique"`                                                              // Address of this account's ActivityPub inbox, for sending activity to
+	OutboxURI               string           `validate:"omitempty,url" bun:",nullzero,unique"`                                                              // Address of this account's activitypub outbox
+	FollowingURI            string           `validate:"omitempty,url" bun:",nullzero,unique"`                                                              // URI for getting the following list of this account
+	FollowersURI            string           `validate:"omitempty,url" bun:",nullzero,unique"`                                                              // URI for getting the followers list of this account
+	FeaturedCollectionURI   string           `validate:"omitempty,url" bun:",nullzero,unique"`                                                              // URL for getting the featured collection list of this account
+	ActorType               string           `validate:"oneof=Application Group Organization Person Service " bun:",nullzero,notnull"`                      // What type of activitypub actor is this account?
+	PrivateKey              *rsa.PrivateKey  `validate:"required_without=Domain"`                                                                           // Privatekey for validating activitypub requests, will only be defined for local accounts
+	PublicKey               *rsa.PublicKey   `validate:"required"`                                                                                          // Publickey for encoding activitypub requests, will be defined for both local and remote accounts
+	PublicKeyURI            string           `validate:"required" bun:",nullzero,notnull"`                                                                  // Web-reachable location of this account's public key
+	SensitizedAt            time.Time        `validate:"-" bun:",nullzero"`                                                                                 // When was this account set to have all its media shown as sensitive?
+	SilencedAt              time.Time        `validate:"-" bun:",nullzero"`                                                                                 // When was this account silenced (eg., statuses only visible to followers, not public)?
+	SuspendedAt             time.Time        `validate:"-" bun:",nullzero"`                                                                                 // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
+	HideCollections         bool             `validate:"-" bun:",nullzero,default:false"`                                                                   // Hide this account's collections
+	SuspensionOrigin        string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                       // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
 }
 
 // Field represents a key value field on an account, for things like pronouns, website, etc.
 // VerifiedAt is optional, to be used only if Value is a URL to a webpage that contains the
 // username of the user.
 type Field struct {
-	Name       string
-	Value      string
-	VerifiedAt time.Time `bun:",nullzero"`
+	Name       string    `validate:"required"`          // Name of this field.
+	Value      string    `validate:"required"`          // Value of this field.
+	VerifiedAt time.Time `validate:"-" bun:",nullzero"` // This field was verified at (optional).
 }

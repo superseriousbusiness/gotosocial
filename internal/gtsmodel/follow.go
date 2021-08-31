@@ -26,10 +26,10 @@ type Follow struct {
 	CreatedAt       time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
 	UpdatedAt       time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item last updated
 	URI             string    `validate:"required,url" bun:",notnull,nullzero,unique"`                  // ActivityPub uri of this follow.
-	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull"` // Who does this follow originate from?
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull"`   // Who does this follow originate from?
 	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                       // Account corresponding to accountID
-	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull"` // Who is the target of this follow ?
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull"`   // Who is the target of this follow ?
 	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                       // Account corresponding to targetAccountID
-	ShowReblogs     bool      `validate:"-" bun:",nullzero,default:true"`                                // Does this follow also want to see reblogs and not just posts?
+	ShowReblogs     bool      `validate:"-" bun:",nullzero,default:true"`                               // Does this follow also want to see reblogs and not just posts?
 	Notify          bool      `validate:"-" bun:",nullzero,default:false"`                              // does the following account want to be notified when the followed account posts?
 }
