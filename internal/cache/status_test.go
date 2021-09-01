@@ -3,37 +3,59 @@ package cache_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
+type StatusCacheTestSuite struct {
+	suite.Suite
+	data  map[string]*gtsmodel.Status
+	cache *cache.StatusCache
+}
+
+func (suite *StatusCacheTestSuite) SetupSuite() {
+	suite.data = testrig.NewTestStatuses()
+}
+
+func (suite *StatusCacheTestSuite) SetupTest() {
+	suite.cache = cache.NewStatusCache()
+}
+
+func (suite *StatusCacheTestSuite) TearDownTest() {
+	suite.data = nil
+	suite.cache = nil
+}
+
+func (suite *StatusCacheTestSuite) TestStatusCache() {
+	for _, status := range suite.data {
+		// Place in the cache
+		suite.cache.Put(status)
+	}
+
+	for _, status := range suite.data {
+		var ok bool
+		var check *gtsmodel.Status
+
+		// Check we can retrieve
+		check, ok = suite.cache.GetByID(status.ID)
+		if !ok && !statusIs(status, check) {
+			suite.Fail("Failed to fetch expected account with ID: %s", status.ID)
+		}
+		check, ok = suite.cache.GetByURI(status.URI)
+		if status.URI != "" && !ok && !statusIs(status, check) {
+			suite.Fail("Failed to fetch expected account with URI: %s", status.URI)
+		}
+		check, ok = suite.cache.GetByURL(status.URL)
+		if status.URL != "" && !ok && !statusIs(status, check) {
+			suite.Fail("Failed to fetch expected account with URL: %s", status.URL)
+		}
+	}
+}
+
 func TestStatusCache(t *testing.T) {
-	cache := cache.NewStatusCache()
-
-	// Attempt to place a status
-	status := gtsmodel.Status{
-		ID:  "id",
-		URI: "uri",
-		URL: "url",
-	}
-	cache.Put(&status)
-
-	var ok bool
-	var check *gtsmodel.Status
-
-	// Check we can retrieve
-	check, ok = cache.GetByID(status.ID)
-	if !ok || !statusIs(&status, check) {
-		t.Fatal("Could not find expected status")
-	}
-	check, ok = cache.GetByURI(status.URI)
-	if !ok || !statusIs(&status, check) {
-		t.Fatal("Could not find expected status")
-	}
-	check, ok = cache.GetByURL(status.URL)
-	if !ok || !statusIs(&status, check) {
-		t.Fatal("Could not find expected status")
-	}
+	suite.Run(t, &StatusCacheTestSuite{})
 }
 
 func statusIs(status1, status2 *gtsmodel.Status) bool {
