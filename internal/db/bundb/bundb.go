@@ -155,10 +155,11 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn.RegisterModel(t)
 	}
 
-	accounts := &accountDB{config: c, conn: conn, cache: cache.NewAccountCache()}
 	if err := doMigration(ctx, conn.DB, log); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
+
+	accounts := &accountDB{config: c, conn: conn, cache: cache.NewAccountCache()}
 
 	ps := &bunDBService{
 		Account: accounts,
