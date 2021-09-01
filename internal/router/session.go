@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
@@ -31,8 +32,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
-// SessionOptions returns the standard set of options to use for each session.
-func SessionOptions(cfg *config.Config) sessions.Options {
+// sessionOptions returns the standard set of options to use for each session.
+func sessionOptions(cfg *config.Config) sessions.Options {
 	return sessions.Options{
 		Path:     "/",
 		Domain:   cfg.Host,
@@ -41,6 +42,22 @@ func SessionOptions(cfg *config.Config) sessions.Options {
 		HttpOnly: true,                     // exclude javascript from inspecting cookie
 		SameSite: http.SameSiteDefaultMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
 	}
+}
+
+func sessionName(cfg *config.Config) (string, error) {
+	// parse the protocol + host
+	u, err := url.Parse(fmt.Sprintf("%s://%s", cfg.Protocol, cfg.Host))
+	if err != nil {
+		return "", err
+	}
+
+	// take the hostname without any port attached
+	strippedHostname := u.Hostname()
+	if strippedHostname == "" {
+		return "", fmt.Errorf("could not derive hostname without port from %s://%s", cfg.Protocol, cfg.Host)
+	}
+
+	return fmt.Sprintf("gotosocial-%s", strippedHostname), nil
 }
 
 func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, engine *gin.Engine) error {
@@ -54,8 +71,13 @@ func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, e
 	}
 
 	store := memstore.NewStore(rs.Auth, rs.Crypt)
-	store.Options(SessionOptions(cfg))
-	sessionName := fmt.Sprintf("gotosocial-%s", cfg.Host)
+	store.Options(sessionOptions(cfg))
+
+	sessionName, err := sessionName(cfg)
+	if err != nil {
+		return err
+	}
+
 	engine.Use(sessions.Sessions(sessionName, store))
 	return nil
 }
