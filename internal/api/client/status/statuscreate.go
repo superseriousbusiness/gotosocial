@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // StatusCreatePOSTHandler swagger:operation POST /api/v1/statuses statusCreate
@@ -157,7 +157,7 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm, config *config.S
 
 	// validate post language
 	if form.Language != "" {
-		if err := util.ValidateLanguage(form.Language); err != nil {
+		if err := validate.Language(form.Language); err != nil {
 			return err
 		}
 	}

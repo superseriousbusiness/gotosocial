@@ -21,30 +21,23 @@ package gtsmodel
 import "time"
 
 // Token is a translation of the gotosocial token with the ExpiresIn fields replaced with ExpiresAt.
-//
-// Explanation for this: gotosocial assumes an in-memory or file database of some kind, where a time-to-live parameter (TTL) can be defined,
-// and tokens with expired TTLs are automatically removed. Since some databases don't have that feature, it's easier to set an expiry time and
-// then periodically sweep out tokens when that time has passed.
-//
-// Note that this struct does *not* satisfy the token interface shown here: https://github.com/superseriousbusiness/oauth2/blob/master/model.go#L22
-// and implemented here: https://github.com/superseriousbusiness/oauth2/blob/master/models/token.go.
-// As such, manual translation is always required between Token and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
-// and pgTokenToOauthToken can be used for that.
 type Token struct {
-	ID                  string `validate:"ulid" bun:"type:CHAR(26),pk,nullzero,notnull"`
-	ClientID            string
-	UserID              string
-	RedirectURI         string
-	Scope               string
-	Code                string `bun:"default:'',pk"`
-	CodeChallenge       string
-	CodeChallengeMethod string
-	CodeCreateAt        time.Time `bun:",nullzero"`
-	CodeExpiresAt       time.Time `bun:",nullzero"`
-	Access              string    `bun:"default:'',pk"`
-	AccessCreateAt      time.Time `bun:",nullzero"`
-	AccessExpiresAt     time.Time `bun:",nullzero"`
-	Refresh             string    `bun:"default:'',pk"`
-	RefreshCreateAt     time.Time `bun:",nullzero"`
-	RefreshExpiresAt    time.Time `bun:",nullzero"`
+	ID                  string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
+	CreatedAt           time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt           time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	ClientID            string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the client who owns this token
+	UserID              string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the user who owns this token
+	RedirectURI         string    `validate:"required,url" bun:",nullzero,notnull"`                              // Oauth redirect URI for this token
+	Scope               string    `validate:"omitempty,url" bun:",nullzero,notnull,default:'read'"`              // Oauth scope
+	Code                string    `validate:"-" bun:",pk,nullzero,notnull,default:''"`                           // Code, if present
+	CodeChallenge       string    `validate:"-" bun:",nullzero"`                                                 // Code challenge, if code present
+	CodeChallengeMethod string    `validate:"-" bun:",nullzero"`                                                 // Code challenge method, if code present
+	CodeCreateAt        time.Time `validate:"required_with=Code" bun:"type:timestamp,nullzero"`                  // Code created time, if code present
+	CodeExpiresAt       time.Time `validate:"-" bun:"type:timestamp,nullzero"`                                   // Code expires at -- null means the code never expires
+	Access              string    `validate:"-" bun:",pk,nullzero,notnull,default:''"`                           // User level access token, if present
+	AccessCreateAt      time.Time `validate:"required_with=Access" bun:"type:timestamp,nullzero"`                // User level access token created time, if access present
+	AccessExpiresAt     time.Time `validate:"-" bun:"type:timestamp,nullzero"`                                   // User level access token expires at -- null means the token never expires
+	Refresh             string    `validate:"-" bun:",pk,nullzero,notnull,default:''"`                           // Refresh token, if present
+	RefreshCreateAt     time.Time `validate:"required_with=Refresh" bun:"type:timestamp,nullzero"`               // Refresh created at, if refresh present
+	RefreshExpiresAt    time.Time `validate:"-" bun:"type:timestamp,nullzero"`                                   // Refresh expires at -- null means the refresh token never expires
 }

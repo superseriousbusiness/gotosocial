@@ -25,18 +25,18 @@ import (
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
-	CreatedAt                time.Time          `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                       // when was item created
-	UpdatedAt                time.Time          `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                                       // when was item last updated
+	CreatedAt                time.Time          `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                         // when was item created
+	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                         // when was item last updated
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
 	Content                  string             `validate:"-" bun:",nullzero"`                                                                         // content of this status; likely html-formatted but not guaranteed
-	AttachmentIDs            []string           `validate:"dive,ulid" bun:"attachments,array,nullzero"`                                                // Database IDs of any media attachments associated with this status
+	AttachmentIDs            []string           `validate:"dive,ulid" bun:"attachments,array"`                                                         // Database IDs of any media attachments associated with this status
 	Attachments              []*MediaAttachment `validate:"-" bun:"attached_media,rel:has-many"`                                                       // Attachments corresponding to attachmentIDs
-	TagIDs                   []string           `validate:"dive,ulid" bun:"tags,array,nullzero"`                                                       // Database IDs of any tags used in this status
+	TagIDs                   []string           `validate:"dive,ulid" bun:"tags,array"`                                                                // Database IDs of any tags used in this status
 	Tags                     []*Tag             `validate:"-" bun:"attached_tags,m2m:status_to_tags"`                                                  // Tags corresponding to tagIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
-	MentionIDs               []string           `validate:"dive,ulid" bun:"mentions,array,nullzero"`                                                   // Database IDs of any mentions in this status
+	MentionIDs               []string           `validate:"dive,ulid" bun:"mentions,array"`                                                            // Database IDs of any mentions in this status
 	Mentions                 []*Mention         `validate:"-" bun:"attached_mentions,rel:has-many"`                                                    // Mentions corresponding to mentionIDs
-	EmojiIDs                 []string           `validate:"dive,ulid" bun:"emojis,array,nullzero"`                                                     // Database IDs of any emojis used in this status
+	EmojiIDs                 []string           `validate:"dive,ulid" bun:"emojis,array"`                                                              // Database IDs of any emojis used in this status
 	Emojis                   []*Emoji           `validate:"-" bun:"attached_emojis,m2m:status_to_emojis"`                                              // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
 	Local                    bool               `validate:"-" bun:",notnull,default:false"`                                                            // is this status from a local account?
 	AccountID                string             `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                        // which account posted this status?

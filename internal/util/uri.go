@@ -21,6 +21,8 @@ package util
 import (
 	"fmt"
 	"net/url"
+
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
 const (
@@ -169,67 +171,67 @@ func GenerateURIsForAccount(username string, protocol string, host string) *User
 
 // IsUserPath returns true if the given URL path corresponds to eg /users/example_username
 func IsUserPath(id *url.URL) bool {
-	return userPathRegex.MatchString(id.Path)
+	return regexes.UserPath.MatchString(id.Path)
 }
 
 // IsInboxPath returns true if the given URL path corresponds to eg /users/example_username/inbox
 func IsInboxPath(id *url.URL) bool {
-	return inboxPathRegex.MatchString(id.Path)
+	return regexes.InboxPath.MatchString(id.Path)
 }
 
 // IsOutboxPath returns true if the given URL path corresponds to eg /users/example_username/outbox
 func IsOutboxPath(id *url.URL) bool {
-	return outboxPathRegex.MatchString(id.Path)
+	return regexes.OutboxPath.MatchString(id.Path)
 }
 
 // IsInstanceActorPath returns true if the given URL path corresponds to eg /actors/example_username
 func IsInstanceActorPath(id *url.URL) bool {
-	return actorPathRegex.MatchString(id.Path)
+	return regexes.ActorPath.MatchString(id.Path)
 }
 
 // IsFollowersPath returns true if the given URL path corresponds to eg /users/example_username/followers
 func IsFollowersPath(id *url.URL) bool {
-	return followersPathRegex.MatchString(id.Path)
+	return regexes.FollowersPath.MatchString(id.Path)
 }
 
 // IsFollowingPath returns true if the given URL path corresponds to eg /users/example_username/following
 func IsFollowingPath(id *url.URL) bool {
-	return followingPathRegex.MatchString(id.Path)
+	return regexes.FollowingPath.MatchString(id.Path)
 }
 
 // IsFollowPath returns true if the given URL path corresponds to eg /users/example_username/follow/SOME_ULID_OF_A_FOLLOW
 func IsFollowPath(id *url.URL) bool {
-	return followPathRegex.MatchString(id.Path)
+	return regexes.FollowPath.MatchString(id.Path)
 }
 
 // IsLikedPath returns true if the given URL path corresponds to eg /users/example_username/liked
 func IsLikedPath(id *url.URL) bool {
-	return likedPathRegex.MatchString(id.Path)
+	return regexes.LikedPath.MatchString(id.Path)
 }
 
 // IsLikePath returns true if the given URL path corresponds to eg /users/example_username/liked/SOME_ULID_OF_A_STATUS
 func IsLikePath(id *url.URL) bool {
-	return likePathRegex.MatchString(id.Path)
+	return regexes.LikePath.MatchString(id.Path)
 }
 
 // IsStatusesPath returns true if the given URL path corresponds to eg /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func IsStatusesPath(id *url.URL) bool {
-	return statusesPathRegex.MatchString(id.Path)
+	return regexes.StatusesPath.MatchString(id.Path)
 }
 
 // IsPublicKeyPath returns true if the given URL path corresponds to eg /users/example_username/main-key
 func IsPublicKeyPath(id *url.URL) bool {
-	return userPublicKeyPathRegex.MatchString(id.Path)
+	return regexes.PublicKeyPath.MatchString(id.Path)
 }
 
 // IsBlockPath returns true if the given URL path corresponds to eg /users/example_username/blocks/SOME_ULID_OF_A_BLOCK
 func IsBlockPath(id *url.URL) bool {
-	return blockPathRegex.MatchString(id.Path)
+	return regexes.BlockPath.MatchString(id.Path)
 }
 
 // ParseStatusesPath returns the username and ulid from a path such as /users/example_username/statuses/SOME_ULID_OF_A_STATUS
 func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
-	matches := statusesPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.StatusesPath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return
@@ -241,7 +243,7 @@ func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
 
 // ParseUserPath returns the username from a path such as /users/example_username
 func ParseUserPath(id *url.URL) (username string, err error) {
-	matches := userPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.UserPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return
@@ -252,7 +254,7 @@ func ParseUserPath(id *url.URL) (username string, err error) {
 
 // ParseInboxPath returns the username from a path such as /users/example_username/inbox
 func ParseInboxPath(id *url.URL) (username string, err error) {
-	matches := inboxPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.InboxPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return
@@ -263,7 +265,7 @@ func ParseInboxPath(id *url.URL) (username string, err error) {
 
 // ParseOutboxPath returns the username from a path such as /users/example_username/outbox
 func ParseOutboxPath(id *url.URL) (username string, err error) {
-	matches := outboxPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.OutboxPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return
@@ -274,7 +276,7 @@ func ParseOutboxPath(id *url.URL) (username string, err error) {
 
 // ParseFollowersPath returns the username from a path such as /users/example_username/followers
 func ParseFollowersPath(id *url.URL) (username string, err error) {
-	matches := followersPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.FollowersPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return
@@ -285,7 +287,7 @@ func ParseFollowersPath(id *url.URL) (username string, err error) {
 
 // ParseFollowingPath returns the username from a path such as /users/example_username/following
 func ParseFollowingPath(id *url.URL) (username string, err error) {
-	matches := followingPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.FollowingPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return
@@ -296,7 +298,7 @@ func ParseFollowingPath(id *url.URL) (username string, err error) {
 
 // ParseLikedPath returns the username and ulid from a path such as /users/example_username/liked/SOME_ULID_OF_A_STATUS
 func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
-	matches := likePathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.LikePath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return
@@ -308,7 +310,7 @@ func ParseLikedPath(id *url.URL) (username string, ulid string, err error) {
 
 // ParseBlockPath returns the username and ulid from a path such as /users/example_username/blocks/SOME_ULID_OF_A_BLOCK
 func ParseBlockPath(id *url.URL) (username string, ulid string, err error) {
-	matches := blockPathRegex.FindStringSubmatch(id.Path)
+	matches := regexes.BlockPath.FindStringSubmatch(id.Path)
 	if len(matches) != 3 {
 		err = fmt.Errorf("expected 3 matches but matches length was %d", len(matches))
 		return

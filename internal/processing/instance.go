@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
@@ -59,7 +59,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site title if it's set on the form
 	if form.Title != nil {
-		if err := util.ValidateSiteTitle(*form.Title); err != nil {
+		if err := validate.SiteTitle(*form.Title); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
 		i.Title = text.RemoveHTML(*form.Title) // don't allow html in site title
@@ -101,7 +101,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site contact email if it's set on the form
 	if form.ContactEmail != nil {
-		if err := util.ValidateEmail(*form.ContactEmail); err != nil {
+		if err := validate.Email(*form.ContactEmail); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		i.ContactEmail = *form.ContactEmail
@@ -109,7 +109,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site short description if it's set on the form
 	if form.ShortDescription != nil {
-		if err := util.ValidateSiteShortDescription(*form.ShortDescription); err != nil {
+		if err := validate.SiteShortDescription(*form.ShortDescription); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		i.ShortDescription = text.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
@@ -117,7 +117,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site description if it's set on the form
 	if form.Description != nil {
-		if err := util.ValidateSiteDescription(*form.Description); err != nil {
+		if err := validate.SiteDescription(*form.Description); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		i.Description = text.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
@@ -125,7 +125,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	// validate & update site terms if it's set on the form
 	if form.Terms != nil {
-		if err := util.ValidateSiteTerms(*form.Terms); err != nil {
+		if err := validate.SiteTerms(*form.Terms); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		i.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it

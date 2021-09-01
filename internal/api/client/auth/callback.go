@@ -33,7 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // CallbackGETHandler parses a token from an external auth provider.
@@ -153,7 +153,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	}
 
 	// check if we can just use claims.Name as-is
-	err = util.ValidateUsername(claims.Name)
+	err = validate.Username(claims.Name)
 	if err == nil {
 		// the name we have on the claims is already a valid username
 		username = claims.Name
@@ -166,7 +166,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 		// lowercase the whole thing
 		lower := strings.ToLower(underscored)
 		// see if this is valid....
-		if err := util.ValidateUsername(lower); err == nil {
+		if err := validate.Username(lower); err == nil {
 			// we managed to get a valid username
 			username = lower
 		} else {

@@ -11,6 +11,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
@@ -20,7 +21,7 @@ type Processor interface {
 	// AuthorizeStreamingRequest returns an oauth2 token info in response to an access token query from the streaming API
 	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
 	// OpenStreamForAccount returns a new Stream for the given account, which will contain a channel for passing messages back to the caller.
-	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode)
 	// StreamStatusToAccount streams the given status to any open, appropriate streams belonging to the given account.
 	StreamStatusToAccount(s *apimodel.Status, account *gtsmodel.Account) error
 	// StreamNotificationToAccount streams the given notification to any open, appropriate streams belonging to the given account.

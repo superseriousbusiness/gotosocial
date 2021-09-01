@@ -39,6 +39,7 @@ import (
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -166,7 +167,7 @@ type Processor interface {
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
 	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
-	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS

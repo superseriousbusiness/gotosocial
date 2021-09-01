@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 func (p *processor) StreamNotificationToAccount(n *apimodel.Notification, account *gtsmodel.Account) error {
@@ -21,7 +22,7 @@ func (p *processor) StreamNotificationToAccount(n *apimodel.Notification, accoun
 		return nil
 	}
 
-	streamsForAccount, ok := v.(*gtsmodel.StreamsForAccount)
+	streamsForAccount, ok := v.(*stream.StreamsForAccount)
 	if !ok {
 		return errors.New("stream map error")
 	}
@@ -33,13 +34,13 @@ func (p *processor) StreamNotificationToAccount(n *apimodel.Notification, accoun
 
 	streamsForAccount.Lock()
 	defer streamsForAccount.Unlock()
-	for _, stream := range streamsForAccount.Streams {
-		stream.Lock()
-		defer stream.Unlock()
-		if stream.Connected {
-			l.Debugf("streaming notification to stream id %s", stream.ID)
-			stream.Messages <- &gtsmodel.Message{
-				Stream:  []string{stream.Type},
+	for _, s := range streamsForAccount.Streams {
+		s.Lock()
+		defer s.Unlock()
+		if s.Connected {
+			l.Debugf("streaming notification to stream id %s", s.ID)
+			s.Messages <- &stream.Message{
+				Stream:  []string{s.Type},
 				Event:   "notification",
 				Payload: string(notificationBytes),
 			}

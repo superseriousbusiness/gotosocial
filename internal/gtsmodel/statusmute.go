@@ -22,12 +22,13 @@ import "time"
 
 // StatusMute refers to one account having muted the status of another account or its own.
 type StatusMute struct {
-	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	CreatedAt       time.Time `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`          // when was item created
-	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id of the account that created ('did') the mute
-	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                       // pointer to the account specified by accountID
-	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // id the account owning the muted status (can be the same as accountID)
-	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                       // pointer to the account specified by targetAccountID
-	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`           // database id of the status that has been muted
-	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                       // pointer to the muted status specified by statusID
+	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
+	CreatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id of the account that created ('did') the mute
+	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the account specified by accountID
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id the account owning the muted status (can be the same as accountID)
+	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the account specified by targetAccountID
+	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // database id of the status that has been muted
+	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the muted status specified by statusID
 }

@@ -103,7 +103,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGWSJCND9BWBD4WGJXBM93",           // admin client
 			ClientSecret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a", // admin client
 			Scopes:       "read write follow push",
-			VapidKey:     "76ae0095-8a10-438f-9f49-522d1985b190",
 		},
 		"application_1": {
 			ID:           "01F8MGY43H3N2C8EWPR2FPYEXG",
@@ -113,7 +112,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGV8AC3NGSJW0FE8W1BV70",           // client_1
 			ClientSecret: "c3724c74-dc3b-41b2-a108-0ea3d8399830", // client_1
 			Scopes:       "read write follow push",
-			VapidKey:     "4738dfd7-ca73-4aa6-9aa9-80e946b7db36",
 		},
 		"application_2": {
 			ID:           "01F8MGYG9E893WRHW0TAEXR8GJ",
@@ -123,7 +121,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGW47HN8ZXNHNZ7E47CDMQ",           // client_2
 			ClientSecret: "8f5603a5-c721-46cd-8f1b-2e368f51379f", // client_2
 			Scopes:       "read write follow push",
-			VapidKey:     "c040a5fc-e1e2-4859-bbea-0a3efbca1c4b",
 		},
 	}
 	return apps

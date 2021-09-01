@@ -86,6 +86,9 @@ func doMigration(ctx context.Context, db *bun.DB, log *logrus.Logger) error {
 
 	group, err := migrator.Migrate(ctx)
 	if err != nil {
+		if err.Error() == "migrate: there are no any migrations" {
+			return nil
+		}
 		return err
 	}
 

@@ -146,13 +146,13 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	}
 	defer conn.Close() // whatever happens, when we leave this function we want to close the websocket connection
 
-	// inform the processor that we have a new connection and want a stream for it
-	stream, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
+	// inform the processor that we have a new connection and want a s for it
+	s, errWithCode := m.processor.OpenStreamForAccount(c.Request.Context(), account, streamType)
 	if errWithCode != nil {
 		c.JSON(errWithCode.Code(), errWithCode.Safe())
 		return
 	}
-	defer close(stream.Hangup) // closing stream.Hangup indicates that we've finished with the connection (the client has gone), so we want to do this on exiting this handler
+	defer close(s.Hangup) // closing stream.Hangup indicates that we've finished with the connection (the client has gone), so we want to do this on exiting this handler
 
 	// spawn a new ticker for pinging the connection periodically
 	t := time.NewTicker(30 * time.Second)
@@ -161,7 +161,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 sendLoop:
 	for {
 		select {
-		case m := <-stream.Messages:
+		case m := <-s.Messages:
 			// we've got a streaming message!!
 			l.Trace("received message from stream")
 			if err := conn.WriteJSON(m); err != nil {

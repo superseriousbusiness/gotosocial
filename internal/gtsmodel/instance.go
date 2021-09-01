@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package gtsmodel
 
 import "time"
@@ -5,12 +23,12 @@ import "time"
 // Instance represents a federated instance, either local or remote.
 type Instance struct {
 	ID                     string       `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                     // id of this item in the database
-	CreatedAt              time.Time    `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                              // when was item created
-	UpdatedAt              time.Time    `validate:"-" bun:",nullzero,notnull,default:current_timestamp"`                              // when was item last updated
+	CreatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item created
+	UpdatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item last updated
 	Domain                 string       `validate:"required,fqdn" bun:",nullzero,notnull,unique"`                                     // Instance domain eg example.org
 	Title                  string       `validate:"-" bun:",nullzero"`                                                                // Title of this instance as it would like to be displayed.
 	URI                    string       `validate:"required,url" bun:",nullzero,notnull,unique"`                                      // base URI of this instance eg https://example.org
-	SuspendedAt            time.Time    `validate:"-" bun:",nullzero"`                                                                // When was this instance suspended, if at all?
+	SuspendedAt            time.Time    `validate:"-" bun:"type:timestamp,nullzero"`                                                  // When was this instance suspended, if at all?
 	DomainBlockID          string       `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                      // ID of any existing domain block for this instance in the database
 	DomainBlock            *DomainBlock `validate:"-" bun:"rel:belongs-to"`                                                           // Domain block corresponding to domainBlockID
 	ShortDescription       string       `validate:"-" bun:",nullzero"`                                                                // Short description of this instance

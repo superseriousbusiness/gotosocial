@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // AccountCreatePOSTHandler swagger:operation POST /api/v1/accounts accountCreate
@@ -118,15 +118,15 @@ func validateCreateAccount(form *model.AccountCreateRequest, c *config.AccountsC
 		return errors.New("registration is not open for this server")
 	}
 
-	if err := util.ValidateUsername(form.Username); err != nil {
+	if err := validate.Username(form.Username); err != nil {
 		return err
 	}
 
-	if err := util.ValidateEmail(form.Email); err != nil {
+	if err := validate.Email(form.Email); err != nil {
 		return err
 	}
 
-	if err := util.ValidateNewPassword(form.Password); err != nil {
+	if err := validate.NewPassword(form.Password); err != nil {
 		return err
 	}
 
@@ -134,11 +134,11 @@ func validateCreateAccount(form *model.AccountCreateRequest, c *config.AccountsC
 		return errors.New("agreement to terms and conditions not given")
 	}
 
-	if err := util.ValidateLanguage(form.Locale); err != nil {
+	if err := validate.Language(form.Locale); err != nil {
 		return err
 	}
 
-	if err := util.ValidateSignUpReason(form.Reason, c.ReasonRequired); err != nil {
+	if err := validate.SignUpReason(form.Reason, c.ReasonRequired); err != nil {
 		return err
 	}
 

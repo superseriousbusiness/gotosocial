@@ -95,7 +95,6 @@ func (suite *AuthTestSuite) SetupSuite() {
 		ClientID:     "a-known-client-id",
 		ClientSecret: "some-secret",
 		Scopes:       "read",
-		VapidKey:     uuid.NewString(),
 	}
 }
 

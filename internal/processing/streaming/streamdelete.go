@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 func (p *processor) StreamDelete(statusID string) error {
@@ -20,7 +20,7 @@ func (p *processor) StreamDelete(statusID string) error {
 		}
 
 		// the value of the map should be a buncha streams
-		streamsForAccount, ok := v.(*gtsmodel.StreamsForAccount)
+		streamsForAccount, ok := v.(*stream.StreamsForAccount)
 		if !ok {
 			errs = append(errs, fmt.Sprintf("stream map error for account stream %s", accountID))
 		}
@@ -28,13 +28,13 @@ func (p *processor) StreamDelete(statusID string) error {
 		// lock the streams while we work on them
 		streamsForAccount.Lock()
 		defer streamsForAccount.Unlock()
-		for _, stream := range streamsForAccount.Streams {
+		for _, s := range streamsForAccount.Streams {
 			// lock each individual stream as we work on it
-			stream.Lock()
-			defer stream.Unlock()
-			if stream.Connected {
-				stream.Messages <- &gtsmodel.Message{
-					Stream:  []string{stream.Type},
+			s.Lock()
+			defer s.Unlock()
+			if s.Connected {
+				s.Messages <- &stream.Message{
+					Stream:  []string{s.Type},
 					Event:   "delete",
 					Payload: statusID,
 				}
