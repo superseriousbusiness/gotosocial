@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
@@ -39,7 +40,7 @@ func NewClientStore(db db.Basic) oauth2.ClientStore {
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	poc := &Client{}
+	poc := &gtsmodel.Client{}
 	if err := cs.db.GetByID(ctx, clientID, poc); err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 }
 
 func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
-	poc := &Client{
+	poc := &gtsmodel.Client{
 		ID:     cli.GetID(),
 		Secret: cli.GetSecret(),
 		Domain: cli.GetDomain(),
@@ -57,16 +58,8 @@ func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {
-	poc := &Client{
+	poc := &gtsmodel.Client{
 		ID: id,
 	}
 	return cs.db.DeleteByID(ctx, id, poc)
-}
-
-// Client is a handy little wrapper for typical oauth client details
-type Client struct {
-	ID     string `bun:"type:CHAR(26),pk,notnull"`
-	Secret string
-	Domain string
-	UserID string
 }

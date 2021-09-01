@@ -9,7 +9,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -27,8 +26,8 @@ type AccountStandardTestSuite struct {
 	processor processing.Processor
 
 	// standard suite models
-	testTokens       map[string]*oauth.Token
-	testClients      map[string]*oauth.Client
+	testTokens       map[string]*gtsmodel.Token
+	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account

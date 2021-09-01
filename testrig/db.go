@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 var testModels []interface{} = []interface{}{
@@ -51,8 +50,8 @@ var testModels []interface{} = []interface{}{
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
 	&gtsmodel.RouterSession{},
-	&oauth.Token{},
-	&oauth.Client{},
+	&gtsmodel.Token{},
+	&gtsmodel.Client{},
 }
 
 // NewTestDB returns a new initialized, empty database for testing.

@@ -21,16 +21,45 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20210816411877_struct_validation"
 	"github.com/uptrace/bun"
 )
 
 func init() {
+
+	var models []interface{} = []interface{}{
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
+		&gtsmodel.Block{},
+		&gtsmodel.DomainBlock{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.MediaAttachment{},
+		&gtsmodel.Mention{},
+		&gtsmodel.Status{},
+		&gtsmodel.StatusToEmoji{},
+		&gtsmodel.StatusToTag{},
+		&gtsmodel.StatusFave{},
+		&gtsmodel.StatusBookmark{},
+		&gtsmodel.StatusMute{},
+		&gtsmodel.Tag{},
+		&gtsmodel.User{},
+		&gtsmodel.Emoji{},
+		&gtsmodel.Instance{},
+		&gtsmodel.Notification{},
+		&gtsmodel.RouterSession{},
+		&gtsmodel.Token{},
+		&gtsmodel.Client{},
+	}
+
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.NewCreateTable().Model(&gtsmodel.Account{}).IfNotExists().Exec(ctx)
-			if err != nil {
-				return err
+			for _, m := range models {
+				_, err := tx.NewCreateTable().Model(m).IfNotExists().Exec(ctx)
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil

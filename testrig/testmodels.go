@@ -38,12 +38,11 @@ import (
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
-func NewTestTokens() map[string]*oauth.Token {
-	tokens := map[string]*oauth.Token{
+func NewTestTokens() map[string]*gtsmodel.Token {
+	tokens := map[string]*gtsmodel.Token{
 		"local_account_1": {
 			ID:              "01F8MGTQW4DKTDF8SW5CT9HYGA",
 			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",
@@ -69,8 +68,8 @@ func NewTestTokens() map[string]*oauth.Token {
 }
 
 // NewTestClients returns a map of Clients keyed according to which account they are used by.
-func NewTestClients() map[string]*oauth.Client {
-	clients := map[string]*oauth.Client{
+func NewTestClients() map[string]*gtsmodel.Client {
+	clients := map[string]*gtsmodel.Client{
 		"admin_account": {
 			ID:     "01F8MGWSJCND9BWBD4WGJXBM93",
 			Secret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a",

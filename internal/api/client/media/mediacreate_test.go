@@ -60,8 +60,8 @@ type MediaCreateTestSuite struct {
 	processor    processing.Processor
 
 	// standard suite models
-	testTokens       map[string]*oauth.Token
-	testClients      map[string]*oauth.Client
+	testTokens       map[string]*gtsmodel.Token
+	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account

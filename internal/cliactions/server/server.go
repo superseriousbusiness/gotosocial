@@ -73,8 +73,8 @@ var models []interface{} = []interface{}{
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
 	&gtsmodel.RouterSession{},
-	&oauth.Token{},
-	&oauth.Client{},
+	&gtsmodel.Token{},
+	&gtsmodel.Client{},
 }
 
 // Start creates and starts a gotosocial server

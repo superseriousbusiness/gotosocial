@@ -26,6 +26,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
@@ -71,7 +72,7 @@ func newTokenStore(ctx context.Context, db db.Basic, log *logrus.Logger) oauth2.
 func (ts *tokenStore) sweep(ctx context.Context) error {
 	// select *all* tokens from the db
 	// todo: if this becomes expensive (ie., there are fucking LOADS of tokens) then figure out a better way.
-	tokens := new([]*Token)
+	tokens := new([]*gtsmodel.Token)
 	if err := ts.db.GetAll(ctx, tokens); err != nil {
 		return err
 	}
@@ -117,17 +118,17 @@ func (ts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (ts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "code", Value: code}}, &Token{})
+	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "code", Value: code}}, &gtsmodel.Token{})
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (ts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "access", Value: access}}, &Token{})
+	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "access", Value: access}}, &gtsmodel.Token{})
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (ts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, &Token{})
+	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, &gtsmodel.Token{})
 }
 
 // GetByCode selects a token from the DB based on the Code field
@@ -135,7 +136,7 @@ func (ts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenI
 	if code == "" {
 		return nil, nil
 	}
-	dbt := &Token{
+	dbt := &gtsmodel.Token{
 		Code: code,
 	}
 	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "code", Value: code}}, dbt); err != nil {
@@ -149,7 +150,7 @@ func (ts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.To
 	if access == "" {
 		return nil, nil
 	}
-	dbt := &Token{
+	dbt := &gtsmodel.Token{
 		Access: access,
 	}
 	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "access", Value: access}}, dbt); err != nil {
@@ -163,7 +164,7 @@ func (ts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.
 	if refresh == "" {
 		return nil, nil
 	}
-	dbt := &Token{
+	dbt := &gtsmodel.Token{
 		Refresh: refresh,
 	}
 	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, dbt); err != nil {
@@ -176,37 +177,8 @@ func (ts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.
 	The following models are basically helpers for the token store implementation, they should only be used internally.
 */
 
-// Token is a translation of the gotosocial token with the ExpiresIn fields replaced with ExpiresAt.
-//
-// Explanation for this: gotosocial assumes an in-memory or file database of some kind, where a time-to-live parameter (TTL) can be defined,
-// and tokens with expired TTLs are automatically removed. Since some databases don't have that feature, it's easier to set an expiry time and
-// then periodically sweep out tokens when that time has passed.
-//
-// Note that this struct does *not* satisfy the token interface shown here: https://github.com/superseriousbusiness/oauth2/blob/master/model.go#L22
-// and implemented here: https://github.com/superseriousbusiness/oauth2/blob/master/models/token.go.
-// As such, manual translation is always required between Token and the gotosocial *model.Token. The helper functions oauthTokenToPGToken
-// and pgTokenToOauthToken can be used for that.
-type Token struct {
-	ID                  string `bun:"type:CHAR(26),pk,notnull"`
-	ClientID            string
-	UserID              string
-	RedirectURI         string
-	Scope               string
-	Code                string `bun:"default:'',pk"`
-	CodeChallenge       string
-	CodeChallengeMethod string
-	CodeCreateAt        time.Time `bun:",nullzero"`
-	CodeExpiresAt       time.Time `bun:",nullzero"`
-	Access              string    `bun:"default:'',pk"`
-	AccessCreateAt      time.Time `bun:",nullzero"`
-	AccessExpiresAt     time.Time `bun:",nullzero"`
-	Refresh             string    `bun:"default:'',pk"`
-	RefreshCreateAt     time.Time `bun:",nullzero"`
-	RefreshExpiresAt    time.Time `bun:",nullzero"`
-}
-
 // TokenToDBToken is a lil util function that takes a gotosocial token and gives back a token for inserting into a database.
-func TokenToDBToken(tkn *models.Token) *Token {
+func TokenToDBToken(tkn *models.Token) *gtsmodel.Token {
 	now := time.Now()
 
 	// For the following, we want to make sure we're not adding a time.Now() to an *empty* ExpiresIn, otherwise that's
@@ -228,7 +200,7 @@ func TokenToDBToken(tkn *models.Token) *Token {
 		rea = now.Add(tkn.RefreshExpiresIn)
 	}
 
-	return &Token{
+	return &gtsmodel.Token{
 		ClientID:            tkn.ClientID,
 		UserID:              tkn.UserID,
 		RedirectURI:         tkn.RedirectURI,
@@ -248,7 +220,7 @@ func TokenToDBToken(tkn *models.Token) *Token {
 }
 
 // DBTokenToToken is a lil util function that takes a database token and gives back a gotosocial token
-func DBTokenToToken(dbt *Token) *models.Token {
+func DBTokenToToken(dbt *gtsmodel.Token) *models.Token {
 	now := time.Now()
 
 	var codeExpiresIn time.Duration

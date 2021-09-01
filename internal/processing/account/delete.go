@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // Delete handles the complete deletion of an account.
@@ -66,12 +65,12 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 		u := &gtsmodel.User{}
 		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, u); err == nil {
 			// we got one! select all tokens with the user's ID
-			tokens := []*oauth.Token{}
+			tokens := []*gtsmodel.Token{}
 			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: u.ID}}, &tokens); err == nil {
 				// we have some tokens to delete
 				for _, t := range tokens {
 					// delete client(s) associated with this token
-					if err := p.db.DeleteByID(ctx, t.ClientID, &oauth.Client{}); err != nil {
+					if err := p.db.DeleteByID(ctx, t.ClientID, &gtsmodel.Client{}); err != nil {
 						l.Errorf("error deleting oauth client: %s", err)
 					}
 					// delete application(s) associated with this token

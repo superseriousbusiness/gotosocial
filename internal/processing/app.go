@@ -68,7 +68,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	}
 
 	// now we need to model an oauth client from the application that the oauth library can use
-	oc := &oauth.Client{
+	oc := &gtsmodel.Client{
 		ID:     clientID,
 		Secret: clientSecret,
 		Domain: form.RedirectURIs,
