@@ -12,6 +12,8 @@ import (
 
 // dbConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
 type DBConn struct {
+	// TODO: move *Config here, no need to be in each struct type
+
 	errProc func(error) db.Error // errProc is the SQL-type specific error processor
 	log     *logrus.Logger       // log is the logger passed with this DBConn
 	*bun.DB                      // DB is the underlying bun.DB connection
@@ -33,6 +35,24 @@ func WrapDBConn(dbConn *bun.DB, log *logrus.Logger) *DBConn {
 		log:     log,
 		DB:      dbConn,
 	}
+}
+
+func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) db.Error {
+	// Acquire a new transaction
+	tx, err := conn.BeginTx(ctx, nil)
+	if err != nil {
+		return conn.ProcessError(err)
+	}
+
+	// Perform supplied transaction
+	if err = fn(tx); err != nil {
+		tx.Rollback() //nolint
+		return conn.ProcessError(err)
+	}
+
+	// Finally, commit transaction
+	err = tx.Commit()
+	return conn.ProcessError(err)
 }
 
 // ProcessError processes an error to replace any known values with our own db.Error types,

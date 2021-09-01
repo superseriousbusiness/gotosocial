@@ -26,13 +26,13 @@ import (
 
 // Status contains functions for getting statuses, creating statuses, and checking various other fields on statuses.
 type Status interface {
-	// GetStatusByID returns one status from the database, with all rel fields populated (if possible).
+	// GetStatusByID returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, Error)
 
-	// GetStatusByURI returns one status from the database, with all rel fields populated (if possible).
+	// GetStatusByURI returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, Error)
 
-	// GetStatusByURL returns one status from the database, with all rel fields populated (if possible).
+	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, Error)
 
 	// PutStatus stores one status in the database.

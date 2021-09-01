@@ -339,7 +339,6 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 }
 
 func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
-
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on follow, or was not an iri")

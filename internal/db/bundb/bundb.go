@@ -91,6 +91,15 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
 	case dbTypeSqlite:
 		// SQLITE
+
+		// Drop anything fancy from DB address
+		c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
+		c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
+
+		// Append our own SQLite preferences
+		c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
+
+		// Open new DB instance
 		var err error
 		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
 		if err != nil {
@@ -98,7 +107,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		}
 		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()), log)
 
-		if strings.HasPrefix(strings.TrimPrefix(c.DBConfig.Address, "file:"), ":memory:") {
+		if c.DBConfig.Address == "file::memory:?cache=shared" {
 			log.Warn("sqlite in-memory database should only be used for debugging")
 
 			// don't close connections on disconnect -- otherwise
@@ -121,11 +130,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		conn.RegisterModel(t)
 	}
 
+	accounts := &accountDB{config: c, conn: conn, cache: cache.NewAccountCache()}
+
 	ps := &bunDBService{
-		Account: &accountDB{
-			config: c,
-			conn:   conn,
-		},
+		Account: accounts,
 		Admin: &adminDB{
 			config: c,
 			conn:   conn,
@@ -165,9 +173,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			conn:   conn,
 		},
 		Status: &statusDB{
-			config: c,
-			conn:   conn,
-			cache:  cache.NewStatusCache(),
+			config:   c,
+			conn:     conn,
+			cache:    cache.NewStatusCache(),
+			accounts: accounts,
 		},
 		Timeline: &timelineDB{
 			config: c,
