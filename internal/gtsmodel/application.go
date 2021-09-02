@@ -28,8 +28,8 @@ type Application struct {
 	UpdatedAt    time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	Name         string    `validate:"required" bun:",nullzero,notnull"`                                  // name of the application given when it was created (eg., 'tusky')
 	Website      string    `validate:"omitempty,url" bun:",nullzero"`                                     // website for the application given when it was created (eg., 'https://tusky.app')
-	RedirectURI  string    `validate:"required" bun:",nullzero,notnull"`                                  // redirect uri requested by the application for oauth2 flow
+	RedirectURI  string    `validate:"required,uri" bun:",nullzero,notnull"`                              // redirect uri requested by the application for oauth2 flow
 	ClientID     string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                       // id of the associated oauth client entity in the db
 	ClientSecret string    `validate:"required,uuid" bun:",nullzero,notnull"`                             // secret of the associated oauth client entity in the db
-	Scopes       string    `validate:"required" bun:",nullzero,notnull,default:'read'"`                   // scopes requested when this app was created
+	Scopes       string    `validate:"-" bun:",nullzero,notnull,default:'read'"`                          // scopes requested when this app was created
 }
