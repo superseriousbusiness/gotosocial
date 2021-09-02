@@ -26,6 +26,6 @@ type Client struct {
 	CreatedAt time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	Secret    string    `validate:"required,uuid" bun:",nullzero,notnull"`                             // secret generated when client was created
-	Domain    string    `validate:"required" bun:",nullzero,notnull"`                                  // domain requested for client
+	Domain    string    `validate:"required,uri" bun:",nullzero,notnull"`                              // domain requested for client
 	UserID    string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                       // id of the user that this client acts on behalf of
 }
