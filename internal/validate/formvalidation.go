@@ -38,8 +38,8 @@ const (
 	maximumDescriptionLength      = 5000
 	maximumSiteTermsLength        = 5000
 	maximumUsernameLength         = 64
-	maximumEmojiShortcodeLength   = 30
-	maximumHashtagLength          = 30
+	// maximumEmojiShortcodeLength   = 30
+	// maximumHashtagLength          = 30
 )
 
 // NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.

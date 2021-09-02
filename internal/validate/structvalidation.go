@@ -46,7 +46,9 @@ func ulidValidator(fl validator.FieldLevel) bool {
 
 func init() {
 	v = validator.New()
-	v.RegisterValidation("ulid", ulidValidator)
+	if err := v.RegisterValidation("ulid", ulidValidator); err != nil {
+		panic(err)
+	}
 }
 
 // Struct validates the passed struct, returning validator.ValidationErrors if invalid, or nil if OK.

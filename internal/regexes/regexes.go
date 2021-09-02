@@ -24,20 +24,20 @@ import (
 )
 
 const (
-	users       = "users"
-	actors      = "actors"
-	statuses    = "statuses"
-	inbox       = "inbox"
-	outbox      = "outbox"
-	followers   = "followers"
-	following   = "following"
-	liked       = "liked"
-	collections = "collections"
-	featured    = "featured"
-	publicKey   = "main-key"
-	follow      = "follow"
-	update      = "updates"
-	blocks      = "blocks"
+	users     = "users"
+	actors    = "actors"
+	statuses  = "statuses"
+	inbox     = "inbox"
+	outbox    = "outbox"
+	followers = "followers"
+	following = "following"
+	liked     = "liked"
+	// collections = "collections"
+	// featured    = "featured"
+	publicKey = "main-key"
+	follow    = "follow"
+	// update      = "updates"
+	blocks = "blocks"
 )
 
 const (
