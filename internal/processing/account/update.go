@@ -26,11 +26,13 @@ import (
 	"io"
 	"mime/multipart"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
@@ -49,7 +51,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.DisplayName != nil {
-		if err := util.ValidateDisplayName(*form.DisplayName); err != nil {
+		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, err
 		}
 		displayName := text.RemoveHTML(*form.DisplayName) // no html allowed in display name
@@ -59,7 +61,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Note != nil {
-		if err := util.ValidateNote(*form.Note); err != nil {
+		if err := validate.Note(*form.Note); err != nil {
 			return nil, err
 		}
 		note := text.SanitizeHTML(*form.Note) // html OK in note but sanitize it
@@ -92,7 +94,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 	if form.Source != nil {
 		if form.Source.Language != nil {
-			if err := util.ValidateLanguage(*form.Source.Language); err != nil {
+			if err := validate.Language(*form.Source.Language); err != nil {
 				return nil, err
 			}
 			if err := p.db.UpdateOneByID(ctx, account.ID, "language", *form.Source.Language, &gtsmodel.Account{}); err != nil {
@@ -107,7 +109,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		if form.Source.Privacy != nil {
-			if err := util.ValidatePrivacy(*form.Source.Privacy); err != nil {
+			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, err
 			}
 			if err := p.db.UpdateOneByID(ctx, account.ID, "privacy", *form.Source.Privacy, &gtsmodel.Account{}); err != nil {
@@ -122,9 +124,9 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, fmt.Errorf("could not fetch updated account %s: %s", account.ID, err)
 	}
 
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsProfile,
-		APActivityType: gtsmodel.ActivityStreamsUpdate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityUpdate,
 		GTSModel:       updatedAccount,
 		OriginAccount:  updatedAccount,
 	}

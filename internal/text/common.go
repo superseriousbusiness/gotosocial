@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
 // preformat contains some common logic for making a string ready for formatting, which should be used for all user-input text.
@@ -61,7 +61,7 @@ func postformat(in string) string {
 }
 
 func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
-	return util.HashtagFinderRegex.ReplaceAllStringFunc(in, func(match string) string {
+	return regexes.HashtagFinder.ReplaceAllStringFunc(in, func(match string) string {
 		// we have a match
 		matchTrimmed := strings.TrimSpace(match)
 		tagAsEntered := strings.Split(matchTrimmed, "#")[1]

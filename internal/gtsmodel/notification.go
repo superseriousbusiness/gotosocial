@@ -22,41 +22,29 @@ import "time"
 
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
-	// ID of this notification in the database
-	ID string `bun:"type:CHAR(26),pk,notnull"`
-	// Type of this notification
-	NotificationType NotificationType `bun:",notnull"`
-	// Creation time of this notification
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Which account does this notification target (ie., who will receive the notification?)
-	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
-	// Which account performed the action that created this notification?
-	OriginAccountID string   `bun:"type:CHAR(26),notnull"`
-	OriginAccount   *Account `bun:"rel:belongs-to"`
-	// If the notification pertains to a status, what is the database ID of that status?
-	StatusID string  `bun:"type:CHAR(26),nullzero"`
-	Status   *Status `bun:"rel:belongs-to"`
-	// Has this notification been read already?
-	Read bool
+	ID               string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                                                                                                                    // id of this item in the database
+	CreatedAt        time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                                                                                                                               // when was item created
+	UpdatedAt        time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                                                                                                                               // when was item last updated                                                                                                                            // when was item created
+	NotificationType NotificationType `validate:"oneof=follow follow_request mention reblog favourite poll status" bun:",nullzero,notnull"`                                                                                                        // Type of this notification
+	TargetAccountID  string           `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                                                                                       // Which account does this notification target (ie., who will receive the notification?)
+	TargetAccount    *Account         `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Which account performed the action that created this notification?
+	OriginAccountID  string           `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                                                                                       // ID of the account that performed the action that created the notification.
+	OriginAccount    *Account         `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Account corresponding to originAccountID
+	StatusID         string           `validate:"required_if=NotificationType mention,required_if=NotificationType reblog,required_if=NotificationType favourite,required_if=NotificationType status,omitempty,ulid" bun:"type:CHAR(26),nullzero"` // If the notification pertains to a status, what is the database ID of that status?
+	Status           *Status          `validate:"-" bun:"rel:belongs-to"`                                                                                                                                                                          // Status corresponding to statusID
+	Read             bool             `validate:"-" bun:",notnull,default:false"`                                                                                                                                                                  // Notification has been seen/read
 }
 
 // NotificationType describes the reason/type of this notification.
 type NotificationType string
 
+// Notification Types
 const (
-	// NotificationFollow -- someone followed you
-	NotificationFollow NotificationType = "follow"
-	// NotificationFollowRequest -- someone requested to follow you
-	NotificationFollowRequest NotificationType = "follow_request"
-	// NotificationMention -- someone mentioned you in their status
-	NotificationMention NotificationType = "mention"
-	// NotificationReblog -- someone boosted one of your statuses
-	NotificationReblog NotificationType = "reblog"
-	// NotificationFave -- someone faved/liked one of your statuses
-	NotificationFave NotificationType = "favourite"
-	// NotificationPoll -- a poll you voted in or created has ended
-	NotificationPoll NotificationType = "poll"
-	// NotificationStatus -- someone you enabled notifications for has posted a status.
-	NotificationStatus NotificationType = "status"
+	NotificationFollow        NotificationType = "follow"         // NotificationFollow -- someone followed you
+	NotificationFollowRequest NotificationType = "follow_request" // NotificationFollowRequest -- someone requested to follow you
+	NotificationMention       NotificationType = "mention"        // NotificationMention -- someone mentioned you in their status
+	NotificationReblog        NotificationType = "reblog"         // NotificationReblog -- someone boosted one of your statuses
+	NotificationFave          NotificationType = "favourite"      // NotificationFave -- someone faved/liked one of your statuses
+	NotificationPoll          NotificationType = "poll"           // NotificationPoll -- a poll you voted in or created has ended
+	NotificationStatus        NotificationType = "status"         // NotificationStatus -- someone you enabled notifications for has posted a status.
 )

@@ -1,21 +1,33 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package gtsmodel
 
 import "time"
 
 // Block refers to the blocking of one account by another.
 type Block struct {
-	// id of this block in the database
-	ID string `bun:"type:CHAR(26),pk,notnull"`
-	// When was this block created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this block updated
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Who created this block?
-	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
-	// Who is targeted by this block?
-	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
-	// Activitypub URI for this block
-	URI string `bun:",notnull"`
+	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
+	CreatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	URI             string    `validate:"required,url" bun:",notnull,nullzero,unique"`                       // ActivityPub uri of this block.
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:blocksrctarget,notnull"`   // Who does this block originate from?
+	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                            // Account corresponding to accountID
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:blocksrctarget,notnull"`   // Who is the target of this block ?
+	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                            // Account corresponding to targetAccountID
 }

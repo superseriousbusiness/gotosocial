@@ -16,4 +16,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtsmodel
+package migrations
+
+import (
+	"github.com/uptrace/bun/migrate"
+)
+
+var (
+	// Migrations provides migration logic for bun
+	Migrations = migrate.NewMigrations()
+)

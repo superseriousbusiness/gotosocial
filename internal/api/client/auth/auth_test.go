@@ -41,7 +41,7 @@ type AuthTestSuite struct {
 	testAccount     *gtsmodel.Account
 	testApplication *gtsmodel.Application
 	testUser        *gtsmodel.User
-	testClient      *oauth.Client
+	testClient      *gtsmodel.Client
 	config          *config.Config
 }
 
@@ -83,7 +83,7 @@ func (suite *AuthTestSuite) SetupSuite() {
 		Email:             "user@example.org",
 		AccountID:         acctID,
 	}
-	suite.testClient = &oauth.Client{
+	suite.testClient = &gtsmodel.Client{
 		ID:     "a-known-client-id",
 		Secret: "some-secret",
 		Domain: fmt.Sprintf("%s://%s", c.Protocol, c.Host),
@@ -95,7 +95,6 @@ func (suite *AuthTestSuite) SetupSuite() {
 		ClientID:     "a-known-client-id",
 		ClientSecret: "some-secret",
 		Scopes:       "read",
-		VapidKey:     uuid.NewString(),
 	}
 }
 
@@ -112,8 +111,8 @@ func (suite *AuthTestSuite) SetupTest() {
 	suite.db = db
 
 	models := []interface{}{
-		&oauth.Client{},
-		&oauth.Token{},
+		&gtsmodel.Client{},
+		&gtsmodel.Token{},
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
 		&gtsmodel.Application{},
@@ -145,8 +144,8 @@ func (suite *AuthTestSuite) SetupTest() {
 // TearDownTest drops the oauth_clients table and closes the pg connection after each test
 func (suite *AuthTestSuite) TearDownTest() {
 	models := []interface{}{
-		&oauth.Client{},
-		&oauth.Token{},
+		&gtsmodel.Client{},
+		&gtsmodel.Token{},
 		&gtsmodel.User{},
 		&gtsmodel.Account{},
 		&gtsmodel.Application{},

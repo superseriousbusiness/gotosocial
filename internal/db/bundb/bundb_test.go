@@ -24,7 +24,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 type BunDBStandardTestSuite struct {
@@ -35,8 +34,8 @@ type BunDBStandardTestSuite struct {
 	log    *logrus.Logger
 
 	// standard suite models
-	testTokens       map[string]*oauth.Token
-	testClients      map[string]*oauth.Client
+	testTokens       map[string]*gtsmodel.Token
+	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account

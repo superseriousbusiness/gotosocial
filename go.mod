@@ -21,7 +21,7 @@ require (
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-fed/activity v1.0.1-0.20210803212804-d866ba75dd0f
 	github.com/go-fed/httpsig v1.1.0
-	github.com/go-playground/validator/v10 v10.7.0 // indirect
+	github.com/go-playground/validator/v10 v10.7.0
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

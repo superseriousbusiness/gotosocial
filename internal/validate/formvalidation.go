@@ -16,13 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package validate
 
 import (
 	"errors"
 	"fmt"
 	"net/mail"
 
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	pwv "github.com/wagslane/go-password-validator"
 	"golang.org/x/text/language"
 )
@@ -36,10 +37,13 @@ const (
 	maximumShortDescriptionLength = 500
 	maximumDescriptionLength      = 5000
 	maximumSiteTermsLength        = 5000
+	maximumUsernameLength         = 64
+	// maximumEmojiShortcodeLength   = 30
+	// maximumHashtagLength          = 30
 )
 
-// ValidateNewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
-func ValidateNewPassword(password string) error {
+// NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
+func NewPassword(password string) error {
 	if password == "" {
 		return errors.New("no password provided")
 	}
@@ -51,23 +55,23 @@ func ValidateNewPassword(password string) error {
 	return pwv.Validate(password, minimumPasswordEntropy)
 }
 
-// ValidateUsername makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
+// Username makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
 // Returns an error if not.
-func ValidateUsername(username string) error {
+func Username(username string) error {
 	if username == "" {
 		return errors.New("no username provided")
 	}
 
-	if !usernameValidationRegex.MatchString(username) {
+	if !regexes.Username.MatchString(username) {
 		return fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max %d characters", username, maximumUsernameLength)
 	}
 
 	return nil
 }
 
-// ValidateEmail makes sure that a given email address is a valid address.
+// Email makes sure that a given email address is a valid address.
 // Returns an error if not.
-func ValidateEmail(email string) error {
+func Email(email string) error {
 	if email == "" {
 		return errors.New("no email provided")
 	}
@@ -76,9 +80,9 @@ func ValidateEmail(email string) error {
 	return err
 }
 
-// ValidateLanguage checks that the given language string is a 2- or 3-letter ISO 639 code.
+// Language checks that the given language string is a 2- or 3-letter ISO 639 code.
 // Returns an error if the language cannot be parsed. See: https://pkg.go.dev/golang.org/x/text/language
-func ValidateLanguage(lang string) error {
+func Language(lang string) error {
 	if lang == "" {
 		return errors.New("no language provided")
 	}
@@ -86,8 +90,8 @@ func ValidateLanguage(lang string) error {
 	return err
 }
 
-// ValidateSignUpReason checks that a sufficient reason is given for a server signup request
-func ValidateSignUpReason(reason string, reasonRequired bool) error {
+// SignUpReason checks that a sufficient reason is given for a server signup request
+func SignUpReason(reason string, reasonRequired bool) error {
 	if !reasonRequired {
 		// we don't care!
 		// we're not going to do anything with this text anyway if no reason is required
@@ -108,36 +112,36 @@ func ValidateSignUpReason(reason string, reasonRequired bool) error {
 	return nil
 }
 
-// ValidateDisplayName checks that a requested display name is valid
-func ValidateDisplayName(displayName string) error {
+// DisplayName checks that a requested display name is valid
+func DisplayName(displayName string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
 
-// ValidateNote checks that a given profile/account note/bio is valid
-func ValidateNote(note string) error {
+// Note checks that a given profile/account note/bio is valid
+func Note(note string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
 
-// ValidatePrivacy checks that the desired privacy setting is valid
-func ValidatePrivacy(privacy string) error {
+// Privacy checks that the desired privacy setting is valid
+func Privacy(privacy string) error {
 	// TODO: add some validation logic here -- length, characters, etc
 	return nil
 }
 
-// ValidateEmojiShortcode just runs the given shortcode through the regular expression
+// EmojiShortcode just runs the given shortcode through the regular expression
 // for emoji shortcodes, to figure out whether it's a valid shortcode, ie., 2-30 characters,
 // lowercase a-z, numbers, and underscores.
-func ValidateEmojiShortcode(shortcode string) error {
-	if !emojiShortcodeValidationRegex.MatchString(shortcode) {
+func EmojiShortcode(shortcode string) error {
+	if !regexes.EmojiShortcode.MatchString(shortcode) {
 		return fmt.Errorf("shortcode %s did not pass validation, must be between 2 and 30 characters, lowercase letters, numbers, and underscores only", shortcode)
 	}
 	return nil
 }
 
-// ValidateSiteTitle ensures that the given site title is within spec.
-func ValidateSiteTitle(siteTitle string) error {
+// SiteTitle ensures that the given site title is within spec.
+func SiteTitle(siteTitle string) error {
 	if len(siteTitle) > maximumSiteTitleLength {
 		return fmt.Errorf("site title should be no more than %d chars but given title was %d", maximumSiteTitleLength, len(siteTitle))
 	}
@@ -145,8 +149,8 @@ func ValidateSiteTitle(siteTitle string) error {
 	return nil
 }
 
-// ValidateSiteShortDescription ensures that the given site short description is within spec.
-func ValidateSiteShortDescription(d string) error {
+// SiteShortDescription ensures that the given site short description is within spec.
+func SiteShortDescription(d string) error {
 	if len(d) > maximumShortDescriptionLength {
 		return fmt.Errorf("short description should be no more than %d chars but given description was %d", maximumShortDescriptionLength, len(d))
 	}
@@ -154,8 +158,8 @@ func ValidateSiteShortDescription(d string) error {
 	return nil
 }
 
-// ValidateSiteDescription ensures that the given site description is within spec.
-func ValidateSiteDescription(d string) error {
+// SiteDescription ensures that the given site description is within spec.
+func SiteDescription(d string) error {
 	if len(d) > maximumDescriptionLength {
 		return fmt.Errorf("description should be no more than %d chars but given description was %d", maximumDescriptionLength, len(d))
 	}
@@ -163,11 +167,16 @@ func ValidateSiteDescription(d string) error {
 	return nil
 }
 
-// ValidateSiteTerms ensures that the given site terms string is within spec.
-func ValidateSiteTerms(t string) error {
+// SiteTerms ensures that the given site terms string is within spec.
+func SiteTerms(t string) error {
 	if len(t) > maximumSiteTermsLength {
 		return fmt.Errorf("terms should be no more than %d chars but given terms was %d", maximumSiteTermsLength, len(t))
 	}
 
 	return nil
+}
+
+// ULID returns true if the passed string is a valid ULID.
+func ULID(i string) bool {
+	return regexes.ULID.MatchString(i)
 }

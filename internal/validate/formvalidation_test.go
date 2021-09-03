@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util_test
+package validate_test
 
 import (
 	"errors"
@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 type ValidationTestSuite struct {
@@ -43,42 +43,42 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 	strongPassword := "3dX5@Zc%mV*W2MBNEy$@"
 	var err error
 
-	err = util.ValidateNewPassword(empty)
+	err = validate.NewPassword(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no password provided"), err)
 	}
 
-	err = util.ValidateNewPassword(terriblePassword)
+	err = validate.NewPassword(terriblePassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
 	}
 
-	err = util.ValidateNewPassword(weakPassword)
+	err = validate.NewPassword(weakPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters, using numbers or using a longer password"), err)
 	}
 
-	err = util.ValidateNewPassword(shortPassword)
+	err = validate.NewPassword(shortPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters or using a longer password"), err)
 	}
 
-	err = util.ValidateNewPassword(specialPassword)
+	err = validate.NewPassword(specialPassword)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("insecure password, try including more special characters or using a longer password"), err)
 	}
 
-	err = util.ValidateNewPassword(longPassword)
+	err = validate.NewPassword(longPassword)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateNewPassword(tooLong)
+	err = validate.NewPassword(tooLong)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("password should be no more than 64 chars"), err)
 	}
 
-	err = util.ValidateNewPassword(strongPassword)
+	err = validate.NewPassword(strongPassword)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
@@ -95,42 +95,42 @@ func (suite *ValidationTestSuite) TestValidateUsername() {
 	goodUsername := "this_is_a_good_username"
 	var err error
 
-	err = util.ValidateUsername(empty)
+	err = validate.Username(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no username provided"), err)
 	}
 
-	err = util.ValidateUsername(tooLong)
+	err = validate.Username(tooLong)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", tooLong), err)
 	}
 
-	err = util.ValidateUsername(withSpaces)
+	err = validate.Username(withSpaces)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", withSpaces), err)
 	}
 
-	err = util.ValidateUsername(weirdChars)
+	err = validate.Username(weirdChars)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", weirdChars), err)
 	}
 
-	err = util.ValidateUsername(leadingSpace)
+	err = validate.Username(leadingSpace)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", leadingSpace), err)
 	}
 
-	err = util.ValidateUsername(trailingSpace)
+	err = validate.Username(trailingSpace)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", trailingSpace), err)
 	}
 
-	err = util.ValidateUsername(newlines)
+	err = validate.Username(newlines)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), fmt.Errorf("given username %s was invalid: must contain only lowercase letters, numbers, and underscores, max 64 characters", newlines), err)
 	}
 
-	err = util.ValidateUsername(goodUsername)
+	err = validate.Username(goodUsername)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
@@ -144,27 +144,27 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 	emailAddress := "thisis.actually@anemail.address"
 	var err error
 
-	err = util.ValidateEmail(empty)
+	err = validate.Email(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no email provided"), err)
 	}
 
-	err = util.ValidateEmail(notAnEmailAddress)
+	err = validate.Email(notAnEmailAddress)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("mail: missing '@' or angle-addr"), err)
 	}
 
-	err = util.ValidateEmail(almostAnEmailAddress)
+	err = validate.Email(almostAnEmailAddress)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("mail: no angle-addr"), err)
 	}
 
-	err = util.ValidateEmail(aWebsite)
+	err = validate.Email(aWebsite)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("mail: missing '@' or angle-addr"), err)
 	}
 
-	err = util.ValidateEmail(emailAddress)
+	err = validate.Email(emailAddress)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
@@ -182,47 +182,47 @@ func (suite *ValidationTestSuite) TestValidateLanguage() {
 	german := "de"
 	var err error
 
-	err = util.ValidateLanguage(empty)
+	err = validate.Language(empty)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no language provided"), err)
 	}
 
-	err = util.ValidateLanguage(notALanguage)
+	err = validate.Language(notALanguage)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("language: tag is not well-formed"), err)
 	}
 
-	err = util.ValidateLanguage(english)
+	err = validate.Language(english)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateLanguage(capitalEnglish)
+	err = validate.Language(capitalEnglish)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateLanguage(arabic3Letters)
+	err = validate.Language(arabic3Letters)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateLanguage(mixedCapsEnglish)
+	err = validate.Language(mixedCapsEnglish)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateLanguage(englishUS)
+	err = validate.Language(englishUS)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("language: tag is not well-formed"), err)
 	}
 
-	err = util.ValidateLanguage(dutch)
+	err = validate.Language(dutch)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateLanguage(german)
+	err = validate.Language(german)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
@@ -236,43 +236,43 @@ func (suite *ValidationTestSuite) TestValidateReason() {
 	var err error
 
 	// check with no reason required
-	err = util.ValidateSignUpReason(empty, false)
+	err = validate.SignUpReason(empty, false)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateSignUpReason(badReason, false)
+	err = validate.SignUpReason(badReason, false)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateSignUpReason(tooLong, false)
+	err = validate.SignUpReason(tooLong, false)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
-	err = util.ValidateSignUpReason(goodReason, false)
+	err = validate.SignUpReason(goodReason, false)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}
 
 	// check with reason required
-	err = util.ValidateSignUpReason(empty, true)
+	err = validate.SignUpReason(empty, true)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("no reason provided"), err)
 	}
 
-	err = util.ValidateSignUpReason(badReason, true)
+	err = validate.SignUpReason(badReason, true)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("reason should be at least 40 chars but 'because' was 7"), err)
 	}
 
-	err = util.ValidateSignUpReason(tooLong, true)
+	err = validate.SignUpReason(tooLong, true)
 	if assert.Error(suite.T(), err) {
 		assert.Equal(suite.T(), errors.New("reason should be no more than 500 chars but given reason was 600"), err)
 	}
 
-	err = util.ValidateSignUpReason(goodReason, true)
+	err = validate.SignUpReason(goodReason, true)
 	if assert.NoError(suite.T(), err) {
 		assert.Equal(suite.T(), nil, err)
 	}

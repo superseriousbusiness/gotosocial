@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -113,7 +114,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 			PrivateKey:            key,
 			PublicKey:             &key.PublicKey,
 			PublicKeyURI:          newAccountURIs.PublicKeyURI,
-			ActorType:             gtsmodel.ActivityStreamsPerson,
+			ActorType:             ap.ActorPerson,
 			URI:                   newAccountURIs.UserURI,
 			InboxURI:              newAccountURIs.InboxURI,
 			OutboxURI:             newAccountURIs.OutboxURI,
@@ -207,7 +208,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
 		PublicKeyURI:          newAccountURIs.PublicKeyURI,
-		ActorType:             gtsmodel.ActivityStreamsPerson,
+		ActorType:             ap.ActorPerson,
 		URI:                   newAccountURIs.UserURI,
 		InboxURI:              newAccountURIs.InboxURI,
 		OutboxURI:             newAccountURIs.OutboxURI,

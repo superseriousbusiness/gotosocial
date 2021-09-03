@@ -25,127 +25,93 @@ import (
 // MediaAttachment represents a user-uploaded media attachment: an image/video/audio/gif that is
 // somewhere in storage and that can be retrieved and served by the router.
 type MediaAttachment struct {
-	// ID of the attachment in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// ID of the status to which this is attached
-	StatusID string `bun:"type:CHAR(26),nullzero"`
-	// Where can the attachment be retrieved on *this* server
-	URL string `bun:",nullzero"`
-	// Where can the attachment be retrieved on a remote server (empty for local media)
-	RemoteURL string `bun:",nullzero"`
-	// When was the attachment created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was the attachment last updated
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// Type of file (image/gif/audio/video)
-	Type FileType `bun:",notnull"`
-	// Metadata about the file
-	FileMeta FileMeta
-	// To which account does this attachment belong
-	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:has-one"`
-	// Description of the attachment (for screenreaders)
-	Description string `bun:",nullzero"`
-	// To which scheduled status does this attachment belong
-	ScheduledStatusID string `bun:"type:CHAR(26),nullzero"`
-	// What is the generated blurhash of this attachment
-	Blurhash string `bun:",nullzero"`
-	// What is the processing status of this attachment
-	Processing ProcessingStatus
-	// metadata for the whole file
-	File File
-	// small image thumbnail derived from a larger image, video, or audio file.
-	Thumbnail Thumbnail
-	// Is this attachment being used as an avatar?
-	Avatar bool
-	// Is this attachment being used as a header?
-	Header bool
+	ID                string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                       // id of this item in the database
+	CreatedAt         time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                  // when was item created
+	UpdatedAt         time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                  // when was item last updated
+	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // ID of the status to which this is attached
+	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
+	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
+	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",notnull"`                                 // Type of file (image/gif/audio/video)
+	FileMeta          FileMeta         `validate:"required" bun:",nullzero,notnull"`                                                   // Metadata about the file
+	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
+	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                // Account corresponding to accountID
+	Description       string           `validate:"-" bun:",nullzero"`                                                                  // Description of the attachment (for screenreaders)
+	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // To which scheduled status does this attachment belong
+	Blurhash          string           `validate:"required_if=Type Image,required_if=Type Gif,required_if=Type Video" bun:",nullzero"` // What is the generated blurhash of this attachment
+	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                           // What is the processing status of this attachment
+	File              File             `validate:"required" bun:",notnull,nullzero"`                                                   // metadata for the whole file
+	Thumbnail         Thumbnail        `validate:"required" bun:",notnull,nullzero"`                                                   // small image thumbnail derived from a larger image, video, or audio file.
+	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as an avatar?
+	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as a header?
 }
 
 // File refers to the metadata for the whole file
 type File struct {
-	// What is the path of the file in storage.
-	Path string `bun:",nullzero"`
-	// What is the MIME content type of the file.
-	ContentType string `bun:",nullzero"`
-	// What is the size of the file in bytes.
-	FileSize int
-	// When was the file last updated.
-	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
+	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                             // Path of the file in storage.
+	ContentType string    `validate:"required" bun:",nullzero,notnull"`                                  // MIME content type of the file.
+	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                                  // File size in bytes
+	UpdatedAt   time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
-	// What is the path of the file in storage
-	Path string `bun:",nullzero"`
-	// What is the MIME content type of the file.
-	ContentType string `bun:",nullzero"`
-	// What is the size of the file in bytes
-	FileSize int
-	// When was the file last updated
-	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
-	// What is the URL of the thumbnail on the local server
-	URL string `bun:",nullzero"`
-	// What is the remote URL of the thumbnail (empty for local media)
-	RemoteURL string `bun:",nullzero"`
+	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                             // Path of the file in storage.
+	ContentType string    `validate:"required" bun:",nullzero,notnull"`                                  // MIME content type of the file.
+	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                                  // File size in bytes
+	UpdatedAt   time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
+	URL         string    `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`          // What is the URL of the thumbnail on the local server
+	RemoteURL   string    `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                // What is the remote URL of the thumbnail (empty for local media)
 }
 
 // ProcessingStatus refers to how far along in the processing stage the attachment is.
 type ProcessingStatus int
 
+// MediaAttachment processing states.
 const (
-	// ProcessingStatusReceived indicates the attachment has been received and is awaiting processing. No thumbnail available yet.
-	ProcessingStatusReceived ProcessingStatus = 0
-	// ProcessingStatusProcessing indicates the attachment is currently being processed. Thumbnail is available but full media is not.
-	ProcessingStatusProcessing ProcessingStatus = 1
-	// ProcessingStatusProcessed indicates the attachment has been fully processed and is ready to be served.
-	ProcessingStatusProcessed ProcessingStatus = 2
-	// ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
-	ProcessingStatusError ProcessingStatus = 666
+	ProcessingStatusReceived   ProcessingStatus = 0   // ProcessingStatusReceived indicates the attachment has been received and is awaiting processing. No thumbnail available yet.
+	ProcessingStatusProcessing ProcessingStatus = 1   // ProcessingStatusProcessing indicates the attachment is currently being processed. Thumbnail is available but full media is not.
+	ProcessingStatusProcessed  ProcessingStatus = 2   // ProcessingStatusProcessed indicates the attachment has been fully processed and is ready to be served.
+	ProcessingStatusError      ProcessingStatus = 666 // ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
 )
 
 // FileType refers to the file type of the media attaachment.
 type FileType string
 
+// MediaAttachment file types.
 const (
-	// FileTypeImage is for jpegs and pngs
-	FileTypeImage FileType = "Image"
-	// FileTypeGif is for native gifs and soundless videos that have been converted to gifs
-	FileTypeGif FileType = "Gif"
-	// FileTypeAudio is for audio-only files (no video)
-	FileTypeAudio FileType = "Audio"
-	// FileTypeVideo is for files with audio + visual
-	FileTypeVideo FileType = "Video"
-	// FileTypeUnknown is for unknown file types (surprise surprise!)
-	FileTypeUnknown FileType = "Unknown"
+	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs and pngs
+	FileTypeGif     FileType = "Gif"     // FileTypeGif is for native gifs and soundless videos that have been converted to gifs
+	FileTypeAudio   FileType = "Audio"   // FileTypeAudio is for audio-only files (no video)
+	FileTypeVideo   FileType = "Video"   // FileTypeVideo is for files with audio + visual
+	FileTypeUnknown FileType = "Unknown" // FileTypeUnknown is for unknown file types (surprise surprise!)
 )
 
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {
-	Original Original
+	Original Original `validate:"required"`
 	Small    Small
 	Focus    Focus
 }
 
 // Small can be used for a thumbnail of any media type
 type Small struct {
-	Width  int
-	Height int
-	Size   int
-	Aspect float64
+	Width  int     `validate:"required_with=Height Size Aspect"`  // width in pixels
+	Height int     `validate:"required_with=Width Size Aspect"`   // height in pixels
+	Size   int     `validate:"required_with=Width Height Aspect"` // size in pixels (width * height)
+	Aspect float64 `validate:"required_with=Widhth Height Size"`  // aspect ratio (width / height)
 }
 
 // Original can be used for original metadata for any media type
 type Original struct {
-	Width  int
-	Height int
-	Size   int
-	Aspect float64
+	Width  int     `validate:"required_with=Height Size Aspect"`  // width in pixels
+	Height int     `validate:"required_with=Width Size Aspect"`   // height in pixels
+	Size   int     `validate:"required_with=Width Height Aspect"` // size in pixels (width * height)
+	Aspect float64 `validate:"required_with=Widhth Height Size"`  // aspect ratio (width / height)
 }
 
 // Focus describes the 'center' of the image for display purposes.
 // X and Y should each be between -1 and 1
 type Focus struct {
-	X float32
-	Y float32
+	X float32 `validate:"omitempty,max=1,min=-1"`
+	Y float32 `validate:"omitempty,max=1,min=-1"`
 }

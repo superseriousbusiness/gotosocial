@@ -32,12 +32,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -165,7 +167,7 @@ type Processor interface {
 	// AuthorizeStreamingRequest returns a gotosocial account in exchange for an access token, or an error if the given token is not valid.
 	AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error)
 	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
-	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*gtsmodel.Stream, gtserror.WithCode)
+	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
@@ -219,8 +221,8 @@ type Processor interface {
 
 // processor just implements the Processor interface
 type processor struct {
-	fromClientAPI   chan gtsmodel.FromClientAPI
-	fromFederator   chan gtsmodel.FromFederator
+	fromClientAPI   chan messages.FromClientAPI
+	fromFederator   chan messages.FromFederator
 	federator       federation.Federator
 	stop            chan interface{}
 	log             *logrus.Logger
@@ -247,8 +249,8 @@ type processor struct {
 // NewProcessor returns a new Processor that uses the given federator and logger
 func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
 
-	fromClientAPI := make(chan gtsmodel.FromClientAPI, 1000)
-	fromFederator := make(chan gtsmodel.FromFederator, 1000)
+	fromClientAPI := make(chan messages.FromClientAPI, 1000)
+	fromFederator := make(chan messages.FromFederator, 1000)
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-golangci-lint run
+golangci-lint run --test=false

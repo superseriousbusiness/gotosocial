@@ -23,9 +23,10 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 // Delete handles the complete deletion of an account.
@@ -64,12 +65,12 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 		u := &gtsmodel.User{}
 		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, u); err == nil {
 			// we got one! select all tokens with the user's ID
-			tokens := []*oauth.Token{}
+			tokens := []*gtsmodel.Token{}
 			if err := p.db.GetWhere(ctx, []db.Where{{Key: "user_id", Value: u.ID}}, &tokens); err == nil {
 				// we have some tokens to delete
 				for _, t := range tokens {
 					// delete client(s) associated with this token
-					if err := p.db.DeleteByID(ctx, t.ClientID, &oauth.Client{}); err != nil {
+					if err := p.db.DeleteByID(ctx, t.ClientID, &gtsmodel.Client{}); err != nil {
 						l.Errorf("error deleting oauth client: %s", err)
 					}
 					// delete application(s) associated with this token
@@ -150,9 +151,9 @@ selectStatusesLoop:
 			// pass the status delete through the client api channel for processing
 			s.Account = account
 			l.Debug("putting status in the client api channel")
-			p.fromClientAPI <- gtsmodel.FromClientAPI{
-				APObjectType:   gtsmodel.ActivityStreamsNote,
-				APActivityType: gtsmodel.ActivityStreamsDelete,
+			p.fromClientAPI <- messages.FromClientAPI{
+				APObjectType:   ap.ObjectNote,
+				APActivityType: ap.ActivityDelete,
 				GTSModel:       s,
 				OriginAccount:  account,
 				TargetAccount:  account,
@@ -186,9 +187,9 @@ selectStatusesLoop:
 				}
 
 				l.Debug("putting boost undo in the client api channel")
-				p.fromClientAPI <- gtsmodel.FromClientAPI{
-					APObjectType:   gtsmodel.ActivityStreamsAnnounce,
-					APActivityType: gtsmodel.ActivityStreamsUndo,
+				p.fromClientAPI <- messages.FromClientAPI{
+					APObjectType:   ap.ActivityAnnounce,
+					APActivityType: ap.ActivityUndo,
 					GTSModel:       s,
 					OriginAccount:  b.Account,
 					TargetAccount:  account,

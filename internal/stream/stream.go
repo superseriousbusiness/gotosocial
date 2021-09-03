@@ -1,4 +1,4 @@
-package gtsmodel
+package stream
 
 import "sync"
 

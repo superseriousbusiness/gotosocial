@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
@@ -199,7 +200,7 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 		if v, ok := i.(map[string]string); ok {
 			// see if there's an email in the map
 			if email, present := v["email"]; present {
-				if err := util.ValidateEmail(email); err == nil {
+				if err := validate.Email(email); err == nil {
 					// valid email address
 					contactEmail = email
 				}

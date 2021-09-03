@@ -28,7 +28,6 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // DereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
@@ -57,7 +56,7 @@ func (d *deref) DereferenceCollectionPage(ctx context.Context, username string, 
 		return nil, fmt.Errorf("DereferenceCollectionPage: error resolving json into ap vocab type: %s", err)
 	}
 
-	if t.GetTypeName() != gtsmodel.ActivityStreamsCollectionPage {
+	if t.GetTypeName() != ap.ObjectCollectionPage {
 		return nil, fmt.Errorf("DereferenceCollectionPage: type name %s not supported", t.GetTypeName())
 	}
 

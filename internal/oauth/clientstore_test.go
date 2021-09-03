@@ -42,9 +42,9 @@ const ()
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *PgClientStoreTestSuite) SetupSuite() {
 	suite.testClientID = "01FCVB74EW6YBYAEY7QG9CQQF6"
-	suite.testClientSecret = "test-client-secret"
+	suite.testClientSecret = "4cc87402-259b-4a35-9485-2c8bf54f3763"
 	suite.testClientDomain = "https://example.org"
-	suite.testClientUserID = "test-client-user-id"
+	suite.testClientUserID = "01FEGYXKVCDB731QF9MVFXA4F5"
 }
 
 // SetupTest creates a postgres connection and creates the oauth_clients table before each test

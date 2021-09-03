@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -46,13 +47,13 @@ type processor struct {
 	tc            typeutils.TypeConverter
 	config        *config.Config
 	mediaHandler  media.Handler
-	fromClientAPI chan gtsmodel.FromClientAPI
+	fromClientAPI chan messages.FromClientAPI
 	db            db.DB
 	log           *logrus.Logger
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan gtsmodel.FromClientAPI, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,

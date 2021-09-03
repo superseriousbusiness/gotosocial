@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -84,50 +85,50 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	if fromFederatorChanI == nil {
 		l.Error("UPDATE: from federator channel wasn't set on context")
 	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan gtsmodel.FromFederator)
+	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
 	if !ok {
 		l.Error("UPDATE: from federator channel was set on context but couldn't be parsed")
 	}
 
 	typeName := asType.GetTypeName()
-	if typeName == gtsmodel.ActivityStreamsApplication ||
-		typeName == gtsmodel.ActivityStreamsGroup ||
-		typeName == gtsmodel.ActivityStreamsOrganization ||
-		typeName == gtsmodel.ActivityStreamsPerson ||
-		typeName == gtsmodel.ActivityStreamsService {
+	if typeName == ap.ActorApplication ||
+		typeName == ap.ActorGroup ||
+		typeName == ap.ActorOrganization ||
+		typeName == ap.ActorPerson ||
+		typeName == ap.ActorService {
 		// it's an UPDATE to some kind of account
 		var accountable ap.Accountable
 
 		switch asType.GetTypeName() {
-		case gtsmodel.ActivityStreamsApplication:
+		case ap.ActorApplication:
 			l.Debug("got update for APPLICATION")
 			i, ok := asType.(vocab.ActivityStreamsApplication)
 			if !ok {
 				return errors.New("UPDATE: could not convert type to application")
 			}
 			accountable = i
-		case gtsmodel.ActivityStreamsGroup:
+		case ap.ActorGroup:
 			l.Debug("got update for GROUP")
 			i, ok := asType.(vocab.ActivityStreamsGroup)
 			if !ok {
 				return errors.New("UPDATE: could not convert type to group")
 			}
 			accountable = i
-		case gtsmodel.ActivityStreamsOrganization:
+		case ap.ActorOrganization:
 			l.Debug("got update for ORGANIZATION")
 			i, ok := asType.(vocab.ActivityStreamsOrganization)
 			if !ok {
 				return errors.New("UPDATE: could not convert type to organization")
 			}
 			accountable = i
-		case gtsmodel.ActivityStreamsPerson:
+		case ap.ActorPerson:
 			l.Debug("got update for PERSON")
 			i, ok := asType.(vocab.ActivityStreamsPerson)
 			if !ok {
 				return errors.New("UPDATE: could not convert type to person")
 			}
 			accountable = i
-		case gtsmodel.ActivityStreamsService:
+		case ap.ActorService:
 			l.Debug("got update for SERVICE")
 			i, ok := asType.(vocab.ActivityStreamsService)
 			if !ok {
@@ -157,9 +158,9 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("UPDATE: database error inserting updated account: %s", err)
 		}
 
-		fromFederatorChan <- gtsmodel.FromFederator{
-			APObjectType:     gtsmodel.ActivityStreamsProfile,
-			APActivityType:   gtsmodel.ActivityStreamsUpdate,
+		fromFederatorChan <- messages.FromFederator{
+			APObjectType:     ap.ObjectProfile,
+			APActivityType:   ap.ActivityUpdate,
 			GTSModel:         updatedAcct,
 			ReceivingAccount: targetAcct,
 		}

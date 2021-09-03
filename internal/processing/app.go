@@ -43,7 +43,6 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		return nil, err
 	}
 	clientSecret := uuid.NewString()
-	vapidKey := uuid.NewString()
 
 	appID, err := id.NewRandomULID()
 	if err != nil {
@@ -59,7 +58,6 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       scopes,
-		VapidKey:     vapidKey,
 	}
 
 	// chuck it in the db
@@ -68,7 +66,7 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	}
 
 	// now we need to model an oauth client from the application that the oauth library can use
-	oc := &oauth.Client{
+	oc := &gtsmodel.Client{
 		ID:     clientID,
 		Secret: clientSecret,
 		Domain: form.RedirectURIs,

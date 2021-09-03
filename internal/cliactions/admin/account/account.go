@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,7 +45,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -53,7 +53,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 	if !ok {
 		return errors.New("no email set")
 	}
-	if err := util.ValidateEmail(email); err != nil {
+	if err := validate.Email(email); err != nil {
 		return err
 	}
 
@@ -61,7 +61,7 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 	if !ok {
 		return errors.New("no password set")
 	}
-	if err := util.ValidateNewPassword(password); err != nil {
+	if err := validate.NewPassword(password); err != nil {
 		return err
 	}
 
@@ -84,7 +84,7 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -183,7 +183,7 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -221,7 +221,7 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 	if !ok {
 		return errors.New("no username set")
 	}
-	if err := util.ValidateUsername(username); err != nil {
+	if err := validate.Username(username); err != nil {
 		return err
 	}
 
@@ -229,7 +229,7 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 	if !ok {
 		return errors.New("no password set")
 	}
-	if err := util.ValidateNewPassword(password); err != nil {
+	if err := validate.NewPassword(password); err != nil {
 		return err
 	}
 

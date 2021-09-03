@@ -1,0 +1,136 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package regexes
+
+import (
+	"fmt"
+	"regexp"
+)
+
+const (
+	users     = "users"
+	actors    = "actors"
+	statuses  = "statuses"
+	inbox     = "inbox"
+	outbox    = "outbox"
+	followers = "followers"
+	following = "following"
+	liked     = "liked"
+	// collections = "collections"
+	// featured    = "featured"
+	publicKey = "main-key"
+	follow    = "follow"
+	// update      = "updates"
+	blocks = "blocks"
+)
+
+const (
+	maximumUsernameLength       = 64
+	maximumEmojiShortcodeLength = 30
+	maximumHashtagLength        = 30
+)
+
+var (
+	mentionName = `^@(\w+)(?:@([a-zA-Z0-9_\-\.:]+)?)$`
+	// MentionName captures the username and domain part from a mention string
+	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
+	MentionName = regexp.MustCompile(mentionName)
+
+	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
+	mentionFinder = `(?:\B)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)(?:\B)?`
+	// MentionFinder extracts mentions from a piece of text.
+	MentionFinder = regexp.MustCompile(mentionFinder)
+
+	// hashtag regex can be played with here: https://regex101.com/r/bPxeca/1
+	hashtagFinder = fmt.Sprintf(`(?:^|\n|\s)(#[a-zA-Z0-9]{1,%d})(?:\b)`, maximumHashtagLength)
+	// HashtagFinder finds possible hashtags in a string.
+	// It returns just the string part of the hashtag, not the # symbol.
+	HashtagFinder = regexp.MustCompile(hashtagFinder)
+
+	emojiShortcode = fmt.Sprintf(`\w{2,%d}`, maximumEmojiShortcodeLength)
+	// EmojiShortcode validates an emoji name.
+	EmojiShortcode = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcode))
+
+	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
+	emojiFinderString = fmt.Sprintf(`(?:\B)?:(%s):(?:\B)?`, emojiShortcode)
+	// EmojiFinder extracts emoji strings from a piece of text.
+	EmojiFinder = regexp.MustCompile(emojiFinderString)
+
+	// usernameString defines an acceptable username on this instance
+	usernameString = fmt.Sprintf(`[a-z0-9_]{2,%d}`, maximumUsernameLength)
+	// Username can be used to validate usernames of new signups
+	Username = regexp.MustCompile(fmt.Sprintf(`^%s$`, usernameString))
+
+	userPathString = fmt.Sprintf(`^?/%s/(%s)$`, users, usernameString)
+	// UserPath parses a path that validates and captures the username part from eg /users/example_username
+	UserPath = regexp.MustCompile(userPathString)
+
+	publicKeyPath = fmt.Sprintf(`^?/%s/(%s)/%s`, users, usernameString, publicKey)
+	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
+	PublicKeyPath = regexp.MustCompile(publicKeyPath)
+
+	inboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, inbox)
+	// InboxPath parses a path that validates and captures the username part from eg /users/example_username/inbox
+	InboxPath = regexp.MustCompile(inboxPath)
+
+	outboxPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, outbox)
+	// OutboxPath parses a path that validates and captures the username part from eg /users/example_username/outbox
+	OutboxPath = regexp.MustCompile(outboxPath)
+
+	actorPath = fmt.Sprintf(`^?/%s/(%s)$`, actors, usernameString)
+	// ActorPath parses a path that validates and captures the username part from eg /actors/example_username
+	ActorPath = regexp.MustCompile(actorPath)
+
+	followersPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, followers)
+	// FollowersPath parses a path that validates and captures the username part from eg /users/example_username/followers
+	FollowersPath = regexp.MustCompile(followersPath)
+
+	followingPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, following)
+	// FollowingPath parses a path that validates and captures the username part from eg /users/example_username/following
+	FollowingPath = regexp.MustCompile(followingPath)
+
+	followPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, follow, ulid)
+	// FollowPath parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/follow/01F7XT5JZW1WMVSW1KADS8PVDH
+	FollowPath = regexp.MustCompile(followPath)
+
+	ulid = `[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}`
+	// ULID parses and validate a ULID.
+	ULID = regexp.MustCompile(fmt.Sprintf(`^%s$`, ulid))
+
+	likedPath = fmt.Sprintf(`^/?%s/(%s)/%s$`, users, usernameString, liked)
+	// LikedPath parses a path that validates and captures the username part from eg /users/example_username/liked
+	LikedPath = regexp.MustCompile(likedPath)
+
+	likePath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, liked, ulid)
+	// LikePath parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/like/01F7XT5JZW1WMVSW1KADS8PVDH
+	LikePath = regexp.MustCompile(likePath)
+
+	statusesPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, statuses, ulid)
+	// StatusesPath parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/statuses/01F7XT5JZW1WMVSW1KADS8PVDH
+	// The regex can be played with here: https://regex101.com/r/G9zuxQ/1
+	StatusesPath = regexp.MustCompile(statusesPath)
+
+	blockPath = fmt.Sprintf(`^/?%s/(%s)/%s/(%s)$`, users, usernameString, blocks, ulid)
+	// BlockPath parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
+	BlockPath = regexp.MustCompile(blockPath)
+)

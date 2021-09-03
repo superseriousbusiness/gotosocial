@@ -23,11 +23,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -47,10 +49,8 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
-	if targetStatus.VisibilityAdvanced != nil {
-		if !targetStatus.VisibilityAdvanced.Likeable {
-			return nil, gtserror.NewErrorForbidden(errors.New("status is not faveable"))
-		}
+	if !targetStatus.VisibilityAdvanced.Likeable {
+		return nil, gtserror.NewErrorForbidden(errors.New("status is not faveable"))
 	}
 
 	// first check if the status is already faved, if so we don't need to do anything
@@ -84,9 +84,9 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 		}
 
 		// send it back to the processor for async processing
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsLike,
-			APActivityType: gtsmodel.ActivityStreamsCreate,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityLike,
+			APActivityType: ap.ActivityCreate,
 			GTSModel:       gtsFave,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,

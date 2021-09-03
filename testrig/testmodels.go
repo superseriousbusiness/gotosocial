@@ -36,13 +36,13 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
-func NewTestTokens() map[string]*oauth.Token {
-	tokens := map[string]*oauth.Token{
+func NewTestTokens() map[string]*gtsmodel.Token {
+	tokens := map[string]*gtsmodel.Token{
 		"local_account_1": {
 			ID:              "01F8MGTQW4DKTDF8SW5CT9HYGA",
 			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",
@@ -68,8 +68,8 @@ func NewTestTokens() map[string]*oauth.Token {
 }
 
 // NewTestClients returns a map of Clients keyed according to which account they are used by.
-func NewTestClients() map[string]*oauth.Client {
-	clients := map[string]*oauth.Client{
+func NewTestClients() map[string]*gtsmodel.Client {
+	clients := map[string]*gtsmodel.Client{
 		"admin_account": {
 			ID:     "01F8MGWSJCND9BWBD4WGJXBM93",
 			Secret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a",
@@ -103,7 +103,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGWSJCND9BWBD4WGJXBM93",           // admin client
 			ClientSecret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a", // admin client
 			Scopes:       "read write follow push",
-			VapidKey:     "76ae0095-8a10-438f-9f49-522d1985b190",
 		},
 		"application_1": {
 			ID:           "01F8MGY43H3N2C8EWPR2FPYEXG",
@@ -113,7 +112,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGV8AC3NGSJW0FE8W1BV70",           // client_1
 			ClientSecret: "c3724c74-dc3b-41b2-a108-0ea3d8399830", // client_1
 			Scopes:       "read write follow push",
-			VapidKey:     "4738dfd7-ca73-4aa6-9aa9-80e946b7db36",
 		},
 		"application_2": {
 			ID:           "01F8MGYG9E893WRHW0TAEXR8GJ",
@@ -123,7 +121,6 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ClientID:     "01F8MGW47HN8ZXNHNZ7E47CDMQ",           // client_2
 			ClientSecret: "8f5603a5-c721-46cd-8f1b-2e368f51379f", // client_2
 			Scopes:       "read write follow push",
-			VapidKey:     "c040a5fc-e1e2-4859-bbea-0a3efbca1c4b",
 		},
 	}
 	return apps
@@ -149,7 +146,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			LastEmailedAt:          time.Time{},
 			ConfirmationToken:      "a5a280bd-34be-44a3-8330-a57eaf61b8dd",
 			ConfirmedAt:            time.Time{},
@@ -179,7 +176,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{"en"},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			LastEmailedAt:          time.Now().Add(-30 * time.Minute),
 			ConfirmationToken:      "",
 			ConfirmedAt:            time.Now().Add(-72 * time.Hour),
@@ -239,7 +236,7 @@ func NewTestUsers() map[string]*gtsmodel.User {
 			ChosenLanguages:        []string{"en"},
 			FilteredLanguages:      []string{},
 			Locale:                 "en",
-			CreatedByApplicationID: "",
+			CreatedByApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			LastEmailedAt:          time.Now().Add(-55 * time.Minute),
 			ConfirmationToken:      "",
 			ConfirmedAt:            time.Now().Add(-34 * time.Hour),
@@ -260,10 +257,6 @@ func NewTestUsers() map[string]*gtsmodel.User {
 // NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
 	accounts := map[string]*gtsmodel.Account{
-		"instance_account": {
-			ID:       "01F8MH261H1KSV3GW3016GZRY3",
-			Username: "localhost:8080",
-		},
 		"unconfirmed_account": {
 			ID:                      "01F8MH0BBE4FHXPH513MBVFHB0",
 			Username:                "weed_lord420",
@@ -291,7 +284,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/weed_lord420/followers",
 			FollowingURI:            "http://localhost:8080/users/weed_lord420/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/weed_lord420/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -330,7 +323,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/admin/followers",
 			FollowingURI:            "http://localhost:8080/users/admin/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/admin/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -367,7 +360,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/the_mighty_zork/followers",
 			FollowingURI:            "http://localhost:8080/users/the_mighty_zork/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/the_mighty_zork/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -405,7 +398,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:            "http://localhost:8080/users/1happyturtle/followers",
 			FollowingURI:            "http://localhost:8080/users/1happyturtle/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/1happyturtle/collections/featured",
-			ActorType:               gtsmodel.ActivityStreamsPerson,
+			ActorType:               ap.ActorPerson,
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
@@ -440,7 +433,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowersURI:          "http://fossbros-anonymous.io/users/foss_satan/followers",
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
 			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
-			ActorType:             gtsmodel.ActivityStreamsPerson,
+			ActorType:             ap.ActorPerson,
 			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
@@ -799,6 +792,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-71 * time.Hour),
 			UpdatedAt:                time.Now().Add(-71 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -807,13 +801,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"admin_account_status_2": {
 			ID:                       "01F8MHAAY43M6RJ473VQFCVH37",
@@ -823,6 +817,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-70 * time.Hour),
 			UpdatedAt:                time.Now().Add(-70 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -831,13 +826,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_1": {
 			ID:                       "01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -847,6 +842,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-47 * time.Hour),
 			UpdatedAt:                time.Now().Add(-47 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -855,13 +851,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_2": {
 			ID:                       "01F8MHAYFKS4KMXF8K5Y1C0KRN",
@@ -871,6 +867,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-46 * time.Hour),
 			UpdatedAt:                time.Now().Add(-46 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -879,13 +876,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_3": {
 			ID:                       "01F8MHBBN8120SYH7D5S050MGK",
@@ -895,6 +892,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-45 * time.Hour),
 			UpdatedAt:                time.Now().Add(-45 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -903,13 +901,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: false,
 				Replyable: false,
 				Likeable:  false,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_4": {
 			ID:                       "01F8MH82FYRXD2RC6108DAJ5HB",
@@ -920,6 +918,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Hour),
 			UpdatedAt:                time.Now().Add(-1 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -928,13 +927,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_1_status_5": {
 			ID:                       "01FCTA44PW9H1TB328S9AQXKDS",
@@ -945,6 +944,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -953,13 +953,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_1": {
 			ID:                       "01F8MHBQCBTDKN6X5VHGMMN4MA",
@@ -969,6 +969,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-189 * time.Hour),
 			UpdatedAt:                time.Now().Add(-189 * time.Hour),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -977,13 +978,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_2": {
 			ID:                       "01F8MHC0H0A7XHTVH5F596ZKBM",
@@ -993,6 +994,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1001,13 +1003,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: false,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_3": {
 			ID:                       "01F8MHC8VWDRBQR0N1BATDDEM5",
@@ -1017,6 +1019,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-2 * time.Minute),
 			UpdatedAt:                time.Now().Add(-2 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1025,13 +1028,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: false,
 				Likeable:  false,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_4": {
 			ID:                       "01F8MHCP5P2NWYQ416SBA0XSEV",
@@ -1041,6 +1044,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
@@ -1049,13 +1053,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                true,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: false,
 				Boostable: false,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 		"local_account_2_status_5": {
 			ID:                       "01FCQSQ667XHJ9AV9T27SJJSX5",
@@ -1065,6 +1069,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedAt:                time.Now().Add(-1 * time.Minute),
 			UpdatedAt:                time.Now().Add(-1 * time.Minute),
 			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			MentionIDs:               []string{"01FDF2HM2NF6FSRZCDEDV451CN"},
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -1076,13 +1081,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
-			VisibilityAdvanced: &gtsmodel.VisibilityAdvanced{
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
 				Federated: true,
 				Boostable: true,
 				Replyable: true,
 				Likeable:  true,
 			},
-			ActivityStreamsType: gtsmodel.ActivityStreamsNote,
+			ActivityStreamsType: ap.ObjectNote,
 		},
 	}
 }

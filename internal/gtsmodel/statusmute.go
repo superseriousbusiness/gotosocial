@@ -20,19 +20,15 @@ package gtsmodel
 
 import "time"
 
-// StatusMute refers to one account having muted the status of another account or its own
+// StatusMute refers to one account having muted the status of another account or its own.
 type StatusMute struct {
-	// id of this mute in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// when was this mute created
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// id of the account that created ('did') the mute
-	AccountID string   `bun:"type:CHAR(26),notnull"`
-	Account   *Account `bun:"rel:belongs-to"`
-	// id the account owning the muted status (can be the same as accountID)
-	TargetAccountID string   `bun:"type:CHAR(26),notnull"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
-	// database id of the status that has been muted
-	StatusID string  `bun:"type:CHAR(26),notnull"`
-	Status   *Status `bun:"rel:belongs-to"`
+	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
+	CreatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id of the account that created ('did') the mute
+	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the account specified by accountID
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id the account owning the muted status (can be the same as accountID)
+	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the account specified by targetAccountID
+	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // database id of the status that has been muted
+	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                            // pointer to the muted status specified by statusID
 }

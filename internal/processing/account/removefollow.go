@@ -22,10 +22,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
@@ -78,9 +80,9 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 
 	// follow request status changed so send the UNDO activity to the channel for async processing
 	if frChanged {
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsFollow,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccountID,
@@ -93,9 +95,9 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 
 	// follow status changed so send the UNDO activity to the channel for async processing
 	if fChanged {
-		p.fromClientAPI <- gtsmodel.FromClientAPI{
-			APObjectType:   gtsmodel.ActivityStreamsFollow,
-			APActivityType: gtsmodel.ActivityStreamsUndo,
+		p.fromClientAPI <- messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
 				TargetAccountID: targetAccountID,

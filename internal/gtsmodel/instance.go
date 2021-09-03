@@ -1,41 +1,43 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package gtsmodel
 
 import "time"
 
 // Instance represents a federated instance, either local or remote.
 type Instance struct {
-	// ID of this instance in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// Instance domain eg example.org
-	Domain string `bun:",pk,notnull,unique"`
-	// Title of this instance as it would like to be displayed.
-	Title string `bun:",nullzero"`
-	// base URI of this instance eg https://example.org
-	URI string `bun:",notnull,unique"`
-	// When was this instance created in the db?
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this instance last updated in the db?
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this instance suspended, if at all?
-	SuspendedAt time.Time `bun:",nullzero"`
-	// ID of any existing domain block for this instance in the database
-	DomainBlockID string       `bun:"type:CHAR(26),nullzero"`
-	DomainBlock   *DomainBlock `bun:"rel:belongs-to"`
-	// Short description of this instance
-	ShortDescription string `bun:",nullzero"`
-	// Longer description of this instance
-	Description string `bun:",nullzero"`
-	// Terms and conditions of this instance
-	Terms string `bun:",nullzero"`
-	// Contact email address for this instance
-	ContactEmail string `bun:",nullzero"`
-	// Username of the contact account for this instance
-	ContactAccountUsername string `bun:",nullzero"`
-	// Contact account ID in the database for this instance
-	ContactAccountID string   `bun:"type:CHAR(26),nullzero"`
-	ContactAccount   *Account `bun:"rel:belongs-to"`
-	// Reputation score of this instance
-	Reputation int64 `bun:",notnull,default:0"`
-	// Version of the software used on this instance
-	Version string `bun:",nullzero"`
+	ID                     string       `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                     // id of this item in the database
+	CreatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item created
+	UpdatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item last updated
+	Domain                 string       `validate:"required,fqdn" bun:",nullzero,notnull,unique"`                                     // Instance domain eg example.org
+	Title                  string       `validate:"-" bun:",nullzero"`                                                                // Title of this instance as it would like to be displayed.
+	URI                    string       `validate:"required,url" bun:",nullzero,notnull,unique"`                                      // base URI of this instance eg https://example.org
+	SuspendedAt            time.Time    `validate:"-" bun:"type:timestamp,nullzero"`                                                  // When was this instance suspended, if at all?
+	DomainBlockID          string       `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                      // ID of any existing domain block for this instance in the database
+	DomainBlock            *DomainBlock `validate:"-" bun:"rel:belongs-to"`                                                           // Domain block corresponding to domainBlockID
+	ShortDescription       string       `validate:"-" bun:",nullzero"`                                                                // Short description of this instance
+	Description            string       `validate:"-" bun:",nullzero"`                                                                // Longer description of this instance
+	Terms                  string       `validate:"-" bun:",nullzero"`                                                                // Terms and conditions of this instance
+	ContactEmail           string       `validate:"omitempty,email" bun:",nullzero"`                                                  // Contact email address for this instance
+	ContactAccountUsername string       `validate:"required_with=ContactAccountID" bun:",nullzero"`                                   // Username of the contact account for this instance
+	ContactAccountID       string       `validate:"required_with=ContactAccountUsername,omitempty,ulid" bun:"type:CHAR(26),nullzero"` // Contact account ID in the database for this instance
+	ContactAccount         *Account     `validate:"-" bun:"rel:belongs-to"`                                                           // account corresponding to contactAccountID
+	Reputation             int64        `validate:"-" bun:",notnull,default:0"`                                                       // Reputation score of this instance
+	Version                string       `validate:"-" bun:",nullzero"`                                                                // Version of the software used on this instance
 }

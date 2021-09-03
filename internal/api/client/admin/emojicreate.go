@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // emojiCreateRequest swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
@@ -132,5 +132,5 @@ func validateCreateEmoji(form *model.EmojiCreateRequest) error {
 		return fmt.Errorf("file size limit exceeded: limit is %d bytes but emoji was %d bytes", media.EmojiMaxBytes, form.Image.Size)
 	}
 
-	return util.ValidateEmojiShortcode(form.Shortcode)
+	return validate.EmojiShortcode(form.Shortcode)
 }

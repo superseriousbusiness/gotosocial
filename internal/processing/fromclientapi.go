@@ -25,16 +25,18 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel.FromClientAPI) error {
+func (p *processor) processFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	switch clientMsg.APActivityType {
-	case gtsmodel.ActivityStreamsCreate:
+	case ap.ActivityCreate:
 		// CREATE
 		switch clientMsg.APObjectType {
-		case gtsmodel.ActivityStreamsNote:
+		case ap.ObjectNote:
 			// CREATE NOTE
 			status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -49,10 +51,10 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 				return err
 			}
 
-			if status.VisibilityAdvanced != nil && status.VisibilityAdvanced.Federated {
+			if status.VisibilityAdvanced.Federated {
 				return p.federateStatus(ctx, status)
 			}
-		case gtsmodel.ActivityStreamsFollow:
+		case ap.ActivityFollow:
 			// CREATE FOLLOW REQUEST
 			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
 			if !ok {
@@ -64,7 +66,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			return p.federateFollow(ctx, followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
-		case gtsmodel.ActivityStreamsLike:
+		case ap.ActivityLike:
 			// CREATE LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 			if !ok {
@@ -76,7 +78,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
-		case gtsmodel.ActivityStreamsAnnounce:
+		case ap.ActivityAnnounce:
 			// CREATE BOOST/ANNOUNCE
 			boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -92,7 +94,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
-		case gtsmodel.ActivityStreamsBlock:
+		case ap.ActivityBlock:
 			// CREATE BLOCK
 			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
 			if !ok {
@@ -112,10 +114,10 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 			return p.federateBlock(ctx, block)
 		}
-	case gtsmodel.ActivityStreamsUpdate:
+	case ap.ActivityUpdate:
 		// UPDATE
 		switch clientMsg.APObjectType {
-		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
+		case ap.ObjectProfile, ap.ActorPerson:
 			// UPDATE ACCOUNT/PROFILE
 			account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
 			if !ok {
@@ -124,10 +126,10 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 			return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
 		}
-	case gtsmodel.ActivityStreamsAccept:
+	case ap.ActivityAccept:
 		// ACCEPT
 		switch clientMsg.APObjectType {
-		case gtsmodel.ActivityStreamsFollow:
+		case ap.ActivityFollow:
 			// ACCEPT FOLLOW
 			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 			if !ok {
@@ -140,31 +142,31 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 			return p.federateAcceptFollowRequest(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
-	case gtsmodel.ActivityStreamsUndo:
+	case ap.ActivityUndo:
 		// UNDO
 		switch clientMsg.APObjectType {
-		case gtsmodel.ActivityStreamsFollow:
+		case ap.ActivityFollow:
 			// UNDO FOLLOW
 			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.Follow")
 			}
 			return p.federateUnfollow(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
-		case gtsmodel.ActivityStreamsBlock:
+		case ap.ActivityBlock:
 			// UNDO BLOCK
 			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.Block")
 			}
 			return p.federateUnblock(ctx, block)
-		case gtsmodel.ActivityStreamsLike:
+		case ap.ActivityLike:
 			// UNDO LIKE/FAVE
 			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 			if !ok {
 				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
 			}
 			return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
-		case gtsmodel.ActivityStreamsAnnounce:
+		case ap.ActivityAnnounce:
 			// UNDO ANNOUNCE/BOOST
 			boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -177,10 +179,10 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 
 			return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
 		}
-	case gtsmodel.ActivityStreamsDelete:
+	case ap.ActivityDelete:
 		// DELETE
 		switch clientMsg.APObjectType {
-		case gtsmodel.ActivityStreamsNote:
+		case ap.ObjectNote:
 			// DELETE STATUS/NOTE
 			statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 			if !ok {
@@ -216,7 +218,7 @@ func (p *processor) processFromClientAPI(ctx context.Context, clientMsg gtsmodel
 			}
 
 			return p.federateStatusDelete(ctx, statusToDelete)
-		case gtsmodel.ActivityStreamsProfile, gtsmodel.ActivityStreamsPerson:
+		case ap.ObjectProfile, ap.ActorPerson:
 			// DELETE ACCOUNT/PROFILE
 
 			// the origin of the delete could be either a domain block, or an action by another (or this) account

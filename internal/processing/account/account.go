@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -79,7 +80,7 @@ type processor struct {
 	tc            typeutils.TypeConverter
 	config        *config.Config
 	mediaHandler  media.Handler
-	fromClientAPI chan gtsmodel.FromClientAPI
+	fromClientAPI chan messages.FromClientAPI
 	oauthServer   oauth.Server
 	filter        visibility.Filter
 	db            db.DB
@@ -88,7 +89,7 @@ type processor struct {
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan gtsmodel.FromClientAPI, federator federation.Federator, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,

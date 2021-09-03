@@ -24,7 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -36,11 +36,11 @@ type StatusStandardTestSuite struct {
 	db                db.DB
 	log               *logrus.Logger
 	typeConverter     typeutils.TypeConverter
-	fromClientAPIChan chan gtsmodel.FromClientAPI
+	fromClientAPIChan chan messages.FromClientAPI
 
 	// standard suite models
-	testTokens       map[string]*oauth.Token
-	testClients      map[string]*oauth.Client
+	testTokens       map[string]*gtsmodel.Token
+	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account

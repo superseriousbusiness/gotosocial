@@ -21,6 +21,8 @@ package util
 import (
 	"fmt"
 	"strings"
+
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
 // DeriveMentionsFromStatus takes a plaintext (ie., not html-formatted) status,
@@ -31,7 +33,7 @@ import (
 // or the form "@username" for local users.
 func DeriveMentionsFromStatus(status string) []string {
 	mentionedAccounts := []string{}
-	for _, m := range mentionFinderRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.MentionFinder.FindAllStringSubmatch(status, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
 	return UniqueStrings(mentionedAccounts)
@@ -43,7 +45,7 @@ func DeriveMentionsFromStatus(status string) []string {
 // tags will be lowered, for consistency.
 func DeriveHashtagsFromStatus(status string) []string {
 	tags := []string{}
-	for _, m := range HashtagFinderRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.HashtagFinder.FindAllStringSubmatch(status, -1) {
 		tags = append(tags, strings.TrimPrefix(m[1], "#"))
 	}
 	return UniqueStrings(tags)
@@ -54,7 +56,7 @@ func DeriveHashtagsFromStatus(status string) []string {
 // used in that status, without the surround ::.
 func DeriveEmojisFromStatus(status string) []string {
 	emojis := []string{}
-	for _, m := range emojiFinderRegex.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.EmojiFinder.FindAllStringSubmatch(status, -1) {
 		emojis = append(emojis, m[1])
 	}
 	return UniqueStrings(emojis)
@@ -65,7 +67,7 @@ func DeriveEmojisFromStatus(status string) []string {
 //
 // If nothing is matched, it will return an error.
 func ExtractMentionParts(mention string) (username, domain string, err error) {
-	matches := mentionNameRegex.FindStringSubmatch(mention)
+	matches := regexes.MentionName.FindStringSubmatch(mention)
 	if matches == nil || len(matches) != 3 {
 		err = fmt.Errorf("could't match mention %s", mention)
 		return
@@ -77,5 +79,5 @@ func ExtractMentionParts(mention string) (username, domain string, err error) {
 
 // IsMention returns true if the passed string looks like @whatever@example.org
 func IsMention(mention string) bool {
-	return mentionNameRegex.MatchString(strings.ToLower(mention))
+	return regexes.MentionName.MatchString(strings.ToLower(mention))
 }

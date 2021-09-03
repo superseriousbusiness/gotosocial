@@ -227,7 +227,6 @@ func (c *converter) AppToMastoSensitive(ctx context.Context, a *gtsmodel.Applica
 		RedirectURI:  a.RedirectURI,
 		ClientID:     a.ClientID,
 		ClientSecret: a.ClientSecret,
-		VapidKey:     a.VapidKey,
 	}, nil
 }
 

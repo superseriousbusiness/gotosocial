@@ -22,25 +22,17 @@ import "time"
 
 // Mention refers to the 'tagging' or 'mention' of a user within a status.
 type Mention struct {
-	// ID of this mention in the database
-	ID string `bun:"type:CHAR(26),pk,notnull,unique"`
-	// ID of the status this mention originates from
-	StatusID string  `bun:"type:CHAR(26),notnull,nullzero"`
-	Status   *Status `bun:"rel:belongs-to"`
-	// When was this mention created?
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// When was this mention last updated?
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	// What's the internal account ID of the originator of the mention?
-	OriginAccountID string   `bun:"type:CHAR(26),notnull,nullzero"`
-	OriginAccount   *Account `bun:"rel:belongs-to"`
-	// What's the AP URI of the originator of the mention?
-	OriginAccountURI string `bun:",notnull"`
-	// What's the internal account ID of the mention target?
-	TargetAccountID string   `bun:"type:CHAR(26),notnull,nullzero"`
-	TargetAccount   *Account `bun:"rel:belongs-to"`
-	// Prevent this mention from generating a notification?
-	Silent bool
+	ID               string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
+	CreatedAt        time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt        time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	StatusID         string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the status this mention originates from
+	Status           *Status   `validate:"-" bun:"rel:belongs-to"`                                            // status referred to by statusID
+	OriginAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the mention creator account
+	OriginAccountURI string    `validate:"url" bun:",nullzero,notnull"`                                       // ActivityPub URI of the originator/creator of the mention
+	OriginAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account referred to by originAccountID
+	TargetAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // Mention target/receiver account ID
+	TargetAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account referred to by targetAccountID
+	Silent           bool      `validate:"-" bun:",notnull,default:false"`                                    // Prevent this mention from generating a notification?
 
 	/*
 		NON-DATABASE CONVENIENCE FIELDS
@@ -54,15 +46,14 @@ type Mention struct {
 	// @whatever_username@example.org
 	//
 	// This will not be put in the database, it's just for convenience.
-	NameString string `bun:"-"`
+	NameString string `validate:"-" bun:"-"`
 	// TargetAccountURI is the AP ID (uri) of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
-	TargetAccountURI string `bun:"-"`
+	TargetAccountURI string `validate:"-" bun:"-"`
 	// TargetAccountURL is the web url of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
-	TargetAccountURL string `bun:"-"`
+	TargetAccountURL string `validate:"-" bun:"-"`
 	// A pointer to the gtsmodel account of the mentioned account.
-
 }

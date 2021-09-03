@@ -23,9 +23,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
@@ -44,10 +46,8 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
-	if targetStatus.VisibilityAdvanced != nil {
-		if !targetStatus.VisibilityAdvanced.Boostable {
-			return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
-		}
+	if !targetStatus.VisibilityAdvanced.Boostable {
+		return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
@@ -65,9 +65,9 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	}
 
 	// send it back to the processor for async processing
-	p.fromClientAPI <- gtsmodel.FromClientAPI{
-		APObjectType:   gtsmodel.ActivityStreamsAnnounce,
-		APActivityType: gtsmodel.ActivityStreamsCreate,
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ActivityAnnounce,
+		APActivityType: ap.ActivityCreate,
 		GTSModel:       boostWrapperStatus,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetStatus.Account,
