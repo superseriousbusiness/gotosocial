@@ -27,11 +27,6 @@ import (
 
 var v *validator.Validate
 
-// Validation Panic messages
-const (
-	InvalidPanic = "validate function was passed invalid item"
-)
-
 func ulidValidator(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
@@ -52,13 +47,7 @@ func init() {
 
 // Struct validates the passed struct, returning validator.ValidationErrors if invalid, or nil if OK.
 func Struct(s interface{}) error {
-	switch reflect.TypeOf(s).Kind() {
-	case reflect.Invalid:
-		panic(InvalidPanic)
-	}
-
-	err := v.Struct(s)
-	return processValidationError(err)
+	return processValidationError(v.Struct(s))
 }
 
 func processValidationError(err error) error {
