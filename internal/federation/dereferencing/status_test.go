@@ -19,101 +19,19 @@
 package dereferencing_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"testing"
 	"time"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusTestSuite struct {
 	DereferencerStandardTestSuite
-}
-
-// mockTransportController returns basically a miniature muxer, which returns a different
-// value based on the request URL. It can be used to return remote statuses, profiles, etc,
-// as though they were actually being dereferenced. If the URL doesn't correspond to any person
-// or note or attachment that we have stored, then just a 200 code will be returned, with an empty body.
-func (suite *StatusTestSuite) mockTransportController() transport.Controller {
-	do := func(req *http.Request) (*http.Response, error) {
-		suite.log.Debugf("received request for %s", req.URL)
-
-		responseBytes := []byte{}
-
-		note, ok := suite.testRemoteStatuses[req.URL.String()]
-		if ok {
-			// the request is for a note that we have stored
-			noteI, err := streams.Serialize(note)
-			if err != nil {
-				panic(err)
-			}
-			noteJson, err := json.Marshal(noteI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = noteJson
-		}
-
-		person, ok := suite.testRemoteAccounts[req.URL.String()]
-		if ok {
-			// the request is for a person that we have stored
-			personI, err := streams.Serialize(person)
-			if err != nil {
-				panic(err)
-			}
-			personJson, err := json.Marshal(personI)
-			if err != nil {
-				panic(err)
-			}
-			responseBytes = personJson
-		}
-
-		if len(responseBytes) != 0 {
-			// we found something, so print what we're going to return
-			suite.log.Debugf("returning response %s", string(responseBytes))
-		}
-
-		reader := bytes.NewReader(responseBytes)
-		readCloser := io.NopCloser(reader)
-		response := &http.Response{
-			StatusCode: 200,
-			Body:       readCloser,
-		}
-
-		return response, nil
-	}
-	mockClient := testrig.NewMockHTTPClient(do)
-	return testrig.NewTestTransportController(mockClient, suite.db)
-}
-
-func (suite *StatusTestSuite) SetupSuite() {
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testRemoteStatuses = testrig.NewTestFediStatuses()
-	suite.testRemoteAccounts = testrig.NewTestFediPeople()
-}
-
-func (suite *StatusTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
-	suite.dereferencer = dereferencing.NewDereferencer(suite.config,
-		suite.db,
-		testrig.NewTestTypeConverter(suite.db),
-		suite.mockTransportController(),
-		testrig.NewTestMediaHandler(suite.db, testrig.NewTestStorage()),
-		suite.log)
-	testrig.StandardDBSetup(suite.db, nil)
 }
 
 func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
@@ -203,10 +121,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.WithinDuration(time.Now(), m.CreatedAt, 5*time.Minute)
 	suite.WithinDuration(time.Now(), m.UpdatedAt, 5*time.Minute)
 	suite.False(m.Silent)
-}
-
-func (suite *StatusTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func TestStatusTestSuite(t *testing.T) {

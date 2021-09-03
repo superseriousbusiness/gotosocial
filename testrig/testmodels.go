@@ -27,10 +27,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/go-fed/activity/pub"
@@ -1282,6 +1284,25 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"image/png",
 			false,
 		),
+	}
+}
+
+// RemoteAttachmentFile mimics a remote (federated) attachment
+type RemoteAttachmentFile struct {
+	Data        []byte
+	ContentType string
+}
+
+func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile {
+	beeBytes, err := os.ReadFile(fmt.Sprintf("%s/beeplushie.jpg", relativePath))
+	if err != nil {
+		panic(err)
+	}
+	return map[string]RemoteAttachmentFile{
+		"https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg": {
+			Data:        beeBytes,
+			ContentType: "image/jpeg",
+		},
 	}
 }
 

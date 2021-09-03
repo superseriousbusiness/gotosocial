@@ -73,7 +73,7 @@ type Handler interface {
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 	// and then returns information to the caller about the attachment. It's the caller's responsibility to put the returned struct
 	// in the database.
-	ProcessAttachment(ctx context.Context, attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error)
+	ProcessAttachment(ctx context.Context, attachmentBytes []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
 	// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
@@ -145,11 +145,14 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []
 // ProcessAttachment takes a new attachment and the owning account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
 // and then returns information to the caller about the attachment.
-func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachment []byte, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
-	contentType, err := parseContentType(attachment)
+func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
+	contentType, err := parseContentType(attachmentBytes)
 	if err != nil {
 		return nil, err
 	}
+
+	minAttachment.File.ContentType = contentType
+
 	mainType := strings.Split(contentType, "/")[0]
 	switch mainType {
 	// case MIMEVideo:
@@ -164,10 +167,10 @@ func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachment []byte
 		if !SupportedImageType(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
 		}
-		if len(attachment) == 0 {
+		if len(attachmentBytes) == 0 {
 			return nil, errors.New("image was of size 0")
 		}
-		return mh.processImageAttachment(attachment, accountID, contentType, remoteURL)
+		return mh.processImageAttachment(attachmentBytes, minAttachment)
 	default:
 		break
 	}

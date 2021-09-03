@@ -28,11 +28,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta
 	var small *imageAndMeta
+
+	contentType := minAttachment.File.ContentType
 
 	switch contentType {
 	case MIMEJpeg, MIMEPng:
@@ -66,46 +68,47 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 	}
 
 	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
-	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, accountID, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, accountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, minAttachment.AccountID, newMediaID, extension)
+	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, minAttachment.AccountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, Attachment, Original, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Original, newMediaID, extension)
 	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, accountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
 	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
-	ma := &gtsmodel.MediaAttachment{
-		ID:        newMediaID,
-		StatusID:  "",
-		URL:       originalURL,
-		RemoteURL: remoteURL,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Original: gtsmodel.Original{
-				Width:  original.width,
-				Height: original.height,
-				Size:   original.size,
-				Aspect: original.aspect,
-			},
-			Small: gtsmodel.Small{
-				Width:  small.width,
-				Height: small.height,
-				Size:   small.size,
-				Aspect: small.aspect,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
+	minAttachment.FileMeta.Original = gtsmodel.Original{
+		Width:  original.width,
+		Height: original.height,
+		Size:   original.size,
+		Aspect: original.aspect,
+	}
+
+	minAttachment.FileMeta.Small = gtsmodel.Small{
+		Width:  small.width,
+		Height: small.height,
+		Size:   small.size,
+		Aspect: small.aspect,
+	}
+
+	attachment := &gtsmodel.MediaAttachment{
+		ID:                newMediaID,
+		StatusID:          minAttachment.StatusID,
+		URL:               originalURL,
+		RemoteURL:         minAttachment.RemoteURL,
+		CreatedAt:         minAttachment.CreatedAt,
+		UpdatedAt:         minAttachment.UpdatedAt,
+		Type:              gtsmodel.FileTypeImage,
+		FileMeta:          minAttachment.FileMeta,
+		AccountID:         minAttachment.AccountID,
+		Description:       minAttachment.Description,
+		ScheduledStatusID: minAttachment.ScheduledStatusID,
 		Blurhash:          original.blurhash,
 		Processing:        2,
 		File: gtsmodel.File{
@@ -120,12 +123,12 @@ func (mh *mediaHandler) processImageAttachment(data []byte, accountID string, co
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,
-			RemoteURL:   "",
+			RemoteURL:   minAttachment.Thumbnail.RemoteURL,
 		},
-		Avatar: false,
-		Header: false,
+		Avatar: minAttachment.Avatar,
+		Header: minAttachment.Header,
 	}
 
-	return ma, nil
+	return attachment, nil
 
 }
