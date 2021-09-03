@@ -45,53 +45,53 @@ type TokenValidateTestSuite struct {
 
 func (suite *TokenValidateTestSuite) TestValidateTokenHappyPath() {
 	// no problem here
-	a := happyToken()
-	err := validate.Struct(*a)
+	t := happyToken()
+	err := validate.Struct(t)
 	suite.NoError(err)
 }
 
 func (suite *TokenValidateTestSuite) TestValidateTokenBadID() {
-	a := happyToken()
+	t := happyToken()
 
-	a.ID = ""
-	err := validate.Struct(*a)
+	t.ID = ""
+	err := validate.Struct(t)
 	suite.EqualError(err, "Key: 'Token.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
-	a.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*a)
+	t.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
+	err = validate.Struct(t)
 	suite.EqualError(err, "Key: 'Token.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
 func (suite *TokenValidateTestSuite) TestValidateTokenNoCreatedAt() {
-	a := happyToken()
+	t := happyToken()
 
-	a.CreatedAt = time.Time{}
-	err := validate.Struct(*a)
+	t.CreatedAt = time.Time{}
+	err := validate.Struct(t)
 	suite.NoError(err)
 }
 
 func (suite *TokenValidateTestSuite) TestValidateTokenRedirectURI() {
-	a := happyToken()
+	t := happyToken()
 
-	a.RedirectURI = "invalid-uri"
-	err := validate.Struct(*a)
+	t.RedirectURI = "invalid-uri"
+	err := validate.Struct(t)
 	suite.EqualError(err, "Key: 'Token.RedirectURI' Error:Field validation for 'RedirectURI' failed on the 'uri' tag")
 
-	a.RedirectURI = ""
-	err = validate.Struct(*a)
+	t.RedirectURI = ""
+	err = validate.Struct(t)
 	suite.EqualError(err, "Key: 'Token.RedirectURI' Error:Field validation for 'RedirectURI' failed on the 'required' tag")
 
-	a.RedirectURI = "urn:ietf:wg:oauth:2.0:oob"
-	err = validate.Struct(*a)
+	t.RedirectURI = "urn:ietf:wg:oauth:2.0:oob"
+	err = validate.Struct(t)
 	suite.NoError(err)
 }
 
 func (suite *TokenValidateTestSuite) TestValidateTokenScope() {
-	a := happyToken()
+	t := happyToken()
 
-	a.Scope = ""
-	err := validate.Struct(*a)
-	suite.NoError(err)
+	t.Scope = ""
+	err := validate.Struct(t)
+	suite.EqualError(err, "Key: 'Token.Scope' Error:Field validation for 'Scope' failed on the 'required' tag")
 }
 
 func TestTokenValidateTestSuite(t *testing.T) {

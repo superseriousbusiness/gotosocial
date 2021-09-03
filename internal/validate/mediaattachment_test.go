@@ -109,7 +109,7 @@ type MediaAttachmentValidateTestSuite struct {
 func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentHappyPath() {
 	// no problem here
 	m := happyMediaAttachment()
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.NoError(err)
 }
 
@@ -117,27 +117,27 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBadFil
 	m := happyMediaAttachment()
 
 	m.File.Path = "/tmp/nonexistent/file/for/gotosocial/test"
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'file' tag")
 
 	m.File.Path = ""
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'required' tag")
 
 	m.File.Path = "???????????thisnot a valid path####"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'file' tag")
 
 	m.Thumbnail.Path = "/tmp/nonexistent/file/for/gotosocial/test"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'file' tag\nKey: 'MediaAttachment.Thumbnail.Path' Error:Field validation for 'Path' failed on the 'file' tag")
 
 	m.Thumbnail.Path = ""
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'file' tag\nKey: 'MediaAttachment.Thumbnail.Path' Error:Field validation for 'Path' failed on the 'required' tag")
 
 	m.Thumbnail.Path = "???????????thisnot a valid path####"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.File.Path' Error:Field validation for 'Path' failed on the 'file' tag\nKey: 'MediaAttachment.Thumbnail.Path' Error:Field validation for 'Path' failed on the 'file' tag")
 }
 
@@ -145,11 +145,11 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBadTyp
 	m := happyMediaAttachment()
 
 	m.Type = ""
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.Type' Error:Field validation for 'Type' failed on the 'oneof' tag")
 
 	m.Type = "Not Supported"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.Type' Error:Field validation for 'Type' failed on the 'oneof' tag")
 }
 
@@ -157,23 +157,23 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBadFil
 	m := happyMediaAttachment()
 
 	m.FileMeta.Original.Aspect = 0
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.FileMeta.Original.Aspect' Error:Field validation for 'Aspect' failed on the 'required_with' tag")
 
 	m.FileMeta.Original.Height = 0
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.FileMeta.Original.Height' Error:Field validation for 'Height' failed on the 'required_with' tag\nKey: 'MediaAttachment.FileMeta.Original.Aspect' Error:Field validation for 'Aspect' failed on the 'required_with' tag")
 
 	m.FileMeta.Original = gtsmodel.Original{}
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.NoError(err)
 
 	m.FileMeta.Focus.X = 3.6
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.FileMeta.Focus.X' Error:Field validation for 'X' failed on the 'max' tag")
 
 	m.FileMeta.Focus.Y = -50
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.FileMeta.Focus.X' Error:Field validation for 'X' failed on the 'max' tag\nKey: 'MediaAttachment.FileMeta.Focus.Y' Error:Field validation for 'Y' failed on the 'min' tag")
 }
 
@@ -181,19 +181,19 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBadURL
 	m := happyMediaAttachment()
 
 	m.URL = "aaaaaaaaaa"
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.URL' Error:Field validation for 'URL' failed on the 'url' tag")
 
 	m.URL = ""
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.URL' Error:Field validation for 'URL' failed on the 'required_without' tag\nKey: 'MediaAttachment.RemoteURL' Error:Field validation for 'RemoteURL' failed on the 'required_without' tag")
 
 	m.RemoteURL = "oooooooooo"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.RemoteURL' Error:Field validation for 'RemoteURL' failed on the 'url' tag")
 
 	m.RemoteURL = "https://a-valid-url.gay"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.NoError(err)
 }
 
@@ -201,15 +201,15 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentBlurha
 	m := happyMediaAttachment()
 
 	m.Blurhash = ""
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.Blurhash' Error:Field validation for 'Blurhash' failed on the 'required_if' tag")
 
 	m.Type = gtsmodel.FileTypeAudio
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.NoError(err)
 
 	m.Blurhash = "some_blurhash"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.NoError(err)
 }
 
@@ -217,11 +217,11 @@ func (suite *MediaAttachmentValidateTestSuite) TestValidateMediaAttachmentProces
 	m := happyMediaAttachment()
 
 	m.Processing = 420
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.Processing' Error:Field validation for 'Processing' failed on the 'oneof' tag")
 
 	m.Processing = -5
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'MediaAttachment.Processing' Error:Field validation for 'Processing' failed on the 'oneof' tag")
 }
 

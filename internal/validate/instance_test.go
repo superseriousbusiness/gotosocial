@@ -77,11 +77,11 @@ func (suite *InstanceValidateTestSuite) TestValidateInstanceAccountURI() {
 	i := happyInstance()
 
 	i.URI = ""
-	err := validate.Struct(*i)
+	err := validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.URI' Error:Field validation for 'URI' failed on the 'required' tag")
 
 	i.URI = "---------------------------"
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 }
 
@@ -89,19 +89,19 @@ func (suite *InstanceValidateTestSuite) TestValidateInstanceDodgyAccountID() {
 	i := happyInstance()
 
 	i.ContactAccountID = "9HZJ76B6VXSKF"
-	err := validate.Struct(*i)
+	err := validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.ContactAccountID' Error:Field validation for 'ContactAccountID' failed on the 'ulid' tag")
 
 	i.ContactAccountID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.ContactAccountID' Error:Field validation for 'ContactAccountID' failed on the 'ulid' tag")
 
 	i.ContactAccountID = ""
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.ContactAccountID' Error:Field validation for 'ContactAccountID' failed on the 'required_with' tag")
 
 	i.ContactAccountUsername = ""
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.NoError(err)
 }
 
@@ -109,15 +109,15 @@ func (suite *InstanceValidateTestSuite) TestValidateInstanceDomain() {
 	i := happyInstance()
 
 	i.Domain = "poopoo"
-	err := validate.Struct(*i)
+	err := validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.Domain' Error:Field validation for 'Domain' failed on the 'fqdn' tag")
 
 	i.Domain = ""
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.Domain' Error:Field validation for 'Domain' failed on the 'required' tag")
 
 	i.Domain = "https://aaaaaaaaaaaaah.org"
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.Domain' Error:Field validation for 'Domain' failed on the 'fqdn' tag")
 }
 
@@ -125,11 +125,11 @@ func (suite *InstanceValidateTestSuite) TestValidateInstanceContactEmail() {
 	i := happyInstance()
 
 	i.ContactEmail = "poopoo"
-	err := validate.Struct(*i)
+	err := validate.Struct(i)
 	suite.EqualError(err, "Key: 'Instance.ContactEmail' Error:Field validation for 'ContactEmail' failed on the 'email' tag")
 
 	i.ContactEmail = ""
-	err = validate.Struct(*i)
+	err = validate.Struct(i)
 	suite.NoError(err)
 }
 
@@ -137,7 +137,7 @@ func (suite *InstanceValidateTestSuite) TestValidateInstanceNoCreatedAt() {
 	i := happyInstance()
 
 	i.CreatedAt = time.Time{}
-	err := validate.Struct(*i)
+	err := validate.Struct(i)
 	suite.NoError(err)
 }
 

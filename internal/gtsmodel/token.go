@@ -28,7 +28,7 @@ type Token struct {
 	ClientID            string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the client who owns this token
 	UserID              string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the user who owns this token
 	RedirectURI         string    `validate:"required,uri" bun:",nullzero,notnull"`                              // Oauth redirect URI for this token
-	Scope               string    `validate:"omitempty" bun:",nullzero,notnull,default:'read'"`                  // Oauth scope
+	Scope               string    `validate:"required" bun:",nullzero,notnull"`                                  // Oauth scope
 	Code                string    `validate:"-" bun:",pk,nullzero,notnull,default:''"`                           // Code, if present
 	CodeChallenge       string    `validate:"-" bun:",nullzero"`                                                 // Code challenge, if code present
 	CodeChallengeMethod string    `validate:"-" bun:",nullzero"`                                                 // Code challenge method, if code present

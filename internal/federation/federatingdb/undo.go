@@ -73,7 +73,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			continue
 		}
 		switch iter.GetType().GetTypeName() {
-		case string(ap.ActivityFollow):
+		case ap.ActivityFollow:
 			// UNDO FOLLOW
 			ASFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
 			if !ok {
@@ -102,11 +102,11 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			}
 			l.Debug("follow undone")
 			return nil
-		case string(ap.ActivityLike):
+		case ap.ActivityLike:
 			// UNDO LIKE
-		case string(ap.ActivityAnnounce):
+		case ap.ActivityAnnounce:
 			// UNDO BOOST/REBLOG/ANNOUNCE
-		case string(ap.ActivityBlock):
+		case ap.ActivityBlock:
 			// UNDO BLOCK
 			ASBlock, ok := iter.GetType().(vocab.ActivityStreamsBlock)
 			if !ok {

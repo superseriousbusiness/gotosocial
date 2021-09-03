@@ -118,7 +118,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		}
 		switch iter.GetType().GetTypeName() {
 		// we have the whole object so we can figure out what we're accepting
-		case string(ap.ActivityFollow):
+		case ap.ActivityFollow:
 			// ACCEPT FOLLOW
 			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
 			if !ok {

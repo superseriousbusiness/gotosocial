@@ -47,49 +47,49 @@ type NotificationValidateTestSuite struct {
 
 func (suite *NotificationValidateTestSuite) TestValidateNotificationHappyPath() {
 	// no problem here
-	m := happyNotification()
-	err := validate.Struct(*m)
+	n := happyNotification()
+	err := validate.Struct(n)
 	suite.NoError(err)
 }
 
 func (suite *NotificationValidateTestSuite) TestValidateNotificationBadID() {
-	m := happyNotification()
+	n := happyNotification()
 
-	m.ID = ""
-	err := validate.Struct(*m)
+	n.ID = ""
+	err := validate.Struct(n)
 	suite.EqualError(err, "Key: 'Notification.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
-	m.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*m)
+	n.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
+	err = validate.Struct(n)
 	suite.EqualError(err, "Key: 'Notification.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
 func (suite *NotificationValidateTestSuite) TestValidateNotificationStatusID() {
-	m := happyNotification()
+	n := happyNotification()
 
-	m.StatusID = ""
-	err := validate.Struct(*m)
+	n.StatusID = ""
+	err := validate.Struct(n)
 	suite.EqualError(err, "Key: 'Notification.StatusID' Error:Field validation for 'StatusID' failed on the 'required_if' tag")
 
-	m.StatusID = "9HZJ76B6VXSKF"
-	err = validate.Struct(*m)
+	n.StatusID = "9HZJ76B6VXSKF"
+	err = validate.Struct(n)
 	suite.EqualError(err, "Key: 'Notification.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
-	m.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*m)
+	n.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
+	err = validate.Struct(n)
 	suite.EqualError(err, "Key: 'Notification.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
-	m.StatusID = ""
-	m.NotificationType = gtsmodel.NotificationFollowRequest
-	err = validate.Struct(*m)
+	n.StatusID = ""
+	n.NotificationType = gtsmodel.NotificationFollowRequest
+	err = validate.Struct(n)
 	suite.NoError(err)
 }
 
 func (suite *NotificationValidateTestSuite) TestValidateNotificationNoCreatedAt() {
-	m := happyNotification()
+	n := happyNotification()
 
-	m.CreatedAt = time.Time{}
-	err := validate.Struct(*m)
+	n.CreatedAt = time.Time{}
+	err := validate.Struct(n)
 	suite.NoError(err)
 }
 

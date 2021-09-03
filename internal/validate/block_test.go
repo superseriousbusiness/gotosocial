@@ -46,68 +46,68 @@ type BlockValidateTestSuite struct {
 
 func (suite *BlockValidateTestSuite) TestValidateBlockHappyPath() {
 	// no problem here
-	d := happyBlock()
-	err := validate.Struct(*d)
+	b := happyBlock()
+	err := validate.Struct(b)
 	suite.NoError(err)
 }
 
 func (suite *BlockValidateTestSuite) TestValidateBlockBadID() {
-	d := happyBlock()
+	b := happyBlock()
 
-	d.ID = ""
-	err := validate.Struct(*d)
+	b.ID = ""
+	err := validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
-	d.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*d)
+	b.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
+	err = validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
 func (suite *BlockValidateTestSuite) TestValidateBlockNoCreatedAt() {
-	d := happyBlock()
+	b := happyBlock()
 
-	d.CreatedAt = time.Time{}
-	err := validate.Struct(*d)
+	b.CreatedAt = time.Time{}
+	err := validate.Struct(b)
 	suite.NoError(err)
 }
 
 func (suite *BlockValidateTestSuite) TestValidateBlockCreatedByAccountID() {
-	d := happyBlock()
+	b := happyBlock()
 
-	d.AccountID = ""
-	err := validate.Struct(*d)
+	b.AccountID = ""
+	err := validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.AccountID' Error:Field validation for 'AccountID' failed on the 'required' tag")
 
-	d.AccountID = "this-is-not-a-valid-ulid"
-	err = validate.Struct(*d)
+	b.AccountID = "this-is-not-a-valid-ulid"
+	err = validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.AccountID' Error:Field validation for 'AccountID' failed on the 'ulid' tag")
 }
 
 func (suite *BlockValidateTestSuite) TestValidateBlockTargetAccountID() {
-	d := happyBlock()
+	b := happyBlock()
 
-	d.TargetAccountID = "invalid-ulid"
-	err := validate.Struct(*d)
+	b.TargetAccountID = "invalid-ulid"
+	err := validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.TargetAccountID' Error:Field validation for 'TargetAccountID' failed on the 'ulid' tag")
 
-	d.TargetAccountID = "01FEEDHX4G7EGHF5GD9E82Y51Q"
-	err = validate.Struct(*d)
+	b.TargetAccountID = "01FEEDHX4G7EGHF5GD9E82Y51Q"
+	err = validate.Struct(b)
 	suite.NoError(err)
 
-	d.TargetAccountID = ""
-	err = validate.Struct(*d)
+	b.TargetAccountID = ""
+	err = validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.TargetAccountID' Error:Field validation for 'TargetAccountID' failed on the 'required' tag")
 }
 
 func (suite *BlockValidateTestSuite) TestValidateBlockURI() {
-	d := happyBlock()
+	b := happyBlock()
 
-	d.URI = "invalid-uri"
-	err := validate.Struct(*d)
+	b.URI = "invalid-uri"
+	err := validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 
-	d.URI = ""
-	err = validate.Struct(*d)
+	b.URI = ""
+	err = validate.Struct(b)
 	suite.EqualError(err, "Key: 'Block.URI' Error:Field validation for 'URI' failed on the 'required' tag")
 }
 

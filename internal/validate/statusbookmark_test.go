@@ -46,40 +46,40 @@ type StatusBookmarkValidateTestSuite struct {
 
 func (suite *StatusBookmarkValidateTestSuite) TestValidateStatusBookmarkHappyPath() {
 	// no problem here
-	m := happyStatusBookmark()
-	err := validate.Struct(*m)
+	s := happyStatusBookmark()
+	err := validate.Struct(s)
 	suite.NoError(err)
 }
 
 func (suite *StatusBookmarkValidateTestSuite) TestValidateStatusBookmarkBadID() {
-	m := happyStatusBookmark()
+	s := happyStatusBookmark()
 
-	m.ID = ""
-	err := validate.Struct(*m)
+	s.ID = ""
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'StatusBookmark.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
-	m.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*m)
+	s.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'StatusBookmark.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
 func (suite *StatusBookmarkValidateTestSuite) TestValidateStatusBookmarkDodgyStatusID() {
-	m := happyStatusBookmark()
+	s := happyStatusBookmark()
 
-	m.StatusID = "9HZJ76B6VXSKF"
-	err := validate.Struct(*m)
+	s.StatusID = "9HZJ76B6VXSKF"
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'StatusBookmark.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
-	m.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*m)
+	s.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'StatusBookmark.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 }
 
 func (suite *StatusBookmarkValidateTestSuite) TestValidateStatusBookmarkNoCreatedAt() {
-	m := happyStatusBookmark()
+	s := happyStatusBookmark()
 
-	m.CreatedAt = time.Time{}
-	err := validate.Struct(*m)
+	s.CreatedAt = time.Time{}
+	err := validate.Struct(s)
 	suite.NoError(err)
 }
 

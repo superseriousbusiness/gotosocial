@@ -49,7 +49,7 @@ type MentionValidateTestSuite struct {
 func (suite *MentionValidateTestSuite) TestValidateMentionHappyPath() {
 	// no problem here
 	m := happyMention()
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.NoError(err)
 }
 
@@ -57,11 +57,11 @@ func (suite *MentionValidateTestSuite) TestValidateMentionBadID() {
 	m := happyMention()
 
 	m.ID = ""
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	m.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -69,11 +69,11 @@ func (suite *MentionValidateTestSuite) TestValidateMentionAccountURI() {
 	m := happyMention()
 
 	m.OriginAccountURI = ""
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.OriginAccountURI' Error:Field validation for 'OriginAccountURI' failed on the 'url' tag")
 
 	m.OriginAccountURI = "---------------------------"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.OriginAccountURI' Error:Field validation for 'OriginAccountURI' failed on the 'url' tag")
 }
 
@@ -81,11 +81,11 @@ func (suite *MentionValidateTestSuite) TestValidateMentionDodgyStatusID() {
 	m := happyMention()
 
 	m.StatusID = "9HZJ76B6VXSKF"
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
 	m.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'Mention.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 }
 
@@ -93,7 +93,7 @@ func (suite *MentionValidateTestSuite) TestValidateMentionNoCreatedAt() {
 	m := happyMention()
 
 	m.CreatedAt = time.Time{}
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.NoError(err)
 }
 

@@ -47,7 +47,7 @@ type StatusMuteValidateTestSuite struct {
 func (suite *StatusMuteValidateTestSuite) TestValidateStatusMuteHappyPath() {
 	// no problem here
 	m := happyStatusMute()
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.NoError(err)
 }
 
@@ -55,11 +55,11 @@ func (suite *StatusMuteValidateTestSuite) TestValidateStatusMuteBadID() {
 	m := happyStatusMute()
 
 	m.ID = ""
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'StatusMute.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	m.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'StatusMute.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -67,11 +67,11 @@ func (suite *StatusMuteValidateTestSuite) TestValidateStatusMuteDodgyStatusID() 
 	m := happyStatusMute()
 
 	m.StatusID = "9HZJ76B6VXSKF"
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.EqualError(err, "Key: 'StatusMute.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
 	m.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*m)
+	err = validate.Struct(m)
 	suite.EqualError(err, "Key: 'StatusMute.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 }
 
@@ -79,7 +79,7 @@ func (suite *StatusMuteValidateTestSuite) TestValidateStatusMuteNoCreatedAt() {
 	m := happyStatusMute()
 
 	m.CreatedAt = time.Time{}
-	err := validate.Struct(*m)
+	err := validate.Struct(m)
 	suite.NoError(err)
 }
 

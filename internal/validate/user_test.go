@@ -68,7 +68,7 @@ type UserValidateTestSuite struct {
 func (suite *UserValidateTestSuite) TestValidateUserHappyPath() {
 	// no problem here
 	u := happyUser()
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.NoError(err)
 }
 
@@ -77,7 +77,7 @@ func (suite *UserValidateTestSuite) TestValidateUserNoID() {
 	u := happyUser()
 	u.ID = ""
 
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.EqualError(err, "Key: 'User.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 }
 
@@ -86,7 +86,7 @@ func (suite *UserValidateTestSuite) TestValidateUserNoEmail() {
 	u := happyUser()
 	u.Email = ""
 
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.EqualError(err, "Key: 'User.Email' Error:Field validation for 'Email' failed on the 'required_with' tag\nKey: 'User.UnconfirmedEmail' Error:Field validation for 'UnconfirmedEmail' failed on the 'required_without' tag")
 }
 
@@ -96,7 +96,7 @@ func (suite *UserValidateTestSuite) TestValidateUserOnlyUnconfirmedEmail() {
 	u.Email = ""
 	u.UnconfirmedEmail = "whatever@example.org"
 
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.EqualError(err, "Key: 'User.Email' Error:Field validation for 'Email' failed on the 'required_with' tag")
 }
 
@@ -107,7 +107,7 @@ func (suite *UserValidateTestSuite) TestValidateUserOnlyUnconfirmedEmailOK() {
 	u.UnconfirmedEmail = "whatever@example.org"
 	u.ConfirmedAt = time.Time{}
 
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.NoError(err)
 }
 
@@ -116,8 +116,17 @@ func (suite *UserValidateTestSuite) TestValidateUserNoConfirmedAt() {
 	u := happyUser()
 	u.ConfirmedAt = time.Time{}
 
-	err := validate.Struct(*u)
+	err := validate.Struct(u)
 	suite.EqualError(err, "Key: 'User.ConfirmedAt' Error:Field validation for 'ConfirmedAt' failed on the 'required_with' tag")
+}
+
+func (suite *UserValidateTestSuite) TestValidateUserUnlikelySignInCount() {
+	// user has Email but no ConfirmedAt
+	u := happyUser()
+	u.SignInCount = -69
+
+	err := validate.Struct(u)
+	suite.EqualError(err, "Key: 'User.SignInCount' Error:Field validation for 'SignInCount' failed on the 'min' tag")
 }
 
 func TestUserValidateTestSuite(t *testing.T) {

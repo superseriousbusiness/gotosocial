@@ -30,15 +30,21 @@ type ValidateTestSuite struct {
 	suite.Suite
 }
 
-func (suite *ValidateTestSuite) TestValidatePointer() {
+func (suite *ValidateTestSuite) TestValidateNilPointer() {
 	var nilUser *gtsmodel.User
-	suite.PanicsWithValue(validate.PointerPanic, func() {
+	suite.Panics(func() {
 		validate.Struct(nilUser)
 	})
 }
 
+func (suite *ValidateTestSuite) TestValidatePointer() {
+	user := &gtsmodel.User{}
+	err := validate.Struct(user)
+	suite.EqualError(err, "Key: 'User.ID' Error:Field validation for 'ID' failed on the 'required' tag\nKey: 'User.AccountID' Error:Field validation for 'AccountID' failed on the 'required' tag\nKey: 'User.EncryptedPassword' Error:Field validation for 'EncryptedPassword' failed on the 'required' tag\nKey: 'User.UnconfirmedEmail' Error:Field validation for 'UnconfirmedEmail' failed on the 'required_without' tag")
+}
+
 func (suite *ValidateTestSuite) TestValidateNil() {
-	suite.PanicsWithValue(validate.InvalidPanic, func() {
+	suite.Panics(func() {
 		validate.Struct(nil)
 	})
 }

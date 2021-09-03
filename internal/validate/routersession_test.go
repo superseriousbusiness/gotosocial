@@ -41,7 +41,7 @@ type RouterSessionValidateTestSuite struct {
 func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionHappyPath() {
 	// no problem here
 	r := happyRouterSession()
-	err := validate.Struct(*r)
+	err := validate.Struct(r)
 	suite.NoError(err)
 }
 
@@ -50,17 +50,17 @@ func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionAuth() {
 
 	// remove auth struct
 	r.Auth = nil
-	err := validate.Struct(*r)
+	err := validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Auth' Error:Field validation for 'Auth' failed on the 'required' tag")
 
 	// auth bytes too long
 	r.Auth = []byte("1234567890123456789012345678901234567890")
-	err = validate.Struct(*r)
+	err = validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Auth' Error:Field validation for 'Auth' failed on the 'len' tag")
 
 	// auth bytes too short
 	r.Auth = []byte("12345678901")
-	err = validate.Struct(*r)
+	err = validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Auth' Error:Field validation for 'Auth' failed on the 'len' tag")
 }
 
@@ -69,17 +69,17 @@ func (suite *RouterSessionValidateTestSuite) TestValidateRouterSessionCrypt() {
 
 	// remove crypt struct
 	r.Crypt = nil
-	err := validate.Struct(*r)
+	err := validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Crypt' Error:Field validation for 'Crypt' failed on the 'required' tag")
 
 	// crypt bytes too long
 	r.Crypt = []byte("1234567890123456789012345678901234567890")
-	err = validate.Struct(*r)
+	err = validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Crypt' Error:Field validation for 'Crypt' failed on the 'len' tag")
 
 	// crypt bytes too short
 	r.Crypt = []byte("12345678901")
-	err = validate.Struct(*r)
+	err = validate.Struct(r)
 	suite.EqualError(err, "Key: 'RouterSession.Crypt' Error:Field validation for 'Crypt' failed on the 'len' tag")
 }
 

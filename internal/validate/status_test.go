@@ -82,7 +82,7 @@ type StatusValidateTestSuite struct {
 func (suite *StatusValidateTestSuite) TestValidateStatusHappyPath() {
 	// no problem here
 	s := happyStatus()
-	err := validate.Struct(*s)
+	err := validate.Struct(s)
 	suite.NoError(err)
 }
 
@@ -90,11 +90,11 @@ func (suite *StatusValidateTestSuite) TestValidateStatusBadID() {
 	s := happyStatus()
 
 	s.ID = ""
-	err := validate.Struct(*s)
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	s.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -102,23 +102,23 @@ func (suite *StatusValidateTestSuite) TestValidateStatusAttachmentIDs() {
 	s := happyStatus()
 
 	s.AttachmentIDs[0] = ""
-	err := validate.Struct(*s)
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag")
 
 	s.AttachmentIDs[0] = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag")
 
 	s.AttachmentIDs[1] = ""
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.AttachmentIDs[0]' Error:Field validation for 'AttachmentIDs[0]' failed on the 'ulid' tag\nKey: 'Status.AttachmentIDs[1]' Error:Field validation for 'AttachmentIDs[1]' failed on the 'ulid' tag")
 
 	s.AttachmentIDs = []string{}
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.NoError(err)
 
 	s.AttachmentIDs = nil
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.NoError(err)
 }
 
@@ -126,11 +126,11 @@ func (suite *StatusValidateTestSuite) TestStatusApplicationID() {
 	s := happyStatus()
 
 	s.CreatedWithApplicationID = ""
-	err := validate.Struct(*s)
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.CreatedWithApplicationID' Error:Field validation for 'CreatedWithApplicationID' failed on the 'required_if' tag")
 
 	s.Local = false
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.NoError(err)
 }
 
@@ -138,23 +138,23 @@ func (suite *StatusValidateTestSuite) TestValidateStatusReplyFields() {
 	s := happyStatus()
 
 	s.InReplyToAccountID = "01FEBCTP6DN7961PN81C3DVM4N                         "
-	err := validate.Struct(*s)
+	err := validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.InReplyToID' Error:Field validation for 'InReplyToID' failed on the 'required_with' tag\nKey: 'Status.InReplyToURI' Error:Field validation for 'InReplyToURI' failed on the 'required_with' tag\nKey: 'Status.InReplyToAccountID' Error:Field validation for 'InReplyToAccountID' failed on the 'ulid' tag")
 
 	s.InReplyToAccountID = "01FEBCTP6DN7961PN81C3DVM4N"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.InReplyToID' Error:Field validation for 'InReplyToID' failed on the 'required_with' tag\nKey: 'Status.InReplyToURI' Error:Field validation for 'InReplyToURI' failed on the 'required_with' tag")
 
 	s.InReplyToURI = "https://example.org/users/mmbop/statuses/aaaaaaaa"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.InReplyToID' Error:Field validation for 'InReplyToID' failed on the 'required_with' tag")
 
 	s.InReplyToID = "not a valid ulid"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.EqualError(err, "Key: 'Status.InReplyToID' Error:Field validation for 'InReplyToID' failed on the 'ulid' tag")
 
 	s.InReplyToID = "01FEBD07E72DEY6YB9K10ZA6ST"
-	err = validate.Struct(*s)
+	err = validate.Struct(s)
 	suite.NoError(err)
 }
 

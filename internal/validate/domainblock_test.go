@@ -48,7 +48,7 @@ type DomainBlockValidateTestSuite struct {
 func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockHappyPath() {
 	// no problem here
 	d := happyDomainBlock()
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.NoError(err)
 }
 
@@ -56,11 +56,11 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockBadID() {
 	d := happyDomainBlock()
 
 	d.ID = ""
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	d.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*d)
+	err = validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -68,7 +68,7 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockNoCreatedAt() 
 	d := happyDomainBlock()
 
 	d.CreatedAt = time.Time{}
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.NoError(err)
 }
 
@@ -76,11 +76,11 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockBadDomain() {
 	d := happyDomainBlock()
 
 	d.Domain = ""
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.Domain' Error:Field validation for 'Domain' failed on the 'required' tag")
 
 	d.Domain = "this-is-not-a-valid-domain"
-	err = validate.Struct(*d)
+	err = validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.Domain' Error:Field validation for 'Domain' failed on the 'fqdn' tag")
 }
 
@@ -88,11 +88,11 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockCreatedByAccou
 	d := happyDomainBlock()
 
 	d.CreatedByAccountID = ""
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.CreatedByAccountID' Error:Field validation for 'CreatedByAccountID' failed on the 'required' tag")
 
 	d.CreatedByAccountID = "this-is-not-a-valid-ulid"
-	err = validate.Struct(*d)
+	err = validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.CreatedByAccountID' Error:Field validation for 'CreatedByAccountID' failed on the 'ulid' tag")
 }
 
@@ -101,7 +101,7 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainBlockComments() {
 
 	d.PrivateComment = ""
 	d.PublicComment = ""
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.NoError(err)
 }
 
@@ -109,11 +109,11 @@ func (suite *DomainBlockValidateTestSuite) TestValidateDomainSubscriptionID() {
 	d := happyDomainBlock()
 
 	d.SubscriptionID = "invalid-ulid"
-	err := validate.Struct(*d)
+	err := validate.Struct(d)
 	suite.EqualError(err, "Key: 'DomainBlock.SubscriptionID' Error:Field validation for 'SubscriptionID' failed on the 'ulid' tag")
 
 	d.SubscriptionID = "01FEEDHX4G7EGHF5GD9E82Y51Q"
-	err = validate.Struct(*d)
+	err = validate.Struct(d)
 	suite.NoError(err)
 }
 

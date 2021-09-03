@@ -45,7 +45,7 @@ type ClientValidateTestSuite struct {
 func (suite *ClientValidateTestSuite) TestValidateClientHappyPath() {
 	// no problem here
 	c := happyClient()
-	err := validate.Struct(*c)
+	err := validate.Struct(c)
 	suite.NoError(err)
 }
 
@@ -53,11 +53,11 @@ func (suite *ClientValidateTestSuite) TestValidateClientBadID() {
 	c := happyClient()
 
 	c.ID = ""
-	err := validate.Struct(*c)
+	err := validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	c.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*c)
+	err = validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -65,7 +65,7 @@ func (suite *ClientValidateTestSuite) TestValidateClientNoCreatedAt() {
 	c := happyClient()
 
 	c.CreatedAt = time.Time{}
-	err := validate.Struct(*c)
+	err := validate.Struct(c)
 	suite.NoError(err)
 }
 
@@ -73,27 +73,27 @@ func (suite *ClientValidateTestSuite) TestValidateClientDomain() {
 	c := happyClient()
 
 	c.Domain = "invalid-uri"
-	err := validate.Struct(*c)
+	err := validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.Domain' Error:Field validation for 'Domain' failed on the 'uri' tag")
 
 	c.Domain = ""
-	err = validate.Struct(*c)
+	err = validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.Domain' Error:Field validation for 'Domain' failed on the 'required' tag")
 
 	c.Domain = "urn:ietf:wg:oauth:2.0:oob"
-	err = validate.Struct(*c)
+	err = validate.Struct(c)
 	suite.NoError(err)
 }
 
 func (suite *ClientValidateTestSuite) TestValidateSecret() {
-	a := happyClient()
+	c := happyClient()
 
-	a.Secret = "invalid-uuid"
-	err := validate.Struct(*a)
+	c.Secret = "invalid-uuid"
+	err := validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.Secret' Error:Field validation for 'Secret' failed on the 'uuid' tag")
 
-	a.Secret = ""
-	err = validate.Struct(*a)
+	c.Secret = ""
+	err = validate.Struct(c)
 	suite.EqualError(err, "Key: 'Client.Secret' Error:Field validation for 'Secret' failed on the 'required' tag")
 }
 

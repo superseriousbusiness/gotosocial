@@ -44,7 +44,7 @@ type EmailDomainBlockValidateTestSuite struct {
 func (suite *EmailDomainBlockValidateTestSuite) TestValidateEmailDomainBlockHappyPath() {
 	// no problem here
 	e := happyEmailDomainBlock()
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.NoError(err)
 }
 
@@ -52,11 +52,11 @@ func (suite *EmailDomainBlockValidateTestSuite) TestValidateEmailDomainBlockBadI
 	e := happyEmailDomainBlock()
 
 	e.ID = ""
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	e.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -64,7 +64,7 @@ func (suite *EmailDomainBlockValidateTestSuite) TestValidateEmailDomainBlockNoCr
 	e := happyEmailDomainBlock()
 
 	e.CreatedAt = time.Time{}
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.NoError(err)
 }
 
@@ -72,11 +72,11 @@ func (suite *EmailDomainBlockValidateTestSuite) TestValidateEmailDomainBlockBadD
 	e := happyEmailDomainBlock()
 
 	e.Domain = ""
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.Domain' Error:Field validation for 'Domain' failed on the 'required' tag")
 
 	e.Domain = "this-is-not-a-valid-domain"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.Domain' Error:Field validation for 'Domain' failed on the 'fqdn' tag")
 }
 
@@ -84,11 +84,11 @@ func (suite *EmailDomainBlockValidateTestSuite) TestValidateEmailDomainBlockCrea
 	e := happyEmailDomainBlock()
 
 	e.CreatedByAccountID = ""
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.CreatedByAccountID' Error:Field validation for 'CreatedByAccountID' failed on the 'required' tag")
 
 	e.CreatedByAccountID = "this-is-not-a-valid-ulid"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'EmailDomainBlock.CreatedByAccountID' Error:Field validation for 'CreatedByAccountID' failed on the 'ulid' tag")
 }
 

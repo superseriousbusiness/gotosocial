@@ -48,7 +48,7 @@ type StatusFaveValidateTestSuite struct {
 func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveHappyPath() {
 	// no problem here
 	f := happyStatusFave()
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.NoError(err)
 }
 
@@ -56,11 +56,11 @@ func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveBadID() {
 	f := happyStatusFave()
 
 	f.ID = ""
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	f.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*f)
+	err = validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -68,11 +68,11 @@ func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveDodgyStatusID() 
 	f := happyStatusFave()
 
 	f.StatusID = "9HZJ76B6VXSKF"
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 
 	f.StatusID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!!!!!!!!!!!!"
-	err = validate.Struct(*f)
+	err = validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.StatusID' Error:Field validation for 'StatusID' failed on the 'ulid' tag")
 }
 
@@ -80,7 +80,7 @@ func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveNoCreatedAt() {
 	f := happyStatusFave()
 
 	f.CreatedAt = time.Time{}
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.NoError(err)
 }
 
@@ -88,11 +88,11 @@ func (suite *StatusFaveValidateTestSuite) TestValidateStatusFaveNoURI() {
 	f := happyStatusFave()
 
 	f.URI = ""
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.URI' Error:Field validation for 'URI' failed on the 'required' tag")
 
 	f.URI = "this-is-not-a-valid-url"
-	err = validate.Struct(*f)
+	err = validate.Struct(f)
 	suite.EqualError(err, "Key: 'StatusFave.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 }
 

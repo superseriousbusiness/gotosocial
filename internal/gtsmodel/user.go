@@ -38,7 +38,7 @@ type User struct {
 	CurrentSignInIP        net.IP       `validate:"-" bun:",nullzero"`                                                 // What's the most recent IP of this user
 	LastSignInAt           time.Time    `validate:"-" bun:"type:timestamp,nullzero"`                                   // When did this user last sign in?
 	LastSignInIP           net.IP       `validate:"-" bun:",nullzero"`                                                 // What's the previous IP of this user?
-	SignInCount            int          `validate:"-" bun:",nullzero,notnull,default:0"`                               // How many times has this user signed in?
+	SignInCount            int          `validate:"min=0" bun:",nullzero,notnull,default:0"`                           // How many times has this user signed in?
 	InviteID               string       `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                       // id of the user who invited this user (who let this joker in?)
 	ChosenLanguages        []string     `validate:"-" bun:",nullzero"`                                                 // What languages does this user want to see?
 	FilteredLanguages      []string     `validate:"-" bun:",nullzero"`                                                 // What languages does this user not want to see?

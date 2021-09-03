@@ -47,7 +47,7 @@ type FollowRequestValidateTestSuite struct {
 func (suite *FollowRequestValidateTestSuite) TestValidateFollowRequestHappyPath() {
 	// no problem here
 	f := happyFollowRequest()
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.NoError(err)
 }
 
@@ -55,11 +55,11 @@ func (suite *FollowRequestValidateTestSuite) TestValidateFollowRequestBadID() {
 	f := happyFollowRequest()
 
 	f.ID = ""
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.EqualError(err, "Key: 'FollowRequest.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	f.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*f)
+	err = validate.Struct(f)
 	suite.EqualError(err, "Key: 'FollowRequest.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -67,7 +67,7 @@ func (suite *FollowRequestValidateTestSuite) TestValidateFollowRequestNoCreatedA
 	f := happyFollowRequest()
 
 	f.CreatedAt = time.Time{}
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.NoError(err)
 }
 
@@ -75,11 +75,11 @@ func (suite *FollowRequestValidateTestSuite) TestValidateFollowRequestNoURI() {
 	f := happyFollowRequest()
 
 	f.URI = ""
-	err := validate.Struct(*f)
+	err := validate.Struct(f)
 	suite.EqualError(err, "Key: 'FollowRequest.URI' Error:Field validation for 'URI' failed on the 'required' tag")
 
 	f.URI = "this-is-not-a-valid-url"
-	err = validate.Struct(*f)
+	err = validate.Struct(f)
 	suite.EqualError(err, "Key: 'FollowRequest.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 }
 

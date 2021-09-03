@@ -48,7 +48,7 @@ type TagValidateTestSuite struct {
 func (suite *TagValidateTestSuite) TestValidateTagHappyPath() {
 	// no problem here
 	t := happyTag()
-	err := validate.Struct(*t)
+	err := validate.Struct(t)
 	suite.NoError(err)
 }
 
@@ -56,7 +56,7 @@ func (suite *TagValidateTestSuite) TestValidateTagNoName() {
 	t := happyTag()
 	t.Name = ""
 
-	err := validate.Struct(*t)
+	err := validate.Struct(t)
 	suite.EqualError(err, "Key: 'Tag.Name' Error:Field validation for 'Name' failed on the 'required' tag")
 }
 
@@ -64,19 +64,19 @@ func (suite *TagValidateTestSuite) TestValidateTagBadURL() {
 	t := happyTag()
 
 	t.URL = ""
-	err := validate.Struct(*t)
+	err := validate.Struct(t)
 	suite.EqualError(err, "Key: 'Tag.URL' Error:Field validation for 'URL' failed on the 'required' tag")
 
 	t.URL = "no-schema.com"
-	err = validate.Struct(*t)
+	err = validate.Struct(t)
 	suite.EqualError(err, "Key: 'Tag.URL' Error:Field validation for 'URL' failed on the 'url' tag")
 
 	t.URL = "justastring"
-	err = validate.Struct(*t)
+	err = validate.Struct(t)
 	suite.EqualError(err, "Key: 'Tag.URL' Error:Field validation for 'URL' failed on the 'url' tag")
 
 	t.URL = "https://aaa\n\n\naaaaaaaa"
-	err = validate.Struct(*t)
+	err = validate.Struct(t)
 	suite.EqualError(err, "Key: 'Tag.URL' Error:Field validation for 'URL' failed on the 'url' tag")
 }
 
@@ -84,7 +84,7 @@ func (suite *TagValidateTestSuite) TestValidateTagNoFirstSeenFromAccountID() {
 	t := happyTag()
 	t.FirstSeenFromAccountID = ""
 
-	err := validate.Struct(*t)
+	err := validate.Struct(t)
 	suite.NoError(err)
 }
 

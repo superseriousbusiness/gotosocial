@@ -48,7 +48,7 @@ type ApplicationValidateTestSuite struct {
 func (suite *ApplicationValidateTestSuite) TestValidateApplicationHappyPath() {
 	// no problem here
 	a := happyApplication()
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.NoError(err)
 }
 
@@ -56,11 +56,11 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationBadID() {
 	a := happyApplication()
 
 	a.ID = ""
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.ID' Error:Field validation for 'ID' failed on the 'required' tag")
 
 	a.ID = "01FE96W293ZPRG9FQQP48HK8N001FE96W32AT24VYBGM12WN3GKB"
-	err = validate.Struct(*a)
+	err = validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.ID' Error:Field validation for 'ID' failed on the 'ulid' tag")
 }
 
@@ -68,7 +68,7 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationNoCreatedAt() 
 	a := happyApplication()
 
 	a.CreatedAt = time.Time{}
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.NoError(err)
 }
 
@@ -76,7 +76,7 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationName() {
 	a := happyApplication()
 
 	a.Name = ""
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.Name' Error:Field validation for 'Name' failed on the 'required' tag")
 }
 
@@ -84,11 +84,11 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationWebsite() {
 	a := happyApplication()
 
 	a.Website = "invalid-website"
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.Website' Error:Field validation for 'Website' failed on the 'url' tag")
 
 	a.Website = ""
-	err = validate.Struct(*a)
+	err = validate.Struct(a)
 	suite.NoError(err)
 }
 
@@ -96,15 +96,15 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationRedirectURI() 
 	a := happyApplication()
 
 	a.RedirectURI = "invalid-uri"
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.RedirectURI' Error:Field validation for 'RedirectURI' failed on the 'uri' tag")
 
 	a.RedirectURI = ""
-	err = validate.Struct(*a)
+	err = validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.RedirectURI' Error:Field validation for 'RedirectURI' failed on the 'required' tag")
 
 	a.RedirectURI = "urn:ietf:wg:oauth:2.0:oob"
-	err = validate.Struct(*a)
+	err = validate.Struct(a)
 	suite.NoError(err)
 }
 
@@ -112,11 +112,11 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationClientSecret()
 	a := happyApplication()
 
 	a.ClientSecret = "invalid-uuid"
-	err := validate.Struct(*a)
+	err := validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.ClientSecret' Error:Field validation for 'ClientSecret' failed on the 'uuid' tag")
 
 	a.ClientSecret = ""
-	err = validate.Struct(*a)
+	err = validate.Struct(a)
 	suite.EqualError(err, "Key: 'Application.ClientSecret' Error:Field validation for 'ClientSecret' failed on the 'required' tag")
 }
 
@@ -124,8 +124,8 @@ func (suite *ApplicationValidateTestSuite) TestValidateApplicationScopes() {
 	a := happyApplication()
 
 	a.Scopes = ""
-	err := validate.Struct(*a)
-	suite.NoError(err)
+	err := validate.Struct(a)
+	suite.EqualError(err, "Key: 'Application.Scopes' Error:Field validation for 'Scopes' failed on the 'required' tag")
 }
 
 func TestApplicationValidateTestSuite(t *testing.T) {

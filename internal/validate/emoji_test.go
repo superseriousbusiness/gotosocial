@@ -95,27 +95,27 @@ func (suite *EmojiValidateTestSuite) TestValidateEmojiBadFilePaths() {
 	e := happyEmoji()
 
 	e.ImagePath = "/tmp/nonexistent/file/for/gotosocial/test"
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'file' tag")
 
 	e.ImagePath = ""
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'required' tag")
 
 	e.ImagePath = "???????????thisnot a valid path####"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'file' tag")
 
 	e.ImageStaticPath = "/tmp/nonexistent/file/for/gotosocial/test"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'file' tag\nKey: 'Emoji.ImageStaticPath' Error:Field validation for 'ImageStaticPath' failed on the 'file' tag")
 
 	e.ImageStaticPath = ""
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'file' tag\nKey: 'Emoji.ImageStaticPath' Error:Field validation for 'ImageStaticPath' failed on the 'required' tag")
 
 	e.ImageStaticPath = "???????????thisnot a valid path####"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImagePath' Error:Field validation for 'ImagePath' failed on the 'file' tag\nKey: 'Emoji.ImageStaticPath' Error:Field validation for 'ImageStaticPath' failed on the 'file' tag")
 }
 
@@ -123,11 +123,11 @@ func (suite *EmojiValidateTestSuite) TestValidateEmojiURI() {
 	e := happyEmoji()
 
 	e.URI = "aaaaaaaaaa"
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 
 	e.URI = ""
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.URI' Error:Field validation for 'URI' failed on the 'url' tag")
 }
 
@@ -135,26 +135,26 @@ func (suite *EmojiValidateTestSuite) TestValidateEmojiURLCombos() {
 	e := happyEmoji()
 
 	e.ImageRemoteURL = ""
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageRemoteURL' Error:Field validation for 'ImageRemoteURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageURL' Error:Field validation for 'ImageURL' failed on the 'required_without' tag")
 
 	e.ImageURL = "https://whatever.org"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.NoError(err)
 
 	e.ImageStaticRemoteURL = ""
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageStaticRemoteURL' Error:Field validation for 'ImageStaticRemoteURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageStaticURL' Error:Field validation for 'ImageStaticURL' failed on the 'required_without' tag")
 
 	e.ImageStaticURL = "https://whatever.org"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.NoError(err)
 
 	e.ImageURL = ""
 	e.ImageStaticURL = ""
 	e.ImageRemoteURL = ""
 	e.ImageStaticRemoteURL = ""
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageRemoteURL' Error:Field validation for 'ImageRemoteURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageStaticRemoteURL' Error:Field validation for 'ImageStaticRemoteURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageURL' Error:Field validation for 'ImageURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageStaticURL' Error:Field validation for 'ImageStaticURL' failed on the 'required_without' tag")
 }
 
@@ -162,19 +162,19 @@ func (suite *EmojiValidateTestSuite) TestValidateFileSize() {
 	e := happyEmoji()
 
 	e.ImageFileSize = 0
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageFileSize' Error:Field validation for 'ImageFileSize' failed on the 'required' tag")
 
 	e.ImageStaticFileSize = 0
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageFileSize' Error:Field validation for 'ImageFileSize' failed on the 'required' tag\nKey: 'Emoji.ImageStaticFileSize' Error:Field validation for 'ImageStaticFileSize' failed on the 'required' tag")
 
 	e.ImageFileSize = -1
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageFileSize' Error:Field validation for 'ImageFileSize' failed on the 'min' tag\nKey: 'Emoji.ImageStaticFileSize' Error:Field validation for 'ImageStaticFileSize' failed on the 'required' tag")
 
 	e.ImageStaticFileSize = -1
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageFileSize' Error:Field validation for 'ImageFileSize' failed on the 'min' tag\nKey: 'Emoji.ImageStaticFileSize' Error:Field validation for 'ImageStaticFileSize' failed on the 'min' tag")
 }
 
@@ -182,11 +182,11 @@ func (suite *EmojiValidateTestSuite) TestValidateDomain() {
 	e := happyEmoji()
 
 	e.Domain = ""
-	err := validate.Struct(*e)
+	err := validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.ImageURL' Error:Field validation for 'ImageURL' failed on the 'required_without' tag\nKey: 'Emoji.ImageStaticURL' Error:Field validation for 'ImageStaticURL' failed on the 'required_without' tag")
 
 	e.Domain = "aaaaaaaaa"
-	err = validate.Struct(*e)
+	err = validate.Struct(e)
 	suite.EqualError(err, "Key: 'Emoji.Domain' Error:Field validation for 'Domain' failed on the 'fqdn' tag")
 }
 
