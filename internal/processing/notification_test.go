@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package bundb_test
+package processing_test
 
 import (
 	"context"
@@ -25,28 +25,23 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SessionTestSuite struct {
-	BunDBStandardTestSuite
+type NotificationTestSuite struct {
+	ProcessingStandardTestSuite
 }
 
-func (suite *SessionTestSuite) TestGetSession() {
-	session, err := suite.db.GetSession(context.Background())
+// get a notification where someone has liked our status
+func (suite *NotificationTestSuite) TestGetNotifications() {
+	receivingAccount := suite.testAccounts["local_account_1"]
+	notifs, err := suite.processor.NotificationsGet(context.Background(), suite.testAutheds["local_account_1"], 10, "", "")
 	suite.NoError(err)
-	suite.NotNil(session)
-	suite.NotEmpty(session.Auth)
-	suite.NotEmpty(session.Crypt)
-	suite.NotEmpty(session.ID)
-
-	// TODO -- the same session should be returned with consecutive selects
-	// right now there's an issue with bytea in bun, so uncomment this when that issue is fixed: https://github.com/uptrace/bun/issues/122
-	// session2, err := suite.db.GetSession(context.Background())
-	// suite.NoError(err)
-	// suite.NotNil(session2)
-	// suite.Equal(session.Auth, session2.Auth)
-	// suite.Equal(session.Crypt, session2.Crypt)
-	// suite.Equal(session.ID, session2.ID)
+	suite.Len(notifs, 1)
+	notif := notifs[0]
+	suite.NotNil(notif.Status)
+	suite.NotNil(notif.Status)
+	suite.NotNil(notif.Status.Account)
+	suite.Equal(receivingAccount.ID, notif.Status.Account.ID)
 }
 
-func TestSessionTestSuite(t *testing.T) {
-	suite.Run(t, new(SessionTestSuite))
+func TestNotificationTestSuite(t *testing.T) {
+	suite.Run(t, &NotificationTestSuite{})
 }

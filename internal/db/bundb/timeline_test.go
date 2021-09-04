@@ -23,35 +23,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type TimelineTestSuite struct {
 	BunDBStandardTestSuite
-}
-
-func (suite *TimelineTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-	suite.testTags = testrig.NewTestTags()
-	suite.testMentions = testrig.NewTestMentions()
-}
-
-func (suite *TimelineTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
-
-	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-}
-
-func (suite *TimelineTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {

@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) processFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	switch clientMsg.APActivityType {
 	case ap.ActivityCreate:
 		// CREATE

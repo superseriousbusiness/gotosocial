@@ -56,6 +56,10 @@ type Processor interface {
 	Start(ctx context.Context) error
 	// Stop stops the processor cleanly, finishing handling any remaining messages before closing down.
 	Stop() error
+	// ProcessFromClientAPI processes one message coming from the clientAPI channel, and triggers appropriate side effects.
+	ProcessFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error
+	// ProcessFromFederator processes one message coming from the federator channel, and triggers appropriate side effects.
+	ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error
 
 	/*
 		CLIENT API-FACING PROCESSING FUNCTIONS
@@ -290,14 +294,14 @@ func (p *processor) Start(ctx context.Context) error {
 			case clientMsg := <-p.fromClientAPI:
 				p.log.Tracef("received message FROM client API: %+v", clientMsg)
 				go func() {
-					if err := p.processFromClientAPI(ctx, clientMsg); err != nil {
+					if err := p.ProcessFromClientAPI(ctx, clientMsg); err != nil {
 						p.log.Error(err)
 					}
 				}()
 			case federatorMsg := <-p.fromFederator:
 				p.log.Tracef("received message FROM federator: %+v", federatorMsg)
 				go func() {
-					if err := p.processFromFederator(ctx, federatorMsg); err != nil {
+					if err := p.ProcessFromFederator(ctx, federatorMsg); err != nil {
 						p.log.Error(err)
 					}
 				}()

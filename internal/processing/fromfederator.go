@@ -32,7 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *processor) processFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
+func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	l := p.log.WithFields(logrus.Fields{
 		"func":         "processFromFederator",
 		"federatorMsg": fmt.Sprintf("%+v", federatorMsg),
@@ -104,9 +104,7 @@ func (p *processor) processFromFederator(ctx context.Context, federatorMsg messa
 			incomingAnnounce.ID = incomingAnnounceID
 
 			if err := p.db.PutStatus(ctx, incomingAnnounce); err != nil {
-				if err != db.ErrNoEntries {
-					return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
-				}
+				return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
 			}
 
 			if err := p.timelineStatus(ctx, incomingAnnounce); err != nil {
