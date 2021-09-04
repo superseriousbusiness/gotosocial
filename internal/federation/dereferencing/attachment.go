@@ -29,10 +29,6 @@ import (
 )
 
 func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
-	if minAttachment == nil {
-		return nil, fmt.Errorf("GetRemoteAttachment: minAttachment was nil")
-	}
-
 	if minAttachment.RemoteURL == "" {
 		return nil, fmt.Errorf("GetRemoteAttachment: minAttachment remote URL was empty")
 	}
