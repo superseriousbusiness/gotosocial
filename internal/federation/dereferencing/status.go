@@ -396,13 +396,10 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 	attachments := []*gtsmodel.MediaAttachment{}
 
 	for _, a := range status.Attachments {
-		aURL, err := url.Parse(a.RemoteURL)
-		if err != nil {
-			l.Errorf("populateStatusAttachments: couldn't parse attachment url %s: %s", a.RemoteURL, err)
-			continue
-		}
+		a.AccountID = status.AccountID
+		a.StatusID = status.ID
 
-		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, aURL, status.AccountID, status.ID, a.File.ContentType)
+		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, a)
 		if err != nil {
 			l.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
 			continue

@@ -384,10 +384,7 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	attachment.RemoteURL = attachmentURL.String()
 
 	mediaType := i.GetActivityStreamsMediaType()
-	if mediaType == nil {
-		return nil, errors.New("no media type")
-	}
-	if mediaType.Get() == "" {
+	if mediaType == nil || mediaType.Get() == "" {
 		return nil, errors.New("no media type")
 	}
 	attachment.File.ContentType = mediaType.Get()

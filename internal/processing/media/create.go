@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -45,25 +46,30 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, errors.New("could not read provided attachment: size 0 bytes")
 	}
 
-	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
-	attachment, err := p.mediaHandler.ProcessAttachment(ctx, buf.Bytes(), account.ID, "")
-	if err != nil {
-		return nil, fmt.Errorf("error reading attachment: %s", err)
-	}
-
-	// now we need to add extra fields that the attachment processor doesn't know (from the form)
-	// TODO: handle this inside mediaHandler.ProcessAttachment (just pass more params to it)
-
-	// first description
-	attachment.Description = text.RemoveHTML(form.Description) // remove any HTML from the image description
-
 	// now parse the focus parameter
 	focusx, focusy, err := parseFocus(form.Focus)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldn't parse attachment focus: %s", err)
 	}
-	attachment.FileMeta.Focus.X = focusx
-	attachment.FileMeta.Focus.Y = focusy
+
+	minAttachment := &gtsmodel.MediaAttachment{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		AccountID:   account.ID,
+		Description: text.RemoveHTML(form.Description),
+		FileMeta: gtsmodel.FileMeta{
+			Focus: gtsmodel.Focus{
+				X: focusx,
+				Y: focusy,
+			},
+		},
+	}
+
+	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
+	attachment, err := p.mediaHandler.ProcessAttachment(ctx, buf.Bytes(), minAttachment)
+	if err != nil {
+		return nil, fmt.Errorf("error reading attachment: %s", err)
+	}
 
 	// prepare the frontend representation now -- if there are any errors here at least we can bail without
 	// having already put something in the database and then having to clean it up again (eugh)

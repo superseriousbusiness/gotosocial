@@ -28,17 +28,23 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername string, remoteAttachmentURI *url.URL, ownerAccountID string, statusID string, expectedContentType string) (*gtsmodel.MediaAttachment, error) {
+func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
+	if minAttachment.RemoteURL == "" {
+		return nil, fmt.Errorf("GetRemoteAttachment: minAttachment remote URL was empty")
+	}
+	remoteAttachmentURL := minAttachment.RemoteURL
+
 	l := d.log.WithFields(logrus.Fields{
 		"username":            requestingUsername,
-		"remoteAttachmentURI": remoteAttachmentURI,
+		"remoteAttachmentURL": remoteAttachmentURL,
 	})
 
+	// return early if we already have the attachment somewhere
 	maybeAttachment := &gtsmodel.MediaAttachment{}
 	where := []db.Where{
 		{
 			Key:   "remote_url",
-			Value: remoteAttachmentURI.String(),
+			Value: remoteAttachmentURL,
 		},
 	}
 
@@ -48,12 +54,11 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername stri
 		return maybeAttachment, nil
 	}
 
-	a, err := d.RefreshAttachment(ctx, requestingUsername, remoteAttachmentURI, ownerAccountID, expectedContentType)
+	a, err := d.RefreshAttachment(ctx, requestingUsername, minAttachment)
 	if err != nil {
 		return nil, fmt.Errorf("GetRemoteAttachment: error refreshing attachment: %s", err)
 	}
 
-	a.StatusID = statusID
 	if err := d.db.Put(ctx, a); err != nil {
 		if err != db.ErrAlreadyExists {
 			return nil, fmt.Errorf("GetRemoteAttachment: error inserting attachment: %s", err)
@@ -63,19 +68,32 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername stri
 	return a, nil
 }
 
-func (d *deref) RefreshAttachment(ctx context.Context, requestingUsername string, remoteAttachmentURI *url.URL, ownerAccountID string, expectedContentType string) (*gtsmodel.MediaAttachment, error) {
+func (d *deref) RefreshAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
 	// it just doesn't exist or we have to refresh
+	if minAttachment.AccountID == "" {
+		return nil, fmt.Errorf("RefreshAttachment: minAttachment account ID was empty")
+	}
+
+	if minAttachment.File.ContentType == "" {
+		return nil, fmt.Errorf("RefreshAttachment: minAttachment.file.contentType was empty")
+	}
+
 	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
 		return nil, fmt.Errorf("RefreshAttachment: error creating transport: %s", err)
 	}
 
-	attachmentBytes, err := t.DereferenceMedia(ctx, remoteAttachmentURI, expectedContentType)
+	derefURI, err := url.Parse(minAttachment.RemoteURL)
+	if err != nil {
+		return nil, err
+	}
+
+	attachmentBytes, err := t.DereferenceMedia(ctx, derefURI, minAttachment.File.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("RefreshAttachment: error dereferencing media: %s", err)
 	}
 
-	a, err := d.mediaHandler.ProcessAttachment(ctx, attachmentBytes, ownerAccountID, remoteAttachmentURI.String())
+	a, err := d.mediaHandler.ProcessAttachment(ctx, attachmentBytes, minAttachment)
 	if err != nil {
 		return nil, fmt.Errorf("RefreshAttachment: error processing attachment: %s", err)
 	}
