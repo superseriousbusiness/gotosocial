@@ -61,17 +61,15 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 		}
 
 		// make sure a notif doesn't already exist for this mention
-		err := p.db.GetWhere(ctx, []db.Where{
+		if err := p.db.GetWhere(ctx, []db.Where{
 			{Key: "notification_type", Value: gtsmodel.NotificationMention},
 			{Key: "target_account_id", Value: m.TargetAccountID},
-			{Key: "origin_account_id", Value: status.AccountID},
-			{Key: "status_id", Value: status.ID},
-		}, &gtsmodel.Notification{})
-		if err == nil {
+			{Key: "origin_account_id", Value: m.OriginAccountID},
+			{Key: "status_id", Value: m.StatusID},
+		}, &gtsmodel.Notification{}); err == nil {
 			// notification exists already so just continue
 			continue
-		}
-		if err != db.ErrNoEntries {
+		} else if err != db.ErrNoEntries {
 			// there's a real error in the db
 			return fmt.Errorf("notifyStatus: error checking existence of notification for mention with id %s : %s", m.ID, err)
 		}
@@ -254,7 +252,7 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 		status.BoostOfAccount = boostedAcct
 	}
 
-	if status.BoostOfAccount.Domain == "" {
+	if status.BoostOfAccount.Domain != "" {
 		// remote account, nothing to do
 		return nil
 	}

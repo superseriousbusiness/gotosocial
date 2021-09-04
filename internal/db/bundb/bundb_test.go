@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type BunDBStandardTestSuite struct {
@@ -43,4 +44,28 @@ type BunDBStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
+}
+
+func (suite *BunDBStandardTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTags = testrig.NewTestTags()
+	suite.testMentions = testrig.NewTestMentions()
+}
+
+func (suite *BunDBStandardTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.log = testrig.NewTestLog()
+
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+}
+
+func (suite *BunDBStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
 }

@@ -25,35 +25,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type RelationshipTestSuite struct {
 	BunDBStandardTestSuite
-}
-
-func (suite *RelationshipTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-	suite.testTags = testrig.NewTestTags()
-	suite.testMentions = testrig.NewTestMentions()
-}
-
-func (suite *RelationshipTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
-
-	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-}
-
-func (suite *RelationshipTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *RelationshipTestSuite) TestIsBlocked() {
