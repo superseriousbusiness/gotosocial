@@ -1215,6 +1215,19 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 	}
 }
 
+func NewTestBlocks() map[string]*gtsmodel.Block {
+	return map[string]*gtsmodel.Block{
+		"local_account_2_block_remote_account_1": {
+			ID:              "01FEXXET6XXMF7G2V3ASZP3YQW",
+			CreatedAt:       time.Now().Add(-1 * time.Hour),
+			UpdatedAt:       time.Now().Add(-1 * time.Hour),
+			URI:             "http://localhost:8080/users/1happyturtle/blocks/01FEXXET6XXMF7G2V3ASZP3YQW",
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			TargetAccountID: "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+		},
+	}
+}
+
 // ActivityWithSignature wraps a pub.Activity along with its signature headers, for testing.
 type ActivityWithSignature struct {
 	Activity        pub.Activity
