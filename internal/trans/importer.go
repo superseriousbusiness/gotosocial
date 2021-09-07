@@ -26,7 +26,7 @@ import (
 )
 
 type Importer interface {
-	ImportMinimal(ctx context.Context, path string) error
+	Import(ctx context.Context, path string) error
 }
 
 type importer struct {

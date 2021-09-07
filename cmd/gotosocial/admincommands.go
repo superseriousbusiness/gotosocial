@@ -20,6 +20,7 @@ package main
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/account"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/export"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/urfave/cli/v2"
 )
@@ -41,14 +42,17 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
 									Name:  config.EmailFlag,
 									Usage: config.EmailUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
 									Name:  config.PasswordFlag,
 									Usage: config.PasswordUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -62,6 +66,7 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -75,6 +80,7 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -88,6 +94,7 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -101,6 +108,7 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -114,6 +122,7 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -127,16 +136,32 @@ func adminCommands() []*cli.Command {
 								&cli.StringFlag{
 									Name:  config.UsernameFlag,
 									Usage: config.UsernameUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
 									Name:  config.PasswordFlag,
 									Usage: config.PasswordUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
 								return runAction(c, account.Password)
 							},
 						},
+					},
+				},
+				{
+					Name:  "export",
+					Usage: "export data from the database to file at the given path",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:  config.TransPathFlag,
+							Usage: config.TransPathUsage,
+							Required: true,
+						},
+					},
+					Action: func(c *cli.Context) error {
+						return runAction(c, export.Export)
 					},
 				},
 			},

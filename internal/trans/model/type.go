@@ -25,9 +25,14 @@ type TransType string
 
 // Type of the trans entry. Describes how it should be read from file.
 const (
-	TransAccount TransType = "account"
-	TransBlock   TransType = "block"
-	TransFollow  TransType = "follow"
+	TransAccount          TransType = "account"
+	TransBlock            TransType = "block"
+	TransDomainBlock      TransType = "domainBlock"
+	TransEmailDomainBlock TransType = "emailDomainBlock"
+	TransFollow           TransType = "follow"
+	TransFollowRequest    TransType = "followRequest"
+	TransInstance         TransType = "instance"
+	TransUser             TransType = "user"
 )
 
 type TransEntry map[string]interface{}

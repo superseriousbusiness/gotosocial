@@ -23,8 +23,7 @@ import "time"
 type Follow struct {
 	Type            TransType `json:"type" bun:"-"`
 	ID              string    `json:"id"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	CreatedAt       *time.Time `json:"createdAt"`
 	URI             string    `json:"uri"`
 	AccountID       string    `json:"accountId"`
 	TargetAccountID string    `json:"targetAccountId"`

@@ -79,6 +79,51 @@ func (i *importer) blockDecode(e transmodel.TransEntry) (*transmodel.Block, erro
 	return b, nil
 }
 
+func (i *importer) domainBlockDecode(e transmodel.TransEntry) (*transmodel.DomainBlock, error) {
+	b := &transmodel.DomainBlock{}
+	if err := i.simpleDecode(e, b); err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func (i *importer) followDecode(e transmodel.TransEntry) (*transmodel.Follow, error) {
+	f := &transmodel.Follow{}
+	if err := i.simpleDecode(e, f); err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func (i *importer) followRequestDecode(e transmodel.TransEntry) (*transmodel.FollowRequest, error) {
+	f := &transmodel.FollowRequest{}
+	if err := i.simpleDecode(e, f); err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func (i *importer) instanceDecode(e transmodel.TransEntry) (*transmodel.Instance, error) {
+	inst := &transmodel.Instance{}
+	if err := i.simpleDecode(e, inst); err != nil {
+		return nil, err
+	}
+
+	return inst, nil
+}
+
+func (i *importer) userDecode(e transmodel.TransEntry) (*transmodel.User, error) {
+	u := &transmodel.User{}
+	if err := i.simpleDecode(e, u); err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func (i *importer) simpleDecode(entry transmodel.TransEntry, target interface{}) error {
 	decoder, err := newDecoder(target)
 	if err != nil {
