@@ -26,7 +26,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -51,7 +50,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	b, err := os.ReadFile(tempFilePath)
 	suite.NoError(err)
 	suite.NotEmpty(b)
-	suite.T().Log(string(b))
+	fmt.Println(string(b))
 
 	// create a new database with just the tables created, no entries
 	testrig.StandardDBTeardown(suite.db)
@@ -59,14 +58,20 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	testrig.CreateTestTables(newDB)
 
 	importer := trans.NewImporter(newDB, suite.log)
-	err = importer.ImportMinimal(ctx, tempFilePath)
+	err = importer.Import(ctx, tempFilePath)
 	suite.NoError(err)
 
-	// we should now have some accounts in the database
+	// we should have some accounts in the database
 	accounts := []*gtsmodel.Account{}
-	err = newDB.GetWhere(ctx, []db.Where{{Key: "domain", Value: nil}}, &accounts)
+	err = newDB.GetAll(ctx, &accounts)
 	suite.NoError(err)
 	suite.NotEmpty(accounts)
+
+	// we should have some blocks in the database
+	blocks := []*gtsmodel.Block{}
+	err = newDB.GetAll(ctx, &blocks)
+	suite.NoError(err)
+	suite.NotEmpty(blocks)
 }
 
 func TestImportMinimalTestSuite(t *testing.T) {

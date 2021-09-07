@@ -64,8 +64,8 @@ func (e *exporter) accountEncode(ctx context.Context, f *os.File, a *transmodel.
 // simpleEncode can be used for any type that doesn't have special keys which need handling differently,
 // or for types where special keys have already been handled.
 //
-// The 'type' key on the passed interface should already have been set, since simpleEncode won't know
-// what type it is!
+// Beware, the 'type' key on the passed interface should already have been set, since simpleEncode won't know
+// what type it is! If you try to decode stuff you've encoded with a missing type key, you're going to have a bad time.
 func (e *exporter) simpleEncode(ctx context.Context, f *os.File, i interface{}, id string) error {
 	_, alreadyWritten := e.writtenIDs[id]
 	if alreadyWritten {

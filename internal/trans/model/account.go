@@ -28,7 +28,6 @@ type Account struct {
 	Type                  TransType       `json:"type" bun:"-"`
 	ID                    string          `json:"id"`
 	CreatedAt             *time.Time      `json:"createdAt"`
-	UpdatedAt             *time.Time      `json:"updatedAt"`
 	Username              string          `json:"username"`
 	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
 	Locked                bool            `json:"locked"`

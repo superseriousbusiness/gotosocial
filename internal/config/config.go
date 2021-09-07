@@ -36,6 +36,9 @@ const (
 
 	PasswordFlag  = "password"
 	PasswordUsage = "the password to set for this account"
+
+	TransPathFlag = "path"
+	TransPathUsage = "the path of the file to import from/export to"
 )
 
 // Config pulls together all the configuration needed to run gotosocial
@@ -65,6 +68,7 @@ type Config struct {
 		Not parsed from .yaml configuration file.
 	*/
 	AccountCLIFlags map[string]string
+	ExportCLIFlags  map[string]string
 	SoftwareVersion string
 }
 
@@ -92,6 +96,7 @@ func Empty() *Config {
 		LetsEncryptConfig: &LetsEncryptConfig{},
 		OIDCConfig:        &OIDCConfig{},
 		AccountCLIFlags:   make(map[string]string),
+		ExportCLIFlags:    make(map[string]string),
 	}
 }
 
@@ -319,6 +324,9 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	c.AccountCLIFlags[UsernameFlag] = f.String(UsernameFlag)
 	c.AccountCLIFlags[EmailFlag] = f.String(EmailFlag)
 	c.AccountCLIFlags[PasswordFlag] = f.String(PasswordFlag)
+
+	// export CLI flags
+	c.ExportCLIFlags[TransPathFlag] = f.String(TransPathFlag)
 
 	c.SoftwareVersion = version
 	return nil

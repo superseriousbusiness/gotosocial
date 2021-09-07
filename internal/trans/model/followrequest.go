@@ -20,13 +20,11 @@ package trans
 
 import "time"
 
-type DomainBlock struct {
-	Type               TransType  `json:"type" bun:"-"`
-	ID                 string     `json:"id"`
-	CreatedAt          *time.Time `json:"createdAt"`
-	CreatedByAccountID string     `json:"createdByAccountID"`
-	PrivateComment     string     `json:"privateComment,omitempty"`
-	PublicComment      string     `json:"publicComment,omitempty"`
-	Obfuscate          bool       `json:"obfuscate"`
-	SubscriptionID     string     `json:"subscriptionID,omitempty"`
+type FollowRequest struct {
+	Type            TransType `json:"type" bun:"-"`
+	ID              string    `json:"id"`
+	CreatedAt       *time.Time `json:"createdAt"`
+	URI             string    `json:"uri"`
+	AccountID       string    `json:"accountId"`
+	TargetAccountID string    `json:"targetAccountId"`
 }
