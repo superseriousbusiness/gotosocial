@@ -20,42 +20,34 @@ package trans
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
-func (e *exporter) ExportMinimal(ctx context.Context, path string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
+func (i *importer) inputEntry(ctx context.Context, entry transmodel.TransEntry) error {
+	t, ok := entry[transmodel.TypeKey].(string)
+	if !ok {
+		return errors.New("inputEntry: could not derive entry type: missing or malformed 'type' key in json")
 	}
 
-	encoder := json.NewEncoder(f)
-
-	accounts := []*transmodel.Account{}
-	if err := e.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: nil}}, &accounts); err != nil {
-		return fmt.Errorf("ExportMinimal: error selecting accounts: %s", err)
-	}
-
-	for _, a := range accounts {
-		a.Type = transmodel.TransAccount
-		if err := encoder.Encode(a); err != nil {
-			return fmt.Errorf("ExportMinimal: error encoding account: %s", err)
+	switch transmodel.TransType(t) {
+	case transmodel.TransAccount:
+		account, err := accountDecode(entry)
+		if err != nil {
+			return fmt.Errorf("inputEntry: error decoding entry into account: %s", err)
 		}
-		e.log.Infof("ExportMinimal: exported account %s to %s", a.ID, path)
+		if err := i.putInDB(ctx, account); err != nil {
+			return fmt.Errorf("inputEntry: error adding account to database: %s", err)
+		}
+		i.log.Infof("inputEntry: added account with id %s", account.ID)
+		return nil
 	}
 
-	return neatClose(f)
+	return fmt.Errorf("inputEntry: didn't recognize transtype %s", t)
 }
 
-func neatClose(f *os.File) error {
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("error closing file: %s", err)
-	}
-
-	return nil
+func (i *importer) putInDB(ctx context.Context, entry interface{}) error {
+	return i.db.Put(ctx, entry)
 }

@@ -25,24 +25,25 @@ import (
 
 // Account represents the minimum viable representation of an account for export/import.
 type Account struct {
+	Type                  TransType       `json:"type" bun:"-"`
 	ID                    string          `json:"id"`
-	CreatedAt             *time.Time      `json:"created_at"`
-	UpdatedAt             *time.Time      `json:"updated_at"`
+	CreatedAt             *time.Time      `json:"createdAt"`
+	UpdatedAt             *time.Time      `json:"updatedAt"`
 	Username              string          `json:"username"`
 	Domain                string          `json:"domain,omitempty"`
 	Locked                bool            `json:"locked"`
 	Language              string          `json:"language,omitempty"`
 	URI                   string          `json:"uri"`
 	URL                   string          `json:"url"`
-	InboxURI              string          `json:"inbox_uri"`
-	OutboxURI             string          `json:"outbox_uri"`
-	FollowingURI          string          `json:"following_uri"`
-	FollowersURI          string          `json:"followers_uri"`
-	FeaturedCollectionURI string          `json:"featured_collection_uri"`
-	ActorType             string          `json:"actor_type"`
-	PrivateKey            *rsa.PrivateKey `json:"private_key,omitempty"`
-	PublicKey             *rsa.PublicKey  `json:"public_key"`
-	PublicKeyURI          string          `json:"public_key_uri"`
-	SuspendedAt           *time.Time      `json:"suspended_at,omitempty"`
-	SuspensionOrigin      string          `json:"suspension_origin,omitempty"`
+	InboxURI              string          `json:"inboxURI"`
+	OutboxURI             string          `json:"outboxURI"`
+	FollowingURI          string          `json:"followingUri"`
+	FollowersURI          string          `json:"followersUri"`
+	FeaturedCollectionURI string          `json:"featuredCollectionUri"`
+	ActorType             string          `json:"actorType"`
+	PrivateKey            *rsa.PrivateKey `json:"privateKey,omitempty"`
+	PublicKey             *rsa.PublicKey  `json:"publicKey"`
+	PublicKeyURI          string          `json:"publicKeyUri"`
+	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty"`
+	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty"`
 }

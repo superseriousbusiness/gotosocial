@@ -20,23 +20,35 @@ package trans
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
-type Exporter interface {
-	ExportMinimal(ctx context.Context, path string) error
-}
+func (i *importer) ImportMinimal(ctx context.Context, path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("ImportMinimal: error opening file %s: %s", path, err)
+	}
 
-type exporter struct {
-	db  db.DB
-	log *logrus.Logger
-}
+	decoder := json.NewDecoder(f)
+	decoder.UseNumber()
 
-func NewExporter(db db.DB, log *logrus.Logger) Exporter {
-	return &exporter{
-		db: db,
-      log: log,
+	for {
+		entry := transmodel.TransEntry{}
+		err := decoder.Decode(&entry)
+		if err != nil {
+			if err == io.EOF {
+				i.log.Infof("ImportMinimal: reached end of file")
+				return neatClose(f)
+			}
+			return fmt.Errorf("ImportMinimal: error decoding in readLoop: %s", err)
+		}
+		if err := i.inputEntry(ctx, entry); err != nil {
+			return fmt.Errorf("ImportMinimal: error inputting entry: %s", err)
+		}
 	}
 }
