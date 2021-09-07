@@ -29,7 +29,7 @@ type Instance struct {
 	Domain                 string     `json:"domain"`
 	Title                  string     `json:"title,omitempty" bun:",nullzero"`
 	URI                    string     `json:"uri"`
-	SuspendedAt            *time.Time  `json:"suspendedAt,omitempty" bun:",nullzero"`
+	SuspendedAt            *time.Time `json:"suspendedAt,omitempty" bun:",nullzero"`
 	DomainBlockID          string     `json:"domainBlockID,omitempty" bun:",nullzero"`
 	ShortDescription       string     `json:"shortDescription,omitempty" bun:",nullzero"`
 	Description            string     `json:"description,omitempty" bun:",nullzero"`
