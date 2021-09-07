@@ -19,53 +19,75 @@
 package trans
 
 import (
-	"crypto/rsa"
-	"encoding"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/sirupsen/logrus"
 	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
+func newDecoder(target interface{}) (*mapstructure.Decoder, error) {
+	decoderConfig := &mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.StringToTimeHookFunc(time.RFC3339), // this is needed to decode time.Time entries serialized as string
+		Result:     target,
+	}
+	return mapstructure.NewDecoder(decoderConfig)
+}
+
 func (i *importer) accountDecode(e transmodel.TransEntry) (*transmodel.Account, error) {
 	a := &transmodel.Account{}
-
-	decoderConfig := &mapstructure.DecoderConfig{
-		DecodeHook: mapstructure.ComposeDecodeHookFunc(
-			mapstructure.StringToTimeHookFunc(time.RFC3339),
-			keyHookFunc(i.log),
-		),
-		Result: a,
+	if err := i.simpleDecode(e, a); err != nil {
+		return nil, err
 	}
-	decoder, err := mapstructure.NewDecoder(decoderConfig)
+
+	// extract public key
+	publicKeyBlock, _ := pem.Decode([]byte(a.PublicKeyString))
+	if publicKeyBlock == nil {
+		return nil, errors.New("accountDecode: error decoding account public key")
+	}
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("accountDecode: error creating decoder: %s", err)
+		return nil, fmt.Errorf("accountDecode: error parsing account public key: %s", err)
 	}
+	a.PublicKey = publicKey
 
-	if err := decoder.Decode(&e); err != nil {
-		return nil, fmt.Errorf("accountDecode: error decoding account: %s", err)
+	if a.Domain == "" {
+		// extract private key (local account)
+		privateKeyBlock, _ := pem.Decode([]byte(a.PrivateKeyString))
+		if privateKeyBlock == nil {
+			return nil, errors.New("accountDecode: error decoding account private key")
+		}
+		privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("accountDecode: error parsing account private key: %s", err)
+		}
+		a.PrivateKey = privateKey
 	}
 
 	return a, nil
 }
 
-func keyHookFunc(log *logrus.Logger) mapstructure.DecodeHookFunc {
-	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-		if t != reflect.TypeOf(rsa.PrivateKey{}) {
-			return data, nil
-		}
-
-		result := reflect.New(t).Interface()
-		unmarshaller, ok := result.(encoding.BinaryUnmarshaler)
-		if !ok {
-			return data, nil
-		}
-		if err := unmarshaller.UnmarshalBinary([]byte(data.(string))); err != nil {
-			return nil, err
-		}
-		return result, nil
+func (i *importer) blockDecode(e transmodel.TransEntry) (*transmodel.Block, error) {
+	b := &transmodel.Block{}
+	if err := i.simpleDecode(e, b); err != nil {
+		return nil, err
 	}
+
+	return b, nil
+}
+
+func (i *importer) simpleDecode(entry transmodel.TransEntry, target interface{}) error {
+	decoder, err := newDecoder(target)
+	if err != nil {
+		return fmt.Errorf("simpleDecode: error creating decoder: %s", err)
+	}
+
+	if err := decoder.Decode(&entry); err != nil {
+		return fmt.Errorf("simpleDecode: error decoding: %s", err)
+	}
+
+	return nil
 }

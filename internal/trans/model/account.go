@@ -30,7 +30,7 @@ type Account struct {
 	CreatedAt             *time.Time      `json:"createdAt"`
 	UpdatedAt             *time.Time      `json:"updatedAt"`
 	Username              string          `json:"username"`
-	Domain                string          `json:"domain,omitempty"`
+	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
 	Locked                bool            `json:"locked"`
 	Language              string          `json:"language,omitempty"`
 	URI                   string          `json:"uri"`
@@ -41,9 +41,11 @@ type Account struct {
 	FollowersURI          string          `json:"followersUri"`
 	FeaturedCollectionURI string          `json:"featuredCollectionUri"`
 	ActorType             string          `json:"actorType"`
-	PrivateKey            *rsa.PrivateKey `json:"privateKey,omitempty"`
-	PublicKey             *rsa.PublicKey  `json:"publicKey"`
+	PrivateKey            *rsa.PrivateKey `json:"-" mapstructure:"-"`
+	PrivateKeyString      string          `json:"privateKey,omitempty" bun:"-" mapstructure:"privateKey"`
+	PublicKey             *rsa.PublicKey  `json:"-" mapstructure:"-"`
+	PublicKeyString       string          `json:"publicKey,omitempty" bun:"-" mapstructure:"publicKey"`
 	PublicKeyURI          string          `json:"publicKeyUri"`
 	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty"`
-	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty"`
+	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty" bun:",nullzero"`
 }

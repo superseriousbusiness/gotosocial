@@ -27,6 +27,7 @@ type TransType string
 const (
 	TransAccount TransType = "account"
 	TransBlock   TransType = "block"
+	TransFollow  TransType = "follow"
 )
 
 type TransEntry map[string]interface{}

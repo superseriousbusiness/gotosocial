@@ -40,7 +40,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	ctx := context.Background()
 
 	// use a temporary file path
-	tempFilePath := fmt.Sprintf("%s/%s", os.TempDir(), uuid.NewString())
+	tempFilePath := fmt.Sprintf("%s/%s", suite.T().TempDir(), uuid.NewString())
 
 	// export to the tempFilePath
 	exporter := trans.NewExporter(suite.db, suite.log)
@@ -53,18 +53,18 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.NotEmpty(b)
 	suite.T().Log(string(b))
 
-	// now that the file is stored, tear down the database...
+	// create a new database with just the tables created, no entries
 	testrig.StandardDBTeardown(suite.db)
-	// and create just the tables -- no entries!
-	testrig.CreateTestTables(suite.db)
+	newDB := testrig.NewTestDB()
+	testrig.CreateTestTables(newDB)
 
-	importer := trans.NewImporter(suite.db, suite.log)
+	importer := trans.NewImporter(newDB, suite.log)
 	err = importer.ImportMinimal(ctx, tempFilePath)
 	suite.NoError(err)
 
 	// we should now have some accounts in the database
 	accounts := []*gtsmodel.Account{}
-	err = suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: nil}}, &accounts)
+	err = newDB.GetWhere(ctx, []db.Where{{Key: "domain", Value: nil}}, &accounts)
 	suite.NoError(err)
 	suite.NotEmpty(accounts)
 }
