@@ -20,22 +20,23 @@ package trans
 
 import (
 	"crypto/rsa"
+	"encoding"
 	"fmt"
-	"net"
 	"reflect"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
-func accountDecode(e transmodel.TransEntry) (*transmodel.Account, error) {
+func (i *importer) accountDecode(e transmodel.TransEntry) (*transmodel.Account, error) {
 	a := &transmodel.Account{}
 
 	decoderConfig := &mapstructure.DecoderConfig{
 		DecodeHook: mapstructure.ComposeDecodeHookFunc(
 			mapstructure.StringToTimeHookFunc(time.RFC3339),
-			PrivateKeyHookFunc(),
+			keyHookFunc(i.log),
 		),
 		Result: a,
 	}
@@ -51,16 +52,20 @@ func accountDecode(e transmodel.TransEntry) (*transmodel.Account, error) {
 	return a, nil
 }
 
-var PrivateKeyHookFunc mapstructure.DecodeHookFunc = func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
-	if t != reflect.TypeOf(rsa.PrivateKey{}) {
-		return data, nil
+func keyHookFunc(log *logrus.Logger) mapstructure.DecodeHookFunc {
+	return func(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+		if t != reflect.TypeOf(rsa.PrivateKey{}) {
+			return data, nil
+		}
+
+		result := reflect.New(t).Interface()
+		unmarshaller, ok := result.(encoding.BinaryUnmarshaler)
+		if !ok {
+			return data, nil
+		}
+		if err := unmarshaller.UnmarshalBinary([]byte(data.(string))); err != nil {
+			return nil, err
+		}
+		return result, nil
 	}
-
-
-	rsa.
-
-	// Convert it by parsing
-	_, net, err := net.ParseCIDR(data.(string))
-	return net, err
-
 }

@@ -34,7 +34,7 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.TransEntry) 
 
 	switch transmodel.TransType(t) {
 	case transmodel.TransAccount:
-		account, err := accountDecode(entry)
+		account, err := i.accountDecode(entry)
 		if err != nil {
 			return fmt.Errorf("inputEntry: error decoding entry into account: %s", err)
 		}
