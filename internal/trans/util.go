@@ -16,24 +16,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package trans_test
+package trans
 
 import (
-	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"fmt"
+	"os"
 )
 
-type ModelTestSuite struct {
-	suite.Suite
-	db db.DB
-}
+func neatClose(f *os.File) error {
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("error closing file: %s", err)
+	}
 
-func (suite *ModelTestSuite) SetupTest() {
-	suite.db = testrig.NewTestDB()
-	testrig.StandardDBSetup(suite.db, nil)
-}
-
-func (suite *ModelTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
+	return nil
 }

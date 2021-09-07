@@ -18,27 +18,14 @@
 
 package trans
 
-import (
-	"context"
+import "time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-)
-
-type Exporter interface {
-	ExportMinimal(ctx context.Context, path string) error
-}
-
-type exporter struct {
-	db         db.DB
-	log        *logrus.Logger
-	writtenIDs map[string]bool
-}
-
-func NewExporter(db db.DB, log *logrus.Logger) Exporter {
-	return &exporter{
-		db:         db,
-		log:        log,
-		writtenIDs: make(map[string]bool),
-	}
+type Follow struct {
+	Type            TransType `json:"type" bun:"-"`
+	ID              string    `json:"id"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	URI             string    `json:"uri"`
+	AccountID       string    `json:"accountId"`
+	TargetAccountID string    `json:"targetAccountId"`
 }

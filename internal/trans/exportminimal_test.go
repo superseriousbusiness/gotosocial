@@ -46,7 +46,7 @@ func (suite *ExportMinimalTestSuite) TestExportMinimalOK() {
 	b, err := os.ReadFile(tempFilePath)
 	suite.NoError(err)
 	suite.NotEmpty(b)
-	suite.T().Log(string(b))
+	fmt.Println(string(b))
 }
 
 func TestExportMinimalTestSuite(t *testing.T) {
