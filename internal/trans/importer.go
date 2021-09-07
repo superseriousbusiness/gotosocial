@@ -18,14 +18,25 @@
 
 package trans
 
-import "time"
+import (
+	"context"
 
-type Block struct {
-	Type            TransType `json:"type" bun:"-"`
-	ID              string    `json:"id"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	URI             string    `json:"uri"`
-	AccountID       string    `json:"accountId"`
-	TargetAccountID string    `json:"targetAccountId"`
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+)
+
+type Importer interface {
+	ImportMinimal(ctx context.Context, path string) error
+}
+
+type importer struct {
+	db  db.DB
+	log *logrus.Logger
+}
+
+func NewImporter(db db.DB, log *logrus.Logger) Importer {
+	return &importer{
+		db: db,
+      log: log,
+	}
 }

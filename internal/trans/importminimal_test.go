@@ -26,20 +26,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type ExportMinimalTestSuite struct {
+type ImportMinimalTestSuite struct {
 	TransTestSuite
 }
 
-func (suite *ExportMinimalTestSuite) TestExportMinimalOK() {
-	// use a temporary file path that will be cleaned when the test is closed
-	tempFilePath := fmt.Sprintf("%s/%s", suite.T().TempDir(), uuid.NewString())
+func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
+	ctx := context.Background()
+
+	// use a temporary file path
+	tempFilePath := fmt.Sprintf("%s/%s", os.TempDir(), uuid.NewString())
 
 	// export to the tempFilePath
 	exporter := trans.NewExporter(suite.db, suite.log)
-	err := exporter.ExportMinimal(context.Background(), tempFilePath)
+	err := exporter.ExportMinimal(ctx, tempFilePath)
 	suite.NoError(err)
 
 	// we should have some bytes in that file now
@@ -47,8 +52,23 @@ func (suite *ExportMinimalTestSuite) TestExportMinimalOK() {
 	suite.NoError(err)
 	suite.NotEmpty(b)
 	suite.T().Log(string(b))
+
+	// now that the file is stored, tear down the database...
+	testrig.StandardDBTeardown(suite.db)
+	// and create just the tables -- no entries!
+	testrig.CreateTestTables(suite.db)
+
+	importer := trans.NewImporter(suite.db, suite.log)
+	err = importer.ImportMinimal(ctx, tempFilePath)
+	suite.NoError(err)
+
+	// we should now have some accounts in the database
+	accounts := []*gtsmodel.Account{}
+	err = suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: nil}}, &accounts)
+	suite.NoError(err)
+	suite.NotEmpty(accounts)
 }
 
-func TestExportMinimalTestSuite(t *testing.T) {
-	suite.Run(t, &ExportMinimalTestSuite{})
+func TestImportMinimalTestSuite(t *testing.T) {
+	suite.Run(t, &ImportMinimalTestSuite{})
 }

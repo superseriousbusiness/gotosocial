@@ -19,6 +19,7 @@
 package trans_test
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -26,11 +27,13 @@ import (
 
 type TransTestSuite struct {
 	suite.Suite
-	db db.DB
+	db  db.DB
+	log *logrus.Logger
 }
 
 func (suite *TransTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
+   suite.log = testrig.NewTestLog()
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

@@ -18,14 +18,15 @@
 
 package trans
 
-import "time"
+const TypeKey = "type"
 
-type Block struct {
-	Type            TransType `json:"type" bun:"-"`
-	ID              string    `json:"id"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	URI             string    `json:"uri"`
-	AccountID       string    `json:"accountId"`
-	TargetAccountID string    `json:"targetAccountId"`
-}
+// TransType describes the type of a trans entry, and how it should be read/serialized.
+type TransType string
+
+// Type of the trans entry. Describes how it should be read from file.
+const (
+	TransAccount TransType = "account"
+	TransBlock   TransType = "block"
+)
+
+type TransEntry map[string]interface{}
