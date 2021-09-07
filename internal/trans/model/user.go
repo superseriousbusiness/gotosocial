@@ -29,21 +29,21 @@ type User struct {
 	Email               string     `json:"email,omitempty" bun:",nullzero"`
 	AccountID           string     `json:"accountID"`
 	EncryptedPassword   string     `json:"encryptedPassword"`
-	CurrentSignInAt     *time.Time  `json:"currentSignInAt,omitempty" bun:",nullzero"`
-	LastSignInAt        *time.Time  `json:"lastSignInAt,omitempty" bun:",nullzero"`
+	CurrentSignInAt     *time.Time `json:"currentSignInAt,omitempty" bun:",nullzero"`
+	LastSignInAt        *time.Time `json:"lastSignInAt,omitempty" bun:",nullzero"`
 	InviteID            string     `json:"inviteID,omitempty" bun:",nullzero"`
 	ChosenLanguages     []string   `json:"chosenLanguages,omitempty" bun:",nullzero"`
 	FilteredLanguages   []string   `json:"filteredLanguage,omitempty" bun:",nullzero"`
 	Locale              string     `json:"locale" bun:",nullzero"`
 	LastEmailedAt       time.Time  `json:"lastEmailedAt,omitempty" bun:",nullzero"`
 	ConfirmationToken   string     `json:"confirmationToken,omitempty" bun:",nullzero"`
-	ConfirmationSentAt  *time.Time  `json:"confirmationTokenSentAt,omitempty" bun:",nullzero"`
-	ConfirmedAt         *time.Time  `json:"confirmedAt,omitempty" bun:",nullzero"`
+	ConfirmationSentAt  *time.Time `json:"confirmationTokenSentAt,omitempty" bun:",nullzero"`
+	ConfirmedAt         *time.Time `json:"confirmedAt,omitempty" bun:",nullzero"`
 	UnconfirmedEmail    string     `json:"unconfirmedEmail,omitempty" bun:",nullzero"`
 	Moderator           bool       `json:"moderator"`
 	Admin               bool       `json:"admin"`
 	Disabled            bool       `json:"disabled"`
 	Approved            bool       `json:"approved"`
 	ResetPasswordToken  string     `json:"resetPasswordToken,omitempty" bun:",nullzero"`
-	ResetPasswordSentAt *time.Time  `json:"resetPasswordSentAt,omitempty" bun:",nullzero"`
+	ResetPasswordSentAt *time.Time `json:"resetPasswordSentAt,omitempty" bun:",nullzero"`
 }

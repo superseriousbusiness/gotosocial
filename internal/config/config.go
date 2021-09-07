@@ -37,7 +37,7 @@ const (
 	PasswordFlag  = "password"
 	PasswordUsage = "the password to set for this account"
 
-	TransPathFlag = "path"
+	TransPathFlag  = "path"
 	TransPathUsage = "the path of the file to import from/export to"
 )
 

@@ -36,7 +36,7 @@ type importer struct {
 
 func NewImporter(db db.DB, log *logrus.Logger) Importer {
 	return &importer{
-		db: db,
-      log: log,
+		db:  db,
+		log: log,
 	}
 }

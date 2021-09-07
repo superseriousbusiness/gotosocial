@@ -33,7 +33,7 @@ type TransTestSuite struct {
 
 func (suite *TransTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
-   suite.log = testrig.NewTestLog()
+	suite.log = testrig.NewTestLog()
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

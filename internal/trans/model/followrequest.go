@@ -21,10 +21,10 @@ package trans
 import "time"
 
 type FollowRequest struct {
-	Type            TransType `json:"type" bun:"-"`
-	ID              string    `json:"id"`
+	Type            TransType  `json:"type" bun:"-"`
+	ID              string     `json:"id"`
 	CreatedAt       *time.Time `json:"createdAt"`
-	URI             string    `json:"uri"`
-	AccountID       string    `json:"accountId"`
-	TargetAccountID string    `json:"targetAccountId"`
+	URI             string     `json:"uri"`
+	AccountID       string     `json:"accountId"`
+	TargetAccountID string     `json:"targetAccountId"`
 }
