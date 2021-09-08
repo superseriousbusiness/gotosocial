@@ -123,6 +123,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestDomainBlocks() {
+		if err := db.Put(ctx, v); err != nil {
+			logrus.Panic(err)
+		}
+	}
+
 	for _, v := range NewTestUsers() {
 		if err := db.Put(ctx, v); err != nil {
 			logrus.Panic(err)

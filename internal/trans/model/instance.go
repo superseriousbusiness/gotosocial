@@ -22,13 +22,14 @@ import (
 	"time"
 )
 
+// Instance represents an instance entry as serialized in an export file.
 type Instance struct {
-	Type                   TransType  `json:"type" bun:"-"`
-	ID                     string     `json:"id"`
-	CreatedAt              *time.Time `json:"createdAt"`
-	Domain                 string     `json:"domain"`
+	Type                   Type       `json:"type" bun:"-"`
+	ID                     string     `json:"id" bun:",nullzero"`
+	CreatedAt              *time.Time `json:"createdAt" bun:",nullzero"`
+	Domain                 string     `json:"domain" bun:",nullzero"`
 	Title                  string     `json:"title,omitempty" bun:",nullzero"`
-	URI                    string     `json:"uri"`
+	URI                    string     `json:"uri" bun:",nullzero"`
 	SuspendedAt            *time.Time `json:"suspendedAt,omitempty" bun:",nullzero"`
 	DomainBlockID          string     `json:"domainBlockID,omitempty" bun:",nullzero"`
 	ShortDescription       string     `json:"shortDescription,omitempty" bun:",nullzero"`

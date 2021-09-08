@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
+// Importer wraps functionality for importing entries from a file into the database.
 type Importer interface {
 	Import(ctx context.Context, path string) error
 }
@@ -34,6 +35,7 @@ type importer struct {
 	log *logrus.Logger
 }
 
+// NewImporter returns a new Importer interface that uses the given db and logger.
 func NewImporter(db db.DB, log *logrus.Logger) Importer {
 	return &importer{
 		db:  db,

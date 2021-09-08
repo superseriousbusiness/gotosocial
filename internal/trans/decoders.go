@@ -37,7 +37,7 @@ func newDecoder(target interface{}) (*mapstructure.Decoder, error) {
 	return mapstructure.NewDecoder(decoderConfig)
 }
 
-func (i *importer) accountDecode(e transmodel.TransEntry) (*transmodel.Account, error) {
+func (i *importer) accountDecode(e transmodel.Entry) (*transmodel.Account, error) {
 	a := &transmodel.Account{}
 	if err := i.simpleDecode(e, a); err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (i *importer) accountDecode(e transmodel.TransEntry) (*transmodel.Account, 
 	return a, nil
 }
 
-func (i *importer) blockDecode(e transmodel.TransEntry) (*transmodel.Block, error) {
+func (i *importer) blockDecode(e transmodel.Entry) (*transmodel.Block, error) {
 	b := &transmodel.Block{}
 	if err := i.simpleDecode(e, b); err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (i *importer) blockDecode(e transmodel.TransEntry) (*transmodel.Block, erro
 	return b, nil
 }
 
-func (i *importer) domainBlockDecode(e transmodel.TransEntry) (*transmodel.DomainBlock, error) {
+func (i *importer) domainBlockDecode(e transmodel.Entry) (*transmodel.DomainBlock, error) {
 	b := &transmodel.DomainBlock{}
 	if err := i.simpleDecode(e, b); err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (i *importer) domainBlockDecode(e transmodel.TransEntry) (*transmodel.Domai
 	return b, nil
 }
 
-func (i *importer) followDecode(e transmodel.TransEntry) (*transmodel.Follow, error) {
+func (i *importer) followDecode(e transmodel.Entry) (*transmodel.Follow, error) {
 	f := &transmodel.Follow{}
 	if err := i.simpleDecode(e, f); err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (i *importer) followDecode(e transmodel.TransEntry) (*transmodel.Follow, er
 	return f, nil
 }
 
-func (i *importer) followRequestDecode(e transmodel.TransEntry) (*transmodel.FollowRequest, error) {
+func (i *importer) followRequestDecode(e transmodel.Entry) (*transmodel.FollowRequest, error) {
 	f := &transmodel.FollowRequest{}
 	if err := i.simpleDecode(e, f); err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func (i *importer) followRequestDecode(e transmodel.TransEntry) (*transmodel.Fol
 	return f, nil
 }
 
-func (i *importer) instanceDecode(e transmodel.TransEntry) (*transmodel.Instance, error) {
+func (i *importer) instanceDecode(e transmodel.Entry) (*transmodel.Instance, error) {
 	inst := &transmodel.Instance{}
 	if err := i.simpleDecode(e, inst); err != nil {
 		return nil, err
@@ -115,7 +115,7 @@ func (i *importer) instanceDecode(e transmodel.TransEntry) (*transmodel.Instance
 	return inst, nil
 }
 
-func (i *importer) userDecode(e transmodel.TransEntry) (*transmodel.User, error) {
+func (i *importer) userDecode(e transmodel.Entry) (*transmodel.User, error) {
 	u := &transmodel.User{}
 	if err := i.simpleDecode(e, u); err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (i *importer) userDecode(e transmodel.TransEntry) (*transmodel.User, error)
 	return u, nil
 }
 
-func (i *importer) simpleDecode(entry transmodel.TransEntry, target interface{}) error {
+func (i *importer) simpleDecode(entry transmodel.Entry, target interface{}) error {
 	decoder, err := newDecoder(target)
 	if err != nil {
 		return fmt.Errorf("simpleDecode: error creating decoder: %s", err)

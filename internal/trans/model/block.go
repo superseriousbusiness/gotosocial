@@ -20,11 +20,12 @@ package trans
 
 import "time"
 
+// Block represents an account block as serialized in an exported file.
 type Block struct {
-	Type            TransType  `json:"type" bun:"-"`
-	ID              string     `json:"id"`
-	CreatedAt       *time.Time `json:"createdAt"`
-	URI             string     `json:"uri"`
-	AccountID       string     `json:"accountId"`
-	TargetAccountID string     `json:"targetAccountId"`
+	Type            Type       `json:"type" bun:"-"`
+	ID              string     `json:"id" bun:",nullzero"`
+	CreatedAt       *time.Time `json:"createdAt" bun:",nullzero"`
+	URI             string     `json:"uri" bun:",nullzero"`
+	AccountID       string     `json:"accountId" bun:",nullzero"`
+	TargetAccountID string     `json:"targetAccountId" bun:",nullzero"`
 }

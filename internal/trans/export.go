@@ -93,7 +93,7 @@ func (e *exporter) exportDomainBlocks(ctx context.Context, f *os.File) ([]*trans
 	}
 
 	for _, b := range domainBlocks {
-		b.Type = transmodel.TransBlock
+		b.Type = transmodel.TransDomainBlock
 		if err := e.simpleEncode(ctx, f, b, b.ID); err != nil {
 			return nil, fmt.Errorf("exportBlocks: error encoding domain block: %s", err)
 		}

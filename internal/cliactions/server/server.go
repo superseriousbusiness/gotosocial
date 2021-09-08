@@ -39,7 +39,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
@@ -51,32 +50,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 )
 
-var models []interface{} = []interface{}{
-	&gtsmodel.Account{},
-	&gtsmodel.Application{},
-	&gtsmodel.Block{},
-	&gtsmodel.DomainBlock{},
-	&gtsmodel.EmailDomainBlock{},
-	&gtsmodel.Follow{},
-	&gtsmodel.FollowRequest{},
-	&gtsmodel.MediaAttachment{},
-	&gtsmodel.Mention{},
-	&gtsmodel.Status{},
-	&gtsmodel.StatusToEmoji{},
-	&gtsmodel.StatusToTag{},
-	&gtsmodel.StatusFave{},
-	&gtsmodel.StatusBookmark{},
-	&gtsmodel.StatusMute{},
-	&gtsmodel.Tag{},
-	&gtsmodel.User{},
-	&gtsmodel.Emoji{},
-	&gtsmodel.Instance{},
-	&gtsmodel.Notification{},
-	&gtsmodel.RouterSession{},
-	&gtsmodel.Token{},
-	&gtsmodel.Client{},
-}
-
 // Start creates and starts a gotosocial server
 var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
 	dbService, err := bundb.NewBunDBService(ctx, c, log)
@@ -84,10 +57,8 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	for _, m := range models {
-		if err := dbService.CreateTable(ctx, m); err != nil {
-			return fmt.Errorf("table creation error: %s", err)
-		}
+	if err := dbService.CreateAllTables(ctx); err != nil {
+		return fmt.Errorf("error creating database tables: %s", err)
 	}
 
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {

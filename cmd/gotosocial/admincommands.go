@@ -20,7 +20,7 @@ package main
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/account"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/export"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/trans"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/urfave/cli/v2"
 )
@@ -161,7 +161,21 @@ func adminCommands() []*cli.Command {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						return runAction(c, export.Export)
+						return runAction(c, trans.Export)
+					},
+				},
+				{
+					Name:  "import",
+					Usage: "import data from a file into the database",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:     config.TransPathFlag,
+							Usage:    config.TransPathUsage,
+							Required: true,
+						},
+					},
+					Action: func(c *cli.Context) error {
+						return runAction(c, trans.Import)
 					},
 				},
 			},

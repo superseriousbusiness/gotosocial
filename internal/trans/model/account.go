@@ -25,26 +25,28 @@ import (
 
 // Account represents the minimum viable representation of an account for export/import.
 type Account struct {
-	Type                  TransType       `json:"type" bun:"-"`
-	ID                    string          `json:"id"`
-	CreatedAt             *time.Time      `json:"createdAt"`
-	Username              string          `json:"username"`
+	Type                  Type            `json:"type" bun:"-"`
+	ID                    string          `json:"id" bun:",nullzero"`
+	CreatedAt             *time.Time      `json:"createdAt" bun:",nullzero"`
+	Username              string          `json:"username" bun:",nullzero"`
 	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
+	HeaderRemoteURL       string          `json:"headerRemoteURL,omitempty" bun:",nullzero"`
+	AvatarRemoteURL       string          `json:"avatarRemoteURL,omitempty" bun:",nullzero"`
 	Locked                bool            `json:"locked"`
-	Language              string          `json:"language,omitempty"`
-	URI                   string          `json:"uri"`
-	URL                   string          `json:"url"`
-	InboxURI              string          `json:"inboxURI"`
-	OutboxURI             string          `json:"outboxURI"`
-	FollowingURI          string          `json:"followingUri"`
-	FollowersURI          string          `json:"followersUri"`
-	FeaturedCollectionURI string          `json:"featuredCollectionUri"`
-	ActorType             string          `json:"actorType"`
+	Language              string          `json:"language,omitempty" bun:",nullzero"`
+	URI                   string          `json:"uri" bun:",nullzero"`
+	URL                   string          `json:"url" bun:",nullzero"`
+	InboxURI              string          `json:"inboxURI" bun:",nullzero"`
+	OutboxURI             string          `json:"outboxURI" bun:",nullzero"`
+	FollowingURI          string          `json:"followingUri" bun:",nullzero"`
+	FollowersURI          string          `json:"followersUri" bun:",nullzero"`
+	FeaturedCollectionURI string          `json:"featuredCollectionUri" bun:",nullzero"`
+	ActorType             string          `json:"actorType" bun:",nullzero"`
 	PrivateKey            *rsa.PrivateKey `json:"-" mapstructure:"-"`
-	PrivateKeyString      string          `json:"privateKey,omitempty" bun:"-" mapstructure:"privateKey"`
+	PrivateKeyString      string          `json:"privateKey,omitempty" bun:"-" mapstructure:"privateKey" bun:",nullzero"`
 	PublicKey             *rsa.PublicKey  `json:"-" mapstructure:"-"`
-	PublicKeyString       string          `json:"publicKey,omitempty" bun:"-" mapstructure:"publicKey"`
-	PublicKeyURI          string          `json:"publicKeyUri"`
-	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty"`
+	PublicKeyString       string          `json:"publicKey,omitempty" bun:"-" mapstructure:"publicKey" bun:",nullzero"`
+	PublicKeyURI          string          `json:"publicKeyUri" bun:",nullzero"`
+	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty" bun:",nullzero"`
 	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty" bun:",nullzero"`
 }

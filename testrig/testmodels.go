@@ -736,6 +736,19 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 	}
 }
 
+func NewTestDomainBlocks() map[string]*gtsmodel.DomainBlock {
+	return map[string]*gtsmodel.DomainBlock{
+		"replyguys.com": {
+			ID:                 "01FF22EQM7X8E3RX1XGPN7S87D",
+			Domain:             "replyguys.com",
+			CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+			PrivateComment:     "i blocked this domain because they keep replying with pushy + unwarranted linux advice",
+			PublicComment:      "reply-guying to tech posts",
+			Obfuscate:          false,
+		},
+	}
+}
+
 type filenames struct {
 	Original string
 	Small    string
@@ -826,6 +839,33 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			ContentWarning:           "open to see some puppies",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                true,
+			Language:                 "en",
+			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
+			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
+				Federated: true,
+				Boostable: true,
+				Replyable: true,
+				Likeable:  true,
+			},
+			ActivityStreamsType: ap.ObjectNote,
+		},
+		"admin_account_status_3": {
+			ID:                       "01FF25D5Q0DH7CHD57CTRS6WK0",
+			URI:                      "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+			URL:                      "http://localhost:8080/@admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+			Content:                  "hi @the_mighty_zork welcome to the instance!",
+			CreatedAt:                time.Now().Add(-46 * time.Hour),
+			UpdatedAt:                time.Now().Add(-46 * time.Hour),
+			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
+			MentionIDs:               []string{"01FF26A6BGEKCZFWNEHXB2ZZ6M"},
+			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
+			InReplyToID:              "01F8MHAMCHF6Y650WCRSCP4WMY",
+			InReplyToAccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
+			InReplyToURI:             "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+			BoostOfID:                "",
+			Visibility:               gtsmodel.VisibilityPublic,
+			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
@@ -1149,6 +1189,18 @@ func NewTestMentions() map[string]*gtsmodel.Mention {
 			TargetAccountURI: "http://localhost:8080/users/the_mighty_zork",
 			TargetAccountURL: "http://localhost:8080/@the_mighty_zork",
 		},
+		"admin_account_mention_zork": {
+			ID:               "01FF26A6BGEKCZFWNEHXB2ZZ6M",
+			StatusID:         "01FF25D5Q0DH7CHD57CTRS6WK0",
+			CreatedAt:        time.Now().Add(-46 * time.Hour),
+			UpdatedAt:        time.Now().Add(-46 * time.Hour),
+			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
+			OriginAccountURI: "http://localhost:8080/users/admin",
+			TargetAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
+			NameString:       "@the_mighty_zork",
+			TargetAccountURI: "http://localhost:8080/users/the_mighty_zork",
+			TargetAccountURL: "http://localhost:8080/@the_mighty_zork",
+		},
 	}
 }
 
@@ -1387,7 +1439,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
-	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FCQSQ667XHJ9AV9T27SJJSX5")
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0")
 	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesLast := ActivityWithSignature{
 		SignatureHeader: sig,
