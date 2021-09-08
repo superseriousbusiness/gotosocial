@@ -47,7 +47,7 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
-	github.com/uptrace/bun v0.4.3
+	github.com/uptrace/bun v1.0.4
 	github.com/uptrace/bun/dialect/pgdialect v0.4.3
 	github.com/uptrace/bun/dialect/sqlitedialect v0.4.3
 	github.com/urfave/cli/v2 v2.3.0
