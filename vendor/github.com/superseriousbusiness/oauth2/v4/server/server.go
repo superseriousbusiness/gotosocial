@@ -352,6 +352,7 @@ func (s *Server) ValidationTokenRequest(r *http.Request) (oauth2.GrantType, *oau
 		tgr.UserID = userID
 	case oauth2.ClientCredentials:
 		tgr.Scope = r.FormValue("scope")
+		tgr.RedirectURI = r.FormValue("redirect_uri")
 	case oauth2.Refreshing:
 		tgr.Refresh = r.FormValue("refresh_token")
 		tgr.Scope = r.FormValue("scope")

@@ -44,7 +44,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
-	github.com/superseriousbusiness/oauth2/v4 v4.3.1-SSB
+	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
 	github.com/uptrace/bun v0.4.3

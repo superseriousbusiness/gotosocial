@@ -412,8 +412,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203 h1:1SWXcTphBQjYGWRRxLFIAR1LVtQEj4eR7xPtyeOVM/c=
 github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203/go.mod h1:0Xw5cYMOYpgaWs+OOSx41ugycl2qvKTi9tlMMcZhFyY=
-github.com/superseriousbusiness/oauth2/v4 v4.3.1-SSB h1:O6t/BGa+cD18jVnSF3wjsdfBPACtrIEQAveYQaTneyM=
-github.com/superseriousbusiness/oauth2/v4 v4.3.1-SSB/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
+github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB h1:PtW2w6budTvRV2J5QAoSvThTHBuvh8t/+BXIZFAaBSc=
+github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
 github.com/tdewolff/minify/v2 v2.9.21 h1:nO4s1PEMy7aRjlIlbr3Jgr+bJby8QYuifa2Vs2f9lh4=
 github.com/tdewolff/minify/v2 v2.9.21/go.mod h1:PoDBts2L7sCwUT28vTAlozGeD6qxjrrihtin4bR/RMM=
 github.com/tdewolff/parse/v2 v2.5.19 h1:Kjaj3KQOx/4elIxlBSglus4E2oMfdROphvbq2b+OBZ0=

@@ -371,7 +371,7 @@ github.com/stretchr/testify/suite
 # github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 ## explicit
 github.com/superseriousbusiness/exifremove/pkg/exifremove
-# github.com/superseriousbusiness/oauth2/v4 v4.3.1-SSB
+# github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 ## explicit
 github.com/superseriousbusiness/oauth2/v4
 github.com/superseriousbusiness/oauth2/v4/errors
