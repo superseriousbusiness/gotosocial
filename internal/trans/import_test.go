@@ -72,6 +72,18 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	err = newDB.GetAll(ctx, &blocks)
 	suite.NoError(err)
 	suite.NotEmpty(blocks)
+
+	// we should have some follows in the database
+	follows := []*gtsmodel.Follow{}
+	err = newDB.GetAll(ctx, &follows)
+	suite.NoError(err)
+	suite.NotEmpty(follows)
+
+	// we should have some domain blocks in the database
+	domainBlocks := []*gtsmodel.DomainBlock{}
+	err = newDB.GetAll(ctx, &domainBlocks)
+	suite.NoError(err)
+	suite.NotEmpty(domainBlocks)
 }
 
 func TestImportMinimalTestSuite(t *testing.T) {

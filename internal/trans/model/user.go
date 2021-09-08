@@ -22,13 +22,14 @@ import (
 	"time"
 )
 
+// User represents a local instance user as serialized to an export file.
 type User struct {
-	Type                TransType  `json:"type" bun:"-"`
-	ID                  string     `json:"id"`
-	CreatedAt           *time.Time `json:"createdAt"`
+	Type                Type       `json:"type" bun:"-"`
+	ID                  string     `json:"id" bun:",nullzero"`
+	CreatedAt           *time.Time `json:"createdAt" bun:",nullzero"`
 	Email               string     `json:"email,omitempty" bun:",nullzero"`
-	AccountID           string     `json:"accountID"`
-	EncryptedPassword   string     `json:"encryptedPassword"`
+	AccountID           string     `json:"accountID" bun:",nullzero"`
+	EncryptedPassword   string     `json:"encryptedPassword" bun:",nullzero"`
 	CurrentSignInAt     *time.Time `json:"currentSignInAt,omitempty" bun:",nullzero"`
 	LastSignInAt        *time.Time `json:"lastSignInAt,omitempty" bun:",nullzero"`
 	InviteID            string     `json:"inviteID,omitempty" bun:",nullzero"`

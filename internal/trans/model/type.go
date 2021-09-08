@@ -18,21 +18,24 @@
 
 package trans
 
+// TypeKey should be set on a TransEntry to indicate the type of entry it is.
 const TypeKey = "type"
 
-// TransType describes the type of a trans entry, and how it should be read/serialized.
-type TransType string
+// Type describes the type of a trans entry, and how it should be read/serialized.
+type Type string
 
 // Type of the trans entry. Describes how it should be read from file.
 const (
-	TransAccount          TransType = "account"
-	TransBlock            TransType = "block"
-	TransDomainBlock      TransType = "domainBlock"
-	TransEmailDomainBlock TransType = "emailDomainBlock"
-	TransFollow           TransType = "follow"
-	TransFollowRequest    TransType = "followRequest"
-	TransInstance         TransType = "instance"
-	TransUser             TransType = "user"
+	TransAccount          Type = "account"
+	TransBlock            Type = "block"
+	TransDomainBlock      Type = "domainBlock"
+	TransEmailDomainBlock Type = "emailDomainBlock"
+	TransFollow           Type = "follow"
+	TransFollowRequest    Type = "followRequest"
+	TransInstance         Type = "instance"
+	TransUser             Type = "user"
 )
 
-type TransEntry map[string]interface{}
+// Entry is used for deserializing trans entries into a rough interface so that
+// the TypeKey can be fetched, before continuing with full parsing.
+type Entry map[string]interface{}

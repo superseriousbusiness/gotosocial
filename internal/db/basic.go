@@ -26,6 +26,10 @@ type Basic interface {
 	// For implementations that don't use tables, this can just return nil.
 	CreateTable(ctx context.Context, i interface{}) Error
 
+	// CreateAllTables creates *all* tables necessary for the running of GoToSocial.
+	// Because it uses the 'if not exists' parameter it is safe to run against a GtS that's already been initialized.
+	CreateAllTables(ctx context.Context) Error
+
 	// DropTable drops the table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
 	DropTable(ctx context.Context, i interface{}) Error

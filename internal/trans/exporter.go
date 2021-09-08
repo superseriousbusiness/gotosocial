@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
+// Exporter wraps functionality for exporting entries from the database to a file.
 type Exporter interface {
 	ExportMinimal(ctx context.Context, path string) error
 }
@@ -35,6 +36,7 @@ type exporter struct {
 	writtenIDs map[string]bool
 }
 
+// NewExporter returns a new Exporter that will use the given db and logger.
 func NewExporter(db db.DB, log *logrus.Logger) Exporter {
 	return &exporter{
 		db:         db,

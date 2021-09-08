@@ -136,5 +136,15 @@ func (e *exporter) ExportMinimal(ctx context.Context, path string) error {
 		return fmt.Errorf("ExportMinimal: error exporting instances: %s", err)
 	}
 
+	// export all SUSPENDED accounts to make sure the suspension sticks across db migration etc
+	whereSuspended := []db.Where{{
+		Key:   "suspended_at",
+		Not:   true,
+		Value: nil,
+	}}
+	if _, err := e.exportAccounts(ctx, whereSuspended, f); err != nil {
+		return fmt.Errorf("ExportMinimal: error exporting suspended accounts: %s", err)
+	}
+
 	return neatClose(f)
 }

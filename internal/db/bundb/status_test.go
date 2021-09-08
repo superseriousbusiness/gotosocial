@@ -104,6 +104,13 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 	suite.Less(duration2, duration1)
 }
 
+func (suite *StatusTestSuite) TestGetStatusChildren() {
+	targetStatus := suite.testStatuses["local_account_1_status_1"]
+	children, err := suite.db.GetStatusChildren(context.Background(), targetStatus, true, "")
+	suite.NoError(err)
+	suite.Len(children, 2)
+}
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
 }

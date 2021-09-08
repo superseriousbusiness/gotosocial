@@ -20,13 +20,15 @@ package trans
 
 import "time"
 
+// DomainBlock represents a domain block as serialized in an exported file.
 type DomainBlock struct {
-	Type               TransType  `json:"type" bun:"-"`
-	ID                 string     `json:"id"`
-	CreatedAt          *time.Time `json:"createdAt"`
-	CreatedByAccountID string     `json:"createdByAccountID"`
-	PrivateComment     string     `json:"privateComment,omitempty"`
-	PublicComment      string     `json:"publicComment,omitempty"`
-	Obfuscate          bool       `json:"obfuscate"`
-	SubscriptionID     string     `json:"subscriptionID,omitempty"`
+	Type               Type       `json:"type" bun:"-"`
+	ID                 string     `json:"id" bun:",nullzero"`
+	CreatedAt          *time.Time `json:"createdAt" bun:",nullzero"`
+	Domain             string     `json:"domain" bun:",nullzero"`
+	CreatedByAccountID string     `json:"createdByAccountID" bun:",nullzero"`
+	PrivateComment     string     `json:"privateComment,omitempty" bun:",nullzero"`
+	PublicComment      string     `json:"publicComment,omitempty" bun:",nullzero"`
+	Obfuscate          bool       `json:"obfuscate" bun:",nullzero"`
+	SubscriptionID     string     `json:"subscriptionID,omitempty" bun:",nullzero"`
 }

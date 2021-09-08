@@ -240,11 +240,11 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 			}
 		}
 
-		// only do one loop if we only want direct children
-		if onlyDirect {
-			return
+		// if we're not only looking for direct children of status, then do the same children-finding
+		// operation for the found child status too.
+		if !onlyDirect {
+			s.statusChildren(ctx, child, foundStatuses, false, minID)
 		}
-		s.statusChildren(ctx, child, foundStatuses, false, minID)
 	}
 }
 

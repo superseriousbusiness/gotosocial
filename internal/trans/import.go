@@ -30,37 +30,41 @@ import (
 )
 
 func (i *importer) Import(ctx context.Context, path string) error {
+	if path == "" {
+		return errors.New("Export: path empty")
+	}
+
 	f, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("ImportMinimal: error opening file %s: %s", path, err)
+		return fmt.Errorf("Import: couldn't export to %s: %s", path, err)
 	}
 
 	decoder := json.NewDecoder(f)
 	decoder.UseNumber()
 
 	for {
-		entry := transmodel.TransEntry{}
+		entry := transmodel.Entry{}
 		err := decoder.Decode(&entry)
 		if err != nil {
 			if err == io.EOF {
-				i.log.Infof("ImportMinimal: reached end of file")
+				i.log.Infof("Import: reached end of file")
 				return neatClose(f)
 			}
-			return fmt.Errorf("ImportMinimal: error decoding in readLoop: %s", err)
+			return fmt.Errorf("Import: error decoding in readLoop: %s", err)
 		}
 		if err := i.inputEntry(ctx, entry); err != nil {
-			return fmt.Errorf("ImportMinimal: error inputting entry: %s", err)
+			return fmt.Errorf("Import: error inputting entry: %s", err)
 		}
 	}
 }
 
-func (i *importer) inputEntry(ctx context.Context, entry transmodel.TransEntry) error {
+func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error {
 	t, ok := entry[transmodel.TypeKey].(string)
 	if !ok {
 		return errors.New("inputEntry: could not derive entry type: missing or malformed 'type' key in json")
 	}
 
-	switch transmodel.TransType(t) {
+	switch transmodel.Type(t) {
 	case transmodel.TransAccount:
 		account, err := i.accountDecode(entry)
 		if err != nil {
@@ -84,12 +88,12 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.TransEntry) 
 	case transmodel.TransDomainBlock:
 		block, err := i.domainBlockDecode(entry)
 		if err != nil {
-			return fmt.Errorf("inputEntry: error decoding entry into block: %s", err)
+			return fmt.Errorf("inputEntry: error decoding entry into domain block: %s", err)
 		}
 		if err := i.putInDB(ctx, block); err != nil {
-			return fmt.Errorf("inputEntry: error adding block to database: %s", err)
+			return fmt.Errorf("inputEntry: error adding domain block to database: %s", err)
 		}
-		i.log.Infof("inputEntry: added block with id %s", block.ID)
+		i.log.Infof("inputEntry: added domain block with id %s", block.ID)
 		return nil
 	case transmodel.TransFollow:
 		follow, err := i.followDecode(entry)

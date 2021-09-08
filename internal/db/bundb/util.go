@@ -19,6 +19,7 @@
 package bundb
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/uptrace/bun"
 )
 
@@ -34,4 +35,66 @@ func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 			WhereOr("? IS NULL", bun.Ident(column)).
 			WhereOr("? = ''", bun.Ident(column))
 	}
+}
+
+// updateWhere parses []db.Where and adds it to the given update query.
+func updateWhere(q *bun.UpdateQuery, where []db.Where) {
+	for _, w := range where {
+		query, args := parseWhere(w)
+		q = q.Where(query, args...)
+	}
+}
+
+// selectWhere parses []db.Where and adds it to the given select query.
+func selectWhere(q *bun.SelectQuery, where []db.Where) {
+	for _, w := range where {
+		query, args := parseWhere(w)
+		q = q.Where(query, args...)
+	}
+}
+
+// deleteWhere parses []db.Where and adds it to the given where query.
+func deleteWhere(q *bun.DeleteQuery, where []db.Where) {
+	for _, w := range where {
+		query, args := parseWhere(w)
+		q = q.Where(query, args...)
+	}
+}
+
+// parseWhere looks through the options on a single db.Where entry, and
+// returns the appropriate query string and arguments.
+func parseWhere(w db.Where) (query string, args []interface{}) {
+	if w.Not {
+		if w.Value == nil {
+			query = "? IS NOT NULL"
+			args = []interface{}{bun.Ident(w.Key)}
+			return
+		}
+
+		if w.CaseInsensitive {
+			query = "LOWER(?) != LOWER(?)"
+			args = []interface{}{bun.Safe(w.Key), w.Value}
+			return
+		}
+
+		query = "? != ?"
+		args = []interface{}{bun.Safe(w.Key), w.Value}
+		return
+	}
+
+	if w.Value == nil {
+		query = "? IS NULL"
+		args = []interface{}{bun.Ident(w.Key)}
+		return
+	}
+
+	if w.CaseInsensitive {
+		query = "LOWER(?) = LOWER(?)"
+		args = []interface{}{bun.Safe(w.Key), w.Value}
+		return
+	}
+
+	query = "? = ?"
+	args = []interface{}{bun.Safe(w.Key), w.Value}
+	return
 }
