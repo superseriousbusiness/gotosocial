@@ -394,7 +394,7 @@ github.com/tdewolff/parse/v2/strconv
 github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 github.com/ugorji/go/codec
-# github.com/uptrace/bun v0.4.3
+# github.com/uptrace/bun v1.0.4
 ## explicit
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -458,7 +458,7 @@ golang.org/x/net/idna
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
+# golang.org/x/sys v0.0.0-20210908160347-a851e7ddeee0
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
