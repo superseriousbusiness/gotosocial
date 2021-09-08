@@ -16,7 +16,7 @@ type (
 	ClientAuthorizedHandler func(clientID string, grant oauth2.GrantType) (allowed bool, err error)
 
 	// ClientScopeHandler check the client allows to use scope
-	ClientScopeHandler func(clientID, scope string) (allowed bool, err error)
+	ClientScopeHandler func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error)
 
 	// UserAuthorizationHandler get user id from request authorization
 	UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
@@ -25,9 +25,9 @@ type (
 	PasswordAuthorizationHandler func(username, password string) (userID string, err error)
 
 	// RefreshingScopeHandler check the scope of the refreshing token
-	RefreshingScopeHandler func(newScope, oldScope string) (allowed bool, err error)
+	RefreshingScopeHandler func(tgr *oauth2.TokenGenerateRequest, oldScope string) (allowed bool, err error)
 
-	//RefreshingValidationHandler check if refresh_token is still valid. eg no revocation or other
+	// RefreshingValidationHandler check if refresh_token is still valid. eg no revocation or other
 	RefreshingValidationHandler func(ti oauth2.TokenInfo) (allowed bool, err error)
 
 	// ResponseErrorHandler response error handing

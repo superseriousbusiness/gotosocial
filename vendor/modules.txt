@@ -16,8 +16,6 @@ github.com/coreos/go-oidc/v3/oidc
 github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
-github.com/dgrijalva/jwt-go
 # github.com/dsoprea/go-exif v0.0.0-20210625224831-a6301f85c82b
 ## explicit
 github.com/dsoprea/go-exif
@@ -266,6 +264,8 @@ github.com/goccy/go-json/internal/encoder/vm_escaped_indent
 github.com/goccy/go-json/internal/encoder/vm_indent
 github.com/goccy/go-json/internal/errors
 github.com/goccy/go-json/internal/runtime
+# github.com/golang-jwt/jwt v3.2.1+incompatible
+github.com/golang-jwt/jwt
 # github.com/golang/geo v0.0.0-20210211234256-740aa86cb551
 ## explicit
 github.com/golang/geo/r1
@@ -371,7 +371,7 @@ github.com/stretchr/testify/suite
 # github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 ## explicit
 github.com/superseriousbusiness/exifremove/pkg/exifremove
-# github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
+# github.com/superseriousbusiness/oauth2/v4 v4.3.1-SSB
 ## explicit
 github.com/superseriousbusiness/oauth2/v4
 github.com/superseriousbusiness/oauth2/v4/errors
@@ -454,7 +454,7 @@ golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/idna
-# golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+# golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/internal

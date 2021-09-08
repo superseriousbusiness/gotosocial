@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/errors"
+	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 // JWTAccessClaims jwt claims

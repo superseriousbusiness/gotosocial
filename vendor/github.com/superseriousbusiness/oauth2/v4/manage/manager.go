@@ -363,6 +363,10 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, tgr *oauth2.TokenGener
 	cli, err := m.GetClient(ctx, tgr.ClientID)
 	if err != nil {
 		return nil, err
+	} else if cliPass, ok := cli.(oauth2.ClientPasswordVerifier); ok {
+		if !cliPass.VerifyPassword(tgr.ClientSecret) {
+			return nil, errors.ErrInvalidClient
+		}
 	} else if tgr.ClientSecret != cli.GetSecret() {
 		return nil, errors.ErrInvalidClient
 	}
