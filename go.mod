@@ -47,7 +47,7 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
-	github.com/uptrace/bun v0.4.3
+	github.com/uptrace/bun v1.0.4
 	github.com/uptrace/bun/dialect/pgdialect v0.4.3
 	github.com/uptrace/bun/dialect/sqlitedialect v0.4.3
 	github.com/urfave/cli/v2 v2.3.0
@@ -55,7 +55,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
-	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf // indirect
+	golang.org/x/sys v0.0.0-20210908160347-a851e7ddeee0 // indirect
 	golang.org/x/text v0.3.6
 	golang.org/x/tools v0.1.5 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
