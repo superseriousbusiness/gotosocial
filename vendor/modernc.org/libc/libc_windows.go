@@ -226,24 +226,21 @@ func newFile(t *TLS, fd int32) uintptr {
 		if err != nil {
 			panic("no console")
 		}
-		f := addFile(h, fd)
-		return uintptr(unsafe.Pointer(f))
+		return addFile(h, fd)
 	}
 	if fd == unistd.STDOUT_FILENO {
 		h, err := syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
 		if err != nil {
 			panic("no console")
 		}
-		f := addFile(h, fd)
-		return uintptr(unsafe.Pointer(f))
+		return addFile(h, fd)
 	}
 	if fd == unistd.STDERR_FILENO {
 		h, err := syscall.GetStdHandle(syscall.STD_ERROR_HANDLE)
 		if err != nil {
 			panic("no console")
 		}
-		f := addFile(h, fd)
-		return uintptr(unsafe.Pointer(f))
+		return addFile(h, fd)
 	}
 
 	// should not get here -- unless newFile

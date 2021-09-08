@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -727,10 +728,23 @@ type conn struct {
 	sync.Mutex
 }
 
-func newConn(name string) (*conn, error) {
+func newConn(dsn string) (*conn, error) {
+	var query string
+
+	// Parse the query parameters from the dsn and them from the dsn if not prefixed by file:
+	// https://github.com/mattn/go-sqlite3/blob/3392062c729d77820afc1f5cae3427f0de39e954/sqlite3.go#L1046
+	// https://github.com/mattn/go-sqlite3/blob/3392062c729d77820afc1f5cae3427f0de39e954/sqlite3.go#L1383
+	pos := strings.IndexRune(dsn, '?')
+	if pos >= 1 {
+		query = dsn[pos+1:]
+		if !strings.HasPrefix(dsn, "file:") {
+			dsn = dsn[:pos]
+		}
+	}
+
 	c := &conn{tls: libc.NewTLS()}
 	db, err := c.openV2(
-		name,
+		dsn,
 		sqlite3.SQLITE_OPEN_READWRITE|sqlite3.SQLITE_OPEN_CREATE|
 			sqlite3.SQLITE_OPEN_FULLMUTEX|
 			sqlite3.SQLITE_OPEN_URI,
@@ -745,7 +759,27 @@ func newConn(name string) (*conn, error) {
 		return nil, err
 	}
 
+	if err = applyPragmas(c, query); err != nil {
+		c.Close()
+		return nil, err
+	}
+
 	return c, nil
+}
+
+func applyPragmas(c *conn, query string) error {
+	q, err := url.ParseQuery(query)
+	if err != nil {
+		return err
+	}
+	for _, v := range q["_pragma"] {
+		cmd := "pragma " + v
+		_, err := c.exec(context.Background(), cmd, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // const void *sqlite3_column_blob(sqlite3_stmt*, int iCol);
