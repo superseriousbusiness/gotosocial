@@ -29,6 +29,8 @@ type Account struct {
 	ID                    string          `json:"id" bun:",nullzero"`
 	CreatedAt             *time.Time      `json:"createdAt" bun:",nullzero"`
 	Username              string          `json:"username" bun:",nullzero"`
+	DisplayName           string          `json:"displayName,omitempty" bun:",nullzero"`
+	Note                  string          `json:"note,omitempty" bun:",nullzero"`
 	Domain                string          `json:"domain,omitempty" bun:",nullzero"`
 	HeaderRemoteURL       string          `json:"headerRemoteURL,omitempty" bun:",nullzero"`
 	AvatarRemoteURL       string          `json:"avatarRemoteURL,omitempty" bun:",nullzero"`
@@ -43,9 +45,9 @@ type Account struct {
 	FeaturedCollectionURI string          `json:"featuredCollectionUri" bun:",nullzero"`
 	ActorType             string          `json:"actorType" bun:",nullzero"`
 	PrivateKey            *rsa.PrivateKey `json:"-" mapstructure:"-"`
-	PrivateKeyString      string          `json:"privateKey,omitempty" bun:"-" mapstructure:"privateKey" bun:",nullzero"`
+	PrivateKeyString      string          `json:"privateKey,omitempty" mapstructure:"privateKey" bun:"-"`
 	PublicKey             *rsa.PublicKey  `json:"-" mapstructure:"-"`
-	PublicKeyString       string          `json:"publicKey,omitempty" bun:"-" mapstructure:"publicKey" bun:",nullzero"`
+	PublicKeyString       string          `json:"publicKey,omitempty" mapstructure:"publicKey" bun:"-"`
 	PublicKeyURI          string          `json:"publicKeyUri" bun:",nullzero"`
 	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty" bun:",nullzero"`
 	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty" bun:",nullzero"`
