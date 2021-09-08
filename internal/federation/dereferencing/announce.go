@@ -60,7 +60,10 @@ func (d *deref) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Stat
 	announce.BoostOfID = boostedStatus.ID
 	announce.BoostOfAccountID = boostedStatus.AccountID
 	announce.Visibility = boostedStatus.Visibility
-	announce.VisibilityAdvanced = boostedStatus.VisibilityAdvanced
+	announce.Federated = boostedStatus.Federated
+	announce.Boostable = boostedStatus.Boostable
+	announce.Replyable = boostedStatus.Replyable
+	announce.Likeable = boostedStatus.Likeable
 	announce.BoostOf = boostedStatus
 	return nil
 }

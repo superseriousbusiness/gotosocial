@@ -70,7 +70,10 @@ func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boost
 		BoostOfID:           s.ID,
 		BoostOfAccountID:    s.AccountID,
 		Visibility:          s.Visibility,
-		VisibilityAdvanced:  s.VisibilityAdvanced,
+		Federated:           s.Federated,
+		Boostable:           s.Boostable,
+		Replyable:           s.Replyable,
+		Likeable:            s.Likeable,
 
 		// attach these here for convenience -- the boosted status/account won't go in the DB
 		// but they're needed in the processor and for the frontend. Since we have them, we can

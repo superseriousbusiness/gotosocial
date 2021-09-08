@@ -63,15 +63,13 @@ func happyStatus() *gtsmodel.Status {
 		Language:                 "en",
 		CreatedWithApplicationID: "01FEBBZHF4GFVRXSJVXD0JTZZ2",
 		CreatedWithApplication:   nil,
-		VisibilityAdvanced: gtsmodel.VisibilityAdvanced{
-			Federated: true,
-			Boostable: true,
-			Replyable: true,
-			Likeable:  true,
-		},
-		ActivityStreamsType: ap.ObjectNote,
-		Text:                "Test status! #hello",
-		Pinned:              false,
+		Federated:                true,
+		Boostable:                true,
+		Replyable:                true,
+		Likeable:                 true,
+		ActivityStreamsType:      ap.ObjectNote,
+		Text:                     "Test status! #hello",
+		Pinned:                   false,
 	}
 }
 

@@ -57,10 +57,13 @@ type Status struct {
 	Language                 string             `validate:"-" bun:",nullzero"`                                                                         // what language is this status written in?
 	CreatedWithApplicationID string             `validate:"required_if=Local true,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // Which application was used to create this status?
 	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
-	VisibilityAdvanced       VisibilityAdvanced `validate:"required" bun:",nullzero,notnull" `                                                         // advanced visibility for this status
 	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `validate:"-" bun:",nullzero"`                                                                         // Original text of the status without formatting
-	Pinned                   bool               `validate:"-" bun:",notnull,default:false" `                                                           // Has this status been pinned by its owner?
+	Pinned                   bool               `validate:"-" bun:",notnull,default:false"`                                                            // Has this status been pinned by its owner?
+	Federated                bool               `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
+	Boostable                bool               `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
+	Replyable                bool               `validate:"-" bun:",notnull"`                                                                          // This status can be replied to
+	Likeable                 bool               `validate:"-" bun:",notnull"`                                                                          // This status can be liked/faved
 }
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
@@ -96,21 +99,3 @@ const (
 	// VisibilityDefault is used when no other setting can be found.
 	VisibilityDefault Visibility = VisibilityUnlocked
 )
-
-// VisibilityAdvanced models flags for fine-tuning visibility and interactivity of a status.
-//
-// All flags default to true.
-//
-// If PUBLIC is selected, flags will all be overwritten to TRUE regardless of what is selected.
-//
-// If UNLOCKED is selected, any flags can be turned on or off in any combination.
-//
-// If FOLLOWERS-ONLY or MUTUALS-ONLY are selected, boostable will always be FALSE. Other flags can be turned on or off as desired.
-//
-// If DIRECT is selected, boostable will be FALSE, and all other flags will be TRUE.
-type VisibilityAdvanced struct {
-	Federated bool `validate:"-" bun:",notnull,default:true"` // This status will be federated beyond the local timeline(s)
-	Boostable bool `validate:"-" bun:",notnull,default:true"` // This status can be boosted/reblogged
-	Replyable bool `validate:"-" bun:",notnull,default:true"` // This status can be replied to
-	Likeable  bool `validate:"-" bun:",notnull,default:true"` // This status can be liked/faved
-}

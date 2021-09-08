@@ -51,7 +51,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 				return err
 			}
 
-			if status.VisibilityAdvanced.Federated {
+			if status.Federated {
 				return p.federateStatus(ctx, status)
 			}
 		case ap.ActivityFollow:

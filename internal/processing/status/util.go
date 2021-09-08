@@ -33,12 +33,10 @@ import (
 
 func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
-	gtsAdvancedVis := gtsmodel.VisibilityAdvanced{
-		Federated: true,
-		Boostable: true,
-		Replyable: true,
-		Likeable:  true,
-	}
+	federated := true
+	boostable := true
+	replyable := true
+	likeable := true
 
 	var vis gtsmodel.Visibility
 	// If visibility isn't set on the form, then just take the account default.
@@ -58,47 +56,50 @@ func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.Advanc
 	case gtsmodel.VisibilityUnlocked:
 		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
 		if form.Federated != nil {
-			gtsAdvancedVis.Federated = *form.Federated
+			federated = *form.Federated
 		}
 
 		if form.Boostable != nil {
-			gtsAdvancedVis.Boostable = *form.Boostable
+			boostable = *form.Boostable
 		}
 
 		if form.Replyable != nil {
-			gtsAdvancedVis.Replyable = *form.Replyable
+			replyable = *form.Replyable
 		}
 
 		if form.Likeable != nil {
-			gtsAdvancedVis.Likeable = *form.Likeable
+			likeable = *form.Likeable
 		}
 
 	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
 		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
-		gtsAdvancedVis.Boostable = false
+		boostable = false
 
 		if form.Federated != nil {
-			gtsAdvancedVis.Federated = *form.Federated
+			federated = *form.Federated
 		}
 
 		if form.Replyable != nil {
-			gtsAdvancedVis.Replyable = *form.Replyable
+			replyable = *form.Replyable
 		}
 
 		if form.Likeable != nil {
-			gtsAdvancedVis.Likeable = *form.Likeable
+			likeable = *form.Likeable
 		}
 
 	case gtsmodel.VisibilityDirect:
 		// direct is pretty easy: there's only one possible setting so return it
-		gtsAdvancedVis.Federated = true
-		gtsAdvancedVis.Boostable = false
-		gtsAdvancedVis.Federated = true
-		gtsAdvancedVis.Likeable = true
+		federated = true
+		boostable = false
+		replyable = true
+		likeable = true
 	}
 
 	status.Visibility = vis
-	status.VisibilityAdvanced = gtsAdvancedVis
+	status.Federated = federated
+	status.Boostable = boostable
+	status.Replyable = replyable
+	status.Likeable = likeable
 	return nil
 }
 
@@ -123,7 +124,7 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 		}
 		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
 	}
-	if !repliedStatus.VisibilityAdvanced.Replyable {
+	if !repliedStatus.Replyable {
 		return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
 	}
 
