@@ -1628,9 +1628,7 @@ type X_libc_fpstate = struct {
 	}
 	Ffpsr      uint32 /* unsigned fpsr: 32 */
 	Ffpcr      uint32 /* unsigned fpcr: 32 */
-	_          [1]byte
 	Fftype     [8]uint8
-	_          [3]byte
 	Finit_flag uint32
 } /* ucontext.h:81:1 */
 

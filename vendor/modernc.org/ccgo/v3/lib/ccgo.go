@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	Version = "3.9.2-20210323171250"
+	Version = "3.10.0-20210904132603"
 
 	experimentsEnvVar = "CCGO_EXPERIMENT"
 	maxSourceLine     = 1 << 20
@@ -1213,7 +1213,7 @@ func (t *Task) createCompileDB(command []string) (rerr error) {
 	var parser func(s string) ([]string, error)
 out:
 	switch {
-	case t.goos == "darwin":
+	case t.goos == "darwin", t.goos == "freebsd":
 		if command[0] != "make" {
 			return fmt.Errorf("usupported build command: %s", command[0])
 		}
@@ -1566,6 +1566,7 @@ func (w *cdbMakeWriter) Write(b []byte) (int, error) {
 			w.fail(err)
 			continue
 		}
+
 		if len(args) == 0 {
 			continue
 		}
@@ -1577,15 +1578,15 @@ func (w *cdbMakeWriter) Write(b []byte) (int, error) {
 		err = nil
 		switch args[0] {
 		case w.cc:
-			fmt.Println(args)
+			fmt.Printf("CCGO CC: %q\n", args)
 			err = w.handleGCC(args)
 		case w.ar:
 			if isCreateArchive(args[1]) {
-				fmt.Println(args)
+				fmt.Printf("CCGO AR: %q\n", args)
 				err = w.handleAR(args)
 			}
 		case "libtool":
-			fmt.Println(args)
+			fmt.Printf("CCGO LIBTOOL: %q\n", args)
 			err = w.handleLibtool(args)
 		}
 		if err != nil {
