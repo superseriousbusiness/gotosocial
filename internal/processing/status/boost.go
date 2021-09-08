@@ -46,7 +46,7 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	if !visible {
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
-	if !targetStatus.VisibilityAdvanced.Boostable {
+	if !targetStatus.Boostable {
 		return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
 	}
 

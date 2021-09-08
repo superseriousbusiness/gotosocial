@@ -325,6 +325,11 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// advanced visibility for this status
 	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
+	// for now we just set everything to true
+	status.Federated = true
+	status.Boostable = true
+	status.Replyable = true
+	status.Likeable = true
 
 	// sensitive
 	// TODO: this is a bool
