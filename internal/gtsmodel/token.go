@@ -26,7 +26,7 @@ type Token struct {
 	CreatedAt           time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt           time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	ClientID            string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the client who owns this token
-	UserID              string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the user who owns this token
+	UserID              string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero"`                        // ID of the user who owns this token
 	RedirectURI         string    `validate:"required,uri" bun:",nullzero,notnull"`                              // Oauth redirect URI for this token
 	Scope               string    `validate:"required" bun:",nullzero,notnull"`                                  // Oauth scope
 	Code                string    `validate:"-" bun:",pk,nullzero,notnull,default:''"`                           // Code, if present

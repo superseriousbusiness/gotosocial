@@ -44,7 +44,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
-	github.com/superseriousbusiness/oauth2/v4 v4.3.0-SSB
+	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
 	github.com/tidwall/buntdb v1.2.4 // indirect
 	github.com/uptrace/bun v1.0.4
@@ -54,7 +54,7 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20210908160347-a851e7ddeee0 // indirect
 	golang.org/x/text v0.3.6
 	golang.org/x/tools v0.1.5 // indirect

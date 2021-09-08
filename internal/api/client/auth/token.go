@@ -31,6 +31,7 @@ type tokenBody struct {
 	Code         *string `form:"code" json:"code" xml:"code"`
 	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
 	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
+	Scope        *string `form:"scope" json:"scope" xml:"scope"`
 }
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
@@ -57,6 +58,9 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 		}
 		if form.RedirectURI != nil {
 			c.Request.Form.Set("redirect_uri", *form.RedirectURI)
+		}
+		if form.Scope != nil {
+			c.Request.Form.Set("scope", *form.Scope)
 		}
 	}
 
