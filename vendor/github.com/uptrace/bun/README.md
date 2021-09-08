@@ -4,17 +4,21 @@
   </a>
 </p>
 
-# Simple and performant SQL database client
+# Simple and performant client for PostgreSQL, MySQL, and SQLite
 
 [![build workflow](https://github.com/uptrace/bun/actions/workflows/build.yml/badge.svg)](https://github.com/uptrace/bun/actions)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/bun)](https://pkg.go.dev/github.com/uptrace/bun)
 [![Documentation](https://img.shields.io/badge/bun-documentation-informational)](https://bun.uptrace.dev/)
 [![Chat](https://discordapp.com/api/guilds/752070105847955518/widget.png)](https://discord.gg/rWtp5Aj)
 
+**Status**: API freeze (stable release). Note that all sub-packages (mainly extra/\* packages) are
+not part of the API freeze and are developed independently. You can think of them as 3-rd party
+packages that share one repo with the core.
+
 Main features are:
 
 - Works with [PostgreSQL](https://bun.uptrace.dev/guide/drivers.html#postgresql),
-  [MySQL](https://bun.uptrace.dev/guide/drivers.html#mysql),
+  [MySQL](https://bun.uptrace.dev/guide/drivers.html#mysql) (including MariaDB),
   [SQLite](https://bun.uptrace.dev/guide/drivers.html#sqlite).
 - [Selecting](/example/basic/) into a map, struct, slice of maps/structs/vars.
 - [Bulk inserts](https://bun.uptrace.dev/guide/queries.html#insert).
@@ -96,7 +100,7 @@ You also need to install a database/sql driver and the corresponding Bun
 ## Quickstart
 
 First you need to create a `sql.DB`. Here we are using the
-[sqliteshim](https://pkg.go.dev/github.com/uptrace/bun/driver/sqliteshim) driver which choses
+[sqliteshim](https://pkg.go.dev/github.com/uptrace/bun/driver/sqliteshim) driver which chooses
 between [modernc.org/sqlite](https://modernc.org/sqlite/) and
 [mattn/go-sqlite3](https://github.com/mattn/go-sqlite3) depending on your platform.
 
@@ -109,7 +113,8 @@ if err != nil {
 }
 ```
 
-And then create a `bun.DB` on top of it using the corresponding SQLite dialect:
+And then create a `bun.DB` on top of it using the corresponding SQLite
+[dialect](https://bun.uptrace.dev/guide/drivers.html) that comes with Bun:
 
 ```go
 import (
