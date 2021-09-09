@@ -30,8 +30,8 @@ import (
 // Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
 type Account struct {
 	ID                      string           `validate:"required,ulid" bun:"type:CHAR(26),pk,notnull,unique"`                                                        // id of this item in the database
-	CreatedAt               time.Time        `validate:"-" bun:"type:timestamp,notnull,default:current_timestamp"`                                                   // when was item created
-	UpdatedAt               time.Time        `validate:"-" bun:"type:timestamp,notnull,default:current_timestamp"`                                                   // when was item last updated
+	CreatedAt               time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                                          // when was item created
+	UpdatedAt               time.Time        `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                                          // when was item last updated
 	Username                string           `validate:"required" bun:",nullzero,notnull,unique:userdomain"`                                                         // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
 	Domain                  string           `validate:"omitempty,fqdn" bun:",nullzero,unique:userdomain"`                                                           // Domain of the account, will be null if this is a local account, otherwise something like ``example.org`` or ``mastodon.social``. Should be unique with username.
 	AvatarMediaAttachmentID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                                // Database ID of the media attachment, if present
