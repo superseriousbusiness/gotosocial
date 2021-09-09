@@ -29,7 +29,7 @@ type Status struct {
 	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                         // when was item last updated
 	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
 	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
-	Content                  string             `validate:"-" bun:",nullzero"`                                                                         // content of this status; likely html-formatted but not guaranteed
+	Content                  string             `validate:"-" bun:""`                                                                                  // content of this status; likely html-formatted but not guaranteed
 	AttachmentIDs            []string           `validate:"dive,ulid" bun:"attachments,array"`                                                         // Database IDs of any media attachments associated with this status
 	Attachments              []*MediaAttachment `validate:"-" bun:"attached_media,rel:has-many"`                                                       // Attachments corresponding to attachmentIDs
 	TagIDs                   []string           `validate:"dive,ulid" bun:"tags,array"`                                                                // Database IDs of any tags used in this status
@@ -52,13 +52,13 @@ type Status struct {
 	BoostOf                  *Status            `validate:"-" bun:"-"`                                                                                 // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account that corresponds to boostOfAccountID
 	ContentWarning           string             `validate:"-" bun:",nullzero"`                                                                         // cw string for this status
-	Visibility               Visibility         `validate:"-" bun:",nullzero,notnull"`                                                                 // visibility entry for this status
+	Visibility               Visibility         `validate:"oneof=public unlocked followers_only mutuals_only direct" bun:",nullzero,notnull"`          // visibility entry for this status
 	Sensitive                bool               `validate:"-" bun:",notnull,default:false"`                                                            // mark the status as sensitive?
 	Language                 string             `validate:"-" bun:",nullzero"`                                                                         // what language is this status written in?
 	CreatedWithApplicationID string             `validate:"required_if=Local true,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // Which application was used to create this status?
 	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
-	Text                     string             `validate:"-" bun:",nullzero"`                                                                         // Original text of the status without formatting
+	Text                     string             `validate:"-" bun:""`                                                                                  // Original text of the status without formatting
 	Pinned                   bool               `validate:"-" bun:",notnull,default:false"`                                                            // Has this status been pinned by its owner?
 	Federated                bool               `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
 	Boostable                bool               `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
