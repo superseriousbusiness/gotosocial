@@ -34,12 +34,12 @@ func (i *importer) Import(ctx context.Context, path string) error {
 		return errors.New("Export: path empty")
 	}
 
-	f, err := os.Open(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return fmt.Errorf("Import: couldn't export to %s: %s", path, err)
 	}
 
-	decoder := json.NewDecoder(f)
+	decoder := json.NewDecoder(file)
 	decoder.UseNumber()
 
 	for {
@@ -48,7 +48,7 @@ func (i *importer) Import(ctx context.Context, path string) error {
 		if err != nil {
 			if err == io.EOF {
 				i.log.Infof("Import: reached end of file")
-				return neatClose(f)
+				return neatClose(file)
 			}
 			return fmt.Errorf("Import: error decoding in readLoop: %s", err)
 		}
