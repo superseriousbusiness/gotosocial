@@ -43,10 +43,14 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
+	suite.True(status.Federated)
+	suite.True(status.Boostable)
+	suite.True(status.Replyable)
+	suite.True(status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusByURI() {
-	status, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
+	status, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_2_status_3"].URI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -57,6 +61,10 @@ func (suite *StatusTestSuite) TestGetStatusByURI() {
 	suite.Nil(status.BoostOfAccount)
 	suite.Nil(status.InReplyTo)
 	suite.Nil(status.InReplyToAccount)
+	suite.True(status.Federated)
+	suite.True(status.Boostable)
+	suite.False(status.Replyable)
+	suite.False(status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithExtras() {
@@ -70,6 +78,10 @@ func (suite *StatusTestSuite) TestGetStatusWithExtras() {
 	suite.NotEmpty(status.Tags)
 	suite.NotEmpty(status.Attachments)
 	suite.NotEmpty(status.Emojis)
+	suite.True(status.Federated)
+	suite.True(status.Boostable)
+	suite.True(status.Replyable)
+	suite.True(status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithMention() {
@@ -83,6 +95,10 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 	suite.NotEmpty(status.MentionIDs)
 	suite.NotEmpty(status.InReplyToID)
 	suite.NotEmpty(status.InReplyToAccountID)
+	suite.True(status.Federated)
+	suite.True(status.Boostable)
+	suite.True(status.Replyable)
+	suite.True(status.Likeable)
 }
 
 func (suite *StatusTestSuite) TestGetStatusTwice() {
@@ -102,6 +118,18 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 
 	// second retrieval should be several orders faster since it will be cached now
 	suite.Less(duration2, duration1)
+}
+
+func (suite *StatusTestSuite) TestGetStatusChildren() {
+	targetStatus := suite.testStatuses["local_account_1_status_1"]
+	children, err := suite.db.GetStatusChildren(context.Background(), targetStatus, true, "")
+	suite.NoError(err)
+	suite.Len(children, 2)
+	for _, c := range children {
+		suite.Equal(targetStatus.URI, c.InReplyToURI)
+		suite.Equal(targetStatus.AccountID, c.InReplyToAccountID)
+		suite.Equal(targetStatus.ID, c.InReplyToID)
+	}
 }
 
 func TestStatusTestSuite(t *testing.T) {

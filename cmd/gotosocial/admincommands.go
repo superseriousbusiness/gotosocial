@@ -20,6 +20,7 @@ package main
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/account"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/admin/trans"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/urfave/cli/v2"
 )
@@ -39,16 +40,19 @@ func adminCommands() []*cli.Command {
 							Usage: "create a new account",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
-									Name:  config.EmailFlag,
-									Usage: config.EmailUsage,
+									Name:     config.EmailFlag,
+									Usage:    config.EmailUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
-									Name:  config.PasswordFlag,
-									Usage: config.PasswordUsage,
+									Name:     config.PasswordFlag,
+									Usage:    config.PasswordUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -60,8 +64,9 @@ func adminCommands() []*cli.Command {
 							Usage: "confirm an existing account manually, thereby skipping email confirmation",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -73,8 +78,9 @@ func adminCommands() []*cli.Command {
 							Usage: "promote an account to admin",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -86,8 +92,9 @@ func adminCommands() []*cli.Command {
 							Usage: "demote an account from admin to normal user",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -99,8 +106,9 @@ func adminCommands() []*cli.Command {
 							Usage: "prevent an account from signing in or posting etc, but don't delete anything",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -112,8 +120,9 @@ func adminCommands() []*cli.Command {
 							Usage: "completely remove an account and all of its posts, media, etc",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
@@ -125,18 +134,48 @@ func adminCommands() []*cli.Command {
 							Usage: "set a new password for the given account",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:  config.UsernameFlag,
-									Usage: config.UsernameUsage,
+									Name:     config.UsernameFlag,
+									Usage:    config.UsernameUsage,
+									Required: true,
 								},
 								&cli.StringFlag{
-									Name:  config.PasswordFlag,
-									Usage: config.PasswordUsage,
+									Name:     config.PasswordFlag,
+									Usage:    config.PasswordUsage,
+									Required: true,
 								},
 							},
 							Action: func(c *cli.Context) error {
 								return runAction(c, account.Password)
 							},
 						},
+					},
+				},
+				{
+					Name:  "export",
+					Usage: "export data from the database to file at the given path",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:     config.TransPathFlag,
+							Usage:    config.TransPathUsage,
+							Required: true,
+						},
+					},
+					Action: func(c *cli.Context) error {
+						return runAction(c, trans.Export)
+					},
+				},
+				{
+					Name:  "import",
+					Usage: "import data from a file into the database",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:     config.TransPathFlag,
+							Usage:    config.TransPathUsage,
+							Required: true,
+						},
+					},
+					Action: func(c *cli.Context) error {
+						return runAction(c, trans.Import)
 					},
 				},
 			},

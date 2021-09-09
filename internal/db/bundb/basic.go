@@ -24,6 +24,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
@@ -53,17 +54,8 @@ func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{})
 	}
 
 	q := b.conn.NewSelect().Model(i)
-	for _, w := range where {
-		if w.Value == nil {
-			q = q.Where("? IS NULL", bun.Ident(w.Key))
-		} else {
-			if w.CaseInsensitive {
-				q = q.Where("LOWER(?) = LOWER(?)", bun.Safe(w.Key), w.Value)
-			} else {
-				q = q.Where("? = ?", bun.Safe(w.Key), w.Value)
-			}
-		}
-	}
+
+	selectWhere(q, where)
 
 	err := q.Scan(ctx)
 	return b.conn.ProcessError(err)
@@ -97,9 +89,7 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 		NewDelete().
 		Model(i)
 
-	for _, w := range where {
-		q = q.Where("? = ?", bun.Safe(w.Key), w.Value)
-	}
+	deleteWhere(q, where)
 
 	_, err := q.Exec(ctx)
 	return b.conn.ProcessError(err)
@@ -128,17 +118,7 @@ func (b *basicDB) UpdateOneByID(ctx context.Context, id string, key string, valu
 func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) db.Error {
 	q := b.conn.NewUpdate().Model(i)
 
-	for _, w := range where {
-		if w.Value == nil {
-			q = q.Where("? IS NULL", bun.Ident(w.Key))
-		} else {
-			if w.CaseInsensitive {
-				q = q.Where("LOWER(?) = LOWER(?)", bun.Safe(w.Key), w.Value)
-			} else {
-				q = q.Where("? = ?", bun.Safe(w.Key), w.Value)
-			}
-		}
-	}
+	updateWhere(q, where)
 
 	q = q.Set("? = ?", bun.Safe(key), value)
 
@@ -149,6 +129,40 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
 	_, err := b.conn.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
 	return err
+}
+
+func (b *basicDB) CreateAllTables(ctx context.Context) db.Error {
+	models := []interface{}{
+		&gtsmodel.Account{},
+		&gtsmodel.Application{},
+		&gtsmodel.Block{},
+		&gtsmodel.DomainBlock{},
+		&gtsmodel.EmailDomainBlock{},
+		&gtsmodel.Follow{},
+		&gtsmodel.FollowRequest{},
+		&gtsmodel.MediaAttachment{},
+		&gtsmodel.Mention{},
+		&gtsmodel.Status{},
+		&gtsmodel.StatusToEmoji{},
+		&gtsmodel.StatusToTag{},
+		&gtsmodel.StatusFave{},
+		&gtsmodel.StatusBookmark{},
+		&gtsmodel.StatusMute{},
+		&gtsmodel.Tag{},
+		&gtsmodel.User{},
+		&gtsmodel.Emoji{},
+		&gtsmodel.Instance{},
+		&gtsmodel.Notification{},
+		&gtsmodel.RouterSession{},
+		&gtsmodel.Token{},
+		&gtsmodel.Client{},
+	}
+	for _, i := range models {
+		if err := b.CreateTable(ctx, i); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
