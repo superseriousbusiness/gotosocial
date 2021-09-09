@@ -66,14 +66,14 @@ func (e *exporter) accountEncode(ctx context.Context, f *os.File, a *transmodel.
 //
 // Beware, the 'type' key on the passed interface should already have been set, since simpleEncode won't know
 // what type it is! If you try to decode stuff you've encoded with a missing type key, you're going to have a bad time.
-func (e *exporter) simpleEncode(ctx context.Context, f *os.File, i interface{}, id string) error {
+func (e *exporter) simpleEncode(ctx context.Context, file *os.File, i interface{}, id string) error {
 	_, alreadyWritten := e.writtenIDs[id]
 	if alreadyWritten {
 		// this exporter has already exported an entry with this ID, no need to do it twice
 		return nil
 	}
 
-	err := json.NewEncoder(f).Encode(i)
+	err := json.NewEncoder(file).Encode(i)
 	if err != nil {
 		return fmt.Errorf("simpleEncode: error encoding entry with id %s: %s", id, err)
 	}

@@ -25,7 +25,7 @@ import (
 	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
-func (e *exporter) exportAccounts(ctx context.Context, where []db.Where, f *os.File) ([]*transmodel.Account, error) {
+func (e *exporter) exportAccounts(ctx context.Context, where []db.Where, file *os.File) ([]*transmodel.Account, error) {
 	// select using the 'where' we've been provided
 	accounts := []*transmodel.Account{}
 	if err := e.db.GetWhere(ctx, where, &accounts); err != nil {
@@ -34,7 +34,7 @@ func (e *exporter) exportAccounts(ctx context.Context, where []db.Where, f *os.F
 
 	// write any accounts found to file
 	for _, a := range accounts {
-		if err := e.accountEncode(ctx, f, a); err != nil {
+		if err := e.accountEncode(ctx, file, a); err != nil {
 			return nil, fmt.Errorf("exportAccounts: error encoding account: %s", err)
 		}
 	}
@@ -42,7 +42,7 @@ func (e *exporter) exportAccounts(ctx context.Context, where []db.Where, f *os.F
 	return accounts, nil
 }
 
-func (e *exporter) exportBlocks(ctx context.Context, accounts []*transmodel.Account, f *os.File) ([]*transmodel.Block, error) {
+func (e *exporter) exportBlocks(ctx context.Context, accounts []*transmodel.Account, file *os.File) ([]*transmodel.Block, error) {
 	blocksUnique := make(map[string]*transmodel.Block)
 
 	// for each account we want to export both where it's blocking and where it's blocked
@@ -55,7 +55,7 @@ func (e *exporter) exportBlocks(ctx context.Context, accounts []*transmodel.Acco
 		}
 		for _, b := range blocking {
 			b.Type = transmodel.TransBlock
-			if err := e.simpleEncode(ctx, f, b, b.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, b, b.ID); err != nil {
 				return nil, fmt.Errorf("exportBlocks: error encoding block owned by account %s: %s", a.ID, err)
 			}
 			blocksUnique[b.ID] = b
@@ -69,7 +69,7 @@ func (e *exporter) exportBlocks(ctx context.Context, accounts []*transmodel.Acco
 		}
 		for _, b := range blocked {
 			b.Type = transmodel.TransBlock
-			if err := e.simpleEncode(ctx, f, b, b.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, b, b.ID); err != nil {
 				return nil, fmt.Errorf("exportBlocks: error encoding block targeting account %s: %s", a.ID, err)
 			}
 			blocksUnique[b.ID] = b
@@ -85,7 +85,7 @@ func (e *exporter) exportBlocks(ctx context.Context, accounts []*transmodel.Acco
 	return blocks, nil
 }
 
-func (e *exporter) exportDomainBlocks(ctx context.Context, f *os.File) ([]*transmodel.DomainBlock, error) {
+func (e *exporter) exportDomainBlocks(ctx context.Context, file *os.File) ([]*transmodel.DomainBlock, error) {
 	domainBlocks := []*transmodel.DomainBlock{}
 
 	if err := e.db.GetAll(ctx, &domainBlocks); err != nil {
@@ -94,7 +94,7 @@ func (e *exporter) exportDomainBlocks(ctx context.Context, f *os.File) ([]*trans
 
 	for _, b := range domainBlocks {
 		b.Type = transmodel.TransDomainBlock
-		if err := e.simpleEncode(ctx, f, b, b.ID); err != nil {
+		if err := e.simpleEncode(ctx, file, b, b.ID); err != nil {
 			return nil, fmt.Errorf("exportBlocks: error encoding domain block: %s", err)
 		}
 	}
@@ -102,7 +102,7 @@ func (e *exporter) exportDomainBlocks(ctx context.Context, f *os.File) ([]*trans
 	return domainBlocks, nil
 }
 
-func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Account, f *os.File) ([]*transmodel.Follow, error) {
+func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Account, file *os.File) ([]*transmodel.Follow, error) {
 	followsUnique := make(map[string]*transmodel.Follow)
 
 	// for each account we want to export both where it's following and where it's followed
@@ -115,7 +115,7 @@ func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Acc
 		}
 		for _, follow := range following {
 			follow.Type = transmodel.TransFollow
-			if err := e.simpleEncode(ctx, f, follow, follow.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, follow, follow.ID); err != nil {
 				return nil, fmt.Errorf("exportFollows: error encoding follow owned by account %s: %s", a.ID, err)
 			}
 			followsUnique[follow.ID] = follow
@@ -129,7 +129,7 @@ func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Acc
 		}
 		for _, follow := range followed {
 			follow.Type = transmodel.TransFollow
-			if err := e.simpleEncode(ctx, f, follow, follow.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, follow, follow.ID); err != nil {
 				return nil, fmt.Errorf("exportFollows: error encoding follow targeting account %s: %s", a.ID, err)
 			}
 			followsUnique[follow.ID] = follow
@@ -145,7 +145,7 @@ func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Acc
 	return follows, nil
 }
 
-func (e *exporter) exportFollowRequests(ctx context.Context, accounts []*transmodel.Account, f *os.File) ([]*transmodel.FollowRequest, error) {
+func (e *exporter) exportFollowRequests(ctx context.Context, accounts []*transmodel.Account, file *os.File) ([]*transmodel.FollowRequest, error) {
 	frsUnique := make(map[string]*transmodel.FollowRequest)
 
 	// for each account we want to export both where it's following and where it's followed
@@ -158,7 +158,7 @@ func (e *exporter) exportFollowRequests(ctx context.Context, accounts []*transmo
 		}
 		for _, fr := range requesting {
 			fr.Type = transmodel.TransFollowRequest
-			if err := e.simpleEncode(ctx, f, fr, fr.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, fr, fr.ID); err != nil {
 				return nil, fmt.Errorf("exportFollowRequests: error encoding follow request owned by account %s: %s", a.ID, err)
 			}
 			frsUnique[fr.ID] = fr
@@ -172,7 +172,7 @@ func (e *exporter) exportFollowRequests(ctx context.Context, accounts []*transmo
 		}
 		for _, fr := range requested {
 			fr.Type = transmodel.TransFollowRequest
-			if err := e.simpleEncode(ctx, f, fr, fr.ID); err != nil {
+			if err := e.simpleEncode(ctx, file, fr, fr.ID); err != nil {
 				return nil, fmt.Errorf("exportFollowRequests: error encoding follow request targeting account %s: %s", a.ID, err)
 			}
 			frsUnique[fr.ID] = fr
@@ -188,7 +188,7 @@ func (e *exporter) exportFollowRequests(ctx context.Context, accounts []*transmo
 	return followRequests, nil
 }
 
-func (e *exporter) exportInstances(ctx context.Context, f *os.File) ([]*transmodel.Instance, error) {
+func (e *exporter) exportInstances(ctx context.Context, file *os.File) ([]*transmodel.Instance, error) {
 	instances := []*transmodel.Instance{}
 
 	if err := e.db.GetAll(ctx, &instances); err != nil {
@@ -197,7 +197,7 @@ func (e *exporter) exportInstances(ctx context.Context, f *os.File) ([]*transmod
 
 	for _, u := range instances {
 		u.Type = transmodel.TransInstance
-		if err := e.simpleEncode(ctx, f, u, u.ID); err != nil {
+		if err := e.simpleEncode(ctx, file, u, u.ID); err != nil {
 			return nil, fmt.Errorf("exportInstances: error encoding instance: %s", err)
 		}
 	}
@@ -205,7 +205,7 @@ func (e *exporter) exportInstances(ctx context.Context, f *os.File) ([]*transmod
 	return instances, nil
 }
 
-func (e *exporter) exportUsers(ctx context.Context, f *os.File) ([]*transmodel.User, error) {
+func (e *exporter) exportUsers(ctx context.Context, file *os.File) ([]*transmodel.User, error) {
 	users := []*transmodel.User{}
 
 	if err := e.db.GetAll(ctx, &users); err != nil {
@@ -214,7 +214,7 @@ func (e *exporter) exportUsers(ctx context.Context, f *os.File) ([]*transmodel.U
 
 	for _, u := range users {
 		u.Type = transmodel.TransUser
-		if err := e.simpleEncode(ctx, f, u, u.ID); err != nil {
+		if err := e.simpleEncode(ctx, file, u, u.ID); err != nil {
 			return nil, fmt.Errorf("exportUsers: error encoding user: %s", err)
 		}
 	}
