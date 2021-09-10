@@ -34,9 +34,7 @@ steps:
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
-  # `-p 1`      => run maximum one test at a time
-  # `./...`     => run all tests
-  - go test -p 1 ./...
+  - ./scripts/test.sh
   when:
     event:
       include:
@@ -85,6 +83,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 268d484fd9c5d14834a3e2a1e39cfe605c3898d601d2969dba5c2e11c1ea2f3b
+hmac: 07325ed3186a319e5cf98f2307f04c4a10b01b2bd8fb394a2e633502041bfb90
 
 ...

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 SWAGGER_FILE="docs/api/swagger.yaml"
 GTS_VERSION="$(cat version)"
 

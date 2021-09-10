@@ -1,4 +1,4 @@
-# Contributing
+# Contributing <!-- omit in toc -->
 
 Hey! Welcome to the CONTRIBUTING.md for GoToSocial :) Thanks for taking a look, that kicks ass.
 
@@ -7,6 +7,24 @@ This document will expand as the project expands, so for now this is basically a
 Contributions are welcome at this point, since the API is fairly stable now and the structure is somewhat coherent.
 
 Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to see if there's anything you fancy jumping in on.
+
+## Table Of Contents  <!-- omit in toc -->
+
+- [Communications](#communications)
+- [Code of Conduct](#code-of-conduct)
+- [Setting up your development environment](#setting-up-your-development-environment)
+  - [Golang forking quirks](#golang-forking-quirks)
+- [Setting up your test environment](#setting-up-your-test-environment)
+  - [Standalone Testrig](#standalone-testrig)
+- [Running tests](#running-tests)
+  - [SQLite](#sqlite)
+  - [Postgres](#postgres)
+  - [Both](#both)
+- [Linting](#linting)
+- [Updating Swagger docs](#updating-swagger-docs)
+- [Pushing to Docker](#pushing-to-docker)
+- [CI/CD configuration](#cicd-configuration)
+- [Financial Compensation](#financial-compensation)
 
 ## Communications
 
@@ -28,7 +46,7 @@ To get started, you first need to have Go installed. GtS is currently using Go 1
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
-Once that's done, you can try building the project: `./build.sh`. This will build the `gotosocial` binary.
+Once that's done, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
 
 If there are no errors, great, you're good to go!
 
@@ -76,12 +94,12 @@ One thing that *isn't* mocked is the Database interface, because it's just easie
 
 You can also launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
 
-To do this, first build the gotosocial binary with `./build.sh`.
+To do this, first build the gotosocial binary with `./scripts/build.sh`.
 
 Then, launch the testrig by invoking the binary as follows:
 
 ```bash
-./gotosocial --host localhost:8080 testrig start
+GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" ./gotosocial --host localhost:8080 testrig start
 ```
 
 To run Pinafore locally in dev mode, first clone the Pinafore repository, and run the following command in the cloned directory:
@@ -104,13 +122,35 @@ Note the following constraints:
 
 ## Running tests
 
-Because the tests use a real SQLite database under the hood, you can't run them in parallel, so you need to run tests with the following command:
+There are a few different ways of running tests. Each requires the use of the `-p 1` flag, to indicate that they should not be run in parallel.
+
+### SQLite
+
+If you want to run tests as quickly as possible, using an SQLite in-memory database, use:
 
 ```bash
-go test -p 1 ./...
+GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -p 1 ./...
 ```
 
-The `-p 1` flag means that only 1 test will be run at a time.
+### Postgres
+
+If you want to run tests against a Postgres database running on localhost, run:
+
+```bash
+GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="localhost" go test -p 1 ./...
+```
+
+In the above command, it is assumed you are using the default Postgres password of `postgres`.
+
+### Both
+
+Finally, to run tests against both database types one after the other, use:
+
+```bash
+./scripts.test.sh
+```
+
+The above script is also used by the CI/CD runner to run tests.
 
 ## Linting
 
@@ -139,6 +179,44 @@ golint ./internal/...
 ```
 
 Then make sure to run `go fmt ./...` to update whitespace and other opinionated formatting.
+
+## Updating Swagger docs
+
+If you change swagger annotations on any of the API paths, you need to generate a new swagger file at `./docs/api/swagger.yaml`. You can do this with:
+
+`./scripts/generateswagger.sh`
+
+## Pushing to Docker
+
+You can easily build a Docker container tagged with the current branch name using:
+
+```bash
+./scripts/dockerbuild.sh
+```
+
+Then, (assuming you have permissions to push to the [GoToSocial Docker repository](https://hub.docker.com/r/superseriousbusiness/gotosocial)), run:
+
+```bash
+./scripts/dockerpush.sh
+```
+
+Note: you should never manually push a Docker container from your machine to `latest` -- we have a CI/CD flow for that. Only push a Docker container manually when you're testing changes on a branch!
+
+## CI/CD configuration
+
+GoToSocial uses [Drone](https://www.drone.io/) for CI/CD tasks like running tests, linting, and building Docker containers. These runs are integrated with Github, and will be run on opening a pull request or merging into main.
+
+The Drone instance for GoToSocial is [here](https://drone.superseriousbusiness.org/superseriousbusiness/gotosocial).
+
+The `drone.yml` file is [here](./.drone.yml) -- this defines how and when Drone should run. Documentation for Drone is [here](https://docs.drone.io/).
+
+Please note that the `drone.yml` file must be signed by the Drone admin account in order to be considered valid. This must be done every time the file is changed. This is to prevent tampering and hijacking of the Drone instance. See [here](https://docs.drone.io/signature/).
+
+To sign the file, first install and setup the [drone cli tool](https://docs.drone.io/cli/install/). Then, run:
+
+```bash
+drone -t PUT_YOUR_DRONE_ADMIN_TOKEN_HERE -s https://drone.superseriousbusiness.org sign superseriousbusiness/gotosocial --save
+```
 
 ## Financial Compensation
 
