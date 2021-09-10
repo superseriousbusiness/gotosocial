@@ -27,7 +27,7 @@ require (
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
-	github.com/uptrace/bun v1.0.5
+	github.com/uptrace/bun v1.0.6-0.20210910151504-6bdd913309c3
 	github.com/uptrace/bun/dialect/pgdialect v1.0.5
 	github.com/uptrace/bun/dialect/sqlitedialect v1.0.5
 	github.com/urfave/cli/v2 v2.3.0
