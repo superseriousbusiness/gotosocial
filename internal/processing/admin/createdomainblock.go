@@ -108,7 +108,7 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 		instance.ContactAccountUsername = ""
 		instance.ContactAccountID = ""
 		instance.Version = ""
-		if err := p.db.UpdateByID(ctx, instance.ID, instance); err != nil {
+		if err := p.db.UpdateByPrimaryKey(ctx, instance); err != nil {
 			l.Errorf("domainBlockProcessSideEffects: db error updating instance: %s", err)
 		}
 		l.Debug("domainBlockProcessSideEffects: instance entry updated")

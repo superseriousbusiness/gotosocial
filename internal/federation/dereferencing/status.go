@@ -44,7 +44,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 		return nil, err
 	}
 
-	if err := d.db.UpdateByID(ctx, status.ID, status); err != nil {
+	if err := d.db.UpdateByPrimaryKey(ctx, status); err != nil {
 		return nil, fmt.Errorf("EnrichRemoteStatus: error updating status: %s", err)
 	}
 
@@ -119,7 +119,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
-		if err := d.db.UpdateByID(ctx, gtsStatus.ID, gtsStatus); err != nil {
+		if err := d.db.UpdateByPrimaryKey(ctx, gtsStatus); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error updating status: %s", err)
 		}
 	}

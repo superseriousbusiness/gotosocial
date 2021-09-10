@@ -95,7 +95,7 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.Error {
+func (b *basicDB) UpdateByPrimaryKey(ctx context.Context, i interface{}) db.Error {
 	q := b.conn.
 		NewUpdate().
 		Model(i).
@@ -105,7 +105,7 @@ func (b *basicDB) UpdateByID(ctx context.Context, id string, i interface{}) db.E
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateOneByID(ctx context.Context, id string, key string, value interface{}, i interface{}) db.Error {
+func (b *basicDB) UpdateOneByPrimaryKey(ctx context.Context, key string, value interface{}, i interface{}) db.Error {
 	q := b.conn.NewUpdate().
 		Model(i).
 		Set("? = ?", bun.Safe(key), value).
