@@ -30,9 +30,9 @@ type StatusLink struct {
 	ID   string `uri:"id"   binding:"required"`
 }
 
-func (m *Module) statusTemplateHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusTemplateGET")
-	l.Trace("rendering status template")
+func (m *Module) threadTemplateHandler(c *gin.Context) {
+	l := m.log.WithField("func", "threadTemplateGET")
+	l.Trace("rendering thread template")
 
 	var statusLink StatusLink
 
@@ -73,7 +73,7 @@ func (m *Module) statusTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "status.tmpl", gin.H{
+	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
 		"instance":    instance,
 		"status":      status,
 		"context":     context,

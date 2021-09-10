@@ -97,7 +97,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
 	// serve statuses
-	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.statusTemplateHandler)
+	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)

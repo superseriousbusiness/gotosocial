@@ -1,0 +1,19 @@
+{{ template "header.tmpl" .}}
+<main>
+	<div class="thread">
+		{{range .context.Ancestors}}
+		<div class="toot">
+			{{ template "status.tmpl" .}}
+		</div>
+		{{end}}
+		<div class="toot expanded">
+			{{ template "status.tmpl" .status}}
+		</div>
+		{{range .context.Descendants}}
+		<div class="toot">
+			{{ template "status.tmpl" .}}
+		</div>
+		{{end}}
+	</div>
+</main>
+{{ template "footer.tmpl" .}}
