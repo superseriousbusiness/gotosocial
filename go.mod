@@ -30,6 +30,7 @@ require (
 	github.com/uptrace/bun v1.0.5
 	github.com/uptrace/bun/dialect/pgdialect v1.0.5
 	github.com/uptrace/bun/dialect/sqlitedialect v1.0.5
+	github.com/uptrace/bun/extra/bundebug v1.0.5
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
@@ -52,6 +53,7 @@ require (
 	github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d // indirect
 	github.com/dsoprea/go-png-image-structure v0.0.0-20210512210324-29b889a6093d // indirect
 	github.com/dsoprea/go-utility v0.0.0-20200717064901-2fccff4aa15e // indirect
+	github.com/fatih/color v1.10.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -75,6 +77,7 @@ require (
 	github.com/json-iterator/go v1.1.11 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
