@@ -147,10 +147,8 @@ In the above command, it is assumed you are using the default Postgres password 
 Finally, to run tests against both database types one after the other, use:
 
 ```bash
-./scripts.test.sh
+./scripts/test.sh
 ```
-
-The above script is also used by the CI/CD runner to run tests.
 
 ## Linting
 
