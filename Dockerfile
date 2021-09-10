@@ -33,10 +33,10 @@ FROM node:16.5.0-alpine3.11 AS web_builder
 RUN apk update && apk upgrade --no-cache
 
 COPY web /web
-WORKDIR /web/source
+WORKDIR /web/gotosocial-styling
 
 RUN yarn install
-RUN node build.js
+RUN BUILD_DIR=../assets node index.js
 
 # STEP THREE: bundle the admin webapp
 FROM node:16.5.0-alpine3.11 AS admin_builder
