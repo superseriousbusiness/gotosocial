@@ -52,6 +52,12 @@ type Router interface {
 	Start()
 	// Stop the router
 	Stop(ctx context.Context) error
+	// (Re)load templates
+	LoadTemplates() error
+}
+
+func (r *router) LoadTemplates() error {
+	return loadTemplates(r.config, r.engine);
 }
 
 // router fulfils the Router interface using gin and logrus

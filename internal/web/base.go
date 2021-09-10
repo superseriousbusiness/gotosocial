@@ -57,7 +57,6 @@ func (m *Module) baseHandler(c *gin.Context) {
 		return
 	}
 
-	// FIXME: fill in more variables?
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"instance": instance,
 	})
