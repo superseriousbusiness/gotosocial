@@ -34,18 +34,21 @@ import (
 // 	req.Header.Set("Content-Type", w.FormDataContentType())
 func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string]string) (bytes.Buffer, *multipart.Writer, error) {
 	var b bytes.Buffer
-	var err error
+
 	w := multipart.NewWriter(&b)
 	var fw io.Writer
-	file, err := os.Open(fileName)
-	if err != nil {
-		return b, nil, err
-	}
-	if fw, err = w.CreateFormFile(fieldName, file.Name()); err != nil {
-		return b, nil, err
-	}
-	if _, err = io.Copy(fw, file); err != nil {
-		return b, nil, err
+
+	if fileName != "" {
+		file, err := os.Open(fileName)
+		if err != nil {
+			return b, nil, err
+		}
+		if fw, err = w.CreateFormFile(fieldName, file.Name()); err != nil {
+			return b, nil, err
+		}
+		if _, err = io.Copy(fw, file); err != nil {
+			return b, nil, err
+		}
 	}
 
 	for k, v := range extraFields {

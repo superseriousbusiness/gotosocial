@@ -19,6 +19,7 @@
 package account_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -37,7 +38,139 @@ type AccountUpdateTestSuite struct {
 	AccountStandardTestSuite
 }
 
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerSimple() {
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
+	// set up the request
+	// we're updating the note of zork
+	newBio := "this is my new bio read it and weep"
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"note": newBio,
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	fmt.Println(string(bodyBytes))
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	fmt.Println(string(b))
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal(newBio, apimodelAccount.Note)
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGetAccountFirst() {
+	// get the account first to make sure it's in the database cache -- when the account is updated via
+	// the PATCH handler, it should invalidate the cache and not return the old version
+	_, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
+	suite.NoError(err)
+
+	// set up the request
+	// we're updating the note of zork
+	newBio := "this is my new bio read it and weep"
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"note": newBio,
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	fmt.Println(string(b))
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal(newBio, apimodelAccount.Note)
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwoFields() {
+	// set up the request
+	// we're updating the note of zork, and setting locked to true
+	newBio := "this is my new bio read it and weep"
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"note":   newBio,
+			"locked": "true",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	fmt.Println(string(bodyBytes))
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	fmt.Println(string(b))
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal(newBio, apimodelAccount.Note)
+	suite.True(apimodelAccount.Locked)
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWithMedia() {
 	// set up the request
 	// we're updating the header image, the display name, and the locked status of zork
 	// we're removing the note/bio
@@ -51,8 +184,9 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerSim
 	if err != nil {
 		panic(err)
 	}
+	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, requestBody.Bytes(), account.UpdateCredentialsPath, w.FormDataContentType())
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
 
 	// call the handler
 	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
@@ -88,6 +222,28 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerSim
 	// should be different from the values set before
 	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.Header)
 	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.HeaderStatic)
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerEmptyForm() {
+	// set up the request
+	bodyBytes := []byte{}
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, "")
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	suite.Equal(`{"error":"empty form submitted"}`, string(b))
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {
