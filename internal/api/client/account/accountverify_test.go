@@ -74,7 +74,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal(testAccount.DisplayName, apimodelAccount.DisplayName)
 	suite.Equal(testAccount.Locked, apimodelAccount.Locked)
 	suite.Equal(testAccount.Bot, apimodelAccount.Bot)
-	suite.WithinDuration(testAccount.CreatedAt, createdAt, 1*time.Second) // we lose a bit of accuracy serializing so fuzz this a bit
+	suite.WithinDuration(testAccount.CreatedAt, createdAt, 30*time.Second) // we lose a bit of accuracy serializing so fuzz this a bit
 	suite.Equal(testAccount.URL, apimodelAccount.URL)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg", apimodelAccount.Avatar)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg", apimodelAccount.AvatarStatic)
