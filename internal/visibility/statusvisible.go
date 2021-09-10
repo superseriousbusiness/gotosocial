@@ -20,8 +20,6 @@ package visibility
 
 import (
 	"context"
-	"errors"
-
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -30,31 +28,33 @@ import (
 )
 
 func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
+	const getBoosted = true
+
 	l := f.log.WithFields(logrus.Fields{
 		"func":     "StatusVisible",
 		"statusID": targetStatus.ID,
 	})
 
-	getBoosted := true
+	// Fetch any relevant accounts for the target status
 	relevantAccounts, err := f.relevantAccounts(ctx, targetStatus, getBoosted)
 	if err != nil {
 		l.Debugf("error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 		return false, fmt.Errorf("StatusVisible: error pulling relevant accounts for status %s: %s", targetStatus.ID, err)
 	}
 
+	// Check we have determined a target account
+	targetAccount := relevantAccounts.Account
+	if targetAccount == nil {
+		l.Trace("target account is not set")
+		return false, nil
+	}
+
+	// Check for domain blocks among relevant accounts
 	domainBlocked, err := f.domainBlockedRelevant(ctx, relevantAccounts)
 	if err != nil {
 		l.Debugf("error checking domain block: %s", err)
 		return false, fmt.Errorf("error checking domain block: %s", err)
-	}
-
-	if domainBlocked {
-		return false, nil
-	}
-
-	targetAccount := relevantAccounts.Account
-	if targetAccount == nil {
-		l.Trace("target account is not set")
+	} else if domainBlocked {
 		return false, nil
 	}
 
@@ -136,25 +136,13 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 		return false, nil
 	}
 
-	// status replies to account id
+	// If not in reply to the requesting account, check if inReplyToAccount is blocked
 	if relevantAccounts.InReplyToAccount != nil && relevantAccounts.InReplyToAccount.ID != requestingAccount.ID {
 		if blocked, err := f.db.IsBlocked(ctx, relevantAccounts.InReplyToAccount.ID, requestingAccount.ID, true); err != nil {
 			return false, err
 		} else if blocked {
 			l.Trace("a block exists between requesting account and reply to account")
 			return false, nil
-		}
-
-		// check reply to ID
-		if targetStatus.InReplyToID != "" && (targetStatus.Visibility == gtsmodel.VisibilityFollowersOnly || targetStatus.Visibility == gtsmodel.VisibilityDirect) {
-			followsRepliedAccount, err := f.db.IsFollowing(ctx, requestingAccount, relevantAccounts.InReplyToAccount)
-			if err != nil {
-				return false, err
-			}
-			if !followsRepliedAccount {
-				l.Trace("target status is a followers-only reply to an account that is not followed by the requesting account")
-				return false, nil
-			}
 		}
 	}
 
@@ -178,19 +166,6 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 		}
 	}
 
-	// status mentions accounts
-	for _, a := range relevantAccounts.MentionedAccounts {
-		if a == nil {
-			continue
-		}
-		if blocked, err := f.db.IsBlocked(ctx, a.ID, requestingAccount.ID, true); err != nil {
-			return false, err
-		} else if blocked {
-			l.Trace("a block exists between requesting account and a mentioned account")
-			return false, nil
-		}
-	}
-
 	// boost mentions accounts
 	for _, a := range relevantAccounts.BoostedMentionedAccounts {
 		if a == nil {
@@ -204,24 +179,40 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 		}
 	}
 
-	// if the requesting account is mentioned in the status it should always be visible
-	for _, acct := range relevantAccounts.MentionedAccounts {
-		if acct == nil {
+	// Iterate mentions to check for blocks or requester mentions
+	isMentioned, blockAmongMentions := false, false
+	for _, a := range relevantAccounts.MentionedAccounts {
+		if a == nil {
 			continue
 		}
-		if acct.ID == requestingAccount.ID {
-			return true, nil // yep it's mentioned!
+
+		if blocked, err := f.db.IsBlocked(ctx, a.ID, requestingAccount.ID, true); err != nil {
+			return false, err
+		} else if blocked {
+			blockAmongMentions = true
+			break
 		}
+
+		if a.ID == requestingAccount.ID {
+			isMentioned = true
+		}
+	}
+
+	if blockAmongMentions {
+		l.Trace("a block exists between requesting account and a mentioned account")
+		return false, nil
+	} else if isMentioned {
+		// Requester mentioned, should always be visible
+		return true, nil
 	}
 
 	// at this point we know neither account blocks the other, or another account mentioned or otherwise referred to in the status
 	// that means it's now just a matter of checking the visibility settings of the status itself
 	switch targetStatus.Visibility {
 	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityUnlocked:
-		// no problem here, just return OK
-		return true, nil
+		// no problem here
 	case gtsmodel.VisibilityFollowersOnly:
-		// check one-way follow
+		// Followers-only post, check for a one-way follow to target
 		follows, err := f.db.IsFollowing(ctx, requestingAccount, targetAccount)
 		if err != nil {
 			return false, err
@@ -230,9 +221,8 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 			l.Trace("requested status is followers only but requesting account is not a follower")
 			return false, nil
 		}
-		return true, nil
 	case gtsmodel.VisibilityMutualsOnly:
-		// check mutual follow
+		// Mutuals-only post, check for a mutual follow
 		mutuals, err := f.db.IsMutualFollowing(ctx, requestingAccount, targetAccount)
 		if err != nil {
 			return false, err
@@ -241,11 +231,11 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 			l.Trace("requested status is mutuals only but accounts aren't mufos")
 			return false, nil
 		}
-		return true, nil
 	case gtsmodel.VisibilityDirect:
-		l.Trace("requesting account requests a status it's not mentioned in")
+		l.Trace("requesting account requests a direct status it's not mentioned in")
 		return false, nil // it's not mentioned -_-
 	}
 
-	return false, errors.New("reached the end of StatusVisible with no result")
+	// If we reached here, all is okay
+	return true, nil
 }
