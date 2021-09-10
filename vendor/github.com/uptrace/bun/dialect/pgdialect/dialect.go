@@ -24,7 +24,8 @@ type Dialect struct {
 func New() *Dialect {
 	d := new(Dialect)
 	d.tables = schema.NewTables(d)
-	d.features = feature.Returning |
+	d.features = feature.CTE |
+		feature.Returning |
 		feature.DefaultPlaceholder |
 		feature.DoubleColonCast |
 		feature.InsertTableAlias |
@@ -70,8 +71,8 @@ func (d *Dialect) onField(field *schema.Field) {
 	}
 
 	if field.Tag.HasOption("array") {
-		field.Append = arrayAppender(field.IndirectType)
-		field.Scan = arrayScanner(field.IndirectType)
+		field.Append = arrayAppender(field.StructField.Type)
+		field.Scan = arrayScanner(field.StructField.Type)
 	}
 }
 

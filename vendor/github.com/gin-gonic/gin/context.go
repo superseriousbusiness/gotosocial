@@ -383,6 +383,15 @@ func (c *Context) Param(key string) string {
 	return c.Params.ByName(key)
 }
 
+// AddParam adds param to context and
+// replaces path param key with given value for e2e testing purposes
+// Example Route: "/user/:id"
+// AddParam("id", 1)
+// Result: "/user/1"
+func (c *Context) AddParam(key, value string) {
+	c.Params = append(c.Params, Param{Key: key, Value: value})
+}
+
 // Query returns the keyed url query value if it exists,
 // otherwise it returns an empty string `("")`.
 // It is shortcut for `c.Request.URL.Query().Get(key)`
@@ -391,9 +400,9 @@ func (c *Context) Param(key string) string {
 // 	   c.Query("name") == "Manu"
 // 	   c.Query("value") == ""
 // 	   c.Query("wtf") == ""
-func (c *Context) Query(key string) string {
-	value, _ := c.GetQuery(key)
-	return value
+func (c *Context) Query(key string) (value string) {
+	value, _ = c.GetQuery(key)
+	return
 }
 
 // DefaultQuery returns the keyed url query value if it exists,
@@ -427,9 +436,9 @@ func (c *Context) GetQuery(key string) (string, bool) {
 
 // QueryArray returns a slice of strings for a given query key.
 // The length of the slice depends on the number of params with the given key.
-func (c *Context) QueryArray(key string) []string {
-	values, _ := c.GetQueryArray(key)
-	return values
+func (c *Context) QueryArray(key string) (values []string) {
+	values, _ = c.GetQueryArray(key)
+	return
 }
 
 func (c *Context) initQueryCache() {
@@ -444,18 +453,16 @@ func (c *Context) initQueryCache() {
 
 // GetQueryArray returns a slice of strings for a given query key, plus
 // a boolean value whether at least one value exists for the given key.
-func (c *Context) GetQueryArray(key string) ([]string, bool) {
+func (c *Context) GetQueryArray(key string) (values []string, ok bool) {
 	c.initQueryCache()
-	if values, ok := c.queryCache[key]; ok && len(values) > 0 {
-		return values, true
-	}
-	return []string{}, false
+	values, ok = c.queryCache[key]
+	return
 }
 
 // QueryMap returns a map for a given query key.
-func (c *Context) QueryMap(key string) map[string]string {
-	dicts, _ := c.GetQueryMap(key)
-	return dicts
+func (c *Context) QueryMap(key string) (dicts map[string]string) {
+	dicts, _ = c.GetQueryMap(key)
+	return
 }
 
 // GetQueryMap returns a map for a given query key, plus a boolean value
@@ -467,9 +474,9 @@ func (c *Context) GetQueryMap(key string) (map[string]string, bool) {
 
 // PostForm returns the specified key from a POST urlencoded form or multipart form
 // when it exists, otherwise it returns an empty string `("")`.
-func (c *Context) PostForm(key string) string {
-	value, _ := c.GetPostForm(key)
-	return value
+func (c *Context) PostForm(key string) (value string) {
+	value, _ = c.GetPostForm(key)
+	return
 }
 
 // DefaultPostForm returns the specified key from a POST urlencoded form or multipart form
@@ -498,9 +505,9 @@ func (c *Context) GetPostForm(key string) (string, bool) {
 
 // PostFormArray returns a slice of strings for a given form key.
 // The length of the slice depends on the number of params with the given key.
-func (c *Context) PostFormArray(key string) []string {
-	values, _ := c.GetPostFormArray(key)
-	return values
+func (c *Context) PostFormArray(key string) (values []string) {
+	values, _ = c.GetPostFormArray(key)
+	return
 }
 
 func (c *Context) initFormCache() {
@@ -518,18 +525,16 @@ func (c *Context) initFormCache() {
 
 // GetPostFormArray returns a slice of strings for a given form key, plus
 // a boolean value whether at least one value exists for the given key.
-func (c *Context) GetPostFormArray(key string) ([]string, bool) {
+func (c *Context) GetPostFormArray(key string) (values []string, ok bool) {
 	c.initFormCache()
-	if values := c.formCache[key]; len(values) > 0 {
-		return values, true
-	}
-	return []string{}, false
+	values, ok = c.formCache[key]
+	return
 }
 
 // PostFormMap returns a map for a given form key.
-func (c *Context) PostFormMap(key string) map[string]string {
-	dicts, _ := c.GetPostFormMap(key)
-	return dicts
+func (c *Context) PostFormMap(key string) (dicts map[string]string) {
+	dicts, _ = c.GetPostFormMap(key)
+	return
 }
 
 // GetPostFormMap returns a map for a given form key, plus a boolean value
@@ -1161,22 +1166,28 @@ func (c *Context) SetAccepted(formats ...string) {
 /***** GOLANG.ORG/X/NET/CONTEXT *****/
 /************************************/
 
-// Deadline always returns that there is no deadline (ok==false),
-// maybe you want to use Request.Context().Deadline() instead.
+// Deadline returns that there is no deadline (ok==false) when c.Request has no Context.
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	return
+	if c.Request == nil || c.Request.Context() == nil {
+		return
+	}
+	return c.Request.Context().Deadline()
 }
 
-// Done always returns nil (chan which will wait forever),
-// if you want to abort your work when the connection was closed
-// you should use Request.Context().Done() instead.
+// Done returns nil (chan which will wait forever) when c.Request has no Context.
 func (c *Context) Done() <-chan struct{} {
-	return nil
+	if c.Request == nil || c.Request.Context() == nil {
+		return nil
+	}
+	return c.Request.Context().Done()
 }
 
-// Err always returns nil, maybe you want to use Request.Context().Err() instead.
+// Err returns nil when c.Request has no Context.
 func (c *Context) Err() error {
-	return nil
+	if c.Request == nil || c.Request.Context() == nil {
+		return nil
+	}
+	return c.Request.Context().Err()
 }
 
 // Value returns the value associated with this context for key, or nil

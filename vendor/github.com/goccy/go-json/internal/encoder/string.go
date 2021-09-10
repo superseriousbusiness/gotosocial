@@ -405,7 +405,10 @@ func stringToUint64Slice(s string) []uint64 {
 	}))
 }
 
-func AppendEscapedString(buf []byte, s string) []byte {
+func AppendString(ctx *RuntimeContext, buf []byte, s string) []byte {
+	if ctx.Option.Flag&HTMLEscapeOption == 0 {
+		return appendString(buf, s)
+	}
 	valLen := len(s)
 	if valLen == 0 {
 		return append(buf, `""`...)
@@ -531,7 +534,7 @@ ESCAPE_END:
 	return append(append(buf, s[i:]...), '"')
 }
 
-func AppendString(buf []byte, s string) []byte {
+func appendString(buf []byte, s string) []byte {
 	valLen := len(s)
 	if valLen == 0 {
 		return append(buf, `""`...)

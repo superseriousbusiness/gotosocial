@@ -1,5 +1,5 @@
 # STEP ONE: build the GoToSocial binary
-FROM golang:1.16.4-alpine3.13 AS binary_builder
+FROM golang:1.17.1-alpine3.13 AS binary_builder
 RUN apk update && apk upgrade --no-cache
 RUN apk add git
 

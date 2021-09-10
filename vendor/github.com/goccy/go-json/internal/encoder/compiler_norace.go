@@ -20,19 +20,36 @@ func CompileToGetCodeSet(typeptr uintptr) (*OpcodeSet, error) {
 	// noescape trick for header.typ ( reflect.*rtype )
 	copiedType := *(**runtime.Type)(unsafe.Pointer(&typeptr))
 
-	code, err := compileHead(&compileContext{
+	noescapeKeyCode, err := compileHead(&compileContext{
 		typ:                      copiedType,
 		structTypeToCompiledCode: map[uintptr]*CompiledCode{},
 	})
 	if err != nil {
 		return nil, err
 	}
-	code = copyOpcode(code)
-	codeLength := code.TotalLength()
+	escapeKeyCode, err := compileHead(&compileContext{
+		typ:                      copiedType,
+		structTypeToCompiledCode: map[uintptr]*CompiledCode{},
+		escapeKey:                true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	noescapeKeyCode = copyOpcode(noescapeKeyCode)
+	escapeKeyCode = copyOpcode(escapeKeyCode)
+	setTotalLengthToInterfaceOp(noescapeKeyCode)
+	setTotalLengthToInterfaceOp(escapeKeyCode)
+	interfaceNoescapeKeyCode := copyToInterfaceOpcode(noescapeKeyCode)
+	interfaceEscapeKeyCode := copyToInterfaceOpcode(escapeKeyCode)
+	codeLength := noescapeKeyCode.TotalLength()
 	codeSet := &OpcodeSet{
-		Type:       copiedType,
-		Code:       code,
-		CodeLength: codeLength,
+		Type:                     copiedType,
+		NoescapeKeyCode:          noescapeKeyCode,
+		EscapeKeyCode:            escapeKeyCode,
+		InterfaceNoescapeKeyCode: interfaceNoescapeKeyCode,
+		InterfaceEscapeKeyCode:   interfaceEscapeKeyCode,
+		CodeLength:               codeLength,
+		EndCode:                  ToEndCode(interfaceNoescapeKeyCode),
 	}
 	cachedOpcodeSets[index] = codeSet
 	return codeSet, nil

@@ -13,7 +13,7 @@ steps:
 # We use golangci-lint for linting.
 # See: https://golangci-lint.run/
 - name: lint
-  image: golangci/golangci-lint:v1.41.1
+  image: golangci/golangci-lint:v1.42.1
   volumes:
   - name: go-build-cache
     path: /root/.cache/go-build
@@ -27,17 +27,16 @@ steps:
         - pull_request
 
 - name: test
-  image: golang:1.16.4
+  image: golang:1.17.1
   volumes:
   - name: go-build-cache
     path: /root/.cache/go-build
   environment:
     GTS_DB_ADDRESS: postgres
   commands:
-  # `-count 1`  => run all tests at least once
   # `-p 1`      => run maximum one test at a time
   # `./...`     => run all tests
-  - go test -count 1 -p 1 ./...
+  - go test -p 1 ./...
   when:
     event:
       include:
@@ -86,6 +85,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 7fa6fa70be0a5c436ecb2f02f4b74bd1be5e90817e2d95a16898e3d29cbadf80
+hmac: 268d484fd9c5d14834a3e2a1e39cfe605c3898d601d2969dba5c2e11c1ea2f3b
 
 ...

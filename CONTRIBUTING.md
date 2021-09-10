@@ -4,7 +4,7 @@ Hey! Welcome to the CONTRIBUTING.md for GoToSocial :) Thanks for taking a look, 
 
 This document will expand as the project expands, so for now this is basically a stub.
 
-Contributions are welcome at this point, since the API is fairly stable now and the structure is at least vaguely coherent.
+Contributions are welcome at this point, since the API is fairly stable now and the structure is somewhat coherent.
 
 Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to see if there's anything you fancy jumping in on.
 
@@ -20,11 +20,11 @@ In lieu of a fuller code of conduct, here are a few ground rules.
 
 1. We *DO NOT ACCEPT* PRs from right-wingers, Nazis, transphobes, homophobes, racists, harassers, abusers, white-supremacists, misogynists, tech-bros of questionable ethics. If that's you, politely fuck off somewhere else.
 2. Any PR that moves GoToSocial in the direction of surveillance capitalism or other bad fediverse behavior will be rejected.
-3. Don't spam the chat too hard.
+3. Don't spam the general chat too hard.
 
 ## Setting up your development environment
 
-To get started, you first need to have Go installed. GTS was developed with Go 1.16.4, so you should take that too. See [here](https://golang.org/doc/install).
+To get started, you first need to have Go installed. GtS is currently using Go 1.17, so you should take that too. See [here](https://golang.org/doc/install).
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
@@ -48,21 +48,21 @@ In case this post disappears, here are the steps (slightly modified):
 
 >
 > Pull the original package from the canonical place with the standard go get command:
-> 
+>
 > `go get github.com/superseriousbusiness/gotosocial`
-> 
+>
 > Fork the repository on Github or set up whatever other remote git repo you will be using. In this case, I would go to Github and fork the repository.
-> 
+>
 > Navigate to the top level of the repository on your computer. Note that this might not be the specific package you’re using:
-> 
+>
 > `cd $GOPATH/src/github.com/superseriousbusiness/gotosocial`
-> 
+>
 > Rename the current origin remote to upstream:
-> 
+>
 > `git remote rename origin upstream`
-> 
+>
 > Add your fork as origin:
-> 
+>
 > `git remote add origin git@github.com/yourgithubname/gotosocial`
 >
 
@@ -70,33 +70,13 @@ In case this post disappears, here are the steps (slightly modified):
 
 GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig) with a bunch of mock packages you can use in integration tests.
 
-One thing that *isn't* mocked is the Database interface, because it's just easier to use a real Postgres database running on localhost.
-
-You can spin up a Postgres easily using Docker:
-
-```bash
-docker run -d --user postgres --network host -e POSTGRES_PASSWORD=postgres postgres
-```
-
-If you want a nice interface for peeking at what's in the Postgres database during tests, use PGWeb:
-
-```bash
-docker run -d --user postgres --network host sosedoff/pgweb
-```
-
-This will launch a pgweb at `http://localhost:8081`.
+One thing that *isn't* mocked is the Database interface, because it's just easier to use an in-memory SQLite database than to mock everything out.
 
 ### Standalone Testrig
 
 You can also launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
 
-To do this, first build the gotosocial binary with `go build ./cmd/gotosocial`.
-
-Then launch a clean Postgres container on localhost:
-
-```bash
-docker run -d --user postgres --network host -e POSTGRES_PASSWORD=postgres postgres
-```
+To do this, first build the gotosocial binary with `./build.sh`.
 
 Then, launch the testrig by invoking the binary as follows:
 
@@ -118,19 +98,19 @@ At the login screen, enter the email address `zork@example.org` and password `pa
 
 Note the following constraints:
 
-- The testrig data will be destroyed when the testrig is destroyed. It does this by dropping all tables in Postgres on shutdown. As such, you should **NEVER RUN THE TESTRIG AGAINST A DATABASE WITH REAL DATA IN IT** because it will be destroyed. Be especially careful if you're forwarding database ports from a remote instance to your local machine, because you can easily and irreversibly nuke that data if you run the testrig against it.
+- Since the testrig uses an in-memory database, the database will be destroyed when the testrig is stopped.
 - If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
 - The testrig does not make any actual external http calls, so federation will (obviously) not work from a testrig.
 
 ## Running tests
 
-Because the tests use a real Postgres under the hood, you can't run them in parallel, so you need to run tests with the following command:
+Because the tests use a real SQLite database under the hood, you can't run them in parallel, so you need to run tests with the following command:
 
 ```bash
-go test -count 1 -p 1 ./...
+go test -p 1 ./...
 ```
 
-The `count` flag means that tests will be run at least once, and the `-p 1` flag means that only 1 test will be run at a time.
+The `-p 1` flag means that only 1 test will be run at a time.
 
 ## Linting
 
