@@ -26,7 +26,7 @@ var (
 	ErrConvertToMapString = errors.New("can not convert to map of strings")
 )
 
-func mapUri(ptr interface{}, m map[string][]string) error {
+func mapURI(ptr interface{}, m map[string][]string) error {
 	return mapFormByTag(ptr, m, "uri")
 }
 
@@ -83,7 +83,7 @@ func mapping(value reflect.Value, field reflect.StructField, setter setter, tag 
 		return false, nil
 	}
 
-	var vKind = value.Kind()
+	vKind := value.Kind()
 
 	if vKind == reflect.Ptr {
 		var isNew bool
@@ -210,7 +210,7 @@ func setWithProperType(val string, value reflect.Value, field reflect.StructFiel
 	case reflect.Int64:
 		switch value.Interface().(type) {
 		case time.Duration:
-			return setTimeDuration(val, value, field)
+			return setTimeDuration(val, value)
 		}
 		return setIntField(val, 64, value)
 	case reflect.Uint:
@@ -310,7 +310,6 @@ func setTimeField(val string, structField reflect.StructField, value reflect.Val
 		t := time.Unix(tv/int64(d), tv%int64(d))
 		value.Set(reflect.ValueOf(t))
 		return nil
-
 	}
 
 	if val == "" {
@@ -360,7 +359,7 @@ func setSlice(vals []string, value reflect.Value, field reflect.StructField) err
 	return nil
 }
 
-func setTimeDuration(val string, value reflect.Value, field reflect.StructField) error {
+func setTimeDuration(val string, value reflect.Value) error {
 	d, err := time.ParseDuration(val)
 	if err != nil {
 		return err

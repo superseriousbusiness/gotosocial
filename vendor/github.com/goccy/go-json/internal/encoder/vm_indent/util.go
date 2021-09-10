@@ -35,24 +35,33 @@ type emptyInterface struct {
 	ptr unsafe.Pointer
 }
 
+type nonEmptyInterface struct {
+	itab *struct {
+		ityp *runtime.Type // static interface type
+		typ  *runtime.Type // dynamic concrete type
+		// unused fields...
+	}
+	ptr unsafe.Pointer
+}
+
 func errUnimplementedOp(op encoder.OpType) error {
 	return fmt.Errorf("encoder (indent): opcode %s has not been implemented", op)
 }
 
-func load(base uintptr, idx uintptr) uintptr {
-	addr := base + idx
+func load(base uintptr, idx uint32) uintptr {
+	addr := base + uintptr(idx)
 	return **(**uintptr)(unsafe.Pointer(&addr))
 }
 
-func store(base uintptr, idx uintptr, p uintptr) {
-	addr := base + idx
+func store(base uintptr, idx uint32, p uintptr) {
+	addr := base + uintptr(idx)
 	**(**uintptr)(unsafe.Pointer(&addr)) = p
 }
 
-func loadNPtr(base uintptr, idx uintptr, ptrNum int) uintptr {
-	addr := base + idx
+func loadNPtr(base uintptr, idx uint32, ptrNum uint8) uintptr {
+	addr := base + uintptr(idx)
 	p := **(**uintptr)(unsafe.Pointer(&addr))
-	for i := 0; i < ptrNum; i++ {
+	for i := uint8(0); i < ptrNum; i++ {
 		if p == 0 {
 			return 0
 		}
@@ -72,8 +81,8 @@ func ptrToSlice(p uintptr) *runtime.SliceHeader { return *(**runtime.SliceHeader
 func ptrToPtr(p uintptr) uintptr {
 	return uintptr(**(**unsafe.Pointer)(unsafe.Pointer(&p)))
 }
-func ptrToNPtr(p uintptr, ptrNum int) uintptr {
-	for i := 0; i < ptrNum; i++ {
+func ptrToNPtr(p uintptr, ptrNum uint8) uintptr {
+	for i := uint8(0); i < ptrNum; i++ {
 		if p == 0 {
 			return 0
 		}
@@ -92,60 +101,23 @@ func ptrToInterface(code *encoder.Opcode, p uintptr) interface{} {
 	}))
 }
 
-func appendBool(b []byte, v bool) []byte {
+func appendBool(_ *encoder.RuntimeContext, b []byte, v bool) []byte {
 	if v {
 		return append(b, "true"...)
 	}
 	return append(b, "false"...)
 }
 
-func appendNull(b []byte) []byte {
+func appendNull(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, "null"...)
 }
 
-func appendComma(b []byte) []byte {
+func appendComma(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, ',', '\n')
 }
 
-func appendColon(b []byte) []byte {
+func appendColon(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, ':', ' ')
-}
-
-func appendInterface(ctx *encoder.RuntimeContext, codeSet *encoder.OpcodeSet, opt encoder.Option, code *encoder.Opcode, b []byte, iface *emptyInterface, ptrOffset uintptr) ([]byte, error) {
-	ctx.KeepRefs = append(ctx.KeepRefs, unsafe.Pointer(iface))
-	ifaceCodeSet, err := encoder.CompileToGetCodeSet(uintptr(unsafe.Pointer(iface.typ)))
-	if err != nil {
-		return nil, err
-	}
-
-	totalLength := uintptr(codeSet.CodeLength)
-	nextTotalLength := uintptr(ifaceCodeSet.CodeLength)
-
-	curlen := uintptr(len(ctx.Ptrs))
-	offsetNum := ptrOffset / uintptrSize
-
-	newLen := offsetNum + totalLength + nextTotalLength
-	if curlen < newLen {
-		ctx.Ptrs = append(ctx.Ptrs, make([]uintptr, newLen-curlen)...)
-	}
-	oldPtrs := ctx.Ptrs
-
-	newPtrs := ctx.Ptrs[(ptrOffset+totalLength*uintptrSize)/uintptrSize:]
-	newPtrs[0] = uintptr(iface.ptr)
-
-	ctx.Ptrs = newPtrs
-
-	oldBaseIndent := ctx.BaseIndent
-	ctx.BaseIndent = code.Indent
-	bb, err := Run(ctx, b, ifaceCodeSet, opt)
-	if err != nil {
-		return nil, err
-	}
-	ctx.BaseIndent = oldBaseIndent
-
-	ctx.Ptrs = oldPtrs
-
-	return bb, nil
 }
 
 func appendMapKeyValue(ctx *encoder.RuntimeContext, code *encoder.Opcode, b, key, value []byte) []byte {
@@ -175,11 +147,11 @@ func appendArrayEnd(ctx *encoder.RuntimeContext, code *encoder.Opcode, b []byte)
 	return append(b, ']', ',', '\n')
 }
 
-func appendEmptyArray(b []byte) []byte {
+func appendEmptyArray(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, '[', ']', ',', '\n')
 }
 
-func appendEmptyObject(b []byte) []byte {
+func appendEmptyObject(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, '{', '}', ',', '\n')
 }
 
@@ -191,14 +163,14 @@ func appendObjectEnd(ctx *encoder.RuntimeContext, code *encoder.Opcode, b []byte
 }
 
 func appendMarshalJSON(ctx *encoder.RuntimeContext, code *encoder.Opcode, b []byte, v interface{}) ([]byte, error) {
-	return encoder.AppendMarshalJSONIndent(ctx, code, b, v, false)
+	return encoder.AppendMarshalJSONIndent(ctx, code, b, v)
 }
 
-func appendMarshalText(code *encoder.Opcode, b []byte, v interface{}) ([]byte, error) {
-	return encoder.AppendMarshalTextIndent(code, b, v, false)
+func appendMarshalText(ctx *encoder.RuntimeContext, code *encoder.Opcode, b []byte, v interface{}) ([]byte, error) {
+	return encoder.AppendMarshalTextIndent(ctx, code, b, v)
 }
 
-func appendStructHead(b []byte) []byte {
+func appendStructHead(_ *encoder.RuntimeContext, b []byte) []byte {
 	return append(b, '{', '\n')
 }
 
@@ -221,15 +193,15 @@ func appendStructEndSkipLast(ctx *encoder.RuntimeContext, code *encoder.Opcode, 
 		b = appendIndent(ctx, b, code.Indent-1)
 		b = append(b, '}')
 	}
-	return appendComma(b)
+	return appendComma(ctx, b)
 }
 
 func restoreIndent(ctx *encoder.RuntimeContext, code *encoder.Opcode, ctxptr uintptr) {
-	ctx.BaseIndent = int(load(ctxptr, code.Length))
+	ctx.BaseIndent = uint32(load(ctxptr, code.Length))
 }
 
 func storeIndent(ctxptr uintptr, code *encoder.Opcode, indent uintptr) {
-	store(ctxptr, code.End.Next.Length, indent)
+	store(ctxptr, code.Length, indent)
 }
 
 func appendArrayElemIndent(ctx *encoder.RuntimeContext, code *encoder.Opcode, b []byte) []byte {

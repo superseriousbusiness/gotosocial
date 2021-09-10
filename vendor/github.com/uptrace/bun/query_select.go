@@ -359,6 +359,10 @@ func (q *SelectQuery) selectJoins(ctx context.Context, joins []relationJoin) err
 
 //------------------------------------------------------------------------------
 
+func (q *SelectQuery) Operation() string {
+	return "SELECT"
+}
+
 func (q *SelectQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
 	return q.appendQuery(fmter, b, false)
 }
@@ -523,7 +527,7 @@ func (q *SelectQuery) appendColumns(fmter schema.Formatter, b []byte) (_ []byte,
 				b = append(b, ", "...)
 			}
 
-			if col.Args == nil {
+			if col.Args == nil && q.table != nil {
 				if field, ok := q.table.FieldMap[col.Query]; ok {
 					b = append(b, q.table.SQLAlias...)
 					b = append(b, '.')

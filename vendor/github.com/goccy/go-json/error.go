@@ -37,13 +37,3 @@ type UnmarshalTypeError = errors.UnmarshalTypeError
 type UnsupportedTypeError = errors.UnsupportedTypeError
 
 type UnsupportedValueError = errors.UnsupportedValueError
-
-var (
-	errExceededMaxDepth      = errors.ErrExceededMaxDepth
-	errNotAtBeginningOfValue = errors.ErrNotAtBeginningOfValue
-	errUnexpectedEndOfJSON   = errors.ErrUnexpectedEndOfJSON
-	errExpected              = errors.ErrExpected
-	errInvalidCharacter      = errors.ErrInvalidCharacter
-	errSyntax                = errors.ErrSyntax
-	errMarshaler             = errors.ErrMarshaler
-)

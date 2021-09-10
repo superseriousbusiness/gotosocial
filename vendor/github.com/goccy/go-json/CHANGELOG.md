@@ -1,3 +1,118 @@
+# v0.7.8 - 2021/09/01
+
+* Fix mapassign_faststr for indirect struct type ( #283 )
+* Fix encoding of not empty interface type ( #284 )
+* Fix encoding of empty struct interface type ( #286 )
+
+# v0.7.7 - 2021/08/25
+
+* Fix invalid utf8 on stream decoder ( #279 )
+* Fix buffer length bug on string stream decoder ( #280 )
+
+Thank you @orisano !!
+
+# v0.7.6 - 2021/08/13
+
+* Fix nil slice assignment ( #276 )
+* Improve error message ( #277 )
+
+# v0.7.5 - 2021/08/12
+
+* Fix encoding of embedded struct with tags ( #265 )
+* Fix encoding of embedded struct that isn't first field ( #272 )
+* Fix decoding of binary type with escaped char ( #273 )
+
+# v0.7.4 - 2021/07/06
+
+* Fix encoding of indirect layout structure ( #264 )
+
+# v0.7.3 - 2021/06/29
+
+* Fix encoding of pointer type in empty interface ( #262 )
+
+# v0.7.2 - 2021/06/26
+
+### Fix decoder
+
+* Add decoder for func type to fix decoding of nil function value ( #257 )
+* Fix stream decoding of []byte type ( #258 )
+
+### Performance
+
+* Improve decoding performance of map[string]interface{} type ( use `mapassign_faststr` ) ( #256 )
+* Improve encoding performance of empty interface type ( remove recursive calling of `vm.Run` ) ( #259 )
+
+### Benchmark
+
+* Add bytedance/sonic as benchmark target ( #254 )
+
+# v0.7.1 - 2021/06/18
+
+### Fix decoder
+
+* Fix error when unmarshal empty array ( #253 )
+
+# v0.7.0 - 2021/06/12
+
+### Support context for MarshalJSON and UnmarshalJSON ( #248 )
+
+* json.MarshalContext(context.Context, interface{}, ...json.EncodeOption) ([]byte, error)
+* json.NewEncoder(io.Writer).EncodeContext(context.Context, interface{}, ...json.EncodeOption) error
+* json.UnmarshalContext(context.Context, []byte, interface{}, ...json.DecodeOption) error
+* json.NewDecoder(io.Reader).DecodeContext(context.Context, interface{}) error
+
+```go
+type MarshalerContext interface {
+  MarshalJSON(context.Context) ([]byte, error)
+}
+
+type UnmarshalerContext interface {
+  UnmarshalJSON(context.Context, []byte) error
+}
+```
+
+### Add DecodeFieldPriorityFirstWin option ( #242 )
+
+In the default behavior, go-json, like encoding/json, will reflect the result of the last evaluation when a field with the same name exists. I've added new options to allow you to change this behavior. `json.DecodeFieldPriorityFirstWin` option reflects the result of the first evaluation if a field with the same name exists. This behavior has a performance advantage as it allows the subsequent strings to be skipped if all fields have been evaluated.
+
+### Fix encoder
+
+* Fix indent number contains recursive type ( #249 )
+* Fix encoding of using empty interface as map key ( #244 )
+
+### Fix decoder
+
+* Fix decoding fields containing escaped characters ( #237 )
+
+### Refactor
+
+* Move some tests to subdirectory ( #243 )
+* Refactor package layout for decoder ( #238 )
+
+# v0.6.1 - 2021/06/02
+
+### Fix encoder
+
+* Fix value of totalLength for encoding ( #236 )
+
+# v0.6.0 - 2021/06/01
+
+### Support Colorize option for encoding (#233)
+
+```go
+b, err := json.MarshalWithOption(v, json.Colorize(json.DefaultColorScheme))
+if err != nil {
+  ...
+}
+fmt.Println(string(b)) // print colored json
+```
+
+### Refactor
+
+* Fix opcode layout - Adjust memory layout of the opcode to 128 bytes in a 64-bit environment ( #230 )
+* Refactor encode option ( #231 )
+* Refactor escape string ( #232 )
+
 # v0.5.1 - 2021/5/20
 
 ### Optimization

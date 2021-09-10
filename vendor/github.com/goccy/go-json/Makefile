@@ -1,7 +1,7 @@
 PKG := github.com/goccy/go-json
 
 BIN_DIR := $(CURDIR)/bin
-PKGS := $(shell go list ./... | grep -v internal/cmd)
+PKGS := $(shell go list ./... | grep -v internal/cmd|grep -v test)
 COVER_PKGS := $(foreach pkg,$(PKGS),$(subst $(PKG),.,$(pkg)))
 
 COMMA := ,
@@ -14,7 +14,7 @@ $(BIN_DIR):
 
 .PHONY: cover
 cover:
-	go test -coverpkg=$(COVERPKG_OPT) -coverprofile=cover.out .
+	go test -coverpkg=$(COVERPKG_OPT) -coverprofile=cover.out ./...
 
 .PHONY: cover-html
 cover-html: cover
