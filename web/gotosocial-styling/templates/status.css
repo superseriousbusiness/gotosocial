@@ -62,7 +62,7 @@ main {
 		grid-column: span 3;
 		display: grid;
 		grid-template-columns: 50% 50%;
-		grid-auto-rows: 16rem;
+		grid-auto-rows: 10rem;
 		overflow: hidden;
 		gap: 0.3rem;
 
@@ -105,7 +105,7 @@ main {
 			grid-column: span 2;
 		}
 
-		&.odd a:first-child {
+		&.odd a:first-child, &.double a {
 			grid-row: span 2;
 		}
 	}

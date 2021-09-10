@@ -10,7 +10,7 @@
 					{{.Content |noescape}}
 				</div>
 				{{with .MediaAttachments}}
-					<div class="media {{(len .) | oddOrEven }} {{if eq (len .) 1}}single{{end}}">
+					<div class="media {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
 						{{range .}}
 							<a href="{{.URL}}" target="_blank" title="{{.Description}}">
  								{{if not .Description}}

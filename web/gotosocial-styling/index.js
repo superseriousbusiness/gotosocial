@@ -46,17 +46,26 @@ let buildDir = process.env.BUILD_DIR;
 if (buildDir == undefined) {
 	buildDir = `${__dirname}/build`;
 }
+console.log("bundling to", buildDir);
 
-if (process.env.NODE_ENV != "development") {
-	getTemplates().then((templates) => {
+function bundleAll() {
+	return getTemplates().then((templates) => {
 		return Promise.map(templates, bundle);
 	});
+}
+
+if (process.env.NODE_ENV != "development") {
+	bundleAll();
 } else {
 	const chokidar = require("chokidar");
 	console.log("Watching for changes");
-	let watcher = chokidar.watch(`${__dirname}/templates`).on("all", (a) => {
-		// bundle();
-		console.log(a)
+	chokidar.watch(`${__dirname}/templates`).on("all", (_, path) => {
+		if (path.endsWith(".css")) {
+			bundle([path.split("/").slice(-1)[0], path]);
+		}
 	});
-	watcher.add(`${__dirname}/colors.css`);
+	chokidar.watch(`${__dirname}/colors.css`).on("all", () => {
+		console.log("colors.css updated, rebuilding all templates");
+		bundleAll();
+	});
 }
