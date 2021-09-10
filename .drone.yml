@@ -31,10 +31,9 @@ steps:
   volumes:
   - name: go-build-cache
     path: /root/.cache/go-build
-  environment:
-    GTS_DB_ADDRESS: postgres
   commands:
-  - ./scripts/test.sh
+  - GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
+  - GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
   when:
     event:
       include:
@@ -83,6 +82,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 07325ed3186a319e5cf98f2307f04c4a10b01b2bd8fb394a2e633502041bfb90
+hmac: 764ac2de691c436bd86c6cc94b862cde2b5558e4de65ff68bb0d227de1736783
 
 ...
