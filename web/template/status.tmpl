@@ -1,0 +1,100 @@
+{{ template "header.tmpl" .}}
+<main>
+	<div class="thread">
+		{{range .context.Ancestors}}
+			<div class="toot">
+				<a href="{{.Account.URL}}" class="avatar"><img src="{{.Account.Avatar}}"></a>
+				<a href="{{.Account.URL}}" class="displayname">{{.Account.DisplayName}}</a>
+				<a href="{{.Account.URL}}" class="username">@{{.Account.Username}}</a>
+				<div class="text">
+					{{.Content |noescape}}
+				</div>
+				{{with .MediaAttachments}}
+					<div class="media {{(len .) | oddOrEven }} {{if eq (len .) 1}}single{{end}}">
+						{{range .}}
+							<a href="{{.URL}}" target="_blank" title="{{.Description}}">
+ 								{{if not .Description}}
+							 		<div class="no-image-desc" aria-hidden="true" >(!)<span>Missing image description</span></div>
+								{{end}}
+								<img src="{{.PreviewURL}}" alt="{{.Description}}"/>
+							</a>
+						{{end}}
+					</div>
+				{{end}}
+				<div class="info">
+					<div id="date">{{.CreatedAt | timestamp}}</div>
+					<div class="stats">
+						<div id="visibility">{{.Visibility | visibilityIcon}}</div>
+						<div id="replies"><i aria-label="Replies" class="fa fa-reply-all"></i> {{.RepliesCount}}</div>
+						<div id="boosts"><i aria-label="Boosts" class="fa fa-retweet"></i> {{.ReblogsCount}}</div>
+						<div id="favorites"><i aria-label="Favorites" class="fa fa-star"></i> {{.FavouritesCount}}</div>
+					</div>
+				</div>
+				<a href="{{.URL}}" class="toot-link">View toot</a>
+			</div>
+		{{end}}
+		<div class="toot expanded">
+			<a href="{{.status.Account.URL}}" class="avatar"><img src="{{.status.Account.Avatar}}"></a>
+			<a href="{{.status.Account.URL}}" class="displayname">{{.status.Account.DisplayName}}</a>
+			<a href="{{.status.Account.URL}}" class="username">@{{.status.Account.Username}}</a>
+			<div class="text">
+				{{.status.Content |noescape}}
+			</div>
+			{{with .status.MediaAttachments}}
+				<div class="media {{(len .) | oddOrEven }} {{if eq (len .) 1}}single{{end}}">
+					{{range .}}
+						<a href="{{.URL}}" target="_blank" title="{{.Description}}">
+ 							{{if not .Description}}
+							 	<div class="no-image-desc" aria-hidden="true" >(!)<span>Missing image description</span></div>
+							{{end}}
+							<img src="{{.PreviewURL}}" alt="{{.Description}}"/>
+						</a>
+					{{end}}
+				</div>
+			{{end}}
+			<div class="info">
+				<div id="date">{{.status.CreatedAt | timestamp}}</div>
+				<div class="stats">
+					<div id="visibility">{{.status.Visibility | visibilityIcon}}</div>
+					<div id="replies"><i aria-label="Replies" class="fa fa-reply-all"></i> {{.status.RepliesCount}}</div>
+					<div id="boosts"><i aria-label="Boosts" class="fa fa-retweet"></i> {{.status.ReblogsCount}}</div>
+					<div id="favorites"><i aria-label="Favorites" class="fa fa-star"></i> {{.status.FavouritesCount}}</div>
+				</div>
+			</div>
+			<a href="{{.status.URL}}" class="toot-link">View toot</a>
+		</div>
+		{{range .context.Descendants}}
+			<div class="toot">
+				<a href="{{.Account.URL}}" class="avatar"><img src="{{.Account.Avatar}}"></a>
+				<a href="{{.Account.URL}}" class="displayname">{{.Account.DisplayName}}</a>
+				<a href="{{.Account.URL}}" class="username">@{{.Account.Username}}</a>
+				<div class="text">
+					{{.Content |noescape}}
+				</div>
+				{{with .MediaAttachments}}
+					<div class="media {{(len .) | oddOrEven }} {{if eq (len .) 1}}single{{end}}">
+						{{range .}}
+							<a href="{{.URL}}" target="_blank" title="{{.Description}}">
+ 								{{if not .Description}}
+							 		<div class="no-image-desc" aria-hidden="true" >(!)<span>Missing image description</span></div>
+								{{end}}
+								<img src="{{.PreviewURL}}" alt="{{.Description}}"/>
+							</a>
+						{{end}}
+					</div>
+				{{end}}
+				<div class="info">
+					<div id="date">{{.CreatedAt | timestamp}}</div>
+					<div class="stats">
+						<div id="visibility">{{.Visibility | visibilityIcon}}</div>
+						<div id="replies"><i aria-label="Replies" class="fa fa-reply-all"></i> {{.RepliesCount}}</div>
+						<div id="boosts"><i aria-label="Boosts" class="fa fa-retweet"></i> {{.ReblogsCount}}</div>
+						<div id="favorites"><i aria-label="Favorites" class="fa fa-star"></i> {{.FavouritesCount}}</div>
+					</div>
+				</div>
+				<a href="{{.URL}}" class="toot-link">View toot</a>
+			</div>
+		{{end}}
+	</div>
+</main>
+{{ template "footer.tmpl" .}}

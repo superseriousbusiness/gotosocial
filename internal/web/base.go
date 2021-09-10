@@ -59,11 +59,7 @@ func (m *Module) baseHandler(c *gin.Context) {
 
 	// FIXME: fill in more variables?
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
-		"instance":      instance,
-		"countUsers":    3,
-		"countStatuses": 42069,
-		"version":       "1.0.0",
-		"adminUsername": "@admin",
+		"instance": instance,
 	})
 }
 
@@ -100,6 +96,9 @@ func (m *Module) Route(s router.Router) error {
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+
+	// serve statuses
+	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.statusTemplateHandler)
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
