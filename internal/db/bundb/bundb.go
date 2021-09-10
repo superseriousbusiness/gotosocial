@@ -147,6 +147,11 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
 
+	if log.Level >= logrus.TraceLevel {
+		// add a hook to just log queries and the time they take
+		conn.DB.AddQueryHook(&debugQueryHook{log: log})
+	}
+
 	// actually *begin* the connection so that we can tell if the db is there and listening
 	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("db connection error: %s", err)
