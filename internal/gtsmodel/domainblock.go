@@ -28,8 +28,8 @@ type DomainBlock struct {
 	Domain             string    `validate:"required,fqdn" bun:",nullzero,notnull"`                             // domain to block. Eg. 'whatever.com'
 	CreatedByAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // Account ID of the creator of this block
 	CreatedByAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                            // Account corresponding to createdByAccountID
-	PrivateComment     string    `validate:"-" bun:",nullzero"`                                                 // Private comment on this block, viewable to admins
-	PublicComment      string    `validate:"-" bun:",nullzero"`                                                 // Public comment on this block, viewable (optionally) by everyone
-	Obfuscate          bool      `validate:"-" bun:",nullzero,default:false"`                                   // whether the domain name should appear obfuscated when displaying it publicly
+	PrivateComment     string    `validate:"-" bun:""`                                                          // Private comment on this block, viewable to admins
+	PublicComment      string    `validate:"-" bun:""`                                                          // Public comment on this block, viewable (optionally) by everyone
+	Obfuscate          bool      `validate:"-" bun:",default:false"`                                            // whether the domain name should appear obfuscated when displaying it publicly
 	SubscriptionID     string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                       // if this block was created through a subscription, what's the subscription ID?
 }

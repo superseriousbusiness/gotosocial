@@ -31,11 +31,11 @@ type MediaAttachment struct {
 	StatusID          string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // ID of the status to which this is attached
 	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",notnull"`                                 // Type of file (image/gif/audio/video)
+	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",nullzero,notnull"`                        // Type of file (image/gif/audio/video)
 	FileMeta          FileMeta         `validate:"required" bun:",nullzero,notnull"`                                                   // Metadata about the file
 	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
 	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                // Account corresponding to accountID
-	Description       string           `validate:"-" bun:",nullzero"`                                                                  // Description of the attachment (for screenreaders)
+	Description       string           `validate:"-" bun:""`                                                                           // Description of the attachment (for screenreaders)
 	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // To which scheduled status does this attachment belong
 	Blurhash          string           `validate:"required_if=Type Image,required_if=Type Gif,required_if=Type Video" bun:",nullzero"` // What is the generated blurhash of this attachment
 	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                           // What is the processing status of this attachment
@@ -49,7 +49,7 @@ type MediaAttachment struct {
 type File struct {
 	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                             // Path of the file in storage.
 	ContentType string    `validate:"required" bun:",nullzero,notnull"`                                  // MIME content type of the file.
-	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                                  // File size in bytes
+	FileSize    int       `validate:"required" bun:",notnull"`                                           // File size in bytes
 	UpdatedAt   time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 }
 
@@ -57,7 +57,7 @@ type File struct {
 type Thumbnail struct {
 	Path        string    `validate:"required,file" bun:",nullzero,notnull"`                             // Path of the file in storage.
 	ContentType string    `validate:"required" bun:",nullzero,notnull"`                                  // MIME content type of the file.
-	FileSize    int       `validate:"required" bun:",nullzero,notnull"`                                  // File size in bytes
+	FileSize    int       `validate:"required" bun:",notnull"`                                           // File size in bytes
 	UpdatedAt   time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 	URL         string    `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`          // What is the URL of the thumbnail on the local server
 	RemoteURL   string    `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                // What is the remote URL of the thumbnail (empty for local media)
