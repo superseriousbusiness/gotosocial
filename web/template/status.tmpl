@@ -2,7 +2,15 @@
 <a href="{{.Account.URL}}" class="displayname">{{.Account.DisplayName}}</a>
 <a href="{{.Account.URL}}" class="username">@{{.Account.Username}}</a>
 <div class="text">
-	{{.Content |noescape}}
+	{{if .SpoilerText}}
+	<input class="spoiler" id="hideSpoiler-{{.ID}}" type="checkbox" style="display: none" aria-hidden="true" checked="true" />
+	<div class="spoiler">
+		<span>{{.SpoilerText}}</span><label class="spoiler-label" for="hideSpoiler-{{.ID}}">Toggle visibility</label>
+	</div>
+	{{end}}
+	<div class="content">
+		{{.Content |noescape}}
+	</div>
 </div>
 {{with .MediaAttachments}}
 	<div class="media {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">

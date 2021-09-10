@@ -46,6 +46,22 @@ main {
 		justify-self: start;
 	}
 
+	input.spoiler:checked ~ .content {
+		display: none;
+	}
+
+	.spoiler {
+		label {
+			background: $acc1;
+			border-radius: 0.3rem;
+			padding: 0.3rem;
+			margin-left: 0.4rem;
+			position: relative;
+			z-index: 2;
+			cursor: pointer;
+		}
+	}
+
 	.text {
 		margin: 0;
 		grid-column: span 2;
