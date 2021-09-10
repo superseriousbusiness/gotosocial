@@ -32,6 +32,11 @@ func (f *filter) StatusPublictimelineable(ctx context.Context, targetStatus *gts
 		"statusID": targetStatus.ID,
 	})
 
+	// Don't timeline boosted statuses
+	if targetStatus.BoostOfID != "" {
+		return false, nil
+	}
+
 	// Don't timeline a reply
 	if targetStatus.InReplyToURI != "" || targetStatus.InReplyToID != "" || targetStatus.InReplyToAccountID != "" {
 		return false, nil
