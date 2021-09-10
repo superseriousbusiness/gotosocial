@@ -1,6 +1,23 @@
-# Quick and Dirty
+# Quick and Dirty <!-- omit in toc -->
 
 This is the quick and dirty getting started guide. It's not recommended to run GtS like this in production, but if you want to quickly get a server up and running, this is a good way to do it.
+
+## Table of Contents <!-- omit in toc -->
+
+- [1: Domain Name](#1-domain-name)
+- [2: VPS](#2-vps)
+- [3: DNS](#3-dns)
+- [4: Postgres](#4-postgres)
+- [5: Build the Binary](#5-build-the-binary)
+- [6: Prepare VPS](#6-prepare-vps)
+- [7: Copy Binary](#7-copy-binary)
+- [8: Copy Web Dir](#8-copy-web-dir)
+- [9: Run the Binary](#9-run-the-binary)
+- [10: Create and confirm your user](#10-create-and-confirm-your-user)
+  - [Create](#create)
+  - [Confirm](#confirm)
+  - [Promote](#promote)
+- [11. Login](#11-login)
 
 ## 1: Domain Name
 
@@ -11,6 +28,8 @@ Get a domain name -- [Namecheap](https://www.namecheap.com/) is a good place to 
 Spin yourself up a cheap VPS with Linux running on it, or get a homeserver ready with Ubuntu Server or something similar.
 
 [Hostwinds](https://www.hostwinds.com/) is a good option here: it's cheap and they throw in a static IP address for free.
+
+[Greenhost](https://greenhost.net) is also great: it has zero co2 emissions, but is a bit more costly.
 
 This guide won't go into running [UFW](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04) and [Fail2Ban](https://linuxize.com/post/install-configure-fail2ban-on-ubuntu-20-04/) but you absolutely should do that. Leave ports `443` and `80` open.
 
@@ -25,7 +44,7 @@ Install [Postgres](https://www.postgresql.org/download/) on your server and run 
 If you have [Docker](https://docs.docker.com/engine/install/ubuntu/) installed on your server, this is as easy as running:
 
 ```bash
-docker run -d --network host --user postgres -e POSTGRES_PASSWORD=some_password postgres 
+docker run -d --network host --user postgres -e POSTGRES_PASSWORD=some_password postgres
 ```
 
 ## 5: Build the Binary
@@ -33,13 +52,13 @@ docker run -d --network host --user postgres -e POSTGRES_PASSWORD=some_password 
 On your local machine (not your server), with Go installed, clone the GoToSocial repository, and build the binary with the provided build script:
 
 ```bash
-./build.sh
+./scripts/build.sh
 ```
 
 If you need to build for a different architecture other than the one you're running the build on (eg., you're running on a Raspberry Pi but building on an amd64 machine), you can put set `GOOS` or `GOARCH` environment variables before running the build script, eg:
 
 ```bash
-GOARCH=arm64 ./build.sh
+GOARCH=arm64 ./scripts/build.sh
 ```
 
 ## 6: Prepare VPS
@@ -70,7 +89,7 @@ scp -r ./web root@example.org:/gotosocial/
 
 ## 9: Run the Binary
 
-Everything is in place now.
+You can now run the binary.
 
 First cd into the directory you created on your remote machine in step 6:
 
@@ -122,6 +141,6 @@ If you want your user to have admin rights, you can promote them using a similar
 
 Replace `example.org` with your domain and `some_username` with the username of the account you just created.
 
-## 11. Login!
+## 11. Login
 
-You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or Tusky for this.
+You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or [Tusky](https://tusky.app) for this.

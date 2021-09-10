@@ -21,6 +21,7 @@ package testrig
 import (
 	"context"
 	"os"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -58,11 +59,31 @@ var testModels []interface{} = []interface{}{
 //
 // If the environment variable GTS_DB_ADDRESS is set, it will take that
 // value as the database address instead.
+//
+// If the environment variable GTS_DB_TYPE is set, it will take that
+// value as the database type instead.
+//
+// If the environment variable GTS_DB_PORT is set, it will take that
+// value as the port instead.
 func NewTestDB() db.DB {
 	config := NewTestConfig()
 	alternateAddress := os.Getenv("GTS_DB_ADDRESS")
 	if alternateAddress != "" {
 		config.DBConfig.Address = alternateAddress
+	}
+
+	alternateDBType := os.Getenv("GTS_DB_TYPE")
+	if alternateDBType != "" {
+		config.DBConfig.Type = alternateDBType
+	}
+
+	alternateDBPort := os.Getenv("GTS_DB_PORT")
+	if alternateDBPort != "" {
+		port, err := strconv.ParseInt(alternateDBPort, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		config.DBConfig.Port = int(port)
 	}
 
 	testDB, err := bundb.NewBunDBService(context.Background(), config, NewTestLog())
