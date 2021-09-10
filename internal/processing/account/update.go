@@ -39,13 +39,13 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	l := p.log.WithField("func", "AccountUpdate")
 
 	if form.Discoverable != nil {
-		if err := p.db.UpdateOneByID(ctx, account.ID, "discoverable", *form.Discoverable, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByPrimaryKey(ctx, "discoverable", *form.Discoverable, account); err != nil {
 			return nil, fmt.Errorf("error updating discoverable: %s", err)
 		}
 	}
 
 	if form.Bot != nil {
-		if err := p.db.UpdateOneByID(ctx, account.ID, "bot", *form.Bot, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByPrimaryKey(ctx, "bot", *form.Bot, account); err != nil {
 			return nil, fmt.Errorf("error updating bot: %s", err)
 		}
 	}
@@ -55,7 +55,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			return nil, err
 		}
 		displayName := text.RemoveHTML(*form.DisplayName) // no html allowed in display name
-		if err := p.db.UpdateOneByID(ctx, account.ID, "display_name", displayName, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByPrimaryKey(ctx, "display_name", displayName, account); err != nil {
 			return nil, err
 		}
 	}
@@ -65,7 +65,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			return nil, err
 		}
 		note := text.SanitizeHTML(*form.Note) // html OK in note but sanitize it
-		if err := p.db.UpdateOneByID(ctx, account.ID, "note", note, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByPrimaryKey(ctx, "note", note, account); err != nil {
 			return nil, err
 		}
 	}
@@ -87,7 +87,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Locked != nil {
-		if err := p.db.UpdateOneByID(ctx, account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
+		if err := p.db.UpdateOneByPrimaryKey(ctx, "locked", *form.Locked, account); err != nil {
 			return nil, err
 		}
 	}
@@ -97,13 +97,13 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Language(*form.Source.Language); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByID(ctx, account.ID, "language", *form.Source.Language, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByPrimaryKey(ctx, "language", *form.Source.Language, account); err != nil {
 				return nil, err
 			}
 		}
 
 		if form.Source.Sensitive != nil {
-			if err := p.db.UpdateOneByID(ctx, account.ID, "locked", *form.Locked, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByPrimaryKey(ctx, "locked", *form.Locked, account); err != nil {
 				return nil, err
 			}
 		}
@@ -112,7 +112,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByID(ctx, account.ID, "privacy", *form.Source.Privacy, &gtsmodel.Account{}); err != nil {
+			if err := p.db.UpdateOneByPrimaryKey(ctx, "privacy", *form.Source.Privacy, account); err != nil {
 				return nil, err
 			}
 		}

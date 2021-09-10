@@ -46,7 +46,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 
 	if form.Description != nil {
 		attachment.Description = text.RemoveHTML(*form.Description)
-		if err := p.db.UpdateByID(ctx, mediaAttachmentID, attachment); err != nil {
+		if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
 		}
 	}
@@ -58,7 +58,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		}
 		attachment.FileMeta.Focus.X = focusx
 		attachment.FileMeta.Focus.Y = focusy
-		if err := p.db.UpdateByID(ctx, mediaAttachmentID, attachment); err != nil {
+		if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating focus: %s", err))
 		}
 	}

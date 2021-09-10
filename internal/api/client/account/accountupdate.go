@@ -107,13 +107,14 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 	l.Tracef("retrieved account %+v", authed.Account.ID)
 
-	l.Debugf("parsing request form %s", c.Request.Form)
 	form := &model.UpdateCredentialsRequest{}
 	if err := c.ShouldBind(&form); err != nil || form == nil {
 		l.Debugf("could not parse form from request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	l.Debugf("parsed request form %+v", form)
 
 	// if everything on the form is nil, then nothing has been set and we shouldn't continue
 	if form.Discoverable == nil && form.Bot == nil && form.DisplayName == nil && form.Note == nil && form.Avatar == nil && form.Header == nil && form.Locked == nil && form.Source == nil && form.FieldsAttributes == nil {

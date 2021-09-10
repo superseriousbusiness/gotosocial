@@ -19,18 +19,17 @@
 package account_test
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -38,69 +37,57 @@ type AccountUpdateTestSuite struct {
 	AccountStandardTestSuite
 }
 
-func (suite *AccountUpdateTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *AccountUpdateTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
-	suite.log = testrig.NewTestLog()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.accountModule = account.New(suite.config, suite.processor, suite.log).(*account.Module)
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-}
-
-func (suite *AccountUpdateTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
-}
-
-func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() {
-
-	requestBody, w, err := testrig.CreateMultipartFormData("header", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
-		"display_name": "updated zork display name!!!",
-		"locked":       "true",
-	})
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerSimple() {
+	// set up the request
+	// we're updating the header image, the display name, and the locked status of zork
+	// we're removing the note/bio
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"header", "../../../../testrig/media/test-jpeg.jpg",
+		map[string]string{
+			"display_name": "updated zork display name!!!",
+			"note":         "",
+			"locked":       "true",
+		})
 	if err != nil {
 		panic(err)
 	}
-
-	// setup
 	recorder := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(recorder)
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/%s", account.UpdateCredentialsPath), bytes.NewReader(requestBody.Bytes())) // the endpoint we're hitting
-	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
+	ctx := suite.newContext(recorder, http.MethodPatch, requestBody.Bytes(), account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
 	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
 
-	// check response
-
 	// 1. we should have OK because our request was valid
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	suite.Equal(http.StatusOK, recorder.Code)
 
 	// 2. we should have no error message in the result body
 	result := recorder.Result()
 	defer result.Body.Close()
 
+	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-
 	fmt.Println(string(b))
 
-	// TODO write more assertions allee
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal("updated zork display name!!!", apimodelAccount.DisplayName)
+	suite.True(apimodelAccount.Locked)
+	suite.Empty(apimodelAccount.Note)
+
+	// header values...
+	// should be set
+	suite.NotEmpty(apimodelAccount.Header)
+	suite.NotEmpty(apimodelAccount.HeaderStatic)
+
+	// should be different from the values set before
+	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.Header)
+	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.HeaderStatic)
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

@@ -101,7 +101,7 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 	u.Approved = true
 	u.Email = u.UnconfirmedEmail
 	u.ConfirmedAt = time.Now()
-	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
+	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 	u.Admin = true
-	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
+	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config, lo
 		return err
 	}
 	u.Admin = false
-	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
+	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
 		return err
 	}
 
@@ -197,7 +197,7 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config, l
 		return err
 	}
 	u.Disabled = true
-	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
+	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
 		return err
 	}
 
@@ -250,7 +250,7 @@ var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config, 
 
 	u.EncryptedPassword = string(pw)
 
-	if err := dbConn.UpdateByID(ctx, u.ID, u); err != nil {
+	if err := dbConn.UpdateByPrimaryKey(ctx, u); err != nil {
 		return err
 	}
 
