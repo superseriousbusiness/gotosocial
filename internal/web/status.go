@@ -74,8 +74,9 @@ func (m *Module) statusTemplateHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "status.tmpl", gin.H{
-		"instance": instance,
-		"status":   status,
-		"context":  context,
+		"instance":    instance,
+		"status":      status,
+		"context":     context,
+		"stylesheets": []string{"/assets/Fork-Awesome/css/fork-awesome.min.css", "/assets/status.css"},
 	})
 }

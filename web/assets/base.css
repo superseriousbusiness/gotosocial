@@ -1,45 +1,70 @@
 html, body {
 	padding: 0;
 	margin: 0;
-	background: #525c66;
+	background: rgb(70, 79, 88);
 	color: #fafaff;
 	font-family: sans-serif;
 }
 
 body {
 	display: grid;
-	grid-template-columns: 1fr 50% 1fr;
-	grid-template-columns: 1fr 90ch 1fr;
-	line-height: 1.5em;
 
+	grid-template-rows: auto 1fr auto;
 	min-height: 100vh;
-	grid-auto-rows: auto;
-	grid-auto-flow: dense;
+	line-height: 1.5em;
 }
 
-body > * {
+main {
+	background: #525c66;
+	display: grid;
+	padding-top: 2rem;
+	grid-template-columns: 1fr 50% 1fr;
+	grid-template-columns: auto min(92%, 90ch) auto;
+}
+
+main .left {
+		grid-column: 1;
+	}
+
+main .right {
+		grid-column: 3;
+	}
+
+main.lightgray {
+		background: #525c66;
+	}
+
+main > * {
 		align-self: start;
 		grid-column: 2;
 	}
 
-body header, body footer, body .fullWidth {
-		grid-column: 1/4;
-		grid-column: 1/-1;
-	}
-
-body .left {
-		grid-column: 1;
-	}
-
-body .right {
-		grid-column: 3;
-	}
-
 header {
 	background: rgb(70, 79, 88);
-	padding: 2rem;
-	margin-bottom: 4rem;
+	padding: 2rem 0;
+	padding-bottom: 0;
+	display: flex;
+	flex-wrap: wrap;
 }
+
+header img {
+		height: 4rem;
+		padding-left: 2rem;
+		padding-bottom: 2rem;
+	}
+
+header div {
+		height: 100%;
+		margin: 0 2rem;
+		margin-top: -2rem;
+		flex-grow: 1;
+		align-self: center;
+		display: flex;
+	}
+
+header div h1 {
+			align-self: center;
+		}
 
 h1 {
 	/* color: $acc1; */
@@ -160,26 +185,21 @@ footer a {
 	}
 
 @media screen and (orientation: portrait) {
-	body {
+	main {
 		grid-template-columns: 1fr 92% 1fr;
 	}
-
-		body footer, body .left, body .right {
-			grid-column: 2;
-		}
 
 	header {
 		text-align: center;
 	}
 
 	footer {
-		padding: 0;
 		margin-top: 2rem;
 		grid-template-columns: 1fr;
 	}
 
 		footer div {
-			margin: 1rem 0;
+			margin: 0.3rem 0;
 		}
 
 	section.apps .applist {
