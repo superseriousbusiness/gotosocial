@@ -178,18 +178,18 @@ type TypeConverter interface {
 }
 
 type converter struct {
-	config        *config.Config
-	db            db.DB
-	log           *logrus.Logger
-	asCache       cache.Cache
+	config  *config.Config
+	db      db.DB
+	log     *logrus.Logger
+	asCache cache.Cache
 }
 
 // NewConverter returns a new Converter
 func NewConverter(config *config.Config, db db.DB, log *logrus.Logger) TypeConverter {
 	return &converter{
-		config:        config,
-		db:            db,
-		log:           log,
-		asCache:       cache.New(),
+		config:  config,
+		db:      db,
+		log:     log,
+		asCache: cache.New(),
 	}
 }
