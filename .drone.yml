@@ -32,8 +32,8 @@ steps:
   - name: go-build-cache
     path: /root/.cache/go-build
   commands:
-  - GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
-  - GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
   when:
     event:
       include:
@@ -86,6 +86,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 0a467111d4fc9f8ca92ad4794d9a5aed9a5b0edb0f013d548ee341e4408c1f70
+hmac: 703dad12a9e92cbd415b23d82620608830a60a70168527118e2e9aab145f1099
 
 ...
