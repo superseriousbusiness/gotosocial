@@ -80,12 +80,12 @@ trustedProxies:
 db:
 
   # String. Database type.
-  # Options: ["postgres"]
+  # Options: ["postgres","sqlite"]
   # Default: "postgres"
   type: "postgres"
 
-  # String. Database address. Can be either an ipv4 address or a hostname.
-  # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110"]
+  # String. Database address or parameters.
+  # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
   # Default: "localhost"
   address: "127.0.0.1"
 
