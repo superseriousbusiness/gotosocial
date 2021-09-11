@@ -19,7 +19,9 @@
 package account
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -107,17 +109,24 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 	}
 	l.Tracef("retrieved account %+v", authed.Account.ID)
 
-	form := &model.UpdateCredentialsRequest{}
-	if err := c.ShouldBind(&form); err != nil || form == nil {
-		l.Debugf("could not parse form from request: %s", err)
+	form, err := parseUpdateAccountForm(c)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	l.Debugf("parsed request form %+v", form)
-
 	// if everything on the form is nil, then nothing has been set and we shouldn't continue
-	if form.Discoverable == nil && form.Bot == nil && form.DisplayName == nil && form.Note == nil && form.Avatar == nil && form.Header == nil && form.Locked == nil && form.Source == nil && form.FieldsAttributes == nil {
+	if form.Discoverable == nil &&
+		form.Bot == nil &&
+		form.DisplayName == nil &&
+		form.Note == nil &&
+		form.Avatar == nil &&
+		form.Header == nil &&
+		form.Locked == nil &&
+		form.Source.Privacy == nil &&
+		form.Source.Sensitive == nil &&
+		form.Source.Language == nil &&
+		form.FieldsAttributes == nil {
 		l.Debugf("could not parse form from request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "empty form submitted"})
 		return
@@ -132,4 +141,35 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 
 	l.Tracef("conversion successful, returning OK and mastosensitive account %+v", acctSensitive)
 	c.JSON(http.StatusOK, acctSensitive)
+}
+
+func parseUpdateAccountForm(c *gin.Context) (*model.UpdateCredentialsRequest, error) {
+	// parse main fields from request
+	form := &model.UpdateCredentialsRequest{
+		Source: &model.UpdateSource{},
+	}
+	if err := c.ShouldBind(&form); err != nil || form == nil {
+		return nil, fmt.Errorf("could not parse form from request: %s", err)
+	}
+
+	// parse source field-by-field
+	sourceMap := c.PostFormMap("source")
+
+	if privacy, ok := sourceMap["privacy"]; ok {
+		form.Source.Privacy = &privacy
+	}
+
+	if sensitive, ok := sourceMap["sensitive"]; ok {
+		sensitiveBool, err := strconv.ParseBool(sensitive)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing form source[sensitive]: %s", err)
+		}
+		form.Source.Sensitive = &sensitiveBool
+	}
+
+	if language, ok := sourceMap["language"]; ok {
+		form.Source.Language = &language
+	}
+
+	return form, nil
 }

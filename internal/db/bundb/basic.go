@@ -105,16 +105,6 @@ func (b *basicDB) UpdateByPrimaryKey(ctx context.Context, i interface{}) db.Erro
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateOneByPrimaryKey(ctx context.Context, key string, value interface{}, i interface{}) db.Error {
-	q := b.conn.NewUpdate().
-		Model(i).
-		Set("? = ?", bun.Safe(key), value).
-		WherePK()
-
-	_, err := q.Exec(ctx)
-	return b.conn.ProcessError(err)
-}
-
 func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) db.Error {
 	q := b.conn.NewUpdate().Model(i)
 

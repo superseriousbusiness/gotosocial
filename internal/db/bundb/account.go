@@ -22,7 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -103,16 +102,15 @@ func (a *accountDB) getAccount(ctx context.Context, cacheGet func() (*gtsmodel.A
 }
 
 func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account) (*gtsmodel.Account, db.Error) {
-	if strings.TrimSpace(account.ID) == "" {
-		// TODO: we should not need this check here
-		return nil, errors.New("account had no ID")
-	}
-
-	// Update the account's last-used
+	// Update the account's last-updated
 	account.UpdatedAt = time.Now()
 
 	// Update the account model in the DB
-	_, err := a.conn.NewUpdate().Model(account).WherePK().Exec(ctx)
+	_, err := a.conn.
+		NewUpdate().
+		Model(account).
+		WherePK().
+		Exec(ctx)
 	if err != nil {
 		return nil, a.conn.ProcessError(err)
 	}

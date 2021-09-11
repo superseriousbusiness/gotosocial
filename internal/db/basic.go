@@ -66,10 +66,6 @@ type Basic interface {
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	UpdateByPrimaryKey(ctx context.Context, i interface{}) Error
 
-	// UpdateOneByPrimaryKey sets one column of interface, with the given key, to the given value.
-	// It uses the primary key of interface i to decide which row to update. This is usually the `id`.
-	UpdateOneByPrimaryKey(ctx context.Context, key string, value interface{}, i interface{}) Error
-
 	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
 	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) Error
 

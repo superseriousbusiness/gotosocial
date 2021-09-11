@@ -192,7 +192,7 @@ func (p *processor) ProcessLanguage(ctx context.Context, form *apimodel.Advanced
 
 func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	menchies := []string{}
-	gtsMenchies, err := p.db.MentionStringsToMentions(ctx, util.DeriveMentionsFromStatus(form.Status), accountID, status.ID)
+	gtsMenchies, err := p.db.MentionStringsToMentions(ctx, util.DeriveMentionsFromText(form.Status), accountID, status.ID)
 	if err != nil {
 		return fmt.Errorf("error generating mentions from status: %s", err)
 	}
@@ -217,7 +217,7 @@ func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.Advanced
 
 func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	tags := []string{}
-	gtsTags, err := p.db.TagStringsToTags(ctx, util.DeriveHashtagsFromStatus(form.Status), accountID, status.ID)
+	gtsTags, err := p.db.TagStringsToTags(ctx, util.DeriveHashtagsFromText(form.Status), accountID)
 	if err != nil {
 		return fmt.Errorf("error generating hashtags from status: %s", err)
 	}
@@ -236,7 +236,7 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 
 func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	emojis := []string{}
-	gtsEmojis, err := p.db.EmojiStringsToEmojis(ctx, util.DeriveEmojisFromStatus(form.Status), accountID, status.ID)
+	gtsEmojis, err := p.db.EmojiStringsToEmojis(ctx, util.DeriveEmojisFromText(form.Status))
 	if err != nil {
 		return fmt.Errorf("error generating emojis from status: %s", err)
 	}

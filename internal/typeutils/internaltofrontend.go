@@ -67,14 +67,6 @@ func (c *converter) AccountToMastoPublic(ctx context.Context, a *gtsmodel.Accoun
 		return nil, fmt.Errorf("given account was nil")
 	}
 
-	// first check if we have this account in our frontEnd cache
-	if accountI, err := c.frontendCache.Fetch(a.ID); err == nil {
-		if account, ok := accountI.(*model.Account); ok {
-			// we have it, so just return it as-is
-			return account, nil
-		}
-	}
-
 	// count followers
 	followersCount, err := c.db.CountAccountFollowedBy(ctx, a.ID, false)
 	if err != nil {
@@ -182,11 +174,6 @@ func (c *converter) AccountToMastoPublic(ctx context.Context, a *gtsmodel.Accoun
 		Emojis:         emojis, // TODO: implement this
 		Fields:         fields,
 		Suspended:      suspended,
-	}
-
-	// put the account in our cache in case we need it again soon
-	if err := c.frontendCache.Store(a.ID, accountFrontend); err != nil {
-		return nil, err
 	}
 
 	return accountFrontend, nil

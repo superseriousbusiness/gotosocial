@@ -160,6 +160,7 @@ type StatusCreateRequest struct {
 // - public
 // - unlisted
 // - private
+// - mutuals_only
 // - direct
 type Visibility string
 

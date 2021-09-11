@@ -36,7 +36,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 
 	locked := true
 	displayName := "new display name"
-	note := ""
+	note := "#hello here i am!"
 
 	form := &apimodel.UpdateCredentialsRequest{
 		DisplayName: &displayName,
@@ -52,7 +52,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	// fields on the profile should be updated
 	suite.True(apiAccount.Locked)
 	suite.Equal(displayName, apiAccount.DisplayName)
-	suite.Empty(apiAccount.Note)
+	suite.Equal(`<p><a href="http://localhost:8080/tags/hello" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>hello</span></a> here i am!</p>`, apiAccount.Note)
 
 	// we should have an update in the client api channel
 	msg := <-suite.fromClientAPIChan
@@ -67,7 +67,50 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	suite.NoError(err)
 	suite.True(dbAccount.Locked)
 	suite.Equal(displayName, dbAccount.DisplayName)
-	suite.Empty(dbAccount.Note)
+	suite.Equal(`<p><a href="http://localhost:8080/tags/hello" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>hello</span></a> here i am!</p>`, dbAccount.Note)
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	locked := true
+	displayName := "new display name"
+	note := `#hello here i am!
+
+go check out @1happyturtle, they have a cool account!
+`
+	noteExpected := `<p><a href="http://localhost:8080/tags/hello" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>hello</span></a> here i am!<br><br>go check out <span class="h-card"><a href="http://localhost:8080/@1happyturtle" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>1happyturtle</span></a></span>, they have a cool account!</p>`
+
+	form := &apimodel.UpdateCredentialsRequest{
+		DisplayName: &displayName,
+		Locked:      &locked,
+		Note:        &note,
+	}
+
+	// should get no error from the update function, and an api model account returned
+	apiAccount, err := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	// fields on the profile should be updated
+	suite.True(apiAccount.Locked)
+	suite.Equal(displayName, apiAccount.DisplayName)
+	suite.Equal(noteExpected, apiAccount.Note)
+
+	// we should have an update in the client api channel
+	msg := <-suite.fromClientAPIChan
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.NotNil(msg.OriginAccount)
+	suite.Equal(testAccount.ID, msg.OriginAccount.ID)
+	suite.Nil(msg.TargetAccount)
+
+	// fields should be updated in the database as well
+	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
+	suite.NoError(err)
+	suite.True(dbAccount.Locked)
+	suite.Equal(displayName, dbAccount.DisplayName)
+	suite.Equal(noteExpected, dbAccount.Note)
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {
