@@ -25,38 +25,38 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
-// DeriveMentionsFromStatus takes a plaintext (ie., not html-formatted) status,
+// DeriveMentionsFromText takes a plaintext (ie., not html-formatted) text,
 // and applies a regex to it to return a deduplicated list of accounts
-// mentioned in that status.
+// mentioned in that text.
 //
 // It will look for fully-qualified account names in the form "@user@example.org".
 // or the form "@username" for local users.
-func DeriveMentionsFromStatus(status string) []string {
+func DeriveMentionsFromText(text string) []string {
 	mentionedAccounts := []string{}
-	for _, m := range regexes.MentionFinder.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.MentionFinder.FindAllStringSubmatch(text, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])
 	}
 	return UniqueStrings(mentionedAccounts)
 }
 
-// DeriveHashtagsFromStatus takes a plaintext (ie., not html-formatted) status,
+// DeriveHashtagsFromText takes a plaintext (ie., not html-formatted) text,
 // and applies a regex to it to return a deduplicated list of hashtags
-// used in that status, without the leading #. The case of the returned
+// used in that text, without the leading #. The case of the returned
 // tags will be lowered, for consistency.
-func DeriveHashtagsFromStatus(status string) []string {
+func DeriveHashtagsFromText(text string) []string {
 	tags := []string{}
-	for _, m := range regexes.HashtagFinder.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.HashtagFinder.FindAllStringSubmatch(text, -1) {
 		tags = append(tags, strings.TrimPrefix(m[1], "#"))
 	}
 	return UniqueStrings(tags)
 }
 
-// DeriveEmojisFromStatus takes a plaintext (ie., not html-formatted) status,
+// DeriveEmojisFromText takes a plaintext (ie., not html-formatted) text,
 // and applies a regex to it to return a deduplicated list of emojis
-// used in that status, without the surround ::.
-func DeriveEmojisFromStatus(status string) []string {
+// used in that text, without the surrounding `::`
+func DeriveEmojisFromText(text string) []string {
 	emojis := []string{}
-	for _, m := range regexes.EmojiFinder.FindAllStringSubmatch(status, -1) {
+	for _, m := range regexes.EmojiFinder.FindAllStringSubmatch(text, -1) {
 		emojis = append(emojis, m[1])
 	}
 	return UniqueStrings(emojis)

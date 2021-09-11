@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/mail"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	pwv "github.com/wagslane/go-password-validator"
 	"golang.org/x/text/language"
@@ -126,8 +127,14 @@ func Note(note string) error {
 
 // Privacy checks that the desired privacy setting is valid
 func Privacy(privacy string) error {
-	// TODO: add some validation logic here -- length, characters, etc
-	return nil
+	if privacy == "" {
+		return fmt.Errorf("empty string for privacy not allowed")
+	}
+	switch apimodel.Visibility(privacy) {
+	case apimodel.VisibilityDirect, apimodel.VisibilityMutualsOnly, apimodel.VisibilityPrivate, apimodel.VisibilityPublic, apimodel.VisibilityUnlisted:
+		return nil
+	}
+	return fmt.Errorf("privacy %s was not recognized", privacy)
 }
 
 // EmojiShortcode just runs the given shortcode through the regular expression

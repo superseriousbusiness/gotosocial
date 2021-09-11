@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -39,35 +40,29 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	l := p.log.WithField("func", "AccountUpdate")
 
 	if form.Discoverable != nil {
-		if err := p.db.UpdateOneByPrimaryKey(ctx, "discoverable", *form.Discoverable, account); err != nil {
-			return nil, fmt.Errorf("error updating discoverable: %s", err)
-		}
+		account.Discoverable = *form.Discoverable
 	}
 
 	if form.Bot != nil {
-		if err := p.db.UpdateOneByPrimaryKey(ctx, "bot", *form.Bot, account); err != nil {
-			return nil, fmt.Errorf("error updating bot: %s", err)
-		}
+		account.Bot = *form.Bot
 	}
 
 	if form.DisplayName != nil {
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, err
 		}
-		displayName := text.RemoveHTML(*form.DisplayName) // no html allowed in display name
-		if err := p.db.UpdateOneByPrimaryKey(ctx, "display_name", displayName, account); err != nil {
-			return nil, err
-		}
+		account.DisplayName = text.RemoveHTML(*form.DisplayName)
 	}
 
 	if form.Note != nil {
 		if err := validate.Note(*form.Note); err != nil {
 			return nil, err
 		}
-		note := text.SanitizeHTML(*form.Note) // html OK in note but sanitize it
-		if err := p.db.UpdateOneByPrimaryKey(ctx, "note", note, account); err != nil {
+		note, err := p.processNote(ctx, *form.Note, account.ID)
+		if err != nil {
 			return nil, err
 		}
+		account.Note = note
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
@@ -75,6 +70,8 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err != nil {
 			return nil, err
 		}
+		account.AvatarMediaAttachmentID = avatarInfo.ID
+		account.AvatarMediaAttachment = avatarInfo
 		l.Tracef("new avatar info for account %s is %+v", account.ID, avatarInfo)
 	}
 
@@ -83,13 +80,13 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err != nil {
 			return nil, err
 		}
+		account.HeaderMediaAttachmentID = headerInfo.ID
+		account.HeaderMediaAttachment = headerInfo
 		l.Tracef("new header info for account %s is %+v", account.ID, headerInfo)
 	}
 
 	if form.Locked != nil {
-		if err := p.db.UpdateOneByPrimaryKey(ctx, "locked", *form.Locked, account); err != nil {
-			return nil, err
-		}
+		account.Locked = *form.Locked
 	}
 
 	if form.Source != nil {
@@ -97,31 +94,25 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Language(*form.Source.Language); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByPrimaryKey(ctx, "language", *form.Source.Language, account); err != nil {
-				return nil, err
-			}
+			account.Language = *form.Source.Language
 		}
 
 		if form.Source.Sensitive != nil {
-			if err := p.db.UpdateOneByPrimaryKey(ctx, "locked", *form.Locked, account); err != nil {
-				return nil, err
-			}
+			account.Sensitive = *form.Source.Sensitive
 		}
 
 		if form.Source.Privacy != nil {
 			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, err
 			}
-			if err := p.db.UpdateOneByPrimaryKey(ctx, "privacy", *form.Source.Privacy, account); err != nil {
-				return nil, err
-			}
+			privacy := p.tc.MastoVisToVis(apimodel.Visibility(*form.Source.Privacy))
+			account.Privacy = privacy
 		}
 	}
 
-	// fetch the account with all updated values set
-	updatedAccount, err := p.db.GetAccountByID(ctx, account.ID)
+	updatedAccount, err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch updated account %s: %s", account.ID, err)
+		return nil, fmt.Errorf("could not update account %s: %s", account.ID, err)
 	}
 
 	p.fromClientAPI <- messages.FromClientAPI{
@@ -202,4 +193,28 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	}
 
 	return headerInfo, f.Close()
+}
+
+func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {
+	if note == "" {
+		return "", nil
+	}
+
+	tagStrings := util.DeriveHashtagsFromText(note)
+	tags, err := p.db.TagStringsToTags(ctx, tagStrings, accountID)
+	if err != nil {
+		return "", err
+	}
+
+	mentionStrings := util.DeriveMentionsFromText(note)
+	mentions, err := p.db.MentionStringsToMentions(ctx, mentionStrings, accountID, "")
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: support emojis in account notes
+	// emojiStrings := util.DeriveEmojisFromText(note)
+	// emojis, err := p.db.EmojiStringsToEmojis(ctx, emojiStrings)
+
+	return p.formatter.FromPlain(ctx, note, mentions, tags), nil
 }

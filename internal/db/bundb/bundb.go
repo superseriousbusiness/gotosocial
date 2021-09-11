@@ -149,7 +149,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 
 	if log.Level >= logrus.TraceLevel {
 		// add a hook to just log queries and the time they take
-		conn.DB.AddQueryHook(&debugQueryHook{log: log})
+		conn.DB.AddQueryHook(newDebugQueryHook(log))
 	}
 
 	// actually *begin* the connection so that we can tell if the db is there and listening
@@ -407,7 +407,7 @@ func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAcco
 	return menchies, nil
 }
 
-func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string, statusID string) ([]*gtsmodel.Tag, error) {
+func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
 		tag := &gtsmodel.Tag{}
@@ -443,7 +443,7 @@ func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, ori
 	return newTags, nil
 }
 
-func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []string, originAccountID string, statusID string) ([]*gtsmodel.Emoji, error) {
+func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []string) ([]*gtsmodel.Emoji, error) {
 	newEmojis := []*gtsmodel.Emoji{}
 	for _, e := range emojis {
 		emoji := &gtsmodel.Emoji{}

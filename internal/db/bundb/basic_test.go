@@ -64,40 +64,6 @@ func (suite *BasicTestSuite) TestGetAllNotNull() {
 	}
 }
 
-func (suite *BasicTestSuite) TestUpdateOneByPrimaryKeySetEmpty() {
-	testAccount := suite.testAccounts["local_account_1"]
-
-	// try removing the note from zork
-	err := suite.db.UpdateOneByPrimaryKey(context.Background(), "note", "", testAccount)
-	suite.NoError(err)
-
-	// get zork out of the database
-	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.NotNil(dbAccount)
-
-	// note should be empty now
-	suite.Empty(dbAccount.Note)
-}
-
-func (suite *BasicTestSuite) TestUpdateOneByPrimaryKeySetValue() {
-	testAccount := suite.testAccounts["local_account_1"]
-
-	note := "this is my new note :)"
-
-	// try updating the note on zork
-	err := suite.db.UpdateOneByPrimaryKey(context.Background(), "note", note, testAccount)
-	suite.NoError(err)
-
-	// get zork out of the database
-	dbAccount, err := suite.db.GetAccountByID(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.NotNil(dbAccount)
-
-	// note should be set now
-	suite.Equal(note, dbAccount.Note)
-}
-
 func TestBasicTestSuite(t *testing.T) {
 	suite.Run(t, new(BasicTestSuite))
 }

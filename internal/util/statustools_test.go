@@ -45,7 +45,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 	`
 
-	menchies := util.DeriveMentionsFromStatus(statusText)
+	menchies := util.DeriveMentionsFromText(statusText)
 	assert.Len(suite.T(), menchies, 6)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
@@ -57,7 +57,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 	statusText := ``
-	menchies := util.DeriveMentionsFromStatus(statusText)
+	menchies := util.DeriveMentionsFromText(statusText)
 	assert.Len(suite.T(), menchies, 0)
 }
 
@@ -74,7 +74,7 @@ func (suite *StatusTestSuite) TestDeriveHashtagsOK() {
 
 #111111 thisalsoshouldn'twork#### ##`
 
-	tags := util.DeriveHashtagsFromStatus(statusText)
+	tags := util.DeriveHashtagsFromText(statusText)
 	assert.Len(suite.T(), tags, 5)
 	assert.Equal(suite.T(), "testing123", tags[0])
 	assert.Equal(suite.T(), "also", tags[1])
@@ -97,7 +97,7 @@ Here's some normal text with an :emoji: at the end
 :underscores_ok_too:
 `
 
-	tags := util.DeriveEmojisFromStatus(statusText)
+	tags := util.DeriveEmojisFromText(statusText)
 	assert.Len(suite.T(), tags, 7)
 	assert.Equal(suite.T(), "test", tags[0])
 	assert.Equal(suite.T(), "another", tags[1])
@@ -115,9 +115,9 @@ func (suite *StatusTestSuite) TestDeriveMultiple() {
 
 	Text`
 
-	ms := util.DeriveMentionsFromStatus(statusText)
-	hs := util.DeriveHashtagsFromStatus(statusText)
-	es := util.DeriveEmojisFromStatus(statusText)
+	ms := util.DeriveMentionsFromText(statusText)
+	hs := util.DeriveHashtagsFromText(statusText)
+	es := util.DeriveEmojisFromText(statusText)
 
 	assert.Len(suite.T(), ms, 1)
 	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", ms[0])

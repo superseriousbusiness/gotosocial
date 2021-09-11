@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/oauth2/v4"
@@ -83,6 +84,7 @@ type processor struct {
 	fromClientAPI chan messages.FromClientAPI
 	oauthServer   oauth.Server
 	filter        visibility.Filter
+	formatter     text.Formatter
 	db            db.DB
 	federator     federation.Federator
 	log           *logrus.Logger
@@ -97,6 +99,7 @@ func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauth
 		fromClientAPI: fromClientAPI,
 		oauthServer:   oauthServer,
 		filter:        visibility.NewFilter(db, log),
+		formatter:     text.NewFormatter(config, db, log),
 		db:            db,
 		federator:     federator,
 		log:           log,

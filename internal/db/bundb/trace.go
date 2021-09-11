@@ -26,10 +26,13 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// queryHook is just a wrapper for bun.QueryHook
-type queryHook bun.QueryHook
+func newDebugQueryHook(log *logrus.Logger) bun.QueryHook {
+	return &debugQueryHook{
+		log: log,
+	}
+}
 
-// debugQueryHook implements queryHook
+// debugQueryHook implements bun.QueryHook
 type debugQueryHook struct {
 	log *logrus.Logger
 }
@@ -41,7 +44,7 @@ func (q *debugQueryHook) BeforeQuery(ctx context.Context, event *bun.QueryEvent)
 
 // AfterQuery logs the time taken to query, the operation (select, update, etc), and the query itself as translated by bun.
 func (q *debugQueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
-	dur := time.Now().Sub(event.StartTime).Round(time.Microsecond)
+	dur := time.Since(event.StartTime).Round(time.Microsecond)
 	l := q.log.WithFields(logrus.Fields{
 		"queryTime": dur,
 		"operation": event.Operation(),

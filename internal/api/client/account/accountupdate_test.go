@@ -21,7 +21,6 @@ package account_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -51,7 +50,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 		panic(err)
 	}
 	bodyBytes := requestBody.Bytes()
-	fmt.Println(string(bodyBytes))
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
 
@@ -68,7 +66,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -77,7 +74,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal(newBio, apimodelAccount.Note)
+	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGetAccountFirst() {
@@ -114,7 +111,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGet
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -123,7 +119,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGet
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal(newBio, apimodelAccount.Note)
+	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwoFields() {
@@ -140,7 +136,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 		panic(err)
 	}
 	bodyBytes := requestBody.Bytes()
-	fmt.Println(string(bodyBytes))
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
 
@@ -157,7 +152,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -166,7 +160,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 
 	// check the returned api model account
 	// fields should be updated
-	suite.Equal(newBio, apimodelAccount.Note)
+	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
 	suite.True(apimodelAccount.Locked)
 }
 
@@ -201,7 +195,6 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWit
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	fmt.Println(string(b))
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -244,6 +237,52 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerEmp
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 	suite.Equal(`{"error":"empty form submitted"}`, string(b))
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateSource() {
+	// set up the request
+	// we're updating the language of zork
+	newLanguage := "de"
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"source[privacy]":   string(apimodel.VisibilityPrivate),
+			"source[language]":  "de",
+			"source[sensitive]": "true",
+			"locked":            "true",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, account.UpdateCredentialsPath, w.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+
+	// unmarshal the returned account
+	apimodelAccount := &apimodel.Account{}
+	err = json.Unmarshal(b, apimodelAccount)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.Equal(newLanguage, apimodelAccount.Source.Language)
+	suite.EqualValues(apimodel.VisibilityPrivate, apimodelAccount.Source.Privacy)
+	suite.True(apimodelAccount.Source.Sensitive)
+	suite.True(apimodelAccount.Locked)
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {
