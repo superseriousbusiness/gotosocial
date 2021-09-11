@@ -23,7 +23,7 @@ ADD .git /go/src/github.com/superseriousbusiness/gotosocial/.git
 ADD version /go/src/github.com/superseriousbusiness/gotosocial/version
 
 # move the build script
-ADD build.sh /go/src/github.com/superseriousbusiness/gotosocial/build.sh
+ADD scripts/build.sh /go/src/github.com/superseriousbusiness/gotosocial/build.sh
 
 # do the build step
 RUN ./build.sh
