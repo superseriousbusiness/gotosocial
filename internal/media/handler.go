@@ -250,11 +250,11 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 
 	// serve url and storage path for the original emoji -- can be png or gif
 	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, Emoji, Original, newEmojiID, extension)
-	emojiPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, instanceAccount.ID, Emoji, Original, newEmojiID, extension)
+	emojiPath := fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, Emoji, Original, newEmojiID, extension)
 
 	// serve url and storage path for the static version -- will always be png
 	emojiStaticURL := fmt.Sprintf("%s/%s/%s/%s/%s.png", URLbase, instanceAccount.ID, Emoji, Static, newEmojiID)
-	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s/%s.png", mh.config.StorageConfig.BasePath, instanceAccount.ID, Emoji, Static, newEmojiID)
+	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s.png", instanceAccount.ID, Emoji, Static, newEmojiID)
 
 	// Store the original emoji
 	if err := mh.storage.Put(emojiPath, original.image); err != nil {
