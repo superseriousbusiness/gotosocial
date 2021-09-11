@@ -34,14 +34,6 @@ import (
 // Converts a gts model account into an Activity Streams person type, following
 // the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
-	// first check if we have this person in our asCache already
-	if personI, err := c.asCache.Fetch(a.ID); err == nil {
-		if person, ok := personI.(vocab.ActivityStreamsPerson); ok {
-			// we have it, so just return it as-is
-			return person, nil
-		}
-	}
-
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -270,11 +262,6 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 
 		headerProperty.AppendActivityStreamsImage(headerImage)
 		person.SetActivityStreamsImage(headerProperty)
-	}
-
-	// put the person in our cache in case we need it again soon
-	if err := c.asCache.Store(a.ID, person); err != nil {
-		return nil, err
 	}
 
 	return person, nil
