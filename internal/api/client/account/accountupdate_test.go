@@ -77,6 +77,80 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
 }
 
+func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUnlockLock() {
+	// set up the first request
+	requestBody1, w1, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"locked": "false",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes1 := requestBody1.Bytes()
+	recorder1 := httptest.NewRecorder()
+	ctx1 := suite.newContext(recorder1, http.MethodPatch, bodyBytes1, account.UpdateCredentialsPath, w1.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx1)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder1.Code)
+
+	// 2. we should have no error message in the result body
+	result1 := recorder1.Result()
+	defer result1.Body.Close()
+
+	// check the response
+	b1, err := ioutil.ReadAll(result1.Body)
+	assert.NoError(suite.T(), err)
+
+	// unmarshal the returned account
+	apimodelAccount1 := &apimodel.Account{}
+	err = json.Unmarshal(b1, apimodelAccount1)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.False(apimodelAccount1.Locked)
+
+	// set up the first request
+	requestBody2, w2, err := testrig.CreateMultipartFormData(
+		"", "",
+		map[string]string{
+			"locked": "true",
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes2 := requestBody2.Bytes()
+	recorder2 := httptest.NewRecorder()
+	ctx2 := suite.newContext(recorder2, http.MethodPatch, bodyBytes2, account.UpdateCredentialsPath, w2.FormDataContentType())
+
+	// call the handler
+	suite.accountModule.AccountUpdateCredentialsPATCHHandler(ctx2)
+
+	// 1. we should have OK because our request was valid
+	suite.Equal(http.StatusOK, recorder1.Code)
+
+	// 2. we should have no error message in the result body
+	result2 := recorder2.Result()
+	defer result2.Body.Close()
+
+	// check the response
+	b2, err := ioutil.ReadAll(result2.Body)
+	suite.NoError(err)
+
+	// unmarshal the returned account
+	apimodelAccount2 := &apimodel.Account{}
+	err = json.Unmarshal(b2, apimodelAccount2)
+	suite.NoError(err)
+
+	// check the returned api model account
+	// fields should be updated
+	suite.True(apimodelAccount2.Locked)
+}
+
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGetAccountFirst() {
 	// get the account first to make sure it's in the database cache -- when the account is updated via
 	// the PATCH handler, it should invalidate the cache and not return the old version

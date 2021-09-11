@@ -181,7 +181,6 @@ type converter struct {
 	config        *config.Config
 	db            db.DB
 	log           *logrus.Logger
-	frontendCache cache.Cache
 	asCache       cache.Cache
 }
 
@@ -191,7 +190,6 @@ func NewConverter(config *config.Config, db db.DB, log *logrus.Logger) TypeConve
 		config:        config,
 		db:            db,
 		log:           log,
-		frontendCache: cache.New(),
 		asCache:       cache.New(),
 	}
 }
