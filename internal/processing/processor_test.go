@@ -43,7 +43,7 @@ type ProcessingStandardTestSuite struct {
 	config              *config.Config
 	db                  db.DB
 	log                 *logrus.Logger
-	store               *kv.KVStore
+	storage             *kv.KVStore
 	typeconverter       typeutils.TypeConverter
 	transportController transport.Controller
 	federator           federation.Federator
@@ -89,12 +89,12 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
-	suite.store = testrig.NewTestStorage()
+	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.store)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.store)
+	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
 
 	suite.processor = processing.NewProcessor(
@@ -103,13 +103,13 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 		suite.federator,
 		suite.oauthServer,
 		suite.mediaHandler,
-		suite.store,
+		suite.storage,
 		suite.timelineManager,
 		suite.db,
 		suite.log)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-	testrig.StandardStorageSetup(suite.store, "../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 	if err := suite.processor.Start(context.Background()); err != nil {
 		panic(err)
 	}
@@ -117,7 +117,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 func (suite *ProcessingStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.store)
+	testrig.StandardStorageTeardown(suite.storage)
 	if err := suite.processor.Stop(); err != nil {
 		panic(err)
 	}

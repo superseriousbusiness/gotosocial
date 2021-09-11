@@ -234,7 +234,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaHandler    media.Handler
-	store           *kv.KVStore
+	storage         *kv.KVStore
 	timelineManager timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -251,7 +251,7 @@ type processor struct {
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, store *kv.KVStore, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
@@ -259,7 +259,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, store, config, log)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -271,7 +271,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		tc:              tc,
 		oauthServer:     oauthServer,
 		mediaHandler:    mediaHandler,
-		store:           store,
+		storage:         storage,
 		timelineManager: timelineManager,
 		db:              db,
 		filter:          visibility.NewFilter(db, log),

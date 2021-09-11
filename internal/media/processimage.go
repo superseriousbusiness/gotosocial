@@ -73,13 +73,13 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 
 	// we store the original...
 	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Original, newMediaID, extension)
-	if err := mh.store.Put(originalPath, original.image); err != nil {
+	if err := mh.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
 	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
-	if err := mh.store.Put(smallPath, small.image); err != nil {
+	if err := mh.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 

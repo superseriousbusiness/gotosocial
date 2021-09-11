@@ -47,18 +47,18 @@ type processor struct {
 	tc           typeutils.TypeConverter
 	config       *config.Config
 	mediaHandler media.Handler
-	store        *kv.KVStore
+	storage      *kv.KVStore
 	db           db.DB
 	log          *logrus.Logger
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, store *kv.KVStore, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage *kv.KVStore, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
 		tc:           tc,
 		config:       config,
 		mediaHandler: mediaHandler,
-		store:        store,
+		storage:      storage,
 		db:           db,
 		log:          log,
 	}

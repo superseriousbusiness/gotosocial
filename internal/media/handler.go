@@ -84,19 +84,19 @@ type Handler interface {
 }
 
 type mediaHandler struct {
-	config *config.Config
-	db     db.DB
-	store  *kv.KVStore
-	log    *logrus.Logger
+	config  *config.Config
+	db      db.DB
+	storage *kv.KVStore
+	log     *logrus.Logger
 }
 
 // New returns a new handler with the given config, db, storage, and logger
-func New(config *config.Config, database db.DB, store *kv.KVStore, log *logrus.Logger) Handler {
+func New(config *config.Config, database db.DB, storage *kv.KVStore, log *logrus.Logger) Handler {
 	return &mediaHandler{
-		config: config,
-		db:     database,
-		store:  store,
-		log:    log,
+		config:  config,
+		db:      database,
+		storage: storage,
+		log:     log,
 	}
 }
 
@@ -257,12 +257,12 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s/%s.png", mh.config.StorageConfig.BasePath, instanceAccount.ID, Emoji, Static, newEmojiID)
 
 	// Store the original emoji
-	if err := mh.store.Put(emojiPath, original.image); err != nil {
+	if err := mh.storage.Put(emojiPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// Store the static emoji
-	if err := mh.store.Put(emojiStaticPath, static.image); err != nil {
+	if err := mh.storage.Put(emojiStaticPath, static.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 

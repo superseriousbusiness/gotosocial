@@ -76,8 +76,8 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
-	// Create new storage backend
-	store, err := kv.OpenFile(c.StorageConfig.BasePath, nil)
+	// Open the storage backend
+	storage, err := kv.OpenFile(c.StorageConfig.BasePath, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
@@ -87,11 +87,11 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c, log)
 
 	// build backend handlers
-	mediaHandler := media.New(c, dbService, store, log)
+	mediaHandler := media.New(c, dbService, storage, log)
 	oauthServer := oauth.New(dbService, log)
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter, mediaHandler)
-	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, store, timelineManager, dbService, log)
+	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, log)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
