@@ -1,6 +1,6 @@
 # GoToSocial <!-- omit in toc -->
 
-![patrons](https://img.shields.io/liberapay/patrons/dumpsterqueer.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/dumpsterqueer.svg?logo=liberapay)
+![patrons](https://img.shields.io/liberapay/patrons/GoToSocial.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/GoToSocial.svg?logo=liberapay)
 
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
@@ -48,7 +48,7 @@ If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSoci
 
 GoToSocial is not designed for 'must-follow' influencers with tens of thousands of followers, and it's not designed to be addictive. Your timeline and your experience is shaped by who you follow and how you interact with people, not by metrics of engagement!
 
-GoToSocial doesn't claim to be *better* than any other application, but it offers something that might better *for you* in particular.
+GoToSocial doesn't claim to be *better* than any other application, but it offers something that might be better *for you* in particular.
 
 ### Federation
 
@@ -213,19 +213,19 @@ Sloth logo made by [Freepik](https://www.freepik.com) from [www.flaticon.com](ht
 
 In alphabetical order:
 
-- f0x
+- f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
 - kim
-- tobi
+- tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
 
 ### Special Thanks
 
-Thanks to everyone who has used GtS, opened an issue, suggested something, given funding, or otherwise encouraged or supported the project!
+Thanks to everyone who has used GtS, opened an issue, suggested something, given funding, and otherwise encouraged or supported the project!
 
 ## Sponsorship + Funding
 
 Currently, this project is funded using Liberapay, to put bread on the table while work continues on it.
 
-If you want to sponsor this project, you can do so [here](https://liberapay.com/dumpsterqueer/)! `<3`
+If you want to sponsor this project, you can do so [here](https://liberapay.com/GoToSocial/)! `<3`
 
 **GoToSocial has NO CORPORATE SPONSORS and does not desire corporate sponsorship.**
 
