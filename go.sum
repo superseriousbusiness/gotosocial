@@ -450,8 +450,9 @@ github.com/ugorji/go v1.2.6/go.mod h1:anCg0y61KIhDlPZmnH+so+RQbysYVyDko0IMgJv0Nn
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ=
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
-github.com/uptrace/bun v1.0.5 h1:bNhNhWt6XNwSWMEQUvYK7iJ3qHrMfeoKY3/w2jkqcBs=
 github.com/uptrace/bun v1.0.5/go.mod h1:aL6D9vPw8DXaTQTwGrEPtUderBYXx7ShUmPfnxnqscw=
+github.com/uptrace/bun v1.0.6 h1:o9eMq5ePGBXtxbK3SIreOCRr+rIBQzvJH+/s98kYcVM=
+github.com/uptrace/bun v1.0.6/go.mod h1:aL6D9vPw8DXaTQTwGrEPtUderBYXx7ShUmPfnxnqscw=
 github.com/uptrace/bun/dialect/pgdialect v1.0.5 h1:mq694/aMvs7GwuTar9NIlCLQt/2u4xsF0QMP4I24yHA=
 github.com/uptrace/bun/dialect/pgdialect v1.0.5/go.mod h1:MKWjO0PC20ris2oJ3dd6mI/762x24Cjwh8XmbqUhM8A=
 github.com/uptrace/bun/dialect/sqlitedialect v1.0.5 h1:6cIj31YVJr4vvA15C2v76soXL+7WtjFdV6WraApc3r0=
