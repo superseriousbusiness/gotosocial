@@ -19,23 +19,28 @@
 package testrig
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
+	"git.iim.gay/grufwub/go-store/kv"
+	"git.iim.gay/grufwub/go-store/storage"
+	"git.iim.gay/grufwub/go-store/util"
 )
 
 // NewTestStorage returns a new in memory storage with the default test config
-func NewTestStorage() blob.Storage {
-	s, err := blob.NewInMem(NewTestConfig(), NewTestLog())
+func NewTestStorage() *kv.KVStore {
+	storage, err := kv.OpenStorage(&inMemStorage{storage: map[string][]byte{}, overwrite: false})
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return storage
 }
 
 // StandardStorageSetup populates the storage with standard test entries from the given directory.
-func StandardStorageSetup(s blob.Storage, relativePath string) {
+func StandardStorageSetup(s *kv.KVStore, relativePath string) {
 	storedA := newTestStoredAttachments()
 	a := NewTestAttachments()
 	for k, paths := range storedA {
@@ -51,14 +56,14 @@ func StandardStorageSetup(s blob.Storage, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.StoreFileAt(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bSmall, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameSmall))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.StoreFileAt(pathSmall, bSmall); err != nil {
+		if err := s.Put(pathSmall, bSmall); err != nil {
 			panic(err)
 		}
 	}
@@ -78,28 +83,109 @@ func StandardStorageSetup(s blob.Storage, relativePath string) {
 		if err != nil {
 			panic(err)
 		}
-		if err := s.StoreFileAt(pathOriginal, bOriginal); err != nil {
+		if err := s.Put(pathOriginal, bOriginal); err != nil {
 			panic(err)
 		}
 		bStatic, err := os.ReadFile(fmt.Sprintf("%s/%s", relativePath, filenameStatic))
 		if err != nil {
 			panic(err)
 		}
-		if err := s.StoreFileAt(pathStatic, bStatic); err != nil {
+		if err := s.Put(pathStatic, bStatic); err != nil {
 			panic(err)
 		}
 	}
 }
 
 // StandardStorageTeardown deletes everything in storage so that it's clean for the next test
-func StandardStorageTeardown(s blob.Storage) {
-	keys, err := s.ListKeys()
+func StandardStorageTeardown(s *kv.KVStore) {
+	iter, err := s.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}
+	keys := []string{}
+	for iter.Next() {
+		keys = append(keys, iter.Key())
+	}
+	iter.Release()
 	for _, k := range keys {
-		if err := s.RemoveFileAt(k); err != nil {
+		if err := s.Delete(k); err != nil {
 			panic(err)
 		}
 	}
+}
+
+type inMemStorage struct {
+	storage   map[string][]byte
+	overwrite bool
+}
+
+func (s *inMemStorage) Clean() error {
+	return nil
+}
+
+func (s *inMemStorage) ReadBytes(key string) ([]byte, error) {
+	b, ok := s.storage[key]
+	if !ok {
+		return nil, errors.New("key not found")
+	}
+	return b, nil
+}
+
+func (s *inMemStorage) ReadStream(key string) (io.ReadCloser, error) {
+	b, err := s.ReadBytes(key)
+	if err != nil {
+		return nil, err
+	}
+	return util.NopReadCloser(bytes.NewReader(b)), nil
+}
+
+func (s *inMemStorage) WriteBytes(key string, value []byte) error {
+	if _, ok := s.storage[key]; ok && !s.overwrite {
+		return errors.New("key already in storage")
+	}
+	s.storage[key] = copyBytes(value)
+	return nil
+}
+
+func (s *inMemStorage) WriteStream(key string, r io.Reader) error {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return s.WriteBytes(key, b)
+}
+
+func (s *inMemStorage) Stat(key string) (bool, error) {
+	_, ok := s.storage[key]
+	return ok, nil
+}
+
+func (s *inMemStorage) Remove(key string) error {
+	if _, ok := s.storage[key]; !ok {
+		return errors.New("key not found")
+	}
+	delete(s.storage, key)
+	return nil
+}
+
+func (s *inMemStorage) WalkKeys(opts *storage.WalkKeysOptions) error {
+	if opts == nil || opts.WalkFn == nil {
+		return errors.New("invalid walkfn")
+	}
+	for key := range s.storage {
+		opts.WalkFn(entry(key))
+	}
+	return nil
+}
+
+type entry string
+
+func (e entry) Key() string {
+	return string(e)
+}
+
+func copyBytes(b []byte) []byte {
+	p := make([]byte, len(b))
+	copy(p, b)
+	return p
 }

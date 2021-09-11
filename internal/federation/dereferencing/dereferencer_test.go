@@ -24,11 +24,11 @@ import (
 	"io"
 	"net/http"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
@@ -42,7 +42,7 @@ type DereferencerStandardTestSuite struct {
 	config  *config.Config
 	db      db.DB
 	log     *logrus.Logger
-	storage blob.Storage
+	storage *kv.KVStore
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemoteAccounts    map[string]vocab.ActivityStreamsPerson

@@ -28,13 +28,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -52,7 +52,7 @@ type MediaCreateTestSuite struct {
 	config       *config.Config
 	db           db.DB
 	log          *logrus.Logger
-	storage      blob.Storage
+	storage      *kv.KVStore
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	mediaHandler media.Handler
@@ -118,7 +118,6 @@ func (suite *MediaCreateTestSuite) TearDownTest() {
 */
 
 func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() {
-
 	// set up the context for the request
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
@@ -130,10 +129,15 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// see what's in storage *before* the request
-	storageKeysBeforeRequest, err := suite.storage.ListKeys()
+	storageKeysBeforeRequest := []string{}
+	iter, err := suite.storage.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}
+	for iter.Next() {
+		storageKeysBeforeRequest = append(storageKeysBeforeRequest, iter.Key())
+	}
+	iter.Release()
 
 	// create the request
 	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string]string{
@@ -150,10 +154,15 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
 
 	// check what's in storage *after* the request
-	storageKeysAfterRequest, err := suite.storage.ListKeys()
+	storageKeysAfterRequest := []string{}
+	iter, err = suite.storage.Iterator(nil)
 	if err != nil {
 		panic(err)
 	}
+	for iter.Next() {
+		storageKeysAfterRequest = append(storageKeysAfterRequest, iter.Key())
+	}
+	iter.Release()
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

@@ -19,10 +19,10 @@
 package account_test
 
 import (
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/pub"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -43,7 +43,7 @@ type AccountStandardTestSuite struct {
 	db                  db.DB
 	log                 *logrus.Logger
 	tc                  typeutils.TypeConverter
-	storage             blob.Storage
+	storage             *kv.KVStore
 	mediaHandler        media.Handler
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI

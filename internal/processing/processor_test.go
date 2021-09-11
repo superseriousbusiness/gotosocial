@@ -21,9 +21,9 @@ package processing_test
 import (
 	"context"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -43,7 +43,7 @@ type ProcessingStandardTestSuite struct {
 	config              *config.Config
 	db                  db.DB
 	log                 *logrus.Logger
-	storage             blob.Storage
+	store               *kv.KVStore
 	typeconverter       typeutils.TypeConverter
 	transportController transport.Controller
 	federator           federation.Federator
@@ -89,12 +89,12 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
-	suite.storage = testrig.NewTestStorage()
+	suite.store = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.store)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.store)
 	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
 
 	suite.processor = processing.NewProcessor(
@@ -103,13 +103,13 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 		suite.federator,
 		suite.oauthServer,
 		suite.mediaHandler,
-		suite.storage,
+		suite.store,
 		suite.timelineManager,
 		suite.db,
 		suite.log)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
+	testrig.StandardStorageSetup(suite.store, "../../testrig/media")
 	if err := suite.processor.Start(context.Background()); err != nil {
 		panic(err)
 	}
@@ -117,7 +117,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 func (suite *ProcessingStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StandardStorageTeardown(suite.store)
 	if err := suite.processor.Stop(); err != nil {
 		panic(err)
 	}

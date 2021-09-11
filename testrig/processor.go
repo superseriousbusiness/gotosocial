@@ -19,13 +19,13 @@
 package testrig
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage blob.Storage, federator federation.Federator) processing.Processor {
+func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator) processing.Processor {
 	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, NewTestTimelineManager(db), db, NewTestLog())
 }

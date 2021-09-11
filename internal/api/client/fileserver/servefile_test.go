@@ -26,12 +26,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -49,7 +49,7 @@ type ServeFileTestSuite struct {
 	config       *config.Config
 	db           db.DB
 	log          *logrus.Logger
-	storage      blob.Storage
+	storage      *kv.KVStore
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    processing.Processor
@@ -152,7 +152,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), b)
 
-	fileInStorage, err := suite.storage.RetrieveFileFrom(targetAttachment.File.Path)
+	fileInStorage, err := suite.storage.Get(targetAttachment.File.Path)
 	assert.NoError(suite.T(), err)
 	assert.NotNil(suite.T(), fileInStorage)
 	assert.Equal(suite.T(), b, fileInStorage)

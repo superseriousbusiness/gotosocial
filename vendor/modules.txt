@@ -1,3 +1,29 @@
+# git.iim.gay/grufwub/fastpath v0.2.2
+## explicit; go 1.14
+git.iim.gay/grufwub/fastpath
+# git.iim.gay/grufwub/go-bufpool v0.2.1
+## explicit; go 1.16
+git.iim.gay/grufwub/go-bufpool
+# git.iim.gay/grufwub/go-bytes v0.7.0
+## explicit; go 1.16
+git.iim.gay/grufwub/go-bytes
+# git.iim.gay/grufwub/go-errors v0.2.3
+## explicit; go 1.15
+git.iim.gay/grufwub/go-errors
+# git.iim.gay/grufwub/go-hashenc v0.3.0
+## explicit; go 1.16
+git.iim.gay/grufwub/go-hashenc
+# git.iim.gay/grufwub/go-mutexes v0.5.0
+## explicit; go 1.16
+git.iim.gay/grufwub/go-mutexes
+# git.iim.gay/grufwub/go-nowish v0.3.4
+## explicit; go 1.16
+git.iim.gay/grufwub/go-nowish
+# git.iim.gay/grufwub/go-store v0.4.1
+## explicit; go 1.16
+git.iim.gay/grufwub/go-store/kv
+git.iim.gay/grufwub/go-store/storage
+git.iim.gay/grufwub/go-store/util
 # github.com/ReneKroon/ttlcache v1.7.0
 ## explicit; go 1.14
 github.com/ReneKroon/ttlcache
@@ -285,6 +311,9 @@ github.com/golang/geo/s2
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
+# github.com/golang/snappy v0.0.3
+## explicit
+github.com/golang/snappy
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid

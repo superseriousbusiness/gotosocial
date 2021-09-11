@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -234,7 +234,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaHandler    media.Handler
-	storage         blob.Storage
+	store           *kv.KVStore
 	timelineManager timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -251,8 +251,7 @@ type processor struct {
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
-
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, store *kv.KVStore, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
@@ -260,7 +259,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, store, config, log)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -272,7 +271,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		tc:              tc,
 		oauthServer:     oauthServer,
 		mediaHandler:    mediaHandler,
-		storage:         storage,
+		store:           store,
 		timelineManager: timelineManager,
 		db:              db,
 		filter:          visibility.NewFilter(db, log),
