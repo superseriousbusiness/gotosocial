@@ -21,9 +21,9 @@ package processing_test
 import (
 	"context"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -43,7 +43,7 @@ type ProcessingStandardTestSuite struct {
 	config              *config.Config
 	db                  db.DB
 	log                 *logrus.Logger
-	storage             blob.Storage
+	storage             *kv.KVStore
 	typeconverter       typeutils.TypeConverter
 	transportController transport.Controller
 	federator           federation.Federator

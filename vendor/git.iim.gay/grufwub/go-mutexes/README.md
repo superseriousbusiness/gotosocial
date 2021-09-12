@@ -1,0 +1,1 @@
+Library that provides more complex mutex implementations than default libraries

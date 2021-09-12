@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -28,7 +28,7 @@ type AccountStandardTestSuite struct {
 	db        db.DB
 	log       *logrus.Logger
 	tc        typeutils.TypeConverter
-	storage   blob.Storage
+	storage   *kv.KVStore
 	federator federation.Federator
 	processor processing.Processor
 

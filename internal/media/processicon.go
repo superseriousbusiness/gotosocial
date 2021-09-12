@@ -84,14 +84,14 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Original, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, Original, newMediaID, extension)
+	if err := mh.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, accountID, mediaType, Small, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, Small, newMediaID, extension)
+	if err := mh.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 

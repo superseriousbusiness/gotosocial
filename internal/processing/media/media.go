@@ -21,9 +21,9 @@ package media
 import (
 	"context"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -47,13 +47,13 @@ type processor struct {
 	tc           typeutils.TypeConverter
 	config       *config.Config
 	mediaHandler media.Handler
-	storage      blob.Storage
+	storage      *kv.KVStore
 	db           db.DB
 	log          *logrus.Logger
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage blob.Storage, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage *kv.KVStore, config *config.Config, log *logrus.Logger) Processor {
 	return &processor{
 		tc:           tc,
 		config:       config,

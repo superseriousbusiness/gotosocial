@@ -24,14 +24,14 @@ func (p *processor) Delete(ctx context.Context, mediaAttachmentID string) gtserr
 
 	// delete the thumbnail from storage
 	if attachment.Thumbnail.Path != "" {
-		if err := p.storage.RemoveFileAt(attachment.Thumbnail.Path); err != nil {
+		if err := p.storage.Delete(attachment.Thumbnail.Path); err != nil {
 			errs = append(errs, fmt.Sprintf("remove thumbnail at path %s: %s", attachment.Thumbnail.Path, err))
 		}
 	}
 
 	// delete the file from storage
 	if attachment.File.Path != "" {
-		if err := p.storage.RemoveFileAt(attachment.File.Path); err != nil {
+		if err := p.storage.Delete(attachment.File.Path); err != nil {
 			errs = append(errs, fmt.Sprintf("remove file at path %s: %s", attachment.File.Path, err))
 		}
 	}

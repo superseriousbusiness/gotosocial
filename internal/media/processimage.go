@@ -72,14 +72,14 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, minAttachment.AccountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s/%s.%s", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Original, newMediaID, extension)
-	if err := mh.storage.StoreFileAt(originalPath, original.image); err != nil {
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, Attachment, Original, newMediaID, extension)
+	if err := mh.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s/%s.jpeg", mh.config.StorageConfig.BasePath, minAttachment.AccountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
-	if err := mh.storage.StoreFileAt(smallPath, small.image); err != nil {
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	if err := mh.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
@@ -130,5 +130,4 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 	}
 
 	return attachment, nil
-
 }

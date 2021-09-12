@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
+	git.iim.gay/grufwub/go-store v0.4.1
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.0.0
@@ -41,6 +42,13 @@ require (
 )
 
 require (
+	git.iim.gay/grufwub/fastpath v0.2.2 // indirect
+	git.iim.gay/grufwub/go-bufpool v0.2.1 // indirect
+	git.iim.gay/grufwub/go-bytes v0.7.0 // indirect
+	git.iim.gay/grufwub/go-errors v0.2.3 // indirect
+	git.iim.gay/grufwub/go-hashenc v0.3.0 // indirect
+	git.iim.gay/grufwub/go-mutexes v0.5.0 // indirect
+	git.iim.gay/grufwub/go-nowish v0.3.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -61,6 +69,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/snappy v0.0.3 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect

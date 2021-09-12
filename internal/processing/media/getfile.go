@@ -110,7 +110,7 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		}
 	}
 
-	bytes, err := p.storage.RetrieveFileFrom(storagePath)
+	bytes, err := p.storage.Get(storagePath)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}

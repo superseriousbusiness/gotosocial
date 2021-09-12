@@ -19,13 +19,13 @@
 package testrig
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 // NewTestMediaHandler returns a media handler with the default test config, the default test logger,
 // and the given db and storage.
-func NewTestMediaHandler(db db.DB, storage blob.Storage) media.Handler {
+func NewTestMediaHandler(db db.DB, storage *kv.KVStore) media.Handler {
 	return media.New(NewTestConfig(), db, storage, NewTestLog())
 }

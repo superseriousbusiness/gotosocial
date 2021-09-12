@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -234,7 +234,7 @@ type processor struct {
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaHandler    media.Handler
-	storage         blob.Storage
+	storage         *kv.KVStore
 	timelineManager timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
@@ -251,8 +251,7 @@ type processor struct {
 }
 
 // NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage blob.Storage, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
-
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 

@@ -24,13 +24,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/superseriousbusiness/gotosocial/internal/blob"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -45,7 +45,7 @@ type ProtocolTestSuite struct {
 	config        *config.Config
 	db            db.DB
 	log           *logrus.Logger
-	storage       blob.Storage
+	storage       *kv.KVStore
 	typeConverter typeutils.TypeConverter
 	accounts      map[string]*gtsmodel.Account
 	activities    map[string]testrig.ActivityWithSignature
@@ -65,7 +65,6 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 
 func (suite *ProtocolTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, suite.accounts)
-
 }
 
 // TearDownTest drops tables to make sure there's no data in the db
@@ -75,7 +74,6 @@ func (suite *ProtocolTestSuite) TearDownTest() {
 
 // make sure PostInboxRequestBodyHook properly sets the inbox username and activity on the context
 func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
-
 	// the activity we're gonna use
 	activity := suite.activities["dm_for_zork"]
 
@@ -106,7 +104,6 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 }
 
 func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
-
 	// the activity we're gonna use
 	activity := suite.activities["dm_for_zork"]
 	sendingAccount := suite.accounts["remote_account_1"]
