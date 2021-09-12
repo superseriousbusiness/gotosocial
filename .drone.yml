@@ -27,13 +27,13 @@ steps:
         - pull_request
 
 - name: test
-  image: golang:1.17.1
+  image: golang:1.17.1-alpine3.14
   volumes:
   - name: go-build-cache
     path: /root/.cache/go-build
   commands:
-  - GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
-  - GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
   when:
     event:
       include:
@@ -77,11 +77,15 @@ volumes:
 
 trigger:
   repo:
+    exclude:
+    - "*"
+    include:
     - superseriousbusiness/gotosocial
     - NyaaaWhatsUpDoc/gotosocial
+    - f0x52/gotosocial
 
 ---
 kind: signature
-hmac: 764ac2de691c436bd86c6cc94b862cde2b5558e4de65ff68bb0d227de1736783
+hmac: 703dad12a9e92cbd415b23d82620608830a60a70168527118e2e9aab145f1099
 
 ...

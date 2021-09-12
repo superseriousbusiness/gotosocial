@@ -1,5 +1,5 @@
 # STEP ONE: build the GoToSocial binary
-FROM golang:1.17.1-alpine3.13 AS binary_builder
+FROM golang:1.17.1-alpine3.14 AS binary_builder
 RUN apk update && apk upgrade --no-cache
 RUN apk add git
 
@@ -29,7 +29,7 @@ ADD scripts/build.sh /go/src/github.com/superseriousbusiness/gotosocial/build.sh
 RUN ./build.sh
 
 # STEP TWO: build the web assets
-FROM node:16.5.0-alpine3.11 AS web_builder
+FROM node:16.9.0-alpine3.14 AS web_builder
 RUN apk update && apk upgrade --no-cache
 
 COPY web /web
@@ -39,7 +39,7 @@ RUN yarn install
 RUN node build.js
 
 # STEP THREE: bundle the admin webapp
-FROM node:16.5.0-alpine3.11 AS admin_builder
+FROM node:16.9.0-alpine3.14 AS admin_builder
 RUN apk update && apk upgrade --no-cache
 RUN apk add git
 
@@ -50,7 +50,7 @@ RUN npm install
 RUN node index.js
 
 # STEP FOUR: build the final container
-FROM alpine:3.13 AS executor
+FROM alpine:3.14.2 AS executor
 RUN apk update && apk upgrade --no-cache
 
 # copy over the binary from the first stage
