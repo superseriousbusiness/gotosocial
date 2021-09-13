@@ -39,7 +39,6 @@ func loadTemplates(cfg *config.Config, engine *gin.Engine) error {
 
 	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", cfg.TemplateConfig.BaseDir))
 
-	println("loading html templates")
 	engine.LoadHTMLGlob(tmPath)
 	return nil
 }
