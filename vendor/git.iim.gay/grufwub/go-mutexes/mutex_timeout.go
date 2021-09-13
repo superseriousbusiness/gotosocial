@@ -43,7 +43,7 @@ type timeoutMutex struct {
 }
 
 func (mu *timeoutMutex) Lock() func() {
-	return mu.LockFunc(func() { panic("timed out") })
+	return mu.LockFunc(func() { panic("lock timed out") })
 }
 
 func (mu *timeoutMutex) LockFunc(fn func()) func() {
@@ -58,7 +58,7 @@ type timeoutRWMutex struct {
 }
 
 func (mu *timeoutRWMutex) Lock() func() {
-	return mu.LockFunc(func() { panic("timed out") })
+	return mu.LockFunc(func() { panic("lock timed out") })
 }
 
 func (mu *timeoutRWMutex) LockFunc(fn func()) func() {
@@ -66,7 +66,7 @@ func (mu *timeoutRWMutex) LockFunc(fn func()) func() {
 }
 
 func (mu *timeoutRWMutex) RLock() func() {
-	return mu.RLockFunc(func() { panic("timed out") })
+	return mu.RLockFunc(func() { panic("rlock timed out") })
 }
 
 func (mu *timeoutRWMutex) RLockFunc(fn func()) func() {
@@ -76,7 +76,8 @@ func (mu *timeoutRWMutex) RLockFunc(fn func()) func() {
 // timeoutPool provides nowish.Timeout objects for timeout mutexes
 var timeoutPool = sync.Pool{
 	New: func() interface{} {
-		return nowish.NewTimeout()
+		t := nowish.NewTimeout()
+		return &t
 	},
 }
 
@@ -88,7 +89,7 @@ func mutexTimeout(d time.Duration, unlock func(), fn func()) func() {
 	}
 
 	// Acquire timeout obj
-	t := timeoutPool.Get().(nowish.Timeout)
+	t := timeoutPool.Get().(*nowish.Timeout)
 
 	// Start the timeout with hook
 	t.Start(d, fn)

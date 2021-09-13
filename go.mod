@@ -3,7 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
-	git.iim.gay/grufwub/go-store v0.4.1
+	git.iim.gay/grufwub/go-store v0.4.2
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.0.0
@@ -47,8 +47,8 @@ require (
 	git.iim.gay/grufwub/go-bytes v0.7.0 // indirect
 	git.iim.gay/grufwub/go-errors v0.2.3 // indirect
 	git.iim.gay/grufwub/go-hashenc v0.3.0 // indirect
-	git.iim.gay/grufwub/go-mutexes v0.5.0 // indirect
-	git.iim.gay/grufwub/go-nowish v0.3.4 // indirect
+	git.iim.gay/grufwub/go-mutexes v0.5.1 // indirect
+	git.iim.gay/grufwub/go-nowish v0.3.5 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
