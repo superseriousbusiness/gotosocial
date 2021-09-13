@@ -63,7 +63,6 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	println(uriParts.User[:1], uriParts.User, status.Account.Username)
 	if uriParts.User[:1] != "@" || uriParts.User[1:] != status.Account.Username {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
