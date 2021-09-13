@@ -54,6 +54,8 @@ GoToSocial doesn't claim to be *better* than any other application, but it offer
 
 Because GoToSocial uses [ActivityPub](https://activitypub.rocks/), you can hang out not just with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly.
 
+![the activitypub logo](docs/assets/ap_logo.svg)
+
 Federation means that your home server is part of a network of servers all over the world that all communicate using the same protocol. Your data is no longer centralized on one company's servers, but resides on your own server and is shared -- as you see fit -- across a resilient web of servers run by other people.
 
 This federated approach also means that you aren't beholden to arbitrary rules from some gigantic corporation potentially thousands of miles away. Your server has its own rules and culture; your fellow server residents are your neighbors; you will likely get to know your server admins and moderators, or be an admin yourself.
