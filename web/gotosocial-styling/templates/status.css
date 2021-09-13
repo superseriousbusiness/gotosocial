@@ -91,12 +91,16 @@ main {
 			position: absolute;
 			bottom: 0.1rem;
 			right: 0.4rem;
-			content: "(!)";
 			color: white;
 			background: $blue;
 			padding: 0.2rem 0.4rem;
 			border-radius: 100%;
 			z-index: 3;
+
+			i.fa {
+				display: block;
+				line-height: 1.3rem;
+			}
 
 			span {
 				margin-left: 0.3rem;
