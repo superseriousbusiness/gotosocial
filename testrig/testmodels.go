@@ -800,7 +800,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
 			Content:                  "hello world! #welcome ! first post on the instance :rainbow: !",
-			AttachmentIDs:            []string{"01F8MH6NEM8D7527KZAECTCR76", "01F8MH7TDVANYKWVE8VVKFPJTJ", "01F8MH8RMYQ6MSNY3JM2XT1CQ5"},
+			AttachmentIDs:            []string{"01F8MH6NEM8D7527KZAECTCR76"},
 			TagIDs:                   []string{"01F8MHA1A2NF9MJ3WCCQ3K8BSZ"},
 			MentionIDs:               []string{},
 			EmojiIDs:                 []string{"01F8MH9H8E4VG3KDYJR9EGPXCQ"},
