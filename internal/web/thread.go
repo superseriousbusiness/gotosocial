@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-type StatusLink struct {
+type statusLink struct {
 	User string `uri:"user" binding:"required"`
 	ID   string `uri:"id"   binding:"required"`
 }
@@ -34,40 +34,42 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 	l := m.log.WithField("func", "threadTemplateGET")
 	l.Trace("rendering thread template")
 
-	var statusLink StatusLink
+	ctx := c.Request.Context()
 
-	if err := c.ShouldBindUri(&statusLink); err != nil {
+	var uriParts statusLink
+
+	if err := c.ShouldBindUri(&uriParts); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
 	}
 
-	authed, err := oauth.Authed(c, false, false, false, false) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
 		l.Errorf("error authing status GET request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
 	}
 
-	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
+	instance, err := m.processor.InstanceGet(ctx, m.config.Host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
 
-	status, err := m.processor.StatusGet(c.Request.Context(), authed, statusLink.ID)
+	status, err := m.processor.StatusGet(ctx, authed, uriParts.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
 	}
 
-	println(statusLink.User[:1], statusLink.User, status.Account.Username)
-	if statusLink.User[:1] != "@" || statusLink.User[1:] != status.Account.Username {
+	println(uriParts.User[:1], uriParts.User, status.Account.Username)
+	if uriParts.User[:1] != "@" || uriParts.User[1:] != status.Account.Username {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
 	}
 
-	context, err := m.processor.StatusGetContext(c.Request.Context(), authed, statusLink.ID)
+	context, err := m.processor.StatusGetContext(ctx, authed, uriParts.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
 		return
