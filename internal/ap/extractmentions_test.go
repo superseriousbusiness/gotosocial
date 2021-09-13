@@ -16,39 +16,35 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package typeutils_test
+package ap_test
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"testing"
 
-	"github.com/go-fed/activity/streams"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
-type InternalToASTestSuite struct {
-	TypeUtilsTestSuite
+type ExtractMentionsTestSuite struct {
+	ExtractTestSuite
 }
 
-func (suite *InternalToASTestSuite) TestAccountToAS() {
-	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
+func (suite *ExtractMentionsTestSuite) TestExtractMentions() {
+	note := suite.noteWithMentions1
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
-	assert.NoError(suite.T(), err)
+	mentions, err := ap.ExtractMentions(note)
+	suite.NoError(err)
+	suite.Len(mentions, 2)
 
-	ser, err := streams.Serialize(asPerson)
-	assert.NoError(suite.T(), err)
+	m1 := mentions[0]
+	suite.Equal("@dumpsterqueer@superseriousbusiness.org", m1.NameString)
+	suite.Equal("https://gts.superseriousbusiness.org/users/dumpsterqueer", m1.TargetAccountURI)
 
-	bytes, err := json.Marshal(ser)
-	assert.NoError(suite.T(), err)
-
-	fmt.Println(string(bytes))
-	// TODO: write assertions here, rn we're just eyeballing the output
+	m2 := mentions[1]
+	suite.Equal("@f0x@superseriousbusiness.org", m2.NameString)
+	suite.Equal("https://gts.superseriousbusiness.org/users/f0x", m2.TargetAccountURI)
 }
 
-func TestInternalToASTestSuite(t *testing.T) {
-	suite.Run(t, new(InternalToASTestSuite))
+func TestExtractMentionsTestSuite(t *testing.T) {
+	suite.Run(t, &ExtractMentionsTestSuite{})
 }
