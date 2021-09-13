@@ -8,15 +8,7 @@ import (
 // by key. You do not need to worry about managing the contents of the map,
 // only requesting RLock/Lock for keys, and ensuring to call the returned
 // unlock functions.
-type MutexMap interface {
-	// Lock acquires a mutex lock for supplied key, returning an Unlock function
-	Lock(key string) (unlock func())
-
-	// RLock acquires a mutex read lock for supplied key, returning an RUnlock function
-	RLock(key string) (runlock func())
-}
-
-type mutexMap struct {
+type MutexMap struct {
 	// NOTE:
 	// Individual keyed mutexes should ONLY ever
 	// be locked within the protection of the outer
@@ -35,7 +27,7 @@ func NewMap(newFn func() RWMutex) MutexMap {
 	if newFn == nil {
 		newFn = NewRW
 	}
-	return &mutexMap{
+	return MutexMap{
 		mus:   make(map[string]RWMutex),
 		mapMu: sync.Mutex{},
 		pool: sync.Pool{
@@ -46,7 +38,7 @@ func NewMap(newFn func() RWMutex) MutexMap {
 	}
 }
 
-func (mm *mutexMap) evict(key string, mu RWMutex) {
+func (mm *MutexMap) evict(key string, mu RWMutex) {
 	// Acquire map lock
 	mm.mapMu.Lock()
 
@@ -63,21 +55,21 @@ func (mm *mutexMap) evict(key string, mu RWMutex) {
 	mm.pool.Put(mu)
 }
 
-// GetRLock acquires a mutex read lock for supplied key, returning an RUnlock function
-func (mm *mutexMap) RLock(key string) func() {
+// RLock acquires a mutex read lock for supplied key, returning an RUnlock function
+func (mm *MutexMap) RLock(key string) func() {
 	return mm.getLock(key, func(mu RWMutex) func() {
 		return mu.RLock()
 	})
 }
 
-// GetLock acquires a mutex lock for supplied key, returning an Unlock function
-func (mm *mutexMap) Lock(key string) func() {
+// Lock acquires a mutex lock for supplied key, returning an Unlock function
+func (mm *MutexMap) Lock(key string) func() {
 	return mm.getLock(key, func(mu RWMutex) func() {
 		return mu.Lock()
 	})
 }
 
-func (mm *mutexMap) getLock(key string, doLock func(RWMutex) func()) func() {
+func (mm *MutexMap) getLock(key string, doLock func(RWMutex) func()) func() {
 	// Get map lock
 	mm.mapMu.Lock()
 
