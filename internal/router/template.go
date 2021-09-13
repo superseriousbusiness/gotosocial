@@ -23,8 +23,10 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -41,12 +43,51 @@ func loadTemplates(cfg *config.Config, engine *gin.Engine) error {
 	return nil
 }
 
+func oddOrEven(n int) string {
+	if n%2 == 0 {
+		return "even"
+	} else {
+		return "odd"
+	}
+}
+
 func noescape(str string) template.HTML {
 	return template.HTML(str)
 }
 
+func timestamp(stamp string) string {
+	t, _ := time.Parse(time.RFC3339, stamp)
+	return t.Format("January 2, 2006, 15:04:05")
+}
+
+type IconWithLabel struct {
+	faIcon string
+	label  string
+}
+
+func visibilityIcon(visibility model.Visibility) template.HTML {
+	var icon IconWithLabel
+
+	if visibility == model.VisibilityPublic {
+		icon = IconWithLabel{"globe", "public"}
+	} else if visibility == model.VisibilityUnlisted {
+		icon = IconWithLabel{"unlock", "unlisted"}
+	} else if visibility == model.VisibilityPrivate {
+		icon = IconWithLabel{"lock", "private"}
+	} else if visibility == model.VisibilityMutualsOnly {
+		icon = IconWithLabel{"handshake-o", "mutuals only"}
+	} else if visibility == model.VisibilityDirect {
+		icon = IconWithLabel{"envelope", "direct"}
+	}
+
+	return template.HTML(fmt.Sprintf(`<i aria-label="Visiblity: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
+}
+
 func loadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
-		"noescape": noescape,
+		"noescape":       noescape,
+		"oddOrEven":      oddOrEven,
+		"visibilityIcon": visibilityIcon,
+		"timestamp":      timestamp,
 	})
 }

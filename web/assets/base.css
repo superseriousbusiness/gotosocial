@@ -1,53 +1,70 @@
-$bg: #525c66;
-$fg: #fafaff;
-
-$bg_accent: color($bg lightness(-5%));
-
-$acc1: #de8957; // sloth light orange
-$acc2: #c76d33; // sloth dark orange
-
 html, body {
 	padding: 0;
 	margin: 0;
-	background: $bg;
-	color: $fg;
+	background: rgb(70, 79, 88);
+	color: #fafaff;
 	font-family: sans-serif;
 }
 
 body {
 	display: grid;
-	grid-template-columns: 1fr 50% 1fr;
-	grid-template-columns: 1fr 90ch 1fr;
-	line-height: 1.5em;
 
+	grid-template-rows: auto 1fr auto;
 	min-height: 100vh;
-	grid-auto-rows: auto;
-	grid-auto-flow: dense;
+	line-height: 1.5em;
+}
 
-	& > * {
+main {
+	background: #525c66;
+	display: grid;
+	padding-top: 2rem;
+	grid-template-columns: 1fr 50% 1fr;
+	grid-template-columns: auto min(92%, 90ch) auto;
+}
+
+main .left {
+		grid-column: 1;
+	}
+
+main .right {
+		grid-column: 3;
+	}
+
+main.lightgray {
+		background: #525c66;
+	}
+
+main > * {
 		align-self: start;
 		grid-column: 2;
 	}
 
-	header, footer, .fullWidth {
-		grid-column: 1/4;
-		grid-column: 1/-1;
-	}
-
-	.left {
-		grid-column: 1;
-	}
-
-	.right {
-		grid-column: 3;
-	}
-}
-
 header {
-	background: $bg_accent;
-	padding: 2rem;
-	margin-bottom: 4rem;
+	background: rgb(70, 79, 88);
+	padding: 2rem 0;
+	padding-bottom: 0;
+	display: flex;
+	flex-wrap: wrap;
 }
+
+header img {
+		height: 4rem;
+		padding-left: 2rem;
+		padding-bottom: 2rem;
+	}
+
+header div {
+		height: 100%;
+		margin: 0 2rem;
+		margin-top: -2rem;
+		flex-grow: 1;
+		align-self: center;
+		display: flex;
+	}
+
+header div h1 {
+			align-self: center;
+		}
 
 h1 {
 	/* color: $acc1; */
@@ -56,27 +73,27 @@ h1 {
 }
 
 a {
-	color: $acc1;
+	color: #de8957;
 }
 
 .button, button {
 	border-radius: 0.2rem;
-	background: $acc1;
-	color: $fg;
+	background: #de8957;
+	color: #fafaff;
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
 	padding: 0.5rem;
 	border: none;
 	cursor: pointer;
-
-	&:hover {
-		background: $acc2;
-	}
 }
 
+.button:hover, button:hover {
+		background: #c76d33;
+	}
+
 .count {
-	background: $bg_accent;
+	background: rgb(70, 79, 88);
 	border-radius: 0.3rem;
 	padding: 0.2rem;
 }
@@ -86,72 +103,72 @@ a {
 }
 
 .accent {
-	color: $acc1;
+	color: #de8957;
 }
 
 .logo {
 	justify-self: center;
-	img {
+}
+
+.logo img {
 		height: 30vh;
 	}
-}
 
 section.apps {
 	align-self: start;
+}
 
-	.applist {
+section.apps .applist {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		grid-gap: 0.5rem;
 		align-content: start;
+	}
 
-		.entry {
+section.apps .applist .entry {
 			display: grid;
 			grid-template-columns: 30% 1fr;
 			gap: 0.5rem;
 			padding: 0.5rem;
-			background: $bg_accent;
+			background: rgb(70, 79, 88);
 			border-radius: 0.5rem;
+		}
 
-			.logo {
+section.apps .applist .entry .logo {
 				align-self: center;
 				width: 100%;
 				object-fit: contain;
 				flex: 1 1 auto;
 			}
 
-			.logo.redraw {
-				fill: $fg;
-				stroke: $fg;
+section.apps .applist .entry .logo.redraw {
+				fill: #fafaff;
+				stroke: #fafaff;
 			}
 
-			div {
+section.apps .applist .entry div {
 				padding: 1rem 0;
-				h3 {
+			}
+
+section.apps .applist .entry div h3 {
 					margin-top: 0;
 				}
-			}
-		}
-	}
-}
 
-section.login {
-	form {
+section.login form {
 		display: inline-grid;
 		grid-template-columns: auto 100%;
 		grid-gap: 0.7rem;
+	}
 
-		button {
+section.login form button {
 			place-self: center;
 			grid-column: 2;
 		}
-	}
-}
 
 input, select, textarea {
-	border: 1px solid $fg;
-	color: $fg;
-	background: $bg;
+	border: 1px solid #fafaff;
+	color: #fafaff;
+	background: #525c66;
 	width: 100%;
 }
 
@@ -161,19 +178,15 @@ footer {
 	padding: 2rem;
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr 1fr;
-
-	a {
-		font-weight: bold;
-	}
 }
 
-@media screen and (orientation: portrait) {
-	body {
-		grid-template-columns: 1fr 92% 1fr;
+footer a {
+		font-weight: bold;
+	}
 
-		footer, .left, .right {
-			grid-column: 2;
-		}
+@media screen and (orientation: portrait) {
+	main {
+		grid-template-columns: 1fr 92% 1fr;
 	}
 
 	header {
@@ -181,14 +194,13 @@ footer {
 	}
 
 	footer {
-		padding: 0;
 		margin-top: 2rem;
 		grid-template-columns: 1fr;
-
-		div {
-			margin: 1rem 0;
-		}
 	}
+
+		footer div {
+			margin: 0.3rem 0;
+		}
 
 	section.apps .applist {
 		grid-template-columns: 1fr;

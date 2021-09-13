@@ -1,0 +1,230 @@
+main {
+	background: transparent;
+	grid-auto-rows: auto;
+}
+
+.thread {
+	display: flex;
+	flex-direction: column;
+}
+
+.toot {
+	position: relative;
+	background: rgb(75, 84, 93);
+	padding: 2rem;
+	/* padding-bottom: 0; */
+	display: grid;
+	grid-template-columns: 3.2rem auto 1fr;
+	column-gap: 0.5rem;
+	margin-bottom: 0.2rem;
+}
+
+.toot a {
+		position: relative;
+		z-index: 1;
+		color: inherit;
+		text-decoration: none;
+	}
+
+.toot .avatar {
+		grid-row: span 2;
+	}
+
+.toot .avatar img {
+			height: 3.2rem;
+			width: 3.2rem;
+			object-fit: cover;
+		}
+
+.toot .displayname {
+		font-weight: bold;
+		font-size: 1.2rem;
+		align-self: start;
+	}
+
+.toot .username {
+		color: #b0b0b5;
+		justify-self: start;
+	}
+
+.toot input.spoiler:checked ~ .content {
+		display: none;
+	}
+
+.toot .spoiler label {
+			background: #de8957;
+			border-radius: 0.3rem;
+			padding: 0.3rem;
+			margin-left: 0.4rem;
+			position: relative;
+			z-index: 2;
+			cursor: pointer;
+		}
+
+.toot .text {
+		margin: 0;
+		grid-column: span 2;
+	}
+
+.toot .text a {
+			color: #de8957;
+			text-decoration: underline;
+		}
+
+.toot .media {
+		margin-top: 0.6rem;
+		border-radius: 0.2rem;
+		grid-column: span 3;
+		display: grid;
+		grid-template-columns: 50% 50%;
+		grid-auto-rows: 10rem;
+		overflow: hidden;
+		gap: 0.3rem;
+	}
+
+.toot .media a {
+			position: relative;
+		}
+
+.toot .media .no-image-desc {
+			display: flex;
+			position: absolute;
+			bottom: 0.1rem;
+			right: 0.4rem;
+			color: white;
+			background: #5897df;
+			padding: 0.2rem 0.4rem;
+			border-radius: 100%;
+			z-index: 3;
+		}
+
+.toot .media .no-image-desc i.fa {
+				display: block;
+				line-height: 1.3rem;
+			}
+
+.toot .media .no-image-desc span {
+				margin-left: 0.3rem;
+				display: none;
+			}
+
+.toot .media .no-image-desc:hover span {
+					display: block;
+				}
+
+.toot .media .no-image-desc:hover {
+				border-radius: 0.2rem;
+}
+
+.toot .media img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+
+.toot .media.single a {
+			grid-column: span 2;
+		}
+
+.toot .media.odd a:first-child, .toot .media.double a {
+			grid-row: span 2;
+		}
+
+.toot .info {
+		display: none;
+	}
+
+.toot .info div {
+			position: relative;
+			padding-right: 1.3rem;
+		}
+
+.toot .info .stats {
+			display: flex;
+		}
+
+.toot .info {
+
+		color: #b0b0b5;
+		grid-column: span 3;
+		margin-top: 0.5rem;
+		flex-wrap: wrap;
+}
+
+.toot .info div.stats::after {
+			display: none;
+		}
+
+.toot .info div::after {
+			display: block;
+			background: #b0b0b5;
+			height: 0.25rem;
+			width: 0.25rem;
+			content: "";
+			position: absolute;
+			top: calc((1.5rem - 0.25rem) / 2);
+			right: 0.55rem;
+			border-radius: 1rem;
+		}
+
+.toot .info div:last-child::after {
+				display: none;
+			}
+
+.toot .info div:last-child {
+			margin-right: 0;
+}
+
+.toot .toot-link {
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		overflow: hidden;
+		text-indent: 100%;
+		white-space: nowrap;
+
+		position: absolute;
+		z-index: 0;
+	}
+
+.toot {}
+
+.toot:first-child {
+		/* top left, top right */
+		border-radius: 0.3rem 0.3rem 0 0;
+	}
+
+.toot:last-child {
+		/* bottom left, bottom right */
+		border-radius: 0 0 0.3rem 0.3rem;
+		padding-bottom: 1.5rem;
+	}
+
+.toot.expanded {
+		background: #525c66;
+		padding-bottom: 1.5rem;
+	}
+
+.toot.expanded .displayname {
+			grid-column: span 2;
+		}
+
+.toot.expanded .text {
+			grid-column: span 3;
+			grid-row: span 1;
+			margin-top: 0.3rem;
+		}
+
+.toot.expanded .info {
+			display: flex;
+		}
+
+.toot.expanded .media {
+			grid-auto-rows: 1fr;
+			max-height: 120rem;
+		}
+
+footer + div { /* something weird from the devstack.. */
+	display: none;
+}

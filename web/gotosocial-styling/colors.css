@@ -1,0 +1,9 @@
+$bg: #525c66;
+$fg: #fafaff;
+$fg_dark: #b0b0b5;
+
+$bg_accent: color($bg lightness(-5%));
+
+$acc1: #de8957; // sloth light orange
+$acc2: #c76d33; // sloth dark orange
+$blue: #5897df;

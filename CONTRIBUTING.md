@@ -46,11 +46,11 @@ To get started, you first need to have Go installed. GtS is currently using Go 1
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
-Once that's done, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
+Once that's done, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary. For automatic re-compiling during development, you can use [nodemon](https://www.npmjs.com/package/nodemon): `nodemon -e go --signal SIGTERM --exec "go run ./cmd/gotosocial --host localhost testrig start || exit 1"`
 
 If there are no errors, great, you're good to go!
 
-To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/source/`. Recompiling the bundle.css is `node build.js` but can be automated with [nodemon](https://www.npmjs.com/package/nodemon) on file change: `nodemon -w style.css build.js`.
+To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/gotosocial-styling/`. Recompiling the bundles is done with `BUILD_DIR=../assets node index.js` but can be automatically live-reloaded with `BUILD_DIR=../assets NODE_ENV=development node index.js`. 
 
 ### Golang forking quirks
 

@@ -1,0 +1,34 @@
+{{ template "header.tmpl" .}}
+<main>
+	<div class="thread">
+		{{range .context.Ancestors}}
+		<div class="toot">
+			{{ template "status.tmpl" .}}
+		</div>
+		{{end}}
+		<div class="toot expanded">
+			{{ template "status.tmpl" .status}}
+		</div>
+		{{range .context.Descendants}}
+		<div class="toot">
+			{{ template "status.tmpl" .}}
+		</div>
+		{{end}}
+	</div>
+</main>
+<script>
+	Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => {
+		let checkbox = document.getElementById(label.htmlFor);
+		function update() {
+			if(checkbox.checked) {
+				label.innerHTML = "Show more";
+			} else {
+				label.innerHTML = "Show less";
+			}
+		}
+		update();
+
+		label.addEventListener("click", () => {setTimeout(update, 1)});
+	});
+</script>
+{{ template "footer.tmpl" .}}
