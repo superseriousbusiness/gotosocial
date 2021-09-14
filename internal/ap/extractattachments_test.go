@@ -22,47 +22,17 @@ import (
 	"testing"
 
 	"github.com/go-fed/activity/streams"
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-func document1() vocab.ActivityStreamsDocument {
-	document1 := streams.NewActivityStreamsDocument()
-
-	document1MediaType := streams.NewActivityStreamsMediaTypeProperty()
-	document1MediaType.Set("image/jpeg")
-	document1.SetActivityStreamsMediaType(document1MediaType)
-
-	document1URL := streams.NewActivityStreamsUrlProperty()
-	document1URL.AppendIRI(testrig.URLMustParse("https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"))
-	document1.SetActivityStreamsUrl(document1URL)
-
-	document1Name := streams.NewActivityStreamsNameProperty()
-	document1Name.AppendXMLSchemaString("It's a cute plushie.")
-	document1.SetActivityStreamsName(document1Name)
-
-	document1Blurhash := streams.NewTootBlurhashProperty()
-	document1Blurhash.Set("UxQ0EkRP_4tRxtRjWBt7%hozM_ayV@oLf6WB")
-	document1.SetTootBlurhash(document1Blurhash)
-
-	return document1
+type ExtractAttachmentsTestSuite struct {
+	ExtractTestSuite
 }
 
-func attachment1() vocab.ActivityStreamsAttachmentProperty {
-	attachment1 := streams.NewActivityStreamsAttachmentProperty()
-	attachment1.AppendActivityStreamsDocument(document1())
-	return attachment1
-}
-
-type ExtractTestSuite struct {
-	suite.Suite
-}
-
-func (suite *ExtractTestSuite) TestExtractAttachments() {
+func (suite *ExtractAttachmentsTestSuite) TestExtractAttachments() {
 	note := streams.NewActivityStreamsNote()
-	note.SetActivityStreamsAttachment(attachment1())
+	note.SetActivityStreamsAttachment(suite.attachment1)
 
 	attachments, err := ap.ExtractAttachments(note)
 	suite.NoError(err)
@@ -75,7 +45,7 @@ func (suite *ExtractTestSuite) TestExtractAttachments() {
 	suite.Empty(attachment1.Blurhash) // atm we discard blurhashes and generate them ourselves during processing
 }
 
-func (suite *ExtractTestSuite) TestExtractNoAttachments() {
+func (suite *ExtractAttachmentsTestSuite) TestExtractNoAttachments() {
 	note := streams.NewActivityStreamsNote()
 
 	attachments, err := ap.ExtractAttachments(note)
@@ -83,8 +53,8 @@ func (suite *ExtractTestSuite) TestExtractNoAttachments() {
 	suite.Empty(attachments)
 }
 
-func (suite *ExtractTestSuite) TestExtractAttachmentsMissingContentType() {
-	d1 := document1()
+func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentsMissingContentType() {
+	d1 := suite.document1
 	d1.SetActivityStreamsMediaType(streams.NewActivityStreamsMediaTypeProperty())
 
 	a1 := streams.NewActivityStreamsAttachmentProperty()
@@ -98,9 +68,8 @@ func (suite *ExtractTestSuite) TestExtractAttachmentsMissingContentType() {
 	suite.Empty(attachments)
 }
 
-func (suite *ExtractTestSuite) TestExtractAttachmentMissingContentType() {
-
-	d1 := document1()
+func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingContentType() {
+	d1 := suite.document1
 	d1.SetActivityStreamsMediaType(streams.NewActivityStreamsMediaTypeProperty())
 
 	attachment, err := ap.ExtractAttachment(d1)
@@ -108,8 +77,8 @@ func (suite *ExtractTestSuite) TestExtractAttachmentMissingContentType() {
 	suite.Nil(attachment)
 }
 
-func (suite *ExtractTestSuite) TestExtractAttachmentMissingURL() {
-	d1 := document1()
+func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingURL() {
+	d1 := suite.document1
 	d1.SetActivityStreamsUrl(streams.NewActivityStreamsUrlProperty())
 
 	attachment, err := ap.ExtractAttachment(d1)
@@ -117,6 +86,6 @@ func (suite *ExtractTestSuite) TestExtractAttachmentMissingURL() {
 	suite.Nil(attachment)
 }
 
-func TestExtractTestSuite(t *testing.T) {
-	suite.Run(t, &ExtractTestSuite{})
+func TestExtractAttachmentsTestSuite(t *testing.T) {
+	suite.Run(t, &ExtractAttachmentsTestSuite{})
 }

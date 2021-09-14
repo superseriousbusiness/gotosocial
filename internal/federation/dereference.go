@@ -34,12 +34,12 @@ func (f *federator) EnrichRemoteAccount(ctx context.Context, username string, ac
 	return f.dereferencer.EnrichRemoteAccount(ctx, username, account)
 }
 
-func (f *federator) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent, includeChilds bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
-	return f.dereferencer.GetRemoteStatus(ctx, username, remoteStatusID, refresh, includeParent, includeChilds)
+func (f *federator) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
+	return f.dereferencer.GetRemoteStatus(ctx, username, remoteStatusID, refresh, includeParent)
 }
 
-func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent, includeChilds bool) (*gtsmodel.Status, error) {
-	return f.dereferencer.EnrichRemoteStatus(ctx, username, status, includeParent, includeChilds)
+func (f *federator) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error) {
+	return f.dereferencer.EnrichRemoteStatus(ctx, username, status, includeParent)
 }
 
 func (f *federator) DereferenceRemoteThread(ctx context.Context, username string, statusIRI *url.URL) error {
