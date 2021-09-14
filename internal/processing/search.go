@@ -130,7 +130,7 @@ func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, u
 
 	// we don't have it locally so dereference it if we're allowed to
 	if resolve {
-		status, _, _, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true, false, false)
+		status, _, _, err := p.federator.GetRemoteStatus(ctx, authed.Account.Username, uri, true, true)
 		if err == nil {
 			if err := p.federator.DereferenceRemoteThread(ctx, authed.Account.Username, uri); err != nil {
 				// try to deref the thread while we're here

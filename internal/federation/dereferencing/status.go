@@ -39,8 +39,8 @@ import (
 //
 // EnrichRemoteStatus is mostly useful for calling after a status has been initially created by
 // the federatingDB's Create function, but additional dereferencing is needed on it.
-func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent, includeChilds bool) (*gtsmodel.Status, error) {
-	if err := d.populateStatusFields(ctx, status, username, includeParent, includeChilds); err != nil {
+func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error) {
+	if err := d.populateStatusFields(ctx, status, username, includeParent); err != nil {
 		return nil, err
 	}
 
@@ -62,7 +62,7 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 // If a dereference was performed, then the function also returns the ap.Statusable representation for further processing.
 //
 // SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
-func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent, includeChilds bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
+func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	new := true
 
 	// check if we already have the status in our db
@@ -105,7 +105,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		}
 		gtsStatus.ID = ulid
 
-		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent, includeChilds); err != nil {
+		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
@@ -115,7 +115,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 	} else {
 		gtsStatus.ID = maybeStatus.ID
 
-		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent, includeChilds); err != nil {
+		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
 			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 		}
 
@@ -235,7 +235,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // This function will deference all of the above, insert them in the database as necessary,
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
-func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent, includeChilds bool) error {
+func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
 	l := d.log.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
@@ -275,12 +275,10 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 	// 3. Emojis
 	// TODO
 
-	// 4. Mentions (only if requested)
+	// 4. Mentions
 	// TODO: do we need to handle removing empty mention objects and just using mention IDs slice?
-	if includeChilds {
-		if err := d.populateStatusMentions(ctx, status, requestingUsername); err != nil {
-			return fmt.Errorf("populateStatusFields: error populating status mentions: %s", err)
-		}
+	if err := d.populateStatusMentions(ctx, status, requestingUsername); err != nil {
+		return fmt.Errorf("populateStatusFields: error populating status mentions: %s", err)
 	}
 
 	// 5. Replied-to-status (only if requested)
@@ -325,10 +323,10 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		errs := []string{}
 
 		// check if account is in the db already
-		if a, err := d.db.GetAccountByURL(ctx, targetAccountURI.String()); err != nil {
+		if a, err := d.db.GetAccountByURI(ctx, targetAccountURI.String()); err != nil {
 			errs = append(errs, err.Error())
 		} else {
-			l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURL", targetAccountURI, a.ID)
+			l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
 			targetAccount = a
 		}
 
@@ -426,7 +424,7 @@ func (d *deref) populateStatusRepliedTo(ctx context.Context, status *gtsmodel.St
 		replyToStatus, err := d.db.GetStatusByURI(ctx, status.InReplyToURI)
 		if err != nil {
 			// Status was not in the DB, try fetch
-			replyToStatus, _, _, err = d.GetRemoteStatus(ctx, requestingUsername, statusURI, false, false, false)
+			replyToStatus, _, _, err = d.GetRemoteStatus(ctx, requestingUsername, statusURI, false, false)
 			if err != nil {
 				return fmt.Errorf("populateStatusRepliedTo: couldn't get reply to status with uri %s: %s", status.InReplyToURI, err)
 			}
