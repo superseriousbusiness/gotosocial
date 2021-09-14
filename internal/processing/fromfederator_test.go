@@ -99,7 +99,6 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 			},
 		},
 		AccountID:           replyingAccount.ID,
-		Account:             replyingAccount,
 		AccountURI:          replyingAccount.URI,
 		InReplyToID:         repliedStatus.ID,
 		InReplyToURI:        repliedStatus.URI,

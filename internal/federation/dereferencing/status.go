@@ -357,7 +357,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 			Status:           m.Status,
 			CreatedAt:        status.CreatedAt,
 			UpdatedAt:        status.UpdatedAt,
-			OriginAccountID:  status.Account.ID,
+			OriginAccountID:  status.AccountID,
 			OriginAccountURI: status.AccountURI,
 			OriginAccount:    status.Account,
 			TargetAccountID:  targetAccount.ID,
