@@ -49,7 +49,7 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 	}
 
 	// first make sure we have this status in our db
-	_, statusable, _, err := d.GetRemoteStatus(ctx, username, statusIRI, true, false, false)
+	_, statusable, _, err := d.GetRemoteStatus(ctx, username, statusIRI, true, false)
 	if err != nil {
 		return fmt.Errorf("DereferenceThread: error getting status with id %s: %s", statusIRI.String(), err)
 	}
@@ -104,7 +104,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 
 	// If we reach here, we're looking at a remote status -- make sure we have it in our db by calling GetRemoteStatus
 	// We call it with refresh to true because we want the statusable representation to parse inReplyTo from.
-	_, statusable, _, err := d.GetRemoteStatus(ctx, username, &statusIRI, true, false, false)
+	_, statusable, _, err := d.GetRemoteStatus(ctx, username, &statusIRI, true, false)
 	if err != nil {
 		l.Debugf("error getting remote status: %s", err)
 		return nil
@@ -214,7 +214,7 @@ pageLoop:
 			foundReplies = foundReplies + 1
 
 			// get the remote statusable and put it in the db
-			_, statusable, new, err := d.GetRemoteStatus(ctx, username, itemURI, false, false, false)
+			_, statusable, new, err := d.GetRemoteStatus(ctx, username, itemURI, false, false)
 			if new && err == nil && statusable != nil {
 				// now iterate descendants of *that* status
 				if err := d.iterateDescendants(ctx, username, *itemURI, statusable); err != nil {

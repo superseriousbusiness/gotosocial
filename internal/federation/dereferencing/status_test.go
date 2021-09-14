@@ -38,7 +38,7 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839")
-	status, statusable, new, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false, false)
+	status, statusable, new, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(status)
 	suite.NotNil(statusable)
@@ -80,7 +80,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV")
-	status, statusable, new, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false, true)
+	status, statusable, new, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(status)
 	suite.NotNil(statusable)
