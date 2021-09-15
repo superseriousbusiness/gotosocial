@@ -131,6 +131,19 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, false, nil // couldn't extract the verifier
 	}
 
+	// we should have the signature itself set too
+	si := ctx.Value(util.APRequestingPublicKeySignature)
+	if vi == nil {
+		l.Debug("request wasn't signed")
+		return nil, false, nil // request wasn't signed
+	}
+
+	signature, ok := si.(string)
+	if !ok {
+		l.Debug("couldn't extract signature")
+		return nil, false, nil // couldn't extract the signature
+	}
+
 	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
 	if err != nil {
 		l.Debug("couldn't parse public key URL")
@@ -231,6 +244,6 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 	}
 
-	l.Infof("authentication not passed for %s", pkOwnerURI)
+	l.Infof("authentication not passed for public key owner %s; signature value was '%s'", pkOwnerURI, signature)
 	return nil, false, nil
 }

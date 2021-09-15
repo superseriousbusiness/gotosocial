@@ -1,14 +1,12 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGETHandler serves the target status as an activitystreams NOTE so that other AP servers can parse it.
@@ -30,25 +28,19 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	// make sure this actually an AP request
-	format := c.NegotiateFormat(ActivityPubAcceptHeaders...)
-	if format == "" {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": "could not negotiate format with given Accept header(s)"})
+	format, err := negotiateFormat(c)
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": fmt.Sprintf("could not negotiate format with given Accept header(s): %s", err)})
 		return
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// transfer the signature verifier from the gin context to the request context
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
-	}
+	ctx := populateContext(c)
 
-	status, err := m.processor.GetFediStatus(ctx, requestedUsername, requestedStatusID, c.Request.URL) // handles auth as well
-	if err != nil {
-		l.Info(err.Error())
-		c.JSON(err.Code(), gin.H{"error": err.Safe()})
+	status, errWithCode := m.processor.GetFediStatus(ctx, requestedUsername, requestedStatusID, c.Request.URL)
+	if errWithCode != nil {
+		l.Info(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

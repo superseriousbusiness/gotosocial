@@ -3,9 +3,12 @@ package security
 import (
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-fed/httpsig"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -14,9 +17,6 @@ import (
 // verifier in the gin context for use down the line.
 func (m *Module) SignatureCheck(c *gin.Context) {
 	l := m.log.WithField("func", "DomainBlockChecker")
-
-	// set this extra field for signature validation
-	c.Request.Header.Set("host", m.config.Host)
 
 	// create the verifier from the request
 	// if the request is signed, it will have a signature header
@@ -43,8 +43,42 @@ func (m *Module) SignatureCheck(c *gin.Context) {
 				return
 			}
 
-			// set the verifier on the context here to save some work further down the line
+			// set the verifier and signature on the context here to save some work further down the line
 			c.Set(string(util.APRequestingPublicKeyVerifier), verifier)
+			signature := c.GetHeader("Signature")
+			if signature != "" {
+				if l.Level >= logrus.DebugLevel {
+					signatureHeaders := extractSignatureHeaders(signature)
+					for _, s := range signatureHeaders {
+						sValue := c.Request.Header.Get(s)
+						if sValue != "" {
+							l.Tracef("signature header %s is %s", s, sValue)
+						} else {
+							l.Debugf("signature header %s was required but empty", s)
+						}
+					}
+				}
+				c.Set(string(util.APRequestingPublicKeySignature), signature)
+			}
 		}
 	}
 }
+
+func extractSignatureHeaders(signature string) []string {
+	headers := []string{}
+	headersMatches := extractSignatureHeadersRegex.FindStringSubmatch(signature)
+	if len(headersMatches) != 2 {
+		return headers
+	}
+
+	headersString := headersMatches[1]
+	
+	if headersString != "" {
+		headersStringSplit := strings.Split(headersString, " ")
+		headers = append(headers, headersStringSplit...)
+	}
+
+	return headers
+}
+
+var extractSignatureHeadersRegex = regexp.MustCompile(`^.*headers="([^,]*)".*$`)

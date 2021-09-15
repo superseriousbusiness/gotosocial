@@ -61,13 +61,6 @@ const (
 	UsersStatusRepliesPath = UsersStatusPath + "/replies"
 )
 
-// ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-// https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubAcceptHeaders = []string{
-	`application/activity+json`,
-	`application/ld+json; profile="https://www.w3.org/ns/activitystreams"`,
-}
-
 // Module implements the FederationAPIModule interface
 type Module struct {
 	config    *config.Config
