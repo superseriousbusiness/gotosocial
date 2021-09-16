@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusRepliesGETHandler swagger:operation GET /users/{username}/statuses/{status}/replies s2sRepliesGet
@@ -116,25 +114,19 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		minID = minIDString
 	}
 
-	// make sure this actually an AP request
-	format := c.NegotiateFormat(ActivityPubAcceptHeaders...)
-	if format == "" {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": "could not negotiate format with given Accept header(s)"})
+	format, err := negotiateFormat(c)
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": fmt.Sprintf("could not negotiate format with given Accept header(s): %s", err)})
 		return
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// transfer the signature verifier from the gin context to the request context
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
-	}
+	ctx := populateContext(c)
 
-	replies, err := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
-	if err != nil {
-		l.Info(err.Error())
-		c.JSON(err.Code(), gin.H{"error": err.Safe()})
+	replies, errWithCode := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
+	if errWithCode != nil {
+		l.Info(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

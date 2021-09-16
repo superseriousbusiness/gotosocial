@@ -128,12 +128,13 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	ctxWithAccount := context.WithValue(ctx, util.APAccount, inboxAccount)
 	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
 	ctxWithVerifier := context.WithValue(ctxWithActivity, util.APRequestingPublicKeyVerifier, verifier)
+	ctxWithSignature := context.WithValue(ctxWithVerifier, util.APRequestingPublicKeySignature, activity.SignatureHeader)
 
 	// we can pass this recorder as a writer and read it back after
 	recorder := httptest.NewRecorder()
 
 	// trigger the function being tested, and return the new context it creates
-	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithVerifier, recorder, request)
+	newContext, authed, err := federator.AuthenticatePostInbox(ctxWithSignature, recorder, request)
 	assert.NoError(suite.T(), err)
 	assert.True(suite.T(), authed)
 

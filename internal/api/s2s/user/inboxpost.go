@@ -19,13 +19,11 @@
 package user
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
@@ -42,12 +40,7 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// transfer the signature verifier from the gin context to the request context
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
-	}
+	ctx := populateContext(c)
 
 	posted, err := m.processor.InboxPost(ctx, c.Writer, c.Request)
 	if err != nil {

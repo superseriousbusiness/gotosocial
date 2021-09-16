@@ -11,12 +11,9 @@ import (
 
 // SignatureCheck checks whether an incoming http request has been signed. If so, it will check if the domain
 // that signed the request is permitted to access the server. If it is permitted, the handler will set the key
-// verifier in the gin context for use down the line.
+// verifier and the signature in the gin context for use down the line.
 func (m *Module) SignatureCheck(c *gin.Context) {
 	l := m.log.WithField("func", "DomainBlockChecker")
-
-	// set this extra field for signature validation
-	c.Request.Header.Set("host", m.config.Host)
 
 	// create the verifier from the request
 	// if the request is signed, it will have a signature header
@@ -43,8 +40,12 @@ func (m *Module) SignatureCheck(c *gin.Context) {
 				return
 			}
 
-			// set the verifier on the context here to save some work further down the line
+			// set the verifier and signature on the context here to save some work further down the line
 			c.Set(string(util.APRequestingPublicKeyVerifier), verifier)
+			signature := c.GetHeader("Signature")
+			if signature != "" {
+				c.Set(string(util.APRequestingPublicKeySignature), signature)
+			}
 		}
 	}
 }

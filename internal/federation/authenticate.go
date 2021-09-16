@@ -102,10 +102,6 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 // Authenticate in this case is defined as making sure that the http request is actually signed by whoever claims
 // to have signed it, by fetching the public key from the signature and checking it against the remote public key.
 //
-// To avoid making unnecessary http calls towards blocked domains, this function *does* bail early if an instance-level domain block exists
-// for the request from the incoming domain. However, it does not check whether individual blocks exist between the requesting user or domain
-// and the requested user: this should be done elsewhere.
-//
 // The provided username will be used to generate a transport for making remote requests/derefencing the public key ID of the request signature.
 // Ideally you should pass in the username of the user *being requested*, so that the remote server can decide how to handle the request based on who's making it.
 // Ie., if the request on this server is for https://example.org/users/some_username then you should pass in the username 'some_username'.
@@ -133,6 +129,19 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	if !ok {
 		l.Debug("couldn't extract sig verifier")
 		return nil, false, nil // couldn't extract the verifier
+	}
+
+	// we should have the signature itself set too
+	si := ctx.Value(util.APRequestingPublicKeySignature)
+	if vi == nil {
+		l.Debug("request wasn't signed")
+		return nil, false, nil // request wasn't signed
+	}
+
+	signature, ok := si.(string)
+	if !ok {
+		l.Debug("couldn't extract signature")
+		return nil, false, nil // couldn't extract the signature
 	}
 
 	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
@@ -227,13 +236,14 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	for _, algo := range algos {
 		l.Tracef("trying algo: %s", algo)
-		if err := verifier.Verify(publicKey, algo); err == nil {
+		err := verifier.Verify(publicKey, algo)
+		if err == nil {
 			l.Tracef("authentication for %s PASSED with algorithm %s", pkOwnerURI, algo)
 			return pkOwnerURI, true, nil
 		}
 		l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 	}
 
-	l.Infof("authentication not passed for %s", pkOwnerURI)
+	l.Infof("authentication not passed for public key owner %s; signature value was '%s'", pkOwnerURI, signature)
 	return nil, false, nil
 }
