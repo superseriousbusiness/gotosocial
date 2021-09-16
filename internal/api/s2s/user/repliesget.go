@@ -124,7 +124,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 	ctx := populateContext(c)
 
 	replies, errWithCode := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
-	if err != nil {
+	if errWithCode != nil {
 		l.Info(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
