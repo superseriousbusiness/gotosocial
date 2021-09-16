@@ -36,17 +36,17 @@ var ActivityPubAcceptHeaders = []string{
 // populateContext transfers the signature verifier and signature from the gin context to the request context
 func populateContext(c *gin.Context) context.Context {
 	ctx := c.Request.Context()
-	
+
 	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
 	if signed {
 		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
 	}
-	
+
 	signature, signed := c.Get(string(util.APRequestingPublicKeySignature))
 	if signed {
 		ctx = context.WithValue(ctx, util.APRequestingPublicKeySignature, signature)
 	}
-	
+
 	return ctx
 }
 
