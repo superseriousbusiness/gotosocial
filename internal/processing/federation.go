@@ -371,7 +371,7 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 	return data, nil
 }
 
-func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string, requestURL *url.URL) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
 	if err != nil {
