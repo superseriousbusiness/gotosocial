@@ -22,17 +22,17 @@ import "time"
 
 // Mention refers to the 'tagging' or 'mention' of a user within a status.
 type Mention struct {
-	ID               string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
-	CreatedAt        time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt        time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	StatusID         string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the status this mention originates from
-	Status           *Status   `validate:"-" bun:"rel:belongs-to"`                                            // status referred to by statusID
-	OriginAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // ID of the mention creator account
-	OriginAccountURI string    `validate:"url" bun:",nullzero,notnull"`                                       // ActivityPub URI of the originator/creator of the mention
-	OriginAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account referred to by originAccountID
-	TargetAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // Mention target/receiver account ID
-	TargetAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account referred to by targetAccountID
-	Silent           bool      `validate:"-" bun:",notnull,default:false"`                                    // Prevent this mention from generating a notification?
+	ID               string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
+	CreatedAt        time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt        time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	StatusID         string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // ID of the status this mention originates from
+	Status           *Status   `validate:"-" bun:"rel:belongs-to"`                                              // status referred to by statusID
+	OriginAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // ID of the mention creator account
+	OriginAccountURI string    `validate:"url" bun:",nullzero,notnull"`                                         // ActivityPub URI of the originator/creator of the mention
+	OriginAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account referred to by originAccountID
+	TargetAccountID  string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // Mention target/receiver account ID
+	TargetAccount    *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account referred to by targetAccountID
+	Silent           bool      `validate:"-" bun:",notnull,default:false"`                                      // Prevent this mention from generating a notification?
 
 	/*
 		NON-DATABASE CONVENIENCE FIELDS
