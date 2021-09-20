@@ -40,7 +40,7 @@ type UserStandardTestSuite struct {
 	userModule *user.Module
 }
 
-func (suite *UserGetTestSuite) SetupSuite() {
+func (suite *UserStandardTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -50,7 +50,7 @@ func (suite *UserGetTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 }
 
-func (suite *UserGetTestSuite) SetupTest() {
+func (suite *UserStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
@@ -64,7 +64,7 @@ func (suite *UserGetTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
-func (suite *UserGetTestSuite) TearDownTest() {
+func (suite *UserStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 }
