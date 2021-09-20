@@ -23,8 +23,8 @@ import "time"
 // Emoji represents a custom emoji that's been uploaded through the admin UI, and is useable by instance denizens.
 type Emoji struct {
 	ID                     string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                // id of this item in the database
-	CreatedAt              time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                           // when was item created
-	UpdatedAt              time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                           // when was item last updated
+	CreatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                         // when was item created
+	UpdatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                         // when was item last updated
 	Shortcode              string    `validate:"required" bun:",nullzero,notnull,unique:shortcodedomain"`                                     // String shortcode for this emoji -- the part that's between colons. This should be lowercase a-z_  eg., 'blob_hug' 'purple_heart' Must be unique with domain.
 	Domain                 string    `validate:"omitempty,fqdn" bun:",notnull,default:'',unique:shortcodedomain"`                             // Origin domain of this emoji, eg 'example.org', 'queer.party'. empty string for local emojis.
 	ImageRemoteURL         string    `validate:"required_without=ImageURL,omitempty,url" bun:",nullzero"`                                     // Where can this emoji be retrieved remotely? Null for local emojis.
@@ -37,7 +37,7 @@ type Emoji struct {
 	ImageStaticContentType string    `validate:"required" bun:",nullzero,notnull"`                                                            // MIME content type of the static version of the emoji image.
 	ImageFileSize          int       `validate:"required,min=1" bun:",nullzero,notnull"`                                                      // Size of the emoji image file in bytes, for serving purposes.
 	ImageStaticFileSize    int       `validate:"required,min=1" bun:",nullzero,notnull"`                                                      // Size of the static version of the emoji image file in bytes, for serving purposes.
-	ImageUpdatedAt         time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                           // When was the emoji image last updated?
+	ImageUpdatedAt         time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                         // When was the emoji image last updated?
 	Disabled               bool      `validate:"-" bun:",notnull,default:false"`                                                              // Has a moderation action disabled this emoji from being shown?
 	URI                    string    `validate:"url" bun:",nullzero,notnull,unique"`                                                          // ActivityPub uri of this emoji. Something like 'https://example.org/emojis/1234'
 	VisibleInPicker        bool      `validate:"-" bun:",notnull,default:true"`                                                               // Is this emoji visible in the admin emoji picker?

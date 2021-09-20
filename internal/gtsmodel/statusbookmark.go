@@ -22,13 +22,13 @@ import "time"
 
 // StatusBookmark refers to one account having a 'bookmark' of the status of another account.
 type StatusBookmark struct {
-	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`      // id of this item in the database
-	CreatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id of the account that created ('did') the bookmark
-	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account that created the bookmark
-	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // id the account owning the bookmarked status
-	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                            // account owning the bookmarked status
-	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                // database id of the status that has been bookmarked
-	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                            // the bookmarked status
+	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
+	CreatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // id of the account that created ('did') the bookmark
+	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account that created the bookmark
+	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // id the account owning the bookmarked status
+	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                              // account owning the bookmarked status
+	StatusID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // database id of the status that has been bookmarked
+	Status          *Status   `validate:"-" bun:"rel:belongs-to"`                                              // the bookmarked status
 }
