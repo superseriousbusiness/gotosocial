@@ -12,9 +12,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// nolint
 type UserStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
@@ -38,4 +38,33 @@ type UserStandardTestSuite struct {
 
 	// module being tested
 	userModule *user.Module
+}
+
+func (suite *UserGetTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+}
+
+func (suite *UserGetTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.storage = testrig.NewTestStorage()
+	suite.log = testrig.NewTestLog()
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
+	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
+	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+}
+
+func (suite *UserGetTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }

@@ -43,19 +43,21 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	withAcct := strings.Split(q, "acct:")
-	if len(withAcct) != 2 {
-		l.Debugf("aborting request because resource query %s could not be split by 'acct:'", q)
+	// remove the acct: prefix if it's present
+	trimAcct := strings.TrimPrefix(q, "acct:")
+	// remove the first @ in @whatever@example.org if it's present
+	namestring := strings.TrimPrefix(trimAcct, "@")
+
+	// at this point we should have a string like some_user@example.org
+	l.Debugf("got finger request for '%s'", namestring)
+
+	usernameAndAccountDomain := strings.Split(namestring, "@")
+	if len(usernameAndAccountDomain) != 2 {
+		l.Debugf("aborting request because username and domain could not be parsed from %s", namestring)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
-	usernameAndAccountDomain := strings.Split(withAcct[1], "@")
-	if len(usernameAndAccountDomain) != 2 {
-		l.Debugf("aborting request because username and domain could not be parsed from %s", withAcct[1])
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
-		return
-	}
 	username := strings.ToLower(usernameAndAccountDomain[0])
 	accountDomain := strings.ToLower(usernameAndAccountDomain[1])
 	if username == "" || accountDomain == "" {
@@ -77,7 +79,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
 	}
 
-	resp, err := m.processor.GetWebfingerAccount(ctx, username, c.Request.URL)
+	resp, err := m.processor.GetWebfingerAccount(ctx, username)
 	if err != nil {
 		l.Debugf("aborting request with an error: %s", err.Error())
 		c.JSON(err.Code(), gin.H{"error": err.Safe()})
