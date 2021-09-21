@@ -20,7 +20,6 @@ package security
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -35,12 +34,6 @@ func (m *Module) UserAgentBlock(c *gin.Context) {
 	ua := c.Request.UserAgent()
 	if ua == "" {
 		l.Debug("aborting request because there's no user-agent set")
-		c.AbortWithStatus(http.StatusTeapot)
-		return
-	}
-
-	if strings.Contains(strings.ToLower(ua), strings.ToLower("friendica")) {
-		l.Debugf("aborting request with user-agent %s because it contains 'friendica'", ua)
 		c.AbortWithStatus(http.StatusTeapot)
 		return
 	}
