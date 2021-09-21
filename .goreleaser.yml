@@ -1,0 +1,39 @@
+# https://goreleaser.com
+before:
+  hooks:
+  - go mod tidy
+builds:
+  - main: ./cmd/gotosocial
+    ldflags:
+      - -s -w -extldflags -static -X main.Commit={{.Env.COMMIT}} -X main.Version={{.Env.VERSION}}
+    tags:
+      - netgo
+      - osusergo
+      - static_build
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - freebsd
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    ignore:
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm
+archives:
+  - replacements:
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Env.VERSION }}-SNAPSHOT"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'

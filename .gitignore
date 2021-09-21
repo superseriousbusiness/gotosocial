@@ -12,3 +12,6 @@ cp.out
 
 # exclude compiled mkdocs site
 site/
+
+# exclude compiled binaries
+dist/
