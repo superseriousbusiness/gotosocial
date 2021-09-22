@@ -73,6 +73,7 @@ steps:
   - wget https://github.com/go-swagger/go-swagger/releases/download/${GO_SWAGGER_VERSION}/swagger_linux_amd64 -O /go/bin/swagger && chmod +x /go/bin/swagger
   # run
   - scripts/snapshot.sh
+  - docker push superseriousbusiness/gotosocial:latest
   when:
     event:
       include:
@@ -146,6 +147,6 @@ trigger:
 
 ---
 kind: signature
-hmac: c281e136a987fc270055511ca47463add60ec1d173b211cb429c8ee24d94346f
+hmac: 27c571afad65319e9fe65892dbc251a59268fa897b48f52ed4c62a5803a48436
 
 ...
