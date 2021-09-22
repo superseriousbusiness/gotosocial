@@ -2,4 +2,4 @@
 
 set -eu
 
-goreleaser release --rm-dist --snapshot --skip-publish
+goreleaser release --rm-dist --snapshot

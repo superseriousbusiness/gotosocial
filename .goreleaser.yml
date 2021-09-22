@@ -6,7 +6,6 @@ before:
   # tidy up and lint
   - go mod tidy
   - go fmt ./...
-  - golangci-lint run --tests=false
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
   - bash -c "VERSION={{ incpatch .Version }} scripts/generateswagger.sh"
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
@@ -56,9 +55,6 @@ dockers:
     image_templates:
     - "superseriousbusiness/gotosocial:latest"
     - "superseriousbusiness/gotosocial:{{ .Version }}"
-    # If set to auto, the release will not be pushed to the Docker repository
-    #  in case there is an indicator of a prerelease in the tag, e.g. v1.0.0-rc1.
-    skip_push: auto
     build_flag_templates:
     - "--label=org.opencontainers.image.created={{.Date}}"
     - "--label=org.opencontainers.image.title={{.ProjectName}}"

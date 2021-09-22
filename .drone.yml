@@ -8,50 +8,6 @@
 kind: pipeline
 type: docker
 name: default
-steps:
-
-# We use golangci-lint for linting.
-# See: https://golangci-lint.run/
-- name: lint
-  image: golangci/golangci-lint:v1.42.1
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  - name: golangci-lint-cache
-    path: /root/.cache/golangci-lint
-  commands:
-  - golangci-lint run --timeout 5m0s --tests=false --verbose
-  when:
-    event:
-      include:
-        - pull_request
-
-- name: test
-  image: golang:1.17.1-alpine3.14
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  commands:
-  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
-  - CGO_ENABLED=0 GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
-  when:
-    event:
-      include:
-        - pull_request
-
-- name: publish
-  image: plugins/docker
-  settings:
-    auto_tag: true
-    username: gotosocial
-    password:
-      from_secret: gts_docker_password
-    repo: superseriousbusiness/gotosocial
-    tags: latest
-  when:
-    event:
-      exclude:
-        - pull_request
 
 # We need a postgres service running for the test step.
 # See: https://docs.drone.io/pipeline/docker/syntax/services/
@@ -65,6 +21,117 @@ services:
       include:
         - pull_request
 
+steps:
+# We use golangci-lint for linting.
+# See: https://golangci-lint.run/
+- name: lint
+  image: golangci/golangci-lint:v1.42.1
+  volumes:
+  - name: go-build-cache
+    path: /root/.cache/go-build
+  - name: golangci-lint-cache
+    path: /root/.cache/golangci-lint
+  - name: go-src
+    path: /go
+  commands:
+  - golangci-lint run --timeout 5m0s --tests=false --verbose
+  when:
+    event:
+      include:
+      - pull_request
+
+- name: test
+  image: golang:1.17.1-alpine3.14
+  volumes:
+  - name: go-build-cache
+    path: /root/.cache/go-build
+  - name: go-src
+    path: /go
+  commands:
+  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -count 1 -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="postgres" go test -count 1 -p 1 ./...
+  when:
+    event:
+      include:
+      - pull_request
+
+- name: snapshot
+  image: golang:1.17.1-alpine3.14
+  volumes:
+  - name: go-build-cache
+    path: /root/.cache/go-build
+  - name: go-src
+    path: /go
+  - name: docker
+    path: /var/run/docker.sock
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    DOCKER_PASSWORD:
+      from_secret: gts_docker_password
+    GO_SWAGGER_VERSION: v0.27.0
+  commands:
+  - apk update
+  # install node and yarn
+  - apk add nodejs-current
+  - apk add npm
+  - npm install --global yarn
+  # install and start docker
+  - apk add docker openrc
+  - rc-update add docker boot
+  - echo ${DOCKER_PASSWORD} | docker login -u gotosocial --password-stdin
+  # install goreleaser
+  - go install github.com/goreleaser/goreleaser@latest
+  # install go-swagger
+  - wget https://github.com/go-swagger/go-swagger/releases/download/${GO_SWAGGER_VERSION}/swagger_linux_amd64 -O /go/bin/swagger && chmod +x /go/bin/swagger
+  # run
+  - scripts/snapshot.sh
+  when:
+    event:
+      include:
+      - push
+      exclude:
+      - tag
+    branch:
+      include:
+      - main
+
+- name: release
+  image: golang:1.17.1-alpine3.14
+  volumes:
+  - name: go-build-cache
+    path: /root/.cache/go-build
+  - name: go-src
+    path: /go
+  - name: docker
+    path: /var/run/docker.sock
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+    DOCKER_PASSWORD:
+      from_secret: gts_docker_password
+    GO_SWAGGER_VERSION: v0.27.0
+  commands:
+  - apk update
+  # install node and yarn
+  - apk add nodejs-current
+  - apk add npm
+  - npm install --global yarn
+  # install and start docker
+  - apk add docker openrc
+  - rc-update add docker boot
+  - echo ${DOCKER_PASSWORD} | docker login -u gotosocial --password-stdin
+  # install goreleaser
+  - go install github.com/goreleaser/goreleaser@latest
+  # install go-swagger
+  - wget https://github.com/go-swagger/go-swagger/releases/download/${GO_SWAGGER_VERSION}/swagger_linux_amd64 -O /go/bin/swagger && chmod +x /go/bin/swagger
+  # run
+  - scripts/release.sh
+  when:
+    event:
+      include:
+      - tag
+
 # We can speed up builds significantly by caching build artifacts between runs.
 # See: https://docs.drone.io/pipeline/docker/syntax/volumes/host/
 volumes:
@@ -74,6 +141,12 @@ volumes:
 - name: golangci-lint-cache
   host:
     path: /drone/gotosocial/golangci-lint
+- name: go-src
+  host:
+    path: /drone/gotosocial/go
+- name: docker
+  host:
+    path: /var/run/docker.sock
 
 trigger:
   repo:
@@ -86,6 +159,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 703dad12a9e92cbd415b23d82620608830a60a70168527118e2e9aab145f1099
+hmac: 3923764cddc90f4b8fd70c9cd3b097679cae1ca5d0eee147c96d4af102ff59ab
 
 ...
