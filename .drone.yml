@@ -9,18 +9,6 @@ kind: pipeline
 type: docker
 name: default
 
-# We need a postgres service running for the test step.
-# See: https://docs.drone.io/pipeline/docker/syntax/services/
-services:
-- name: postgres
-  image: postgres
-  environment:
-    POSTGRES_PASSWORD: postgres
-  when:
-    event:
-      include:
-        - pull_request
-
 steps:
 # We use golangci-lint for linting.
 # See: https://golangci-lint.run/
@@ -158,6 +146,6 @@ trigger:
 
 ---
 kind: signature
-hmac: c73c67fe6f7af5f8c6a43d8d64900491bb0d4ab65a874285f27e6df2ff3fc537
+hmac: c281e136a987fc270055511ca47463add60ec1d173b211cb429c8ee24d94346f
 
 ...
