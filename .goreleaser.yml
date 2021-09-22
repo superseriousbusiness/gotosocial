@@ -2,7 +2,11 @@
 before:
   hooks:
   - go mod tidy
-  - bash -c "cd web/gotosocial-styling && yarn install && BUILD_DIR=../assets node index.js && cd ../.."
+  - go fmt ./...
+  - golangci-lint run --tests=false
+  - scripts/generateswagger.sh
+  - yarn install --cwd web/gotosocial-styling
+  - node web/gotosocial-styling/index.js --build-dir="web/assets"
 builds:
   - main: ./cmd/gotosocial
     ldflags:
