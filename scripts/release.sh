@@ -2,4 +2,4 @@
 
 set -eu
 
-goreleaser release
+goreleaser release --rm-dist
