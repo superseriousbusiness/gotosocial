@@ -2,6 +2,7 @@
 before:
   hooks:
   - go mod tidy
+  - bash -c "cd web/gotosocial-styling && yarn install && BUILD_DIR=../assets node index.js && cd ../.."
 builds:
   - main: ./cmd/gotosocial
     ldflags:
@@ -27,6 +28,12 @@ builds:
 archives:
   - replacements:
       amd64: x86_64
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG*
+      - web
+      - example/config.yaml
 checksum:
   name_template: 'checksums.txt'
 snapshot:
