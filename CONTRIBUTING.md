@@ -50,7 +50,7 @@ Once that's done, you can try building the project: `./scripts/build.sh`. This w
 
 If there are no errors, great, you're good to go!
 
-To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/gotosocial-styling/`. Recompiling the bundles is done with `BUILD_DIR=../assets node index.js` but can be automatically live-reloaded with `BUILD_DIR=../assets NODE_ENV=development node index.js`. 
+To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/gotosocial-styling/`. Recompiling the bundles is done with `BUILD_DIR=../assets node index.js` but can be automatically live-reloaded with `BUILD_DIR=../assets NODE_ENV=development node index.js`.
 
 ### Golang forking quirks
 
@@ -180,9 +180,15 @@ Then make sure to run `go fmt ./...` to update whitespace and other opinionated 
 
 ## Updating Swagger docs
 
-If you change swagger annotations on any of the API paths, you need to generate a new swagger file at `./docs/api/swagger.yaml`. You can do this with:
+GoToSocial uses [go-swagger](https://goswagger.io) to generate Swagger API documentation from code annotations.
 
-`./scripts/generateswagger.sh`
+You can install go-swagger following the instructions [here](https://goswagger.io/install.html).
+
+If you change Swagger annotations on any of the API paths, you need to generate a new Swagger file at `./docs/api/swagger.yaml`. You can do this with:
+
+`VERSION=[whatever_version] ./scripts/generateswagger.sh`
+
+Replace `[whatever_version]` with whatever version of GtS you're building docs for, eg `0.1.0`.
 
 ## Pushing to Docker
 

@@ -1,5 +1,10 @@
 # STEP ONE: build the GoToSocial binary
 FROM golang:1.17.1-alpine3.14 AS binary_builder
+ARG VERSION
+ENV VERSION=${VERSION}
+ARG COMMIT
+ENV COMMIT=${COMMIT}
+
 RUN apk update && apk upgrade --no-cache
 RUN apk add git
 
@@ -18,10 +23,6 @@ ADD go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 ADD go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
 ADD vendor /go/src/github.com/superseriousbusiness/gotosocial/vendor
 
-# move .git dir and version for versioning
-ADD .git /go/src/github.com/superseriousbusiness/gotosocial/.git
-ADD version /go/src/github.com/superseriousbusiness/gotosocial/version
-
 # move the build script
 ADD scripts/build.sh /go/src/github.com/superseriousbusiness/gotosocial/build.sh
 
@@ -32,7 +33,7 @@ RUN ./build.sh
 FROM node:16.9.0-alpine3.14 AS web_builder
 RUN apk update && apk upgrade --no-cache
 
-COPY web /web
+ADD web /web
 WORKDIR /web/gotosocial-styling
 
 RUN yarn install
@@ -61,7 +62,7 @@ COPY --from=binary_builder /go/src/github.com/superseriousbusiness/gotosocial/go
 COPY --from=web_builder web /gotosocial/web
 
 # put the swagger yaml in the web assets directory so it can be accessed
-COPY docs/api/swagger.yaml /gotosocial/web/assets/swagger.yaml
+ADD docs/api/swagger.yaml /gotosocial/web/assets/swagger.yaml
 
 # copy over the admin directory
 COPY --from=admin_builder /gotosocial-admin/public /gotosocial/web/assets/admin
