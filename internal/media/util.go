@@ -156,23 +156,12 @@ func deriveGif(b []byte, extension string) (*imageAndMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	bh, err := blurhash.Encode(4, 3, g.Image[0])
-	if err != nil || bh == "" {
-		return nil, err
-	}
-
-	out := &bytes.Buffer{}
-	if err := gif.EncodeAll(out, g); err != nil {
-		return nil, err
-	}
-
 	return &imageAndMeta{
-		image:    out.Bytes(),
-		width:    width,
-		height:   height,
-		size:     size,
-		aspect:   aspect,
-		blurhash: bh,
+		image:  b,
+		width:  width,
+		height: height,
+		size:   size,
+		aspect: aspect,
 	}, nil
 }
 
@@ -200,25 +189,12 @@ func deriveImage(b []byte, contentType string) (*imageAndMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	bh, err := blurhash.Encode(4, 3, i)
-	if err != nil {
-		return nil, err
-	}
-
-	out := &bytes.Buffer{}
-	if err := jpeg.Encode(out, i, &jpeg.Options{
-		Quality: 100,
-	}); err != nil {
-		return nil, err
-	}
-
 	return &imageAndMeta{
-		image:    out.Bytes(),
-		width:    width,
-		height:   height,
-		size:     size,
-		aspect:   aspect,
-		blurhash: bh,
+		image:  b,
+		width:  width,
+		height: height,
+		size:   size,
+		aspect: aspect,
 	}, nil
 }
 
@@ -257,18 +233,25 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	size := width * height
 	aspect := float64(width) / float64(height)
 
+	tiny := resize.Thumbnail(32, 32, thumb, resize.NearestNeighbor)
+	bh, err := blurhash.Encode(4, 3, tiny)
+	if err != nil {
+		return nil, err
+	}
+
 	out := &bytes.Buffer{}
 	if err := jpeg.Encode(out, thumb, &jpeg.Options{
-		Quality: 100,
+		Quality: 75,
 	}); err != nil {
 		return nil, err
 	}
 	return &imageAndMeta{
-		image:  out.Bytes(),
-		width:  width,
-		height: height,
-		size:   size,
-		aspect: aspect,
+		image:    out.Bytes(),
+		width:    width,
+		height:   height,
+		size:     size,
+		aspect:   aspect,
+		blurhash: bh,
 	}, nil
 }
 

@@ -120,7 +120,7 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		AccountID:         accountID,
 		Description:       "",
 		ScheduledStatusID: "",
-		Blurhash:          original.blurhash,
+		Blurhash:          small.blurhash,
 		Processing:        2,
 		File: gtsmodel.File{
 			Path:        originalPath,

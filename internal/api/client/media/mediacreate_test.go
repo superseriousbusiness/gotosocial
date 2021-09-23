@@ -187,9 +187,9 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 			Aspect: 1.7777778,
 		},
 		Small: model.MediaDimensions{
-			Width:  256,
-			Height: 144,
-			Size:   "256x144",
+			Width:  512,
+			Height: 288,
+			Size:   "512x288",
 			Aspect: 1.7777778,
 		},
 		Focus: model.MediaFocus{
@@ -197,7 +197,7 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 			Y: 0.5,
 		},
 	}, attachmentReply.Meta)
-	assert.Equal(suite.T(), "LjCZnlvyRkRn_NvzRjWF?urqV@f9", attachmentReply.Blurhash)
+	assert.Equal(suite.T(), "LjBzUo#6RQR._NvzRjWF?urqV@a$", attachmentReply.Blurhash)
 	assert.NotEmpty(suite.T(), attachmentReply.ID)
 	assert.NotEmpty(suite.T(), attachmentReply.URL)
 	assert.NotEmpty(suite.T(), attachmentReply.PreviewURL)
