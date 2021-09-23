@@ -447,7 +447,7 @@ github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/uptrace/bun v1.0.6
+# github.com/uptrace/bun v1.0.9-0.20210922104131-34c982b23581
 ## explicit; go 1.16
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -459,10 +459,10 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.0.5
+# github.com/uptrace/bun/dialect/pgdialect v1.0.9-0.20210922104131-34c982b23581
 ## explicit; go 1.16
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.0.5
+# github.com/uptrace/bun/dialect/sqlitedialect v1.0.9-0.20210922104131-34c982b23581
 ## explicit; go 1.16
 github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/urfave/cli/v2 v2.3.0

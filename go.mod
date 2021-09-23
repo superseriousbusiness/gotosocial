@@ -28,9 +28,9 @@ require (
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
-	github.com/uptrace/bun v1.0.6
-	github.com/uptrace/bun/dialect/pgdialect v1.0.5
-	github.com/uptrace/bun/dialect/sqlitedialect v1.0.5
+	github.com/uptrace/bun v1.0.9-0.20210922104131-34c982b23581
+	github.com/uptrace/bun/dialect/pgdialect v1.0.9-0.20210922104131-34c982b23581
+	github.com/uptrace/bun/dialect/sqlitedialect v1.0.9-0.20210922104131-34c982b23581
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
