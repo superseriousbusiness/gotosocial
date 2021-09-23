@@ -55,7 +55,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		return nil, errors.New("media type unrecognized")
 	}
 
-	small, err = deriveThumbnail(clean, contentType, 256, 256)
+	small, err = deriveThumbnail(clean, contentType, 512, 512)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
@@ -109,7 +109,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		AccountID:         minAttachment.AccountID,
 		Description:       minAttachment.Description,
 		ScheduledStatusID: minAttachment.ScheduledStatusID,
-		Blurhash:          original.blurhash,
+		Blurhash:          small.blurhash,
 		Processing:        2,
 		File: gtsmodel.File{
 			Path:        originalPath,
