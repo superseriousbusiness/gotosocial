@@ -1,0 +1,85 @@
+# https://goreleaser.com
+project_name: gotosocial
+before:
+  # https://goreleaser.com/customization/hooks/
+  hooks:
+  # tidy up and lint
+  - go mod tidy
+  - go fmt ./...
+  # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
+  - swagger generate spec -o docs/api/swagger.yaml --scan-models
+  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
+  - cp docs/api/swagger.yaml web/assets/swagger.yaml
+  # install and bundle the web assets and styling
+  - yarn install --cwd web/gotosocial-styling
+  - node web/gotosocial-styling/index.js --build-dir="web/assets"
+builds:
+  # https://goreleaser.com/customization/build/
+  -
+    main: ./cmd/gotosocial
+    binary: gotosocial
+    ldflags:
+      - -s
+      - -w
+      - -extldflags
+      - -static
+      - -X main.Commit={{.Commit}}
+      - -X main.Version={{.Version}}
+    tags:
+      - netgo
+      - osusergo
+      - static_build
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - freebsd
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    ignore:
+      # build freebsd only for amd64
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm
+      - goos: freebsd
+        goarch: 386
+    mod_timestamp: "{{ .CommitTimestamp }}"
+dockers:
+  # https://goreleaser.com/customization/docker/
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+    - "superseriousbusiness/gotosocial:latest"
+    - "superseriousbusiness/gotosocial:{{ .Version }}"
+    build_flag_templates:
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+archives:
+  # https://goreleaser.com/customization/archive/
+  -
+    files:
+    # standard release files
+    - LICENSE
+    - README.md
+    - CHANGELOG*
+    # web assets and example config
+    - web
+    - example/config.yaml
+checksum:
+  # https://goreleaser.com/customization/checksum/
+  name_template: 'checksums.txt'
+snapshot:
+  # https://goreleaser.com/customization/snapshots/
+  name_template: "{{ incpatch .Version }}-SNAPSHOT"
+source:
+  # https://goreleaser.com/customization/source/
+  enabled: true

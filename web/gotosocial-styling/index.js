@@ -4,6 +4,7 @@ const Promise = require("bluebird");
 const fs = require("fs").promises;
 const postcss = require('postcss');
 const {parse} = require("postcss-scss");
+const argv = require('minimist')(process.argv.slice(2));
 
 /*
 	Bundle all postCSS files under the `templates/` directory separately, each prepended with the (variable) contents of ./colors.css
@@ -42,10 +43,23 @@ function bundle([template, path]) {
 	});
 }
 
-let buildDir = process.env.BUILD_DIR;
+let buildDir
+
+// try reading from arguments first
+if (argv["build-dir"] != undefined) {
+	buildDir = argv["build-dir"]
+}
+
+// then try reading from environment variable
+if (buildDir == undefined) {
+	buildDir = process.env.BUILD_DIR;
+}
+
+// then take default
 if (buildDir == undefined) {
 	buildDir = `${__dirname}/build`;
 }
+
 console.log("bundling to", buildDir);
 
 function bundleAll() {
