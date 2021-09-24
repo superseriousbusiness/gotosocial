@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -33,6 +32,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -80,7 +80,6 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 
 	bodyJson, err := json.Marshal(bodyI)
 	suite.NoError(err)
-	fmt.Println(string(bodyJson))
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
@@ -127,13 +126,13 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	suite.Equal("http://fossbros-anonymous.io/users/foss_satan/blocks/01FG9C441MCTW3R2W117V2PQK3", dbBlock.URI)
 }
 
+// TestPostUnblock verifies that a remote account with a block targeting one of our instance users should be able to undo that block.
 func (suite *InboxPostTestSuite) TestPostUnblock() {
-   blockingAccount := suite.testAccounts["remote_account_1"]
+	blockingAccount := suite.testAccounts["remote_account_1"]
 	blockedAccount := suite.testAccounts["local_account_1"]
 
 	// first put a block in the database so we have something to undo
 	blockURI := "http://fossbros-anonymous.io/users/foss_satan/blocks/01FG9C441MCTW3R2W117V2PQK3"
-	undoURI := "http://fossbros-anonymous.io/72cc96a3-f742-4daf-b9f5-3407667260c5"
 	dbBlockID, err := id.NewRandomULID()
 	suite.NoError(err)
 
@@ -149,7 +148,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	err = suite.db.Put(context.Background(), dbBlock)
 	suite.NoError(err)
 
-   asBlock, err := suite.tc.BlockToAS(context.Background(), dbBlock)
+	asBlock, err := suite.tc.BlockToAS(context.Background(), dbBlock)
 	suite.NoError(err)
 
 	targetAccountURI := testrig.URLMustParse(blockedAccount.URI)
@@ -168,9 +167,9 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	undoTo.AppendIRI(targetAccountURI)
 	undo.SetActivityStreamsTo(undoTo)
 
-   undoID := streams.NewJSONLDIdProperty()
-   undoID.SetIRI(testrig.URLMustParse(undoURI))
-   undo.SetJSONLDId(undoID)
+	undoID := streams.NewJSONLDIdProperty()
+	undoID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/72cc96a3-f742-4daf-b9f5-3407667260c5"))
+	undo.SetJSONLDId(undoID)
 
 	targetURI := testrig.URLMustParse(blockedAccount.InboxURI)
 
@@ -180,7 +179,6 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 
 	bodyJson, err := json.Marshal(bodyI)
 	suite.NoError(err)
-	fmt.Println(string(bodyJson))
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
@@ -217,8 +215,12 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 	suite.Empty(b)
+	suite.Equal(http.StatusOK, result.StatusCode)
 
-
+	// the block should be undone
+	block, err := suite.db.GetBlock(context.Background(), blockingAccount.ID, blockedAccount.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(block)
 }
 
 func TestInboxPostTestSuite(t *testing.T) {
