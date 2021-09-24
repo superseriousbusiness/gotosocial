@@ -203,19 +203,22 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			if err == db.ErrNoEntries {
 				// we don't have an entry for this account so it's not blocked
 				// TODO: allow a different default to be set for this behavior
+				l.Tracef("no entry for account with URI %s so it can't be blocked", uri)
 				continue
 			}
 			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
 		}
 
-		blocked, err = f.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
+		blocked, err = f.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, false)
 		if err != nil {
 			return false, fmt.Errorf("error checking account block: %s", err)
 		}
 		if blocked {
+			l.Tracef("local account %s blocks account with uri %s", requestedAccount.Username, uri)
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
