@@ -13,17 +13,20 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
 - [Communications](#communications)
 - [Code of Conduct](#code-of-conduct)
 - [Setting up your development environment](#setting-up-your-development-environment)
+  - [Stylesheet / Web dev](#stylesheet--web-dev)
   - [Golang forking quirks](#golang-forking-quirks)
 - [Setting up your test environment](#setting-up-your-test-environment)
-  - [Standalone Testrig](#standalone-testrig)
-- [Running tests](#running-tests)
-  - [SQLite](#sqlite)
-  - [Postgres](#postgres)
-  - [Both](#both)
+  - [Standalone Testrig with Pinafore](#standalone-testrig-with-pinafore)
+  - [Running automated tests](#running-automated-tests)
+    - [SQLite](#sqlite)
+    - [Postgres](#postgres)
+    - [Both](#both)
 - [Linting](#linting)
 - [Updating Swagger docs](#updating-swagger-docs)
-- [Pushing to Docker](#pushing-to-docker)
 - [CI/CD configuration](#cicd-configuration)
+- [Building releases and Docker containers](#building-releases-and-docker-containers)
+  - [With GoReleaser](#with-goreleaser)
+  - [Manually](#manually)
 - [Financial Compensation](#financial-compensation)
 
 ## Communications
@@ -46,11 +49,37 @@ To get started, you first need to have Go installed. GtS is currently using Go 1
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
-Once that's done, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary. For automatic re-compiling during development, you can use [nodemon](https://www.npmjs.com/package/nodemon): `nodemon -e go --signal SIGTERM --exec "go run ./cmd/gotosocial --host localhost testrig start || exit 1"`
+Once that's done, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
 
 If there are no errors, great, you're good to go!
 
-To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/), then run `yarn install` in `web/gotosocial-styling/`. Recompiling the bundles is done with `BUILD_DIR=../assets node index.js` but can be automatically live-reloaded with `BUILD_DIR=../assets NODE_ENV=development node index.js`.
+For automatic re-compiling during development, you can use [nodemon](https://www.npmjs.com/package/nodemon):
+
+```bash
+nodemon -e go --signal SIGTERM --exec "go run ./cmd/gotosocial --host localhost testrig start || exit 1"
+```
+
+### Stylesheet / Web dev
+
+To work with the stylesheet for templates, you need [Node.js](https://nodejs.org/en/download/) and [Yarn](https://classic.yarnpkg.com/en/docs/install).
+
+To install Yarn dependencies:
+
+```bash
+yarn install --cwd web/gotosocial-styling
+```
+
+To recompile bundles:
+
+```bash
+node web/gotosocial-styling/index.js --build-dir="web/assets"
+```
+
+You can do automatic live-reloads of bundles with:
+
+``` bash
+NODE_ENV=development node web/gotosocial-styling/index.js --build-dir="web/assets"
+```
 
 ### Golang forking quirks
 
@@ -90,9 +119,9 @@ GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosoci
 
 One thing that *isn't* mocked is the Database interface, because it's just easier to use an in-memory SQLite database than to mock everything out.
 
-### Standalone Testrig
+### Standalone Testrig with Pinafore
 
-You can also launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
+You can launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore).
 
 To do this, first build the gotosocial binary with `./scripts/build.sh`.
 
@@ -102,7 +131,7 @@ Then, launch the testrig by invoking the binary as follows:
 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" ./gotosocial --host localhost:8080 testrig start
 ```
 
-To run Pinafore locally in dev mode, first clone the Pinafore repository, and run the following command in the cloned directory:
+To run Pinafore locally in dev mode, first clone the [Pinafore](https://github.com/nolanlawson/pinafore) repository, and then run the following command in the cloned directory:
 
 ```bash
 yarn run dev
@@ -112,19 +141,19 @@ The Pinafore instance will start running on `localhost:4002`.
 
 To connect to the testrig, navigate to `https://localhost:4002` and enter your instance name as `localhost:8080`.
 
-At the login screen, enter the email address `zork@example.org` and password `password`.
+At the login screen, enter the email address `zork@example.org` and password `password`. You will get a confirmation prompt. Accept, and you are logged in as Zork.
 
 Note the following constraints:
 
 - Since the testrig uses an in-memory database, the database will be destroyed when the testrig is stopped.
 - If you stop the testrig and start it again, any tokens or applications you created during your tests will also be removed. As such, you need to log out and in again every time you stop/start the rig.
-- The testrig does not make any actual external http calls, so federation will (obviously) not work from a testrig.
+- The testrig does not make any actual external http calls, so federation will not work from a testrig.
 
-## Running tests
+### Running automated tests
 
 There are a few different ways of running tests. Each requires the use of the `-p 1` flag, to indicate that they should not be run in parallel.
 
-### SQLite
+#### SQLite
 
 If you want to run tests as quickly as possible, using an SQLite in-memory database, use:
 
@@ -132,7 +161,7 @@ If you want to run tests as quickly as possible, using an SQLite in-memory datab
 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -p 1 ./...
 ```
 
-### Postgres
+#### Postgres
 
 If you want to run tests against a Postgres database running on localhost, run:
 
@@ -142,7 +171,7 @@ GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="localhost" go test -p 1 ./...
 
 In the above command, it is assumed you are using the default Postgres password of `postgres`.
 
-### Both
+#### Both
 
 Finally, to run tests against both database types one after the other, use:
 
@@ -184,31 +213,15 @@ GoToSocial uses [go-swagger](https://goswagger.io) to generate Swagger API docum
 
 You can install go-swagger following the instructions [here](https://goswagger.io/install.html).
 
-If you change Swagger annotations on any of the API paths, you need to generate a new Swagger file at `./docs/api/swagger.yaml`. You can do this with:
+If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
 
-`VERSION=[whatever_version] ./scripts/generateswagger.sh`
-
-Replace `[whatever_version]` with whatever version of GtS you're building docs for, eg `0.1.0`.
-
-## Pushing to Docker
-
-You can easily build a Docker container tagged with the current branch name using:
-
-```bash
-./scripts/dockerbuild.sh
-```
-
-Then, (assuming you have permissions to push to the [GoToSocial Docker repository](https://hub.docker.com/r/superseriousbusiness/gotosocial)), run:
-
-```bash
-./scripts/dockerpush.sh
-```
-
-Note: you should never manually push a Docker container from your machine to `latest` -- we have a CI/CD flow for that. Only push a Docker container manually when you're testing changes on a branch!
+`swagger generate spec -o docs/api/swagger.yaml --scan-models`
 
 ## CI/CD configuration
 
-GoToSocial uses [Drone](https://www.drone.io/) for CI/CD tasks like running tests, linting, and building Docker containers. These runs are integrated with Github, and will be run on opening a pull request or merging into main.
+GoToSocial uses [Drone](https://www.drone.io/) for CI/CD tasks like running tests, linting, and building Docker containers.
+
+These runs are integrated with Github, and will be run on opening a pull request or merging into main.
 
 The Drone instance for GoToSocial is [here](https://drone.superseriousbusiness.org/superseriousbusiness/gotosocial).
 
@@ -220,6 +233,34 @@ To sign the file, first install and setup the [drone cli tool](https://docs.dron
 
 ```bash
 drone -t PUT_YOUR_DRONE_ADMIN_TOKEN_HERE -s https://drone.superseriousbusiness.org sign superseriousbusiness/gotosocial --save
+```
+
+## Building releases and Docker containers
+
+### With GoReleaser
+
+GoToSocial uses the release tooling [GoReleaser](https://goreleaser.com/intro/) to make multiple-architecture + Docker builds simple.
+
+GoReleaser is also used by GoToSocial for building and pushing Docker containers.
+
+Normally, these processes are handled by Drone (see CI/CD above). However, you can also invoke GoReleaser manually for things like building snapshots.
+
+To do this, first [install GoReleaser](https://goreleaser.com/install/).
+
+Then, to create snapshot builds, do:
+
+```bash
+goreleaser release --rm-dist --snapshot
+```
+
+If all goes according to plan, you should now have a bunch of multiple-architecture binaries and tars inside the `./dist` folder, and a snapshot Docker image should be built (check your terminal output for version).
+
+### Manually
+
+If you prefer a simple approach with fewer dependencies, you can also just build a Docker container manually in the following way:
+
+```bash
+./scripts/build.sh && docker build -t superseriousbusiness/gotosocial:latest .
 ```
 
 ## Financial Compensation

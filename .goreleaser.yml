@@ -7,7 +7,8 @@ before:
   - go mod tidy
   - go fmt ./...
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
-  - bash -c "VERSION={{ incpatch .Version }} scripts/generateswagger.sh"
+  - swagger generate spec -o docs/api/swagger.yaml --scan-models
+  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
   # install and bundle the web assets and styling
   - yarn install --cwd web/gotosocial-styling
@@ -60,18 +61,7 @@ dockers:
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
-    - "--build-arg=VERSION={{.Version}}"
-    - "--build-arg=COMMIT={{.ShortCommit}}"
     extra_files:
-    - cmd
-    - internal
-    - testrig
-    - docs/swagger.go
-    - docs/api/swagger.yaml
-    - go.sum
-    - go.mod
-    - vendor
-    - scripts/build.sh
     - web
 archives:
   # https://goreleaser.com/customization/archive/
