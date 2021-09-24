@@ -139,7 +139,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	replies, errWithCode := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
 	if errWithCode != nil {

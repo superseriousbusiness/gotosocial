@@ -51,7 +51,7 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	user, errWithCode := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL)
 	if errWithCode != nil {

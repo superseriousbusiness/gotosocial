@@ -53,7 +53,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	status, errWithCode := m.processor.GetFediStatus(ctx, requestedUsername, requestedStatusID, c.Request.URL)
 	if errWithCode != nil {
