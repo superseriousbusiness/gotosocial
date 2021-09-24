@@ -47,7 +47,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	followers, errWithCode := m.processor.GetFediFollowers(ctx, requestedUsername, c.Request.URL)
 	if errWithCode != nil {

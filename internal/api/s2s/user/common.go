@@ -33,8 +33,8 @@ var ActivityPubAcceptHeaders = []string{
 	`application/ld+json; profile="https://www.w3.org/ns/activitystreams"`,
 }
 
-// populateContext transfers the signature verifier and signature from the gin context to the request context
-func populateContext(c *gin.Context) context.Context {
+// transferContext transfers the signature verifier and signature from the gin context to the request context
+func transferContext(c *gin.Context) context.Context {
 	ctx := c.Request.Context()
 
 	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))

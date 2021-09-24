@@ -47,7 +47,7 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	following, errWithCode := m.processor.GetFediFollowing(ctx, requestedUsername, c.Request.URL)
 	if errWithCode != nil {

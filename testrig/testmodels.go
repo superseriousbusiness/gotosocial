@@ -1283,7 +1283,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
-	sig, digest, date := getSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	sig, digest, date := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
@@ -1391,7 +1391,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	statuses := NewTestStatuses()
 
 	target = URLMustParse(accounts["local_account_1"].URI)
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceZork := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1399,7 +1399,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1407,7 +1407,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesNext := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1415,7 +1415,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesLast := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1430,9 +1430,9 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 }
 
-// getSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// GetSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given activity, public key ID, private key, and destination.
-func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1473,9 +1473,9 @@ func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 	return
 }
 
-// getSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// GetSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {

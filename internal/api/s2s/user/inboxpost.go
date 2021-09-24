@@ -40,12 +40,12 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	ctx := populateContext(c)
+	ctx := transferContext(c)
 
 	posted, err := m.processor.InboxPost(ctx, c.Writer, c.Request)
 	if err != nil {
 		if withCode, ok := err.(gtserror.WithCode); ok {
-			l.Debug(withCode.Error())
+			l.Debugf("InboxPOSTHandler: %s", withCode.Error())
 			c.JSON(withCode.Code(), withCode.Safe())
 			return
 		}
@@ -55,7 +55,7 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	}
 
 	if !posted {
-		l.Debugf("request could not be handled as an AP request; headers were: %+v", c.Request.Header)
+		l.Debugf("InboxPOSTHandler: request could not be handled as an AP request; headers were: %+v", c.Request.Header)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
 	}
 }
