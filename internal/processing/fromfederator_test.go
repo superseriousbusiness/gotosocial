@@ -179,7 +179,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
-		ReceivingAccount: suite.testAccounts["local_account_1"],
+		ReceivingAccount: favedAccount,
 	})
 	suite.NoError(err)
 
@@ -189,6 +189,10 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 		{
 			Key:   "status_id",
 			Value: favedStatus.ID,
+		},
+		{
+			Key:   "origin_account_id",
+			Value: favingAccount.ID,
 		},
 	}
 
@@ -206,6 +210,70 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	suite.Equal("notification", msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{"user"}, msg.Stream)
+}
+
+// TestProcessFaveWithDifferentReceivingAccount ensures that when an account receives a fave that's for
+// another account in their AP inbox, a notification isn't streamed to the receiving account.
+//
+// This tests for an issue we were seeing where Misskey sends out faves to inboxes of people that don't own
+// the fave, but just follow the actor who received the fave.
+func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccount() {
+	receivingAccount := suite.testAccounts["local_account_2"]
+	favedAccount := suite.testAccounts["local_account_1"]
+	favedStatus := suite.testStatuses["local_account_1_status_1"]
+	favingAccount := suite.testAccounts["remote_account_1"]
+
+	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), receivingAccount, "user")
+	suite.NoError(errWithCode)
+
+	fave := &gtsmodel.StatusFave{
+		ID:              "01FGKJPXFTVQPG9YSSZ95ADS7Q",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		AccountID:       favingAccount.ID,
+		Account:         favingAccount,
+		TargetAccountID: favedAccount.ID,
+		TargetAccount:   favedAccount,
+		StatusID:        favedStatus.ID,
+		Status:          favedStatus,
+		URI:             favingAccount.URI + "/faves/aaaaaaaaaaaa",
+	}
+
+	err := suite.db.Put(context.Background(), fave)
+	suite.NoError(err)
+
+	err = suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+		APObjectType:     ap.ActivityLike,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         fave,
+		ReceivingAccount: receivingAccount,
+	})
+	suite.NoError(err)
+
+	// side effects should be triggered
+	// 1. a notification should exist for the fave
+	where := []db.Where{
+		{
+			Key:   "status_id",
+			Value: favedStatus.ID,
+		},
+		{
+			Key:   "origin_account_id",
+			Value: favingAccount.ID,
+		},
+	}
+
+	notif := &gtsmodel.Notification{}
+	err = suite.db.GetWhere(context.Background(), where, notif)
+	suite.NoError(err)
+	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
+	suite.Equal(fave.AccountID, notif.OriginAccountID)
+	suite.Equal(fave.StatusID, notif.StatusID)
+	suite.False(notif.Read)
+
+	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
+	suite.Empty(stream.Messages)
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {
