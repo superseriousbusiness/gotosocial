@@ -199,7 +199,7 @@ func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 		fave.TargetAccount = a
 	}
 	targetAccount := fave.TargetAccount
-	
+
 	// just return if target isn't a local account
 	if targetAccount.Domain != "" {
 		return nil
