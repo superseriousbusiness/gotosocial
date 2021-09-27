@@ -22,7 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -141,13 +140,8 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 				return errors.New("profile was not parseable as *gtsmodel.Account")
 			}
 
-			incomingAccountURI, err := url.Parse(incomingAccount.URI)
-			if err != nil {
-				return err
-			}
-
-			if _, _, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccountURI, true); err != nil {
-				return fmt.Errorf("error dereferencing account from federator: %s", err)
+			if _, err := p.federator.EnrichRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccount); err != nil {
+				return fmt.Errorf("error enriching updated account from federator: %s", err)
 			}
 		}
 	case ap.ActivityDelete:
