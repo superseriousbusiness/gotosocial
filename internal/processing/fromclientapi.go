@@ -73,7 +73,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(ctx, fave, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFave(ctx, fave); err != nil {
 				return err
 			}
 

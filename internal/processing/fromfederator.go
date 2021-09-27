@@ -73,7 +73,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 				return errors.New("like was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(ctx, incomingFave, federatorMsg.ReceivingAccount); err != nil {
+			if err := p.notifyFave(ctx, incomingFave); err != nil {
 				return err
 			}
 		case ap.ActivityFollow:

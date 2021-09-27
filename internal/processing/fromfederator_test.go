@@ -151,6 +151,63 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.False(notif.Read)
 }
 
+func (suite *FromFederatorTestSuite) TestProcessFave() {
+	favedAccount := suite.testAccounts["local_account_1"]
+	favedStatus := suite.testStatuses["local_account_1_status_1"]
+	favingAccount := suite.testAccounts["remote_account_1"]
+
+	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, "user")
+	suite.NoError(errWithCode)
+
+	fave := &gtsmodel.StatusFave{
+		ID:              "01FGKJPXFTVQPG9YSSZ95ADS7Q",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		AccountID:       favingAccount.ID,
+		Account:         favingAccount,
+		TargetAccountID: favedAccount.ID,
+		TargetAccount:   favedAccount,
+		StatusID:        favedStatus.ID,
+		Status:          favedStatus,
+		URI:             favingAccount.URI + "/faves/aaaaaaaaaaaa",
+	}
+
+	err := suite.db.Put(context.Background(), fave)
+	suite.NoError(err)
+
+	err = suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+		APObjectType:     ap.ActivityLike,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         fave,
+		ReceivingAccount: suite.testAccounts["local_account_1"],
+	})
+	suite.NoError(err)
+
+	// side effects should be triggered
+	// 1. a notification should exist for the fave
+	where := []db.Where{
+		{
+			Key:   "status_id",
+			Value: favedStatus.ID,
+		},
+	}
+
+	notif := &gtsmodel.Notification{}
+	err = suite.db.GetWhere(context.Background(), where, notif)
+	suite.NoError(err)
+	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
+	suite.Equal(fave.AccountID, notif.OriginAccountID)
+	suite.Equal(fave.StatusID, notif.StatusID)
+	suite.False(notif.Read)
+
+	// 2. a notification should be streamed
+	msg := <-stream.Messages
+	suite.Equal("notification", msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{"user"}, msg.Stream)
+}
+
 func TestFromFederatorTestSuite(t *testing.T) {
 	suite.Run(t, &FromFederatorTestSuite{})
 }
