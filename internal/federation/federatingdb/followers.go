@@ -54,8 +54,15 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 		if follow.Account == nil {
 			followAccount, err := f.db.GetAccountByID(ctx, follow.AccountID)
 			if err != nil {
-				l.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
-				continue
+				errWrapped := fmt.Errorf("FOLLOWERS: db error getting account id %s: %s", follow.AccountID, err)
+				if err == db.ErrNoEntries {
+					// no entry for this account id so it's probably been deleted and we haven't caught up yet
+					l.Error(errWrapped)
+					continue
+				} else {
+					// proper error
+					return nil, errWrapped
+				}
 			}
 			follow.Account = followAccount
 		}
