@@ -154,18 +154,21 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		// set some fields here on the updatedAccount representation so we don't run into db issues
 		updatedAcct.CreatedAt = requestingAcct.CreatedAt
 		updatedAcct.ID = requestingAcct.ID
+		updatedAcct.Language = requestingAcct.Language
+
+		// do the update
 		updatedAcct, err = f.db.UpdateAccount(ctx, updatedAcct)
 		if err != nil {
 			return fmt.Errorf("UPDATE: database error inserting updated account: %s", err)
 		}
 
+		// pass to the processor for further processing of eg., avatar/header
 		fromFederatorChan <- messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityUpdate,
 			GTSModel:         updatedAcct,
 			ReceivingAccount: targetAcct,
 		}
-
 	}
 
 	return nil
