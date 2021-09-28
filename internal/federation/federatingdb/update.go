@@ -98,8 +98,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		typeName == ap.ActorService {
 		// it's an UPDATE to some kind of account
 		var accountable ap.Accountable
-
-		switch asType.GetTypeName() {
+		switch typeName {
 		case ap.ActorApplication:
 			l.Debug("got update for APPLICATION")
 			i, ok := asType.(vocab.ActivityStreamsApplication)
@@ -152,19 +151,24 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("UPDATE: update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
 		}
 
-		updatedAcct.ID = requestingAcct.ID // set this here so the db will update properly instead of trying to PUT this and getting constraint issues
+		// set some fields here on the updatedAccount representation so we don't run into db issues
+		updatedAcct.CreatedAt = requestingAcct.CreatedAt
+		updatedAcct.ID = requestingAcct.ID
+		updatedAcct.Language = requestingAcct.Language
+
+		// do the update
 		updatedAcct, err = f.db.UpdateAccount(ctx, updatedAcct)
 		if err != nil {
 			return fmt.Errorf("UPDATE: database error inserting updated account: %s", err)
 		}
 
+		// pass to the processor for further processing of eg., avatar/header
 		fromFederatorChan <- messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityUpdate,
 			GTSModel:         updatedAcct,
 			ReceivingAccount: targetAcct,
 		}
-
 	}
 
 	return nil
