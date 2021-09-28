@@ -223,6 +223,136 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	suite.Nil(block)
 }
 
+func (suite *InboxPostTestSuite) TestPostUpdate() {
+	updatedAccount := *suite.testAccounts["remote_account_1"]
+	updatedAccount.DisplayName = "updated display name!"
+
+	asAccount, err := suite.tc.AccountToAS(context.Background(), &updatedAccount)
+	suite.NoError(err)
+
+	receivingAccount := suite.testAccounts["local_account_1"]
+
+	// create an update
+	update := streams.NewActivityStreamsUpdate()
+
+	// set the appropriate actor on it
+	updateActor := streams.NewActivityStreamsActorProperty()
+	updateActor.AppendIRI(testrig.URLMustParse(updatedAccount.URI))
+	update.SetActivityStreamsActor(updateActor)
+
+	// Set the account as the 'object' property.
+	updateObject := streams.NewActivityStreamsObjectProperty()
+	updateObject.AppendActivityStreamsPerson(asAccount)
+	update.SetActivityStreamsObject(updateObject)
+
+	// Set the To of the update as public
+	updateTo := streams.NewActivityStreamsToProperty()
+	updateTo.AppendIRI(testrig.URLMustParse("https://www.w3.org/ns/activitystreams#Public"))
+	update.SetActivityStreamsTo(updateTo)
+
+	// set the cc of the update to the receivingAccount
+	updateCC := streams.NewActivityStreamsCcProperty()
+	updateCC.AppendIRI(testrig.URLMustParse(receivingAccount.URI))
+	update.SetActivityStreamsCc(updateCC)
+
+	// set some random-ass ID for the activity
+	undoID := streams.NewJSONLDIdProperty()
+	undoID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/d360613a-dc8d-4563-8f0b-b6161caf0f2b"))
+	update.SetJSONLDId(undoID)
+
+	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
+
+	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(update, updatedAccount.PublicKeyURI, updatedAccount.PrivateKey, targetURI)
+	bodyI, err := streams.Serialize(update)
+	suite.NoError(err)
+
+	bodyJson, err := json.Marshal(bodyI)
+	suite.NoError(err)
+	body := bytes.NewReader(bodyJson)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
+	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+
+	// setup request
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
+	ctx.Request.Header.Set("Signature", signature)
+	ctx.Request.Header.Set("Date", dateHeader)
+	ctx.Request.Header.Set("Digest", digestHeader)
+	ctx.Request.Header.Set("Content-Type", "application/activity+json")
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.securityModule.SignatureCheck(ctx)
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   user.UsernameKey,
+			Value: receivingAccount.Username,
+		},
+	}
+
+	// trigger the function being tested
+	userModule.InboxPOSTHandler(ctx)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	suite.Empty(b)
+	suite.Equal(http.StatusOK, result.StatusCode)
+
+	// account should be changed in the database now
+	dbUpdatedAccount, err := suite.db.GetAccountByID(context.Background(), updatedAccount.ID)
+	suite.NoError(err)
+
+	// displayName should be updated
+	suite.Equal("updated display name!", dbUpdatedAccount.DisplayName)
+
+	// everything else should be the same as it was before
+	suite.EqualValues(updatedAccount.Username, dbUpdatedAccount.Username)
+	suite.EqualValues(updatedAccount.Domain, dbUpdatedAccount.Domain)
+	suite.EqualValues(updatedAccount.AvatarMediaAttachmentID, dbUpdatedAccount.AvatarMediaAttachmentID)
+	suite.EqualValues(updatedAccount.AvatarMediaAttachment, dbUpdatedAccount.AvatarMediaAttachment)
+	suite.EqualValues(updatedAccount.AvatarRemoteURL, dbUpdatedAccount.AvatarRemoteURL)
+	suite.EqualValues(updatedAccount.HeaderMediaAttachmentID, dbUpdatedAccount.HeaderMediaAttachmentID)
+	suite.EqualValues(updatedAccount.HeaderMediaAttachment, dbUpdatedAccount.HeaderMediaAttachment)
+	suite.EqualValues(updatedAccount.HeaderRemoteURL, dbUpdatedAccount.HeaderRemoteURL)
+	// suite.EqualValues(updatedAccount.Fields, dbUpdatedAccount.Fields)
+	suite.EqualValues(updatedAccount.Note, dbUpdatedAccount.Note)
+	suite.EqualValues(updatedAccount.Memorial, dbUpdatedAccount.Memorial)
+	suite.EqualValues(updatedAccount.AlsoKnownAs, dbUpdatedAccount.AlsoKnownAs)
+	suite.EqualValues(updatedAccount.MovedToAccountID, dbUpdatedAccount.MovedToAccountID)
+	suite.EqualValues(updatedAccount.Bot, dbUpdatedAccount.Bot)
+	suite.EqualValues(updatedAccount.Reason, dbUpdatedAccount.Reason)
+	suite.EqualValues(updatedAccount.Locked, dbUpdatedAccount.Locked)
+	suite.EqualValues(updatedAccount.Discoverable, dbUpdatedAccount.Discoverable)
+	suite.EqualValues(updatedAccount.Privacy, dbUpdatedAccount.Privacy)
+	suite.EqualValues(updatedAccount.Sensitive, dbUpdatedAccount.Sensitive)
+	suite.EqualValues(updatedAccount.Language, dbUpdatedAccount.Language)
+	suite.EqualValues(updatedAccount.URI, dbUpdatedAccount.URI)
+	suite.EqualValues(updatedAccount.URL, dbUpdatedAccount.URL)
+	suite.EqualValues(updatedAccount.LastWebfingeredAt, dbUpdatedAccount.LastWebfingeredAt)
+	suite.EqualValues(updatedAccount.InboxURI, dbUpdatedAccount.InboxURI)
+	suite.EqualValues(updatedAccount.OutboxURI, dbUpdatedAccount.OutboxURI)
+	suite.EqualValues(updatedAccount.FollowingURI, dbUpdatedAccount.FollowingURI)
+	suite.EqualValues(updatedAccount.FollowersURI, dbUpdatedAccount.FollowersURI)
+	suite.EqualValues(updatedAccount.FeaturedCollectionURI, dbUpdatedAccount.FeaturedCollectionURI)
+	suite.EqualValues(updatedAccount.ActorType, dbUpdatedAccount.ActorType)
+	// suite.EqualValues(updatedAccount.PrivateKey, dbUpdatedAccount.PrivateKey)
+	suite.EqualValues(updatedAccount.PublicKey, dbUpdatedAccount.PublicKey)
+	suite.EqualValues(updatedAccount.PublicKeyURI, dbUpdatedAccount.PublicKeyURI)
+	suite.EqualValues(updatedAccount.SensitizedAt, dbUpdatedAccount.SensitizedAt)
+	suite.EqualValues(updatedAccount.SilencedAt, dbUpdatedAccount.SilencedAt)
+	suite.EqualValues(updatedAccount.SuspendedAt, dbUpdatedAccount.SuspendedAt)
+	suite.EqualValues(updatedAccount.HideCollections, dbUpdatedAccount.HideCollections)
+	suite.EqualValues(updatedAccount.SuspensionOrigin, dbUpdatedAccount.SuspensionOrigin)
+}
+
 func TestInboxPostTestSuite(t *testing.T) {
 	suite.Run(t, &InboxPostTestSuite{})
 }
