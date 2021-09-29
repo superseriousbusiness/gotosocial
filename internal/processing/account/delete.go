@@ -31,7 +31,7 @@ import (
 
 // Delete handles the complete deletion of an account.
 //
-// TODO in this function:
+// To be done in this function:
 // 1. Delete account's application(s), clients, and oauth tokens
 // 2. Delete account's blocks
 // 3. Delete account's emoji
@@ -51,12 +51,16 @@ import (
 // 17. Delete account's timeline
 // 18. Delete account itself
 func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) error {
-	l := p.log.WithFields(logrus.Fields{
+	fields := logrus.Fields{
 		"func":     "Delete",
 		"username": account.Username,
-	})
+	}
+	if account.Domain != "" {
+		fields["domain"] = account.Domain
+	}
+	l := p.log.WithFields(fields)
 
-	l.Debugf("beginning account delete process for username %s", account.Username)
+	l.Debug("beginning account delete process")
 
 	// 1. Delete account's application(s), clients, and oauth tokens
 	// we only need to do this step for local account since remote ones won't have any tokens or applications on our server
@@ -214,8 +218,14 @@ selectStatusesLoop:
 
 	// 10. Delete account's notifications
 	l.Debug("deleting account notifications")
+	// first notifications created by account
 	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "origin_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
 		l.Errorf("error deleting notifications created by account: %s", err)
+	}
+
+	// now notifications targeting account
+	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "target_account_id", Value: account.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+		l.Errorf("error deleting notifications targeting account: %s", err)
 	}
 
 	// 11. Delete account's bookmarks
@@ -266,8 +276,6 @@ selectStatusesLoop:
 	account.Fields = []gtsmodel.Field{}
 	account.HideCollections = true
 	account.Discoverable = false
-
-	account.UpdatedAt = time.Now()
 
 	account.SuspendedAt = time.Now()
 	account.SuspensionOrigin = origin

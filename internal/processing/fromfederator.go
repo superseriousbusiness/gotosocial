@@ -181,7 +181,13 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 			return p.deleteStatusFromTimelines(ctx, statusToDelete)
 		case ap.ObjectProfile:
 			// DELETE A PROFILE/ACCOUNT
-			// TODO: handle side effects of account deletion here: delete all objects, statuses, media etc associated with account
+			// handle side effects of account deletion here: delete all objects, statuses, media etc associated with account
+			account, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
+			if !ok {
+				return errors.New("account delete was not parseable as *gtsmodel.Account")
+			}
+
+			return p.accountProcessor.Delete(ctx, account, account.ID)
 		}
 	case ap.ActivityAccept:
 		// ACCEPT
