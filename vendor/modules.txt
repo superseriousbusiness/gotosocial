@@ -658,3 +658,12 @@ modernc.org/token
 # mvdan.cc/xurls/v2 v2.3.0
 ## explicit; go 1.15
 mvdan.cc/xurls/v2
+# rogchap.com/v8go v0.6.0
+## explicit; go 1.12
+rogchap.com/v8go
+rogchap.com/v8go/deps/darwin_x86_64
+rogchap.com/v8go/deps/include
+rogchap.com/v8go/deps/include/cppgc
+rogchap.com/v8go/deps/include/libplatform
+rogchap.com/v8go/deps/linux_x86_64
+rogchap.com/v8go/deps/windows_x86_64

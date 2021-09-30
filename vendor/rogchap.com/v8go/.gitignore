@@ -1,0 +1,10 @@
+*swp
+.DS_Store
+
+.build
+.cipd
+.gclient_entries
+
+deps/darwin-x86_64/libv8_debug.a
+
+c.out

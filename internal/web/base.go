@@ -30,12 +30,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+
+	"rogchap.com/v8go"
 )
 
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
 	log       *logrus.Logger
+	v8ctx     *v8go.Context
 }
 
 func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
@@ -60,6 +63,20 @@ func (m *Module) baseHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.tmpl", gin.H{
 		"instance": instance,
 	})
+}
+
+func (m *Module) reactTest(c *gin.Context) {
+	l := m.log.WithField("func", "ReactTestHandler")
+	l.Trace("rendering")
+
+	ctx := m.v8ctx
+
+	ctx.RunScript("const add = (a, b) => a + b", "math.js") // executes a script on the global context
+	ctx.RunScript("const result = add(3, 4)", "main.js")    // any functions previously added to the context can be called
+	val, _ := ctx.RunScript("result", "value.js")           // return a value in JavaScript back to Go
+	fmt.Printf("addition result: %s", val)
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(val.String()))
 }
 
 func (m *Module) NotFoundHandler(c *gin.Context) {
@@ -95,6 +112,10 @@ func (m *Module) Route(s router.Router) error {
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
+
+	ctx, _ := v8go.NewContext() // creates a new V8 context with a new Isolate aka VM
+	m.v8ctx = ctx
+	s.AttachHandler(http.MethodGet, "/react", m.reactTest)
 
 	// serve statuses
 	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
