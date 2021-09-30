@@ -52,8 +52,8 @@ var (
 	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
 	MentionName = regexp.MustCompile(mentionName)
 
-	// mention regex can be played around with here: https://regex101.com/r/qwM9D3/1
-	mentionFinder = `(?:\B)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)(?:\B)?`
+	// mention regex can be played around with here: https://regex101.com/r/G1oGR0/1
+	mentionFinder = `(?:^|\s)(@\w+(?:@[a-zA-Z0-9_\-\.]+)?)`
 	// MentionFinder extracts mentions from a piece of text.
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
