@@ -30,6 +30,17 @@ type StatusTestSuite struct {
 	suite.Suite
 }
 
+func (suite *StatusTestSuite) TestLinkNoMention() {
+	statusText := `here's a link to a post by zork:
+
+https://localhost:8080/@the_mighty_zork/statuses/01FGVP55XMF2K6316MQRX6PFG1
+
+that link shouldn't come out formatted as a mention!`
+
+	menchies := util.DeriveMentionsFromText(statusText)
+	suite.Empty(menchies)
+}
+
 func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 	statusText := `@dumpsterqueer@example.org testing testing
 
