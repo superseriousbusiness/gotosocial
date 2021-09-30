@@ -45,6 +45,8 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
+
+	// blank import for the sqlite driver for bun
 	_ "modernc.org/sqlite"
 )
 

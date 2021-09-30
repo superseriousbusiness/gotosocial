@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun/dialect"
 )
 
-// dbConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
+// DBConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
 type DBConn struct {
 	// TODO: move *Config here, no need to be in each struct type
 
@@ -37,6 +37,7 @@ func WrapDBConn(dbConn *bun.DB, log *logrus.Logger) *DBConn {
 	}
 }
 
+// RunInTx wraps execution of the supplied transaction function.
 func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) db.Error {
 	// Acquire a new transaction
 	tx, err := conn.BeginTx(ctx, nil)

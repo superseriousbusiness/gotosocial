@@ -7,7 +7,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// statusCache is a wrapper around ttlcache.Cache to provide URL and URI lookups for gtsmodel.Status
+// StatusCache is a wrapper around ttlcache.Cache to provide URL and URI lookups for gtsmodel.Status
 type StatusCache struct {
 	cache *ttlcache.Cache   // map of IDs -> cached statuses
 	urls  map[string]string // map of status URLs -> IDs
@@ -15,7 +15,7 @@ type StatusCache struct {
 	mutex sync.Mutex
 }
 
-// newStatusCache returns a new instantiated statusCache object
+// NewStatusCache returns a new instantiated statusCache object
 func NewStatusCache() *StatusCache {
 	c := StatusCache{
 		cache: ttlcache.NewCache(),
