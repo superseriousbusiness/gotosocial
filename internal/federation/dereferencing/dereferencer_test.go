@@ -45,7 +45,8 @@ type DereferencerStandardTestSuite struct {
 	storage *kv.KVStore
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
-	testRemoteAccounts    map[string]vocab.ActivityStreamsPerson
+	testRemotePeople      map[string]vocab.ActivityStreamsPerson
+	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
 	testRemoteAttachments map[string]testrig.RemoteAttachmentFile
 	testAccounts          map[string]*gtsmodel.Account
 
@@ -55,7 +56,8 @@ type DereferencerStandardTestSuite struct {
 func (suite *DereferencerStandardTestSuite) SetupSuite() {
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testRemoteStatuses = testrig.NewTestFediStatuses()
-	suite.testRemoteAccounts = testrig.NewTestFediPeople()
+	suite.testRemotePeople = testrig.NewTestFediPeople()
+	suite.testRemoteGroups = testrig.NewTestFediGroups()
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
 }
 
@@ -89,8 +91,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 		responseType := ""
 		responseLength := 0
 
-		note, ok := suite.testRemoteStatuses[req.URL.String()]
-		if ok {
+		if note, ok := suite.testRemoteStatuses[req.URL.String()]; ok {
 			// the request is for a note that we have stored
 			noteI, err := streams.Serialize(note)
 			if err != nil {
@@ -104,8 +105,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 			responseType = "application/activity+json"
 		}
 
-		person, ok := suite.testRemoteAccounts[req.URL.String()]
-		if ok {
+		if person, ok := suite.testRemotePeople[req.URL.String()]; ok {
 			// the request is for a person that we have stored
 			personI, err := streams.Serialize(person)
 			if err != nil {
@@ -119,8 +119,21 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 			responseType = "application/activity+json"
 		}
 
-		attachment, ok := suite.testRemoteAttachments[req.URL.String()]
-		if ok {
+		if group, ok := suite.testRemoteGroups[req.URL.String()]; ok {
+			// the request is for a person that we have stored
+			groupI, err := streams.Serialize(group)
+			if err != nil {
+				panic(err)
+			}
+			groupJson, err := json.Marshal(groupI)
+			if err != nil {
+				panic(err)
+			}
+			responseBytes = groupJson
+			responseType = "application/activity+json"
+		}
+
+		if attachment, ok := suite.testRemoteAttachments[req.URL.String()]; ok {
 			responseBytes = attachment.Data
 			responseType = attachment.ContentType
 		}
