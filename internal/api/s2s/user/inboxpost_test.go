@@ -322,7 +322,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(updatedAccount.HeaderMediaAttachmentID, dbUpdatedAccount.HeaderMediaAttachmentID)
 	suite.EqualValues(updatedAccount.HeaderMediaAttachment, dbUpdatedAccount.HeaderMediaAttachment)
 	suite.EqualValues(updatedAccount.HeaderRemoteURL, dbUpdatedAccount.HeaderRemoteURL)
-	// suite.EqualValues(updatedAccount.Fields, dbUpdatedAccount.Fields)
 	suite.EqualValues(updatedAccount.Note, dbUpdatedAccount.Note)
 	suite.EqualValues(updatedAccount.Memorial, dbUpdatedAccount.Memorial)
 	suite.EqualValues(updatedAccount.AlsoKnownAs, dbUpdatedAccount.AlsoKnownAs)
@@ -343,7 +342,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(updatedAccount.FollowersURI, dbUpdatedAccount.FollowersURI)
 	suite.EqualValues(updatedAccount.FeaturedCollectionURI, dbUpdatedAccount.FeaturedCollectionURI)
 	suite.EqualValues(updatedAccount.ActorType, dbUpdatedAccount.ActorType)
-	// suite.EqualValues(updatedAccount.PrivateKey, dbUpdatedAccount.PrivateKey)
 	suite.EqualValues(updatedAccount.PublicKey, dbUpdatedAccount.PublicKey)
 	suite.EqualValues(updatedAccount.PublicKeyURI, dbUpdatedAccount.PublicKeyURI)
 	suite.EqualValues(updatedAccount.SensitizedAt, dbUpdatedAccount.SensitizedAt)
@@ -351,6 +349,111 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.EqualValues(updatedAccount.SuspendedAt, dbUpdatedAccount.SuspendedAt)
 	suite.EqualValues(updatedAccount.HideCollections, dbUpdatedAccount.HideCollections)
 	suite.EqualValues(updatedAccount.SuspensionOrigin, dbUpdatedAccount.SuspensionOrigin)
+}
+
+func (suite *InboxPostTestSuite) TestPostDelete() {
+	deletedAccount := *suite.testAccounts["remote_account_1"]
+	receivingAccount := suite.testAccounts["local_account_1"]
+
+	// create a delete
+	delete := streams.NewActivityStreamsDelete()
+
+	// set the appropriate actor on it
+	deleteActor := streams.NewActivityStreamsActorProperty()
+	deleteActor.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
+	delete.SetActivityStreamsActor(deleteActor)
+
+	// Set the account iri as the 'object' property.
+	deleteObject := streams.NewActivityStreamsObjectProperty()
+	deleteObject.AppendIRI(testrig.URLMustParse(deletedAccount.URI))
+	delete.SetActivityStreamsObject(deleteObject)
+
+	// Set the To of the delete as public
+	deleteTo := streams.NewActivityStreamsToProperty()
+	deleteTo.AppendIRI(testrig.URLMustParse("https://www.w3.org/ns/activitystreams#Public"))
+	delete.SetActivityStreamsTo(deleteTo)
+
+	// set some random-ass ID for the activity
+	deleteID := streams.NewJSONLDIdProperty()
+	deleteID.SetIRI(testrig.URLMustParse("http://fossbros-anonymous.io/d360613a-dc8d-4563-8f0b-b6161caf0f2b"))
+	delete.SetJSONLDId(deleteID)
+
+	targetURI := testrig.URLMustParse(receivingAccount.InboxURI)
+
+	signature, digestHeader, dateHeader := testrig.GetSignatureForActivity(delete, deletedAccount.PublicKeyURI, deletedAccount.PrivateKey, targetURI)
+	bodyI, err := streams.Serialize(delete)
+	suite.NoError(err)
+
+	bodyJson, err := json.Marshal(bodyI)
+	suite.NoError(err)
+	body := bytes.NewReader(bodyJson)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
+	err = processor.Start(context.Background())
+	suite.NoError(err)
+	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+
+	// setup request
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodPost, targetURI.String(), body) // the endpoint we're hitting
+	ctx.Request.Header.Set("Signature", signature)
+	ctx.Request.Header.Set("Date", dateHeader)
+	ctx.Request.Header.Set("Digest", digestHeader)
+	ctx.Request.Header.Set("Content-Type", "application/activity+json")
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.securityModule.SignatureCheck(ctx)
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   user.UsernameKey,
+			Value: receivingAccount.Username,
+		},
+	}
+
+	// trigger the function being tested
+	userModule.InboxPOSTHandler(ctx)
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	suite.Empty(b)
+	suite.Equal(http.StatusOK, result.StatusCode)
+
+	// sleep for a sec so side effects can process in the background
+	time.Sleep(2 * time.Second)
+
+	// local account 2 blocked foss_satan, that block should be gone now
+	testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
+	dbBlock := &gtsmodel.Block{}
+	err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
+	suite.ErrorIs(err, db.ErrNoEntries)
+
+	// no statuses from foss satan should be left in the database
+	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, "", false, false)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(dbStatuses)
+
+	dbAccount, err := suite.db.GetAccountByID(ctx, deletedAccount.ID)
+	suite.NoError(err)
+
+	suite.Empty(dbAccount.Note)
+	suite.Empty(dbAccount.DisplayName)
+	suite.Empty(dbAccount.AvatarMediaAttachmentID)
+	suite.Empty(dbAccount.AvatarRemoteURL)
+	suite.Empty(dbAccount.HeaderMediaAttachmentID)
+	suite.Empty(dbAccount.HeaderRemoteURL)
+	suite.Empty(dbAccount.Reason)
+	suite.Empty(dbAccount.Fields)
+	suite.True(dbAccount.HideCollections)
+	suite.False(dbAccount.Discoverable)
+	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
+	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }
 
 func TestInboxPostTestSuite(t *testing.T) {

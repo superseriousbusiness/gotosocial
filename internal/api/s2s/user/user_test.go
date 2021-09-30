@@ -53,6 +53,7 @@ type UserStandardTestSuite struct {
 	testAccounts     map[string]*gtsmodel.Account
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
+	testBlocks       map[string]*gtsmodel.Block
 
 	// module being tested
 	userModule *user.Module
@@ -66,6 +67,7 @@ func (suite *UserStandardTestSuite) SetupSuite() {
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testBlocks = testrig.NewTestBlocks()
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {

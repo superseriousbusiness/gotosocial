@@ -20,6 +20,7 @@ package processing_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -274,6 +275,86 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
 	suite.Empty(stream.Messages)
+}
+
+func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
+	ctx := context.Background()
+
+	deletedAccount := suite.testAccounts["remote_account_1"]
+	receivingAccount := suite.testAccounts["local_account_1"]
+
+	// before doing the delete....
+	// make local_account_1 and remote_account_1 into mufos
+	zorkFollowSatan := &gtsmodel.Follow{
+		ID:              "01FGRY72ASHBSET64353DPHK9T",
+		CreatedAt:       time.Now().Add(-1 * time.Hour),
+		UpdatedAt:       time.Now().Add(-1 * time.Hour),
+		AccountID:       deletedAccount.ID,
+		TargetAccountID: receivingAccount.ID,
+		ShowReblogs:     true,
+		URI:             fmt.Sprintf("%s/follows/01FGRY72ASHBSET64353DPHK9T", deletedAccount.URI),
+		Notify:          false,
+	}
+	err := suite.db.Put(ctx, zorkFollowSatan)
+	suite.NoError(err)
+
+	satanFollowZork := &gtsmodel.Follow{
+		ID:              "01FGRYAVAWWPP926J175QGM0WV",
+		CreatedAt:       time.Now().Add(-1 * time.Hour),
+		UpdatedAt:       time.Now().Add(-1 * time.Hour),
+		AccountID:       receivingAccount.ID,
+		TargetAccountID: deletedAccount.ID,
+		ShowReblogs:     true,
+		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", receivingAccount.URI),
+		Notify:          false,
+	}
+	err = suite.db.Put(ctx, satanFollowZork)
+	suite.NoError(err)
+
+	// now they are mufos!
+
+	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+		APObjectType:     ap.ObjectProfile,
+		APActivityType:   ap.ActivityDelete,
+		GTSModel:         deletedAccount,
+		ReceivingAccount: receivingAccount,
+	})
+	suite.NoError(err)
+
+	// local account 2 blocked foss_satan, that block should be gone now
+	testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
+	dbBlock := &gtsmodel.Block{}
+	err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
+	suite.ErrorIs(err, db.ErrNoEntries)
+
+	// the mufos should be gone now too
+	satanFollowsZork, err := suite.db.IsFollowing(ctx, deletedAccount, receivingAccount)
+	suite.NoError(err)
+	suite.False(satanFollowsZork)
+	zorkFollowsSatan, err := suite.db.IsFollowing(ctx, receivingAccount, deletedAccount)
+	suite.NoError(err)
+	suite.False(zorkFollowsSatan)
+
+	// no statuses from foss satan should be left in the database
+	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, "", false, false)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Empty(dbStatuses)
+
+	dbAccount, err := suite.db.GetAccountByID(ctx, deletedAccount.ID)
+	suite.NoError(err)
+
+	suite.Empty(dbAccount.Note)
+	suite.Empty(dbAccount.DisplayName)
+	suite.Empty(dbAccount.AvatarMediaAttachmentID)
+	suite.Empty(dbAccount.AvatarRemoteURL)
+	suite.Empty(dbAccount.HeaderMediaAttachmentID)
+	suite.Empty(dbAccount.HeaderRemoteURL)
+	suite.Empty(dbAccount.Reason)
+	suite.Empty(dbAccount.Fields)
+	suite.True(dbAccount.HideCollections)
+	suite.False(dbAccount.Discoverable)
+	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
+	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {

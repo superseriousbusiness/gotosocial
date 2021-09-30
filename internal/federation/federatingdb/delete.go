@@ -89,10 +89,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	a, err := f.db.GetAccountByURI(ctx, id.String())
 	if err == nil {
 		// it's an account
-		l.Debugf("uri is for an account with id: %s", a.ID)
-		if err := f.db.DeleteByID(ctx, a.ID, &gtsmodel.Account{}); err != nil {
-			return fmt.Errorf("DELETE: err deleting account: %s", err)
-		}
+		l.Debugf("uri is for an account with id %s, passing delete message to the processor", a.ID)
 		fromFederatorChan <- messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityDelete,
