@@ -21,8 +21,8 @@ package text_test
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -52,6 +52,22 @@ Text`
 <a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag">#<span>Hashtag</span></a>
 
 Text`
+
+	replaceMentionsWithLinkString = `Another test @foss_satan@fossbros-anonymous.io
+
+https://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
+
+	replaceMentionsWithLinkStringExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
+
+https://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
+
+	replaceMentionsWithLinkSelfString = `Mentioning myself: @the_mighty_zork
+
+and linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR`
+
+	replaceMemtionsWithLinkSelfExpected = `Mentioning myself: <span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span>
+
+and linking to my own status: https://localhost:8080/@the_mighty_zork/statuses/01FGXKJRX2PMERJQ9EQF8Y6HCR`
 )
 
 type CommonTestSuite struct {
@@ -89,7 +105,7 @@ func (suite *CommonTestSuite) TestReplaceMentions() {
 	}
 
 	f := suite.formatter.ReplaceMentions(context.Background(), replaceMentionsString, foundMentions)
-	assert.Equal(suite.T(), replaceMentionsExpected, f)
+	suite.Equal(replaceMentionsExpected, f)
 }
 
 func (suite *CommonTestSuite) TestReplaceHashtags() {
@@ -99,7 +115,7 @@ func (suite *CommonTestSuite) TestReplaceHashtags() {
 
 	f := suite.formatter.ReplaceTags(context.Background(), replaceMentionsString, foundTags)
 
-	assert.Equal(suite.T(), replaceHashtagsExpected, f)
+	suite.Equal(replaceHashtagsExpected, f)
 }
 
 func (suite *CommonTestSuite) TestReplaceHashtagsAfterReplaceMentions() {
@@ -109,7 +125,37 @@ func (suite *CommonTestSuite) TestReplaceHashtagsAfterReplaceMentions() {
 
 	f := suite.formatter.ReplaceTags(context.Background(), replaceMentionsExpected, foundTags)
 
-	assert.Equal(suite.T(), replaceHashtagsAfterMentionsExpected, f)
+	suite.Equal(replaceHashtagsAfterMentionsExpected, f)
+}
+
+func (suite *CommonTestSuite) TestReplaceMentionsWithLink() {
+	foundMentions := []*gtsmodel.Mention{
+		suite.testMentions["zork_mention_foss_satan"],
+	}
+
+	f := suite.formatter.ReplaceMentions(context.Background(), replaceMentionsWithLinkString, foundMentions)
+	suite.Equal(replaceMentionsWithLinkStringExpected, f)
+}
+
+func (suite *CommonTestSuite) TestReplaceMentionsWithLinkSelf() {
+	mentioningAccount := suite.testAccounts["local_account_1"]
+
+	foundMentions := []*gtsmodel.Mention{
+		{
+			ID:               "01FGXKN5F815DVFVD53PN9NYM6",
+			CreatedAt:        time.Now(),
+			UpdatedAt:        time.Now(),
+			StatusID:         "01FGXKP0S5THQXFC1D9R141DDR",
+			OriginAccountID:  mentioningAccount.ID,
+			TargetAccountID:  mentioningAccount.ID,
+			NameString:       "@the_mighty_zork",
+			TargetAccountURI: mentioningAccount.URI,
+			TargetAccountURL: mentioningAccount.URL,
+		},
+	}
+
+	f := suite.formatter.ReplaceMentions(context.Background(), replaceMentionsWithLinkSelfString, foundMentions)
+	suite.Equal(replaceMemtionsWithLinkSelfExpected, f)
 }
 
 func TestCommonTestSuite(t *testing.T) {

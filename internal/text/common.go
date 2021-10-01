@@ -90,26 +90,38 @@ func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel
 }
 
 func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string {
-	for _, menchie := range mentions {
-		// make sure we have a target account, either by getting one pinned on the mention,
-		// or by pulling it from the database
-		var targetAccount *gtsmodel.Account
-		if menchie.OriginAccount != nil {
-			// got it from the mention
-			targetAccount = menchie.OriginAccount
-		} else {
-			a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
-			if err == nil {
-				// got it from the db
-				targetAccount = a
-			} else {
-				// couldn't get it so we can't do replacement
-				return in
+	return regexes.MentionFinder.ReplaceAllStringFunc(in, func(match string) string {
+		// we have a match
+		matchTrimmed := strings.TrimSpace(match)
+		// check through mentions to find what we're matching
+		for _, menchie := range mentions {
+			if strings.EqualFold(matchTrimmed, menchie.NameString) {
+				// make sure we have an account attached to this mention
+				if menchie.TargetAccount == nil {
+					a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
+					if err != nil {
+						f.log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
+						return match
+					}
+					menchie.TargetAccount = a
+				}
+				targetAccount := menchie.TargetAccount
+
+				// replace the mention with the formatted mention content
+				mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
+
+				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
+				if strings.HasPrefix(match, " ") {
+					mentionContent = " " + mentionContent
+				} else if strings.HasPrefix(match, "\n") {
+					mentionContent = "\n" + mentionContent
+				}
+
+				// done
+				return mentionContent
 			}
 		}
-
-		mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-		in = strings.ReplaceAll(in, menchie.NameString, mentionContent)
-	}
-	return in
+		// the match wasn't in the list of mentions for whatever reason, so just return the match as we found it so nothing changes
+		return match
+	})
 }
