@@ -45,9 +45,9 @@ func New(level string) (*logrus.Logger, error) {
 	}
 
 	log.SetFormatter(&logrus.TextFormatter{
-		DisableColors: false,
+		DisableColors: true,
 		ForceQuote:    true,
-		FullTimestamp: false,
+		FullTimestamp: true,
 	})
 
 	return log, nil

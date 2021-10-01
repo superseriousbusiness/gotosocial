@@ -26,7 +26,7 @@ import (
 
 // NewTestLog returns a trace level logger for testing
 func NewTestLog() *logrus.Logger {
-	logger, err := log.New("debug")
+	logger, err := log.New("trace")
 	logger.SetFormatter(&logrus.TextFormatter{
 		ForceColors:   true,
 		ForceQuote:    true,
