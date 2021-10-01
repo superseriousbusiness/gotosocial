@@ -357,6 +357,14 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }
 
+func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+}
+
+func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+}
+
 func TestFromFederatorTestSuite(t *testing.T) {
 	suite.Run(t, &FromFederatorTestSuite{})
 }
