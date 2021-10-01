@@ -20,12 +20,14 @@ package processing_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -355,6 +357,133 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.False(dbAccount.Discoverable)
 	suite.WithinDuration(time.Now(), dbAccount.SuspendedAt, 30*time.Second)
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
+}
+
+func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
+	ctx := context.Background()
+
+	originAccount := suite.testAccounts["remote_account_1"]
+
+	// target is a locked account
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, "user")
+	suite.NoError(errWithCode)
+
+	// put the follow request in the database as though it had passed through the federating db already
+	satanFollowRequestTurtle := &gtsmodel.FollowRequest{
+		ID:              "01FGRYAVAWWPP926J175QGM0WV",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		AccountID:       originAccount.ID,
+		Account:         originAccount,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		ShowReblogs:     true,
+		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
+		Notify:          false,
+	}
+
+	err := suite.db.Put(ctx, satanFollowRequestTurtle)
+	suite.NoError(err)
+
+	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+		APObjectType:     ap.ActivityFollow,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         satanFollowRequestTurtle,
+		ReceivingAccount: targetAccount,
+	})
+	suite.NoError(err)
+
+	// a notification should be streamed
+	msg := <-stream.Messages
+	suite.Equal("notification", msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{"user"}, msg.Stream)
+	notif := &model.Notification{}
+	err = json.Unmarshal([]byte(msg.Payload), notif)
+	suite.NoError(err)
+	suite.Equal("follow_request", notif.Type)
+	suite.Equal(originAccount.ID, notif.Account.ID)
+
+	// no messages should have been sent out, since we didn't need to federate an accept
+	suite.Empty(suite.sentHTTPRequests)
+}
+
+func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
+	ctx := context.Background()
+
+	originAccount := suite.testAccounts["remote_account_1"]
+
+	// target is an unlocked account
+	targetAccount := suite.testAccounts["local_account_1"]
+
+	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, "user")
+	suite.NoError(errWithCode)
+
+	// put the follow request in the database as though it had passed through the federating db already
+	satanFollowRequestTurtle := &gtsmodel.FollowRequest{
+		ID:              "01FGRYAVAWWPP926J175QGM0WV",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		AccountID:       originAccount.ID,
+		Account:         originAccount,
+		TargetAccountID: targetAccount.ID,
+		TargetAccount:   targetAccount,
+		ShowReblogs:     true,
+		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
+		Notify:          false,
+	}
+
+	err := suite.db.Put(ctx, satanFollowRequestTurtle)
+	suite.NoError(err)
+
+	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+		APObjectType:     ap.ActivityFollow,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         satanFollowRequestTurtle,
+		ReceivingAccount: targetAccount,
+	})
+	suite.NoError(err)
+
+	// a notification should be streamed
+	msg := <-stream.Messages
+	suite.Equal("notification", msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{"user"}, msg.Stream)
+	notif := &model.Notification{}
+	err = json.Unmarshal([]byte(msg.Payload), notif)
+	suite.NoError(err)
+	suite.Equal("follow", notif.Type)
+	suite.Equal(originAccount.ID, notif.Account.ID)
+
+	// an accept message should be sent to satan's inbox
+	suite.Len(suite.sentHTTPRequests, 1)
+	acceptBytes := suite.sentHTTPRequests[originAccount.InboxURI]
+	accept := &struct {
+		Actor  string `json:"actor"`
+		ID     string `json:"id"`
+		Object struct {
+			Actor  string `json:"actor"`
+			ID     string `json:"id"`
+			Object string `json:"object"`
+			To     string `json:"to"`
+			Type   string `json:"type"`
+		}
+		To   string `json:"to"`
+		Type string `json:"type"`
+	}{}
+	err = json.Unmarshal(acceptBytes, accept)
+	suite.NoError(err)
+
+	suite.Equal(targetAccount.URI, accept.Actor)
+	suite.Equal(originAccount.URI, accept.Object.Actor)
+	suite.Equal(satanFollowRequestTurtle.URI, accept.Object.ID)
+	suite.Equal(targetAccount.URI, accept.Object.Object)
+	suite.Equal(targetAccount.URI, accept.Object.To)
+	suite.Equal("Follow", accept.Object.Type)
+	suite.Equal(originAccount.URI, accept.To)
+	suite.Equal("Accept", accept.Type)
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {

@@ -77,14 +77,45 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 			}
 		case ap.ActivityFollow:
 			// CREATE A FOLLOW REQUEST
-			incomingFollowRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
+			followRequest, ok := federatorMsg.GTSModel.(*gtsmodel.FollowRequest)
 			if !ok {
 				return errors.New("incomingFollowRequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
-			if err := p.notifyFollowRequest(ctx, incomingFollowRequest, federatorMsg.ReceivingAccount); err != nil {
+			if followRequest.TargetAccount == nil {
+				a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+				if err != nil {
+					return err
+				}
+				followRequest.TargetAccount = a
+			}
+			targetAccount := followRequest.TargetAccount
+
+			if targetAccount.Locked {
+				// if the account is locked just notify the follow request and nothing else
+				return p.notifyFollowRequest(ctx, followRequest)
+			}
+
+			if followRequest.Account == nil {
+				a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+				if err != nil {
+					return err
+				}
+				followRequest.Account = a
+			}
+			originAccount := followRequest.Account
+
+			// if the target account isn't locked, we should already accept the follow and notify about the new follower instead
+			follow, err := p.db.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
+			if err != nil {
 				return err
 			}
+
+			if err := p.federateAcceptFollowRequest(ctx, follow, originAccount, targetAccount); err != nil {
+				return err
+			}
+
+			return p.notifyFollow(ctx, follow, targetAccount)
 		case ap.ActivityAnnounce:
 			// CREATE AN ANNOUNCE
 			incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
@@ -194,14 +225,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 		switch federatorMsg.APObjectType {
 		case ap.ActivityFollow:
 			// ACCEPT A FOLLOW
-			follow, ok := federatorMsg.GTSModel.(*gtsmodel.Follow)
-			if !ok {
-				return errors.New("follow was not parseable as *gtsmodel.Follow")
-			}
-
-			if err := p.notifyFollow(ctx, follow, federatorMsg.ReceivingAccount); err != nil {
-				return err
-			}
+			// nothing to do here
 		}
 	}
 
