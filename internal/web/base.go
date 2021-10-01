@@ -20,9 +20,11 @@ package web
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -31,14 +33,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 
-	"rogchap.com/v8go"
+	"github.com/dop251/goja"
 )
 
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
 	log       *logrus.Logger
-	v8ctx     *v8go.Context
+	jsVM      *goja.Runtime
 }
 
 func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
@@ -69,14 +71,13 @@ func (m *Module) reactTest(c *gin.Context) {
 	l := m.log.WithField("func", "ReactTestHandler")
 	l.Trace("rendering")
 
-	ctx := m.v8ctx
+	_ = m.jsVM.Set("timestamp", time.Now().String())
 
-	ctx.RunScript("const add = (a, b) => a + b", "math.js") // executes a script on the global context
-	ctx.RunScript("const result = add(3, 4)", "main.js")    // any functions previously added to the context can be called
-	val, _ := ctx.RunScript("result", "value.js")           // return a value in JavaScript back to Go
-	fmt.Printf("addition result: %s", val)
+	val, _ := m.jsVM.RunString("ReactDOMServer.renderToString(reactGo({context: timestamp}))")
 
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(val.String()))
+	fmt.Printf("output: %s\n", val.Export().(string))
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(val.Export().(string)))
 }
 
 func (m *Module) NotFoundHandler(c *gin.Context) {
@@ -97,6 +98,7 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
+	l := m.log.WithField("func", "Web-router")
 
 	// serve static files from /assets
 	cwd, err := os.Getwd()
@@ -113,8 +115,36 @@ func (m *Module) Route(s router.Router) error {
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
-	ctx, _ := v8go.NewContext() // creates a new V8 context with a new Isolate aka VM
-	m.v8ctx = ctx
+	m.jsVM = goja.New()
+
+	if _, err = m.jsVM.RunString("var self = {};"); err != nil {
+		l.Errorf("Error with Goja jsVM: %s", err)
+	}
+
+	for _, script := range []string{"react.production.min.js", "react-dom-server.min.js"} {
+		text, err := ioutil.ReadFile(filepath.Join(assetPath, script))
+		if err != nil {
+			l.Errorf("Unable to read templating React file %s: %s", script, err)
+		}
+		_, err = m.jsVM.RunScript(script, string(text))
+		if err != nil {
+			l.Errorf("Unable to load templating React file %s: %s", script, err)
+		}
+	}
+
+	if _, err = m.jsVM.RunString("var React = self.React; var ReactDOMServer = self.ReactDOMServer;"); err != nil {
+		l.Errorf("Error with Goja jsVM: %s", err)
+	}
+
+	template, _ := ioutil.ReadFile(filepath.Join(assetPath, "bundle.js"))
+	if _, err = m.jsVM.RunScript("bundle.js", string(template)); err != nil {
+		l.Errorf("Error with Goja jsVM: %s", err)
+	}
+
+	if _, err = m.jsVM.RunString("var reactGo = self.reactGo"); err != nil {
+		l.Errorf("Error with Goja jsVM: %s", err)
+	}
+
 	s.AttachHandler(http.MethodGet, "/react", m.reactTest)
 
 	// serve statuses

@@ -7,6 +7,7 @@ require (
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.0.0
+	github.com/dop251/goja v0.0.0-20210926120033-6e5fa0950d16
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.7.2-0.20210908033055-3a6f18f32f22
@@ -39,7 +40,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.13.0
 	mvdan.cc/xurls/v2 v2.3.0
-	rogchap.com/v8go v0.6.0
 )
 
 require (
@@ -53,6 +53,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/dsoprea/go-exif v0.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-exif/v2 v2.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect
@@ -65,6 +66,7 @@ require (
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/goccy/go-json v0.7.8 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

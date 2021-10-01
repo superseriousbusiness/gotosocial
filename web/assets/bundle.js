@@ -1,0 +1,1 @@
+/home/f0x/documents/projects/webdev1/public/bundle.js
