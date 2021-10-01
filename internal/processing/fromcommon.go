@@ -110,7 +110,7 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 }
 
 func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
-	// return if this isn't a local account
+	// make sure we have the target account pinned on the follow request
 	if followRequest.TargetAccount == nil {
 		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
@@ -119,7 +119,8 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		followRequest.TargetAccount = a
 	}
 	targetAccount := followRequest.TargetAccount
-	
+
+	// return if this isn't a local account
 	if targetAccount.Domain != "" {
 		// this isn't a local account so we've got nothing to do here
 		return nil
