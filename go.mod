@@ -29,9 +29,9 @@ require (
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
-	github.com/uptrace/bun v1.0.6
-	github.com/uptrace/bun/dialect/pgdialect v1.0.5
-	github.com/uptrace/bun/dialect/sqlitedialect v1.0.5
+	github.com/uptrace/bun v1.0.9
+	github.com/uptrace/bun/dialect/pgdialect v1.0.9
+	github.com/uptrace/bun/dialect/sqlitedialect v1.0.9
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
@@ -100,7 +100,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/mod v0.5.0 // indirect
 	golang.org/x/net v0.0.0-20210908191846-a5e095526f91 // indirect
-	golang.org/x/sys v0.0.0-20210909193231-528a39cd75f3 // indirect
+	golang.org/x/sys v0.0.0-20210925032602-92d5a993a665 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

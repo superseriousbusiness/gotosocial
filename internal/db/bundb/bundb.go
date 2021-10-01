@@ -27,6 +27,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
@@ -44,6 +45,8 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
+
+	// blank import for the sqlite driver for bun
 	_ "modernc.org/sqlite"
 )
 
@@ -116,6 +119,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 		}
 		sqldb = stdlib.OpenDB(*opts)
+		tweakConnectionValues(sqldb)
 		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
 	case dbTypeSqlite:
 		// SQLITE
@@ -133,6 +137,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		if err != nil {
 			return nil, fmt.Errorf("could not open sqlite db: %s", err)
 		}
+		tweakConnectionValues(sqldb)
 		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()), log)
 
 		if c.DBConfig.Address == "file::memory:?cache=shared" {
@@ -319,8 +324,16 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	cfg.TLSConfig = tlsConfig
 	cfg.Database = c.DBConfig.Database
 	cfg.PreferSimpleProtocol = true
+	cfg.RuntimeParams["application_name"] = c.ApplicationName
 
 	return cfg, nil
+}
+
+// https://bun.uptrace.dev/postgres/running-bun-in-production.html#database-sql
+func tweakConnectionValues(sqldb *sql.DB) {
+	maxOpenConns := 4 * runtime.GOMAXPROCS(0)
+	sqldb.SetMaxOpenConns(maxOpenConns)
+	sqldb.SetMaxIdleConns(maxOpenConns)
 }
 
 /*

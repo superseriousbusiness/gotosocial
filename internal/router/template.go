@@ -46,9 +46,8 @@ func loadTemplates(cfg *config.Config, engine *gin.Engine) error {
 func oddOrEven(n int) string {
 	if n%2 == 0 {
 		return "even"
-	} else {
-		return "odd"
 	}
+	return "odd"
 }
 
 func noescape(str string) template.HTML {
@@ -60,24 +59,24 @@ func timestamp(stamp string) string {
 	return t.Format("January 2, 2006, 15:04:05")
 }
 
-type IconWithLabel struct {
+type iconWithLabel struct {
 	faIcon string
 	label  string
 }
 
 func visibilityIcon(visibility model.Visibility) template.HTML {
-	var icon IconWithLabel
+	var icon iconWithLabel
 
 	if visibility == model.VisibilityPublic {
-		icon = IconWithLabel{"globe", "public"}
+		icon = iconWithLabel{"globe", "public"}
 	} else if visibility == model.VisibilityUnlisted {
-		icon = IconWithLabel{"unlock", "unlisted"}
+		icon = iconWithLabel{"unlock", "unlisted"}
 	} else if visibility == model.VisibilityPrivate {
-		icon = IconWithLabel{"lock", "private"}
+		icon = iconWithLabel{"lock", "private"}
 	} else if visibility == model.VisibilityMutualsOnly {
-		icon = IconWithLabel{"handshake-o", "mutuals only"}
+		icon = iconWithLabel{"handshake-o", "mutuals only"}
 	} else if visibility == model.VisibilityDirect {
-		icon = IconWithLabel{"envelope", "direct"}
+		icon = iconWithLabel{"envelope", "direct"}
 	}
 
 	return template.HTML(fmt.Sprintf(`<i aria-label="Visiblity: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))

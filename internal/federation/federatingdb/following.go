@@ -8,6 +8,7 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -67,7 +68,15 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		if follow.Account == nil {
 			followAccount, err := f.db.GetAccountByID(ctx, follow.AccountID)
 			if err != nil {
-				return nil, fmt.Errorf("FOLLOWING: db error getting account id %s: %s", follow.AccountID, err)
+				errWrapped := fmt.Errorf("FOLLOWING: db error getting account id %s: %s", follow.AccountID, err)
+				if err == db.ErrNoEntries {
+					// no entry for this account id so it's probably been deleted and we haven't caught up yet
+					l.Error(errWrapped)
+					continue
+				} else {
+					// proper error
+					return nil, errWrapped
+				}
 			}
 			follow.Account = followAccount
 		}

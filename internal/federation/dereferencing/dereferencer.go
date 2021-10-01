@@ -38,8 +38,8 @@ type Dereferencer interface {
 	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
 	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
 
-	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent, includeChilds bool) (*gtsmodel.Status, ap.Statusable, bool, error)
-	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent, includeChilds bool) (*gtsmodel.Status, error)
+	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error)
+	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 

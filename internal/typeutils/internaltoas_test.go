@@ -27,37 +27,14 @@ import (
 	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToASTestSuite struct {
-	ConverterStandardTestSuite
-}
-
-// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *InternalToASTestSuite) SetupSuite() {
-	// setup standard items
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
-	suite.accounts = testrig.NewTestAccounts()
-	suite.people = testrig.NewTestFediPeople()
-	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db, suite.log)
-}
-
-func (suite *InternalToASTestSuite) SetupTest() {
-	testrig.StandardDBSetup(suite.db, nil)
-}
-
-// TearDownTest drops tables to make sure there's no data in the db
-func (suite *InternalToASTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
+	TypeUtilsTestSuite
 }
 
 func (suite *InternalToASTestSuite) TestAccountToAS() {
-	testAccount := suite.accounts["local_account_1"] // take zork for this test
+	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
 
 	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	assert.NoError(suite.T(), err)

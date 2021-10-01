@@ -23,8 +23,8 @@ import "time"
 // FollowRequest represents one account requesting to follow another, and the metadata around that request.
 type FollowRequest struct {
 	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`          // id of this item in the database
-	CreatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`     // when was item created
-	UpdatedAt       time.Time `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`     // when was item last updated
+	CreatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`   // when was item created
+	UpdatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`   // when was item last updated
 	URI             string    `validate:"required,url" bun:",notnull,nullzero,unique"`                           // ActivityPub uri of this follow (request).
 	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:frsrctarget,notnull,nullzero"` // Who does this follow request originate from?
 	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                                // Account corresponding to accountID

@@ -36,6 +36,7 @@ import (
 	"github.com/dop251/goja"
 )
 
+// Module implements the api.ClientModule interface for web pages.
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
@@ -43,6 +44,7 @@ type Module struct {
 	jsVM      *goja.Runtime
 }
 
+// New returns a new api.ClientModule for web pages.
 func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
 	return &Module{
 		config:    config,
@@ -80,6 +82,7 @@ func (m *Module) reactTest(c *gin.Context) {
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(val.Export().(string)))
 }
 
+// NotFoundHandler serves a 404 html page instead of a blank 404 error.
 func (m *Module) NotFoundHandler(c *gin.Context) {
 	l := m.log.WithField("func", "404")
 	l.Trace("serving 404 html")
@@ -106,11 +109,11 @@ func (m *Module) Route(s router.Router) error {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
 	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir)
-	s.AttachStaticFS("/assets", FileSystem{http.Dir(assetPath)})
+	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
 
 	// Admin panel route, if it exists
 	adminPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir, "/admin")
-	s.AttachStaticFS("/admin", FileSystem{http.Dir(adminPath)})
+	s.AttachStaticFS("/admin", fileSystem{http.Dir(adminPath)})
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)

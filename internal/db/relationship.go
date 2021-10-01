@@ -26,7 +26,7 @@ import (
 
 // Relationship contains functions for getting or modifying the relationship between two accounts.
 type Relationship interface {
-	// IsBlocked checks whether account 1 has a block in place against block2.
+	// IsBlocked checks whether account 1 has a block in place against account2.
 	// If eitherDirection is true, then the function returns true if account1 blocks account2, OR if account2 blocks account1.
 	IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, Error)
 

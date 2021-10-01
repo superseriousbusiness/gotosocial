@@ -23,13 +23,13 @@ import (
 	"strings"
 )
 
-type FileSystem struct {
+type fileSystem struct {
 	fs http.FileSystem
 }
 
 // FileSystem server that only accepts directory listings when an index.html is available
 // from https://gist.github.com/hauxe/f2ea1901216177ccf9550a1b8bd59178
-func (fs FileSystem) Open(path string) (http.File, error) {
+func (fs fileSystem) Open(path string) (http.File, error) {
 	f, err := fs.fs.Open(path)
 	if err != nil {
 		return nil, err

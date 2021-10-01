@@ -4,15 +4,17 @@ test:
 	set -e; for dir in $(ALL_GO_MOD_DIRS); do \
 	  echo "go test in $${dir}"; \
 	  (cd "$${dir}" && \
-	    go test ./... && \
+	    go test && \
+	    env GOOS=linux GOARCH=386 go test && \
 	    go vet); \
 	done
 
 go_mod_tidy:
+	go get -u && go mod tidy
 	set -e; for dir in $(ALL_GO_MOD_DIRS); do \
 	  echo "go mod tidy in $${dir}"; \
 	  (cd "$${dir}" && \
-	    go get -d ./... && \
+	    go get -u ./... && \
 	    go mod tidy); \
 	done
 

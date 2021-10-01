@@ -61,7 +61,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 				return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
 			}
 
-			if err := p.notifyFollowRequest(ctx, followRequest, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFollowRequest(ctx, followRequest); err != nil {
 				return err
 			}
 
@@ -73,7 +73,7 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
 			}
 
-			if err := p.notifyFave(ctx, fave, clientMsg.TargetAccount); err != nil {
+			if err := p.notifyFave(ctx, fave); err != nil {
 				return err
 			}
 

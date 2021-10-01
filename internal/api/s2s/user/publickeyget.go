@@ -1,14 +1,30 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // PublicKeyGETHandler should be served at eg https://example.org/users/:username/main-key.
@@ -28,25 +44,19 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	// make sure this actually an AP request
-	format := c.NegotiateFormat(ActivityPubAcceptHeaders...)
-	if format == "" {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": "could not negotiate format with given Accept header(s)"})
+	format, err := negotiateFormat(c)
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": fmt.Sprintf("could not negotiate format with given Accept header(s): %s", err)})
 		return
 	}
 	l.Tracef("negotiated format: %s", format)
 
-	// transfer the signature verifier from the gin context to the request context
-	ctx := c.Request.Context()
-	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
-	}
+	ctx := transferContext(c)
 
-	user, err := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL) // GetFediUser handles auth as well
-	if err != nil {
-		l.Info(err.Error())
-		c.JSON(err.Code(), gin.H{"error": err.Safe()})
+	user, errWithCode := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL)
+	if errWithCode != nil {
+		l.Info(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

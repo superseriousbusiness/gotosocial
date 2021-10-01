@@ -1283,7 +1283,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
-	sig, digest, date := getSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	sig, digest, date := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
@@ -1318,6 +1318,37 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			true,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
 			newPerson1Pub,
+			nil,
+			"image/jpeg",
+			nil,
+			"image/png",
+			false,
+		),
+	}
+}
+
+func NewTestFediGroups() map[string]vocab.ActivityStreamsGroup {
+	newGroup1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	newGroup1Pub := &newGroup1Priv.PublicKey
+
+	return map[string]vocab.ActivityStreamsGroup{
+		"https://unknown-instance.com/groups/some_group": newGroup(
+			URLMustParse("https://unknown-instance.com/groups/some_group"),
+			URLMustParse("https://unknown-instance.com/groups/some_group/following"),
+			URLMustParse("https://unknown-instance.com/groups/some_group/followers"),
+			URLMustParse("https://unknown-instance.com/groups/some_group/inbox"),
+			URLMustParse("https://unknown-instance.com/groups/some_group/outbox"),
+			URLMustParse("https://unknown-instance.com/groups/some_group/collections/featured"),
+			"some_group",
+			"This is a group about... something?",
+			"",
+			URLMustParse("https://unknown-instance.com/@some_group"),
+			true,
+			URLMustParse("https://unknown-instance.com/groups/some_group#main-key"),
+			newGroup1Pub,
 			nil,
 			"image/jpeg",
 			nil,
@@ -1391,7 +1422,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	statuses := NewTestStatuses()
 
 	target = URLMustParse(accounts["local_account_1"].URI)
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceZork := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1399,7 +1430,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1407,7 +1438,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesNext := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1415,7 +1446,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0")
-	sig, digest, date = getSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesLast := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
@@ -1430,9 +1461,9 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 }
 
-// getSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// GetSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given activity, public key ID, private key, and destination.
-func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1473,9 +1504,9 @@ func getSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 	return
 }
 
-// getSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
+// GetSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func getSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1686,6 +1717,189 @@ func newPerson(
 	person.SetActivityStreamsImage(headerProperty)
 
 	return person
+}
+
+func newGroup(
+	profileIDURI *url.URL,
+	followingURI *url.URL,
+	followersURI *url.URL,
+	inboxURI *url.URL,
+	outboxURI *url.URL,
+	featuredURI *url.URL,
+	username string,
+	displayName string,
+	note string,
+	profileURL *url.URL,
+	discoverable bool,
+	publicKeyURI *url.URL,
+	pkey *rsa.PublicKey,
+	avatarURL *url.URL,
+	avatarContentType string,
+	headerURL *url.URL,
+	headerContentType string,
+	manuallyApprovesFollowers bool) vocab.ActivityStreamsGroup {
+	group := streams.NewActivityStreamsGroup()
+
+	// id should be the activitypub URI of this group
+	// something like https://example.org/users/example_group
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(profileIDURI)
+	group.SetJSONLDId(idProp)
+
+	// following
+	// The URI for retrieving a list of accounts this group is following
+	followingProp := streams.NewActivityStreamsFollowingProperty()
+	followingProp.SetIRI(followingURI)
+	group.SetActivityStreamsFollowing(followingProp)
+
+	// followers
+	// The URI for retrieving a list of this user's followers
+	followersProp := streams.NewActivityStreamsFollowersProperty()
+	followersProp.SetIRI(followersURI)
+	group.SetActivityStreamsFollowers(followersProp)
+
+	// inbox
+	// the activitypub inbox of this user for accepting messages
+	inboxProp := streams.NewActivityStreamsInboxProperty()
+	inboxProp.SetIRI(inboxURI)
+	group.SetActivityStreamsInbox(inboxProp)
+
+	// outbox
+	// the activitypub outbox of this user for serving messages
+	outboxProp := streams.NewActivityStreamsOutboxProperty()
+	outboxProp.SetIRI(outboxURI)
+	group.SetActivityStreamsOutbox(outboxProp)
+
+	// featured posts
+	// Pinned posts.
+	featuredProp := streams.NewTootFeaturedProperty()
+	featuredProp.SetIRI(featuredURI)
+	group.SetTootFeatured(featuredProp)
+
+	// featuredTags
+	// NOT IMPLEMENTED
+
+	// preferredUsername
+	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
+	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
+	preferredUsernameProp.SetXMLSchemaString(username)
+	group.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+
+	// name
+	// Used as profile display name.
+	nameProp := streams.NewActivityStreamsNameProperty()
+	if displayName != "" {
+		nameProp.AppendXMLSchemaString(displayName)
+	} else {
+		nameProp.AppendXMLSchemaString(username)
+	}
+	group.SetActivityStreamsName(nameProp)
+
+	// summary
+	// Used as profile bio.
+	if note != "" {
+		summaryProp := streams.NewActivityStreamsSummaryProperty()
+		summaryProp.AppendXMLSchemaString(note)
+		group.SetActivityStreamsSummary(summaryProp)
+	}
+
+	// url
+	// Used as profile link.
+	urlProp := streams.NewActivityStreamsUrlProperty()
+	urlProp.AppendIRI(profileURL)
+	group.SetActivityStreamsUrl(urlProp)
+
+	// manuallyApprovesFollowers
+	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
+	manuallyApprovesFollowersProp.Set(manuallyApprovesFollowers)
+	group.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
+
+	// discoverable
+	// Will be shown in the profile directory.
+	discoverableProp := streams.NewTootDiscoverableProperty()
+	discoverableProp.Set(discoverable)
+	group.SetTootDiscoverable(discoverableProp)
+
+	// devices
+	// NOT IMPLEMENTED, probably won't implement
+
+	// alsoKnownAs
+	// Required for Move activity.
+	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+
+	// publicKey
+	// Required for signatures.
+	publicKeyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	// create the public key
+	publicKey := streams.NewW3IDSecurityV1PublicKey()
+
+	// set ID for the public key
+	publicKeyIDProp := streams.NewJSONLDIdProperty()
+	publicKeyIDProp.SetIRI(publicKeyURI)
+	publicKey.SetJSONLDId(publicKeyIDProp)
+
+	// set owner for the public key
+	publicKeyOwnerProp := streams.NewW3IDSecurityV1OwnerProperty()
+	publicKeyOwnerProp.SetIRI(profileIDURI)
+	publicKey.SetW3IDSecurityV1Owner(publicKeyOwnerProp)
+
+	// set the pem key itself
+	encodedPublicKey, err := x509.MarshalPKIXPublicKey(pkey)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: encodedPublicKey,
+	})
+	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
+
+	// append the public key to the public key property
+	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
+
+	// set the public key property on the Person
+	group.SetW3IDSecurityV1PublicKey(publicKeyProp)
+
+	// tag
+	// TODO: Any tags used in the summary of this profile
+
+	// attachment
+	// Used for profile fields.
+	// TODO: The PropertyValue type has to be added: https://schema.org/PropertyValue
+
+	// endpoints
+	// NOT IMPLEMENTED -- this is for shared inbox which we don't use
+
+	// icon
+	// Used as profile avatar.
+	iconProperty := streams.NewActivityStreamsIconProperty()
+	iconImage := streams.NewActivityStreamsImage()
+	mediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(avatarContentType)
+	iconImage.SetActivityStreamsMediaType(mediaType)
+	avatarURLProperty := streams.NewActivityStreamsUrlProperty()
+	avatarURLProperty.AppendIRI(avatarURL)
+	iconImage.SetActivityStreamsUrl(avatarURLProperty)
+	iconProperty.AppendActivityStreamsImage(iconImage)
+	group.SetActivityStreamsIcon(iconProperty)
+
+	// image
+	// Used as profile header.
+	headerProperty := streams.NewActivityStreamsImageProperty()
+	headerImage := streams.NewActivityStreamsImage()
+	headerMediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(headerContentType)
+	headerImage.SetActivityStreamsMediaType(headerMediaType)
+	headerURLProperty := streams.NewActivityStreamsUrlProperty()
+	headerURLProperty.AppendIRI(headerURL)
+	headerImage.SetActivityStreamsUrl(headerURLProperty)
+	headerProperty.AppendActivityStreamsImage(headerImage)
+	group.SetActivityStreamsImage(headerProperty)
+
+	return group
 }
 
 func newMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention {

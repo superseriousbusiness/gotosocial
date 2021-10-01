@@ -109,9 +109,20 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 	return nil
 }
 
-func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest, receivingAccount *gtsmodel.Account) error {
+func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
+	// make sure we have the target account pinned on the follow request
+	if followRequest.TargetAccount == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		if err != nil {
+			return err
+		}
+		followRequest.TargetAccount = a
+	}
+	targetAccount := followRequest.TargetAccount
+
 	// return if this isn't a local account
-	if receivingAccount.Domain != "" {
+	if targetAccount.Domain != "" {
+		// this isn't a local account so we've got nothing to do here
 		return nil
 	}
 
@@ -137,7 +148,7 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, receivingAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -190,8 +201,17 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	return nil
 }
 
-func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave, targetAccount *gtsmodel.Account) error {
-	// return if this isn't a local account
+func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
+	if fave.TargetAccount == nil {
+		a, err := p.db.GetAccountByID(ctx, fave.TargetAccountID)
+		if err != nil {
+			return err
+		}
+		fave.TargetAccount = a
+	}
+	targetAccount := fave.TargetAccount
+
+	// just return if target isn't a local account
 	if targetAccount.Domain != "" {
 		return nil
 	}

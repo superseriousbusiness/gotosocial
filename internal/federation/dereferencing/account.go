@@ -165,16 +165,28 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 	}
 
 	switch t.GetTypeName() {
-	case ap.ActorPerson:
-		p, ok := t.(vocab.ActivityStreamsPerson)
-		if !ok {
-			return nil, errors.New("DereferenceAccountable: error resolving type as activitystreams person")
-		}
-		return p, nil
 	case ap.ActorApplication:
 		p, ok := t.(vocab.ActivityStreamsApplication)
 		if !ok {
 			return nil, errors.New("DereferenceAccountable: error resolving type as activitystreams application")
+		}
+		return p, nil
+	case ap.ActorGroup:
+		p, ok := t.(vocab.ActivityStreamsGroup)
+		if !ok {
+			return nil, errors.New("DereferenceAccountable: error resolving type as activitystreams group")
+		}
+		return p, nil
+	case ap.ActorOrganization:
+		p, ok := t.(vocab.ActivityStreamsOrganization)
+		if !ok {
+			return nil, errors.New("DereferenceAccountable: error resolving type as activitystreams organization")
+		}
+		return p, nil
+	case ap.ActorPerson:
+		p, ok := t.(vocab.ActivityStreamsPerson)
+		if !ok {
+			return nil, errors.New("DereferenceAccountable: error resolving type as activitystreams person")
 		}
 		return p, nil
 	case ap.ActorService:

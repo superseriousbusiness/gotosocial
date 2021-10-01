@@ -72,6 +72,8 @@ const (
 	APRequestingActorIRI APContextKey = "requestingActorIRI"
 	// APRequestingPublicKeyVerifier can be used to set and retrieve the public key verifier of an incoming federation request.
 	APRequestingPublicKeyVerifier APContextKey = "requestingPublicKeyVerifier"
+	// APRequestingPublicKeySignature can be used to set and retrieve the value of the signature header of an incoming federation request.
+	APRequestingPublicKeySignature APContextKey = "requestingPublicKeySignature"
 	// APFromFederatorChanKey can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
 	APFromFederatorChanKey APContextKey = "fromFederatorChan"
 )

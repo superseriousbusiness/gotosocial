@@ -23,12 +23,12 @@ import "time"
 // Instance represents a federated instance, either local or remote.
 type Instance struct {
 	ID                     string       `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                     // id of this item in the database
-	CreatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item created
-	UpdatedAt              time.Time    `validate:"-" bun:"type:timestamp,nullzero,notnull,default:current_timestamp"`                // when was item last updated
+	CreatedAt              time.Time    `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`              // when was item created
+	UpdatedAt              time.Time    `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`              // when was item last updated
 	Domain                 string       `validate:"required,fqdn" bun:",nullzero,notnull,unique"`                                     // Instance domain eg example.org
 	Title                  string       `validate:"-" bun:""`                                                                         // Title of this instance as it would like to be displayed.
 	URI                    string       `validate:"required,url" bun:",nullzero,notnull,unique"`                                      // base URI of this instance eg https://example.org
-	SuspendedAt            time.Time    `validate:"-" bun:"type:timestamp,nullzero"`                                                  // When was this instance suspended, if at all?
+	SuspendedAt            time.Time    `validate:"-" bun:"type:timestamptz,nullzero"`                                                // When was this instance suspended, if at all?
 	DomainBlockID          string       `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                      // ID of any existing domain block for this instance in the database
 	DomainBlock            *DomainBlock `validate:"-" bun:"rel:belongs-to"`                                                           // Domain block corresponding to domainBlockID
 	ShortDescription       string       `validate:"-" bun:""`                                                                         // Short description of this instance

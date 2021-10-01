@@ -19,9 +19,15 @@
 package processing_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net/http"
 
 	"git.iim.gay/grufwub/go-store/kv"
+	"github.com/go-fed/activity/streams"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -62,6 +68,9 @@ type ProcessingStandardTestSuite struct {
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
 	testAutheds      map[string]*oauth.Auth
+	testBlocks       map[string]*gtsmodel.Block
+
+	sentHTTPRequests map[string][]byte
 
 	processor processing.Processor
 }
@@ -83,6 +92,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 			Account:     suite.testAccounts["local_account_1"],
 		},
 	}
+	suite.testBlocks = testrig.NewTestBlocks()
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
@@ -91,7 +101,62 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
-	suite.transportController = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
+
+	// make an http client that stores POST requests it receives into a map,
+	// and also responds to correctly to dereference requests
+	suite.sentHTTPRequests = make(map[string][]byte)
+	httpClient := testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		if req.Method == http.MethodPost && req.Body != nil {
+			requestBytes, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				panic(err)
+			}
+			if err := req.Body.Close(); err != nil {
+				panic(err)
+			}
+			suite.sentHTTPRequests[req.URL.String()] = requestBytes
+		}
+
+		if req.URL.String() == suite.testAccounts["remote_account_1"].URI {
+			// the request is for remote account 1
+			satan := suite.testAccounts["remote_account_1"]
+
+			satanAS, err := suite.typeconverter.AccountToAS(context.Background(), satan)
+			if err != nil {
+				panic(err)
+			}
+
+			satanI, err := streams.Serialize(satanAS)
+			if err != nil {
+				panic(err)
+			}
+			satanJson, err := json.Marshal(satanI)
+			if err != nil {
+				panic(err)
+			}
+			responseType := "application/activity+json"
+
+			reader := bytes.NewReader(satanJson)
+			readCloser := io.NopCloser(reader)
+			response := &http.Response{
+				StatusCode:    200,
+				Body:          readCloser,
+				ContentLength: int64(len(satanJson)),
+				Header: http.Header{
+					"content-type": {responseType},
+				},
+			}
+			return response, nil
+		}
+
+		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+		return &http.Response{
+			StatusCode: 200,
+			Body:       r,
+		}, nil
+	})
+
+	suite.transportController = testrig.NewTestTransportController(httpClient, suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
