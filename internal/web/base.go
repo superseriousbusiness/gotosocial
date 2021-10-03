@@ -127,11 +127,11 @@ func (m *Module) Route(s router.Router) error {
 	for _, script := range []string{"react.production.min.js", "react-dom-server.min.js"} {
 		text, err := ioutil.ReadFile(filepath.Join(assetPath, script))
 		if err != nil {
-			l.Errorf("Unable to read templating React file %s: %s", script, err)
+			l.Errorf("Unable to load web asset %s: %s", script, err)
 		}
 		_, err = m.jsVM.RunScript(script, string(text))
 		if err != nil {
-			l.Errorf("Unable to load templating React file %s: %s", script, err)
+			l.Errorf("Unable to load web asset %s: %s", script, err)
 		}
 	}
 
@@ -139,13 +139,23 @@ func (m *Module) Route(s router.Router) error {
 		l.Errorf("Error with Goja jsVM: %s", err)
 	}
 
-	template, _ := ioutil.ReadFile(filepath.Join(assetPath, "bundle.js"))
+	template, err := ioutil.ReadFile(filepath.Join(assetPath, "bundle.js"))
+	if err != nil {
+		l.Errorf("Unable to load web asset bundle.js: %s", err)
+	}
 	if _, err = m.jsVM.RunScript("bundle.js", string(template)); err != nil {
 		l.Errorf("Error with Goja jsVM: %s", err)
 	}
 
 	if _, err = m.jsVM.RunString("var reactGo = self.reactGo"); err != nil {
 		l.Errorf("Error with Goja jsVM: %s", err)
+	}
+
+	val, err := m.jsVM.RunString(" 'React: ' + React.version + ', ReactDOMServer: ' + ReactDOMServer.version ")
+	if err != nil {
+		l.Errorf("Error with Goja jsVM: %v", err.(*goja.Exception).String())
+	} else {
+		fmt.Printf("loaded libraries: %s\n", val.Export().(string))
 	}
 
 	s.AttachHandler(http.MethodGet, "/react", m.reactTest)
