@@ -2,6 +2,18 @@ package stream
 
 import "sync"
 
+// EventType models a type of stream event.
+type EventType string
+
+const (
+	// EventTypeNotification -- a user should be shown a notification
+	EventTypeNotification EventType = "notification"
+	// EventTypeUpdate -- a user should be shown an update in their timeline
+	EventTypeUpdate EventType = "update"
+	// EventTypeDelete -- something should be deleted from a user
+	EventTypeDelete EventType = "delete"
+)
+
 // StreamsForAccount is a wrapper for the multiple streams that one account can have running at the same time.
 // TODO: put a limit on this
 type StreamsForAccount struct {

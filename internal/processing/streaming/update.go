@@ -19,33 +19,19 @@
 package streaming
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error) {
-	ti, err := p.oauthServer.LoadAccessToken(context.Background(), accessToken)
+func (p *processor) StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account) error {
+	bytes, err := json.Marshal(s)
 	if err != nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: error loading access token: %s", err)
+		return fmt.Errorf("error marshalling status to json: %s", err)
 	}
 
-	uid := ti.GetUserID()
-	if uid == "" {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no userid in token")
-	}
-
-	// fetch user's and account for this user id
-	user := &gtsmodel.User{}
-	if err := p.db.GetByID(ctx, uid, user); err != nil || user == nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no user found for validated uid %s", uid)
-	}
-
-	acct, err := p.db.GetAccountByID(ctx, user.AccountID)
-	if err != nil || acct == nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no account retrieved for user with id %s", uid)
-	}
-
-	return acct, nil
+	return p.streamToAccount(string(bytes), stream.EventTypeUpdate, account.ID)
 }
