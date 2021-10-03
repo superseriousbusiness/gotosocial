@@ -60,34 +60,24 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 
 	l.Debugf("received UPDATE asType %s", string(b))
 
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		// If the target account wasn't set on the context, that means this request didn't pass through the
-		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
+	if err != nil {
+		return err
+	}
+	if targetAcct == nil || fromFederatorChan == nil {
+		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
 	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("UPDATE: target account was set on context but couldn't be parsed")
-	}
 
 	requestingAcctI := ctx.Value(util.APRequestingAccount)
-	if targetAcctI == nil {
+	if requestingAcctI == nil {
 		l.Error("UPDATE: requesting account wasn't set on context")
 	}
 	requestingAcct, ok := requestingAcctI.(*gtsmodel.Account)
 	if !ok {
 		l.Error("UPDATE: requesting account was set on context but couldn't be parsed")
-	}
-
-	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-	if fromFederatorChanI == nil {
-		l.Error("UPDATE: from federator channel wasn't set on context")
-	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
-	if !ok {
-		l.Error("UPDATE: from federator channel was set on context but couldn't be parsed")
 	}
 
 	typeName := asType.GetTypeName()

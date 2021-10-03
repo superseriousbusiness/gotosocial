@@ -22,8 +22,8 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/sirupsen/logrus"
 )
 
 // Liked obtains the Liked Collection for an actor with the
@@ -32,13 +32,8 @@ import (
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
+//
+// Implementation note: we don't serve a Liked collection *yet* so just return an empty collection for now.
 func (f *federatingDB) Liked(c context.Context, actorIRI *url.URL) (liked vocab.ActivityStreamsCollection, err error) {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func":     "Liked",
-			"actorIRI": actorIRI.String(),
-		},
-	)
-	l.Debugf("entering LIKED function with actorIRI %s", actorIRI.String())
-	return nil, nil
+	return streams.NewActivityStreamsCollection(), nil
 }

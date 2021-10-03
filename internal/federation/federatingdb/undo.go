@@ -30,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
@@ -50,16 +49,14 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 	}
 	l.Debugf("received UNDO asType %s", string(b))
 
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		// If the target account wasn't set on the context, that means this request didn't pass through the
-		// API, but came from inside GtS as the result of another activity on this instance. That being so,
-		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
+	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
+	if err != nil {
+		return err
 	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("UNDO: target account was set on context but couldn't be parsed")
+	if targetAcct == nil || fromFederatorChan == nil {
+		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
+		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
 	}
 

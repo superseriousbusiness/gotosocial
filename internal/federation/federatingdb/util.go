@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -201,48 +202,115 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func":     "ActorForOutbox",
-			"inboxIRI": outboxIRI.String(),
-		},
-	)
-	l.Debugf("entering ACTORFOROUTBOX function with outboxIRI %s", outboxIRI.String())
-
-	if !util.IsOutboxPath(outboxIRI) {
-		return nil, fmt.Errorf("%s is not an outbox URI", outboxIRI.String())
+	acct, err := f.getAccountForIRI(ctx, outboxIRI)
+	if err != nil {
+		return nil, err
 	}
-	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: outboxIRI.String()}}, acct); err != nil {
-		if err == db.ErrNoEntries {
-			return nil, fmt.Errorf("no actor found that corresponds to outbox %s", outboxIRI.String())
-		}
-		return nil, fmt.Errorf("db error searching for actor with outbox %s", outboxIRI.String())
-	}
-	return url.Parse(acct.URI)
+	return url.Parse(acct.URL)
 }
 
 // ActorForInbox fetches the actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func":     "ActorForInbox",
-			"inboxIRI": inboxIRI.String(),
-		},
-	)
-	l.Debugf("entering ACTORFORINBOX function with inboxIRI %s", inboxIRI.String())
+	acct, err := f.getAccountForIRI(ctx, inboxIRI)
+	if err != nil {
+		return nil, err
+	}
+	return url.Parse(acct.URL)
+}
 
-	if !util.IsInboxPath(inboxIRI) {
-		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
-	}
+// getAccountForIRI returns the account that corresponds to or owns the given IRI.
+func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (account *gtsmodel.Account, err error) {
 	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
-		if err == db.ErrNoEntries {
-			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
+
+	if util.IsInboxPath(iri) {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: iri.String()}}, acct); err != nil {
+			if err == db.ErrNoEntries {
+				return nil, fmt.Errorf("no actor found that corresponds to inbox %s", iri.String())
+			}
+			return nil, fmt.Errorf("db error searching for actor with inbox %s", iri.String())
 		}
-		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
+		return acct, nil
 	}
-	return url.Parse(acct.URI)
+
+	if util.IsOutboxPath(iri) {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "outbox_uri", Value: iri.String()}}, acct); err != nil {
+			if err == db.ErrNoEntries {
+				return nil, fmt.Errorf("no actor found that corresponds to outbox %s", iri.String())
+			}
+			return nil, fmt.Errorf("db error searching for actor with outbox %s", iri.String())
+		}
+		return acct, nil
+	}
+
+	if util.IsUserPath(iri) {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: iri.String()}}, acct); err != nil {
+			if err == db.ErrNoEntries {
+				return nil, fmt.Errorf("no actor found that corresponds to uri %s", iri.String())
+			}
+			return nil, fmt.Errorf("db error searching for actor with uri %s", iri.String())
+		}
+		return acct, nil
+	}
+
+	if util.IsFollowersPath(iri) {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: iri.String()}}, acct); err != nil {
+			if err == db.ErrNoEntries {
+				return nil, fmt.Errorf("no actor found that corresponds to followers_uri %s", iri.String())
+			}
+			return nil, fmt.Errorf("db error searching for actor with followers_uri %s", iri.String())
+		}
+		return acct, nil
+	}
+
+	if util.IsFollowingPath(iri) {
+		if err := f.db.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: iri.String()}}, acct); err != nil {
+			if err == db.ErrNoEntries {
+				return nil, fmt.Errorf("no actor found that corresponds to following_uri %s", iri.String())
+			}
+			return nil, fmt.Errorf("db error searching for actor with following_uri %s", iri.String())
+		}
+		return acct, nil
+	}
+
+	return nil, fmt.Errorf("getActorForIRI: iri %s not recognised", iri)
+}
+
+// collectFollows takes a slice of iris and converts them into ActivityStreamsCollection of IRIs.
+func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.ActivityStreamsCollection, error) {
+	collection := streams.NewActivityStreamsCollection()
+	items := streams.NewActivityStreamsItemsProperty()
+	for _, i := range iris {
+		items.AppendIRI(i)
+	}
+	collection.SetActivityStreamsItems(items)
+	return collection, nil
+}
+
+// extractFromCtx extracts some useful values from a context passed into the federatingDB via the API:
+//   - The target account that owns the inbox or URI being interacted with.
+//   - A channel that messages for the processor can be placed into.
+func extractFromCtx(ctx context.Context) (*gtsmodel.Account, chan messages.FromFederator, error) {
+	var targetAcct *gtsmodel.Account
+	targetAcctI := ctx.Value(util.APAccount)
+	if targetAcctI != nil {
+		var ok bool
+		targetAcct, ok = targetAcctI.(*gtsmodel.Account)
+		if !ok {
+			return nil, nil, errors.New("extractFromCtx: account value in context not parseable")
+		}
+	}
+
+	var fromFederatorChan chan messages.FromFederator
+	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
+	if fromFederatorChanI != nil {
+		var ok bool
+		fromFederatorChan, ok = fromFederatorChanI.(chan messages.FromFederator)
+		if !ok {
+			return nil, nil, errors.New("extractFromCtx: fromFederatorChan value in context not parseable")
+		}
+	}
+
+	return targetAcct, fromFederatorChan, nil
 }

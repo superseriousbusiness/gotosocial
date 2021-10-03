@@ -41,37 +41,27 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			"asType": accept.GetTypeName(),
 		},
 	)
-	m, err := streams.Serialize(accept)
-	if err != nil {
-		return err
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-	l.Debugf("received ACCEPT asType %s", string(b))
 
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		// If the target account wasn't set on the context, that means this request didn't pass through the
-		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+	if l.Level >= logrus.DebugLevel {
+		m, err := streams.Serialize(accept)
+		if err != nil {
+			return err
+		}
+		b, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		l.Debugf("received ACCEPT asType %s", string(b))
+	}
+
+	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
+	if err != nil {
+		return err
+	}
+	if targetAcct == nil || fromFederatorChan == nil {
+		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
-	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("ACCEPT: target account was set on context but couldn't be parsed")
-		return nil
-	}
-
-	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-	if fromFederatorChanI == nil {
-		l.Error("ACCEPT: from federator channel wasn't set on context")
-		return nil
-	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
-	if !ok {
-		l.Error("ACCEPT: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 
