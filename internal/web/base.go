@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -73,13 +72,32 @@ func (m *Module) reactTest(c *gin.Context) {
 	l := m.log.WithField("func", "ReactTestHandler")
 	l.Trace("rendering")
 
-	_ = m.jsVM.Set("timestamp", time.Now().String())
+	instance, gtserr := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
+	if gtserr != nil {
+		l.Debugf("error getting instance from processor: %s", gtserr)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
 
-	val, _ := m.jsVM.RunString("ReactDOMServer.renderToString(reactGo({context: timestamp}))")
+	err := m.jsVM.Set("instance", instance)
+	if err != nil {
+		l.Errorf("Error: %s", err)
+	}
 
-	fmt.Printf("output: %s\n", val.Export().(string))
+	val, err := m.jsVM.RunString("JSON.stringify(instance)")
+	if err != nil {
+		l.Errorf("Error with Goja jsVM: %v", err.(*goja.Exception).String())
 
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(val.Export().(string)))
+		fmt.Printf("Instance: %s\n", val.Export().(string))
+	}
+
+	if val, err := m.jsVM.RunString("ReactDOMServer.renderToStaticMarkup(reactGo.TemplateIndex({instance}))"); err != nil {
+		l.Errorf("Error with Goja jsVM: %s", err)
+	} else {
+		fmt.Printf("output: %s\n", val.Export().(string))
+
+		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte("<!DOCTYPE html>\n"+val.Export().(string)))
+	}
 }
 
 // NotFoundHandler serves a 404 html page instead of a blank 404 error.
@@ -151,7 +169,7 @@ func (m *Module) Route(s router.Router) error {
 		l.Errorf("Error with Goja jsVM: %s", err)
 	}
 
-	val, err := m.jsVM.RunString(" 'React: ' + React.version + ', ReactDOMServer: ' + ReactDOMServer.version ")
+	val, err := m.jsVM.RunString(" 'React: ' + React.version + ', ReactDOMServer: ' + ReactDOMServer.version + 'reactGo functions: ' + Object.keys(reactGo).join(', ') ")
 	if err != nil {
 		l.Errorf("Error with Goja jsVM: %v", err.(*goja.Exception).String())
 	} else {
