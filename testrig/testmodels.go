@@ -58,7 +58,7 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 		"local_account_2": {
 			ID:              "01F8MGVVM1EDVYET710J27XY5R",
 			ClientID:        "01F8MGW47HN8ZXNHNZ7E47CDMQ",
-			UserID:          "01F8MGWAPB4GJ42M4N0TCZSQ7K",
+			UserID:          "01F8MH1VYJAE00TVVGMM5JNJ8X",
 			RedirectURI:     "http://localhost:8080",
 			Scope:           "read write follow push",
 			Access:          "PIPINALKNNNFNF98717NAMNAMNFKIJKJ881818KJKJAKJJJA",
@@ -88,7 +88,7 @@ func NewTestClients() map[string]*gtsmodel.Client {
 			ID:     "01F8MGW47HN8ZXNHNZ7E47CDMQ",
 			Secret: "8f5603a5-c721-46cd-8f1b-2e368f51379f",
 			Domain: "http://localhost:8080",
-			UserID: "01F8MGWAPB4GJ42M4N0TCZSQ7K", // local_account_2
+			UserID: "01F8MH1VYJAE00TVVGMM5JNJ8X", // local_account_2
 		},
 	}
 	return clients
@@ -420,7 +420,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Note:                  "i post about like, i dunno, stuff, or whatever!!!!",
 			Memorial:              false,
 			MovedToAccountID:      "",
-			CreatedAt:             time.Now().Add(-190 * time.Hour),
+			CreatedAt:             TimeMustParse("2021-09-26T12:52:36+02:00"),
 			UpdatedAt:             time.Now().Add(-36 * time.Hour),
 			Bot:                   false,
 			Locked:                false,
