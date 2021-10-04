@@ -19,7 +19,6 @@
 package model
 
 // OAuthAuthorize represents a request sent to https://example.org/oauth/authorize
-// See here: https://docs.joinmastodon.org/methods/apps/oauth/
 type OAuthAuthorize struct {
 	// Forces the user to re-login, which is necessary for authorizing with multiple accounts from the same instance.
 	ForceLogin string `form:"force_login" json:"force_login"`

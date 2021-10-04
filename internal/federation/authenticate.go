@@ -185,13 +185,13 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 
 		// The actual http call to the remote server is made right here in the Dereference function.
-		b, err := transport.Dereference(context.Background(), requestingPublicKeyID)
+		b, err := transport.Dereference(ctx, requestingPublicKeyID)
 		if err != nil {
 			return nil, false, fmt.Errorf("error deferencing key %s: %s", requestingPublicKeyID.String(), err)
 		}
 
 		// if the key isn't in the response, we can't authenticate the request
-		requestingPublicKey, err := getPublicKeyFromResponse(context.Background(), b, requestingPublicKeyID)
+		requestingPublicKey, err := getPublicKeyFromResponse(ctx, b, requestingPublicKeyID)
 		if err != nil {
 			return nil, false, fmt.Errorf("error getting key %s from response %s: %s", requestingPublicKeyID.String(), string(b), err)
 		}

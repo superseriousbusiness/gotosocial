@@ -16,18 +16,26 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package streaming_test
 
-// IdentityProof represents a proof from an external identity provider. See https://docs.joinmastodon.org/entities/identityproof/
-type IdentityProof struct {
-	// The name of the identity provider.
-	Provider string `json:"provider"`
-	// The account owner's username on the identity provider's service.
-	ProviderUsername string `json:"provider_username"`
-	// The account owner's profile URL on the identity provider.
-	ProfileURL string `json:"profile_url"`
-	// A link to a statement of identity proof, hosted by the identity provider.
-	ProofURL string `json:"proof_url"`
-	// When the identity proof was last updated.
-	UpdatedAt string `json:"updated_at"`
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+)
+
+type OpenStreamTestSuite struct {
+	StreamingTestSuite
+}
+
+func (suite *OpenStreamTestSuite) TestOpenStream() {
+	account := suite.testAccounts["local_account_1"]
+
+	_, errWithCode := suite.streamingProcessor.OpenStreamForAccount(context.Background(), account, "user")
+	suite.NoError(errWithCode)
+}
+
+func TestOpenStreamTestSuite(t *testing.T) {
+	suite.Run(t, &OpenStreamTestSuite{})
 }

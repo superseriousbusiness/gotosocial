@@ -61,14 +61,14 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 	}
 	emoji.ID = emojiID
 
-	mastoEmoji, err := p.tc.EmojiToMasto(ctx, emoji)
+	apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, emoji)
 	if err != nil {
-		return nil, fmt.Errorf("error converting emoji to mastotype: %s", err)
+		return nil, fmt.Errorf("error converting emoji to apitype: %s", err)
 	}
 
 	if err := p.db.Put(ctx, emoji); err != nil {
 		return nil, fmt.Errorf("database error while processing emoji: %s", err)
 	}
 
-	return &mastoEmoji, nil
+	return &apiEmoji, nil
 }

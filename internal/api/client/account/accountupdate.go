@@ -139,7 +139,7 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	l.Tracef("conversion successful, returning OK and mastosensitive account %+v", acctSensitive)
+	l.Tracef("conversion successful, returning OK and apisensitive account %+v", acctSensitive)
 	c.JSON(http.StatusOK, acctSensitive)
 }
 

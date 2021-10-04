@@ -16,35 +16,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package admin
+package streaming
 
 import (
-	"context"
+	"encoding/json"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
-	domainBlocks := []*gtsmodel.DomainBlock{}
-
-	if err := p.db.GetAll(ctx, &domainBlocks); err != nil {
-		if err != db.ErrNoEntries {
-			// something has gone really wrong
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+func (p *processor) StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account) error {
+	bytes, err := json.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("error marshalling status to json: %s", err)
 	}
 
-	apiDomainBlocks := []*apimodel.DomainBlock{}
-	for _, b := range domainBlocks {
-		apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, b, export)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		apiDomainBlocks = append(apiDomainBlocks, apiDomainBlock)
-	}
-
-	return apiDomainBlocks, nil
+	return p.streamToAccount(string(bytes), stream.EventTypeUpdate, account.ID)
 }

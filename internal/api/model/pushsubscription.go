@@ -18,7 +18,7 @@
 
 package model
 
-// PushSubscription represents a subscription to the push streaming server. See https://docs.joinmastodon.org/entities/pushsubscription/
+// PushSubscription represents a subscription to the push streaming server.
 type PushSubscription struct {
 	// The id of the push subscription in the database.
 	ID string `json:"id"`

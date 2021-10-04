@@ -20,16 +20,12 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
@@ -38,38 +34,24 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 			"func": "Announce",
 		},
 	)
-	m, err := streams.Serialize(announce)
+
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(announce)
+		if err != nil {
+			return err
+		}
+		l = l.WithField("announce", i)
+		l.Debug("entering Announce")
+	}
+
+	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {
 		return err
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	l.Debugf("received ANNOUNCE %s", string(b))
-
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		// If the target account wasn't set on the context, that means this request didn't pass through the
-		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+	if targetAcct == nil || fromFederatorChan == nil {
+		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
-	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("ANNOUNCE: target account was set on context but couldn't be parsed")
-		return nil
-	}
-
-	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-	if fromFederatorChanI == nil {
-		l.Error("ANNOUNCE: from federator channel wasn't set on context")
-		return nil
-	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
-	if !ok {
-		l.Error("ANNOUNCE: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 

@@ -60,7 +60,7 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	}
 
 	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, application.ID)
-	accessToken, err := p.oauthServer.GenerateUserAccessToken(applicationToken, application.ClientSecret, user.ID)
+	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, applicationToken, application.ClientSecret, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)
 	}

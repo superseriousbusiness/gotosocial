@@ -43,58 +43,58 @@ const (
 // That said, it *absolutely should not* manipulate database entries in any way, only examine them.
 type TypeConverter interface {
 	/*
-		INTERNAL (gts) MODEL TO FRONTEND (mastodon) MODEL
+		INTERNAL (gts) MODEL TO FRONTEND (api) MODEL
 	*/
 
-	// AccountToMastoSensitive takes a db model account as a param, and returns a populated mastotype account, or an error
+	// AccountToAPIAccountSensitive takes a db model account as a param, and returns a populated apitype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may have sensitive fields,
 	// so serve it only to an authorized user who should have permission to see it.
-	AccountToMastoSensitive(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
-	// AccountToMastoPublic takes a db model account as a param, and returns a populated mastotype account, or an error
+	AccountToAPIAccountSensitive(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	// AccountToAPIAccountPublic takes a db model account as a param, and returns a populated apitype account, or an error
 	// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 	// In other words, this is the public record that the server has of an account.
-	AccountToMastoPublic(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
-	// AccountToMastoBlocked takes a db model account as a param, and returns a mastotype account, or an error if
+	AccountToAPIAccountPublic(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	// AccountToAPIAccountBlocked takes a db model account as a param, and returns a apitype account, or an error if
 	// something goes wrong. The returned account will be a bare minimum representation of the account. This function should be used
 	// when someone wants to view an account they've blocked.
-	AccountToMastoBlocked(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
-	// AppToMastoSensitive takes a db model application as a param, and returns a populated mastotype application, or an error
+	AccountToAPIAccountBlocked(ctx context.Context, account *gtsmodel.Account) (*model.Account, error)
+	// AppToAPIAppSensitive takes a db model application as a param, and returns a populated apitype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 	// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
-	AppToMastoSensitive(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
-	// AppToMastoPublic takes a db model application as a param, and returns a populated mastotype application, or an error
+	AppToAPIAppSensitive(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
+	// AppToAPIAppPublic takes a db model application as a param, and returns a populated apitype application, or an error
 	// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
 	// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
-	AppToMastoPublic(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
-	// AttachmentToMasto converts a gts model media attacahment into its mastodon representation for serialization on the API.
-	AttachmentToMasto(ctx context.Context, attachment *gtsmodel.MediaAttachment) (model.Attachment, error)
-	// MentionToMasto converts a gts model mention into its mastodon (frontend) representation for serialization on the API.
-	MentionToMasto(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error)
-	// EmojiToMasto converts a gts model emoji into its mastodon (frontend) representation for serialization on the API.
-	EmojiToMasto(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error)
-	// TagToMasto converts a gts model tag into its mastodon (frontend) representation for serialization on the API.
-	TagToMasto(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error)
-	// StatusToMasto converts a gts model status into its mastodon (frontend) representation for serialization on the API.
+	AppToAPIAppPublic(ctx context.Context, application *gtsmodel.Application) (*model.Application, error)
+	// AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
+	AttachmentToAPIAttachment(ctx context.Context, attachment *gtsmodel.MediaAttachment) (model.Attachment, error)
+	// MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
+	MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (model.Mention, error)
+	// EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
+	EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (model.Emoji, error)
+	// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
+	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag, error)
+	// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
 	//
 	// Requesting account can be nil.
-	StatusToMasto(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error)
-	// VisToMasto converts a gts visibility into its mastodon equivalent
-	VisToMasto(ctx context.Context, m gtsmodel.Visibility) model.Visibility
-	// InstanceToMasto converts a gts instance into its mastodon equivalent for serving at /api/v1/instance
-	InstanceToMasto(ctx context.Context, i *gtsmodel.Instance) (*model.Instance, error)
-	// RelationshipToMasto converts a gts relationship into its mastodon equivalent for serving in various places
-	RelationshipToMasto(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error)
-	// NotificationToMasto converts a gts notification into a mastodon notification
-	NotificationToMasto(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error)
-	// DomainBlockTomasto converts a gts model domin block into a mastodon domain block, for serving at /api/v1/admin/domain_blocks
-	DomainBlockToMasto(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
+	StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error)
+	// VisToAPIVis converts a gts visibility into its api equivalent
+	VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) model.Visibility
+	// InstanceToAPIInstance converts a gts instance into its api equivalent for serving at /api/v1/instance
+	InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Instance) (*model.Instance, error)
+	// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
+	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*model.Relationship, error)
+	// NotificationToAPINotification converts a gts notification into a api notification
+	NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*model.Notification, error)
+	// DomainBlockToAPIDomainBlock converts a gts model domin block into a api domain block, for serving at /api/v1/admin/domain_blocks
+	DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error)
 
 	/*
-		FRONTEND (mastodon) MODEL TO INTERNAL (gts) MODEL
+		FRONTEND (api) MODEL TO INTERNAL (gts) MODEL
 	*/
 
-	// MastoVisToVis converts a mastodon visibility into its gts equivalent.
-	MastoVisToVis(m model.Visibility) gtsmodel.Visibility
+	// APIVisToVis converts an API model visibility into its internal gts equivalent.
+	APIVisToVis(m model.Visibility) gtsmodel.Visibility
 
 	/*
 		ACTIVITYSTREAMS MODEL TO INTERNAL (gts) MODEL

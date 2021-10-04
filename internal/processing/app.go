@@ -29,7 +29,7 @@ import (
 )
 
 func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error) {
-	// set default 'read' for scopes if it's not set, this follows the default of the mastodon api https://docs.joinmastodon.org/methods/apps/
+	// set default 'read' for scopes if it's not set
 	var scopes string
 	if form.Scopes == "" {
 		scopes = "read"
@@ -78,10 +78,10 @@ func (p *processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		return nil, err
 	}
 
-	mastoApp, err := p.tc.AppToMastoSensitive(ctx, app)
+	apiApp, err := p.tc.AppToAPIAppSensitive(ctx, app)
 	if err != nil {
 		return nil, err
 	}
 
-	return mastoApp, nil
+	return apiApp, nil
 }

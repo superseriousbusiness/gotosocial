@@ -36,10 +36,10 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Owns",
-			"id":   id.String(),
+			"id":   id,
 		},
 	)
-	l.Tracef("entering OWNS function with id %s", id.String())
+	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI
 	if id.Host != f.config.Host {

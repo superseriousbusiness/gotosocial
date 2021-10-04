@@ -55,7 +55,7 @@ type Server interface {
 	HandleTokenRequest(w http.ResponseWriter, r *http.Request) error
 	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
-	GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
+	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
 	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
 }
 
@@ -66,8 +66,8 @@ type s struct {
 }
 
 // New returns a new oauth server that implements the Server interface
-func New(database db.Basic, log *logrus.Logger) Server {
-	ts := newTokenStore(context.Background(), database, log)
+func New(ctx context.Context, database db.Basic, log *logrus.Logger) Server {
+	ts := newTokenStore(ctx, database, log)
 	cs := NewClientStore(database)
 
 	manager := manage.NewDefaultManager()
@@ -138,9 +138,9 @@ func (s *s) ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 //
 // The ti parameter refers to an existing Application token that was used to make the upstream
 // request. This token needs to be validated and exist in database in order to create a new token.
-func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, userID string) (oauth2.TokenInfo, error) {
+func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (oauth2.TokenInfo, error) {
 
-	authToken, err := s.server.Manager.GenerateAuthToken(context.Background(), oauth2.Code, &oauth2.TokenGenerateRequest{
+	authToken, err := s.server.Manager.GenerateAuthToken(ctx, oauth2.Code, &oauth2.TokenGenerateRequest{
 		ClientID:     ti.GetClientID(),
 		ClientSecret: clientSecret,
 		UserID:       userID,
@@ -155,7 +155,7 @@ func (s *s) GenerateUserAccessToken(ti oauth2.TokenInfo, clientSecret string, us
 	}
 	s.log.Tracef("obtained auth token: %+v", authToken)
 
-	accessToken, err := s.server.Manager.GenerateAccessToken(context.Background(), oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
+	accessToken, err := s.server.Manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
 		ClientID:     authToken.GetClientID(),
 		ClientSecret: clientSecret,
 		RedirectURI:  authToken.GetRedirectURI(),

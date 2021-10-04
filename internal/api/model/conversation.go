@@ -18,7 +18,7 @@
 
 package model
 
-// Conversation represents a conversation with "direct message" visibility. See https://docs.joinmastodon.org/entities/conversation/
+// Conversation represents a conversation with "direct message" visibility.
 type Conversation struct {
 	// REQUIRED
 

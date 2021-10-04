@@ -29,14 +29,15 @@ import (
 // id. It may not be owned by this application instance.
 //
 // The library makes this call only after acquiring a lock first.
+//
+// Implementation note: this just straight up isn't implemented, and doesn't *really* need to be either.
 func (f *federatingDB) Exists(c context.Context, id *url.URL) (exists bool, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Exists",
-			"id":   id.String(),
+			"id":   id,
 		},
 	)
-	l.Debugf("entering EXISTS function with id %s", id.String())
-
+	l.Debug("entering Exists")
 	return false, nil
 }

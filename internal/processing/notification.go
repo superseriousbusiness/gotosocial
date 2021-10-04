@@ -34,15 +34,15 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, li
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	mastoNotifs := []*apimodel.Notification{}
+	apiNotifs := []*apimodel.Notification{}
 	for _, n := range notifs {
-		mastoNotif, err := p.tc.NotificationToMasto(ctx, n)
+		apiNotif, err := p.tc.NotificationToAPINotification(ctx, n)
 		if err != nil {
-			l.Debugf("got an error converting a notification to masto, will skip it: %s", err)
+			l.Debugf("got an error converting a notification to api, will skip it: %s", err)
 			continue
 		}
-		mastoNotifs = append(mastoNotifs, mastoNotif)
+		apiNotifs = append(apiNotifs, apiNotif)
 	}
 
-	return mastoNotifs, nil
+	return apiNotifs, nil
 }

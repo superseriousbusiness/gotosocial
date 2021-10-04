@@ -18,4 +18,55 @@
 
 package federatingdb_test
 
-// TODO: write tests for pgfed
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/testrig"
+)
+
+type FederatingDBTestSuite struct {
+	suite.Suite
+	config       *config.Config
+	db           db.DB
+	log          *logrus.Logger
+	tc           typeutils.TypeConverter
+	federatingDB federatingdb.DB
+
+	testTokens       map[string]*gtsmodel.Token
+	testClients      map[string]*gtsmodel.Client
+	testApplications map[string]*gtsmodel.Application
+	testUsers        map[string]*gtsmodel.User
+	testAccounts     map[string]*gtsmodel.Account
+	testAttachments  map[string]*gtsmodel.MediaAttachment
+	testStatuses     map[string]*gtsmodel.Status
+	testBlocks       map[string]*gtsmodel.Block
+}
+
+func (suite *FederatingDBTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testBlocks = testrig.NewTestBlocks()
+}
+
+func (suite *FederatingDBTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.log = testrig.NewTestLog()
+	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+}
+
+func (suite *FederatingDBTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+}

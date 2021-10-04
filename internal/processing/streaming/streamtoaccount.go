@@ -19,31 +19,36 @@
 package streaming
 
 import (
-	"fmt"
-	"strings"
+	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) StreamDelete(statusID string) error {
-	errs := []string{}
-
-	// get all account IDs with open streams
-	accountIDs := []string{}
-	p.streamMap.Range(func(k interface{}, _ interface{}) bool {
-		accountIDs = append(accountIDs, k.(string))
-		return true
-	})
-
-	// stream the delete to every account
-	for _, accountID := range accountIDs {
-		if err := p.streamToAccount(statusID, stream.EventTypeDelete, accountID); err != nil {
-			errs = append(errs, err.Error())
-		}
+// streamToAccount streams the given payload with the given event type to any streams currently open for the given account ID.
+func (p *processor) streamToAccount(payload string, event stream.EventType, accountID string) error {
+	v, ok := p.streamMap.Load(accountID)
+	if !ok {
+		// no open connections so nothing to stream
+		return nil
 	}
 
-	if len(errs) != 0 {
-		return fmt.Errorf("one or more errors streaming status delete: %s", strings.Join(errs, ";"))
+	streamsForAccount, ok := v.(*stream.StreamsForAccount)
+	if !ok {
+		return errors.New("stream map error")
+	}
+
+	streamsForAccount.Lock()
+	defer streamsForAccount.Unlock()
+	for _, s := range streamsForAccount.Streams {
+		s.Lock()
+		defer s.Unlock()
+		if s.Connected {
+			s.Messages <- &stream.Message{
+				Stream:  []string{s.Type},
+				Event:   string(event),
+				Payload: payload,
+			}
+		}
 	}
 
 	return nil

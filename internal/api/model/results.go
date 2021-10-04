@@ -18,7 +18,7 @@
 
 package model
 
-// Results represents the results of a search. See https://docs.joinmastodon.org/entities/results/
+// Results represents the results of a search.
 type Results struct {
 	// Accounts which match the given query
 	Accounts []Account `json:"accounts"`

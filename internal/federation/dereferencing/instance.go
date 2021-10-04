@@ -36,5 +36,5 @@ func (d *deref) GetRemoteInstance(ctx context.Context, username string, remoteIn
 		return nil, fmt.Errorf("transport err: %s", err)
 	}
 
-	return transport.DereferenceInstance(context.Background(), remoteInstanceURI)
+	return transport.DereferenceInstance(ctx, remoteInstanceURI)
 }

@@ -67,7 +67,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
-	idp, err := oidc.NewIDP(c, log)
+	idp, err := oidc.NewIDP(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}

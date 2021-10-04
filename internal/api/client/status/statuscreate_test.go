@@ -121,7 +121,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
 	assert.Equal(suite.T(), "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because masto has no idea about mutuals_only
+	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because the mastodon api has no idea about mutuals_only
 	assert.Len(suite.T(), statusReply.Tags, 1)
 	assert.Equal(suite.T(), model.Tag{
 		Name: "helloworld",
@@ -202,12 +202,12 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	assert.Equal(suite.T(), "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
 
 	assert.Len(suite.T(), statusReply.Emojis, 1)
-	mastoEmoji := statusReply.Emojis[0]
+	apiEmoji := statusReply.Emojis[0]
 	gtsEmoji := testrig.NewTestEmojis()["rainbow"]
 
-	assert.Equal(suite.T(), gtsEmoji.Shortcode, mastoEmoji.Shortcode)
-	assert.Equal(suite.T(), gtsEmoji.ImageURL, mastoEmoji.URL)
-	assert.Equal(suite.T(), gtsEmoji.ImageStaticURL, mastoEmoji.StaticURL)
+	assert.Equal(suite.T(), gtsEmoji.Shortcode, apiEmoji.Shortcode)
+	assert.Equal(suite.T(), gtsEmoji.ImageURL, apiEmoji.URL)
+	assert.Equal(suite.T(), gtsEmoji.ImageStaticURL, apiEmoji.StaticURL)
 }
 
 // Try to reply to a status that doesn't exist
@@ -326,12 +326,12 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	gtsAttachment, err := suite.db.GetAttachmentByID(context.Background(), statusResponse.MediaAttachments[0].ID)
 	assert.NoError(suite.T(), err)
 
-	// convert it to a masto attachment
-	gtsAttachmentAsMasto, err := suite.tc.AttachmentToMasto(context.Background(), gtsAttachment)
+	// convert it to a api attachment
+	gtsAttachmentAsapi, err := suite.tc.AttachmentToAPIAttachment(context.Background(), gtsAttachment)
 	assert.NoError(suite.T(), err)
 
 	// compare it with what we have now
-	assert.EqualValues(suite.T(), statusResponse.MediaAttachments[0], gtsAttachmentAsMasto)
+	assert.EqualValues(suite.T(), statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
 
 	// the status id of the attachment should now be set to the id of the status we just created
 	assert.Equal(suite.T(), statusResponse.ID, gtsAttachment.StatusID)

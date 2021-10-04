@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -22,53 +19,28 @@ import (
 func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":     "Following",
-			"actorIRI": actorIRI.String(),
+			"func": "Following",
+			"id":   actorIRI,
 		},
 	)
-	l.Debugf("entering FOLLOWING function with actorIRI %s", actorIRI.String())
+	l.Debug("entering Following")
 
-	var acct *gtsmodel.Account
-	if util.IsUserPath(actorIRI) {
-		username, err := util.ParseUserPath(actorIRI)
-		if err != nil {
-			return nil, fmt.Errorf("FOLLOWING: error parsing user path: %s", err)
-		}
-
-		a, err := f.db.GetLocalAccountByUsername(ctx, username)
-		if err != nil {
-			return nil, fmt.Errorf("FOLLOWING: db error getting account with uri %s: %s", actorIRI.String(), err)
-		}
-
-		acct = a
-	} else if util.IsFollowingPath(actorIRI) {
-		username, err := util.ParseFollowingPath(actorIRI)
-		if err != nil {
-			return nil, fmt.Errorf("FOLLOWING: error parsing following path: %s", err)
-		}
-
-		a, err := f.db.GetLocalAccountByUsername(ctx, username)
-		if err != nil {
-			return nil, fmt.Errorf("FOLLOWING: db error getting account with following uri %s: %s", actorIRI.String(), err)
-		}
-
-		acct = a
-	} else {
-		return nil, fmt.Errorf("FOLLOWING: could not parse actor IRI %s as users or following path", actorIRI.String())
+	acct, err := f.getAccountForIRI(ctx, actorIRI)
+	if err != nil {
+		return nil, err
 	}
 
 	acctFollowing, err := f.db.GetAccountFollows(ctx, acct.ID)
 	if err != nil {
-		return nil, fmt.Errorf("FOLLOWING: db error getting following for account id %s: %s", acct.ID, err)
+		return nil, fmt.Errorf("Following: db error getting following for account id %s: %s", acct.ID, err)
 	}
 
-	following = streams.NewActivityStreamsCollection()
-	items := streams.NewActivityStreamsItemsProperty()
+	iris := []*url.URL{}
 	for _, follow := range acctFollowing {
-		if follow.Account == nil {
-			followAccount, err := f.db.GetAccountByID(ctx, follow.AccountID)
+		if follow.TargetAccount == nil {
+			a, err := f.db.GetAccountByID(ctx, follow.TargetAccountID)
 			if err != nil {
-				errWrapped := fmt.Errorf("FOLLOWING: db error getting account id %s: %s", follow.AccountID, err)
+				errWrapped := fmt.Errorf("Following: db error getting account id %s: %s", follow.TargetAccountID, err)
 				if err == db.ErrNoEntries {
 					// no entry for this account id so it's probably been deleted and we haven't caught up yet
 					l.Error(errWrapped)
@@ -78,15 +50,14 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 					return nil, errWrapped
 				}
 			}
-			follow.Account = followAccount
+			follow.TargetAccount = a
 		}
-
-		uri, err := url.Parse(follow.Account.URI)
+		u, err := url.Parse(follow.TargetAccount.URI)
 		if err != nil {
-			return nil, fmt.Errorf("FOLLOWING: error parsing %s as url: %s", follow.Account.URI, err)
+			return nil, err
 		}
-		items.AppendIRI(uri)
+		iris = append(iris, u)
 	}
-	following.SetActivityStreamsItems(items)
-	return
+
+	return f.collectIRIs(ctx, iris)
 }

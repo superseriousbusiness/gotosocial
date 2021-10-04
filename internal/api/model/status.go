@@ -177,7 +177,7 @@ const (
 	VisibilityDirect Visibility = "direct"
 )
 
-// AdvancedStatusCreateForm wraps the mastodon status create form along with the GTS advanced
+// AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
 // visibility settings.
 //
 // swagger:model advancedStatusCreateForm

@@ -23,8 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// MastoVisToVis converts a mastodon visibility into its gts equivalent.
-func (c *converter) MastoVisToVis(m model.Visibility) gtsmodel.Visibility {
+func (c *converter) APIVisToVis(m model.Visibility) gtsmodel.Visibility {
 	switch m {
 	case model.VisibilityPublic:
 		return gtsmodel.VisibilityPublic

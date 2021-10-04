@@ -64,7 +64,7 @@ func (p *processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 			f.Account = a
 		}
 
-		account, err := p.tc.AccountToMastoPublic(ctx, f.Account)
+		account, err := p.tc.AccountToAPIAccountPublic(ctx, f.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

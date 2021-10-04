@@ -18,7 +18,7 @@
 
 package model
 
-// Preferences represents a user's preferences. See https://docs.joinmastodon.org/entities/preferences/
+// Preferences represents a user's preferences.
 type Preferences struct {
 	// Default visibility for new posts.
 	// 	public = Public post

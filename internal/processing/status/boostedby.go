@@ -64,15 +64,15 @@ func (p *processor) BoostedBy(ctx context.Context, requestingAccount *gtsmodel.A
 
 	// TODO: filter other things here? suspended? muted? silenced?
 
-	// now we can return the masto representation of those accounts
-	mastoAccounts := []*apimodel.Account{}
+	// now we can return the api representation of those accounts
+	apiAccounts := []*apimodel.Account{}
 	for _, acc := range filteredAccounts {
-		mastoAccount, err := p.tc.AccountToMastoPublic(ctx, acc)
+		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, acc)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("StatusFavedBy: error converting account to api model: %s", err))
 		}
-		mastoAccounts = append(mastoAccounts, mastoAccount)
+		apiAccounts = append(apiAccounts, apiAccount)
 	}
 
-	return mastoAccounts, nil
+	return apiAccounts, nil
 }

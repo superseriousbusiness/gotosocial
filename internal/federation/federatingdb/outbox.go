@@ -20,29 +20,19 @@ package federatingdb
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // GetOutbox returns the first ordered collection page of the outbox
 // at the specified IRI, for prepending new items.
 //
 // The library makes this call only after acquiring a lock first.
+//
+// Implementation note: we don't (yet) serve outboxes, so just return empty and nil here.
 func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func": "GetOutbox",
-		},
-	)
-	l.Debug("entering GETOUTBOX function")
-
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
@@ -51,14 +41,9 @@ func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox
 // database entries. Separate calls to Create will do that.
 //
 // The library makes this call only after acquiring a lock first.
+//
+// Implementation note: we don't allow outbox setting so just return nil here.
 func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func": "SetOutbox",
-		},
-	)
-	l.Debug("entering SETOUTBOX function")
-
 	return nil
 }
 
@@ -67,23 +52,9 @@ func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStrea
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
-	l := f.log.WithFields(
-		logrus.Fields{
-			"func":     "OutboxForInbox",
-			"inboxIRI": inboxIRI.String(),
-		},
-	)
-	l.Debugf("entering OUTBOXFORINBOX function with inboxIRI %s", inboxIRI.String())
-
-	if !util.IsInboxPath(inboxIRI) {
-		return nil, fmt.Errorf("%s is not an inbox URI", inboxIRI.String())
-	}
-	acct := &gtsmodel.Account{}
-	if err := f.db.GetWhere(ctx, []db.Where{{Key: "inbox_uri", Value: inboxIRI.String()}}, acct); err != nil {
-		if err == db.ErrNoEntries {
-			return nil, fmt.Errorf("no actor found that corresponds to inbox %s", inboxIRI.String())
-		}
-		return nil, fmt.Errorf("db error searching for actor with inbox %s", inboxIRI.String())
+	acct, err := f.getAccountForIRI(ctx, inboxIRI)
+	if err != nil {
+		return nil, err
 	}
 	return url.Parse(acct.OutboxURI)
 }

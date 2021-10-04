@@ -57,61 +57,6 @@ func (suite *StatusGetTestSuite) TearDownTest() {
 	testrig.StandardStorageTeardown(suite.storage)
 }
 
-// Post a new status with some custom visibility settings
-func (suite *StatusGetTestSuite) TestPostNewStatus() {
-
-	// t := suite.testTokens["local_account_1"]
-	// oauthToken := oauth.PGTokenToOauthToken(t)
-
-	// // setup
-	// recorder := httptest.NewRecorder()
-	// ctx, _ := gin.CreateTestContext(recorder)
-	// ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	// ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	// ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	// ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	// ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", basePath), nil) // the endpoint we're hitting
-	// ctx.Request.Form = url.Values{
-	// 	"status":              {"this is a brand new status! #helloworld"},
-	// 	"spoiler_text":        {"hello hello"},
-	// 	"sensitive":           {"true"},
-	// 	"visibility_advanced": {"mutuals_only"},
-	// 	"likeable":            {"false"},
-	// 	"replyable":           {"false"},
-	// 	"federated":           {"false"},
-	// }
-	// suite.statusModule.statusGETHandler(ctx)
-
-	// // check response
-
-	// // 1. we should have OK from our call to the function
-	// suite.EqualValues(http.StatusOK, recorder.Code)
-
-	// result := recorder.Result()
-	// defer result.Body.Close()
-	// b, err := ioutil.ReadAll(result.Body)
-	// assert.NoError(suite.T(), err)
-
-	// statusReply := &mastotypes.Status{}
-	// err = json.Unmarshal(b, statusReply)
-	// assert.NoError(suite.T(), err)
-
-	// assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
-	// assert.Equal(suite.T(), "this is a brand new status! #helloworld", statusReply.Content)
-	// assert.True(suite.T(), statusReply.Sensitive)
-	// assert.Equal(suite.T(), mastotypes.VisibilityPrivate, statusReply.Visibility)
-	// assert.Len(suite.T(), statusReply.Tags, 1)
-	// assert.Equal(suite.T(), mastotypes.Tag{
-	// 	Name: "helloworld",
-	// 	URL:  "http://localhost:8080/tags/helloworld",
-	// }, statusReply.Tags[0])
-
-	// gtsTag := &gtsmodel.Tag{}
-	// err = suite.db.GetWhere("name", "helloworld", gtsTag)
-	// assert.NoError(suite.T(), err)
-	// assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
-}
-
 func TestStatusGetTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusGetTestSuite))
 }

@@ -18,7 +18,7 @@
 
 package model
 
-// List represents a list of some users that the authenticated user follows. See https://docs.joinmastodon.org/entities/list/
+// List represents a list of some users that the authenticated user follows.
 type List struct {
 	// The internal database ID of the list.
 	ID string `json:"id"`

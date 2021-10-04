@@ -73,12 +73,12 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 		go p.initiateDomainBlockSideEffects(ctx, account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, domainBlock, false)
+	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/masto representation %s: %s", domain, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: error converting domain block to frontend/api representation %s: %s", domain, err))
 	}
 
-	return mastoDomainBlock, nil
+	return apiDomainBlock, nil
 }
 
 // initiateDomainBlockSideEffects should be called asynchronously, to process the side effects of a domain block:

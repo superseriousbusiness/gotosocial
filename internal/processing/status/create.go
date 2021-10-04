@@ -105,10 +105,10 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := p.tc.StatusToMasto(ctx, newStatus, account)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, newStatus, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", newStatus.ID, err))
 	}
 
-	return mastoStatus, nil
+	return apiStatus, nil
 }

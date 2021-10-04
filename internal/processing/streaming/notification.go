@@ -16,17 +16,22 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package streaming
 
-// Error represents an error message returned from the API. See https://docs.joinmastodon.org/entities/error/
-type Error struct {
-	// REQUIRED
+import (
+	"encoding/json"
+	"fmt"
 
-	// The error message.
-	Error string `json:"error"`
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
+)
 
-	// OPTIONAL
+func (p *processor) StreamNotificationToAccount(n *apimodel.Notification, account *gtsmodel.Account) error {
+	bytes, err := json.Marshal(n)
+	if err != nil {
+		return fmt.Errorf("error marshalling notification to json: %s", err)
+	}
 
-	// A longer description of the error, mainly provided with the OAuth API.
-	ErrorDescription string `json:"error_description"`
+	return p.streamToAccount(string(bytes), stream.EventTypeNotification, account.ID)
 }

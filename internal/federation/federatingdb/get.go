@@ -25,8 +25,6 @@ import (
 
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -37,46 +35,33 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Get",
-			"id":   id.String(),
+			"id":   id,
 		},
 	)
-	l.Debug("entering GET function")
+	l.Debug("entering Get")
 
 	if util.IsUserPath(id) {
 		acct, err := f.db.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
-		l.Debug("is user path! returning account")
 		return f.typeConverter.AccountToAS(ctx, acct)
 	}
 
-	if util.IsFollowersPath(id) {
-		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere(ctx, []db.Where{{Key: "followers_uri", Value: id.String()}}, acct); err != nil {
-			return nil, err
-		}
-
-		followersURI, err := url.Parse(acct.FollowersURI)
+	if util.IsStatusesPath(id) {
+		status, err := f.db.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
+		return f.typeConverter.StatusToAS(ctx, status)
+	}
 
-		return f.Followers(ctx, followersURI)
+	if util.IsFollowersPath(id) {
+		return f.Followers(ctx, id)
 	}
 
 	if util.IsFollowingPath(id) {
-		acct := &gtsmodel.Account{}
-		if err := f.db.GetWhere(ctx, []db.Where{{Key: "following_uri", Value: id.String()}}, acct); err != nil {
-			return nil, err
-		}
-
-		followingURI, err := url.Parse(acct.FollowingURI)
-		if err != nil {
-			return nil, err
-		}
-
-		return f.Following(ctx, followingURI)
+		return f.Following(ctx, id)
 	}
 
 	return nil, errors.New("could not get")

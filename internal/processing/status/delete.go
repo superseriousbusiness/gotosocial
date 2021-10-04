@@ -43,7 +43,7 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, gtserror.NewErrorForbidden(errors.New("status doesn't belong to requesting account"))
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(ctx, targetStatus, requestingAccount)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
@@ -61,5 +61,5 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 		TargetAccount:  requestingAccount,
 	}
 
-	return mastoStatus, nil
+	return apiStatus, nil
 }

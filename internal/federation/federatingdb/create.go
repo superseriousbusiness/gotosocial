@@ -20,19 +20,15 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Create adds a new entry to the database which must be able to be
@@ -50,42 +46,27 @@ import (
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "Create",
-			"asType": asType.GetTypeName(),
+			"func": "Create",
 		},
 	)
-	m, err := streams.Serialize(asType)
+
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(asType)
+		if err != nil {
+			return err
+		}
+		l = l.WithField("create", i)
+		l.Debug("entering Create")
+	}
+
+	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {
 		return err
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	l.Debugf("received CREATE asType %s", string(b))
-
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI == nil {
-		// If the target account wasn't set on the context, that means this request didn't pass through the
-		// API, but came from inside GtS as the result of another activity on this instance. That being so,
+	if targetAcct == nil || fromFederatorChan == nil {
+		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
-	}
-	targetAcct, ok := targetAcctI.(*gtsmodel.Account)
-	if !ok {
-		l.Error("CREATE: target account was set on context but couldn't be parsed")
-		return nil
-	}
-
-	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
-	if fromFederatorChanI == nil {
-		l.Error("CREATE: from federator channel wasn't set on context")
-		return nil
-	}
-	fromFederatorChan, ok := fromFederatorChanI.(chan messages.FromFederator)
-	if !ok {
-		l.Error("CREATE: from federator channel was set on context but couldn't be parsed")
 		return nil
 	}
 

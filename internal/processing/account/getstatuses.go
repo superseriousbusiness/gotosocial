@@ -51,9 +51,9 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(ctx, s, requestingAccount)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to masto: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
 		}
 
 		apiStatuses = append(apiStatuses, *apiStatus)

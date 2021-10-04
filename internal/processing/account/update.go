@@ -105,7 +105,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, err
 			}
-			privacy := p.tc.MastoVisToVis(apimodel.Visibility(*form.Source.Privacy))
+			privacy := p.tc.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
 			account.Privacy = privacy
 		}
 	}
@@ -122,9 +122,9 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		OriginAccount:  updatedAccount,
 	}
 
-	acctSensitive, err := p.tc.AccountToMastoSensitive(ctx, updatedAccount)
+	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, updatedAccount)
 	if err != nil {
-		return nil, fmt.Errorf("could not convert account into mastosensitive account: %s", err)
+		return nil, fmt.Errorf("could not convert account into apisensitive account: %s", err)
 	}
 	return acctSensitive, nil
 }

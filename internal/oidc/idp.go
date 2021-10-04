@@ -56,7 +56,7 @@ type idp struct {
 // If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.
-func NewIDP(config *config.Config, log *logrus.Logger) (IDP, error) {
+func NewIDP(ctx context.Context, config *config.Config, log *logrus.Logger) (IDP, error) {
 
 	// oidc isn't enabled so we don't need to do anything
 	if config.OIDCConfig == nil || !config.OIDCConfig.Enabled {
@@ -80,7 +80,7 @@ func NewIDP(config *config.Config, log *logrus.Logger) (IDP, error) {
 		return nil, fmt.Errorf("not set: Scopes")
 	}
 
-	provider, err := oidc.NewProvider(context.Background(), config.OIDCConfig.Issuer)
+	provider, err := oidc.NewProvider(ctx, config.OIDCConfig.Issuer)
 	if err != nil {
 		return nil, err
 	}

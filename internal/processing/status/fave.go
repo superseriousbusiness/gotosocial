@@ -93,11 +93,11 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 		}
 	}
 
-	// return the mastodon representation of the target status
-	mastoStatus, err := p.tc.StatusToMasto(ctx, targetStatus, requestingAccount)
+	// return the apidon representation of the target status
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
 
-	return mastoStatus, nil
+	return apiStatus, nil
 }

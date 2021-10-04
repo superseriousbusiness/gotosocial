@@ -36,7 +36,7 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
 	}
 
-	ai, err := p.tc.InstanceToMasto(ctx, i)
+	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
@@ -151,7 +151,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", p.config.Host, err))
 	}
 
-	ai, err := p.tc.InstanceToMasto(ctx, i)
+	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}

@@ -45,13 +45,13 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 		}
 	}
 
-	var mastoAccount *apimodel.Account
+	var apiAccount *apimodel.Account
 	if blocked {
-		mastoAccount, err = p.tc.AccountToMastoBlocked(ctx, targetAccount)
+		apiAccount, err = p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
 		if err != nil {
 			return nil, fmt.Errorf("error converting account: %s", err)
 		}
-		return mastoAccount, nil
+		return apiAccount, nil
 	}
 
 	// last-minute check to make sure we have remote account header/avi cached
@@ -63,12 +63,12 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	}
 
 	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
-		mastoAccount, err = p.tc.AccountToMastoSensitive(ctx, targetAccount)
+		apiAccount, err = p.tc.AccountToAPIAccountSensitive(ctx, targetAccount)
 	} else {
-		mastoAccount, err = p.tc.AccountToMastoPublic(ctx, targetAccount)
+		apiAccount, err = p.tc.AccountToAPIAccountPublic(ctx, targetAccount)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error converting account: %s", err)
 	}
-	return mastoAccount, nil
+	return apiAccount, nil
 }
