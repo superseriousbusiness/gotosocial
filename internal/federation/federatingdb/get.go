@@ -35,10 +35,10 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Get",
-			"id":   id.String(),
+			"id":   id,
 		},
 	)
-	l.Debug("entering GET function")
+	l.Debug("entering Get")
 
 	if util.IsUserPath(id) {
 		acct, err := f.db.GetAccountByURI(ctx, id.String())

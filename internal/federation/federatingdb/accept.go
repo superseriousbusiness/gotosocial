@@ -20,11 +20,9 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -37,21 +35,17 @@ import (
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "Accept",
-			"asType": accept.GetTypeName(),
+			"func": "Accept",
 		},
 	)
 
 	if l.Level >= logrus.DebugLevel {
-		m, err := streams.Serialize(accept)
+		i, err := marshalItem(accept)
 		if err != nil {
 			return err
 		}
-		b, err := json.Marshal(m)
-		if err != nil {
-			return err
-		}
-		l.Debugf("received ACCEPT asType %s", string(b))
+		l = l.WithField("accept", i)
+		l.Debug("entering Accept")
 	}
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)

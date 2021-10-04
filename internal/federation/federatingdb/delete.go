@@ -39,10 +39,10 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	l := f.log.WithFields(
 		logrus.Fields{
 			"func": "Delete",
-			"id":   id.String(),
+			"id":   id,
 		},
 	)
-	l.Debugf("received DELETE id %s", id.String())
+	l.Debug("entering Delete")
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {

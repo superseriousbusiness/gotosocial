@@ -19,10 +19,11 @@ import (
 func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":     "Followers",
-			"actorIRI": actorIRI.String(),
+			"func": "Followers",
+			"id":   actorIRI,
 		},
 	)
+	l.Debug("entering Followers")
 
 	acct, err := f.getAccountForIRI(ctx, actorIRI)
 	if err != nil {

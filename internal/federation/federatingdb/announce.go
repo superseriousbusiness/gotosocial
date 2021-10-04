@@ -20,10 +20,8 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -31,18 +29,19 @@ import (
 )
 
 func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-	l := f.log
+	l := f.log.WithFields(
+		logrus.Fields{
+			"func": "Announce",
+		},
+	)
 
 	if l.Level >= logrus.DebugLevel {
-		m, err := streams.Serialize(announce)
+		i, err := marshalItem(announce)
 		if err != nil {
 			return err
 		}
-		b, err := json.Marshal(m)
-		if err != nil {
-			return err
-		}
-		l.Debugf("received Announce %s", string(b))
+		l = l.WithField("announce", i)
+		l.Debug("entering Announce")
 	}
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)

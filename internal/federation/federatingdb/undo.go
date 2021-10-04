@@ -20,11 +20,9 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -35,19 +33,18 @@ import (
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "Undo",
-			"asType": undo.GetTypeName(),
+			"func": "Undo",
 		},
 	)
-	m, err := streams.Serialize(undo)
-	if err != nil {
-		return err
+
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(undo)
+		if err != nil {
+			return err
+		}
+		l = l.WithField("undo", i)
+		l.Debug("entering Undo")
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-	l.Debugf("received UNDO asType %s", string(b))
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {

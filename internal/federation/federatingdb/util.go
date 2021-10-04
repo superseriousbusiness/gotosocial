@@ -65,19 +65,18 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "NewID",
-			"asType": t.GetTypeName(),
+			"func": "NewID",
 		},
 	)
-	m, err := streams.Serialize(t)
-	if err != nil {
-		return nil, err
+
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(t)
+		if err != nil {
+			return nil, err
+		}
+		l = l.WithField("newID", i)
+		l.Debug("entering NewID")
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	l.Debugf("received NEWID request for asType %s", string(b))
 
 	switch t.GetTypeName() {
 	case ap.ActivityFollow:
@@ -313,4 +312,16 @@ func extractFromCtx(ctx context.Context) (*gtsmodel.Account, chan messages.FromF
 	}
 
 	return targetAcct, fromFederatorChan, nil
+}
+
+func marshalItem(item vocab.Type) (string, error) {
+	m, err := streams.Serialize(item)
+	if err != nil {
+		return "", err
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

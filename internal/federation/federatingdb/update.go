@@ -20,11 +20,9 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -45,20 +43,18 @@ import (
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "Update",
-			"asType": asType.GetTypeName(),
+			"func": "Update",
 		},
 	)
-	m, err := streams.Serialize(asType)
-	if err != nil {
-		return err
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
 
-	l.Debugf("received UPDATE asType %s", string(b))
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(asType)
+		if err != nil {
+			return err
+		}
+		l = l.WithField("update", i)
+		l.Debug("entering Update")
+	}
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {

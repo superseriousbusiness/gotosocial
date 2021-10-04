@@ -20,11 +20,9 @@ package federatingdb
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -48,20 +46,18 @@ import (
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	l := f.log.WithFields(
 		logrus.Fields{
-			"func":   "Create",
-			"asType": asType.GetTypeName(),
+			"func": "Create",
 		},
 	)
-	m, err := streams.Serialize(asType)
-	if err != nil {
-		return err
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
 
-	l.Debugf("received CREATE asType %s", string(b))
+	if l.Level >= logrus.DebugLevel {
+		i, err := marshalItem(asType)
+		if err != nil {
+			return err
+		}
+		l = l.WithField("create", i)
+		l.Debug("entering Create")
+	}
 
 	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
 	if err != nil {
