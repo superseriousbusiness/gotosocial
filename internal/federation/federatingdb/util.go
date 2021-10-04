@@ -206,7 +206,7 @@ func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (
 	if err != nil {
 		return nil, err
 	}
-	return url.Parse(acct.URL)
+	return url.Parse(acct.URI)
 }
 
 // ActorForInbox fetches the actor's IRI for the given outbox IRI.
@@ -217,7 +217,7 @@ func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (ac
 	if err != nil {
 		return nil, err
 	}
-	return url.Parse(acct.URL)
+	return url.Parse(acct.URI)
 }
 
 // getAccountForIRI returns the account that corresponds to or owns the given IRI.
