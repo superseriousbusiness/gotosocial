@@ -50,9 +50,8 @@ definitions:
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Source:
-    description: |-
-      Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
-      See https://docs.joinmastodon.org/entities/source/
+    description: Returned as an additional entity when verifying and updated credentials,
+      as an attribute of Account.
     properties:
       fields:
         description: Metadata about the account.
@@ -330,7 +329,7 @@ definitions:
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   advancedStatusCreateForm:
     description: |-
-      AdvancedStatusCreateForm wraps the mastodon status create form along with the GTS advanced
+      AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
       visibility settings.
     properties:
       boostable:
