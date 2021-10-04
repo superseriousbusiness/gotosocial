@@ -35,7 +35,7 @@ import (
 
 // AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
 // The idea here is to present an oauth authorize page to the user, with a button
-// that they have to click to accept. See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
+// that they have to click to accept.
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
@@ -122,7 +122,6 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 // AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
 // At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
 // so we should proceed with the authentication flow and generate an oauth token for them if we can.
-// See here: https://docs.joinmastodon.org/methods/apps/oauth/#authorize-a-user
 func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)

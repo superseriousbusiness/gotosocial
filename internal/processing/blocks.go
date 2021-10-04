@@ -44,7 +44,7 @@ func (p *processor) BlocksGet(ctx context.Context, authed *oauth.Auth, maxID str
 
 	apiAccounts := []*apimodel.Account{}
 	for _, a := range accounts {
-		apiAccount, err := p.tc.AccountToMastoBlocked(ctx, a)
+		apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, a)
 		if err != nil {
 			continue
 		}

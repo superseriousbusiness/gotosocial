@@ -101,12 +101,11 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoApp, err := m.processor.AppCreate(c.Request.Context(), authed, form)
+	apiApp, err := m.processor.AppCreate(c.Request.Context(), authed, form)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// done, return the new app information per the spec here: https://docs.joinmastodon.org/methods/apps/
-	c.JSON(http.StatusOK, mastoApp)
+	c.JSON(http.StatusOK, apiApp)
 }

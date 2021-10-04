@@ -31,8 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// Converts a gts model account into an Activity Streams person type, following
-// the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
+// Converts a gts model account into an Activity Streams person type.
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
 
@@ -267,8 +266,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	return person, nil
 }
 
-// Converts a gts model account into a VERY MINIMAL Activity Streams person type, following
-// the spec laid out for mastodon here: https://docs.joinmastodon.org/spec/activitypub/
+// Converts a gts model account into a VERY MINIMAL Activity Streams person type.
 //
 // The returned account will just have the Type, Username, PublicKey, and ID properties set.
 func (c *converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {

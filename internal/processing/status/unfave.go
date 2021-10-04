@@ -82,10 +82,10 @@ func (p *processor) Unfave(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(ctx, targetStatus, requestingAccount)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
 
-	return mastoStatus, nil
+	return apiStatus, nil
 }

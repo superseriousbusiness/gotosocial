@@ -58,9 +58,9 @@ func (p *processor) Context(ctx context.Context, requestingAccount *gtsmodel.Acc
 
 	for _, status := range parents {
 		if v, err := p.filter.StatusVisible(ctx, status, requestingAccount); err == nil && v {
-			mastoStatus, err := p.tc.StatusToMasto(ctx, status, requestingAccount)
+			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
 			if err == nil {
-				context.Ancestors = append(context.Ancestors, *mastoStatus)
+				context.Ancestors = append(context.Ancestors, *apiStatus)
 			}
 		}
 	}
@@ -76,9 +76,9 @@ func (p *processor) Context(ctx context.Context, requestingAccount *gtsmodel.Acc
 
 	for _, status := range children {
 		if v, err := p.filter.StatusVisible(ctx, status, requestingAccount); err == nil && v {
-			mastoStatus, err := p.tc.StatusToMasto(ctx, status, requestingAccount)
+			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
 			if err == nil {
-				context.Descendants = append(context.Descendants, *mastoStatus)
+				context.Descendants = append(context.Descendants, *apiStatus)
 			}
 		}
 	}

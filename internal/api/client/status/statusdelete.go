@@ -86,7 +86,7 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	mastoStatus, err := m.processor.StatusDelete(c.Request.Context(), authed, targetStatusID)
+	apiStatus, err := m.processor.StatusDelete(c.Request.Context(), authed, targetStatusID)
 	if err != nil {
 		l.Debugf("error processing status delete: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
@@ -94,10 +94,10 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 	}
 
 	// the status was already gone/never existed
-	if mastoStatus == nil {
+	if apiStatus == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Record not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, mastoStatus)
+	c.JSON(http.StatusOK, apiStatus)
 }

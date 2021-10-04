@@ -18,7 +18,7 @@
 
 package model
 
-// History represents daily usage history of a hashtag. See https://docs.joinmastodon.org/entities/history/
+// History represents daily usage history of a hashtag.
 type History struct {
 	// UNIX timestamp on midnight of the given day (string cast from integer).
 	Day string `json:"day"`

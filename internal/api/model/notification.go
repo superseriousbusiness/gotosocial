@@ -18,7 +18,7 @@
 
 package model
 
-// Notification represents a notification of an event relevant to the user. See https://docs.joinmastodon.org/entities/notification/
+// Notification represents a notification of an event relevant to the user.
 type Notification struct {
 	// REQUIRED
 

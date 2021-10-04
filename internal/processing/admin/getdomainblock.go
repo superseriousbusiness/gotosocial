@@ -40,10 +40,10 @@ func (p *processor) DomainBlockGet(ctx context.Context, account *gtsmodel.Accoun
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no entry for ID %s", id))
 	}
 
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, domainBlock, export)
+	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, export)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return mastoDomainBlock, nil
+	return apiDomainBlock, nil
 }

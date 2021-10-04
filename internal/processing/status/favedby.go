@@ -62,15 +62,15 @@ func (p *processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 		}
 	}
 
-	// now we can return the masto representation of those accounts
-	mastoAccounts := []*apimodel.Account{}
+	// now we can return the api representation of those accounts
+	apiAccounts := []*apimodel.Account{}
 	for _, acc := range filteredAccounts {
-		mastoAccount, err := p.tc.AccountToMastoPublic(ctx, acc)
+		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, acc)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 		}
-		mastoAccounts = append(mastoAccounts, mastoAccount)
+		apiAccounts = append(apiAccounts, apiAccount)
 	}
 
-	return mastoAccounts, nil
+	return apiAccounts, nil
 }

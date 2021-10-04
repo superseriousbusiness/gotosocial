@@ -73,7 +73,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 
 	// prepare the frontend representation now -- if there are any errors here at least we can bail without
 	// having already put something in the database and then having to clean it up again (eugh)
-	mastoAttachment, err := p.tc.AttachmentToMasto(ctx, attachment)
+	apiAttachment, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing media attachment to frontend type: %s", err)
 	}
@@ -83,5 +83,5 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, fmt.Errorf("error storing media attachment in db: %s", err)
 	}
 
-	return &mastoAttachment, nil
+	return &apiAttachment, nil
 }

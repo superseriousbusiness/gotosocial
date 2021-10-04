@@ -18,7 +18,7 @@
 
 package model
 
-// ScheduledStatus represents a status that will be published at a future scheduled date. See https://docs.joinmastodon.org/entities/scheduledstatus/
+// ScheduledStatus represents a status that will be published at a future scheduled date.
 type ScheduledStatus struct {
 	ID               string        `json:"id"`
 	ScheduledAt      string        `json:"scheduled_at"`
@@ -26,7 +26,7 @@ type ScheduledStatus struct {
 	MediaAttachments []Attachment  `json:"media_attachments"`
 }
 
-// StatusParams represents parameters for a scheduled status. See https://docs.joinmastodon.org/entities/scheduledstatus/
+// StatusParams represents parameters for a scheduled status.
 type StatusParams struct {
 	Text          string   `json:"text"`
 	InReplyToID   string   `json:"in_reply_to_id,omitempty"`

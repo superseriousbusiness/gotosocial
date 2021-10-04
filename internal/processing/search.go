@@ -93,8 +93,8 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 		// make sure there's no block in either direction between the account and the requester
 		if blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
 			// all good, convert it and add it to the results
-			if acctMasto, err := p.tc.AccountToMastoPublic(ctx, foundAccount); err == nil && acctMasto != nil {
-				results.Accounts = append(results.Accounts, *acctMasto)
+			if apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, foundAccount); err == nil && apiAcct != nil {
+				results.Accounts = append(results.Accounts, *apiAcct)
 			}
 		}
 	}
@@ -104,12 +104,12 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 			continue
 		}
 
-		statusMasto, err := p.tc.StatusToMasto(ctx, foundStatus, authed.Account)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, foundStatus, authed.Account)
 		if err != nil {
 			continue
 		}
 
-		results.Statuses = append(results.Statuses, *statusMasto)
+		results.Statuses = append(results.Statuses, *apiStatus)
 	}
 
 	return results, nil

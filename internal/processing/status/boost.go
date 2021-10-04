@@ -74,10 +74,10 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	}
 
 	// return the frontend representation of the new status to the submitter
-	mastoStatus, err := p.tc.StatusToMasto(ctx, boostWrapperStatus, requestingAccount)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, boostWrapperStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status %s to frontend representation: %s", targetStatus.ID, err))
 	}
 
-	return mastoStatus, nil
+	return apiStatus, nil
 }

@@ -47,11 +47,11 @@ func (p *processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]
 			fr.Account = frAcct
 		}
 
-		mastoAcct, err := p.tc.AccountToMastoPublic(ctx, fr.Account)
+		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, fr.Account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		accts = append(accts, *mastoAcct)
+		accts = append(accts, *apiAcct)
 	}
 	return accts, nil
 }
@@ -91,7 +91,7 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	r, err := p.tc.RelationshipToMasto(ctx, gtsR)
+	r, err := p.tc.RelationshipToAPIRelationship(ctx, gtsR)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

@@ -36,7 +36,6 @@ type tokenBody struct {
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
-// See https://docs.joinmastodon.org/methods/apps/oauth/#obtain-a-token
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
 	l := m.log.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")

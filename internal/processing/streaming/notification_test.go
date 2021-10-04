@@ -38,7 +38,7 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 	suite.NoError(errWithCode)
 
 	followAccount := suite.testAccounts["remote_account_1"]
-	followAccountAPIModel, err := testrig.NewTestTypeConverter(suite.db).AccountToMastoPublic(context.Background(), followAccount)
+	followAccountAPIModel, err := testrig.NewTestTypeConverter(suite.db).AccountToAPIAccountPublic(context.Background(), followAccount)
 	suite.NoError(err)
 
 	notification := &apimodel.Notification{

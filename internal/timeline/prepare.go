@@ -244,7 +244,7 @@ func (t *timeline) prepare(ctx context.Context, statusID string) error {
 	}
 
 	// serialize the status (or, at least, convert it to a form that's ready to be serialized)
-	apiModelStatus, err := t.tc.StatusToMasto(ctx, gtsStatus, t.account)
+	apiModelStatus, err := t.tc.StatusToAPIStatus(ctx, gtsStatus, t.account)
 	if err != nil {
 		return err
 	}

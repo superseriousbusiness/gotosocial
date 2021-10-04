@@ -83,12 +83,12 @@ func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	mastoStatus, err := m.processor.StatusFave(c.Request.Context(), authed, targetStatusID)
+	apiStatus, err := m.processor.StatusFave(c.Request.Context(), authed, targetStatusID)
 	if err != nil {
 		l.Debugf("error processing status fave: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
-	c.JSON(http.StatusOK, mastoStatus)
+	c.JSON(http.StatusOK, apiStatus)
 }

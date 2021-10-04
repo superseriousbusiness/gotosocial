@@ -96,12 +96,12 @@ func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) e
 		}
 
 		// now stream the notification to the user
-		mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
+		apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 		if err != nil {
-			return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+			return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 		}
 
-		if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, m.TargetAccount); err != nil {
+		if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, m.TargetAccount); err != nil {
 			return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 		}
 	}
@@ -143,12 +143,12 @@ func (p *processor) notifyFollowRequest(ctx context.Context, followRequest *gtsm
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
+	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
-		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -189,12 +189,12 @@ func (p *processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
+	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
-		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -237,12 +237,12 @@ func (p *processor) notifyFave(ctx context.Context, fave *gtsmodel.StatusFave) e
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
+	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
-		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, targetAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, targetAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -316,12 +316,12 @@ func (p *processor) notifyAnnounce(ctx context.Context, status *gtsmodel.Status)
 	}
 
 	// now stream the notification to the user
-	mastoNotif, err := p.tc.NotificationToMasto(ctx, notif)
+	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
-		return fmt.Errorf("notifyStatus: error converting notification to masto representation: %s", err)
+		return fmt.Errorf("notifyStatus: error converting notification to api representation: %s", err)
 	}
 
-	if err := p.streamingProcessor.StreamNotificationToAccount(mastoNotif, status.BoostOfAccount); err != nil {
+	if err := p.streamingProcessor.StreamNotificationToAccount(apiNotif, status.BoostOfAccount); err != nil {
 		return fmt.Errorf("notifyStatus: error streaming notification to account: %s", err)
 	}
 
@@ -414,21 +414,21 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 
 	// the status was inserted to stream it to the user
 	if inserted {
-		mastoStatus, err := p.tc.StatusToMasto(ctx, status, timelineAccount)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
 		if err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 		} else {
-			if err := p.streamingProcessor.StreamUpdateToAccount(mastoStatus, timelineAccount); err != nil {
+			if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount); err != nil {
 				errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 			}
 		}
 	}
 
-	mastoStatus, err := p.tc.StatusToMasto(ctx, status, timelineAccount)
+	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 	} else {
-		if err := p.streamingProcessor.StreamUpdateToAccount(mastoStatus, timelineAccount); err != nil {
+		if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount); err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}

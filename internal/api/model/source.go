@@ -20,7 +20,6 @@ package model
 
 // Source represents display or publishing preferences of user's own account.
 // Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
-// See https://docs.joinmastodon.org/entities/source/
 type Source struct {
 	// The default post privacy to be used for new statuses.
 	//    public = Public post

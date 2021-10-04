@@ -84,12 +84,12 @@ func (m *Module) StatusFavedByGETHandler(c *gin.Context) {
 		return
 	}
 
-	mastoAccounts, err := m.processor.StatusFavedBy(c.Request.Context(), authed, targetStatusID)
+	apiAccounts, err := m.processor.StatusFavedBy(c.Request.Context(), authed, targetStatusID)
 	if err != nil {
 		l.Debugf("error processing status faved by request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
-	c.JSON(http.StatusOK, mastoAccounts)
+	c.JSON(http.StatusOK, apiAccounts)
 }

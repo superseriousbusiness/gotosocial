@@ -18,7 +18,7 @@
 
 package model
 
-// FeaturedTag represents a hashtag that is featured on a profile. See https://docs.joinmastodon.org/entities/featuredtag/
+// FeaturedTag represents a hashtag that is featured on a profile.
 type FeaturedTag struct {
 	// The internal ID of the featured tag in the database.
 	ID string `json:"id"`

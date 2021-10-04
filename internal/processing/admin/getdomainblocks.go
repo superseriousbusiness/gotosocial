@@ -37,14 +37,14 @@ func (p *processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
-	mastoDomainBlocks := []*apimodel.DomainBlock{}
+	apiDomainBlocks := []*apimodel.DomainBlock{}
 	for _, b := range domainBlocks {
-		mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, b, export)
+		apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, b, export)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-		mastoDomainBlocks = append(mastoDomainBlocks, mastoDomainBlock)
+		apiDomainBlocks = append(apiDomainBlocks, apiDomainBlock)
 	}
 
-	return mastoDomainBlocks, nil
+	return apiDomainBlocks, nil
 }

@@ -42,7 +42,7 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 	}
 
 	// prepare the domain block to return
-	mastoDomainBlock, err := p.tc.DomainBlockToMasto(ctx, domainBlock, false)
+	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -80,5 +80,5 @@ func (p *processor) DomainBlockDelete(ctx context.Context, account *gtsmodel.Acc
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error removing suspension_origin from accounts: %s", err))
 	}
 
-	return mastoDomainBlock, nil
+	return apiDomainBlock, nil
 }

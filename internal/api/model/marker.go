@@ -18,7 +18,7 @@
 
 package model
 
-// Marker represents the last read position within a user's timelines. See https://docs.joinmastodon.org/entities/marker/
+// Marker represents the last read position within a user's timelines.
 type Marker struct {
 	// Information about the user's position in the home timeline.
 	Home *TimelineMarker `json:"home"`
@@ -26,7 +26,7 @@ type Marker struct {
 	Notifications *TimelineMarker `json:"notifications"`
 }
 
-// TimelineMarker contains information about a user's progress through a specific timeline. See https://docs.joinmastodon.org/entities/marker/
+// TimelineMarker contains information about a user's progress through a specific timeline.
 type TimelineMarker struct {
 	// The ID of the most recently viewed entity.
 	LastReadID string `json:"last_read_id"`

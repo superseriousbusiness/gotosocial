@@ -63,7 +63,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		}
 	}
 
-	a, err := p.tc.AttachmentToMasto(ctx, attachment)
+	a, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}

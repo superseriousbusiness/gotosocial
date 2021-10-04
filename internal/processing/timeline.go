@@ -151,9 +151,9 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(ctx, s, authed.Account)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
+			l.Debugf("filterPublicStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 
@@ -186,9 +186,9 @@ func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth,
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToMasto(ctx, s, authed.Account)
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			l.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its mastodon representation: %s", s.ID, err)
+			l.Debugf("filterFavedStatuses: skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
 			continue
 		}
 
