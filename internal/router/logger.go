@@ -62,9 +62,9 @@ func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 			})
 
 			if errorMessage == "" {
-				l.Infof("%s: wrote %d bytes in %v", http.StatusText(statusCode), bodySize, latency)
+				l.Infof("[%s] %s: wrote %d bytes", latency, http.StatusText(statusCode), bodySize)
 			} else {
-				l.Errorf("%s: %s", http.StatusText(statusCode), errorMessage)
+				l.Errorf("[%s] %s: %s", latency, http.StatusText(statusCode), errorMessage)
 			}
 		}
 	}
