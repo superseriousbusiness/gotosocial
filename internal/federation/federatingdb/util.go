@@ -69,7 +69,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		},
 	)
 
-	if l.Level >= logrus.DebugLevel {
+	if f.log.Level >= logrus.DebugLevel {
 		i, err := marshalItem(t)
 		if err != nil {
 			return nil, err
