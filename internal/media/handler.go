@@ -323,7 +323,7 @@ func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t trans
 		expectedContentType = currentAttachment.File.ContentType
 	}
 
-	attachmentBytes, err := t.DereferenceMedia(context.Background(), remoteIRI, expectedContentType)
+	attachmentBytes, err := t.DereferenceMedia(ctx, remoteIRI, expectedContentType)
 	if err != nil {
 		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
 	}

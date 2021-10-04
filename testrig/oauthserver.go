@@ -19,11 +19,13 @@
 package testrig
 
 import (
+	"context"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // NewTestOauthServer returns an oauth server with the given db, and the default test logger.
 func NewTestOauthServer(db db.DB) oauth.Server {
-	return oauth.New(db, NewTestLog())
+	return oauth.New(context.Background(), db, NewTestLog())
 }

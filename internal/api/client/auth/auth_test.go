@@ -124,7 +124,7 @@ func (suite *AuthTestSuite) SetupTest() {
 		}
 	}
 
-	suite.oauthServer = oauth.New(suite.db, log)
+	suite.oauthServer = oauth.New(context.Background(), suite.db, log)
 
 	if err := suite.db.Put(context.Background(), suite.testAccount); err != nil {
 		logrus.Panicf("could not insert test account into db: %s", err)

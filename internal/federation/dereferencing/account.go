@@ -149,7 +149,7 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 		return nil, fmt.Errorf("DereferenceAccountable: transport err: %s", err)
 	}
 
-	b, err := transport.Dereference(context.Background(), remoteAccountID)
+	b, err := transport.Dereference(ctx, remoteAccountID)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceAccountable: error deferencing %s: %s", remoteAccountID.String(), err)
 	}
@@ -159,7 +159,7 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 		return nil, fmt.Errorf("DereferenceAccountable: error unmarshalling bytes into json: %s", err)
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(ctx, m)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceAccountable: error resolving json into ap vocab type: %s", err)
 	}

@@ -41,7 +41,7 @@ func (d *deref) DereferenceCollectionPage(ctx context.Context, username string, 
 		return nil, fmt.Errorf("DereferenceCollectionPage: error creating transport: %s", err)
 	}
 
-	b, err := transport.Dereference(context.Background(), pageIRI)
+	b, err := transport.Dereference(ctx, pageIRI)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceCollectionPage: error deferencing %s: %s", pageIRI.String(), err)
 	}
@@ -51,7 +51,7 @@ func (d *deref) DereferenceCollectionPage(ctx context.Context, username string, 
 		return nil, fmt.Errorf("DereferenceCollectionPage: error unmarshalling bytes into json: %s", err)
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(ctx, m)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceCollectionPage: error resolving json into ap vocab type: %s", err)
 	}

@@ -120,7 +120,7 @@ func (p *processor) GetFediFollowers(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
 	}
 
-	requestedFollowers, err := p.federator.FederatingDB().Followers(context.Background(), requestedAccountURI)
+	requestedFollowers, err := p.federator.FederatingDB().Followers(ctx, requestedAccountURI)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching followers for uri %s: %s", requestedAccountURI.String(), err))
 	}
@@ -165,7 +165,7 @@ func (p *processor) GetFediFollowing(ctx context.Context, requestedUsername stri
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
 	}
 
-	requestedFollowing, err := p.federator.FederatingDB().Following(context.Background(), requestedAccountURI)
+	requestedFollowing, err := p.federator.FederatingDB().Following(ctx, requestedAccountURI)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching following for uri %s: %s", requestedAccountURI.String(), err))
 	}

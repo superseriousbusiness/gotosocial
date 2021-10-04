@@ -26,7 +26,7 @@ import (
 )
 
 func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error) {
-	ti, err := p.oauthServer.LoadAccessToken(context.Background(), accessToken)
+	ti, err := p.oauthServer.LoadAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("AuthorizeStreamingRequest: error loading access token: %s", err)
 	}

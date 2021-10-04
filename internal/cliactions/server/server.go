@@ -88,7 +88,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storage, log)
-	oauthServer := oauth.New(dbService, log)
+	oauthServer := oauth.New(ctx, dbService, log)
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient, log)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, log, typeConverter, mediaHandler)
 	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, log)
@@ -96,7 +96,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config, log
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
-	idp, err := oidc.NewIDP(c, log)
+	idp, err := oidc.NewIDP(ctx, c, log)
 	if err != nil {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}

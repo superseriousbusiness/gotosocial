@@ -39,7 +39,7 @@ func (f *federator) FingerRemoteAccount(ctx context.Context, requestingUsername 
 		return nil, fmt.Errorf("FingerRemoteAccount: error getting transport for username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}
 
-	b, err := t.Finger(context.Background(), targetUsername, targetDomain)
+	b, err := t.Finger(ctx, targetUsername, targetDomain)
 	if err != nil {
 		return nil, fmt.Errorf("FingerRemoteAccount: error doing request on behalf of username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
 	}

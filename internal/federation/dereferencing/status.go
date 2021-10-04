@@ -137,7 +137,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 		return nil, fmt.Errorf("DereferenceStatusable: transport err: %s", err)
 	}
 
-	b, err := transport.Dereference(context.Background(), remoteStatusID)
+	b, err := transport.Dereference(ctx, remoteStatusID)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: error deferencing %s: %s", remoteStatusID.String(), err)
 	}
@@ -147,7 +147,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 		return nil, fmt.Errorf("DereferenceStatusable: error unmarshalling bytes into json: %s", err)
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(ctx, m)
 	if err != nil {
 		return nil, fmt.Errorf("DereferenceStatusable: error resolving json into ap vocab type: %s", err)
 	}
