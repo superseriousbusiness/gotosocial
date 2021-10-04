@@ -24,6 +24,7 @@ import (
 	"mime/multipart"
 	"net/url"
 	"os"
+	"time"
 )
 
 // CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer
@@ -75,4 +76,14 @@ func URLMustParse(stringURL string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+// TimeMustParse tries to parse the given time as RFC3339, and panics if it can't.
+// Should only be used in tests.
+func TimeMustParse(timeString string) time.Time {
+	t, err := time.Parse(time.RFC3339, timeString)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
