@@ -46,8 +46,17 @@ func (q *debugQueryHook) BeforeQuery(ctx context.Context, event *bun.QueryEvent)
 func (q *debugQueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 	dur := time.Since(event.StartTime).Round(time.Microsecond)
 	l := q.log.WithFields(logrus.Fields{
-		"queryTime": dur,
+		"duration":  dur,
 		"operation": event.Operation(),
 	})
-	l.Trace(event.Query)
+
+	if event.Err != nil {
+		// if there's an error the it'll be handled in the application logic,
+		// but we can still debug log it here alongside the query
+		l = l.WithField("query", event.Query)
+		l.Debug(event.Err)
+		return
+	}
+
+	l.Tracef("[%s] %s", dur, event.Operation())
 }
