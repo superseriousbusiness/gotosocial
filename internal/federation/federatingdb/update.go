@@ -47,7 +47,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		},
 	)
 
-	if l.Level >= logrus.DebugLevel {
+	if f.log.Level >= logrus.DebugLevel {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err

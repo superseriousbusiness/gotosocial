@@ -39,7 +39,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		},
 	)
 
-	if l.Level >= logrus.DebugLevel {
+	if f.log.Level >= logrus.DebugLevel {
 		i, err := marshalItem(accept)
 		if err != nil {
 			return err

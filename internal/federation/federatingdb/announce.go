@@ -35,7 +35,7 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		},
 	)
 
-	if l.Level >= logrus.DebugLevel {
+	if f.log.Level >= logrus.DebugLevel {
 		i, err := marshalItem(announce)
 		if err != nil {
 			return err

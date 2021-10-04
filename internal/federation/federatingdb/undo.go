@@ -37,7 +37,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		},
 	)
 
-	if l.Level >= logrus.DebugLevel {
+	if f.log.Level >= logrus.DebugLevel {
 		i, err := marshalItem(undo)
 		if err != nil {
 			return err
