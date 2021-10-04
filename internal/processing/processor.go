@@ -256,7 +256,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	fromFederator := make(chan messages.FromFederator, 1000)
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
-	streamingProcessor := streaming.New(db, tc, oauthServer, config, log)
+	streamingProcessor := streaming.New(db, oauthServer, log)
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)

@@ -24,14 +24,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Processor wraps a bunch of functions for processing streaming.
@@ -49,22 +46,16 @@ type Processor interface {
 }
 
 type processor struct {
-	tc          typeutils.TypeConverter
-	config      *config.Config
 	db          db.DB
-	filter      visibility.Filter
 	log         *logrus.Logger
 	oauthServer oauth.Server
 	streamMap   *sync.Map
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, oauthServer oauth.Server, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, oauthServer oauth.Server, log *logrus.Logger) Processor {
 	return &processor{
-		tc:          tc,
-		config:      config,
 		db:          db,
-		filter:      visibility.NewFilter(db, log),
 		log:         log,
 		oauthServer: oauthServer,
 		streamMap:   &sync.Map{},
