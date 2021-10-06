@@ -133,6 +133,12 @@ type Announceable interface {
 	WithCC
 }
 
+// Addressable represents the minimum interface for an addressed activity.
+type Addressable interface {
+	WithTo
+	WithCC
+}
+
 // CollectionPageable represents the minimum interface for an activitystreams 'CollectionPage' object.
 type CollectionPageable interface {
 	WithJSONLDId

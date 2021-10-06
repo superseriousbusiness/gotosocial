@@ -1387,7 +1387,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				URLMustParse("https://www.w3.org/ns/activitystreams#Public"),
+				URLMustParse(pub.PublicActivityPubIRI),
 			},
 			[]*url.URL{},
 			false,
@@ -1401,7 +1401,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				URLMustParse("https://www.w3.org/ns/activitystreams#Public"),
+				URLMustParse(pub.PublicActivityPubIRI),
 			},
 			[]*url.URL{},
 			false,

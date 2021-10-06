@@ -32,10 +32,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const (
-	asPublicURI = "https://www.w3.org/ns/activitystreams#Public"
-)
-
 // TypeConverter is an interface for the common action of converting between apimodule (frontend, serializable) models,
 // internal gts models used in the database, and activitypub models used in federation.
 //

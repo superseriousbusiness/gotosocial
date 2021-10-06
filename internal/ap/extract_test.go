@@ -19,9 +19,14 @@
 package ap_test
 
 import (
+	"context"
+	"encoding/json"
+
+	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -86,15 +91,111 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 	return note
 }
 
+func addressable1() ap.Addressable {
+	// make a note addressed to public with followers in cc
+	note := streams.NewActivityStreamsNote()
+
+	toProp := streams.NewActivityStreamsToProperty()
+	toProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+
+	note.SetActivityStreamsTo(toProp)
+
+	ccProp := streams.NewActivityStreamsCcProperty()
+	ccProp.AppendIRI(testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/followers"))
+
+	note.SetActivityStreamsCc(ccProp)
+
+	return note
+}
+
+func addressable2() ap.Addressable {
+	// make a note addressed to followers with public in cc
+	note := streams.NewActivityStreamsNote()
+
+	toProp := streams.NewActivityStreamsToProperty()
+	toProp.AppendIRI(testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/followers"))
+
+	note.SetActivityStreamsTo(toProp)
+
+	ccProp := streams.NewActivityStreamsCcProperty()
+	ccProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+
+	note.SetActivityStreamsCc(ccProp)
+
+	return note
+}
+
+func addressable3() ap.Addressable {
+	// make a note addressed to followers
+	note := streams.NewActivityStreamsNote()
+
+	toProp := streams.NewActivityStreamsToProperty()
+	toProp.AppendIRI(testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/followers"))
+
+	note.SetActivityStreamsTo(toProp)
+
+	return note
+}
+
+func addressable4() vocab.ActivityStreamsAnnounce {
+	// https://github.com/superseriousbusiness/gotosocial/issues/267
+	announceJson := []byte(`
+{
+	"@context": "https://www.w3.org/ns/activitystreams",
+	"actor": "https://example.org/users/someone",
+	"cc": "https://another.instance/users/someone_else",
+	"id": "https://example.org/users/someone/statuses/107043888547829808/activity",
+	"object": "https://another.instance/users/someone_else/statuses/107026674805188668",
+	"published": "2021-10-04T15:08:35Z",
+	"to": "https://example.org/users/someone/followers",
+	"type": "Announce"
+}`)
+
+	var jsonAsMap map[string]interface{}
+	err := json.Unmarshal(announceJson, &jsonAsMap)
+	if err != nil {
+		panic(err)
+	}
+
+	t, err := streams.ToType(context.Background(), jsonAsMap)
+	if err != nil {
+		panic(err)
+	}
+
+	return t.(vocab.ActivityStreamsAnnounce)
+}
+
+func addressable5() ap.Addressable {
+	// make a note addressed to one person (direct message)
+	note := streams.NewActivityStreamsNote()
+
+	toProp := streams.NewActivityStreamsToProperty()
+	toProp.AppendIRI(testrig.URLMustParse("http://localhost:8080/users/1_happy_turtle"))
+
+	note.SetActivityStreamsTo(toProp)
+
+	return note
+}
+
 type ExtractTestSuite struct {
 	suite.Suite
 	document1         vocab.ActivityStreamsDocument
 	attachment1       vocab.ActivityStreamsAttachmentProperty
 	noteWithMentions1 vocab.ActivityStreamsNote
+	addressable1      ap.Addressable
+	addressable2      ap.Addressable
+	addressable3      ap.Addressable
+	addressable4      vocab.ActivityStreamsAnnounce
+	addressable5      ap.Addressable
 }
 
 func (suite *ExtractTestSuite) SetupTest() {
 	suite.document1 = document1()
 	suite.attachment1 = attachment1()
 	suite.noteWithMentions1 = noteWithMentions1()
+	suite.addressable1 = addressable1()
+	suite.addressable2 = addressable2()
+	suite.addressable3 = addressable3()
+	suite.addressable4 = addressable4()
+	suite.addressable5 = addressable5()
 }
