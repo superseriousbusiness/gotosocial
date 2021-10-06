@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -444,9 +445,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.Account.FollowersURI, err)
 	}
 
-	publicURI, err := url.Parse(asPublicURI)
+	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", asPublicURI, err)
+		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", pub.PublicActivityPubIRI, err)
 	}
 
 	// to and cc
@@ -795,9 +796,9 @@ func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", boostedAccount.URI, err)
 	}
 
-	publicURI, err := url.Parse(asPublicURI)
+	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
 	if err != nil {
-		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", asPublicURI, err)
+		return nil, fmt.Errorf("BoostToAS: error parsing uri %s: %s", pub.PublicActivityPubIRI, err)
 	}
 
 	ccProp := streams.NewActivityStreamsCcProperty()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -46,9 +47,9 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 	update.SetActivityStreamsObject(objectProp)
 
 	// to should be public
-	toURI, err := url.Parse(asPublicURI)
+	toURI, err := url.Parse(pub.PublicActivityPubIRI)
 	if err != nil {
-		return nil, fmt.Errorf("WrapPersonInUpdate: error parsing url %s: %s", asPublicURI, err)
+		return nil, fmt.Errorf("WrapPersonInUpdate: error parsing url %s: %s", pub.PublicActivityPubIRI, err)
 	}
 	toProp := streams.NewActivityStreamsToProperty()
 	toProp.AppendIRI(toURI)

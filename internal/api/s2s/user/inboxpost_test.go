@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
@@ -247,7 +248,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 	// Set the To of the update as public
 	updateTo := streams.NewActivityStreamsToProperty()
-	updateTo.AppendIRI(testrig.URLMustParse("https://www.w3.org/ns/activitystreams#Public"))
+	updateTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
 	update.SetActivityStreamsTo(updateTo)
 
 	// set the cc of the update to the receivingAccount
@@ -370,7 +371,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 
 	// Set the To of the delete as public
 	deleteTo := streams.NewActivityStreamsToProperty()
-	deleteTo.AppendIRI(testrig.URLMustParse("https://www.w3.org/ns/activitystreams#Public"))
+	deleteTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
 	delete.SetActivityStreamsTo(deleteTo)
 
 	// set some random-ass ID for the activity
