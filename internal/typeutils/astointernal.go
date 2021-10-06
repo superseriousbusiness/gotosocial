@@ -22,8 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -245,13 +243,13 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// if we don't know the account yet we can dereference it later
 	attributedTo, err := ap.ExtractAttributedTo(statusable)
 	if err != nil {
-		return nil, errors.New("attributedTo was empty")
+		return nil, errors.New("ASStatusToStatus: attributedTo was empty")
 	}
 	status.AccountURI = attributedTo.String()
 
 	statusOwner, err := c.db.GetAccountByURI(ctx, attributedTo.String())
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get status owner from db: %s", err)
+		return nil, fmt.Errorf("ASStatusToStatus: couldn't get status owner from db: %s", err)
 	}
 	status.AccountID = statusOwner.ID
 	status.AccountURI = statusOwner.URI
@@ -280,46 +278,9 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 
 	// visibility entry for this status
-	var visibility gtsmodel.Visibility
-
-	to, err := ap.ExtractTos(statusable)
+	visibility, err := ap.ExtractVisibility(statusable, status.Account.FollowersURI)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting TO values: %s", err)
-	}
-
-	cc, err := ap.ExtractCCs(statusable)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting CC values: %s", err)
-	}
-
-	if len(to) == 0 && len(cc) == 0 {
-		return nil, errors.New("message wasn't TO or CC anyone")
-	}
-
-	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
-
-	// if it's a DM then it's addressed to SPECIFIC ACCOUNTS and not followers or public
-	if len(to) != 0 && len(cc) == 0 {
-		visibility = gtsmodel.VisibilityDirect
-	}
-
-	// if it's just got followers in TO and it's not also CC'ed to public, it's followers only
-	if isFollowers(to, statusOwner.FollowersURI) {
-		visibility = gtsmodel.VisibilityFollowersOnly
-	}
-
-	// if it's CC'ed to public, it's public or unlocked
-	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
-	if isPublic(cc) {
-		visibility = gtsmodel.VisibilityUnlocked
-	}
-	if isPublic(to) {
-		visibility = gtsmodel.VisibilityPublic
-	}
-
-	// we should have a visibility by now
-	if visibility == "" {
-		return nil, errors.New("couldn't derive visibility")
+		return nil, fmt.Errorf("ASStatusToStatus: error extracting visibility: %s", err)
 	}
 	status.Visibility = visibility
 
@@ -553,55 +514,12 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	status.MentionIDs = []string{}
 	status.EmojiIDs = []string{}
 
-	// parse the visibility from the To and CC entries
-	var visibility gtsmodel.Visibility
-
-	to, err := ap.ExtractTos(announceable)
+	visibility, err := ap.ExtractVisibility(announceable, boostingAccount.FollowersURI)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("error extracting TO values: %s", err)
-	}
-
-	cc, err := ap.ExtractCCs(announceable)
-	if err != nil {
-		return nil, isNew, fmt.Errorf("error extracting CC values: %s", err)
-	}
-
-	if len(to) == 0 && len(cc) == 0 {
-		return nil, isNew, errors.New("message wasn't TO or CC anyone")
-	}
-
-	// if it's CC'ed to public, it's public or unlocked
-	if isPublic(cc) {
-		visibility = gtsmodel.VisibilityUnlocked
-	}
-	if isPublic(to) {
-		visibility = gtsmodel.VisibilityPublic
-	}
-
-	// we should have a visibility by now
-	if visibility == "" {
-		return nil, isNew, errors.New("couldn't derive visibility")
+		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting visibility: %s", err)
 	}
 	status.Visibility = visibility
 
 	// the rest of the fields will be taken from the target status, but it's not our job to do the dereferencing here
 	return status, isNew, nil
-}
-
-func isPublic(tos []*url.URL) bool {
-	for _, entry := range tos {
-		if strings.EqualFold(entry.String(), "https://www.w3.org/ns/activitystreams#Public") {
-			return true
-		}
-	}
-	return false
-}
-
-func isFollowers(ccs []*url.URL, followersURI string) bool {
-	for _, entry := range ccs {
-		if strings.EqualFold(entry.String(), followersURI) {
-			return true
-		}
-	}
-	return false
 }

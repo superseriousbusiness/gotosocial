@@ -610,3 +610,67 @@ func ExtractObject(i WithObject) (*url.URL, error) {
 	}
 	return nil, errors.New("no iri found for object prop")
 }
+
+// ExtractVisibility extracts the gtsmodel.Visibility of a given addressable with a To and CC property.
+//
+// ActorFollowersURI is needed to check whether the visibility is FollowersOnly or not. The passed-in value
+// should just be the string value representation of the followers URI of the actor who created the activity,
+// eg https://example.org/users/whoever/followers.
+func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmodel.Visibility, error) {
+	to, err := ExtractTos(addressable)
+	if err != nil {
+		return "", fmt.Errorf("deriveVisibility: error extracting TO values: %s", err)
+	}
+
+	cc, err := ExtractCCs(addressable)
+	if err != nil {
+		return "", fmt.Errorf("deriveVisibility: error extracting CC values: %s", err)
+	}
+
+	if len(to) == 0 && len(cc) == 0 {
+		return "", errors.New("deriveVisibility: message wasn't TO or CC anyone")
+	}
+
+	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
+	visibility := gtsmodel.VisibilityDirect
+
+	// if it's got followers in TO and it's not also CC'ed to public, it's followers only
+	if isFollowers(to, actorFollowersURI) {
+		visibility = gtsmodel.VisibilityFollowersOnly
+	}
+
+	// if it's CC'ed to public, it's unlocked
+	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
+	if isPublic(cc) {
+		visibility = gtsmodel.VisibilityUnlocked
+	}
+
+	// if it's To public, it's just straight up public
+	if isPublic(to) {
+		visibility = gtsmodel.VisibilityPublic
+	}
+
+	return visibility, nil
+}
+
+// isPublic checks if at least one entry in the given uris slice equals
+// the activitystreams public uri.
+func isPublic(uris []*url.URL) bool {
+	for _, entry := range uris {
+		if strings.EqualFold(entry.String(), pub.PublicActivityPubIRI) {
+			return true
+		}
+	}
+	return false
+}
+
+// isFollowers checks if at least one entry in the given uris slice equals
+// the given followersURI.
+func isFollowers(uris []*url.URL, followersURI string) bool {
+	for _, entry := range uris {
+		if strings.EqualFold(entry.String(), followersURI) {
+			return true
+		}
+	}
+	return false
+}
