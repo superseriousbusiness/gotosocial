@@ -253,7 +253,7 @@ func ExtractSummary(i WithSummary) (string, error) {
 		}
 	}
 
-	return "", errors.New("could not extract summary")
+	return "", nil
 }
 
 // ExtractDiscoverable extracts the Discoverable boolean of an interface.
