@@ -68,13 +68,14 @@ func DeriveEmojisFromText(text string) []string {
 // If nothing is matched, it will return an error.
 func ExtractMentionParts(mention string) (username, domain string, err error) {
 	matches := regexes.MentionName.FindStringSubmatch(mention)
-	if matches == nil || len(matches) != 3 {
-		err = fmt.Errorf("could't match mention %s", mention)
-		return
+	switch len(matches) {
+	case 2:
+		return matches[1], "", nil
+	case 3:
+		return matches[1], matches[2], nil
+	default:
+		return "", "", fmt.Errorf("couldn't match mention %s", mention)
 	}
-	username = matches[1]
-	domain = matches[2]
-	return
 }
 
 // IsMention returns true if the passed string looks like @whatever@example.org
