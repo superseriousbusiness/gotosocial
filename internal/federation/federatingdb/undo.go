@@ -46,12 +46,9 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		l.Debug("entering Undo")
 	}
 
-	targetAcct, fromFederatorChan, err := extractFromCtx(ctx)
-	if err != nil {
-		return err
-	}
-	if targetAcct == nil || fromFederatorChan == nil {
-		// If the target account or federator channel wasn't set on the context, that means this request didn't pass
+	receivingAccount, _, fromFederatorChan := extractFromCtx(ctx)
+	if receivingAccount == nil || fromFederatorChan == nil {
+		// If the receiving account or federator channel wasn't set on the context, that means this request didn't pass
 		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
@@ -83,7 +80,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return fmt.Errorf("UNDO: error converting asfollow to gtsfollow: %s", err)
 			}
 			// make sure the addressee of the original follow is the same as whatever inbox this landed in
-			if gtsFollow.TargetAccountID != targetAcct.ID {
+			if gtsFollow.TargetAccountID != receivingAccount.ID {
 				return errors.New("UNDO: follow object account and inbox account were not the same")
 			}
 			// delete any existing FOLLOW
@@ -116,7 +113,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return fmt.Errorf("UNDO: error converting asblock to gtsblock: %s", err)
 			}
 			// make sure the addressee of the original block is the same as whatever inbox this landed in
-			if gtsBlock.TargetAccountID != targetAcct.ID {
+			if gtsBlock.TargetAccountID != receivingAccount.ID {
 				return errors.New("UNDO: block object account and inbox account were not the same")
 			}
 			// delete any existing BLOCK

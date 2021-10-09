@@ -113,12 +113,12 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, errors.New("username was empty")
 	}
 
-	requestedAccount, err := f.db.GetLocalAccountByUsername(ctx, username)
+	receivingAccount, err := f.db.GetLocalAccountByUsername(ctx, username)
 	if err != nil {
-		return nil, false, fmt.Errorf("could not fetch requested account with username %s: %s", username, err)
+		return nil, false, fmt.Errorf("could not fetch receiving account with username %s: %s", username, err)
 	}
 
-	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(ctx, requestedAccount.Username)
+	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
 	if err != nil {
 		l.Debugf("request not authenticated: %s", err)
 		return ctx, false, err
@@ -154,12 +154,12 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 
 	requestingAccount, _, err := f.GetRemoteAccount(ctx, username, publicKeyOwnerURI, false)
 	if err != nil {
-		return nil, false, fmt.Errorf("couldn't get remote account: %s", err)
+		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}
 
-	withRequester := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
-	withRequested := context.WithValue(withRequester, util.APAccount, requestedAccount)
-	return withRequested, true, nil
+	withRequesting := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
+	withReceiving := context.WithValue(withRequesting, util.APReceivingAccount, receivingAccount)
+	return withReceiving, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by
@@ -182,11 +182,11 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	})
 	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
 
-	requestedAccountI := ctx.Value(util.APAccount)
-	requestedAccount, ok := requestedAccountI.(*gtsmodel.Account)
+	receivingAccountI := ctx.Value(util.APReceivingAccount)
+	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
 	if !ok {
-		f.log.Errorf("requested account not set on request context")
-		return false, errors.New("requested account not set on request context, so couldn't determine blocks")
+		f.log.Errorf("receiving account not set on request context")
+		return false, errors.New("receiving account not set on request context, so couldn't determine blocks")
 	}
 
 	blocked, err := f.db.AreURIsBlocked(ctx, actorIRIs)
@@ -209,12 +209,12 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
 		}
 
-		blocked, err = f.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, false)
+		blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID, false)
 		if err != nil {
 			return false, fmt.Errorf("error checking account block: %s", err)
 		}
 		if blocked {
-			l.Tracef("local account %s blocks account with uri %s", requestedAccount.Username, uri)
+			l.Tracef("local account %s blocks account with uri %s", receivingAccount.Username, uri)
 			return true, nil
 		}
 	}

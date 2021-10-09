@@ -125,7 +125,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	ctx := context.Background()
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
-	ctxWithAccount := context.WithValue(ctx, util.APAccount, inboxAccount)
+	ctxWithAccount := context.WithValue(ctx, util.APReceivingAccount, inboxAccount)
 	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
 	ctxWithVerifier := context.WithValue(ctxWithActivity, util.APRequestingPublicKeyVerifier, verifier)
 	ctxWithSignature := context.WithValue(ctxWithVerifier, util.APRequestingPublicKeySignature, activity.SignatureHeader)
