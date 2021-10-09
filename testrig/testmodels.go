@@ -1268,19 +1268,19 @@ type ActivityWithSignature struct {
 // their requesting signatures.
 func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	dmForZork := newNote(
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
-		URLMustParse("https://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		time.Now(),
 		"hey zork here's a new private note for you",
 		"new note for zork",
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
 		nil,
 		true,
 		[]vocab.ActivityStreamsMention{})
 	createDmForZork := wrapNoteInCreate(
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
 	sig, digest, date := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
