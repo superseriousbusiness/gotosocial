@@ -1283,14 +1283,38 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
-	sig, digest, date := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	forwardedMessage := newNote(
+		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		time.Now(),
+		"this is a public status, please forward it!",
+		"",
+		URLMustParse("http://example.org/users/some_user"),
+		[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
+		nil,
+		false,
+		[]vocab.ActivityStreamsMention{})
+	createForwardedMessage := wrapNoteInCreate(
+		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
+		URLMustParse("http://example.org/users/some_user"),
+		time.Now(),
+		forwardedMessage)
+	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
 			Activity:        createDmForZork,
-			SignatureHeader: sig,
-			DigestHeader:    digest,
-			DateHeader:      date,
+			SignatureHeader: createDmForZorkSig,
+			DigestHeader:    createDmForZorkDigest,
+			DateHeader:      creatDmForZorkDate,
+		},
+		"forwarded_message": {
+			Activity:        createForwardedMessage,
+			SignatureHeader: createForwardedMessageSig,
+			DigestHeader:    createForwardedMessageDigest,
+			DateHeader:      createForwardedMessageDate,
 		},
 	}
 }

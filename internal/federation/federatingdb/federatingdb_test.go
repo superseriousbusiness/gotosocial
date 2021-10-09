@@ -19,13 +19,17 @@
 package federatingdb_test
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,6 +49,7 @@ type FederatingDBTestSuite struct {
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
 	testBlocks       map[string]*gtsmodel.Block
+	testActivities   map[string]testrig.ActivityWithSignature
 }
 
 func (suite *FederatingDBTestSuite) SetupSuite() {
@@ -56,6 +61,7 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testBlocks = testrig.NewTestBlocks()
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 }
 
 func (suite *FederatingDBTestSuite) SetupTest() {
@@ -69,4 +75,12 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 
 func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+}
+
+func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, util.APReceivingAccount, receivingAccount)
+	ctx = context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
+	ctx = context.WithValue(ctx, util.APFromFederatorChanKey, fromFederatorChan)
+	return ctx
 }
