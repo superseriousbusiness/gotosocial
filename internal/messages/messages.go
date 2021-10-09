@@ -18,7 +18,11 @@
 
 package messages
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"net/url"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
 // FromClientAPI wraps a message that travels from the client API into the processor.
 type FromClientAPI struct {
@@ -31,8 +35,9 @@ type FromClientAPI struct {
 
 // FromFederator wraps a message that travels from the federator into the processor.
 type FromFederator struct {
-	APObjectType     string
-	APActivityType   string
-	GTSModel         interface{}
-	ReceivingAccount *gtsmodel.Account
+	APObjectType     string            // what is the object type of this message? eg., Note, Profile etc.
+	APActivityType   string            // what is the activity type of this message? eg., Create, Follow etc.
+	APIri            *url.URL          // what is the IRI ID of this activity?
+	GTSModel         interface{}       // representation of this object if it's already been converted into our internal gts model
+	ReceivingAccount *gtsmodel.Account // which account owns the inbox that this activity was posted to?
 }
