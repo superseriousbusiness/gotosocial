@@ -289,29 +289,26 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 
 // extractFromCtx extracts some useful values from a context passed into the federatingDB via the API:
 //   - The target account that owns the inbox or URI being interacted with.
+//   - The requesting account that posted to the inbox.
 //   - A channel that messages for the processor can be placed into.
-func extractFromCtx(ctx context.Context) (*gtsmodel.Account, chan messages.FromFederator, error) {
-	var targetAcct *gtsmodel.Account
-	targetAcctI := ctx.Value(util.APAccount)
-	if targetAcctI != nil {
-		var ok bool
-		targetAcct, ok = targetAcctI.(*gtsmodel.Account)
-		if !ok {
-			return nil, nil, errors.New("extractFromCtx: account value in context not parseable")
-		}
+// If a value is not present, nil will be returned for it. It's up to the caller to check this and respond appropriately.
+func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) {
+	receivingAccountI := ctx.Value(util.APReceivingAccount)
+	if receivingAccountI != nil {
+		receivingAccount = receivingAccountI.(*gtsmodel.Account)
 	}
 
-	var fromFederatorChan chan messages.FromFederator
+	requestingAcctI := ctx.Value(util.APRequestingAccount)
+	if requestingAcctI != nil {
+		requestingAccount = requestingAcctI.(*gtsmodel.Account)
+	}
+
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI != nil {
-		var ok bool
-		fromFederatorChan, ok = fromFederatorChanI.(chan messages.FromFederator)
-		if !ok {
-			return nil, nil, errors.New("extractFromCtx: fromFederatorChan value in context not parseable")
-		}
+		fromFederatorChan = fromFederatorChanI.(chan messages.FromFederator)
 	}
 
-	return targetAcct, fromFederatorChan, nil
+	return
 }
 
 func marshalItem(item vocab.Type) (string, error) {
