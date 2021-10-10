@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type FromFederatorTestSuite struct {
@@ -484,6 +485,28 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.Equal("Follow", accept.Object.Type)
 	suite.Equal(originAccount.URI, accept.To)
 	suite.Equal("Accept", accept.Type)
+}
+
+// TestCreateStatusFromIRI checks if a forwarded status can be dereferenced by the processor.
+func (suite *FromFederatorTestSuite) TestCreateStatusFromIRI() {
+	ctx := context.Background()
+
+	receivingAccount := suite.testAccounts["local_account_1"]
+	statusCreator := suite.testAccounts["remote_account_2"]
+
+	err := suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+		APObjectType:     ap.ObjectNote,
+		APActivityType:   ap.ActivityCreate,
+		GTSModel:         nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
+		ReceivingAccount: receivingAccount,
+		APIri:            testrig.URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+	})
+	suite.NoError(err)
+
+	// status should now be in the database, attributed to remote_account_2
+	s, err := suite.db.GetStatusByURI(context.Background(), "http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1")
+	suite.NoError(err)
+	suite.Equal(statusCreator.URI, s.AccountURI)
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {
