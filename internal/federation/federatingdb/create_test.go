@@ -19,6 +19,7 @@
 package federatingdb_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -55,6 +56,10 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	// status should have some expected values
 	suite.Equal(requestingAccount.ID, status.AccountID)
 	suite.Equal("hey zork here's a new private note for you", status.Content)
+
+	// status should be in the database
+	_, err = suite.db.GetStatusByID(context.Background(), status.ID)
+	suite.NoError(err)
 }
 
 func (suite *CreateTestSuite) TestCreateNoteForward() {
