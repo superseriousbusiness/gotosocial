@@ -109,7 +109,7 @@ func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
 	engine := gin.New()
 
 	engine.Use(gin.RecoveryWithWriter(logrus.StandardLogger().Writer()))
-	engine.Use(loggerWithConfig())
+	engine.Use(loggingMiddleware())
 
 	// 8 MiB
 	engine.MaxMultipartMemory = 8 << 20

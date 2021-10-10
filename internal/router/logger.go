@@ -30,7 +30,7 @@ var skipPaths = map[string]interface{}{
 	"/api/v1/streaming": nil,
 }
 
-func loggerWithConfig() gin.HandlerFunc {
+func loggingMiddleware() gin.HandlerFunc {
 	logHandler := func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
