@@ -42,7 +42,7 @@ func runAction(c *cli.Context, a cliactions.GTSAction) error {
 	}
 
 	// create a logger with the log level, formatting, and output splitter already set
-	err = log.New(conf.LogLevel)
+	err = log.Initialize(conf.LogLevel)
 	if err != nil {
 		return fmt.Errorf("error creating logger: %s", err)
 	}

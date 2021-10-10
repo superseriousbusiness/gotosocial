@@ -21,7 +21,6 @@ package federatingdb_test
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,7 +36,6 @@ type FederatingDBTestSuite struct {
 	suite.Suite
 	config       *config.Config
 	db           db.DB
-	log          *logrus.Logger
 	tc           typeutils.TypeConverter
 	federatingDB federatingdb.DB
 
@@ -68,7 +66,7 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

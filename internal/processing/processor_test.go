@@ -28,7 +28,6 @@ import (
 
 	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/streams"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -48,7 +47,6 @@ type ProcessingStandardTestSuite struct {
 	suite.Suite
 	config              *config.Config
 	db                  db.DB
-	log                 *logrus.Logger
 	storage             *kv.KVStore
 	typeconverter       typeutils.TypeConverter
 	transportController transport.Controller
@@ -100,7 +98,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 

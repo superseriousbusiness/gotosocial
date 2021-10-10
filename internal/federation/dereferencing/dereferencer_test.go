@@ -41,7 +41,6 @@ type DereferencerStandardTestSuite struct {
 	suite.Suite
 	config  *config.Config
 	db      db.DB
-	log     *logrus.Logger
 	storage *kv.KVStore
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
@@ -64,7 +63,7 @@ func (suite *DereferencerStandardTestSuite) SetupSuite() {
 func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.dereferencer = dereferencing.NewDereferencer(suite.config, suite.db, testrig.NewTestTypeConverter(suite.db), suite.mockTransportController(), testrig.NewTestMediaHandler(suite.db, suite.storage))
 	testrig.StandardDBSetup(suite.db, nil)
@@ -80,7 +79,7 @@ func (suite *DereferencerStandardTestSuite) TearDownTest() {
 // or note or attachment that we have stored, then just a 200 code will be returned, with an empty body.
 func (suite *DereferencerStandardTestSuite) mockTransportController() transport.Controller {
 	do := func(req *http.Request) (*http.Response, error) {
-		suite.log.Debugf("received request for %s", req.URL)
+		logrus.Debugf("received request for %s", req.URL)
 
 		responseBytes := []byte{}
 		responseType := ""
@@ -135,7 +134,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 
 		if len(responseBytes) != 0 {
 			// we found something, so print what we're going to return
-			suite.log.Debugf("returning response %s", string(responseBytes))
+			logrus.Debugf("returning response %s", string(responseBytes))
 		}
 		responseLength = len(responseBytes)
 

@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"git.iim.gay/grufwub/go-store/kv"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
@@ -43,7 +42,6 @@ type WebfingerStandardTestSuite struct {
 	suite.Suite
 	config         *config.Config
 	db             db.DB
-	log            *logrus.Logger
 	tc             typeutils.TypeConverter
 	federator      federation.Federator
 	processor      processing.Processor
@@ -78,7 +76,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)

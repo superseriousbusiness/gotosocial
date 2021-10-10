@@ -21,7 +21,6 @@ package account_test
 import (
 	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/pub"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,7 +40,6 @@ type AccountStandardTestSuite struct {
 	suite.Suite
 	config              *config.Config
 	db                  db.DB
-	log                 *logrus.Logger
 	tc                  typeutils.TypeConverter
 	storage             *kv.KVStore
 	mediaHandler        media.Handler
@@ -77,7 +75,7 @@ func (suite *AccountStandardTestSuite) SetupSuite() {
 func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)

@@ -27,7 +27,6 @@ import (
 	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -44,7 +43,6 @@ type ProtocolTestSuite struct {
 	suite.Suite
 	config        *config.Config
 	db            db.DB
-	log           *logrus.Logger
 	storage       *kv.KVStore
 	typeConverter typeutils.TypeConverter
 	accounts      map[string]*gtsmodel.Account
@@ -56,7 +54,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()

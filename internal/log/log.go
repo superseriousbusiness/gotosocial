@@ -25,10 +25,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// New initializes the global Logrus logger to the specified level
+// Initialize initializes the global Logrus logger to the specified level
 // It also sets the output to log.outputSplitter,
 // so you get error logs on stderr and normal logs on stdout.
-func New(level string) error {
+func Initialize(level string) error {
 	logrus.SetOutput(&outputSplitter{})
 
 	logLevel, err := logrus.ParseLevel(level)

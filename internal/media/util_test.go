@@ -19,16 +19,15 @@
 package media
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"io/ioutil"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
 type MediaUtilTestSuite struct {
 	suite.Suite
-	log *logrus.Logger
 }
 
 /*
@@ -37,10 +36,12 @@ type MediaUtilTestSuite struct {
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *MediaUtilTestSuite) SetupSuite() {
-	// some of our subsequent entities need a log so create this here
-	log := logrus.New()
-	log.SetLevel(logrus.TraceLevel)
-	suite.log = log
+	// doesn't use testrig.InitTestLog() helper to prevent import cycle
+	err := log.Initialize("trace")
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func (suite *MediaUtilTestSuite) TearDownSuite() {

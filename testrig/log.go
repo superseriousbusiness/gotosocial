@@ -20,15 +20,12 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-
-	"github.com/sirupsen/logrus"
 )
 
-// NewTestLog returns a trace level logger for testing
-func NewTestLog() *logrus.Logger {
-	err := log.New("trace")
+// InitTestLog sets the global logger to trace level for logging
+func InitTestLog() {
+	err := log.Initialize("trace")
 	if err != nil {
 		panic(err)
 	}
-	return logrus.StandardLogger()
 }

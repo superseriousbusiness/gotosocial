@@ -20,7 +20,6 @@ package status_test
 
 import (
 	"git.iim.gay/grufwub/go-store/kv"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -37,7 +36,6 @@ type StatusStandardTestSuite struct {
 	suite.Suite
 	config    *config.Config
 	db        db.DB
-	log       *logrus.Logger
 	tc        typeutils.TypeConverter
 	federator federation.Federator
 	processor processing.Processor
