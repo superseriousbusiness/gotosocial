@@ -69,6 +69,7 @@ type ProcessingStandardTestSuite struct {
 	testMentions     map[string]*gtsmodel.Mention
 	testAutheds      map[string]*oauth.Auth
 	testBlocks       map[string]*gtsmodel.Block
+	testActivities   map[string]testrig.ActivityWithSignature
 
 	sentHTTPRequests map[string][]byte
 
@@ -92,6 +93,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 			Account:     suite.testAccounts["local_account_1"],
 		},
 	}
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.testBlocks = testrig.NewTestBlocks()
 }
 
