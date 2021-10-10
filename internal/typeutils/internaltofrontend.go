@@ -303,8 +303,6 @@ func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag
 }
 
 func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
-	l := logrus.StandardLogger()
-
 	repliesCount, err := c.db.CountStatusReplies(ctx, s)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %s", err)
@@ -381,7 +379,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, gtsAttachment := range s.Attachments {
 			apiAttachment, err := c.AttachmentToAPIAttachment(ctx, gtsAttachment)
 			if err != nil {
-				l.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
+				logrus.Errorf("error converting attachment with id %s: %s", gtsAttachment.ID, err)
 				continue
 			}
 			apiAttachments = append(apiAttachments, apiAttachment)
@@ -392,12 +390,12 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, aID := range s.AttachmentIDs {
 			gtsAttachment, err := c.db.GetAttachmentByID(ctx, aID)
 			if err != nil {
-				l.Errorf("error getting attachment with id %s: %s", aID, err)
+				logrus.Errorf("error getting attachment with id %s: %s", aID, err)
 				continue
 			}
 			apiAttachment, err := c.AttachmentToAPIAttachment(ctx, gtsAttachment)
 			if err != nil {
-				l.Errorf("error converting attachment with id %s: %s", aID, err)
+				logrus.Errorf("error converting attachment with id %s: %s", aID, err)
 				continue
 			}
 			apiAttachments = append(apiAttachments, apiAttachment)
@@ -411,7 +409,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, gtsMention := range s.Mentions {
 			apiMention, err := c.MentionToAPIMention(ctx, gtsMention)
 			if err != nil {
-				l.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				logrus.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
 				continue
 			}
 			apiMentions = append(apiMentions, apiMention)
@@ -422,12 +420,12 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, mID := range s.MentionIDs {
 			gtsMention, err := c.db.GetMention(ctx, mID)
 			if err != nil {
-				l.Errorf("error getting mention with id %s: %s", mID, err)
+				logrus.Errorf("error getting mention with id %s: %s", mID, err)
 				continue
 			}
 			apiMention, err := c.MentionToAPIMention(ctx, gtsMention)
 			if err != nil {
-				l.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
+				logrus.Errorf("error converting mention with id %s: %s", gtsMention.ID, err)
 				continue
 			}
 			apiMentions = append(apiMentions, apiMention)
@@ -441,7 +439,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, gtsTag := range s.Tags {
 			apiTag, err := c.TagToAPITag(ctx, gtsTag)
 			if err != nil {
-				l.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				logrus.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
 				continue
 			}
 			apiTags = append(apiTags, apiTag)
@@ -452,12 +450,12 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, t := range s.TagIDs {
 			gtsTag := &gtsmodel.Tag{}
 			if err := c.db.GetByID(ctx, t, gtsTag); err != nil {
-				l.Errorf("error getting tag with id %s: %s", t, err)
+				logrus.Errorf("error getting tag with id %s: %s", t, err)
 				continue
 			}
 			apiTag, err := c.TagToAPITag(ctx, gtsTag)
 			if err != nil {
-				l.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
+				logrus.Errorf("error converting tag with id %s: %s", gtsTag.ID, err)
 				continue
 			}
 			apiTags = append(apiTags, apiTag)
@@ -471,7 +469,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, gtsEmoji := range s.Emojis {
 			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
 			if err != nil {
-				l.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				logrus.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
 				continue
 			}
 			apiEmojis = append(apiEmojis, apiEmoji)
@@ -482,12 +480,12 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
 			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
-				l.Errorf("error getting emoji with id %s: %s", e, err)
+				logrus.Errorf("error getting emoji with id %s: %s", e, err)
 				continue
 			}
 			apiEmoji, err := c.EmojiToAPIEmoji(ctx, gtsEmoji)
 			if err != nil {
-				l.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+				logrus.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
 				continue
 			}
 			apiEmojis = append(apiEmojis, apiEmoji)
