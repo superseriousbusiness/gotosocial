@@ -446,6 +446,41 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:       false,
 			SuspensionOrigin:      "",
 		},
+		"remote_account_2": {
+			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
+			Username:              "some_user",
+			Domain:                "example.org",
+			DisplayName:           "some user",
+			Fields:                []gtsmodel.Field{},
+			Note:                  "i'm a real son of a gun",
+			Memorial:              false,
+			MovedToAccountID:      "",
+			CreatedAt:             TimeMustParse("2020-08-10T14:13:28+02:00"),
+			UpdatedAt:             time.Now().Add(-1 * time.Hour),
+			Bot:                   false,
+			Locked:                true,
+			Discoverable:          true,
+			Sensitive:             false,
+			Language:              "en",
+			URI:                   "http://example.org/users/some_user",
+			URL:                   "http://example.org/@some_user",
+			LastWebfingeredAt:     time.Time{},
+			InboxURI:              "http://example.org/users/some_user/inbox",
+			OutboxURI:             "http://example.org/users/some_user/outbox",
+			FollowersURI:          "http://example.org/users/some_user/followers",
+			FollowingURI:          "http://example.org/users/some_user/following",
+			FeaturedCollectionURI: "http://example.org/users/some_user/collections/featured",
+			ActorType:             ap.ActorPerson,
+			AlsoKnownAs:           "",
+			PrivateKey:            &rsa.PrivateKey{},
+			PublicKey:             &rsa.PublicKey{},
+			PublicKeyURI:          "http://example.org/users/some_user#main-key",
+			SensitizedAt:          time.Time{},
+			SilencedAt:            time.Time{},
+			SuspendedAt:           time.Time{},
+			HideCollections:       false,
+			SuspensionOrigin:      "",
+		},
 	}
 
 	// generate keys for each account
@@ -1268,29 +1303,53 @@ type ActivityWithSignature struct {
 // their requesting signatures.
 func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
 	dmForZork := newNote(
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
-		URLMustParse("https://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
+		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		time.Now(),
 		"hey zork here's a new private note for you",
 		"new note for zork",
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
 		nil,
 		true,
 		[]vocab.ActivityStreamsMention{})
 	createDmForZork := wrapNoteInCreate(
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
-		URLMustParse("https://fossbros-anonymous.io/users/foss_satan"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
-	sig, digest, date := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	forwardedMessage := newNote(
+		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
+		time.Now(),
+		"this is a public status, please forward it!",
+		"",
+		URLMustParse("http://example.org/users/some_user"),
+		[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
+		nil,
+		false,
+		[]vocab.ActivityStreamsMention{})
+	createForwardedMessage := wrapNoteInCreate(
+		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
+		URLMustParse("http://example.org/users/some_user"),
+		time.Now(),
+		forwardedMessage)
+	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
 			Activity:        createDmForZork,
-			SignatureHeader: sig,
-			DigestHeader:    digest,
-			DateHeader:      date,
+			SignatureHeader: createDmForZorkSig,
+			DigestHeader:    createDmForZorkDigest,
+			DateHeader:      creatDmForZorkDate,
+		},
+		"forwarded_message": {
+			Activity:        createForwardedMessage,
+			SignatureHeader: createForwardedMessageSig,
+			DigestHeader:    createForwardedMessageDigest,
+			DateHeader:      createForwardedMessageDate,
 		},
 	}
 }

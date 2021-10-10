@@ -69,6 +69,7 @@ type ProcessingStandardTestSuite struct {
 	testMentions     map[string]*gtsmodel.Mention
 	testAutheds      map[string]*oauth.Auth
 	testBlocks       map[string]*gtsmodel.Block
+	testActivities   map[string]testrig.ActivityWithSignature
 
 	sentHTTPRequests map[string][]byte
 
@@ -92,6 +93,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 			Account:     suite.testAccounts["local_account_1"],
 		},
 	}
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.testBlocks = testrig.NewTestBlocks()
 }
 
@@ -142,6 +144,32 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 				StatusCode:    200,
 				Body:          readCloser,
 				ContentLength: int64(len(satanJson)),
+				Header: http.Header{
+					"content-type": {responseType},
+				},
+			}
+			return response, nil
+		}
+
+		if req.URL.String() == "http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1" {
+			// the request is for the forwarded message
+			message := suite.testActivities["forwarded_message"].Activity.GetActivityStreamsObject().At(0).GetActivityStreamsNote()
+			messageI, err := streams.Serialize(message)
+			if err != nil {
+				panic(err)
+			}
+			messageJson, err := json.Marshal(messageI)
+			if err != nil {
+				panic(err)
+			}
+			responseType := "application/activity+json"
+
+			reader := bytes.NewReader(messageJson)
+			readCloser := io.NopCloser(reader)
+			response := &http.Response{
+				StatusCode:    200,
+				Body:          readCloser,
+				ContentLength: int64(len(messageJson)),
 				Header: http.Header{
 					"content-type": {responseType},
 				},

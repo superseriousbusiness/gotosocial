@@ -55,11 +55,11 @@ Text`
 
 	replaceMentionsWithLinkString = `Another test @foss_satan@fossbros-anonymous.io
 
-https://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
+http://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
 
 	replaceMentionsWithLinkStringExpected = `Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention">@<span>foss_satan</span></a></span>
 
-https://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
+http://fossbros-anonymous.io/@foss_satan/statuses/6675ee73-fccc-4562-a46a-3e8cd9798060`
 
 	replaceMentionsWithLinkSelfString = `Mentioning myself: @the_mighty_zork
 

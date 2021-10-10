@@ -62,8 +62,8 @@ type APContextKey string
 const (
 	// APActivity can be used to set and retrieve the actual go-fed pub.Activity within a context.
 	APActivity APContextKey = "activity"
-	// APAccount can be used the set and retrieve the account being interacted with
-	APAccount APContextKey = "account"
+	// APReceivingAccount can be used the set and retrieve the account being interacted with / receiving an activity in their inbox.
+	APReceivingAccount APContextKey = "account"
 	// APRequestingAccount can be used to set and retrieve the account of an incoming federation request.
 	// This will often be the actor of the instance that's posting the request.
 	APRequestingAccount APContextKey = "requestingAccount"
