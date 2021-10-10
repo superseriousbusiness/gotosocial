@@ -78,8 +78,8 @@ type bunDBService struct {
 	conn   *DBConn
 }
 
-func doMigration(ctx context.Context, db *bun.DB, log *logrus.Logger) error {
-	l := log.WithField("func", "doMigration")
+func doMigration(ctx context.Context, db *bun.DB) error {
+	l := logrus.WithField("func", "doMigration")
 
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
@@ -106,7 +106,7 @@ func doMigration(ctx context.Context, db *bun.DB, log *logrus.Logger) error {
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
-func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) (db.DB, error) {
+func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
 	var sqldb *sql.DB
 	var conn *DBConn
 
@@ -120,7 +120,7 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		}
 		sqldb = stdlib.OpenDB(*opts)
 		tweakConnectionValues(sqldb)
-		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()), log)
+		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 	case dbTypeSqlite:
 		// SQLITE
 
@@ -138,10 +138,10 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 			return nil, fmt.Errorf("could not open sqlite db: %s", err)
 		}
 		tweakConnectionValues(sqldb)
-		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()), log)
+		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
 
 		if c.DBConfig.Address == "file::memory:?cache=shared" {
-			log.Warn("sqlite in-memory database should only be used for debugging")
+			logrus.Warn("sqlite in-memory database should only be used for debugging")
 
 			// don't close connections on disconnect -- otherwise
 			// the SQLite database will be deleted when there
@@ -152,23 +152,23 @@ func NewBunDBService(ctx context.Context, c *config.Config, log *logrus.Logger) 
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
 
-	if log.Level >= logrus.TraceLevel {
+	if logrus.GetLevel() >= logrus.TraceLevel {
 		// add a hook to just log queries and the time they take
-		conn.DB.AddQueryHook(newDebugQueryHook(log))
+		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 
 	// actually *begin* the connection so that we can tell if the db is there and listening
 	if err := conn.Ping(); err != nil {
 		return nil, fmt.Errorf("db connection error: %s", err)
 	}
-	log.Info("connected to database")
+	logrus.Info("connected to database")
 
 	for _, t := range registerTables {
 		// https://bun.uptrace.dev/orm/many-to-many-relation/
 		conn.RegisterModel(t)
 	}
 
-	if err := doMigration(ctx, conn.DB, log); err != nil {
+	if err := doMigration(ctx, conn.DB); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
@@ -398,7 +398,7 @@ func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAcco
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
-				ps.conn.log.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
+				logrus.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
 				continue
 			}
 			// a serious error has happened so bail
@@ -464,7 +464,7 @@ func (ps *bunDBService) EmojiStringsToEmojis(ctx context.Context, emojis []strin
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// no result found for this username/domain so just don't include it as an emoji and carry on about our business
-				ps.conn.log.Debugf("no emoji found with shortcode %s, skipping it", e)
+				logrus.Debugf("no emoji found with shortcode %s, skipping it", e)
 				continue
 			}
 			// a serious error has happened so bail

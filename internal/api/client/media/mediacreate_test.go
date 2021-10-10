@@ -88,7 +88,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.config, suite.processor, suite.log).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.config, suite.processor).(*mediamodule.Module)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {

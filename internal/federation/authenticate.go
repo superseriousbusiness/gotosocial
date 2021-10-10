@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 
@@ -112,7 +113,7 @@ func getPublicKeyFromResponse(c context.Context, b []byte, keyID *url.URL) (voca
 // Also note that this function *does not* dereference the remote account that the signature key is associated with.
 // Other functions should use the returned URL to dereference the remote account, if required.
 func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*url.URL, bool, error) {
-	l := f.log.WithField("func", "AuthenticateFederatedRequest")
+	l := logrus.WithField("func", "AuthenticateFederatedRequest")
 
 	var publicKey interface{}
 	var pkOwnerURI *url.URL

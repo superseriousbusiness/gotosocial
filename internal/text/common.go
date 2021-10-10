@@ -21,6 +21,7 @@ package text
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"html"
 	"strings"
 
@@ -100,7 +101,7 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				if menchie.TargetAccount == nil {
 					a, err := f.db.GetAccountByID(ctx, menchie.TargetAccountID)
 					if err != nil {
-						f.log.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
+						logrus.Errorf("error getting account with id %s from the db: %s", menchie.TargetAccountID, err)
 						return match
 					}
 					menchie.TargetAccount = a

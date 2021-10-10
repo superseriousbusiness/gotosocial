@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -31,13 +30,13 @@ import (
 )
 
 // Export exports info from the database into a file
-var Export cliactions.GTSAction = func(ctx context.Context, c *config.Config, log *logrus.Logger) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c, log)
+var Export cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
+	dbConn, err := bundb.NewBunDBService(ctx, c)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	exporter := trans.NewExporter(dbConn, log)
+	exporter := trans.NewExporter(dbConn)
 
 	path, ok := c.ExportCLIFlags[config.TransPathFlag]
 	if !ok {

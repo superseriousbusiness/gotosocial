@@ -19,6 +19,7 @@
 package followrequest
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,7 +29,7 @@ import (
 // FollowRequestAcceptPOSTHandler deals with follow request accepting. It should be served at
 // /api/v1/follow_requests/:id/authorize
 func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+	l := logrus.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

@@ -19,6 +19,7 @@
 package followrequest
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,7 @@ import (
 
 // FollowRequestGETHandler allows clients to get a list of their incoming follow requests.
 func (m *Module) FollowRequestGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+	l := logrus.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

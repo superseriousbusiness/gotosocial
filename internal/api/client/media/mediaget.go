@@ -19,6 +19,7 @@
 package media
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -61,7 +62,7 @@ import (
 //   '422':
 //      description: unprocessable
 func (m *Module) MediaGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "MediaGETHandler")
+	l := logrus.WithField("func", "MediaGETHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

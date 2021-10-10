@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -45,16 +44,14 @@ const (
 type FileServer struct {
 	config      *config.Config
 	processor   processing.Processor
-	log         *logrus.Logger
 	storageBase string
 }
 
 // New returns a new fileServer module
-func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor) api.ClientModule {
 	return &FileServer{
 		config:      config,
 		processor:   processor,
-		log:         log,
 		storageBase: config.StorageConfig.ServeBasePath,
 	}
 }

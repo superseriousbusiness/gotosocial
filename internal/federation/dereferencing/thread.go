@@ -35,7 +35,7 @@ import (
 // presented by remote instances as part of their replies collections, and will likely involve making several calls to
 // multiple different hosts.
 func (d *deref) DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "DereferenceThread",
 		"username":  username,
 		"statusIRI": statusIRI.String(),
@@ -69,7 +69,7 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 
 // iterateAncestors has the goal of reaching the oldest ancestor of a given status, and stashing all statuses along the way.
 func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI url.URL) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "iterateAncestors",
 		"username":  username,
 		"statusIRI": statusIRI.String(),
@@ -121,7 +121,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 }
 
 func (d *deref) iterateDescendants(ctx context.Context, username string, statusIRI url.URL, statusable ap.Statusable) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "iterateDescendants",
 		"username":  username,
 		"statusIRI": statusIRI.String(),

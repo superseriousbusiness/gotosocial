@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -84,7 +85,7 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
-	l := m.log.WithField("func", "InstanceUpdatePATCHHandler")
+	l := logrus.WithField("func", "InstanceUpdatePATCHHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

@@ -58,7 +58,7 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	if account.Domain != "" {
 		fields["domain"] = account.Domain
 	}
-	l := p.log.WithFields(fields)
+	l := logrus.WithFields(fields)
 
 	l.Debug("beginning account delete process")
 

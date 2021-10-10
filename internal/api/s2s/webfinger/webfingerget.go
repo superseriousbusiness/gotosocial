@@ -31,7 +31,7 @@ import (
 
 // WebfingerGETRequest handles requests to, for example, https://example.org/.well-known/webfinger?resource=acct:some_user@example.org
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":       "WebfingerGETRequest",
 		"user-agent": c.Request.UserAgent(),
 	})

@@ -81,7 +81,7 @@ grabloop:
 }
 
 func (t *timeline) IndexBehind(ctx context.Context, statusID string, include bool, amount int) error {
-	l := t.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":    "IndexBehind",
 		"include": include,
 		"amount":  amount,

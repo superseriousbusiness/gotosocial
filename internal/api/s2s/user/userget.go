@@ -37,7 +37,7 @@ import (
 // And of course, the request should be refused if the account or server making the
 // request is blocked.
 func (m *Module) UsersGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "UsersGETHandler",
 		"url":  c.Request.RequestURI,
 	})

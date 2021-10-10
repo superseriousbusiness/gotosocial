@@ -236,7 +236,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
 func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
 	})
@@ -292,7 +292,7 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 }
 
 func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
-	l := d.log
+	l := logrus.StandardLogger()
 
 	// At this point, mentions should have the namestring and mentionedAccountURI set on them.
 	// We can use these to find the accounts.
@@ -382,7 +382,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 }
 
 func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
-	l := d.log
+	l := logrus.StandardLogger()
 
 	// At this point we should know:
 	// * the media type of the file we're looking for (a.File.ContentType)

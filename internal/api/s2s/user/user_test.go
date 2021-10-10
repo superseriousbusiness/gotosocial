@@ -78,8 +78,8 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.log = testrig.NewTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.userModule = user.New(suite.config, suite.processor, suite.log).(*user.Module)
-	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
+	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
+	suite.securityModule = security.New(suite.config, suite.db).(*security.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

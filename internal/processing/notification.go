@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -27,7 +28,7 @@ import (
 )
 
 func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
-	l := p.log.WithField("func", "NotificationsGet")
+	l := logrus.WithField("func", "NotificationsGet")
 
 	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, limit, maxID, sinceID)
 	if err != nil {

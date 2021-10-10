@@ -190,16 +190,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
 
-	suite.processor = processing.NewProcessor(
-		suite.config,
-		suite.typeconverter,
-		suite.federator,
-		suite.oauthServer,
-		suite.mediaHandler,
-		suite.storage,
-		suite.timelineManager,
-		suite.db,
-		suite.log)
+	suite.processor = processing.NewProcessor(suite.config, suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")

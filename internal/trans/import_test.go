@@ -42,7 +42,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	tempFilePath := fmt.Sprintf("%s/%s", suite.T().TempDir(), uuid.NewString())
 
 	// export to the tempFilePath
-	exporter := trans.NewExporter(suite.db, suite.log)
+	exporter := trans.NewExporter(suite.db)
 	err := exporter.ExportMinimal(ctx, tempFilePath)
 	suite.NoError(err)
 
@@ -57,7 +57,7 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	newDB := testrig.NewTestDB()
 	testrig.CreateTestTables(newDB)
 
-	importer := trans.NewImporter(newDB, suite.log)
+	importer := trans.NewImporter(newDB)
 	err = importer.Import(ctx, tempFilePath)
 	suite.NoError(err)
 

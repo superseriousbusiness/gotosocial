@@ -36,35 +36,33 @@ import (
 type tokenStore struct {
 	oauth2.TokenStore
 	db  db.Basic
-	log *logrus.Logger
 }
 
 // newTokenStore returns a token store that satisfies the oauth2.TokenStore interface.
 //
 // In order to allow tokens to 'expire', it will also set off a goroutine that iterates through
 // the tokens in the DB once per minute and deletes any that have expired.
-func newTokenStore(ctx context.Context, db db.Basic, log *logrus.Logger) oauth2.TokenStore {
+func newTokenStore(ctx context.Context, db db.Basic) oauth2.TokenStore {
 	ts := &tokenStore{
 		db:  db,
-		log: log,
 	}
 
 	// set the token store to clean out expired tokens once per minute, or return if we're done
-	go func(ctx context.Context, ts *tokenStore, log *logrus.Logger) {
+	go func(ctx context.Context, ts *tokenStore) {
 	cleanloop:
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("breaking cleanloop")
+				logrus.Info("breaking cleanloop")
 				break cleanloop
 			case <-time.After(1 * time.Minute):
-				log.Trace("sweeping out old oauth entries broom broom")
+				logrus.Trace("sweeping out old oauth entries broom broom")
 				if err := ts.sweep(ctx); err != nil {
-					log.Errorf("error while sweeping oauth entries: %s", err)
+					logrus.Errorf("error while sweeping oauth entries: %s", err)
 				}
 			}
 		}
-	}(ctx, ts, log)
+	}(ctx, ts)
 	return ts
 }
 

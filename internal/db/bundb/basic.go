@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -165,6 +166,6 @@ func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
 }
 
 func (b *basicDB) Stop(ctx context.Context) db.Error {
-	b.conn.log.Info("closing db connection")
+	logrus.Info("closing db connection")
 	return b.conn.Close()
 }

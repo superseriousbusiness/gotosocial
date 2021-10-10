@@ -29,7 +29,7 @@ import (
 
 // FollowersGETHandler returns a collection of URIs for followers of the target user, formatted so that other AP servers can understand it.
 func (m *Module) FollowersGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "FollowersGETHandler",
 		"url":  c.Request.RequestURI,
 	})

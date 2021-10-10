@@ -22,7 +22,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -47,16 +46,14 @@ type Processor interface {
 
 type processor struct {
 	db          db.DB
-	log         *logrus.Logger
 	oauthServer oauth.Server
 	streamMap   *sync.Map
 }
 
 // New returns a new status processor.
-func New(db db.DB, oauthServer oauth.Server, log *logrus.Logger) Processor {
+func New(db db.DB, oauthServer oauth.Server) Processor {
 	return &processor{
 		db:          db,
-		log:         log,
 		oauthServer: oauthServer,
 		streamMap:   &sync.Map{},
 	}

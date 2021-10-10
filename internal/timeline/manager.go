@@ -84,13 +84,12 @@ type Manager interface {
 }
 
 // NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
-func NewManager(db db.DB, tc typeutils.TypeConverter, config *config.Config, log *logrus.Logger) Manager {
+func NewManager(db db.DB, tc typeutils.TypeConverter, config *config.Config) Manager {
 	return &manager{
 		accountTimelines: sync.Map{},
 		db:               db,
 		tc:               tc,
 		config:           config,
-		log:              log,
 	}
 }
 
@@ -99,11 +98,10 @@ type manager struct {
 	db               db.DB
 	tc               typeutils.TypeConverter
 	config           *config.Config
-	log              *logrus.Logger
 }
 
 func (m *manager) Ingest(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":              "Ingest",
 		"timelineAccountID": timelineAccountID,
 		"statusID":          status.ID,
@@ -119,7 +117,7 @@ func (m *manager) Ingest(ctx context.Context, status *gtsmodel.Status, timelineA
 }
 
 func (m *manager) IngestAndPrepare(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":              "IngestAndPrepare",
 		"timelineAccountID": timelineAccountID,
 		"statusID":          status.ID,
@@ -135,7 +133,7 @@ func (m *manager) IngestAndPrepare(ctx context.Context, status *gtsmodel.Status,
 }
 
 func (m *manager) Remove(ctx context.Context, timelineAccountID string, statusID string) (int, error) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":              "Remove",
 		"timelineAccountID": timelineAccountID,
 		"statusID":          statusID,
@@ -151,7 +149,7 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, statusID
 }
 
 func (m *manager) HomeTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":              "HomeTimelineGet",
 		"timelineAccountID": timelineAccountID,
 	})
@@ -237,7 +235,7 @@ func (m *manager) getOrCreateTimeline(ctx context.Context, timelineAccountID str
 	i, ok := m.accountTimelines.Load(timelineAccountID)
 	if !ok {
 		var err error
-		t, err = NewTimeline(ctx, timelineAccountID, m.db, m.tc, m.log)
+		t, err = NewTimeline(ctx, timelineAccountID, m.db, m.tc)
 		if err != nil {
 			return nil, err
 		}

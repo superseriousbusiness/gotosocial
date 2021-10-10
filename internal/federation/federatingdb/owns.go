@@ -33,7 +33,7 @@ import (
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Owns",
 			"id":   id,

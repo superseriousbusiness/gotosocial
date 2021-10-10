@@ -342,7 +342,7 @@ func (suite *TypeUtilsTestSuite) SetupSuite() {
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testPeople = testrig.NewTestFediPeople()
-	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db, suite.log)
+	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
 }
 
 func (suite *TypeUtilsTestSuite) SetupTest() {

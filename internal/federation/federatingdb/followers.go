@@ -17,7 +17,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (followers vocab.ActivityStreamsCollection, err error) {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Followers",
 			"id":   actorIRI,

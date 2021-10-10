@@ -27,7 +27,7 @@ import (
 
 // UserAgentBlock blocks requests with undesired, empty, or invalid user-agent strings.
 func (m *Module) UserAgentBlock(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "UserAgentBlock",
 	})
 

@@ -1,6 +1,7 @@
 package favourites
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,7 @@ import (
 
 // FavouritesGETHandler handles GETting favourites.
 func (m *Module) FavouritesGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "PublicTimelineGETHandler")
+	l := logrus.WithField("func", "PublicTimelineGETHandler")
 
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

@@ -35,7 +35,7 @@ import (
 // and directs the message into the appropriate side effect handler function, or simply does nothing if there's
 // no handler function defined for the combination of Activity and Object.
 func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	l := p.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":           "processFromFederator",
 		"APActivityType": federatorMsg.APActivityType,
 		"APObjectType":   federatorMsg.APObjectType,

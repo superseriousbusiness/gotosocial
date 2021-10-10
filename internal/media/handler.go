@@ -87,16 +87,14 @@ type mediaHandler struct {
 	config  *config.Config
 	db      db.DB
 	storage *kv.KVStore
-	log     *logrus.Logger
 }
 
 // New returns a new handler with the given config, db, storage, and logger
-func New(config *config.Config, database db.DB, storage *kv.KVStore, log *logrus.Logger) Handler {
+func New(config *config.Config, database db.DB, storage *kv.KVStore) Handler {
 	return &mediaHandler{
 		config:  config,
 		db:      database,
 		storage: storage,
-		log:     log,
 	}
 }
 
@@ -108,7 +106,7 @@ func New(config *config.Config, database db.DB, storage *kv.KVStore, log *logrus
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
 func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
-	l := mh.log.WithField("func", "SetHeaderForAccountID")
+	l := logrus.WithField("func", "SetHeaderForAccountID")
 
 	if mediaType != Header && mediaType != Avatar {
 		return nil, errors.New("header or avatar not selected")

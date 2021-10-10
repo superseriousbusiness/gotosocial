@@ -22,7 +22,6 @@ import (
 	"context"
 	"mime/multipart"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -87,21 +86,19 @@ type processor struct {
 	formatter     text.Formatter
 	db            db.DB
 	federator     federation.Federator
-	log           *logrus.Logger
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, config *config.Config) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,
 		mediaHandler:  mediaHandler,
 		fromClientAPI: fromClientAPI,
 		oauthServer:   oauthServer,
-		filter:        visibility.NewFilter(db, log),
-		formatter:     text.NewFormatter(config, db, log),
+		filter:        visibility.NewFilter(db),
+		formatter:     text.NewFormatter(config, db),
 		db:            db,
 		federator:     federator,
-		log:           log,
 	}
 }

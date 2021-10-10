@@ -86,7 +86,7 @@ func NewTestDB() db.DB {
 		config.DBConfig.Port = int(port)
 	}
 
-	testDB, err := bundb.NewBunDBService(context.Background(), config, NewTestLog())
+	testDB, err := bundb.NewBunDBService(context.Background(), config)
 	if err != nil {
 		logrus.Panic(err)
 	}

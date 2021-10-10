@@ -29,7 +29,7 @@ import (
 
 // NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
 func (m *Module) NotificationsGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":        "NotificationsGETHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),

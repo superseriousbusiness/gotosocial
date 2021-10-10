@@ -19,6 +19,7 @@
 package timeline
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -102,7 +103,7 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "HomeTimelineGETHandler")
+	l := logrus.WithField("func", "HomeTimelineGETHandler")
 
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

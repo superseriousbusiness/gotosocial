@@ -59,7 +59,7 @@ func (d *deref) EnrichRemoteAccount(ctx context.Context, username string, accoun
 
 	updated, err := d.db.UpdateAccount(ctx, account)
 	if err != nil {
-		d.log.Errorf("EnrichRemoteAccount: error updating account: %s", err)
+		logrus.Errorf("EnrichRemoteAccount: error updating account: %s", err)
 		return account, nil
 	}
 
@@ -203,7 +203,7 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 // PopulateAccountFields populates any fields on the given account that weren't populated by the initial
 // dereferencing. This includes things like header and avatar etc.
 func (d *deref) PopulateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, refresh bool) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":               "PopulateAccountFields",
 		"requestingUsername": requestingUsername,
 	})

@@ -27,7 +27,7 @@ import (
 )
 
 func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error) {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":     "StatusHometimelineable",
 		"statusID": targetStatus.ID,
 	})

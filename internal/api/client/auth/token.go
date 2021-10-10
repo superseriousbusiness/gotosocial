@@ -19,6 +19,7 @@
 package auth
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 
@@ -37,7 +38,7 @@ type tokenBody struct {
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
 // The idea here is to serve an oauth access token to a user, which can be used for authorizing against non-public APIs.
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "TokenPOSTHandler")
+	l := logrus.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
 
 	form := &tokenBody{}

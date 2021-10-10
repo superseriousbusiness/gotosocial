@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ import (
 //   '500':
 //      description: internal error
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "InstanceInformationGETHandler")
+	l := logrus.WithField("func", "InstanceInformationGETHandler")
 
 	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
 	if err != nil {

@@ -30,7 +30,7 @@ import (
 func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error) {
 	const getBoosted = true
 
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":     "StatusVisible",
 		"statusID": targetStatus.ID,
 	})

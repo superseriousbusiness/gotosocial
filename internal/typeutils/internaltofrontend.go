@@ -21,6 +21,7 @@ package typeutils
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
@@ -302,7 +303,7 @@ func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (model.Tag
 }
 
 func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*model.Status, error) {
-	l := c.log
+	l := logrus.StandardLogger()
 
 	repliesCount, err := c.db.CountStatusReplies(ctx, s)
 	if err != nil {

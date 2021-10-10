@@ -1,6 +1,7 @@
 package security
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 
@@ -13,7 +14,7 @@ import (
 // that signed the request is permitted to access the server. If it is permitted, the handler will set the key
 // verifier and the signature in the gin context for use down the line.
 func (m *Module) SignatureCheck(c *gin.Context) {
-	l := m.log.WithField("func", "DomainBlockChecker")
+	l := logrus.WithField("func", "DomainBlockChecker")
 
 	// create the verifier from the request
 	// if the request is signed, it will have a signature header

@@ -66,12 +66,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.log = testrig.NewTestLog()
 	suite.storage = testrig.NewTestStorage()
-	suite.dereferencer = dereferencing.NewDereferencer(suite.config,
-		suite.db,
-		testrig.NewTestTypeConverter(suite.db),
-		suite.mockTransportController(),
-		testrig.NewTestMediaHandler(suite.db, suite.storage),
-		suite.log)
+	suite.dereferencer = dereferencing.NewDereferencer(suite.config, suite.db, testrig.NewTestTypeConverter(suite.db), suite.mockTransportController(), testrig.NewTestMediaHandler(suite.db, suite.storage))
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

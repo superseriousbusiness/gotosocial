@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -176,16 +175,14 @@ type TypeConverter interface {
 type converter struct {
 	config  *config.Config
 	db      db.DB
-	log     *logrus.Logger
 	asCache cache.Cache
 }
 
 // NewConverter returns a new Converter
-func NewConverter(config *config.Config, db db.DB, log *logrus.Logger) TypeConverter {
+func NewConverter(config *config.Config, db db.DB) TypeConverter {
 	return &converter{
 		config:  config,
 		db:      db,
-		log:     log,
 		asCache: cache.New(),
 	}
 }

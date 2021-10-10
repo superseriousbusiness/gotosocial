@@ -21,7 +21,6 @@ package auth
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -58,17 +57,15 @@ type Module struct {
 	db     db.DB
 	server oauth.Server
 	idp    oidc.IDP
-	log    *logrus.Logger
 }
 
 // New returns a new auth module
-func New(config *config.Config, db db.DB, server oauth.Server, idp oidc.IDP, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, db db.DB, server oauth.Server, idp oidc.IDP) api.ClientModule {
 	return &Module{
 		config: config,
 		db:     db,
 		server: server,
 		idp:    idp,
-		log:    log,
 	}
 }
 

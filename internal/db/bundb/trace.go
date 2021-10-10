@@ -27,26 +27,24 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func newDebugQueryHook(log *logrus.Logger) bun.QueryHook {
+func newDebugQueryHook() bun.QueryHook {
 	return &debugQueryHook{
-		log: log,
 	}
 }
 
 // debugQueryHook implements bun.QueryHook
 type debugQueryHook struct {
-	log *logrus.Logger
 }
 
-func (q *debugQueryHook) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
+func (q *debugQueryHook) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
 	// do nothing
 	return ctx
 }
 
 // AfterQuery logs the time taken to query, the operation (select, update, etc), and the query itself as translated by bun.
-func (q *debugQueryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
+func (q *debugQueryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 	dur := time.Since(event.StartTime).Round(time.Microsecond)
-	l := q.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"duration":  dur,
 		"operation": event.Operation(),
 	})

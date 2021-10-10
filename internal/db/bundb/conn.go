@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -15,12 +14,11 @@ type DBConn struct {
 	// TODO: move *Config here, no need to be in each struct type
 
 	errProc func(error) db.Error // errProc is the SQL-type specific error processor
-	log     *logrus.Logger       // log is the logger passed with this DBConn
 	*bun.DB                      // DB is the underlying bun.DB connection
 }
 
 // WrapDBConn @TODO
-func WrapDBConn(dbConn *bun.DB, log *logrus.Logger) *DBConn {
+func WrapDBConn(dbConn *bun.DB) *DBConn {
 	var errProc func(error) db.Error
 	switch dbConn.Dialect().Name() {
 	case dialect.PG:
@@ -32,7 +30,6 @@ func WrapDBConn(dbConn *bun.DB, log *logrus.Logger) *DBConn {
 	}
 	return &DBConn{
 		errProc: errProc,
-		log:     log,
 		DB:      dbConn,
 	}
 }

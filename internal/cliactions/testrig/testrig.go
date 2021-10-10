@@ -43,7 +43,7 @@ import (
 )
 
 // Start creates and starts a gotosocial testrig server
-var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log *logrus.Logger) error {
+var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config) error {
 	c := testrig.NewTestConfig()
 	dbService := testrig.NewTestDB()
 	testrig.StandardDBSetup(dbService, nil)
@@ -67,35 +67,35 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
-	idp, err := oidc.NewIDP(ctx, c, log)
+	idp, err := oidc.NewIDP(ctx, c)
 	if err != nil {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}
 
 	// build client api modules
-	authModule := auth.New(c, dbService, oauthServer, idp, log)
-	accountModule := account.New(c, processor, log)
-	instanceModule := instance.New(c, processor, log)
-	appsModule := app.New(c, processor, log)
-	followRequestsModule := followrequest.New(c, processor, log)
-	webfingerModule := webfinger.New(c, processor, log)
-	nodeInfoModule := nodeinfo.New(c, processor, log)
-	webBaseModule := web.New(c, processor, log)
-	usersModule := user.New(c, processor, log)
-	timelineModule := timeline.New(c, processor, log)
-	notificationModule := notification.New(c, processor, log)
-	searchModule := search.New(c, processor, log)
-	filtersModule := filter.New(c, processor, log)
-	emojiModule := emoji.New(c, processor, log)
-	listsModule := list.New(c, processor, log)
-	mm := mediaModule.New(c, processor, log)
-	fileServerModule := fileserver.New(c, processor, log)
-	adminModule := admin.New(c, processor, log)
-	statusModule := status.New(c, processor, log)
-	securityModule := security.New(c, dbService, log)
-	streamingModule := streaming.New(c, processor, log)
-	favouritesModule := favourites.New(c, processor, log)
-	blocksModule := blocks.New(c, processor, log)
+	authModule := auth.New(c, dbService, oauthServer, idp)
+	accountModule := account.New(c, processor)
+	instanceModule := instance.New(c, processor)
+	appsModule := app.New(c, processor)
+	followRequestsModule := followrequest.New(c, processor)
+	webfingerModule := webfinger.New(c, processor)
+	nodeInfoModule := nodeinfo.New(c, processor)
+	webBaseModule := web.New(c, processor)
+	usersModule := user.New(c, processor)
+	timelineModule := timeline.New(c, processor)
+	notificationModule := notification.New(c, processor)
+	searchModule := search.New(c, processor)
+	filtersModule := filter.New(c, processor)
+	emojiModule := emoji.New(c, processor)
+	listsModule := list.New(c, processor)
+	mm := mediaModule.New(c, processor)
+	fileServerModule := fileserver.New(c, processor)
+	adminModule := admin.New(c, processor)
+	statusModule := status.New(c, processor)
+	securityModule := security.New(c, dbService)
+	streamingModule := streaming.New(c, processor)
+	favouritesModule := favourites.New(c, processor)
+	blocksModule := blocks.New(c, processor)
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
@@ -145,7 +145,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
-	log.Infof("received signal %s, shutting down", sig)
+	logrus.Infof("received signal %s, shutting down", sig)
 
 	testrig.StandardDBTeardown(dbService)
 	testrig.StandardStorageTeardown(storageBackend)
@@ -155,6 +155,6 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config, log
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
-	log.Info("done! exiting...")
+	logrus.Info("done! exiting...")
 	return nil
 }

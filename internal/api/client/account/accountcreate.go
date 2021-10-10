@@ -20,6 +20,7 @@ package account
 
 import (
 	"errors"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/http"
 
@@ -67,7 +68,7 @@ import (
 //   '500':
 //      description: internal error
 func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "accountCreatePOSTHandler")
+	l := logrus.WithField("func", "accountCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, false, false)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

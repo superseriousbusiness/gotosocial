@@ -81,8 +81,8 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.log = testrig.NewTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.webfingerModule = webfinger.New(suite.config, suite.processor, suite.log).(*webfinger.Module)
-	suite.securityModule = security.New(suite.config, suite.db, suite.log).(*security.Module)
+	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)
+	suite.securityModule = security.New(suite.config, suite.db).(*security.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

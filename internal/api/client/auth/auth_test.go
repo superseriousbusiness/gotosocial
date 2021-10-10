@@ -103,7 +103,7 @@ func (suite *AuthTestSuite) SetupTest() {
 
 	log := logrus.New()
 	log.SetLevel(logrus.TraceLevel)
-	db, err := bundb.NewBunDBService(context.Background(), suite.config, log)
+	db, err := bundb.NewBunDBService(context.Background(), suite.config)
 	if err != nil {
 		logrus.Panicf("error creating database connection: %s", err)
 	}
@@ -124,7 +124,7 @@ func (suite *AuthTestSuite) SetupTest() {
 		}
 	}
 
-	suite.oauthServer = oauth.New(context.Background(), suite.db, log)
+	suite.oauthServer = oauth.New(context.Background(), suite.db)
 
 	if err := suite.db.Put(context.Background(), suite.testAccount); err != nil {
 		logrus.Panicf("could not insert test account into db: %s", err)

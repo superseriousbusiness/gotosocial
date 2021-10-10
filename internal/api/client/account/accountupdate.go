@@ -20,6 +20,7 @@ package account
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -100,7 +101,7 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
-	l := m.log.WithField("func", "accountUpdateCredentialsPATCHHandler")
+	l := logrus.WithField("func", "accountUpdateCredentialsPATCHHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

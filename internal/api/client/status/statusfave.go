@@ -62,7 +62,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":        "StatusFavePOSTHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),

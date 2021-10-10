@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"git.iim.gay/grufwub/go-store/kv"
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -49,17 +48,15 @@ type processor struct {
 	mediaHandler media.Handler
 	storage      *kv.KVStore
 	db           db.DB
-	log          *logrus.Logger
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage *kv.KVStore, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage *kv.KVStore, config *config.Config) Processor {
 	return &processor{
 		tc:           tc,
 		config:       config,
 		mediaHandler: mediaHandler,
 		storage:      storage,
 		db:           db,
-		log:          log,
 	}
 }

@@ -21,7 +21,6 @@ package media
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -41,15 +40,13 @@ const BasePathWithID = BasePath + "/:" + IDKey
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
-	log       *logrus.Logger
 }
 
 // New returns a new auth module
-func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,
-		log:       log,
 	}
 }
 

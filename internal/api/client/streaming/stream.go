@@ -2,6 +2,7 @@ package streaming
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 
@@ -107,7 +108,7 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) StreamGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "StreamGETHandler")
+	l := logrus.WithField("func", "StreamGETHandler")
 
 	streamType := c.Query(StreamQueryKey)
 	if streamType == "" {

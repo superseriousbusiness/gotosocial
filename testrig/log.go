@@ -26,9 +26,9 @@ import (
 
 // NewTestLog returns a trace level logger for testing
 func NewTestLog() *logrus.Logger {
-	logger, err := log.New("trace")
+	err := log.New("trace")
 	if err != nil {
 		panic(err)
 	}
-	return logger
+	return logrus.StandardLogger()
 }

@@ -85,7 +85,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.fileServer = fileserver.New(suite.config, suite.processor, suite.log).(*fileserver.FileServer)
+	suite.fileServer = fileserver.New(suite.config, suite.processor).(*fileserver.FileServer)
 }
 
 func (suite *ServeFileTestSuite) TearDownSuite() {

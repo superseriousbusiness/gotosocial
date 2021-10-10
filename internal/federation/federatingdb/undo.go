@@ -31,13 +31,13 @@ import (
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Undo",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(undo)
 		if err != nil {
 			return err

@@ -33,13 +33,13 @@ import (
 )
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Accept",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(accept)
 		if err != nil {
 			return err

@@ -50,7 +50,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -109,7 +109,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -171,7 +171,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()

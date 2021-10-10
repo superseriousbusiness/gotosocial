@@ -27,5 +27,5 @@ import (
 
 // NewTestOauthServer returns an oauth server with the given db, and the default test logger.
 func NewTestOauthServer(db db.DB) oauth.Server {
-	return oauth.New(context.Background(), db, NewTestLog())
+	return oauth.New(context.Background(), db)
 }
