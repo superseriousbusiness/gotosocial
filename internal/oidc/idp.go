@@ -50,7 +50,7 @@ type idp struct {
 	oidcConf     *oidc.Config
 }
 
-// NewIDP returns a new IDP configured with the given config and logger.
+// NewIDP returns a new IDP configured with the given config.
 // If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.

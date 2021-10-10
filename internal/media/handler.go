@@ -89,7 +89,7 @@ type mediaHandler struct {
 	storage *kv.KVStore
 }
 
-// New returns a new handler with the given config, db, storage, and logger
+// New returns a new handler with the given config, db, and storage
 func New(config *config.Config, database db.DB, storage *kv.KVStore) Handler {
 	return &mediaHandler{
 		config:  config,

@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// NewTestOauthServer returns an oauth server with the given db, and the default test logger.
+// NewTestOauthServer returns an oauth server with the given db
 func NewTestOauthServer(db db.DB) oauth.Server {
 	return oauth.New(context.Background(), db)
 }

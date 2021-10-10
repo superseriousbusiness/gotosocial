@@ -34,7 +34,7 @@ type exporter struct {
 	writtenIDs map[string]bool
 }
 
-// NewExporter returns a new Exporter that will use the given db and logger.
+// NewExporter returns a new Exporter that will use the given db.
 func NewExporter(db db.DB) Exporter {
 	return &exporter{
 		db:         db,

@@ -33,7 +33,7 @@ type importer struct {
 	db  db.DB
 }
 
-// NewImporter returns a new Importer interface that uses the given db and logger.
+// NewImporter returns a new Importer interface that uses the given db.
 func NewImporter(db db.DB) Importer {
 	return &importer{
 		db:  db,

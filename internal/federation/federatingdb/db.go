@@ -49,7 +49,7 @@ type federatingDB struct {
 	typeConverter typeutils.TypeConverter
 }
 
-// New returns a DB interface using the given database, config, and logger.
+// New returns a DB interface using the given database and config
 func New(db db.DB, config *config.Config) DB {
 	fdb := federatingDB{
 		mutex:         sync.Mutex{},

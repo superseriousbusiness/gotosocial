@@ -249,7 +249,7 @@ type processor struct {
 	mediaProcessor     mediaProcessor.Processor
 }
 
-// NewProcessor returns a new Processor that uses the given federator and logger
+// NewProcessor returns a new Processor that uses the given federator
 func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)

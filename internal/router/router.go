@@ -98,7 +98,7 @@ func (r *router) Stop(ctx context.Context) error {
 	return r.srv.Shutdown(ctx)
 }
 
-// New returns a new Router with the specified configuration, using the given logrus logger.
+// New returns a new Router with the specified configuration.
 //
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.

@@ -47,7 +47,7 @@ type filter struct {
 	db  db.DB
 }
 
-// NewFilter returns a new Filter interface that will use the provided database and logger.
+// NewFilter returns a new Filter interface that will use the provided database.
 func NewFilter(db db.DB) Filter {
 	return &filter{
 		db:  db,
