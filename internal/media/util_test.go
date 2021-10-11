@@ -19,6 +19,7 @@
 package media
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"io/ioutil"
 	"testing"
@@ -37,7 +38,7 @@ type MediaUtilTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *MediaUtilTestSuite) SetupSuite() {
 	// doesn't use testrig.InitTestLog() helper to prevent import cycle
-	err := log.Initialize("trace")
+	err := log.Initialize(logrus.TraceLevel.String())
 	if err != nil {
 		panic(err)
 	}
