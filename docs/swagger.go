@@ -40,12 +40,14 @@
 //           read:search: grant read access to searches
 //           read:statuses: grants read access to statuses
 //           read:streaming: grants read access to streaming api
+//           read:user: grants read access to user-level info
 //           write: grants write access to everything
 //           write:accounts: grants write access to accounts
 //           write:blocks: grants write access to blocks
 //           write:follows: grants write access to follows
 //           write:media: grants write access to media
 //           write:statuses: grants write access to statuses
+//           write:user: grants write access to user-level info
 //           admin: grants admin access to everything
 //           admin:accounts: grants admin access to accounts
 //       OAuth2 Application:
