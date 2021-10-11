@@ -27,7 +27,7 @@ import (
 
 // NewTestRouter returns a Router suitable for testing
 func NewTestRouter(db db.DB) router.Router {
-	r, err := router.New(context.Background(), NewTestConfig(), db, NewTestLog())
+	r, err := router.New(context.Background(), NewTestConfig(), db)
 	if err != nil {
 		panic(err)
 	}

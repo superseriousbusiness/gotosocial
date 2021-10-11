@@ -21,6 +21,7 @@ package status
 import (
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -67,7 +68,7 @@ import (
 //   '500':
 //      description: internal error
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "statusCreatePOSTHandler")
+	l := logrus.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true) // posting a status is serious business so we want *everything*
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)

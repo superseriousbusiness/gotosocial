@@ -23,7 +23,6 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -79,7 +78,6 @@ type Dereferencer interface {
 }
 
 type deref struct {
-	log                 *logrus.Logger
 	db                  db.DB
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
@@ -90,9 +88,8 @@ type deref struct {
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler, log *logrus.Logger) Dereferencer {
+func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler) Dereferencer {
 	return &deref{
-		log:                 log,
 		db:                  db,
 		typeConverter:       typeConverter,
 		transportController: transportController,

@@ -22,7 +22,6 @@ import (
 	"context"
 	"mime/multipart"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -49,17 +48,15 @@ type processor struct {
 	mediaHandler  media.Handler
 	fromClientAPI chan messages.FromClientAPI
 	db            db.DB
-	log           *logrus.Logger
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI, config *config.Config, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI, config *config.Config) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,
 		mediaHandler:  mediaHandler,
 		fromClientAPI: fromClientAPI,
 		db:            db,
-		log:           log,
 	}
 }

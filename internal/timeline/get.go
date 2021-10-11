@@ -31,7 +31,7 @@ import (
 const retries = 5
 
 func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error) {
-	l := t.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "Get",
 		"accountID": t.accountID,
 		"amount":    amount,
@@ -137,7 +137,7 @@ func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]*apimodel.Sta
 }
 
 func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
-	l := t.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":     "GetXBehindID",
 		"amount":   amount,
 		"behindID": behindID,

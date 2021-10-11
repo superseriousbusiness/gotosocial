@@ -67,10 +67,10 @@ func (suite *UtilTestSuite) SetupSuite() {
 func (suite *UtilTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.status = status.New(suite.db, suite.typeConverter, suite.config, suite.fromClientAPIChan, suite.log)
+	suite.status = status.New(suite.db, suite.typeConverter, suite.config, suite.fromClientAPIChan)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

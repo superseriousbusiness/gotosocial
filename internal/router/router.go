@@ -56,7 +56,6 @@ type Router interface {
 
 // router fulfils the Router interface using gin and logrus
 type router struct {
-	logger      *logrus.Logger
 	engine      *gin.Engine
 	srv         *http.Server
 	config      *config.Config
@@ -74,21 +73,21 @@ func (r *router) Start() {
 		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
 			if err := http.ListenAndServe(fmt.Sprintf(":%d", r.config.LetsEncryptConfig.Port), r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
-				r.logger.Fatalf("listen: %s", err)
+				logrus.Fatalf("listen: %s", err)
 			}
 		}()
 
 		// and serve the actual TLS handler
 		go func() {
 			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-				r.logger.Fatalf("listen: %s", err)
+				logrus.Fatalf("listen: %s", err)
 			}
 		}()
 	} else {
 		// no tls required
 		go func() {
 			if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				r.logger.Fatalf("listen: %s", err)
+				logrus.Fatalf("listen: %s", err)
 			}
 		}()
 	}
@@ -99,18 +98,18 @@ func (r *router) Stop(ctx context.Context) error {
 	return r.srv.Shutdown(ctx)
 }
 
-// New returns a new Router with the specified configuration, using the given logrus logger.
+// New returns a new Router with the specified configuration.
 //
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
-func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logger) (Router, error) {
+func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
 
-	engine.Use(gin.RecoveryWithWriter(logger.Writer()))
-	engine.Use(loggerWithConfig(logger))
+	engine.Use(gin.RecoveryWithWriter(logrus.StandardLogger().Writer()))
+	engine.Use(loggingMiddleware())
 
 	// 8 MiB
 	engine.MaxMultipartMemory = 8 << 20
@@ -164,7 +163,6 @@ func New(ctx context.Context, cfg *config.Config, db db.DB, logger *logrus.Logge
 	}
 
 	return &router{
-		logger:      logger,
 		engine:      engine,
 		srv:         s,
 		config:      cfg,

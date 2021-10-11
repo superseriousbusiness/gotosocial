@@ -31,7 +31,7 @@ import (
 )
 
 func (p *processor) OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode) {
-	l := p.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":       "OpenStreamForAccount",
 		"account":    account.ID,
 		"streamType": streamType,

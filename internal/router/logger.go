@@ -30,7 +30,7 @@ var skipPaths = map[string]interface{}{
 	"/api/v1/streaming": nil,
 }
 
-func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
+func loggingMiddleware() gin.HandlerFunc {
 	logHandler := func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
@@ -52,7 +52,7 @@ func loggerWithConfig(log *logrus.Logger) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 
-			l := log.WithFields(logrus.Fields{
+			l := logrus.WithFields(logrus.Fields{
 				"latency":    latency,
 				"clientIP":   clientIP,
 				"userAgent":  userAgent,

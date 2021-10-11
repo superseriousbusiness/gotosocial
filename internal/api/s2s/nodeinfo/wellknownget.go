@@ -28,7 +28,7 @@ import (
 // NodeInfoWellKnownGETHandler returns a well known response to a query to /.well-known/nodeinfo,
 // directing (but not redirecting...) callers to the NodeInfoGETHandler.
 func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":       "NodeInfoWellKnownGETHandler",
 		"user-agent": c.Request.UserAgent(),
 	})

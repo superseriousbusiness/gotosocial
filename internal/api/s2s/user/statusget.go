@@ -29,7 +29,7 @@ import (
 
 // StatusGETHandler serves the target status as an activitystreams NOTE so that other AP servers can parse it.
 func (m *Module) StatusGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "StatusGETHandler",
 		"url":  c.Request.RequestURI,
 	})

@@ -21,7 +21,6 @@ package status
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -77,18 +76,16 @@ type processor struct {
 	filter        visibility.Filter
 	formatter     text.Formatter
 	fromClientAPI chan messages.FromClientAPI
-	log           *logrus.Logger
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClientAPI chan messages.FromClientAPI, log *logrus.Logger) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClientAPI chan messages.FromClientAPI) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,
 		db:            db,
-		filter:        visibility.NewFilter(db, log),
-		formatter:     text.NewFormatter(config, db, log),
+		filter:        visibility.NewFilter(db),
+		formatter:     text.NewFormatter(config, db),
 		fromClientAPI: fromClientAPI,
-		log:           log,
 	}
 }

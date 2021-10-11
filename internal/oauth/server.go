@@ -62,12 +62,11 @@ type Server interface {
 // s fulfils the Server interface using the underlying oauth2 server
 type s struct {
 	server *server.Server
-	log    *logrus.Logger
 }
 
 // New returns a new oauth server that implements the Server interface
-func New(ctx context.Context, database db.Basic, log *logrus.Logger) Server {
-	ts := newTokenStore(ctx, database, log)
+func New(ctx context.Context, database db.Basic) Server {
+	ts := newTokenStore(ctx, database)
 	cs := NewClientStore(database)
 
 	manager := manage.NewDefaultManager()
@@ -95,12 +94,12 @@ func New(ctx context.Context, database db.Basic, log *logrus.Logger) Server {
 
 	srv := server.NewServer(sc, manager)
 	srv.SetInternalErrorHandler(func(err error) *errors.Response {
-		log.Errorf("internal oauth error: %s", err)
+		logrus.Errorf("internal oauth error: %s", err)
 		return nil
 	})
 
 	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Errorf("internal response error: %s", re.Error)
+		logrus.Errorf("internal response error: %s", re.Error)
 	})
 
 	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
@@ -113,7 +112,6 @@ func New(ctx context.Context, database db.Basic, log *logrus.Logger) Server {
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 	return &s{
 		server: srv,
-		log:    log,
 	}
 }
 
@@ -153,7 +151,7 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 	if authToken == nil {
 		return nil, errors.New("generated auth token was empty")
 	}
-	s.log.Tracef("obtained auth token: %+v", authToken)
+	logrus.Tracef("obtained auth token: %+v", authToken)
 
 	accessToken, err := s.server.Manager.GenerateAccessToken(ctx, oauth2.AuthorizationCode, &oauth2.TokenGenerateRequest{
 		ClientID:     authToken.GetClientID(),
@@ -169,7 +167,7 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 	if accessToken == nil {
 		return nil, errors.New("generated user-level access token was empty")
 	}
-	s.log.Tracef("obtained user-level access token: %+v", accessToken)
+	logrus.Tracef("obtained user-level access token: %+v", accessToken)
 	return accessToken, nil
 }
 

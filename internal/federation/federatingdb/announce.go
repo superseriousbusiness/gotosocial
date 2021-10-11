@@ -29,13 +29,13 @@ import (
 )
 
 func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Announce",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(announce)
 		if err != nil {
 			return err

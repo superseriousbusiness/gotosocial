@@ -38,7 +38,7 @@ func (suite *ExportMinimalTestSuite) TestExportMinimalOK() {
 	tempFilePath := fmt.Sprintf("%s/%s", suite.T().TempDir(), uuid.NewString())
 
 	// export to the tempFilePath
-	exporter := trans.NewExporter(suite.db, suite.log)
+	exporter := trans.NewExporter(suite.db)
 	err := exporter.ExportMinimal(context.Background(), tempFilePath)
 	suite.NoError(err)
 

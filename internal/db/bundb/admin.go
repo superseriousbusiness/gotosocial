@@ -24,6 +24,7 @@ import (
 	"crypto/rsa"
 	"database/sql"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net"
 	"net/mail"
 	"strings"
@@ -86,7 +87,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, admin bool) (*gtsmodel.User, db.Error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		a.conn.log.Errorf("error creating new rsa key: %s", err)
+		logrus.Errorf("error creating new rsa key: %s", err)
 		return nil, err
 	}
 
@@ -183,7 +184,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	count, err := existsQ.Count(ctx)
 	if err != nil && count == 1 {
-		a.conn.log.Infof("instance account %s already exists", username)
+		logrus.Infof("instance account %s already exists", username)
 		return nil
 	} else if err != sql.ErrNoRows {
 		return a.conn.ProcessError(err)
@@ -191,7 +192,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		a.conn.log.Errorf("error creating new rsa key: %s", err)
+		logrus.Errorf("error creating new rsa key: %s", err)
 		return err
 	}
 
@@ -226,7 +227,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	a.conn.log.Infof("instance account %s CREATED with id %s", username, acct.ID)
+	logrus.Infof("instance account %s CREATED with id %s", username, acct.ID)
 	return nil
 }
 
@@ -244,7 +245,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return err
 	}
 	if exists {
-		a.conn.log.Infof("instance entry already exists")
+		logrus.Infof("instance entry already exists")
 		return nil
 	}
 
@@ -269,6 +270,6 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	a.conn.log.Infof("created instance instance %s with id %s", domain, i.ID)
+	logrus.Infof("created instance instance %s with id %s", domain, i.ID)
 	return nil
 }

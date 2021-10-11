@@ -63,13 +63,13 @@ func sameActor(activityActor vocab.ActivityStreamsActorProperty, followActor voc
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "NewID",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(t)
 		if err != nil {
 			return nil, err

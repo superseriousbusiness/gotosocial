@@ -22,10 +22,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 )
 
 func (i *idp) HandleCallback(ctx context.Context, code string) (*Claims, error) {
-	l := i.log.WithField("func", "HandleCallback")
+	l := logrus.WithField("func", "HandleCallback")
 	if code == "" {
 		return nil, errors.New("code was empty string")
 	}

@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"github.com/go-fed/activity/pub"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -83,12 +82,11 @@ type federator struct {
 	dereferencer        dereferencing.Dereferencer
 	mediaHandler        media.Handler
 	actor               pub.FederatingActor
-	log                 *logrus.Logger
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, log *logrus.Logger, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
-	dereferencer := dereferencing.NewDereferencer(config, db, typeConverter, transportController, mediaHandler, log)
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
+	dereferencer := dereferencing.NewDereferencer(config, db, typeConverter, transportController, mediaHandler)
 
 	clock := &Clock{}
 	f := &federator{
@@ -100,7 +98,6 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		transportController: transportController,
 		dereferencer:        dereferencer,
 		mediaHandler:        mediaHandler,
-		log:                 log,
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

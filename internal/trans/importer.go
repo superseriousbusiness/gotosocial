@@ -21,7 +21,6 @@ package trans
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -32,13 +31,11 @@ type Importer interface {
 
 type importer struct {
 	db  db.DB
-	log *logrus.Logger
 }
 
-// NewImporter returns a new Importer interface that uses the given db and logger.
-func NewImporter(db db.DB, log *logrus.Logger) Importer {
+// NewImporter returns a new Importer interface that uses the given db.
+func NewImporter(db db.DB) Importer {
 	return &importer{
 		db:  db,
-		log: log,
 	}
 }

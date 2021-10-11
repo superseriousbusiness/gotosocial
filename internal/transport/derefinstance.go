@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -36,7 +37,7 @@ import (
 )
 
 func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := t.log.WithField("func", "DereferenceInstance")
+	l := logrus.WithField("func", "DereferenceInstance")
 
 	var i *gtsmodel.Instance
 	var err error
@@ -78,7 +79,7 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 }
 
 func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := t.log.WithField("func", "dereferenceByAPIV1Instance")
+	l := logrus.WithField("func", "dereferenceByAPIV1Instance")
 
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
@@ -235,7 +236,7 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 }
 
 func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*url.URL, error) {
-	l := t.log.WithField("func", "callNodeInfoWellKnown")
+	l := logrus.WithField("func", "callNodeInfoWellKnown")
 
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
@@ -300,7 +301,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 }
 
 func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
-	l := t.log.WithField("func", "callNodeInfo")
+	l := logrus.WithField("func", "callNodeInfo")
 
 	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)

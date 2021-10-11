@@ -51,7 +51,6 @@ type MediaCreateTestSuite struct {
 	suite.Suite
 	config       *config.Config
 	db           db.DB
-	log          *logrus.Logger
 	storage      *kv.KVStore
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
@@ -79,7 +78,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
@@ -88,7 +87,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.config, suite.processor, suite.log).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.config, suite.processor).(*mediamodule.Module)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {

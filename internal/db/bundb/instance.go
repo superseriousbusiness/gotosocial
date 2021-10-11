@@ -20,6 +20,7 @@ package bundb
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -98,7 +99,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 }
 
 func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
-	i.conn.log.Debug("GetAccountsForInstance")
+	logrus.Debug("GetAccountsForInstance")
 
 	accounts := []*gtsmodel.Account{}
 

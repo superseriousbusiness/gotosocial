@@ -43,7 +43,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) DomainBlockGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":        "DomainBlockGETHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),

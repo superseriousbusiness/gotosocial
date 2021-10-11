@@ -90,7 +90,7 @@ import (
 //   '400':
 //      description: bad request
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":        "DomainBlocksPOSTHandler",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),

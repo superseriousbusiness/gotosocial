@@ -21,7 +21,6 @@ package visibility
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -46,13 +45,11 @@ type Filter interface {
 
 type filter struct {
 	db  db.DB
-	log *logrus.Logger
 }
 
-// NewFilter returns a new Filter interface that will use the provided database and logger.
-func NewFilter(db db.DB, log *logrus.Logger) Filter {
+// NewFilter returns a new Filter interface that will use the provided database.
+func NewFilter(db db.DB) Filter {
 	return &filter{
 		db:  db,
-		log: log,
 	}
 }

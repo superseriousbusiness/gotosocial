@@ -20,6 +20,7 @@ package transport
 
 import (
 	"context"
+	"github.com/sirupsen/logrus"
 	"net/url"
 )
 
@@ -28,7 +29,7 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 }
 
 func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
-	l := t.log.WithField("func", "Deliver")
+	l := logrus.WithField("func", "Deliver")
 	l.Debugf("performing POST to %s", to.String())
 	return t.sigTransport.Deliver(ctx, b, to)
 }

@@ -21,6 +21,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strings"
@@ -37,7 +38,7 @@ import (
 // The idea here is to present an oauth authorize page to the user, with a button
 // that they have to click to accept.
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AuthorizeGETHandler")
+	l := logrus.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
 
 	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
@@ -123,7 +124,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 // At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
 // so we should proceed with the authentication flow and generate an oauth token for them if we can.
 func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AuthorizePOSTHandler")
+	l := logrus.WithField("func", "AuthorizePOSTHandler")
 	s := sessions.Default(c)
 
 	// We need to retrieve the original form submitted to the authorizeGEThandler, and

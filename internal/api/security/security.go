@@ -21,7 +21,6 @@ package security
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -33,15 +32,13 @@ const robotsPath = "/robots.txt"
 // Module implements the ClientAPIModule interface for security middleware
 type Module struct {
 	config *config.Config
-	log    *logrus.Logger
 	db     db.DB
 }
 
 // New returns a new security module
-func New(config *config.Config, db db.DB, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, db db.DB) api.ClientModule {
 	return &Module{
 		config: config,
-		log:    log,
 		db:     db,
 	}
 }

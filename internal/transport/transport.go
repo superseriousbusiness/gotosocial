@@ -26,7 +26,6 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -53,5 +52,4 @@ type transport struct {
 	sigTransport *pub.HttpSigTransport
 	getSigner    httpsig.Signer
 	getSignerMu  *sync.Mutex
-	log          *logrus.Logger
 }

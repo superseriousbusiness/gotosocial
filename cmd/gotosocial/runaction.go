@@ -41,11 +41,11 @@ func runAction(c *cli.Context, a cliactions.GTSAction) error {
 		return fmt.Errorf("error parsing config: %s", err)
 	}
 
-	// create a logger with the log level, formatting, and output splitter already set
-	log, err := log.New(conf.LogLevel)
+	// initialize the global logger to the log level, with formatting and output splitter already set
+	err = log.Initialize(conf.LogLevel)
 	if err != nil {
 		return fmt.Errorf("error creating logger: %s", err)
 	}
 
-	return a(c.Context, conf, log)
+	return a(c.Context, conf)
 }

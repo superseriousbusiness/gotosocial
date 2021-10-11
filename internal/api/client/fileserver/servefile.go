@@ -33,7 +33,7 @@ import (
 // Note: to mitigate scraping attempts, no information should be given out on a bad request except "404 page not found".
 // Don't give away account ids or media ids or anything like that; callers shouldn't be able to infer anything.
 func (m *FileServer) ServeFile(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":        "ServeFile",
 		"request_uri": c.Request.RequestURI,
 		"user_agent":  c.Request.UserAgent(),

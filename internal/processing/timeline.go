@@ -21,6 +21,7 @@ package processing
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -129,7 +130,7 @@ func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 }
 
 func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	l := p.log.WithField("func", "filterPublicStatuses")
+	l := logrus.WithField("func", "filterPublicStatuses")
 
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {
@@ -164,7 +165,7 @@ func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth
 }
 
 func (p *processor) filterFavedStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
-	l := p.log.WithField("func", "filterFavedStatuses")
+	l := logrus.WithField("func", "filterFavedStatuses")
 
 	apiStatuses := []*apimodel.Status{}
 	for _, s := range statuses {

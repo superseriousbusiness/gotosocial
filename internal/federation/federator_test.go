@@ -27,7 +27,6 @@ import (
 	"git.iim.gay/grufwub/go-store/kv"
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -44,7 +43,6 @@ type ProtocolTestSuite struct {
 	suite.Suite
 	config        *config.Config
 	db            db.DB
-	log           *logrus.Logger
 	storage       *kv.KVStore
 	typeConverter typeutils.TypeConverter
 	accounts      map[string]*gtsmodel.Account
@@ -56,7 +54,7 @@ func (suite *ProtocolTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()
@@ -82,7 +80,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}), suite.db)
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
 	// setup request
 	ctx := context.Background()
@@ -111,7 +109,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.log, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
 	// we need these headers for the request to be validated

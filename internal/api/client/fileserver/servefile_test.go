@@ -48,7 +48,6 @@ type ServeFileTestSuite struct {
 	suite.Suite
 	config       *config.Config
 	db           db.DB
-	log          *logrus.Logger
 	storage      *kv.KVStore
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
@@ -76,7 +75,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	// setup standard items
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
@@ -85,7 +84,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.fileServer = fileserver.New(suite.config, suite.processor, suite.log).(*fileserver.FileServer)
+	suite.fileServer = fileserver.New(suite.config, suite.processor).(*fileserver.FileServer)
 }
 
 func (suite *ServeFileTestSuite) TearDownSuite() {

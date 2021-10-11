@@ -19,7 +19,6 @@
 package streaming_test
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -34,7 +33,6 @@ type StreamingTestSuite struct {
 	testTokens   map[string]*gtsmodel.Token
 	db           db.DB
 	oauthServer  oauth.Server
-	log          *logrus.Logger
 
 	streamingProcessor streaming.Processor
 }
@@ -44,8 +42,8 @@ func (suite *StreamingTestSuite) SetupTest() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.db = testrig.NewTestDB()
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.log = testrig.NewTestLog()
-	suite.streamingProcessor = streaming.New(suite.db, suite.oauthServer, suite.log)
+	testrig.InitTestLog()
+	suite.streamingProcessor = streaming.New(suite.db, suite.oauthServer)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

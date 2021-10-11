@@ -85,7 +85,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "StatusRepliesGETHandler",
 		"url":  c.Request.RequestURI,
 	})

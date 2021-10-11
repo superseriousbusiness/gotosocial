@@ -26,7 +26,6 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
@@ -43,18 +42,16 @@ type controller struct {
 	clock    pub.Clock
 	client   pub.HttpClient
 	appAgent string
-	log      *logrus.Logger
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.HttpClient, log *logrus.Logger) Controller {
+func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	return &controller{
 		config:   config,
 		db:       db,
 		clock:    clock,
 		client:   client,
 		appAgent: fmt.Sprintf("%s %s", config.ApplicationName, config.Host),
-		log:      log,
 	}
 }
 
@@ -87,7 +84,6 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (T
 		sigTransport: sigTransport,
 		getSigner:    getSigner,
 		getSignerMu:  &sync.Mutex{},
-		log:          c.log,
 	}, nil
 }
 

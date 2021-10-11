@@ -21,7 +21,6 @@ package trans
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -32,15 +31,13 @@ type Exporter interface {
 
 type exporter struct {
 	db         db.DB
-	log        *logrus.Logger
 	writtenIDs map[string]bool
 }
 
-// NewExporter returns a new Exporter that will use the given db and logger.
-func NewExporter(db db.DB, log *logrus.Logger) Exporter {
+// NewExporter returns a new Exporter that will use the given db.
+func NewExporter(db db.DB) Exporter {
 	return &exporter{
 		db:         db,
-		log:        log,
 		writtenIDs: make(map[string]bool),
 	}
 }

@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io"
 	"mime/multipart"
 
@@ -37,7 +38,7 @@ import (
 )
 
 func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {
-	l := p.log.WithField("func", "AccountUpdate")
+	l := logrus.WithField("func", "AccountUpdate")
 
 	if form.Discoverable != nil {
 		account.Discoverable = *form.Discoverable

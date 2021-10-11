@@ -21,6 +21,7 @@ package account
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -29,7 +30,7 @@ import (
 )
 
 func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error) {
-	l := p.log.WithField("func", "accountCreate")
+	l := logrus.WithField("func", "accountCreate")
 
 	emailAvailable, err := p.db.IsEmailAvailable(ctx, form.Email)
 	if err != nil {

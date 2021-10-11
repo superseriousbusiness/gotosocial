@@ -21,13 +21,14 @@ package transport
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
-	l := t.log.WithField("func", "Finger")
+	l := logrus.WithField("func", "Finger")
 	urlString := fmt.Sprintf("https://%s/.well-known/webfinger?resource=acct:%s@%s", targetDomain, targetUsername, targetDomain)
 	l.Debugf("performing GET to %s", urlString)
 

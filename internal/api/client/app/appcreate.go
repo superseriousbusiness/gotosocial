@@ -20,6 +20,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -63,7 +64,7 @@ import (
 //   '500':
 //      description: internal error
 func (m *Module) AppsPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AppsPOSTHandler")
+	l := logrus.WithField("func", "AppsPOSTHandler")
 	l.Trace("entering AppsPOSTHandler")
 
 	authed, err := oauth.Authed(c, false, false, false, false)

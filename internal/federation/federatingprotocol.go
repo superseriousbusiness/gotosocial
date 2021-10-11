@@ -61,7 +61,7 @@ import (
 // write a response to the ResponseWriter as is expected that the caller
 // to PostInbox will do so when handling the error.
 func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "PostInboxRequestBodyHook",
 		"useragent": r.UserAgent(),
 		"url":       r.URL.String(),
@@ -93,7 +93,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // authenticated must be true and error nil. The request will continue
 // to be processed.
 func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":      "AuthenticatePostInbox",
 		"useragent": r.UserAgent(),
 		"url":       r.URL.String(),
@@ -177,7 +177,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // blocked must be false and error nil. The request will continue
 // to be processed.
 func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "Blocked",
 	})
 	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
@@ -185,7 +185,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	receivingAccountI := ctx.Value(util.APReceivingAccount)
 	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
 	if !ok {
-		f.log.Errorf("receiving account not set on request context")
+		l.Errorf("receiving account not set on request context")
 		return false, errors.New("receiving account not set on request context, so couldn't determine blocks")
 	}
 
@@ -276,7 +276,7 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 // type and extension, so the unhandled ones are passed to
 // DefaultCallback.
 func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":   "DefaultCallback",
 		"aptype": activity.GetTypeName(),
 	})

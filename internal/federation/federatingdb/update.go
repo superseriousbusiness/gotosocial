@@ -41,13 +41,13 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Update",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err

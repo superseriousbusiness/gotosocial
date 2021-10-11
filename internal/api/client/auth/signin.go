@@ -21,6 +21,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
@@ -40,7 +41,7 @@ type login struct {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The form will then POST to the sign in page, which will be handled by SignInPOSTHandler
 func (m *Module) SignInGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "SignInGETHandler")
+	l := logrus.WithField("func", "SignInGETHandler")
 	l.Trace("entering sign in handler")
 	if m.idp != nil {
 		s := sessions.Default(c)
@@ -65,7 +66,7 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 // The idea is to present a sign in page to the user, where they can enter their username and password.
 // The handler will then redirect to the auth handler served at /auth
 func (m *Module) SignInPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "SignInPOSTHandler")
+	l := logrus.WithField("func", "SignInPOSTHandler")
 	s := sessions.Default(c)
 	form := &login{}
 	if err := c.ShouldBind(form); err != nil {
@@ -98,7 +99,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 // address stored in the database. If OK, we return the userid (a ulid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
 func (m *Module) ValidatePassword(ctx context.Context, email string, password string) (userid string, err error) {
-	l := m.log.WithField("func", "ValidatePassword")
+	l := logrus.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not
 	if email == "" || password == "" {

@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"golang.org/x/oauth2"
 )
@@ -49,14 +48,13 @@ type idp struct {
 	oauth2Config oauth2.Config
 	provider     *oidc.Provider
 	oidcConf     *oidc.Config
-	log          *logrus.Logger
 }
 
-// NewIDP returns a new IDP configured with the given config and logger.
+// NewIDP returns a new IDP configured with the given config.
 // If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.
-func NewIDP(ctx context.Context, config *config.Config, log *logrus.Logger) (IDP, error) {
+func NewIDP(ctx context.Context, config *config.Config) (IDP, error) {
 
 	// oidc isn't enabled so we don't need to do anything
 	if config.OIDCConfig == nil || !config.OIDCConfig.Enabled {
@@ -116,6 +114,5 @@ func NewIDP(ctx context.Context, config *config.Config, log *logrus.Logger) (IDP
 		oauth2Config: oauth2Config,
 		oidcConf:     oidcConf,
 		provider:     provider,
-		log:          log,
 	}, nil
 }

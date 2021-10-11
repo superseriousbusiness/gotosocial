@@ -86,7 +86,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -185,7 +185,7 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -274,7 +274,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -394,7 +394,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
 	err = processor.Start(context.Background())
 	suite.NoError(err)
-	userModule := user.New(suite.config, processor, suite.log).(*user.Module)
+	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()

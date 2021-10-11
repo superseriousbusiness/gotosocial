@@ -21,11 +21,10 @@ package cliactions
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // GTSAction defines one *action* that can be taken by the gotosocial cli command.
 // This can be either a long-running action (like server start) or something
 // shorter like db init or db inspect.
-type GTSAction func(context.Context, *config.Config, *logrus.Logger) error
+type GTSAction func(context.Context, *config.Config) error

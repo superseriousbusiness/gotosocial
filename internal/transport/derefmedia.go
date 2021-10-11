@@ -21,13 +21,14 @@ package transport
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
 func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL, expectedContentType string) ([]byte, error) {
-	l := t.log.WithField("func", "DereferenceMedia")
+	l := logrus.WithField("func", "DereferenceMedia")
 	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
 	if err != nil {

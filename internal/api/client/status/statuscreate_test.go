@@ -57,11 +57,11 @@ func (suite *StatusCreateTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.statusModule = status.New(suite.config, suite.processor, suite.log).(*status.Module)
+	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

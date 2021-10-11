@@ -19,7 +19,6 @@
 package bundb_test
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -32,7 +31,6 @@ type BunDBStandardTestSuite struct {
 	suite.Suite
 	config *config.Config
 	db     db.DB
-	log    *logrus.Logger
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -61,7 +59,7 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 func (suite *BunDBStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.log = testrig.NewTestLog()
+	testrig.InitTestLog()
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

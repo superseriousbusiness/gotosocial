@@ -34,7 +34,7 @@ import (
 )
 
 func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
-	l := p.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":  "SearchGet",
 		"query": searchQuery.Query,
 	})
@@ -116,7 +116,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 }
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
-	l := p.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":    "searchStatusByURI",
 		"uri":     uri.String(),
 		"resolve": resolve,

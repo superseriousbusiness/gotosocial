@@ -46,13 +46,13 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Create",
 		},
 	)
 
-	if f.log.Level >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err
@@ -169,7 +169,7 @@ func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, re
 
 // createNote handles a Create activity with a Note type.
 func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) error {
-	l := f.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":              "createNote",
 		"receivingAccount":  receivingAccount.URI,
 		"requestingAccount": requestingAccount.URI,

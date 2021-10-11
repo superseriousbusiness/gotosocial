@@ -19,11 +19,11 @@
 package status
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -76,15 +76,13 @@ const (
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
-	log       *logrus.Logger
 }
 
 // New returns a new account module
-func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor) api.ClientModule {
 	return &Module{
 		config:    config,
 		processor: processor,
-		log:       log,
 	}
 }
 
@@ -109,7 +107,7 @@ func (m *Module) Route(r router.Router) error {
 
 // muxHandler is a little workaround to overcome the limitations of Gin
 func (m *Module) muxHandler(c *gin.Context) {
-	m.log.Debug("entering mux handler")
+	logrus.Debug("entering mux handler")
 	ru := c.Request.RequestURI
 
 	switch c.Request.Method {

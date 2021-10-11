@@ -28,7 +28,7 @@ import (
 // NodeInfoGETHandler returns a compliant nodeinfo response to node info queries.
 // See: https://nodeinfo.diaspora.software/
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":       "NodeInfoGETHandler",
 		"user-agent": c.Request.UserAgent(),
 	})

@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -179,7 +180,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	status.URI = uriProp.GetIRI().String()
 
-	l := c.log.WithField("statusURI", status.URI)
+	l := logrus.WithField("statusURI", status.URI)
 
 	// web url for viewing this status
 	if statusURL, err := ap.ExtractURL(statusable); err != nil {

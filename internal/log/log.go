@@ -25,32 +25,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// New returns a new logrus logger with the specified level,
-// or an error if that level can't be parsed. It also sets
-// the output to log.outputSplitter, so you get error logs
-// on stderr and normal logs on stdout.
-func New(level string) (*logrus.Logger, error) {
-	log := logrus.New()
-
-	log.SetOutput(&outputSplitter{})
+// Initialize initializes the global Logrus logger to the specified level
+// It also sets the output to log.outputSplitter,
+// so you get error logs on stderr and normal logs on stdout.
+func Initialize(level string) error {
+	logrus.SetOutput(&outputSplitter{})
 
 	logLevel, err := logrus.ParseLevel(level)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	log.SetLevel(logLevel)
+	logrus.SetLevel(logLevel)
 
 	if logLevel == logrus.TraceLevel {
-		log.SetReportCaller(true)
+		logrus.SetReportCaller(true)
 	}
 
-	log.SetFormatter(&logrus.TextFormatter{
+	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
 		DisableQuote:  true,
 		FullTimestamp: true,
 	})
 
-	return log, nil
+	return nil
 }
 
 // outputSplitter implements the io.Writer interface for use with Logrus, and simply

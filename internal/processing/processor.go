@@ -229,7 +229,6 @@ type processor struct {
 	fromFederator   chan messages.FromFederator
 	federator       federation.Federator
 	stop            chan interface{}
-	log             *logrus.Logger
 	config          *config.Config
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
@@ -250,23 +249,22 @@ type processor struct {
 	mediaProcessor     mediaProcessor.Processor
 }
 
-// NewProcessor returns a new Processor that uses the given federator and logger
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB, log *logrus.Logger) Processor {
+// NewProcessor returns a new Processor that uses the given federator
+func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
-	statusProcessor := status.New(db, tc, config, fromClientAPI, log)
-	streamingProcessor := streaming.New(db, oauthServer, log)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config, log)
-	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config, log)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config, log)
+	statusProcessor := status.New(db, tc, config, fromClientAPI)
+	streamingProcessor := streaming.New(db, oauthServer)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
+	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
 		fromFederator:   fromFederator,
 		federator:       federator,
 		stop:            make(chan interface{}),
-		log:             log,
 		config:          config,
 		tc:              tc,
 		oauthServer:     oauthServer,
@@ -274,7 +272,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		storage:         storage,
 		timelineManager: timelineManager,
 		db:              db,
-		filter:          visibility.NewFilter(db, log),
+		filter:          visibility.NewFilter(db),
 
 		accountProcessor:   accountProcessor,
 		adminProcessor:     adminProcessor,
@@ -291,17 +289,17 @@ func (p *processor) Start(ctx context.Context) error {
 		for {
 			select {
 			case clientMsg := <-p.fromClientAPI:
-				p.log.Tracef("received message FROM client API: %+v", clientMsg)
+				logrus.Tracef("received message FROM client API: %+v", clientMsg)
 				go func() {
 					if err := p.ProcessFromClientAPI(ctx, clientMsg); err != nil {
-						p.log.Error(err)
+						logrus.Error(err)
 					}
 				}()
 			case federatorMsg := <-p.fromFederator:
-				p.log.Tracef("received message FROM federator: %+v", federatorMsg)
+				logrus.Tracef("received message FROM federator: %+v", federatorMsg)
 				go func() {
 					if err := p.ProcessFromFederator(ctx, federatorMsg); err != nil {
-						p.log.Error(err)
+						logrus.Error(err)
 					}
 				}()
 			case <-p.stop:

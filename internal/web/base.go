@@ -36,20 +36,18 @@ import (
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
-	log       *logrus.Logger
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(config *config.Config, processor processing.Processor, log *logrus.Logger) api.ClientModule {
+func New(config *config.Config, processor processing.Processor) api.ClientModule {
 	return &Module{
 		config:    config,
-		log:       log,
 		processor: processor,
 	}
 }
 
 func (m *Module) baseHandler(c *gin.Context) {
-	l := m.log.WithField("func", "BaseGETHandler")
+	l := logrus.WithField("func", "BaseGETHandler")
 	l.Trace("serving index html")
 
 	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
@@ -66,7 +64,7 @@ func (m *Module) baseHandler(c *gin.Context) {
 
 // NotFoundHandler serves a 404 html page instead of a blank 404 error.
 func (m *Module) NotFoundHandler(c *gin.Context) {
-	l := m.log.WithField("func", "404")
+	l := logrus.WithField("func", "404")
 	l.Trace("serving 404 html")
 
 	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)

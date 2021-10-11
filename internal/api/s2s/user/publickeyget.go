@@ -33,7 +33,7 @@ import (
 // in the form of a vocab.ActivityStreamsPerson. The account will only contain the id,
 // public key, username, and type of the account.
 func (m *Module) PublicKeyGETHandler(c *gin.Context) {
-	l := m.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func": "PublicKeyGETHandler",
 		"url":  c.Request.RequestURI,
 	})

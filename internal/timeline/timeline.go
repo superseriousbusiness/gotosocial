@@ -23,7 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -134,12 +133,11 @@ type timeline struct {
 	db            db.DB
 	filter        visibility.Filter
 	tc            typeutils.TypeConverter
-	log           *logrus.Logger
 	sync.Mutex
 }
 
 // NewTimeline returns a new Timeline for the given account ID
-func NewTimeline(ctx context.Context, accountID string, db db.DB, typeConverter typeutils.TypeConverter, log *logrus.Logger) (Timeline, error) {
+func NewTimeline(ctx context.Context, accountID string, db db.DB, typeConverter typeutils.TypeConverter) (Timeline, error) {
 	timelineOwnerAccount := &gtsmodel.Account{}
 	if err := db.GetByID(ctx, accountID, timelineOwnerAccount); err != nil {
 		return nil, err
@@ -151,9 +149,8 @@ func NewTimeline(ctx context.Context, accountID string, db db.DB, typeConverter 
 		accountID:     accountID,
 		account:       timelineOwnerAccount,
 		db:            db,
-		filter:        visibility.NewFilter(db, log),
+		filter:        visibility.NewFilter(db),
 		tc:            typeConverter,
-		log:           log,
 	}, nil
 }
 

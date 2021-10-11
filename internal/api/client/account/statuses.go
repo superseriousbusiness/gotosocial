@@ -19,6 +19,7 @@
 package account
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
@@ -96,7 +97,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AccountStatusesGETHandler")
+	l := logrus.WithField("func", "AccountStatusesGETHandler")
 
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {

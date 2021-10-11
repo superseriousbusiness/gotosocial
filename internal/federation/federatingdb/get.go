@@ -32,7 +32,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := f.log.WithFields(
+	l := logrus.WithFields(
 		logrus.Fields{
 			"func": "Get",
 			"id":   id,

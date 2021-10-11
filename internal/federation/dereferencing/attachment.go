@@ -34,7 +34,7 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername stri
 	}
 	remoteAttachmentURL := minAttachment.RemoteURL
 
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"username":            requestingUsername,
 		"remoteAttachmentURL": remoteAttachmentURL,
 	})

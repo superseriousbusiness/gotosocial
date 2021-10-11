@@ -25,7 +25,6 @@ import (
 
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams/vocab"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -47,20 +46,18 @@ type federatingDB struct {
 	pool          sync.Pool
 	db            db.DB
 	config        *config.Config
-	log           *logrus.Logger
 	typeConverter typeutils.TypeConverter
 }
 
-// New returns a DB interface using the given database, config, and logger.
-func New(db db.DB, config *config.Config, log *logrus.Logger) DB {
+// New returns a DB interface using the given database and config
+func New(db db.DB, config *config.Config) DB {
 	fdb := federatingDB{
 		mutex:         sync.Mutex{},
 		locks:         make(map[string]*mutex, 100),
 		pool:          sync.Pool{New: func() interface{} { return &mutex{} }},
 		db:            db,
 		config:        config,
-		log:           log,
-		typeConverter: typeutils.NewConverter(config, db, log),
+		typeConverter: typeutils.NewConverter(config, db),
 	}
 	go fdb.cleanupLocks()
 	return &fdb

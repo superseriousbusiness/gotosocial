@@ -19,6 +19,7 @@
 package web
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +32,7 @@ type statusLink struct {
 }
 
 func (m *Module) threadTemplateHandler(c *gin.Context) {
-	l := m.log.WithField("func", "threadTemplateGET")
+	l := logrus.WithField("func", "threadTemplateGET")
 	l.Trace("rendering thread template")
 
 	ctx := c.Request.Context()

@@ -19,6 +19,7 @@
 package account
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -60,7 +61,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AccountUnfollowPOSTHandler")
+	l := logrus.WithField("func", "AccountUnfollowPOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debug(err)

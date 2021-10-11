@@ -1,6 +1,7 @@
 package account
 
 import (
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +48,7 @@ import (
 //   '404':
 //      description: not found
 func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
-	l := m.log.WithField("func", "AccountRelationshipsGETHandler")
+	l := logrus.WithField("func", "AccountRelationshipsGETHandler")
 
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

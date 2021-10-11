@@ -236,7 +236,7 @@ func (d *deref) dereferenceStatusable(ctx context.Context, username string, remo
 // and attach them to the status. The status itself will not be added to the database yet,
 // that's up the caller to do.
 func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Status, requestingUsername string, includeParent bool) error {
-	l := d.log.WithFields(logrus.Fields{
+	l := logrus.WithFields(logrus.Fields{
 		"func":   "dereferenceStatusFields",
 		"status": fmt.Sprintf("%+v", status),
 	})
@@ -292,8 +292,6 @@ func (d *deref) populateStatusFields(ctx context.Context, status *gtsmodel.Statu
 }
 
 func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
-	l := d.log
-
 	// At this point, mentions should have the namestring and mentionedAccountURI set on them.
 	// We can use these to find the accounts.
 
@@ -302,20 +300,20 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 	for _, m := range status.Mentions {
 		if m.ID != "" {
 			// we've already populated this mention, since it has an ID
-			l.Debug("populateStatusMentions: mention already populated")
+			logrus.Debug("populateStatusMentions: mention already populated")
 			mentionIDs = append(mentionIDs, m.ID)
 			newMentions = append(newMentions, m)
 			continue
 		}
 
 		if m.TargetAccountURI == "" {
-			l.Debug("populateStatusMentions: target URI not set on mention")
+			logrus.Debug("populateStatusMentions: target URI not set on mention")
 			continue
 		}
 
 		targetAccountURI, err := url.Parse(m.TargetAccountURI)
 		if err != nil {
-			l.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
+			logrus.Debugf("populateStatusMentions: error parsing mentioned account uri %s: %s", m.TargetAccountURI, err)
 			continue
 		}
 
@@ -326,7 +324,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if a, err := d.db.GetAccountByURI(ctx, targetAccountURI.String()); err != nil {
 			errs = append(errs, err.Error())
 		} else {
-			l.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
+			logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetAccountByURI", targetAccountURI, a.ID)
 			targetAccount = a
 		}
 
@@ -336,13 +334,13 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 			if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err != nil {
 				errs = append(errs, err.Error())
 			} else {
-				l.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
+				logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
 				targetAccount = a
 			}
 		}
 
 		if targetAccount == nil {
-			l.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
+			logrus.Debugf("populateStatusMentions: couldn't get target account %s: %s", m.TargetAccountURI, strings.Join(errs, " : "))
 			continue
 		}
 
@@ -382,8 +380,6 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 }
 
 func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.Status, requestingUsername string) error {
-	l := d.log
-
 	// At this point we should know:
 	// * the media type of the file we're looking for (a.File.ContentType)
 	// * the file type (a.Type)
@@ -399,7 +395,7 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 
 		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, a)
 		if err != nil {
-			l.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
+			logrus.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
 			continue
 		}
 
