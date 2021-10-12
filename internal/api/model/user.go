@@ -25,11 +25,13 @@ type PasswordChangeRequest struct {
 	// User's previous password.
 	//
 	// in: formData
-	OldPassword string `form:"old_password" json:"old_password" xml:"old_password"`
+   // required: true
+	OldPassword string `form:"old_password" json:"old_password" xml:"old_password" validation:"required"`
 	// Desired new password.
 	// If the password does not have high enough entropy, it will be rejected.
 	// See https://github.com/wagslane/go-password-validator
 	//
 	// in: formData
-	NewPassword string `form:"new_password" json:"new_password" xml:"new_password"`
+   // required: true
+	NewPassword string `form:"new_password" json:"new_password" xml:"new_password" validation:"required"`
 }
