@@ -21,28 +21,30 @@ package user
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Processor wraps a bunch of functions for processing user-level actions.
-type Processor interface {
-	// ChangePassword changes the specified user's password from old => new,
-	// or returns an error if the new password is too weak, or the old password is incorrect.
-	ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode
-}
-
-type processor struct {
-	config *config.Config
-	db     db.DB
-}
-
-// New returns a new user processor
-func New(db db.DB, config *config.Config) Processor {
-	return &processor{
-		config: config,
-		db:     db,
+func (p *processor) ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(oldPassword)); err != nil {
+		return gtserror.NewErrorBadRequest(err, "old password did not match")
 	}
+
+	if err := validate.NewPassword(newPassword); err != nil {
+		return gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return gtserror.NewErrorInternalError(err, "error hashing password")
+	}
+
+	user.EncryptedPassword = string(newPasswordHash)
+	if err := p.db.UpdateByPrimaryKey(ctx, user); err != nil {
+		return gtserror.NewErrorInternalError(err, "database error")
+	}
+
+	return nil
 }

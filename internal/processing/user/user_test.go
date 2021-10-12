@@ -16,33 +16,37 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package user
+package user_test
 
 import (
-	"context"
-
+	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// Processor wraps a bunch of functions for processing user-level actions.
-type Processor interface {
-	// ChangePassword changes the specified user's password from old => new,
-	// or returns an error if the new password is too weak, or the old password is incorrect.
-	ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode
-}
-
-type processor struct {
+type UserStandardTestSuite struct {
+	suite.Suite
 	config *config.Config
 	db     db.DB
+
+	testUsers map[string]*gtsmodel.User
+
+	user user.Processor
 }
 
-// New returns a new user processor
-func New(db db.DB, config *config.Config) Processor {
-	return &processor{
-		config: config,
-		db:     db,
-	}
+func (suite *UserStandardTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.user = user.New(suite.db, suite.config)
+
+	testrig.StandardDBSetup(suite.db, nil)
+}
+
+func (suite *UserStandardTestSuite) TeardownTest() {
+	testrig.StandardDBTeardown(suite.db)
 }
