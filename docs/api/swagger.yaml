@@ -3362,6 +3362,51 @@ paths:
       summary: See public statuses/posts that your instance is aware of.
       tags:
       - timelines
+  /api/v1/user/password_change:
+    post:
+      consumes:
+      - application/json
+      - application/xml
+      - application/x-www-form-urlencoded
+      description: |-
+        The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+        The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+      operationId: userPasswordChange
+      parameters:
+      - description: User's previous password.
+        in: formData
+        name: old_password
+        required: true
+        type: string
+        x-go-name: OldPassword
+      - description: |-
+          Desired new password.
+          If the password does not have high enough entropy, it will be rejected.
+          See https://github.com/wagslane/go-password-validator
+        in: formData
+        name: new_password
+        required: true
+        type: string
+        x-go-name: NewPassword
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Change successful
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "500":
+          description: internal error
+      security:
+      - OAuth2 Bearer:
+        - write:user
+      summary: Change the password of authenticated user.
+      tags:
+      - user
   /users/{username}/statuses/{status}/replies:
     get:
       description: |-
@@ -3437,12 +3482,14 @@ securityDefinitions:
       read:search: grant read access to searches
       read:statuses: grants read access to statuses
       read:streaming: grants read access to streaming api
+      read:user: grants read access to user-level info
       write: grants write access to everything
       write:accounts: grants write access to accounts
       write:blocks: grants write access to blocks
       write:follows: grants write access to follows
       write:media: grants write access to media
       write:statuses: grants write access to statuses
+      write:user: grants write access to user-level info
     tokenUrl: https://example.org/oauth/token
     type: oauth2
 swagger: "2.0"
