@@ -47,6 +47,6 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
-func (suite *UserStandardTestSuite) TeardownTest() {
+func (suite *UserStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }

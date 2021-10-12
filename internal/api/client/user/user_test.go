@@ -49,15 +49,12 @@ type UserStandardTestSuite struct {
 	userModule *user.Module
 }
 
-func (suite *UserStandardTestSuite) SetupSuite() {
+func (suite *UserStandardTestSuite) SetupTest() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
-}
-
-func (suite *UserStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
@@ -66,7 +63,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
 	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
-	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
