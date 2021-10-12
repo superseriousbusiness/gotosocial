@@ -37,7 +37,7 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 
 	errWithCode := suite.user.ChangePassword(context.Background(), user, "password", "verygoodnewpassword")
 	suite.NoError(errWithCode)
-	
+
 	err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte("verygoodnewpassword"))
 	suite.NoError(err)
 
