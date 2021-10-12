@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -77,6 +78,20 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	form := &model.PasswordChangeRequest{}
+	if err := c.ShouldBind(form); err != nil || form == nil || form.NewPassword == "" || form.OldPassword == "" {
+		if err != nil {
+			l.Debugf("could not parse form from request: %s", err)
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
+		return
+	}
 
+	if errWithCode := m.processor.UserChangePassword(c.Request.Context(), authed, form); errWithCode != nil {
+		l.Debugf("error changing user password: %s", errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
 
+	c.Status(http.StatusOK)
 }
