@@ -264,7 +264,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
-	userProcessor := user.New(db, tc, config, fromClientAPI)
+	userProcessor := user.New(db, config)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
