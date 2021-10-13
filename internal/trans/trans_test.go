@@ -26,7 +26,7 @@ import (
 
 type TransTestSuite struct {
 	suite.Suite
-	db  db.DB
+	db db.DB
 }
 
 func (suite *TransTestSuite) SetupTest() {
