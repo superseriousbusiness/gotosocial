@@ -35,7 +35,7 @@ import (
 // tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.
 type tokenStore struct {
 	oauth2.TokenStore
-	db  db.Basic
+	db db.Basic
 }
 
 // newTokenStore returns a token store that satisfies the oauth2.TokenStore interface.
@@ -44,7 +44,7 @@ type tokenStore struct {
 // the tokens in the DB once per minute and deletes any that have expired.
 func newTokenStore(ctx context.Context, db db.Basic) oauth2.TokenStore {
 	ts := &tokenStore{
-		db:  db,
+		db: db,
 	}
 
 	// set the token store to clean out expired tokens once per minute, or return if we're done

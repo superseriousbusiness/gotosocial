@@ -30,12 +30,12 @@ type Importer interface {
 }
 
 type importer struct {
-	db  db.DB
+	db db.DB
 }
 
 // NewImporter returns a new Importer interface that uses the given db.
 func NewImporter(db db.DB) Importer {
 	return &importer{
-		db:  db,
+		db: db,
 	}
 }

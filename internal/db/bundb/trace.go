@@ -28,8 +28,7 @@ import (
 )
 
 func newDebugQueryHook() bun.QueryHook {
-	return &debugQueryHook{
-	}
+	return &debugQueryHook{}
 }
 
 // debugQueryHook implements bun.QueryHook
