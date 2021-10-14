@@ -39,6 +39,7 @@ import (
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -173,6 +174,9 @@ type Processor interface {
 	// OpenStreamForAccount opens a new stream for the given account, with the given stream type.
 	OpenStreamForAccount(ctx context.Context, account *gtsmodel.Account, streamType string) (*stream.Stream, gtserror.WithCode)
 
+	// UserChangePassword changes the password for the given user, with the given form.
+	UserChangePassword(ctx context.Context, authed *oauth.Auth, form *apimodel.PasswordChangeRequest) gtserror.WithCode
+
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
 		These functions are intended to be called when the federating client needs an immediate (ie., synchronous) reply
@@ -247,6 +251,7 @@ type processor struct {
 	statusProcessor    status.Processor
 	streamingProcessor streaming.Processor
 	mediaProcessor     mediaProcessor.Processor
+	userProcessor      user.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator
@@ -259,6 +264,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
+	userProcessor := user.New(db, config)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -279,6 +285,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		statusProcessor:    statusProcessor,
 		streamingProcessor: streamingProcessor,
 		mediaProcessor:     mediaProcessor,
+		userProcessor:      userProcessor,
 	}
 }
 
