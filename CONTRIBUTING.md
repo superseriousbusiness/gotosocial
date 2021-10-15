@@ -215,7 +215,9 @@ You can install go-swagger following the instructions [here](https://goswagger.i
 
 If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
 
-`swagger generate spec -o docs/api/swagger.yaml --scan-models`
+```bash
+swagger generate spec -o docs/api/swagger.yaml --scan-models
+```
 
 ## CI/CD configuration
 
