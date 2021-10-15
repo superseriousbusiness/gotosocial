@@ -99,6 +99,45 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 	return r, nil
 }
 
-func (p *processor) FollowRequestDeny(ctx context.Context, auth *oauth.Auth) gtserror.WithCode {
-	return nil
+func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode) {
+	followRequest, err := p.db.RejectFollowRequest(ctx, accountID, auth.Account.ID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	if followRequest.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		followRequest.Account = a
+	}
+
+	if followRequest.TargetAccount == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		followRequest.TargetAccount = a
+	}
+
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityReject,
+		GTSModel:       followRequest,
+		OriginAccount:  followRequest.Account,
+		TargetAccount:  followRequest.TargetAccount,
+	}
+
+	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	r, err := p.tc.RelationshipToAPIRelationship(ctx, gtsR)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return r, nil
 }
