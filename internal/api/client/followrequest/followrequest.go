@@ -28,21 +28,20 @@ import (
 )
 
 const (
-	// IDKey is for status UUIDs
+	// IDKey is for account IDs
 	IDKey = "id"
 	// BasePath is the base path for serving the follow request API
 	BasePath = "/api/v1/follow_requests"
 	// BasePathWithID is just the base path with the ID key in it.
-	// Use this anywhere you need to know the ID of the follow request being queried.
+	// Use this anywhere you need to know the ID of the account that owns the follow request being queried.
 	BasePathWithID = BasePath + "/:" + IDKey
-
-	// AcceptPath is used for accepting follow requests
-	AcceptPath = BasePathWithID + "/authorize"
-	// DenyPath is used for denying follow requests
-	DenyPath = BasePathWithID + "/reject"
+	// AuthorizePath is used for authorizing follow requests
+	AuthorizePath = BasePathWithID + "/authorize"
+	// RejectPath is used for rejecting follow requests
+	RejectPath = BasePathWithID + "/reject"
 )
 
-// Module implements the ClientAPIModule interface for every related to interacting with follow requests
+// Module implements the ClientAPIModule interface
 type Module struct {
 	config    *config.Config
 	processor processing.Processor
@@ -59,7 +58,7 @@ func New(config *config.Config, processor processing.Processor) api.ClientModule
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, BasePath, m.FollowRequestGETHandler)
-	r.AttachHandler(http.MethodPost, AcceptPath, m.FollowRequestAcceptPOSTHandler)
-	r.AttachHandler(http.MethodPost, DenyPath, m.FollowRequestDenyPOSTHandler)
+	r.AttachHandler(http.MethodPost, AuthorizePath, m.FollowRequestAuthorizePOSTHandler)
+	r.AttachHandler(http.MethodPost, RejectPath, m.FollowRequestRejectPOSTHandler)
 	return nil
 }

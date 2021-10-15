@@ -26,14 +26,53 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FollowRequestAcceptPOSTHandler deals with follow request accepting. It should be served at
-// /api/v1/follow_requests/:id/authorize
-func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "statusCreatePOSTHandler")
+// FollowRequestAuthorizePOSTHandler swagger:operation POST /api/v1/follow_requests/{account_id}/authorize authorizeFollowRequest
+//
+// Accept/authorize follow request from the given account ID.
+//
+// Accept a follow request and put the requesting account in your 'followers' list.
+//
+// ---
+// tags:
+// - follow_requests
+//
+// produces:
+// - application/json
+//
+// parameters:
+// - name: account_id
+//   type: string
+//   description: ID of the account requesting to follow you.
+//   in: path
+//   required: true
+//
+// security:
+// - OAuth2 Bearer:
+//   - write:follows
+//
+// responses:
+//   '200':
+//     name: account relationship
+//     description: Your relationship to this account.
+//     schema:
+//       "$ref": "#/definitions/accountRelationship"
+//   '400':
+//      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
+//   '404':
+//      description: not found
+//   '500':
+//      description: internal server error
+func (m *Module) FollowRequestAuthorizePOSTHandler(c *gin.Context) {
+	l := logrus.WithField("func", "FollowRequestAuthorizePOSTHandler")
+
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -49,11 +88,12 @@ func (m *Module) FollowRequestAcceptPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	r, errWithCode := m.processor.FollowRequestAccept(c.Request.Context(), authed, originAccountID)
+	relationship, errWithCode := m.processor.FollowRequestAccept(c.Request.Context(), authed, originAccountID)
 	if errWithCode != nil {
 		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
-	c.JSON(http.StatusOK, r)
+
+	c.JSON(http.StatusOK, relationship)
 }
