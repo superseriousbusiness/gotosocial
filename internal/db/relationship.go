@@ -54,6 +54,11 @@ type Relationship interface {
 	// It will return the newly created follow for further processing.
 	AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
 
+	// RejectFollowRequest fetches a follow request from the database, and then deletes it.
+	//
+	// The deleted follow request will be returned so that further processing can be done on it.
+	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, Error)
+
 	// GetAccountFollowRequests returns all follow requests targeting the given account.
 	GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, Error)
 

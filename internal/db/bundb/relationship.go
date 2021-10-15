@@ -255,6 +255,31 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, originAccountI
 	return follow, nil
 }
 
+func (r *relationshipDB) RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, db.Error) {
+	// first get the follow request out of the database
+	fr := &gtsmodel.FollowRequest{}
+	if err := r.conn.
+		NewSelect().
+		Model(fr).
+		Where("account_id = ?", originAccountID).
+		Where("target_account_id = ?", targetAccountID).
+		Scan(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	// now delete it from the database by ID
+	if _, err := r.conn.
+		NewDelete().
+		Model(&gtsmodel.FollowRequest{ID: fr.ID}).
+		WherePK().
+		Exec(ctx); err != nil {
+		return nil, r.conn.ProcessError(err)
+	}
+
+	// return the deleted follow request
+	return fr, nil
+}
+
 func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, db.Error) {
 	followRequests := []*gtsmodel.FollowRequest{}
 
