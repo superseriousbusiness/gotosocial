@@ -250,16 +250,17 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		OnFollow: pub.OnFollowDoNothing,
 	}
 
+	// override some default behaviors and trigger our own side effects
 	other = []interface{}{
-		// override default undo behavior and trigger our own side effects
 		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
 			return f.FederatingDB().Undo(ctx, undo)
 		},
-		// override default accept behavior and trigger our own side effects
 		func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
 			return f.FederatingDB().Accept(ctx, accept)
 		},
-		// override default announce behavior and trigger our own side effects
+		func(ctx context.Context, reject vocab.ActivityStreamsReject) error {
+			return f.FederatingDB().Reject(ctx, reject)
+		},
 		func(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
 			return f.FederatingDB().Announce(ctx, announce)
 		},
