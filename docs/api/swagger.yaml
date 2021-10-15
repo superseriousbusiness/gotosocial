@@ -2450,6 +2450,115 @@ paths:
       summary: Get an array of accounts that requesting account has blocked.
       tags:
       - blocks
+  /api/v1/follow_requests:
+    get:
+      description: |-
+        The next and previous queries can be parsed from the returned Link header.
+        Example:
+
+        ```
+        <https://example.org/api/v1/follow_requests?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/follow_requests?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+        ````
+      operationId: getFollowRequests
+      parameters:
+      - default: 40
+        description: Number of accounts to return.
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          headers:
+            Link:
+              description: Links to the next and previous queries.
+              type: string
+          schema:
+            items:
+              $ref: '#/definitions/account'
+            type: array
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      security:
+      - OAuth2 Bearer:
+        - read:follows
+      summary: Get an array of accounts that have requested to follow you.
+      tags:
+      - follow_requests
+  /api/v1/follow_requests/{account_id}/authorize:
+    post:
+      description: Accept a follow request and put the requesting account in your
+        'followers' list.
+      operationId: authorizeFollowRequest
+      parameters:
+      - description: ID of the account requesting to follow you.
+        in: path
+        name: account_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Your relationship to this account.
+          schema:
+            $ref: '#/definitions/accountRelationship'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "500":
+          description: internal server error
+      security:
+      - OAuth2 Bearer:
+        - write:follows
+      summary: Accept/authorize follow request from the given account ID.
+      tags:
+      - follow_requests
+  /api/v1/follow_requests/{account_id}/reject:
+    post:
+      operationId: rejectFollowRequest
+      parameters:
+      - description: ID of the account requesting to follow you.
+        in: path
+        name: account_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Your relationship to this account.
+          schema:
+            $ref: '#/definitions/accountRelationship'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+        "500":
+          description: internal server error
+      security:
+      - OAuth2 Bearer:
+        - write:follows
+      summary: Reject/deny follow request from the given account ID.
+      tags:
+      - follow_requests
   /api/v1/instance:
     get:
       description: |-
