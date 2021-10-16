@@ -63,6 +63,7 @@ type Config struct {
 	StatusesConfig    *StatusesConfig    `yaml:"statuses"`
 	LetsEncryptConfig *LetsEncryptConfig `yaml:"letsEncrypt"`
 	OIDCConfig        *OIDCConfig        `yaml:"oidc"`
+	SMTPConfig        *SMTPConfig        `yaml:"smtp"`
 
 	/*
 		Not parsed from .yaml configuration file.
@@ -95,6 +96,7 @@ func Empty() *Config {
 		StatusesConfig:    &StatusesConfig{},
 		LetsEncryptConfig: &LetsEncryptConfig{},
 		OIDCConfig:        &OIDCConfig{},
+		SMTPConfig:        &SMTPConfig{},
 		AccountCLIFlags:   make(map[string]string),
 		ExportCLIFlags:    make(map[string]string),
 	}
@@ -318,6 +320,27 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.OIDCConfig.Scopes = f.StringSlice(fn.OIDCScopes)
 	}
 
+	// smtp flags
+	if c.SMTPConfig.Host == "" || f.IsSet(fn.SMTPHost) {
+		c.SMTPConfig.Host = f.String(fn.SMTPHost)
+	}
+
+	if c.SMTPConfig.Port == 0 || f.IsSet(fn.SMTPPort) {
+		c.SMTPConfig.Port = f.Int(fn.SMTPPort)
+	}
+
+	if c.SMTPConfig.Username == "" || f.IsSet(fn.SMTPUsername) {
+		c.SMTPConfig.Username = f.String(fn.SMTPUsername)
+	}
+
+	if c.SMTPConfig.Password == "" || f.IsSet(fn.SMTPPassword) {
+		c.SMTPConfig.Password = f.String(fn.SMTPPassword)
+	}
+
+	if c.SMTPConfig.From == "" || f.IsSet(fn.SMTPFrom) {
+		c.SMTPConfig.From = f.String(fn.SMTPFrom)
+	}
+
 	// command-specific flags
 
 	// admin account CLI flags
@@ -399,6 +422,12 @@ type Flags struct {
 	OIDCClientID         string
 	OIDCClientSecret     string
 	OIDCScopes           string
+
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
 }
 
 // Defaults contains all the default values for a gotosocial config
@@ -458,6 +487,12 @@ type Defaults struct {
 	OIDCClientID         string
 	OIDCClientSecret     string
 	OIDCScopes           []string
+
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
 }
 
 // GetFlagNames returns a struct containing the names of the various flags used for
@@ -518,6 +553,12 @@ func GetFlagNames() Flags {
 		OIDCClientID:         "oidc-client-id",
 		OIDCClientSecret:     "oidc-client-secret",
 		OIDCScopes:           "oidc-scopes",
+
+		SMTPHost:     "smtp-host",
+		SMTPPort:     "smtp-port",
+		SMTPUsername: "smtp-username",
+		SMTPPassword: "smtp-password",
+		SMTPFrom:     "smtp-from",
 	}
 }
 
@@ -579,5 +620,11 @@ func GetEnvNames() Flags {
 		OIDCClientID:         "GTS_OIDC_CLIENT_ID",
 		OIDCClientSecret:     "GTS_OIDC_CLIENT_SECRET",
 		OIDCScopes:           "GTS_OIDC_SCOPES",
+
+		SMTPHost:     "SMTP_HOST",
+		SMTPPort:     "SMTP_PORT",
+		SMTPUsername: "SMTP_USERNAME",
+		SMTPPassword: "SMTP_PASSWORD",
+		SMTPFrom:     "SMTP_FROM",
 	}
 }

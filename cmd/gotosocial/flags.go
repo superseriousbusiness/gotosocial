@@ -39,6 +39,7 @@ func getFlags() []cli.Flag {
 		statusesFlags(flagNames, envNames, defaults),
 		letsEncryptFlags(flagNames, envNames, defaults),
 		oidcFlags(flagNames, envNames, defaults),
+		smtpFlags(flagNames, envNames, defaults),
 	}
 	for _, fs := range flagSets {
 		flags = append(flags, fs...)
