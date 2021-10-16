@@ -41,6 +41,7 @@ type Sender interface {
 	ExecuteTemplate(templateName string, data interface{}) (string, error)
 }
 
+// NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
 func NewSender(cfg *config.Config) (Sender, error) {
 	t, err := loadTemplates(cfg)
 	if err != nil {
