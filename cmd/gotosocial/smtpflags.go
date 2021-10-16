@@ -51,7 +51,7 @@ func smtpFlags(flagNames, envNames config.Flags, defaults config.Defaults) []cli
 		},
 		&cli.StringFlag{
 			Name:    flagNames.SMTPFrom,
-			Usage:   "String to use as the 'from' field of the email. Eg., 'gotosocial@example.org'",
+			Usage:   "Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'",
 			Value:   defaults.SMTPFrom,
 			EnvVars: []string{envNames.SMTPFrom},
 		},

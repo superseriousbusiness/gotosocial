@@ -388,7 +388,7 @@ smtp:
   # Examples: ["1234", "password"]
   # Default: ""
   password:
-  # String. 'From' field for sent emails.
-  # Examples: ["mail@example.org", "GoToSocial"]
-  # Default: "GoToSocial"
-  from: "GoToSocial"
+  # String. 'From' address for sent emails.
+  # Examples: ["mail@example.org"]
+  # Default: ""
+  from: ""
