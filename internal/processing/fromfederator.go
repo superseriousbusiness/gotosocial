@@ -161,22 +161,13 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		return p.notifyFollowRequest(ctx, followRequest)
 	}
 
-	if followRequest.Account == nil {
-		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
-		if err != nil {
-			return err
-		}
-		followRequest.Account = a
-	}
-	originAccount := followRequest.Account
-
 	// if the target account isn't locked, we should already accept the follow and notify about the new follower instead
 	follow, err := p.db.AcceptFollowRequest(ctx, followRequest.AccountID, followRequest.TargetAccountID)
 	if err != nil {
 		return err
 	}
 
-	if err := p.federateAcceptFollowRequest(ctx, follow, originAccount, targetAccount); err != nil {
+	if err := p.federateAcceptFollowRequest(ctx, follow); err != nil {
 		return err
 	}
 

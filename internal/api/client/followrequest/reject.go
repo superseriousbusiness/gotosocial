@@ -19,23 +19,16 @@
 package followrequest
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FollowRequestGETHandler swagger:operation GET /api/v1/follow_requests getFollowRequests
+// FollowRequestRejectPOSTHandler swagger:operation POST /api/v1/follow_requests/{account_id}/reject rejectFollowRequest
 //
-// Get an array of accounts that have requested to follow you.
-//
-// The next and previous queries can be parsed from the returned Link header.
-// Example:
-//
-// ```
-// <https://example.org/api/v1/follow_requests?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/follow_requests?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
-// ````
+// Reject/deny follow request from the given account ID.
 //
 // ---
 // tags:
@@ -45,26 +38,22 @@ import (
 // - application/json
 //
 // parameters:
-// - name: limit
-//   type: integer
-//   description: Number of accounts to return.
-//   default: 40
-//   in: query
+// - name: account_id
+//   type: string
+//   description: ID of the account requesting to follow you.
+//   in: path
+//   required: true
 //
 // security:
 // - OAuth2 Bearer:
-//   - read:follows
+//   - write:follows
 //
 // responses:
 //   '200':
-//     headers:
-//       Link:
-//         type: string
-//         description: Links to the next and previous queries.
+//     name: account relationship
+//     description: Your relationship to this account.
 //     schema:
-//       type: array
-//       items:
-//         "$ref": "#/definitions/account"
+//       "$ref": "#/definitions/accountRelationship"
 //   '400':
 //      description: bad request
 //   '401':
@@ -73,8 +62,10 @@ import (
 //      description: forbidden
 //   '404':
 //      description: not found
-func (m *Module) FollowRequestGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "FollowRequestGETHandler")
+//   '500':
+//      description: internal server error
+func (m *Module) FollowRequestRejectPOSTHandler(c *gin.Context) {
+	l := logrus.WithField("func", "FollowRequestRejectPOSTHandler")
 
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -89,11 +80,18 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	accts, errWithCode := m.processor.FollowRequestsGet(c.Request.Context(), authed)
+	originAccountID := c.Param(IDKey)
+	if originAccountID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no follow request origin account id provided"})
+		return
+	}
+
+	relationship, errWithCode := m.processor.FollowRequestReject(c.Request.Context(), authed, originAccountID)
 	if errWithCode != nil {
+		l.Debug(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, accts)
+	c.JSON(http.StatusOK, relationship)
 }

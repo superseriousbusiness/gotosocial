@@ -140,7 +140,19 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 				return err
 			}
 
-			return p.federateAcceptFollowRequest(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.federateAcceptFollowRequest(ctx, follow)
+		}
+	case ap.ActivityReject:
+		// REJECT
+		switch clientMsg.APObjectType {
+		case ap.ActivityFollow:
+			// REJECT FOLLOW (request)
+			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
+			if !ok {
+				return errors.New("reject was not parseable as *gtsmodel.FollowRequest")
+			}
+
+			return p.federateRejectFollowRequest(ctx, followRequest)
 		}
 	case ap.ActivityUndo:
 		// UNDO
@@ -453,7 +465,30 @@ func (p *processor) federateUnannounce(ctx context.Context, boost *gtsmodel.Stat
 	return err
 }
 
-func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) error {
+func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gtsmodel.Follow) error {
+	if follow.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, follow.AccountID)
+		if err != nil {
+			return err
+		}
+		follow.Account = a
+	}
+	originAccount := follow.Account
+
+	if follow.TargetAccount == nil {
+		a, err := p.db.GetAccountByID(ctx, follow.TargetAccountID)
+		if err != nil {
+			return err
+		}
+		follow.TargetAccount = a
+	}
+	targetAccount := follow.TargetAccount
+
+	// if target account isn't from our domain we shouldn't do anything
+	if targetAccount.Domain != "" {
+		return nil
+	}
+
 	// if both accounts are local there's nothing to do here
 	if originAccount.Domain == "" && targetAccount.Domain == "" {
 		return nil
@@ -500,6 +535,80 @@ func (p *processor) federateAcceptFollowRequest(ctx context.Context, follow *gts
 
 	// send off the accept using the accepter's outbox
 	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, accept)
+	return err
+}
+
+func (p *processor) federateRejectFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
+	if followRequest.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		if err != nil {
+			return err
+		}
+		followRequest.Account = a
+	}
+	originAccount := followRequest.Account
+
+	if followRequest.TargetAccount == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
+		if err != nil {
+			return err
+		}
+		followRequest.TargetAccount = a
+	}
+	targetAccount := followRequest.TargetAccount
+
+	// if target account isn't from our domain we shouldn't do anything
+	if targetAccount.Domain != "" {
+		return nil
+	}
+
+	// if both accounts are local there's nothing to do here
+	if originAccount.Domain == "" && targetAccount.Domain == "" {
+		return nil
+	}
+
+	// recreate the AS follow
+	follow := p.tc.FollowRequestToFollow(ctx, followRequest)
+	asFollow, err := p.tc.FollowToAS(ctx, follow, originAccount, targetAccount)
+	if err != nil {
+		return fmt.Errorf("federateUnfollow: error converting follow to as format: %s", err)
+	}
+
+	rejectingAccountURI, err := url.Parse(targetAccount.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
+	}
+
+	requestingAccountURI, err := url.Parse(originAccount.URI)
+	if err != nil {
+		return fmt.Errorf("error parsing uri %s: %s", targetAccount.URI, err)
+	}
+
+	// create a Reject
+	reject := streams.NewActivityStreamsReject()
+
+	// set the rejecting actor on it
+	acceptActorProp := streams.NewActivityStreamsActorProperty()
+	acceptActorProp.AppendIRI(rejectingAccountURI)
+	reject.SetActivityStreamsActor(acceptActorProp)
+
+	// Set the recreated follow as the 'object' property.
+	acceptObject := streams.NewActivityStreamsObjectProperty()
+	acceptObject.AppendActivityStreamsFollow(asFollow)
+	reject.SetActivityStreamsObject(acceptObject)
+
+	// Set the To of the reject as the originator of the follow
+	acceptTo := streams.NewActivityStreamsToProperty()
+	acceptTo.AppendIRI(requestingAccountURI)
+	reject.SetActivityStreamsTo(acceptTo)
+
+	outboxIRI, err := url.Parse(targetAccount.OutboxURI)
+	if err != nil {
+		return fmt.Errorf("federateRejectFollowRequest: error parsing outboxURI %s: %s", originAccount.OutboxURI, err)
+	}
+
+	// send off the reject using the rejecting account's outbox
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, reject)
 	return err
 }
 

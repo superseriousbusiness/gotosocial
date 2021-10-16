@@ -35,6 +35,7 @@ type DB interface {
 	pub.Database
 	Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error
 	Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error
+	Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error
 	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
 }
 

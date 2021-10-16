@@ -118,8 +118,10 @@ type Processor interface {
 
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
 	FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode)
-	// FollowRequestAccept handles the acceptance of a follow request from the given account ID
+	// FollowRequestAccept handles the acceptance of a follow request from the given account ID.
 	FollowRequestAccept(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
+	// FollowRequestReject handles the rejection of a follow request from the given account ID.
+	FollowRequestReject(ctx context.Context, auth *oauth.Auth, accountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// InstanceGet retrieves instance information for serving at api/v1/instance
 	InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)

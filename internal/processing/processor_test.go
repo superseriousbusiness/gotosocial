@@ -96,9 +96,9 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
+	testrig.InitTestLog()
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 
@@ -142,6 +142,38 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 				StatusCode:    200,
 				Body:          readCloser,
 				ContentLength: int64(len(satanJson)),
+				Header: http.Header{
+					"content-type": {responseType},
+				},
+			}
+			return response, nil
+		}
+
+		if req.URL.String() == suite.testAccounts["remote_account_2"].URI {
+			// the request is for remote account 2
+			someAccount := suite.testAccounts["remote_account_2"]
+
+			someAccountAS, err := suite.typeconverter.AccountToAS(context.Background(), someAccount)
+			if err != nil {
+				panic(err)
+			}
+
+			someAccountI, err := streams.Serialize(someAccountAS)
+			if err != nil {
+				panic(err)
+			}
+			someAccountJson, err := json.Marshal(someAccountI)
+			if err != nil {
+				panic(err)
+			}
+			responseType := "application/activity+json"
+
+			reader := bytes.NewReader(someAccountJson)
+			readCloser := io.NopCloser(reader)
+			response := &http.Response{
+				StatusCode:    200,
+				Body:          readCloser,
+				ContentLength: int64(len(someAccountJson)),
 				Header: http.Header{
 					"content-type": {responseType},
 				},
