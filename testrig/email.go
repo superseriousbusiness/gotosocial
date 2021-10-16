@@ -26,7 +26,7 @@ func NewEmailSender(templateBaseDir string) email.Sender {
 	cfg.TemplateConfig.BaseDir = templateBaseDir
 
 	s, err := email.NewSender(cfg)
-	if err != nil  {
+	if err != nil {
 		panic(err)
 	}
 	return s

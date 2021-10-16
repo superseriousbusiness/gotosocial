@@ -49,7 +49,7 @@ func (suite *UtilTestSuite) TestTemplateReset() {
 		Username:     "test",
 		InstanceURL:  "https://example.org",
 		InstanceName: "Test Instance",
-		ResetLink:  "https://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa",
+		ResetLink:    "https://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa",
 	}
 	mailBody, err := suite.sender.ExecuteTemplate("email_reset.tmpl", resetData)
 	suite.NoError(err)
