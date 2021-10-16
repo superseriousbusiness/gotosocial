@@ -33,8 +33,7 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 		return err
 	}
 
-	msg := AssembleMessage(confirmSubject, confirmBody)
-
+	msg := s.AssembleMessage(confirmSubject, confirmBody, toAddress)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

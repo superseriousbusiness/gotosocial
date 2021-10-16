@@ -33,8 +33,7 @@ func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
 		return err
 	}
 
-	msg := AssembleMessage(resetSubject, resetBody)
-
+	msg := s.AssembleMessage(resetSubject, resetBody, toAddress)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

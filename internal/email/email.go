@@ -39,6 +39,9 @@ type Sender interface {
 	// ExecuteTemplate returns templated HTML using the given templateName and data. Mostly you won't need to call this,
 	// and can just call one of the 'Send' functions instead (which calls this under the hood anyway).
 	ExecuteTemplate(templateName string, data interface{}) (string, error)
+	// AssembleMessage concacenates the mailSubject, the mime header, mailTo, mailFrom and the mailBody in
+	// an appropriate format for sending via net/smtp. Mostly you won't need to call this, but it's provided just in case.
+	AssembleMessage(mailSubject string, mailBody string, mailTo string) []byte
 }
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.

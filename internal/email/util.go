@@ -18,11 +18,14 @@
 
 package email
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 const (
 	mime = `MIME-version: 1.0;
-Content-Type: text/plain; charset="UTF-8";`
+Content-Type: text/html;`
 )
 
 func (s *sender) ExecuteTemplate(templateName string, data interface{}) (string, error) {
@@ -33,11 +36,14 @@ func (s *sender) ExecuteTemplate(templateName string, data interface{}) (string,
 	return buf.String(), nil
 }
 
-// AssembleMessage concacenates the mailSubject, the mime header, and the mailBody in
-// an appropriate format for sending via net/smtp.
-func AssembleMessage(mailSubject string, mailBody string) []byte {
+func (s *sender) AssembleMessage(mailSubject string, mailBody string, mailTo string) []byte {
+	from := fmt.Sprintf("From: GoToSocial <%s>", s.from)
+	to := fmt.Sprintf("To: %s", mailTo)
+
 	msg := []byte(
 		mailSubject + "\r\n" +
+			from + "\r\n" +
+			to + "\r\n" +
 			mime + "\r\n" +
 			mailBody + "\r\n")
 
