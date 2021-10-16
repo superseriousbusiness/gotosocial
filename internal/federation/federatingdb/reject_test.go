@@ -36,9 +36,9 @@ type RejectTestSuite struct {
 }
 
 func (suite *RejectTestSuite) TestRejectFollowRequest() {
-   // local_account_1 sent a follow request to remote_account_2;
-   // remote_account_2 rejects the follow request
-   followingAccount := suite.testAccounts["local_account_1"]
+	// local_account_1 sent a follow request to remote_account_2;
+	// remote_account_2 rejects the follow request
+	followingAccount := suite.testAccounts["local_account_1"]
 	followedAccount := suite.testAccounts["remote_account_2"]
 	fromFederatorChan := make(chan messages.FromFederator, 10)
 	ctx := createTestContext(followingAccount, followedAccount, fromFederatorChan)
@@ -79,16 +79,16 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	acceptTo.AppendIRI(requestingAccountURI)
 	reject.SetActivityStreamsTo(acceptTo)
 
-   // process the reject in the federating database
+	// process the reject in the federating database
 	err = suite.federatingDB.Reject(ctx, reject)
 	suite.NoError(err)
 
-   // there should be nothing in the federator channel since nothing needs to be passed
-   suite.Empty(fromFederatorChan)
+	// there should be nothing in the federator channel since nothing needs to be passed
+	suite.Empty(fromFederatorChan)
 
-   // the follow request should not be in the database anymore -- it's been rejected
-   err = suite.db.GetByID(ctx, fr.ID, &gtsmodel.FollowRequest{})
-   suite.ErrorIs(err, db.ErrNoEntries)
+	// the follow request should not be in the database anymore -- it's been rejected
+	err = suite.db.GetByID(ctx, fr.ID, &gtsmodel.FollowRequest{})
+	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
 func TestRejectTestSuite(t *testing.T) {
