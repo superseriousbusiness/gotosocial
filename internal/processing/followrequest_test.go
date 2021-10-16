@@ -106,7 +106,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 	relationship, errWithCode := suite.processor.FollowRequestReject(context.Background(), suite.testAutheds["local_account_1"], requestingAccount.ID)
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: false, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	// reject should be sent to some_user
 	sent, ok := suite.sentHTTPRequests[requestingAccount.InboxURI]
