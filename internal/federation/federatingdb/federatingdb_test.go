@@ -63,10 +63,10 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 }
 
 func (suite *FederatingDBTestSuite) SetupTest() {
+	testrig.InitTestLog()
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	testrig.InitTestLog()
 	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

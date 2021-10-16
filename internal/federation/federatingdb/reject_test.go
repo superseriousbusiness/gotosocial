@@ -20,8 +20,15 @@ package federatingdb_test
 
 import (
 	"testing"
+	"time"
 
+	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type RejectTestSuite struct {
@@ -29,7 +36,59 @@ type RejectTestSuite struct {
 }
 
 func (suite *RejectTestSuite) TestRejectFollowRequest() {
-aaaaaaaaaaa
+   // local_account_1 sent a follow request to remote_account_2;
+   // remote_account_2 rejects the follow request
+   followingAccount := suite.testAccounts["local_account_1"]
+	followedAccount := suite.testAccounts["remote_account_2"]
+	fromFederatorChan := make(chan messages.FromFederator, 10)
+	ctx := createTestContext(followingAccount, followedAccount, fromFederatorChan)
+
+	// put the follow request in the database
+	fr := &gtsmodel.FollowRequest{
+		ID:              "01FJ1S8DX3STJJ6CEYPMZ1M0R3",
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+		URI:             util.GenerateURIForFollow(followingAccount.Username, "http", "localhost:8080", "01FJ1S8DX3STJJ6CEYPMZ1M0R3"),
+		AccountID:       followingAccount.ID,
+		TargetAccountID: followedAccount.ID,
+	}
+	err := suite.db.Put(ctx, fr)
+	suite.NoError(err)
+
+	asFollow, err := suite.tc.FollowToAS(ctx, suite.tc.FollowRequestToFollow(ctx, fr), followingAccount, followedAccount)
+	suite.NoError(err)
+
+	rejectingAccountURI := testrig.URLMustParse(followedAccount.URI)
+	requestingAccountURI := testrig.URLMustParse(followingAccount.URI)
+
+	// create a Reject
+	reject := streams.NewActivityStreamsReject()
+
+	// set the rejecting actor on it
+	acceptActorProp := streams.NewActivityStreamsActorProperty()
+	acceptActorProp.AppendIRI(rejectingAccountURI)
+	reject.SetActivityStreamsActor(acceptActorProp)
+
+	// Set the recreated follow as the 'object' property.
+	acceptObject := streams.NewActivityStreamsObjectProperty()
+	acceptObject.AppendActivityStreamsFollow(asFollow)
+	reject.SetActivityStreamsObject(acceptObject)
+
+	// Set the To of the reject as the originator of the follow
+	acceptTo := streams.NewActivityStreamsToProperty()
+	acceptTo.AppendIRI(requestingAccountURI)
+	reject.SetActivityStreamsTo(acceptTo)
+
+   // process the reject in the federating database
+	err = suite.federatingDB.Reject(ctx, reject)
+	suite.NoError(err)
+
+   // there should be nothing in the federator channel since nothing needs to be passed
+   suite.Empty(fromFederatorChan)
+
+   // the follow request should not be in the database anymore -- it's been rejected
+   err = suite.db.GetByID(ctx, fr.ID, &gtsmodel.FollowRequest{})
+   suite.ErrorIs(err, db.ErrNoEntries)
 }
 
 func TestRejectTestSuite(t *testing.T) {
