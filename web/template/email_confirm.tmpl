@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    </head>
+    <body>
+        <div>
+            <h1>
+                Hello {{.Username}}!
+            </h1>
+        </div>
+        <div>
+            <p>
+                You are receiving this mail because you've requested an account on <a href="{{.InstanceURL}}">{{.InstanceName}}</a>.
+            </p>
+            <p>
+                We just need to confirm that this is your email address. To confirm your email, <a href="{{.ConfirmLink}}">click here</a> or paste the following in your browser's address bar:
+            </p>
+            <p>
+                <code>
+                    {{.ConfirmLink}}
+                </code>
+            </p>
+        </div>
+        <div>
+            <p>
+                If you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of <a href="{{.InstanceURL}}">{{.InstanceName}}</a>.
+            </p>
+        </div>
+    </body>
+</html>
