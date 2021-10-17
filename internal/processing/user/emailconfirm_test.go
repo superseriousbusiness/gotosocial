@@ -58,7 +58,7 @@ func (suite *EmailConfirmTestSuite) TestSendConfirmEmail() {
 	suite.Equal(emailShould, email)
 
 	// confirmationSentAt should be recent
-	suite.WithinDuration(time.Now(), user.ConfirmationSentAt, 1 * time.Minute)
+	suite.WithinDuration(time.Now(), user.ConfirmationSentAt, 1*time.Minute)
 }
 
 func TestEmailConfirmTestSuite(t *testing.T) {
