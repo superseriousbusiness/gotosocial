@@ -53,7 +53,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 
 	var foundOne bool
 	// check if the query is something like @whatever_username@example.org -- this means it's a remote account
-	if !foundOne && util.IsMention(searchQuery.Query) {
+	if _, domain, err := util.ExtractMentionParts(searchQuery.Query); err == nil && domain != "" {
 		l.Debug("search term is a mention, looking it up...")
 		foundAccount, err := p.searchAccountByMention(ctx, authed, searchQuery.Query, searchQuery.Resolve)
 		if err == nil && foundAccount != nil {
@@ -64,25 +64,20 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 	}
 
 	// check if the query is a URI and just do a lookup for that, straight up
-	if uri, err := url.Parse(query); err == nil && !foundOne {
-		// 1. check if it's a status
-		if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
-			foundStatuses = append(foundStatuses, foundStatus)
-			foundOne = true
-			l.Debug("got a status by searching by URI")
-		}
-
-		// 2. check if it's an account
-		if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
-			foundAccounts = append(foundAccounts, foundAccount)
-			foundOne = true
-			l.Debug("got an account by searching by URI")
-		}
-	}
-
 	if !foundOne {
-		// we haven't found anything yet so search for text now
-		l.Debug("nothing found by mention or by URI, will fall back to searching by text now")
+		if uri, err := url.Parse(query); err == nil {
+			// 1. check if it's a status
+			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
+				foundStatuses = append(foundStatuses, foundStatus)
+				l.Debug("got a status by searching by URI")
+			}
+
+			// 2. check if it's an account
+			if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
+				foundAccounts = append(foundAccounts, foundAccount)
+				l.Debug("got an account by searching by URI")
+			}
+		}
 	}
 
 	/*
