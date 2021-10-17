@@ -31,7 +31,7 @@ import (
 )
 
 func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, username string) error {
-	if user.UnconfirmedEmail == user.Email {
+	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
 		// user has already confirmed this email address, so there's nothing to do
 		return nil
 	}
@@ -60,8 +60,8 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 		InstanceName: instance.Title,
 		ConfirmLink:  confirmationLink,
 	}
-	if err := p.emailSender.SendConfirmEmail(user.Email, confirmData); err != nil {
-		return fmt.Errorf("SendConfirmEmail: error sending to email address %s belonging to user %s: %s", user.Email, username, err)
+	if err := p.emailSender.SendConfirmEmail(user.UnconfirmedEmail, confirmData); err != nil {
+		return fmt.Errorf("SendConfirmEmail: error sending to email address %s belonging to user %s: %s", user.UnconfirmedEmail, username, err)
 	}
 
 	// email sent, now we need to update the user entry with the token we just sent them
