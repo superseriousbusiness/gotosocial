@@ -273,10 +273,10 @@ func NewProcessor(
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, emailSender, config)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
-	userProcessor := user.New(db, config)
+	userProcessor := user.New(db, emailSender, config)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
