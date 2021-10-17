@@ -25,7 +25,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -87,11 +86,10 @@ type processor struct {
 	formatter     text.Formatter
 	db            db.DB
 	federator     federation.Federator
-	emailSender   email.Sender
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, emailSender email.Sender, config *config.Config) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, config *config.Config) Processor {
 	return &processor{
 		tc:            tc,
 		config:        config,
@@ -102,6 +100,5 @@ func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauth
 		formatter:     text.NewFormatter(config, db),
 		db:            db,
 		federator:     federator,
-		emailSender:   emailSender,
 	}
 }
