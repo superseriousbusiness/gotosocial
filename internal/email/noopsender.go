@@ -45,30 +45,28 @@ type noopSender struct {
 }
 
 func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
-		return err
-	}
-	confirmBody := buf.String()
-
-	msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
-
 	if s.sendCallback != nil {
+		buf := &bytes.Buffer{}
+		if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
+			return err
+		}
+		confirmBody := buf.String()
+
+		msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))
 	}
 	return nil
 }
 
 func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
-		return err
-	}
-	resetBody := buf.String()
-
-	msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
-
 	if s.sendCallback != nil {
+		buf := &bytes.Buffer{}
+		if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
+			return err
+		}
+		resetBody := buf.String()
+
+		msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))
 	}
 	return nil
