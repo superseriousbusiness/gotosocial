@@ -77,8 +77,3 @@ func ExtractMentionParts(mention string) (username, domain string, err error) {
 		return "", "", fmt.Errorf("couldn't match mention %s", mention)
 	}
 }
-
-// IsMention returns true if the passed string looks like @whatever@example.org
-func IsMention(mention string) bool {
-	return regexes.MentionName.MatchString(strings.ToLower(mention))
-}
