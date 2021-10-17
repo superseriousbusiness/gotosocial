@@ -25,8 +25,8 @@ import (
 
 var m *minify.M
 
-// minifyHTML runs html through a minifier, reducing it in size.
-func minifyHTML(in string) (string, error) {
+// MinifyHTML runs html through a minifier, reducing it in size.
+func MinifyHTML(in string) (string, error) {
 	if m == nil {
 		m = minify.New()
 		m.Add("text/html", &html.Minifier{

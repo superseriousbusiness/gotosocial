@@ -21,6 +21,8 @@ package email
 import (
 	"bytes"
 	"html/template"
+
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 // NewNoopSender returns a no-op email sender that will just execute the given sendCallback
@@ -50,7 +52,11 @@ func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error 
 		if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
 			return err
 		}
-		confirmBody := buf.String()
+
+		confirmBody, err := text.MinifyHTML(buf.String())
+		if err != nil {
+			return err
+		}
 
 		msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))
@@ -64,7 +70,11 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 		if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
 			return err
 		}
-		resetBody := buf.String()
+
+		resetBody, err := text.MinifyHTML(buf.String())
+		if err != nil {
+			return err
+		}
 
 		msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))

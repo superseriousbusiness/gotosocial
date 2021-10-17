@@ -21,6 +21,8 @@ package email
 import (
 	"bytes"
 	"net/smtp"
+
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 const (
@@ -33,7 +35,11 @@ func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
 	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
 		return err
 	}
-	resetBody := buf.String()
+
+	resetBody, err := text.MinifyHTML(buf.String())
+	if err != nil {
+		return err
+	}
 
 	msg := assembleMessage(resetSubject, resetBody, toAddress, s.from)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
