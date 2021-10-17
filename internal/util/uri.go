@@ -54,6 +54,8 @@ const (
 	UpdatePath = "updates"
 	// BlocksPath is used to generate the URI for a block
 	BlocksPath = "blocks"
+	// ConfirmEmailPath is used to generate the URI for an email confirmation link
+	ConfirmEmailPath = "confirm_email"
 )
 
 // APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
@@ -134,6 +136,12 @@ func GenerateURIForUpdate(username string, protocol string, host string, thisUpd
 // https://example.org/users/whatever_user/blocks/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForBlock(username string, protocol string, host string, thisBlockID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
+}
+
+// GenerateURIForEmailConfirm returns a link for email confirmation -- something like:
+// https://example.org/confirm_email?token=490e337c-0162-454f-ac48-4b22bb92a205
+func GenerateURIForEmailConfirm(protocol string, host string, token string) string {
+	return fmt.Sprintf("%s://%s/%s?token=%s", protocol, host, ConfirmEmailPath, token)
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
