@@ -24,11 +24,12 @@ import (
 	"crypto/rsa"
 	"database/sql"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net"
 	"net/mail"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -145,6 +146,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	u := &gtsmodel.User{
 		ID:                     newUserID,
 		AccountID:              acct.ID,
+		Account:                acct,
 		EncryptedPassword:      string(pw),
 		SignUpIP:               signUpIP.To4(),
 		Locale:                 locale,
