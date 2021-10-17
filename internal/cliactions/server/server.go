@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
@@ -91,7 +92,12 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 	oauthServer := oauth.New(ctx, dbService)
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, typeConverter, mediaHandler)
-	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService)
+	emailSender, err := email.NewSender(c)
+	if err != nil {
+		return fmt.Errorf("error creating email sender: %s", err)
+	}
+
+	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

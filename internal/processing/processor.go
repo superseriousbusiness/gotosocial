@@ -28,6 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -256,14 +257,23 @@ type processor struct {
 	userProcessor      user.Processor
 }
 
-// NewProcessor returns a new Processor that uses the given federator
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB) Processor {
+// NewProcessor returns a new Processor.
+func NewProcessor(
+	config *config.Config,
+	tc typeutils.TypeConverter,
+	federator federation.Federator,
+	oauthServer oauth.Server,
+	mediaHandler media.Handler,
+	storage *kv.KVStore,
+	timelineManager timeline.Manager,
+	db db.DB,
+	emailSender email.Sender) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
 	statusProcessor := status.New(db, tc, config, fromClientAPI)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, emailSender, config)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
 	userProcessor := user.New(db, config)

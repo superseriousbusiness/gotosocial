@@ -65,7 +65,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
 	suite.config.Host = "gts.example.org"
 	suite.config.AccountDomain = "example.org"
-	suite.processor = processing.NewProcessor(suite.config, suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db)
+	suite.processor = processing.NewProcessor(suite.config, suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)
 
 	targetAccount := accountDomainAccount()
@@ -97,7 +97,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
 	suite.config.Host = "gts.example.org"
 	suite.config.AccountDomain = "example.org"
-	suite.processor = processing.NewProcessor(suite.config, suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db)
+	suite.processor = processing.NewProcessor(suite.config, suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)
 
 	targetAccount := accountDomainAccount()

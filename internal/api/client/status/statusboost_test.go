@@ -30,38 +30,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type StatusBoostTestSuite struct {
 	StatusStandardTestSuite
-}
-
-func (suite *StatusBoostTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *StatusBoostTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-}
-
-func (suite *StatusBoostTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
 }
 
 func (suite *StatusBoostTestSuite) TestPostBoost() {

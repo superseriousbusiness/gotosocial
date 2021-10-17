@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -56,6 +57,7 @@ type MediaCreateTestSuite struct {
 	tc           typeutils.TypeConverter
 	mediaHandler media.Handler
 	oauthServer  oauth.Server
+	emailSender  email.Sender
 	processor    processing.Processor
 
 	// standard suite models
@@ -84,7 +86,8 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.config, suite.processor).(*mediamodule.Module)

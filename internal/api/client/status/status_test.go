@@ -24,22 +24,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// nolint
 type StatusStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config    *config.Config
-	db        db.DB
-	tc        typeutils.TypeConverter
-	federator federation.Federator
-	processor processing.Processor
-	storage   *kv.KVStore
+	config      *config.Config
+	db          db.DB
+	tc          typeutils.TypeConverter
+	federator   federation.Federator
+	emailSender email.Sender
+	processor   processing.Processor
+	storage     *kv.KVStore
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -52,4 +54,32 @@ type StatusStandardTestSuite struct {
 
 	// module being tested
 	statusModule *status.Module
+}
+
+func (suite *StatusStandardTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+}
+
+func (suite *StatusStandardTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.storage = testrig.NewTestStorage()
+	testrig.InitTestLog()
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
+	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
+	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+}
+
+func (suite *StatusStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }

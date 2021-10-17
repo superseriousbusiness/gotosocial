@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -38,11 +39,12 @@ import (
 
 type FollowRequestStandardTestSuite struct {
 	suite.Suite
-	config    *config.Config
-	db        db.DB
-	storage   *kv.KVStore
-	federator federation.Federator
-	processor processing.Processor
+	config      *config.Config
+	db          db.DB
+	storage     *kv.KVStore
+	federator   federation.Federator
+	processor   processing.Processor
+	emailSender email.Sender
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -73,7 +75,8 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.followRequestModule = followrequest.New(suite.config, suite.processor).(*followrequest.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

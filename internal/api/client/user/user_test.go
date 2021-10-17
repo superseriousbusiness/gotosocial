@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -33,12 +34,13 @@ import (
 
 type UserStandardTestSuite struct {
 	suite.Suite
-	config    *config.Config
-	db        db.DB
-	tc        typeutils.TypeConverter
-	federator federation.Federator
-	processor processing.Processor
-	storage   *kv.KVStore
+	config      *config.Config
+	db          db.DB
+	tc          typeutils.TypeConverter
+	federator   federation.Federator
+	emailSender email.Sender
+	processor   processing.Processor
+	storage     *kv.KVStore
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client
@@ -61,7 +63,8 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

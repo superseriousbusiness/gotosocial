@@ -43,34 +43,6 @@ type StatusCreateTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *StatusCreateTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *StatusCreateTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
-	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-}
-
-func (suite *StatusCreateTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
-}
-
 var statusWithLinksAndTags = `#test alright, should be able to post #links with fragments in them now, let's see........
 
 https://docs.gotosocial.org/en/latest/user_guide/posts/#links
