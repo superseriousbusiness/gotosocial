@@ -24,7 +24,7 @@ import (
 	"io"
 	"net/http"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"

@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"

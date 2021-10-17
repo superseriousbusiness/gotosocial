@@ -1,29 +1,35 @@
-# git.iim.gay/grufwub/fastpath v0.2.2
+# codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
-git.iim.gay/grufwub/fastpath
-# git.iim.gay/grufwub/go-bufpool v0.2.1
-## explicit; go 1.16
-git.iim.gay/grufwub/go-bufpool
-# git.iim.gay/grufwub/go-bytes v0.7.0
-## explicit; go 1.16
-git.iim.gay/grufwub/go-bytes
-# git.iim.gay/grufwub/go-errors v0.2.3
+codeberg.org/gruf/go-bytes
+# codeberg.org/gruf/go-cache v1.0.0
+## explicit; go 1.17
+codeberg.org/gruf/go-cache
+# codeberg.org/gruf/go-errors v1.0.0
 ## explicit; go 1.15
-git.iim.gay/grufwub/go-errors
-# git.iim.gay/grufwub/go-hashenc v0.3.0
+codeberg.org/gruf/go-errors
+# codeberg.org/gruf/go-fastpath v1.0.2
+## explicit; go 1.14
+codeberg.org/gruf/go-fastpath
+# codeberg.org/gruf/go-hashenc v1.0.1
 ## explicit; go 1.16
-git.iim.gay/grufwub/go-hashenc
-# git.iim.gay/grufwub/go-mutexes v0.5.1
+codeberg.org/gruf/go-hashenc
+# codeberg.org/gruf/go-logger v1.0.3
+## explicit; go 1.14
+codeberg.org/gruf/go-logger
+# codeberg.org/gruf/go-mutexes v1.0.0
+## explicit; go 1.14
+codeberg.org/gruf/go-mutexes
+# codeberg.org/gruf/go-nowish v1.0.2
+## explicit; go 1.14
+codeberg.org/gruf/go-nowish
+# codeberg.org/gruf/go-pools v1.0.2
 ## explicit; go 1.16
-git.iim.gay/grufwub/go-mutexes
-# git.iim.gay/grufwub/go-nowish v0.3.5
-## explicit; go 1.16
-git.iim.gay/grufwub/go-nowish
-# git.iim.gay/grufwub/go-store v0.4.2
-## explicit; go 1.16
-git.iim.gay/grufwub/go-store/kv
-git.iim.gay/grufwub/go-store/storage
-git.iim.gay/grufwub/go-store/util
+codeberg.org/gruf/go-pools
+# codeberg.org/gruf/go-store v1.0.3
+## explicit; go 1.14
+codeberg.org/gruf/go-store/kv
+codeberg.org/gruf/go-store/storage
+codeberg.org/gruf/go-store/util
 # github.com/ReneKroon/ttlcache v1.7.0
 ## explicit; go 1.14
 github.com/ReneKroon/ttlcache

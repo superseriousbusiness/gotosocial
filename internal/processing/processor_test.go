@@ -26,7 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"

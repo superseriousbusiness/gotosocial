@@ -150,8 +150,8 @@ func GetDefaults() Defaults {
 		Port:            8080,
 		TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
 
-		DbType:      "postgres",
-		DbAddress:   "localhost",
+		DbType:      "sqlite",
+		DbAddress:   ":memory:",
 		DbPort:      5432,
 		DbUser:      "postgres",
 		DbPassword:  "postgres",

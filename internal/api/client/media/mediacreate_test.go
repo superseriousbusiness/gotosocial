@@ -28,7 +28,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

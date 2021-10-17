@@ -26,7 +26,7 @@ import (
 	"strings"
 	"time"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
