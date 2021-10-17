@@ -77,26 +77,39 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
+	// build converters and util
+	typeConverter := typeutils.NewConverter(c, dbService)
+	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c)
+
 	// Open the storage backend
 	storage, err := kv.OpenFile(c.StorageConfig.BasePath, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
 
-	// build converters and util
-	typeConverter := typeutils.NewConverter(c, dbService)
-	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c)
-
 	// build backend handlers
 	mediaHandler := media.New(c, dbService, storage)
 	oauthServer := oauth.New(ctx, dbService)
 	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, c, typeConverter, mediaHandler)
-	emailSender, err := email.NewSender(c)
-	if err != nil {
-		return fmt.Errorf("error creating email sender: %s", err)
+
+	// decide whether to create a noop email sender (won't send emails) or a real one
+	var emailSender email.Sender
+	if c.SMTPConfig.Host != "" {
+		// host is defined so create a proper sender
+		emailSender, err = email.NewSender(c)
+		if err != nil {
+			return fmt.Errorf("error creating email sender: %s", err)
+		}
+	} else {
+		// no host is defined so create a noop sender
+		emailSender, err = email.NewNoopSender(c.TemplateConfig.BaseDir, nil)
+		if err != nil {
+			return fmt.Errorf("error creating noop email sender: %s", err)
+		}
 	}
 
+	// create and start the message processor using the other services we've created so far
 	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
