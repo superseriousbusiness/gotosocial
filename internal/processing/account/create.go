@@ -21,10 +21,13 @@ package account
 import (
 	"context"
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
@@ -64,6 +67,23 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, applicationToken, application.ClientSecret, user.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new access token for user %s: %s", user.ID, err)
+	}
+
+	if user.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, user.AccountID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting new account from the database: %s", err)
+		}
+		user.Account = a
+	}
+
+	// there are side effects for creating a new account (sending confirmation emails etc)
+	// so pass a message to the processor so that it can do it asynchronously
+	p.fromClientAPI <- messages.FromClientAPI{
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       user.Account,
+		OriginAccount:  user.Account,
 	}
 
 	return &apimodel.Token{
