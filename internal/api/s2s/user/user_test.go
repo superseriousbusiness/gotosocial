@@ -77,7 +77,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewTestStorage()
 	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
 	suite.securityModule = security.New(suite.config, suite.db).(*security.Module)

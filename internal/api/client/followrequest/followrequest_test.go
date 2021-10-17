@@ -75,7 +75,7 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.followRequestModule = followrequest.New(suite.config, suite.processor).(*followrequest.Module)
 	testrig.StandardDBSetup(suite.db, nil)

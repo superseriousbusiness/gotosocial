@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/smtp"
-	"os"
-	"path/filepath"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -35,18 +33,11 @@ type Sender interface {
 
 	// SendResetEmail sends a 'reset your password' style email to the given toAddress, with the given data.
 	SendResetEmail(toAddress string, data ResetData) error
-
-	// ExecuteTemplate returns templated HTML using the given templateName and data. Mostly you won't need to call this,
-	// and can just call one of the 'Send' functions instead (which calls this under the hood anyway).
-	ExecuteTemplate(templateName string, data interface{}) (string, error)
-	// AssembleMessage concacenates the mailSubject, the mime header, mailTo, mailFrom and the mailBody in
-	// an appropriate format for sending via net/smtp. Mostly you won't need to call this, but it's provided just in case.
-	AssembleMessage(mailSubject string, mailBody string, mailTo string) []byte
 }
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
 func NewSender(cfg *config.Config) (Sender, error) {
-	t, err := loadTemplates(cfg)
+	t, err := loadTemplates(cfg.TemplateConfig.BaseDir)
 	if err != nil {
 		return nil, err
 	}
@@ -66,16 +57,4 @@ type sender struct {
 	from        string
 	auth        smtp.Auth
 	template    *template.Template
-}
-
-// loadTemplates loads html templates for use in emails
-func loadTemplates(cfg *config.Config) (*template.Template, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("error getting current working directory: %s", err)
-	}
-
-	// look for all templates that start with 'email_'
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%semail_*", cfg.TemplateConfig.BaseDir))
-	return template.ParseGlob(tmPath)
 }

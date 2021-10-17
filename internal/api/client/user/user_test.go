@@ -48,6 +48,8 @@ type UserStandardTestSuite struct {
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
 
+	sentEmails map[string]string
+
 	userModule *user.Module
 }
 
@@ -63,7 +65,8 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.sentEmails = make(map[string]string)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

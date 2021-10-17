@@ -69,10 +69,11 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
 	testrig.StandardDBSetup(suite.db, nil)

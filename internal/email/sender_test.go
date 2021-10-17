@@ -28,9 +28,12 @@ type EmailTestSuite struct {
 	suite.Suite
 
 	sender email.Sender
+
+	sentEmails map[string]string
 }
 
 func (suite *EmailTestSuite) SetupTest() {
 	testrig.InitTestLog()
-	suite.sender = testrig.NewEmailSender("../../web/template/")
+	suite.sentEmails = make(map[string]string)
+	suite.sender = testrig.NewEmailSender("../../web/template/", suite.sentEmails)
 }

@@ -49,7 +49,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	emailSender := testrig.NewEmailSender("../../../../web/template/")
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 
@@ -109,7 +109,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	emailSender := testrig.NewEmailSender("../../../../web/template/")
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 
@@ -172,7 +172,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	emailSender := testrig.NewEmailSender("../../../../web/template/")
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 

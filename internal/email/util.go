@@ -19,8 +19,10 @@
 package email
 
 import (
-	"bytes"
 	"fmt"
+	"html/template"
+	"os"
+	"path/filepath"
 )
 
 const (
@@ -28,16 +30,19 @@ const (
 Content-Type: text/html;`
 )
 
-func (s *sender) ExecuteTemplate(templateName string, data interface{}) (string, error) {
-	buf := &bytes.Buffer{}
-	if err := s.template.ExecuteTemplate(buf, templateName, data); err != nil {
-		return "", err
+func loadTemplates(templateBaseDir string) (*template.Template, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("error getting current working directory: %s", err)
 	}
-	return buf.String(), nil
+
+	// look for all templates that start with 'email_'
+	tmPath := filepath.Join(cwd, fmt.Sprintf("%semail_*", templateBaseDir))
+	return template.ParseGlob(tmPath)
 }
 
-func (s *sender) AssembleMessage(mailSubject string, mailBody string, mailTo string) []byte {
-	from := fmt.Sprintf("From: GoToSocial <%s>", s.from)
+func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) []byte {
+	from := fmt.Sprintf("From: GoToSocial <%s>", mailFrom)
 	to := fmt.Sprintf("To: %s", mailTo)
 
 	msg := []byte(

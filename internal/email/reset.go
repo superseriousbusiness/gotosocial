@@ -19,6 +19,7 @@
 package email
 
 import (
+	"bytes"
 	"net/smtp"
 )
 
@@ -28,12 +29,13 @@ const (
 )
 
 func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
-	resetBody, err := s.ExecuteTemplate(resetTemplate, data)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
 		return err
 	}
+	resetBody := buf.String()
 
-	msg := s.AssembleMessage(resetSubject, resetBody, toAddress)
+	msg := assembleMessage(resetSubject, resetBody, toAddress, s.from)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

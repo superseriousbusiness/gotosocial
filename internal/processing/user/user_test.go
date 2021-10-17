@@ -43,7 +43,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.emailSender = testrig.NewEmailSender("../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 	suite.testUsers = testrig.NewTestUsers()
 
 	suite.user = user.New(suite.db, suite.emailSender, suite.config)

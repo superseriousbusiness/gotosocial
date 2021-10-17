@@ -62,7 +62,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, _ *config.Config) err
 	}), dbService)
 	federator := testrig.NewTestFederator(dbService, transportController, storageBackend)
 
-	emailSender := testrig.NewEmailSender("./web/template/")
+	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
 	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender)
 	if err := processor.Start(ctx); err != nil {

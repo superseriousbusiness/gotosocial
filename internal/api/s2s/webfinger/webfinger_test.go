@@ -80,7 +80,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewTestStorage()
 	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)
 	suite.securityModule = security.New(suite.config, suite.db).(*security.Module)

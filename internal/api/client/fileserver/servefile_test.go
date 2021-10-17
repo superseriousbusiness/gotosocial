@@ -80,7 +80,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)

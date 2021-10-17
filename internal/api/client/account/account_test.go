@@ -31,6 +31,7 @@ type AccountStandardTestSuite struct {
 	federator   federation.Federator
 	processor   processing.Processor
 	emailSender email.Sender
+	sentEmails  map[string]string
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -61,7 +62,8 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewTestStorage()
 	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/")
+	suite.sentEmails = make(map[string]string)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.accountModule = account.New(suite.config, suite.processor).(*account.Module)
 	testrig.StandardDBSetup(suite.db, nil)

@@ -19,6 +19,7 @@
 package email
 
 import (
+	"bytes"
 	"net/smtp"
 )
 
@@ -28,12 +29,13 @@ const (
 )
 
 func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
-	confirmBody, err := s.ExecuteTemplate(confirmTemplate, data)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
 		return err
 	}
+	confirmBody := buf.String()
 
-	msg := s.AssembleMessage(confirmSubject, confirmBody, toAddress)
+	msg := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

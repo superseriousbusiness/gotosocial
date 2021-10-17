@@ -20,12 +20,21 @@ package testrig
 
 import "github.com/superseriousbusiness/gotosocial/internal/email"
 
-// NewEmailSender returns an email sender with the default test config.
-func NewEmailSender(templateBaseDir string) email.Sender {
-	cfg := NewTestConfig()
-	cfg.TemplateConfig.BaseDir = templateBaseDir
+// NewEmailSender returns a noop email sender that won't make any remote calls.
+//
+// If sentEmails is not nil, the noop callback function will place sent emails in
+// the map, with email address of the recipient as the key, and the value as the
+// parsed email message as it would have been sent.
+func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.Sender {
+	var sendCallback func(toAddress string, message string)
 
-	s, err := email.NewSender(cfg)
+	if sentEmails != nil {
+		sendCallback = func(toAddress string, message string) {
+			sentEmails[toAddress] = message
+		}
+	}
+
+	s, err := email.NewNoopSender(templateBaseDir, sendCallback)
 	if err != nil {
 		panic(err)
 	}
