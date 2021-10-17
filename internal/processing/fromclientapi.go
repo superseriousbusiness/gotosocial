@@ -38,214 +38,270 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 		switch clientMsg.APObjectType {
 		case ap.ObjectNote:
 			// CREATE NOTE
-			status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
-			if !ok {
-				return errors.New("note was not parseable as *gtsmodel.Status")
-			}
-
-			if err := p.timelineStatus(ctx, status); err != nil {
-				return err
-			}
-
-			if err := p.notifyStatus(ctx, status); err != nil {
-				return err
-			}
-
-			if status.Federated {
-				return p.federateStatus(ctx, status)
-			}
+			return p.processCreateStatusFromClientAPI(ctx, clientMsg)
 		case ap.ActivityFollow:
 			// CREATE FOLLOW REQUEST
-			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
-			if !ok {
-				return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
-			}
-
-			if err := p.notifyFollowRequest(ctx, followRequest); err != nil {
-				return err
-			}
-
-			return p.federateFollow(ctx, followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processCreateFollowRequestFromClientAPI(ctx, clientMsg)
 		case ap.ActivityLike:
 			// CREATE LIKE/FAVE
-			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
-			if !ok {
-				return errors.New("fave was not parseable as *gtsmodel.StatusFave")
-			}
-
-			if err := p.notifyFave(ctx, fave); err != nil {
-				return err
-			}
-
-			return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processCreateFaveFromClientAPI(ctx, clientMsg)
 		case ap.ActivityAnnounce:
 			// CREATE BOOST/ANNOUNCE
-			boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
-			if !ok {
-				return errors.New("boost was not parseable as *gtsmodel.Status")
-			}
-
-			if err := p.timelineStatus(ctx, boostWrapperStatus); err != nil {
-				return err
-			}
-
-			if err := p.notifyAnnounce(ctx, boostWrapperStatus); err != nil {
-				return err
-			}
-
-			return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processCreateAnnounceFromClientAPI(ctx, clientMsg)
 		case ap.ActivityBlock:
 			// CREATE BLOCK
-			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
-			if !ok {
-				return errors.New("block was not parseable as *gtsmodel.Block")
-			}
-
-			// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
-				return err
-			}
-			if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
-				return err
-			}
-
-			// TODO: same with notifications
-			// TODO: same with bookmarks
-
-			return p.federateBlock(ctx, block)
+			return p.processCreateBlockFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityUpdate:
 		// UPDATE
 		switch clientMsg.APObjectType {
 		case ap.ObjectProfile, ap.ActorPerson:
 			// UPDATE ACCOUNT/PROFILE
-			account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
-			if !ok {
-				return errors.New("account was not parseable as *gtsmodel.Account")
-			}
-
-			return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
+			return p.processUpdateAccountFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityAccept:
 		// ACCEPT
 		switch clientMsg.APObjectType {
 		case ap.ActivityFollow:
 			// ACCEPT FOLLOW
-			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
-			if !ok {
-				return errors.New("accept was not parseable as *gtsmodel.Follow")
-			}
-
-			if err := p.notifyFollow(ctx, follow, clientMsg.TargetAccount); err != nil {
-				return err
-			}
-
-			return p.federateAcceptFollowRequest(ctx, follow)
+			return p.processAcceptFollowFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityReject:
 		// REJECT
 		switch clientMsg.APObjectType {
 		case ap.ActivityFollow:
 			// REJECT FOLLOW (request)
-			followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
-			if !ok {
-				return errors.New("reject was not parseable as *gtsmodel.FollowRequest")
-			}
-
-			return p.federateRejectFollowRequest(ctx, followRequest)
+			return p.processRejectFollowFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityUndo:
 		// UNDO
 		switch clientMsg.APObjectType {
 		case ap.ActivityFollow:
 			// UNDO FOLLOW
-			follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
-			if !ok {
-				return errors.New("undo was not parseable as *gtsmodel.Follow")
-			}
-			return p.federateUnfollow(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processUndoFollowFromClientAPI(ctx, clientMsg)
 		case ap.ActivityBlock:
 			// UNDO BLOCK
-			block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
-			if !ok {
-				return errors.New("undo was not parseable as *gtsmodel.Block")
-			}
-			return p.federateUnblock(ctx, block)
+			return p.processUndoBlockFromClientAPI(ctx, clientMsg)
 		case ap.ActivityLike:
 			// UNDO LIKE/FAVE
-			fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
-			if !ok {
-				return errors.New("undo was not parseable as *gtsmodel.StatusFave")
-			}
-			return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processUndoFaveFromClientAPI(ctx, clientMsg)
 		case ap.ActivityAnnounce:
 			// UNDO ANNOUNCE/BOOST
-			boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
-			if !ok {
-				return errors.New("undo was not parseable as *gtsmodel.Status")
-			}
-
-			if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
-				return err
-			}
-
-			return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
+			return p.processUndoAnnounceFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityDelete:
 		// DELETE
 		switch clientMsg.APObjectType {
 		case ap.ObjectNote:
 			// DELETE STATUS/NOTE
-			statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
-			if !ok {
-				return errors.New("note was not parseable as *gtsmodel.Status")
-			}
-
-			if statusToDelete.Account == nil {
-				statusToDelete.Account = clientMsg.OriginAccount
-			}
-
-			// delete all attachments for this status
-			for _, a := range statusToDelete.AttachmentIDs {
-				if err := p.mediaProcessor.Delete(ctx, a); err != nil {
-					return err
-				}
-			}
-
-			// delete all mentions for this status
-			for _, m := range statusToDelete.MentionIDs {
-				if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
-					return err
-				}
-			}
-
-			// delete all notifications for this status
-			if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
-				return err
-			}
-
-			// delete this status from any and all timelines
-			if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
-				return err
-			}
-
-			return p.federateStatusDelete(ctx, statusToDelete)
+			return p.processDeleteStatusFromClientAPI(ctx, clientMsg)
 		case ap.ObjectProfile, ap.ActorPerson:
 			// DELETE ACCOUNT/PROFILE
-
-			// the origin of the delete could be either a domain block, or an action by another (or this) account
-			var origin string
-			if domainBlock, ok := clientMsg.GTSModel.(*gtsmodel.DomainBlock); ok {
-				// origin is a domain block
-				origin = domainBlock.ID
-			} else {
-				// origin is whichever account caused this message
-				origin = clientMsg.OriginAccount.ID
-			}
-			return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
+			return p.processDeleteAccountFromClientAPI(ctx, clientMsg)
 		}
 	}
 	return nil
+}
+
+func (p *processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return errors.New("note was not parseable as *gtsmodel.Status")
+	}
+
+	if err := p.timelineStatus(ctx, status); err != nil {
+		return err
+	}
+
+	if err := p.notifyStatus(ctx, status); err != nil {
+		return err
+	}
+
+	if status.Federated {
+		return p.federateStatus(ctx, status)
+	}
+	return nil
+}
+
+func (p *processor) processCreateFollowRequestFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
+	if !ok {
+		return errors.New("followrequest was not parseable as *gtsmodel.FollowRequest")
+	}
+
+	if err := p.notifyFollowRequest(ctx, followRequest); err != nil {
+		return err
+	}
+
+	return p.federateFollow(ctx, followRequest, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processCreateFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+	if !ok {
+		return errors.New("fave was not parseable as *gtsmodel.StatusFave")
+	}
+
+	if err := p.notifyFave(ctx, fave); err != nil {
+		return err
+	}
+
+	return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processCreateAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return errors.New("boost was not parseable as *gtsmodel.Status")
+	}
+
+	if err := p.timelineStatus(ctx, boostWrapperStatus); err != nil {
+		return err
+	}
+
+	if err := p.notifyAnnounce(ctx, boostWrapperStatus); err != nil {
+		return err
+	}
+
+	return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processCreateBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
+	if !ok {
+		return errors.New("block was not parseable as *gtsmodel.Block")
+	}
+
+	// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
+	if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
+		return err
+	}
+	if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
+		return err
+	}
+
+	// TODO: same with notifications
+	// TODO: same with bookmarks
+
+	return p.federateBlock(ctx, block)
+}
+
+func (p *processor) processUpdateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
+	if !ok {
+		return errors.New("account was not parseable as *gtsmodel.Account")
+	}
+
+	return p.federateAccountUpdate(ctx, account, clientMsg.OriginAccount)
+}
+
+func (p *processor) processAcceptFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+	if !ok {
+		return errors.New("accept was not parseable as *gtsmodel.Follow")
+	}
+
+	if err := p.notifyFollow(ctx, follow, clientMsg.TargetAccount); err != nil {
+		return err
+	}
+
+	return p.federateAcceptFollowRequest(ctx, follow)
+}
+
+func (p *processor) processRejectFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	followRequest, ok := clientMsg.GTSModel.(*gtsmodel.FollowRequest)
+	if !ok {
+		return errors.New("reject was not parseable as *gtsmodel.FollowRequest")
+	}
+
+	return p.federateRejectFollowRequest(ctx, followRequest)
+}
+
+func (p *processor) processUndoFollowFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	follow, ok := clientMsg.GTSModel.(*gtsmodel.Follow)
+	if !ok {
+		return errors.New("undo was not parseable as *gtsmodel.Follow")
+	}
+	return p.federateUnfollow(ctx, follow, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processUndoBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	block, ok := clientMsg.GTSModel.(*gtsmodel.Block)
+	if !ok {
+		return errors.New("undo was not parseable as *gtsmodel.Block")
+	}
+	return p.federateUnblock(ctx, block)
+}
+
+func (p *processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+	if !ok {
+		return errors.New("undo was not parseable as *gtsmodel.StatusFave")
+	}
+	return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processUndoAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return errors.New("undo was not parseable as *gtsmodel.Status")
+	}
+
+	if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
+		return err
+	}
+
+	return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
+}
+
+func (p *processor) processDeleteStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return errors.New("note was not parseable as *gtsmodel.Status")
+	}
+
+	if statusToDelete.Account == nil {
+		statusToDelete.Account = clientMsg.OriginAccount
+	}
+
+	// delete all attachments for this status
+	for _, a := range statusToDelete.AttachmentIDs {
+		if err := p.mediaProcessor.Delete(ctx, a); err != nil {
+			return err
+		}
+	}
+
+	// delete all mentions for this status
+	for _, m := range statusToDelete.MentionIDs {
+		if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
+			return err
+		}
+	}
+
+	// delete all notifications for this status
+	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+		return err
+	}
+
+	// delete this status from any and all timelines
+	if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
+		return err
+	}
+
+	return p.federateStatusDelete(ctx, statusToDelete)
+}
+
+func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	// the origin of the delete could be either a domain block, or an action by another (or this) account
+	var origin string
+	if domainBlock, ok := clientMsg.GTSModel.(*gtsmodel.DomainBlock); ok {
+		// origin is a domain block
+		origin = domainBlock.ID
+	} else {
+		// origin is whichever account caused this message
+		origin = clientMsg.OriginAccount.ID
+	}
+	return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
 }
 
 // TODO: move all the below functions into federation.Federator
