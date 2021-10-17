@@ -69,14 +69,12 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 			// 1. check if it's a status
 			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
 				foundStatuses = append(foundStatuses, foundStatus)
-				foundOne = true
 				l.Debug("got a status by searching by URI")
 			}
 
 			// 2. check if it's an account
 			if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
 				foundAccounts = append(foundAccounts, foundAccount)
-				foundOne = true
 				l.Debug("got an account by searching by URI")
 			}
 		}
