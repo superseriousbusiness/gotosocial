@@ -36,6 +36,9 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 	case ap.ActivityCreate:
 		// CREATE
 		switch clientMsg.APObjectType {
+		case ap.ObjectProfile, ap.ActorPerson:
+			// CREATE ACCOUNT/PROFILE
+			return p.processCreateAccountFromClientAPI(ctx, clientMsg)
 		case ap.ObjectNote:
 			// CREATE NOTE
 			return p.processCreateStatusFromClientAPI(ctx, clientMsg)
@@ -101,6 +104,27 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 		}
 	}
 	return nil
+}
+
+func (p *processor) processCreateAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
+	account, ok := clientMsg.GTSModel.(*gtsmodel.Account)
+	if !ok {
+		return errors.New("account was not parseable as *gtsmodel.Account")
+	}
+
+	// return if the account isn't from this domain
+	if account.Domain != "" {
+		return nil
+	}
+
+	// get the user this account belongs to
+	user := &gtsmodel.User{}
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, user); err != nil {
+		return err
+	}
+
+	// email a confirmation to this user
+	return p.userProcessor.SendConfirmEmail(ctx, user, account.Username)
 }
 
 func (p *processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
