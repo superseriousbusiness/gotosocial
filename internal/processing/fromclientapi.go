@@ -117,10 +117,7 @@ func (p *processor) processCreateStatusFromClientAPI(ctx context.Context, client
 		return err
 	}
 
-	if status.Federated {
-		return p.federateStatus(ctx, status)
-	}
-	return nil
+	return p.federateStatus(ctx, status)
 }
 
 func (p *processor) processCreateFollowRequestFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
@@ -307,6 +304,11 @@ func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 // TODO: move all the below functions into federation.Federator
 
 func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status) error {
+	// do nothing if the status shouldn't be federated
+	if !status.Federated {
+		return nil
+	}
+
 	if status.Account == nil {
 		statusAccount, err := p.db.GetAccountByID(ctx, status.AccountID)
 		if err != nil {
