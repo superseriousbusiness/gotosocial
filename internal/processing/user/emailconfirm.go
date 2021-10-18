@@ -32,6 +32,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+var (
+	oneWeek = 168 * time.Hour
+)
+
 func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, username string) error {
 	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
 		// user has already confirmed this email address, so there's nothing to do
@@ -107,6 +111,10 @@ func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.U
 	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
 		// no pending email confirmations so just return OK
 		return user, nil
+	}
+
+	if user.ConfirmationSentAt.Before(time.Now().Add(-oneWeek)) {
+		return nil, gtserror.NewErrorForbidden(errors.New("confirmation token more than a week old, please request a new one"))
 	}
 
 	// mark the user's email address as confirmed + remove the unconfirmed address and the token

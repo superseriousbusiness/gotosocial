@@ -88,6 +88,27 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
 	suite.WithinDuration(updatedUser.UpdatedAt, time.Now(), 1*time.Minute)
 }
 
+func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
+	ctx := context.Background()
+
+	user := suite.testUsers["local_account_1"]
+
+	// set a bunch of stuff on the user as though zork hasn't been confirmed yet, but has had an email sent 8 days ago
+	user.UnconfirmedEmail = "some.email@example.org"
+	user.Email = ""
+	user.ConfirmedAt = time.Time{}
+	user.ConfirmationSentAt = time.Now().Add(-192 * time.Hour)
+	user.ConfirmationToken = "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6"
+
+	err := suite.db.UpdateByPrimaryKey(ctx, user)
+	suite.NoError(err)
+
+	// confirm with the token set above
+	updatedUser, errWithCode := suite.user.ConfirmEmail(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
+	suite.Nil(updatedUser)
+	suite.EqualError(errWithCode, "confirmation token more than a week old, please request a new one")
+}
+
 func TestEmailConfirmTestSuite(t *testing.T) {
 	suite.Run(t, &EmailConfirmTestSuite{})
 }
