@@ -30,6 +30,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+const (
+	confirmEmailPath = "/" + util.ConfirmEmailPath
+	tokenParam       = "token"
 )
 
 // Module implements the api.ClientModule interface for web pages.
@@ -99,6 +105,9 @@ func (m *Module) Route(s router.Router) error {
 
 	// serve statuses
 	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
+
+	// serve email confirmation page at /confirm_email?token=whatever
+	s.AttachHandler(http.MethodGet, confirmEmailPath, m.ConfirmEmailGETHandler)
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
