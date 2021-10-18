@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
@@ -47,37 +48,44 @@ type noopSender struct {
 }
 
 func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
+		return err
+	}
+
+	confirmBody, err := text.MinifyHTML(buf.String())
+	if err != nil {
+		return err
+	}
+
+	msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
+
+	logrus.Tracef("NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
+
 	if s.sendCallback != nil {
-		buf := &bytes.Buffer{}
-		if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
-			return err
-		}
-
-		confirmBody, err := text.MinifyHTML(buf.String())
-		if err != nil {
-			return err
-		}
-
-		msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))
 	}
 	return nil
 }
 
 func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
+	buf := &bytes.Buffer{}
+	if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
+		return err
+	}
+
+	resetBody, err := text.MinifyHTML(buf.String())
+	if err != nil {
+		return err
+	}
+
+	msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
+
+	logrus.Tracef("NOT SENDING reset email to %s with contents: %s", toAddress, msg)
+
 	if s.sendCallback != nil {
-		buf := &bytes.Buffer{}
-		if err := s.template.ExecuteTemplate(buf, resetTemplate, data); err != nil {
-			return err
-		}
-
-		resetBody, err := text.MinifyHTML(buf.String())
-		if err != nil {
-			return err
-		}
-
-		msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
 		s.sendCallback(toAddress, string(msg))
 	}
+
 	return nil
 }
