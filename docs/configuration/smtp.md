@@ -4,7 +4,7 @@ GoToSocial supports sending emails to users via the [Simple Mail Transfer Protoc
 
 Configuring GoToSocial to send emails is **not required** in order to have a properly running instance. Still, it's very useful for doing things like sending confirmation emails and notifications, and handling password reset requests.
 
-In order to make GoToSocial email sending work, you need an smtp-compatible mail service running somewhere, either as a server on the same machine that GoToSocial is running on, or via an external service like [Mailgun](https://mailgun.com). It may also be possible to use free a personal email address for sending emails, if your email provider supports smtp (check with them), but you might run into trouble sending lots of emails.
+In order to make GoToSocial email sending work, you need an smtp-compatible mail service running somewhere, either as a server on the same machine that GoToSocial is running on, or via an external service like [Mailgun](https://mailgun.com). It may also be possible to use a free personal email address for sending emails, if your email provider supports smtp (check with them--most do), but you might run into trouble sending lots of emails.
 
 ## Settings
 
