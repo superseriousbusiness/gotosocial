@@ -114,7 +114,7 @@ func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.U
 	}
 
 	if user.ConfirmationSentAt.Before(time.Now().Add(-oneWeek)) {
-		return nil, gtserror.NewErrorForbidden(errors.New("confirmation token more than a week old, please request a new one"))
+		return nil, gtserror.NewErrorForbidden(errors.New("ConfirmEmail: confirmation token expired"))
 	}
 
 	// mark the user's email address as confirmed + remove the unconfirmed address and the token

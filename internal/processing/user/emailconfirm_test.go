@@ -106,7 +106,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
 	// confirm with the token set above
 	updatedUser, errWithCode := suite.user.ConfirmEmail(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
 	suite.Nil(updatedUser)
-	suite.EqualError(errWithCode, "confirmation token more than a week old, please request a new one")
+	suite.EqualError(errWithCode, "ConfirmEmail: confirmation token expired")
 }
 
 func TestEmailConfirmTestSuite(t *testing.T) {
