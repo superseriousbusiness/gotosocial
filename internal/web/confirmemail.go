@@ -25,7 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (m *Module) ConfirmEmailGETHandler(c *gin.Context) {
+func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	// if there's no token in the query, just serve the 404 web handler
 	token := c.Query(tokenParam)
 	if token == "" {

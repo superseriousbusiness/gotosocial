@@ -107,7 +107,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
 
 	// serve email confirmation page at /confirm_email?token=whatever
-	s.AttachHandler(http.MethodGet, confirmEmailPath, m.ConfirmEmailGETHandler)
+	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 
 	// 404 handler
 	s.AttachNoRouteHandler(m.NotFoundHandler)
