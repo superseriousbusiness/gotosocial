@@ -23,9 +23,14 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 func (p *processor) UserChangePassword(ctx context.Context, authed *oauth.Auth, form *apimodel.PasswordChangeRequest) gtserror.WithCode {
 	return p.userProcessor.ChangePassword(ctx, authed.User, form.OldPassword, form.NewPassword)
+}
+
+func (p *processor) UserConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
+   return p.userProcessor.ConfirmEmail(ctx, token)
 }

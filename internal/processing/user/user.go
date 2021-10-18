@@ -33,7 +33,10 @@ type Processor interface {
 	// ChangePassword changes the specified user's password from old => new,
 	// or returns an error if the new password is too weak, or the old password is incorrect.
 	ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode
+	// SendConfirmEmail sends a 'confirm-your-email-address' type email to a user.
 	SendConfirmEmail(ctx context.Context, user *gtsmodel.User, username string) error
+	// ConfirmEmail confirms an email address using the given token.
+	ConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode)
 }
 
 type processor struct {

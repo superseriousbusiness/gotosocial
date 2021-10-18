@@ -179,6 +179,9 @@ type Processor interface {
 
 	// UserChangePassword changes the password for the given user, with the given form.
 	UserChangePassword(ctx context.Context, authed *oauth.Auth, form *apimodel.PasswordChangeRequest) gtserror.WithCode
+	// UserConfirmEmail confirms an email address using the given token.
+	// The user belonging to the confirmed email is also returned.
+	UserConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS

@@ -20,12 +20,14 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -75,4 +77,47 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 	}
 
 	return nil
+}
+
+func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
+	if token == "" {
+		return nil, gtserror.NewErrorNotFound(errors.New("no token provided"))
+	}
+
+	user := &gtsmodel.User{}
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "confirmation_token", Value: token}}, user); err != nil {
+		if err == db.ErrNoEntries {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if user.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, user.AccountID)
+		if err != nil {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		user.Account = a
+	}
+
+	if !user.Account.SuspendedAt.IsZero() {
+		return nil, gtserror.NewErrorForbidden(fmt.Errorf("ConfirmEmail: account %s is suspended", user.AccountID))
+	}
+
+	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
+		// no pending email confirmations so just return OK
+		return user, nil
+	}
+
+	// mark the user's email address as confirmed + remove the unconfirmed address and the token
+	user.Email = user.UnconfirmedEmail
+	user.UnconfirmedEmail = ""
+	user.ConfirmedAt = time.Now()
+	user.ConfirmationToken = ""
+
+	if err := p.db.UpdateByPrimaryKey(ctx, user); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return user, nil
 }

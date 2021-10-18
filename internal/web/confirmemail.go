@@ -18,8 +18,12 @@
 
 package web
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+)
 
 func (m *Module) ConfirmEmailGETHandler(c *gin.Context) {
 	// if there's no token in the query, just serve the 404 web handler
@@ -29,5 +33,25 @@ func (m *Module) ConfirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 
+	user, errWithCode := m.processor.UserConfirmEmail(ctx, token)
+	if errWithCode != nil {
+		logrus.Debugf("error confirming email: %s", errWithCode.Error())
+		// if something goes wrong, just log it and direct to the 404 handler to not give anything away
+		m.NotFoundHandler(c)
+		return
+	}
+
+	instance, err := m.processor.InstanceGet(ctx, m.config.Host)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.HTML(http.StatusOK, "confirmed.tmpl", gin.H{
+		"instance": instance,
+		"email":    user.Email,
+		"username": user.Account.Username,
+	})
 }
