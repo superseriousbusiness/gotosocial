@@ -61,6 +61,33 @@ func (suite *EmailConfirmTestSuite) TestSendConfirmEmail() {
 	suite.WithinDuration(time.Now(), user.ConfirmationSentAt, 1*time.Minute)
 }
 
+func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
+	ctx := context.Background()
+
+	user := suite.testUsers["local_account_1"]
+
+	// set a bunch of stuff on the user as though zork hasn't been confirmed yet, but has had an email sent 5 minutes ago
+	user.UnconfirmedEmail = "some.email@example.org"
+	user.Email = ""
+	user.ConfirmedAt = time.Time{}
+	user.ConfirmationSentAt = time.Now().Add(-5 * time.Minute)
+	user.ConfirmationToken = "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6"
+
+	err := suite.db.UpdateByPrimaryKey(ctx, user)
+	suite.NoError(err)
+
+	// confirm with the token set above
+	updatedUser, errWithCode := suite.user.ConfirmEmail(ctx, "1d1aa44b-afa4-49c8-ac4b-eceb61715cc6")
+	suite.NoError(errWithCode)
+
+	// email should now be confirmed and token cleared
+	suite.Equal("some.email@example.org", updatedUser.Email)
+	suite.Empty(updatedUser.UnconfirmedEmail)
+	suite.Empty(updatedUser.ConfirmationToken)
+	suite.WithinDuration(updatedUser.ConfirmedAt, time.Now(), 1*time.Minute)
+	suite.WithinDuration(updatedUser.UpdatedAt, time.Now(), 1*time.Minute)
+}
+
 func TestEmailConfirmTestSuite(t *testing.T) {
 	suite.Run(t, &EmailConfirmTestSuite{})
 }
