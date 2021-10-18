@@ -114,6 +114,7 @@ func (p *processor) ConfirmEmail(ctx context.Context, token string) (*gtsmodel.U
 	user.UnconfirmedEmail = ""
 	user.ConfirmedAt = time.Now()
 	user.ConfirmationToken = ""
+	user.UpdatedAt = time.Now()
 
 	if err := p.db.UpdateByPrimaryKey(ctx, user); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
