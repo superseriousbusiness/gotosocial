@@ -57,3 +57,11 @@ The exception to this requirement is if you're running your mail server (or brid
 ### When are emails sent?
 
 Currently, emails are only sent to users to request email confirmation when a new account is created, or to serve password reset requests. More email functionality will probably be added later.
+
+### HTML versus Plaintext
+
+Emails are sent in HTML by default. At this point, there is no option to send emails in plaintext, but this is something that might be added later if there's enough demand for it.
+
+## Customization
+
+If you like, you can customize the templates that are used for generating emails. Follow the examples in `web/templates`.
