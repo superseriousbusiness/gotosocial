@@ -32,6 +32,10 @@ type Filter interface {
 	// or account domains, and other relevant accounts mentioned in or replied to by the status.
 	StatusVisible(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
 
+	// StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only
+	// statuses which are visible to the requestingAccount.
+	StatusesVisible(ctx context.Context, statuses []*gtsmodel.Status, requestingAccount *gtsmodel.Account) ([]*gtsmodel.Status, error)
+
 	// StatusHometimelineable returns true if targetStatus should be in the home timeline of the requesting account.
 	//
 	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
