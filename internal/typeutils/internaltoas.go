@@ -1013,3 +1013,77 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 
 	return page, nil
 }
+
+/*
+	the goal is to end up with something like this:
+	{
+		"id": "https://example.org/users/whatever/outbox?page=true",
+		"type": "OrderedCollectionPage",
+		"next": "https://example.org/users/whatever/outbox?max_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+		"prev": "https://example.org/users/whatever/outbox?min_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+		"partOf": "https://example.org/users/whatever/outbox",
+		"orderedItems": [
+			"id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
+			"type": "Create",
+			"actor": "https://example.org/users/whatever",
+			"published": "2021-10-18T20:06:18Z",
+			"to": [
+				"https://www.w3.org/ns/activitystreams#Public"
+			],
+			"cc": [
+				"https://example.org/users/whatever/followers"
+			],
+			"object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
+		]
+	}
+*/
+func (c *converter) StatusesToOutboxCollectionPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
+	// collectionID := fmt.Sprintf("%s/replies", status.URI)
+	// collectionIDURI, err := url.Parse(collectionID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// collection := streams.NewActivityStreamsCollection()
+
+	// // collection.id
+	// collectionIDProp := streams.NewJSONLDIdProperty()
+	// collectionIDProp.SetIRI(collectionIDURI)
+	// collection.SetJSONLDId(collectionIDProp)
+
+	// // first
+	// first := streams.NewActivityStreamsFirstProperty()
+	// firstPage := streams.NewActivityStreamsCollectionPage()
+
+	// // first.id
+	// firstPageIDProp := streams.NewJSONLDIdProperty()
+	// firstPageID, err := url.Parse(fmt.Sprintf("%s?page=true", collectionID))
+	// if err != nil {
+	// 	return nil, gtserror.NewErrorInternalError(err)
+	// }
+	// firstPageIDProp.SetIRI(firstPageID)
+	// firstPage.SetJSONLDId(firstPageIDProp)
+
+	// // first.next
+	// nextProp := streams.NewActivityStreamsNextProperty()
+	// nextPropID, err := url.Parse(fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts))
+	// if err != nil {
+	// 	return nil, gtserror.NewErrorInternalError(err)
+	// }
+	// nextProp.SetIRI(nextPropID)
+	// firstPage.SetActivityStreamsNext(nextProp)
+
+	// // first.partOf
+	// partOfProp := streams.NewActivityStreamsPartOfProperty()
+	// partOfProp.SetIRI(collectionIDURI)
+	// firstPage.SetActivityStreamsPartOf(partOfProp)
+
+	// first.SetActivityStreamsCollectionPage(firstPage)
+
+	// // collection.first
+	// collection.SetActivityStreamsFirst(first)
+
+	// return collection, nil
+
+	return nil, nil
+}
