@@ -64,6 +64,12 @@ import (
 //     Return only statuses *OLDER* than the given max status ID.
 //     The status with the specified ID will not be included in the response.
 //   in: query
+// - name: min_id
+//   type: string
+//   description: |-
+//     Return only statuses *NEWER* than the given min status ID.
+//     The status with the specified ID will not be included in the response.
+//   in: query
 //   required: false
 // - name: pinned_only
 //   type: boolean
@@ -71,9 +77,15 @@ import (
 //   default: false
 //   in: query
 //   required: false
-// - name: media_only
+// - name: only_media
 //   type: boolean
 //   description: Show only statuses with media attachments.
+//   default: false
+//   in: query
+//   required: false
+// - name: only_public
+//   type: boolean
+//   description: Show only statuses with a privacy setting of 'public'.
 //   default: false
 //   in: query
 //   required: false
@@ -143,6 +155,12 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		maxID = maxIDString
 	}
 
+	minID := ""
+	minIDString := c.Query(MinIDKey)
+	if minIDString != "" {
+		minID = minIDString
+	}
+
 	pinnedOnly := false
 	pinnedString := c.Query(PinnedKey)
 	if pinnedString != "" {
@@ -156,7 +174,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	}
 
 	mediaOnly := false
-	mediaOnlyString := c.Query(MediaOnlyKey)
+	mediaOnlyString := c.Query(OnlyMediaKey)
 	if mediaOnlyString != "" {
 		i, err := strconv.ParseBool(mediaOnlyString)
 		if err != nil {
@@ -167,7 +185,19 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		mediaOnly = i
 	}
 
-	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, maxID, pinnedOnly, mediaOnly)
+	publicOnly := false
+	publicOnlyString := c.Query(OnlyPublicKey)
+	if mediaOnlyString != "" {
+		i, err := strconv.ParseBool(publicOnlyString)
+		if err != nil {
+			l.Debugf("error parsing public only string: %s", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse public only query param"})
+			return
+		}
+		mediaOnly = i
+	}
+
+	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
 		l.Debugf("error from processor account statuses get: %s", errWithCode)
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

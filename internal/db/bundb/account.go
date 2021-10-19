@@ -231,7 +231,7 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, maxID string, pinnedOnly bool, mediaOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := a.conn.
@@ -247,12 +247,20 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Limit(limit)
 	}
 
-	if pinnedOnly {
-		q = q.Where("pinned = ?", true)
+	if excludeReplies {
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
 	}
 
 	if maxID != "" {
 		q = q.Where("id < ?", maxID)
+	}
+
+	if minID != "" {
+		q = q.Where("id > ?", minID)
+	}
+
+	if pinnedOnly {
+		q = q.Where("pinned = ?", true)
 	}
 
 	if mediaOnly {
@@ -263,8 +271,8 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		})
 	}
 
-	if excludeReplies {
-		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
+	if publicOnly {
+		q = q.Where("visibility = ?", gtsmodel.VisibilityPublic)
 	}
 
 	if err := q.Scan(ctx); err != nil {
