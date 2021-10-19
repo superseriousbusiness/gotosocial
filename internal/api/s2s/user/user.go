@@ -50,6 +50,8 @@ const (
 	UsersPublicKeyPath = UsersBasePathWithUsername + "/" + util.PublicKeyPath
 	// UsersInboxPath is for serving POST requests to a user's inbox with the given username key.
 	UsersInboxPath = UsersBasePathWithUsername + "/" + util.InboxPath
+	// UsersOutboxPath is for serving GET requests to a user's outbox with the given username key.
+	UsersOutboxPath = UsersBasePathWithUsername + "/" + util.OutboxPath
 	// UsersFollowersPath is for serving GET request's to a user's followers list, with the given username key.
 	UsersFollowersPath = UsersBasePathWithUsername + "/" + util.FollowersPath
 	// UsersFollowingPath is for serving GET request's to a user's following list, with the given username key.
@@ -83,5 +85,6 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, UsersStatusPath, m.StatusGETHandler)
 	s.AttachHandler(http.MethodGet, UsersPublicKeyPath, m.PublicKeyGETHandler)
 	s.AttachHandler(http.MethodGet, UsersStatusRepliesPath, m.StatusRepliesGETHandler)
+	s.AttachHandler(http.MethodGet, UsersOutboxPath, m.OutboxGETHandler)
 	return nil
 }

@@ -371,6 +371,83 @@ func (p *processor) GetFediStatusReplies(ctx context.Context, requestedUsername 
 	return data, nil
 }
 
+func (p *processor) GetFediOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
+	// get the account the request is referring to
+	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
+	}
+
+	// authenticate the request
+	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	if err != nil || !authenticated {
+		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
+	}
+
+	requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
+	if err != nil {
+		return nil, gtserror.NewErrorNotAuthorized(err)
+	}
+
+	// authorize the request:
+	// 1. check if a block exists between the requester and the requestee
+	blocked, err := p.db.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID, true)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	if blocked {
+		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+	}
+
+	var data map[string]interface{}
+	// now there are two scenarios:
+	// 1. we're asked for the whole collection and not a page -- we can just return the collection, with no items, but a link to 'first' page.
+	// 2. we're asked for a specific page; this can be either the first page or any other page
+
+	if !page {
+		// scenario 1
+		// get the collection as a whole
+		/* we want something that looks like this:
+		{
+			"@context": "https://www.w3.org/ns/activitystreams",
+			"id": "https://example.org/users/whatever/outbox",
+			"type": "OrderedCollection",
+			"first": "https://example.org/users/whatever/outbox?page=true",
+			"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
+		}
+		*/
+	}
+
+	// scenario 2 -- get the requested page
+	// limit pages to 30 entries per page
+	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, maxID, minID, false, false, true)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// extract status URIs
+	publicStatusURIs := map[string]*url.URL{}
+	for _, r := range publicStatuses {
+		rURI, err := url.Parse(r.URI)
+		if err != nil {
+			continue
+		}
+
+		publicStatusURIs[r.ID] = rURI
+	}
+
+	outboxPage, err := p.tc.StatusURIsToASOutboxPage(ctx, s, maxID, minID, publicStatusURIs)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	data, err = streams.Serialize(outboxPage)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return data, nil
+}
+
 func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode) {
 	// get the account the request is referring to
 	requestedAccount, err := p.db.GetLocalAccountByUsername(ctx, requestedUsername)
