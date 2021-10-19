@@ -139,7 +139,7 @@ func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	var maxID string
 selectStatusesLoop:
 	for {
-		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, maxID, false, false)
+		statuses, err := p.db.GetAccountStatuses(ctx, account.ID, 20, false, maxID, "", false, false, false)
 		if err != nil {
 			if err == db.ErrNoEntries {
 				// no statuses left for this instance so we're done

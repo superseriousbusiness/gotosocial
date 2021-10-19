@@ -436,7 +436,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 
 	// no statuses from foss satan should be left in the database
-	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, "", false, false)
+	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, "", "", false, false, false)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(dbStatuses)
 
