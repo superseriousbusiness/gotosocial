@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	federationProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/federation"
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
@@ -248,12 +249,13 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
-	accountProcessor   account.Processor
-	adminProcessor     admin.Processor
-	statusProcessor    status.Processor
-	streamingProcessor streaming.Processor
-	mediaProcessor     mediaProcessor.Processor
-	userProcessor      user.Processor
+	accountProcessor    account.Processor
+	adminProcessor      admin.Processor
+	statusProcessor     status.Processor
+	streamingProcessor  streaming.Processor
+	mediaProcessor      mediaProcessor.Processor
+	userProcessor       user.Processor
+	federationProcessor federationProcessor.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator
@@ -267,6 +269,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
 	userProcessor := user.New(db, config)
+	federationProcessor := federationProcessor.New(db, tc, config, federator, fromFederator)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -282,12 +285,13 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db),
 
-		accountProcessor:   accountProcessor,
-		adminProcessor:     adminProcessor,
-		statusProcessor:    statusProcessor,
-		streamingProcessor: streamingProcessor,
-		mediaProcessor:     mediaProcessor,
-		userProcessor:      userProcessor,
+		accountProcessor:    accountProcessor,
+		adminProcessor:      adminProcessor,
+		statusProcessor:     statusProcessor,
+		streamingProcessor:  streamingProcessor,
+		mediaProcessor:      mediaProcessor,
+		userProcessor:       userProcessor,
+		federationProcessor: federationProcessor,
 	}
 }
 
