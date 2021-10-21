@@ -155,6 +155,12 @@ type TypeConverter interface {
 	StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error)
 	// StatusURIsToASRepliesPage returns a collection page with appropriate next/part of pagination.
 	StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error)
+	// OutboxToASCollection returns an ordered collection with appropriate id, next, and last fields.
+	// The returned collection won't have any actual entries; just links to where entries can be obtained.
+	OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error)
+
+	StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statusURIs map[string]*url.URL) (vocab.ActivityStreamsOrderedCollectionPage, error)
+	
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL
 	*/
