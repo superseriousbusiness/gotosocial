@@ -32,6 +32,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+const (
+	// highestID is the highest possible ULID
+	highestID = "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+	// lowestID is the lowest possible ULID
+	lowestID = "00000000000000000000000000"
+)
+
 // Converts a gts model account into an Activity Streams person type.
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
@@ -1037,55 +1044,81 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 		]
 	}
 */
-func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statusURIs map[string]*url.URL) (vocab.ActivityStreamsOrderedCollectionPage, error) {
-	// collectionID := fmt.Sprintf("%s/replies", status.URI)
-	// collectionIDURI, err := url.Parse(collectionID)
-	// if err != nil {
-	// 	return nil, err
-	// }
+func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+	page := streams.NewActivityStreamsOrderedCollectionPage()
 
-	// collection := streams.NewActivityStreamsCollection()
+	// .id
+	pageIDProp := streams.NewJSONLDIdProperty()
+	pageID := fmt.Sprintf("%s?page=true", outboxID)
+	if minID != "" {
+		pageID = fmt.Sprintf("%s&minID=%s", pageID, minID)
+	}
+	if maxID != "" {
+		pageID = fmt.Sprintf("%s&maxID=%s", pageID, maxID)
+	}
+	pageIDURI, err := url.Parse(pageID)
+	if err != nil {
+		return nil, err
+	}
+	pageIDProp.SetIRI(pageIDURI)
+	page.SetJSONLDId(pageIDProp)
 
-	// // collection.id
-	// collectionIDProp := streams.NewJSONLDIdProperty()
-	// collectionIDProp.SetIRI(collectionIDURI)
-	// collection.SetJSONLDId(collectionIDProp)
+	// .partOf
+	collectionIDURI, err := url.Parse(outboxID)
+	if err != nil {
+		return nil, err
+	}
+	partOfProp := streams.NewActivityStreamsPartOfProperty()
+	partOfProp.SetIRI(collectionIDURI)
+	page.SetActivityStreamsPartOf(partOfProp)
 
-	// // first
-	// first := streams.NewActivityStreamsFirstProperty()
-	// firstPage := streams.NewActivityStreamsCollectionPage()
+	// .orderedItems
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	highest := highestID
+	lowest := lowestID
+	for _, s := range statuses {
+		itemsProp.AppendIRI(v)
 
-	// // first.id
-	// firstPageIDProp := streams.NewJSONLDIdProperty()
-	// firstPageID, err := url.Parse(fmt.Sprintf("%s?page=true", collectionID))
-	// if err != nil {
-	// 	return nil, gtserror.NewErrorInternalError(err)
-	// }
-	// firstPageIDProp.SetIRI(firstPageID)
-	// firstPage.SetJSONLDId(firstPageIDProp)
+aaaaaaaaa
 
-	// // first.next
-	// nextProp := streams.NewActivityStreamsNextProperty()
-	// nextPropID, err := url.Parse(fmt.Sprintf("%s?only_other_accounts=%t&page=true", collectionID, onlyOtherAccounts))
-	// if err != nil {
-	// 	return nil, gtserror.NewErrorInternalError(err)
-	// }
-	// nextProp.SetIRI(nextPropID)
-	// firstPage.SetActivityStreamsNext(nextProp)
 
-	// // first.partOf
-	// partOfProp := streams.NewActivityStreamsPartOfProperty()
-	// partOfProp.SetIRI(collectionIDURI)
-	// firstPage.SetActivityStreamsPartOf(partOfProp)
 
-	// first.SetActivityStreamsCollectionPage(firstPage)
+		if s.ID > highest {
+			highest = s.ID
+		}
+		if s.ID < lowest {
+			lowest = s.ID
+		}
+	}
+	page.SetActivityStreamsOrderedItems(itemsProp)
 
-	// // collection.first
-	// collection.SetActivityStreamsFirst(first)
+	// .next
+	nextProp := streams.NewActivityStreamsNextProperty()
+	nextPropIDString := fmt.Sprintf("%spage=true", outboxID)
+	if lowest != "" {
+		nextPropIDString = fmt.Sprintf("%s&max_id=%s", nextPropIDString, lowest)
+	}
+	nextPropIDURI, err := url.Parse(nextPropIDString)
+	if err != nil {
+		return nil, err
+	}
+	nextProp.SetIRI(nextPropIDURI)
+	page.SetActivityStreamsNext(nextProp)
 
-	// return collection, nil
+	// .prev
+	prevProp := streams.NewActivityStreamsPrevProperty()
+	prevPropIDString := fmt.Sprintf("%spage=true", outboxID)
+	if highest != "" {
+		prevPropIDString = fmt.Sprintf("%s&min_id=%s", nextPropIDString, highest)
+	}
+	prevPropIDURI, err := url.Parse(prevPropIDString)
+	if err != nil {
+		return nil, err
+	}
+	prevProp.SetIRI(prevPropIDURI)
+	page.SetActivityStreamsPrev(prevProp)
 
-	return nil, nil
+	return page, nil
 }
 
 /*
