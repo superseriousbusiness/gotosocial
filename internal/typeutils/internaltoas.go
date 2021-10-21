@@ -1037,7 +1037,7 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 		]
 	}
 */
-func (c *converter) StatusesToOutboxCollectionPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
+func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statusURIs map[string]*url.URL) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// collectionID := fmt.Sprintf("%s/replies", status.URI)
 	// collectionIDURI, err := url.Parse(collectionID)
 	// if err != nil {
@@ -1086,4 +1086,47 @@ func (c *converter) StatusesToOutboxCollectionPage(ctx context.Context, status *
 	// return collection, nil
 
 	return nil, nil
+}
+
+/*
+	we want something that looks like this:
+
+	{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/whatever/outbox",
+		"type": "OrderedCollection",
+		"first": "https://example.org/users/whatever/outbox?page=true",
+		"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
+	}
+*/
+func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
+	collection := streams.NewActivityStreamsOrderedCollection()
+
+	collectionIDProp := streams.NewJSONLDIdProperty()
+	outboxIDURI, err := url.Parse(outboxID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", outboxID)
+	}
+	collectionIDProp.SetIRI(outboxIDURI)
+	collection.SetJSONLDId(collectionIDProp)
+
+	collectionFirstProp := streams.NewActivityStreamsFirstProperty()
+	collectionFirstPropID := fmt.Sprintf("%s?page=true", outboxID)
+	collectionFirstPropIDURI, err := url.Parse(collectionFirstPropID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", collectionFirstPropID)
+	}
+	collectionFirstProp.SetIRI(collectionFirstPropIDURI)
+	collection.SetActivityStreamsFirst(collectionFirstProp)
+
+	collectionLastProp := streams.NewActivityStreamsLastProperty()
+	collectionLastPropID := fmt.Sprintf("%s?min_id=0&page=true", outboxID)
+	collectionLastPropIDURI, err := url.Parse(collectionLastPropID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", collectionLastPropID)
+	}
+	collectionLastProp.SetIRI(collectionLastPropIDURI)
+	collection.SetActivityStreamsLast(collectionLastProp)
+
+	return collection, nil
 }
