@@ -1077,11 +1077,17 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 	highest := highestID
 	lowest := lowestID
 	for _, s := range statuses {
-		itemsProp.AppendIRI(v)
+		note, err := c.StatusToAS(ctx, s)
+		if err != nil {
+			return nil, err
+		}
 
-aaaaaaaaa
+		create, err := c.WrapNoteInCreate(note, true)
+		if err != nil {
+			return nil, err
+		}
 
-
+		itemsProp.AppendActivityStreamsCreate(create)
 
 		if s.ID > highest {
 			highest = s.ID

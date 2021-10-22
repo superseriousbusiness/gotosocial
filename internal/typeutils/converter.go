@@ -159,8 +159,8 @@ type TypeConverter interface {
 	// The returned collection won't have any actual entries; just links to where entries can be obtained.
 	OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error)
 
-	StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statusURIs map[string]*url.URL) (vocab.ActivityStreamsOrderedCollectionPage, error)
-	
+	StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
+
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL
 	*/
@@ -176,6 +176,12 @@ type TypeConverter interface {
 
 	// WrapPersonInUpdate
 	WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error)
+	// WrapNoteInCreate wraps a Note with a Create activity.
+
+	// If objectIRIOnly is set to true, then the function won't put the *entire* note in the Object field of the Create,
+	// but just the AP URI of the note. This is useful in cases where you want to give a remote server something to dereference,
+	// and still have control over whether or not they're allowed to actually see the contents.
+	WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error)
 }
 
 type converter struct {

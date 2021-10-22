@@ -93,17 +93,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// extract status URIs
-	publicStatusURIs := map[string]*url.URL{}
-	for _, s := range publicStatuses {
-		sURI, err := url.Parse(s.URI)
-		if err != nil {
-			continue
-		}
-		publicStatusURIs[s.ID] = sURI
-	}
-
-	outboxPage, err := p.tc.StatusURIsToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatusURIs)
+	outboxPage, err := p.tc.StatusURIsToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
