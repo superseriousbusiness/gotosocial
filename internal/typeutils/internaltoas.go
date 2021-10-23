@@ -1099,30 +1099,28 @@ func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 	page.SetActivityStreamsOrderedItems(itemsProp)
 
 	// .next
-	nextProp := streams.NewActivityStreamsNextProperty()
-	nextPropIDString := fmt.Sprintf("%s?page=true", outboxID)
 	if lowest != "" {
-		nextPropIDString = fmt.Sprintf("%s&max_id=%s", nextPropIDString, lowest)
+		nextProp := streams.NewActivityStreamsNextProperty()
+		nextPropIDString := fmt.Sprintf("%s?page=true&max_id=%s", outboxID, lowest)
+		nextPropIDURI, err := url.Parse(nextPropIDString)
+		if err != nil {
+			return nil, err
+		}
+		nextProp.SetIRI(nextPropIDURI)
+		page.SetActivityStreamsNext(nextProp)
 	}
-	nextPropIDURI, err := url.Parse(nextPropIDString)
-	if err != nil {
-		return nil, err
-	}
-	nextProp.SetIRI(nextPropIDURI)
-	page.SetActivityStreamsNext(nextProp)
 
 	// .prev
-	prevProp := streams.NewActivityStreamsPrevProperty()
-	prevPropIDString := fmt.Sprintf("%s?page=true", outboxID)
 	if highest != "" {
-		prevPropIDString = fmt.Sprintf("%s&min_id=%s", prevPropIDString, highest)
+		prevProp := streams.NewActivityStreamsPrevProperty()
+		prevPropIDString := fmt.Sprintf("%s?page=true&min_id=%s", outboxID, highest)
+		prevPropIDURI, err := url.Parse(prevPropIDString)
+		if err != nil {
+			return nil, err
+		}
+		prevProp.SetIRI(prevPropIDURI)
+		page.SetActivityStreamsPrev(prevProp)
 	}
-	prevPropIDURI, err := url.Parse(prevPropIDString)
-	if err != nil {
-		return nil, err
-	}
-	prevProp.SetIRI(prevPropIDURI)
-	page.SetActivityStreamsPrev(prevProp)
 
 	return page, nil
 }
