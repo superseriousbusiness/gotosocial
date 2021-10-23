@@ -1537,11 +1537,38 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
+	target = URLMustParse(accounts["local_account_1"].OutboxURI)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceZorkOutbox := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?page=true")
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceZorkOutboxFirst := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?page=true&max_id=01F8MHAMCHF6Y650WCRSCP4WMY")
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceZorkOutboxNext := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
 		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
 		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
 		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
+		"foss_satan_dereference_zork_outbox":                           fossSatanDereferenceZorkOutbox,
+		"foss_satan_dereference_zork_outbox_first":                     fossSatanDereferenceZorkOutboxFirst,
+		"foss_satan_dereference_zork_outbox_next":                      fossSatanDereferenceZorkOutboxNext,
 	}
 }
 
