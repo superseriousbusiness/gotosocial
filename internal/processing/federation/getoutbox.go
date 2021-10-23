@@ -93,7 +93,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	outboxPage, err := p.tc.StatusURIsToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
+	outboxPage, err := p.tc.StatusesToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

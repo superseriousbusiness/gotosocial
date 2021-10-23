@@ -37,6 +37,8 @@ const (
 	OnlyOtherAccountsKey = "only_other_accounts"
 	// MinIDKey is for filtering status responses.
 	MinIDKey = "min_id"
+	// MaxIDKey is for filtering status responses.
+	MaxIDKey = "max_id"
 	// PageKey is for filtering status responses.
 	PageKey = "page"
 

@@ -33,11 +33,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
+// Processor wraps functions for processing federation API requests.
 type Processor interface {
 	// GetUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-	
+
 	// GetFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)

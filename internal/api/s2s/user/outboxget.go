@@ -18,7 +18,15 @@
 
 package user
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+)
 
 // OutboxGETHandler swagger:operation GET /users/{username}/outbox s2sOutboxGet
 //
@@ -71,5 +79,64 @@ import "github.com/gin-gonic/gin"
 //   '404':
 //      description: not found
 func (m *Module) OutboxGETHandler(c *gin.Context) {
+	l := logrus.WithFields(logrus.Fields{
+		"func": "OutboxGETHandler",
+		"url":  c.Request.RequestURI,
+	})
 
+	requestedUsername := c.Param(UsernameKey)
+	if requestedUsername == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no username specified in request"})
+		return
+	}
+
+	page := false
+	pageString := c.Query(PageKey)
+	if pageString != "" {
+		i, err := strconv.ParseBool(pageString)
+		if err != nil {
+			l.Debugf("error parsing page string: %s", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse page query param"})
+			return
+		}
+		page = i
+	}
+
+	minID := ""
+	minIDString := c.Query(MinIDKey)
+	if minIDString != "" {
+		minID = minIDString
+	}
+
+	maxID := ""
+	maxIDString := c.Query(MaxIDKey)
+	if maxIDString != "" {
+		maxID = maxIDString
+	}
+
+	format, err := negotiateFormat(c)
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": fmt.Sprintf("could not negotiate format with given Accept header(s): %s", err)})
+		return
+	}
+	l.Tracef("negotiated format: %s", format)
+
+	ctx := transferContext(c)
+
+	outbox, errWithCode := m.processor.GetFediOutbox(ctx, requestedUsername, page, maxID, minID, c.Request.URL)
+	if errWithCode != nil {
+		l.Info(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
+
+	b, mErr := json.Marshal(outbox)
+	if mErr != nil {
+		err := fmt.Errorf("could not marshal json: %s", mErr)
+		l.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Data(http.StatusOK, format, b)
 }

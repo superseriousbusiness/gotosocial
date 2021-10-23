@@ -32,12 +32,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const (
-	// highestID is the highest possible ULID
-	highestID = "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"
-	// lowestID is the lowest possible ULID
-	lowestID = "00000000000000000000000000"
-)
+// const (
+// 	// highestID is the highest possible ULID
+// 	highestID = "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+// 	// lowestID is the lowest possible ULID
+// 	lowestID = "00000000000000000000000000"
+// )
 
 // Converts a gts model account into an Activity Streams person type.
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
@@ -1044,7 +1044,7 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 		]
 	}
 */
-func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	page := streams.NewActivityStreamsOrderedCollectionPage()
 
 	// .id
@@ -1074,8 +1074,8 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 
 	// .orderedItems
 	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
-	highest := highestID
-	lowest := lowestID
+	var highest string
+	var lowest string
 	for _, s := range statuses {
 		note, err := c.StatusToAS(ctx, s)
 		if err != nil {
@@ -1089,10 +1089,10 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 
 		itemsProp.AppendActivityStreamsCreate(create)
 
-		if s.ID > highest {
+		if highest == "" || s.ID > highest {
 			highest = s.ID
 		}
-		if s.ID < lowest {
+		if lowest == "" || s.ID < lowest {
 			lowest = s.ID
 		}
 	}
@@ -1100,7 +1100,7 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 
 	// .next
 	nextProp := streams.NewActivityStreamsNextProperty()
-	nextPropIDString := fmt.Sprintf("%spage=true", outboxID)
+	nextPropIDString := fmt.Sprintf("%s?page=true", outboxID)
 	if lowest != "" {
 		nextPropIDString = fmt.Sprintf("%s&max_id=%s", nextPropIDString, lowest)
 	}
@@ -1113,9 +1113,9 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 
 	// .prev
 	prevProp := streams.NewActivityStreamsPrevProperty()
-	prevPropIDString := fmt.Sprintf("%spage=true", outboxID)
+	prevPropIDString := fmt.Sprintf("%s?page=true", outboxID)
 	if highest != "" {
-		prevPropIDString = fmt.Sprintf("%s&min_id=%s", nextPropIDString, highest)
+		prevPropIDString = fmt.Sprintf("%s&min_id=%s", prevPropIDString, highest)
 	}
 	prevPropIDURI, err := url.Parse(prevPropIDString)
 	if err != nil {
@@ -1134,8 +1134,7 @@ func (c *converter) StatusURIsToASOutboxPage(ctx context.Context, outboxID strin
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/whatever/outbox",
 		"type": "OrderedCollection",
-		"first": "https://example.org/users/whatever/outbox?page=true",
-		"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
+		"first": "https://example.org/users/whatever/outbox?page=true"
 	}
 */
 func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
@@ -1157,15 +1156,6 @@ func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (
 	}
 	collectionFirstProp.SetIRI(collectionFirstPropIDURI)
 	collection.SetActivityStreamsFirst(collectionFirstProp)
-
-	collectionLastProp := streams.NewActivityStreamsLastProperty()
-	collectionLastPropID := fmt.Sprintf("%s?min_id=0&page=true", outboxID)
-	collectionLastPropIDURI, err := url.Parse(collectionLastPropID)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing url %s", collectionLastPropID)
-	}
-	collectionLastProp.SetIRI(collectionLastPropIDURI)
-	collection.SetActivityStreamsLast(collectionLastProp)
 
 	return collection, nil
 }

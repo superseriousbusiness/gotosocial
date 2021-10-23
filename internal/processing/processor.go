@@ -191,32 +191,26 @@ type Processor interface {
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
+	// GetFediOutbox returns the public outbox of the requested user, with the given parameters.
+	GetFediOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode)
-
 	// GetNodeInfoRel returns a well known response giving the path to node info.
 	GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
-
 	// GetNodeInfo returns a node info struct in response to a node info request.
 	GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
-
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
 	// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.

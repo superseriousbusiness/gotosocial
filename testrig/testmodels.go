@@ -484,7 +484,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		},
 	}
 
-	preserializedKeys := []string {
+	preserializedKeys := []string{
 		"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",
@@ -495,7 +495,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 
 	if diff := len(accounts) - len(preserializedKeys); diff > 0 {
 		var keyStrings = make([]string, diff)
-		for i := 0; i < diff; i ++ {
+		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 			key, _ := x509.MarshalPKCS8PrivateKey(priv)
 			keyStrings = append(keyStrings, base64.StdEncoding.EncodeToString(key))
@@ -524,6 +524,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 	return accounts
 }
+
 // NewTestAttachments returns a map of attachments keyed according to which account
 // and status they belong to, and which attachment number of that status they are.
 func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
@@ -863,8 +864,8 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			TagIDs:                   []string{"01F8MHA1A2NF9MJ3WCCQ3K8BSZ"},
 			MentionIDs:               []string{},
 			EmojiIDs:                 []string{"01F8MH9H8E4VG3KDYJR9EGPXCQ"},
-			CreatedAt:                time.Now().Add(-71 * time.Hour),
-			UpdatedAt:                time.Now().Add(-71 * time.Hour),
+			CreatedAt:                TimeMustParse("2021-10-20T11:36:45Z"),
+			UpdatedAt:                TimeMustParse("2021-10-20T11:36:45Z"),
 			Local:                    true,
 			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -886,8 +887,8 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URI:                      "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			URL:                      "http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
 			Content:                  "🐕🐕🐕🐕🐕",
-			CreatedAt:                time.Now().Add(-70 * time.Hour),
-			UpdatedAt:                time.Now().Add(-70 * time.Hour),
+			CreatedAt:                TimeMustParse("2021-10-20T12:36:45Z"),
+			UpdatedAt:                TimeMustParse("2021-10-20T12:36:45Z"),
 			Local:                    true,
 			AccountURI:               "http://localhost:8080/users/admin",
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
