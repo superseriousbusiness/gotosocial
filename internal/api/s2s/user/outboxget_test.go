@@ -46,7 +46,8 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
@@ -99,7 +100,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
@@ -152,7 +154,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator)
+	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
 	userModule := user.New(suite.config, processor).(*user.Module)
 
 	// setup request
