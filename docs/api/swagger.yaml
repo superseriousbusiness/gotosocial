@@ -1561,7 +1561,7 @@ definitions:
     type: string
     x-go-name: Visibility
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-  swaggerStatusRepliesCollection:
+  swaggerCollection:
     properties:
       '@context':
         description: ActivityStreams context.
@@ -1569,22 +1569,24 @@ definitions:
         type: string
         x-go-name: Context
       first:
-        $ref: '#/definitions/swaggerStatusRepliesCollectionPage'
+        $ref: '#/definitions/swaggerCollectionPage'
       id:
         description: ActivityStreams ID.
         example: https://example.org/users/some_user/statuses/106717595988259568/replies
         type: string
         x-go-name: ID
+      last:
+        $ref: '#/definitions/swaggerCollectionPage'
       type:
         description: ActivityStreams type.
         example: Collection
         type: string
         x-go-name: Type
-    title: SwaggerStatusRepliesCollection represents a response to GET /users/{username}/statuses/{status}/replies.
+    title: SwaggerCollection represents an activitypub collection.
     type: object
-    x-go-name: SwaggerStatusRepliesCollection
+    x-go-name: SwaggerCollection
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
-  swaggerStatusRepliesCollectionPage:
+  swaggerCollectionPage:
     properties:
       id:
         description: ActivityStreams ID.
@@ -1615,9 +1617,9 @@ definitions:
         example: CollectionPage
         type: string
         x-go-name: Type
-    title: SwaggerStatusRepliesCollectionPage represents one page of a collection.
+    title: SwaggerCollectionPage represents one page of a collection.
     type: object
-    x-go-name: SwaggerStatusRepliesCollectionPage
+    x-go-name: SwaggerCollectionPage
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/s2s/user
   tag:
     properties:
@@ -1935,6 +1937,12 @@ paths:
         in: query
         name: max_id
         type: string
+      - description: |-
+          Return only statuses *NEWER* than the given min status ID.
+          The status with the specified ID will not be included in the response.
+        in: query
+        name: min_id
+        type: string
       - default: false
         description: Show only pinned statuses. In other words,e xclude statuses that
           are not pinned to the given account ID.
@@ -1944,7 +1952,12 @@ paths:
       - default: false
         description: Show only statuses with media attachments.
         in: query
-        name: media_only
+        name: only_media
+        type: boolean
+      - default: false
+        description: Show only statuses with a privacy setting of 'public'.
+        in: query
+        name: only_public
         type: boolean
       produces:
       - application/json
@@ -3516,6 +3529,52 @@ paths:
       summary: Change the password of authenticated user.
       tags:
       - user
+  /users/{username}/outbox:
+    get:
+      description: |-
+        Note that the response will be a Collection with a page as `first`, as shown below, if `page` is `false`.
+
+        If `page` is `true`, then the response will be a single `CollectionPage` without the wrapping `Collection`.
+
+        HTTP signature is required on the request.
+      operationId: s2sOutboxGet
+      parameters:
+      - description: Username of the account.
+        in: path
+        name: username
+        required: true
+        type: string
+      - default: false
+        description: Return response as a CollectionPage.
+        in: query
+        name: page
+        type: boolean
+      - description: Minimum ID of the next status, used for paging.
+        in: query
+        name: min_id
+        type: string
+      - description: Maximum ID of the next status, used for paging.
+        in: query
+        name: max_id
+        type: string
+      produces:
+      - application/activity+json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/swaggerCollection'
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+        "404":
+          description: not found
+      summary: Get the public outbox collection for an actor.
+      tags:
+      - s2s/federation
   /users/{username}/statuses/{status}/replies:
     get:
       description: |-
@@ -3556,7 +3615,7 @@ paths:
         "200":
           description: ""
           schema:
-            $ref: '#/definitions/swaggerStatusRepliesCollection'
+            $ref: '#/definitions/swaggerCollection'
         "400":
           description: bad request
         "401":
