@@ -7,12 +7,14 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/sqltype"
 	"github.com/uptrace/bun/extra/bunjson"
 	"github.com/uptrace/bun/internal"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type (
@@ -30,8 +32,8 @@ var appenders = []AppenderFunc{
 	reflect.Uint:          AppendUintValue,
 	reflect.Uint8:         AppendUintValue,
 	reflect.Uint16:        AppendUintValue,
-	reflect.Uint32:        AppendUintValue,
-	reflect.Uint64:        AppendUintValue,
+	reflect.Uint32:        appendUint32Value,
+	reflect.Uint64:        appendUint64Value,
 	reflect.Uintptr:       nil,
 	reflect.Float32:       AppendFloat32Value,
 	reflect.Float64:       AppendFloat64Value,
@@ -49,6 +51,8 @@ var appenders = []AppenderFunc{
 	reflect.UnsafePointer: nil,
 }
 
+var appenderMap sync.Map
+
 func FieldAppender(dialect Dialect, field *Field) AppenderFunc {
 	if field.Tag.HasOption("msgpack") {
 		return appendMsgpack
@@ -59,10 +63,23 @@ func FieldAppender(dialect Dialect, field *Field) AppenderFunc {
 		return AppendJSONValue
 	}
 
-	return dialect.Appender(field.StructField.Type)
+	return Appender(dialect, field.StructField.Type)
 }
 
-func Appender(typ reflect.Type, custom CustomAppender) AppenderFunc {
+func Appender(dialect Dialect, typ reflect.Type) AppenderFunc {
+	if v, ok := appenderMap.Load(typ); ok {
+		return v.(AppenderFunc)
+	}
+
+	fn := appender(dialect, typ)
+
+	if v, ok := appenderMap.LoadOrStore(typ, fn); ok {
+		return v.(AppenderFunc)
+	}
+	return fn
+}
+
+func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 	switch typ {
 	case bytesType:
 		return appendBytesValue
@@ -80,7 +97,7 @@ func Appender(typ reflect.Type, custom CustomAppender) AppenderFunc {
 		return appendQueryAppenderValue
 	}
 	if typ.Implements(driverValuerType) {
-		return driverValueAppender(custom)
+		return appendDriverValue
 	}
 
 	kind := typ.Kind()
@@ -88,18 +105,18 @@ func Appender(typ reflect.Type, custom CustomAppender) AppenderFunc {
 	if kind != reflect.Ptr {
 		ptr := reflect.PtrTo(typ)
 		if ptr.Implements(queryAppenderType) {
-			return addrAppender(appendQueryAppenderValue, custom)
+			return addrAppender(appendQueryAppenderValue)
 		}
 		if ptr.Implements(driverValuerType) {
-			return addrAppender(driverValueAppender(custom), custom)
+			return addrAppender(appendDriverValue)
 		}
 	}
 
 	switch kind {
 	case reflect.Interface:
-		return ifaceAppenderFunc(typ, custom)
+		return ifaceAppenderFunc
 	case reflect.Ptr:
-		if fn := Appender(typ.Elem(), custom); fn != nil {
+		if fn := Appender(dialect, typ.Elem()); fn != nil {
 			return PtrAppender(fn)
 		}
 	case reflect.Slice:
@@ -112,23 +129,16 @@ func Appender(typ reflect.Type, custom CustomAppender) AppenderFunc {
 		}
 	}
 
-	if custom != nil {
-		if fn := custom(typ); fn != nil {
-			return fn
-		}
-	}
 	return appenders[typ.Kind()]
 }
 
-func ifaceAppenderFunc(typ reflect.Type, custom func(reflect.Type) AppenderFunc) AppenderFunc {
-	return func(fmter Formatter, b []byte, v reflect.Value) []byte {
-		if v.IsNil() {
-			return dialect.AppendNull(b)
-		}
-		elem := v.Elem()
-		appender := Appender(elem.Type(), custom)
-		return appender(fmter, b, elem)
+func ifaceAppenderFunc(fmter Formatter, b []byte, v reflect.Value) []byte {
+	if v.IsNil() {
+		return dialect.AppendNull(b)
 	}
+	elem := v.Elem()
+	appender := Appender(fmter.Dialect(), elem.Type())
+	return appender(fmter, b, elem)
 }
 
 func PtrAppender(fn AppenderFunc) AppenderFunc {
@@ -152,6 +162,14 @@ func AppendUintValue(fmter Formatter, b []byte, v reflect.Value) []byte {
 	return strconv.AppendUint(b, v.Uint(), 10)
 }
 
+func appendUint32Value(fmter Formatter, b []byte, v reflect.Value) []byte {
+	return fmter.Dialect().AppendUint32(b, uint32(v.Uint()))
+}
+
+func appendUint64Value(fmter Formatter, b []byte, v reflect.Value) []byte {
+	return fmter.Dialect().AppendUint64(b, v.Uint())
+}
+
 func AppendFloat32Value(fmter Formatter, b []byte, v reflect.Value) []byte {
 	return dialect.AppendFloat32(b, float32(v.Float()))
 }
@@ -161,17 +179,17 @@ func AppendFloat64Value(fmter Formatter, b []byte, v reflect.Value) []byte {
 }
 
 func appendBytesValue(fmter Formatter, b []byte, v reflect.Value) []byte {
-	return dialect.AppendBytes(b, v.Bytes())
+	return fmter.Dialect().AppendBytes(b, v.Bytes())
 }
 
 func appendArrayBytesValue(fmter Formatter, b []byte, v reflect.Value) []byte {
 	if v.CanAddr() {
-		return dialect.AppendBytes(b, v.Slice(0, v.Len()).Bytes())
+		return fmter.Dialect().AppendBytes(b, v.Slice(0, v.Len()).Bytes())
 	}
 
 	tmp := make([]byte, v.Len())
 	reflect.Copy(reflect.ValueOf(tmp), v)
-	b = dialect.AppendBytes(b, tmp)
+	b = fmter.Dialect().AppendBytes(b, tmp)
 	return b
 }
 
@@ -189,12 +207,12 @@ func AppendJSONValue(fmter Formatter, b []byte, v reflect.Value) []byte {
 		bb = bb[:len(bb)-1]
 	}
 
-	return dialect.AppendJSON(b, bb)
+	return fmter.Dialect().AppendJSON(b, bb)
 }
 
 func appendTimeValue(fmter Formatter, b []byte, v reflect.Value) []byte {
 	tm := v.Interface().(time.Time)
-	return dialect.AppendTime(b, tm)
+	return fmter.Dialect().AppendTime(b, tm)
 }
 
 func appendIPValue(fmter Formatter, b []byte, v reflect.Value) []byte {
@@ -219,21 +237,15 @@ func appendQueryAppenderValue(fmter Formatter, b []byte, v reflect.Value) []byte
 	return AppendQueryAppender(fmter, b, v.Interface().(QueryAppender))
 }
 
-func driverValueAppender(custom CustomAppender) AppenderFunc {
-	return func(fmter Formatter, b []byte, v reflect.Value) []byte {
-		return appendDriverValue(fmter, b, v.Interface().(driver.Valuer), custom)
-	}
-}
-
-func appendDriverValue(fmter Formatter, b []byte, v driver.Valuer, custom CustomAppender) []byte {
-	value, err := v.Value()
+func appendDriverValue(fmter Formatter, b []byte, v reflect.Value) []byte {
+	value, err := v.Interface().(driver.Valuer).Value()
 	if err != nil {
 		return dialect.AppendError(b, err)
 	}
-	return Append(fmter, b, value, custom)
+	return Append(fmter, b, value)
 }
 
-func addrAppender(fn AppenderFunc, custom CustomAppender) AppenderFunc {
+func addrAppender(fn AppenderFunc) AppenderFunc {
 	return func(fmter Formatter, b []byte, v reflect.Value) []byte {
 		if !v.CanAddr() {
 			err := fmt.Errorf("bun: Append(nonaddressable %T)", v.Interface())
@@ -241,4 +253,30 @@ func addrAppender(fn AppenderFunc, custom CustomAppender) AppenderFunc {
 		}
 		return fn(fmter, b, v.Addr())
 	}
+}
+
+func appendMsgpack(fmter Formatter, b []byte, v reflect.Value) []byte {
+	hexEnc := internal.NewHexEncoder(b)
+
+	enc := msgpack.GetEncoder()
+	defer msgpack.PutEncoder(enc)
+
+	enc.Reset(hexEnc)
+	if err := enc.EncodeValue(v); err != nil {
+		return dialect.AppendError(b, err)
+	}
+
+	if err := hexEnc.Close(); err != nil {
+		return dialect.AppendError(b, err)
+	}
+
+	return hexEnc.Bytes()
+}
+
+func AppendQueryAppender(fmter Formatter, b []byte, app QueryAppender) []byte {
+	bb, err := app.AppendQuery(fmter, b)
+	if err != nil {
+		return dialect.AppendError(b, err)
+	}
+	return bb
 }

@@ -351,12 +351,17 @@ func (p *processor) federateStatus(ctx context.Context, status *gtsmodel.Status)
 		return fmt.Errorf("federateStatus: error converting status to as format: %s", err)
 	}
 
+	create, err := p.tc.WrapNoteInCreate(asStatus, false)
+	if err != nil {
+		return fmt.Errorf("federateStatus: error wrapping status in create: %s", err)
+	}
+
 	outboxIRI, err := url.Parse(status.Account.OutboxURI)
 	if err != nil {
 		return fmt.Errorf("federateStatus: error parsing outboxURI %s: %s", status.Account.OutboxURI, err)
 	}
 
-	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, asStatus)
+	_, err = p.federator.FederatingActor().Send(ctx, outboxIRI, create)
 	return err
 }
 

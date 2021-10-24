@@ -32,6 +32,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+// const (
+// 	// highestID is the highest possible ULID
+// 	highestID = "ZZZZZZZZZZZZZZZZZZZZZZZZZZ"
+// 	// lowestID is the lowest possible ULID
+// 	lowestID = "00000000000000000000000000"
+// )
+
 // Converts a gts model account into an Activity Streams person type.
 func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
@@ -1012,4 +1019,141 @@ func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmo
 	page.SetActivityStreamsNext(nextProp)
 
 	return page, nil
+}
+
+/*
+	the goal is to end up with something like this:
+	{
+		"id": "https://example.org/users/whatever/outbox?page=true",
+		"type": "OrderedCollectionPage",
+		"next": "https://example.org/users/whatever/outbox?max_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+		"prev": "https://example.org/users/whatever/outbox?min_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+		"partOf": "https://example.org/users/whatever/outbox",
+		"orderedItems": [
+			"id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
+			"type": "Create",
+			"actor": "https://example.org/users/whatever",
+			"published": "2021-10-18T20:06:18Z",
+			"to": [
+				"https://www.w3.org/ns/activitystreams#Public"
+			],
+			"cc": [
+				"https://example.org/users/whatever/followers"
+			],
+			"object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
+		]
+	}
+*/
+func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+	page := streams.NewActivityStreamsOrderedCollectionPage()
+
+	// .id
+	pageIDProp := streams.NewJSONLDIdProperty()
+	pageID := fmt.Sprintf("%s?page=true", outboxID)
+	if minID != "" {
+		pageID = fmt.Sprintf("%s&minID=%s", pageID, minID)
+	}
+	if maxID != "" {
+		pageID = fmt.Sprintf("%s&maxID=%s", pageID, maxID)
+	}
+	pageIDURI, err := url.Parse(pageID)
+	if err != nil {
+		return nil, err
+	}
+	pageIDProp.SetIRI(pageIDURI)
+	page.SetJSONLDId(pageIDProp)
+
+	// .partOf
+	collectionIDURI, err := url.Parse(outboxID)
+	if err != nil {
+		return nil, err
+	}
+	partOfProp := streams.NewActivityStreamsPartOfProperty()
+	partOfProp.SetIRI(collectionIDURI)
+	page.SetActivityStreamsPartOf(partOfProp)
+
+	// .orderedItems
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	var highest string
+	var lowest string
+	for _, s := range statuses {
+		note, err := c.StatusToAS(ctx, s)
+		if err != nil {
+			return nil, err
+		}
+
+		create, err := c.WrapNoteInCreate(note, true)
+		if err != nil {
+			return nil, err
+		}
+
+		itemsProp.AppendActivityStreamsCreate(create)
+
+		if highest == "" || s.ID > highest {
+			highest = s.ID
+		}
+		if lowest == "" || s.ID < lowest {
+			lowest = s.ID
+		}
+	}
+	page.SetActivityStreamsOrderedItems(itemsProp)
+
+	// .next
+	if lowest != "" {
+		nextProp := streams.NewActivityStreamsNextProperty()
+		nextPropIDString := fmt.Sprintf("%s?page=true&max_id=%s", outboxID, lowest)
+		nextPropIDURI, err := url.Parse(nextPropIDString)
+		if err != nil {
+			return nil, err
+		}
+		nextProp.SetIRI(nextPropIDURI)
+		page.SetActivityStreamsNext(nextProp)
+	}
+
+	// .prev
+	if highest != "" {
+		prevProp := streams.NewActivityStreamsPrevProperty()
+		prevPropIDString := fmt.Sprintf("%s?page=true&min_id=%s", outboxID, highest)
+		prevPropIDURI, err := url.Parse(prevPropIDString)
+		if err != nil {
+			return nil, err
+		}
+		prevProp.SetIRI(prevPropIDURI)
+		page.SetActivityStreamsPrev(prevProp)
+	}
+
+	return page, nil
+}
+
+/*
+	we want something that looks like this:
+
+	{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"id": "https://example.org/users/whatever/outbox",
+		"type": "OrderedCollection",
+		"first": "https://example.org/users/whatever/outbox?page=true"
+	}
+*/
+func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
+	collection := streams.NewActivityStreamsOrderedCollection()
+
+	collectionIDProp := streams.NewJSONLDIdProperty()
+	outboxIDURI, err := url.Parse(outboxID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", outboxID)
+	}
+	collectionIDProp.SetIRI(outboxIDURI)
+	collection.SetJSONLDId(collectionIDProp)
+
+	collectionFirstProp := streams.NewActivityStreamsFirstProperty()
+	collectionFirstPropID := fmt.Sprintf("%s?page=true", outboxID)
+	collectionFirstPropIDURI, err := url.Parse(collectionFirstPropID)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing url %s", collectionFirstPropID)
+	}
+	collectionFirstProp.SetIRI(collectionFirstPropIDURI)
+	collection.SetActivityStreamsFirst(collectionFirstProp)
+
+	return collection, nil
 }

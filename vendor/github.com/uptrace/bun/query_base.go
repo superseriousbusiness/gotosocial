@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/uptrace/bun/dialect/feature"
 	"github.com/uptrace/bun/internal"
@@ -164,6 +165,13 @@ func (q *baseQuery) getModel(dest []interface{}) (Model, error) {
 	return newModel(q.db, dest)
 }
 
+func (q *baseQuery) beforeAppendModel(ctx context.Context, query Query) error {
+	if q.tableModel != nil {
+		return q.tableModel.BeforeAppendModel(ctx, query)
+	}
+	return nil
+}
+
 //------------------------------------------------------------------------------
 
 func (q *baseQuery) checkSoftDelete() error {
@@ -260,6 +268,11 @@ func (q *baseQuery) addColumn(column schema.QueryWithArgs) {
 }
 
 func (q *baseQuery) excludeColumn(columns []string) {
+	if q.table == nil {
+		q.setErr(errNilModel)
+		return
+	}
+
 	if q.columns == nil {
 		for _, f := range q.table.Fields {
 			q.columns = append(q.columns, schema.UnsafeIdent(f.Name))
@@ -456,7 +469,7 @@ func (q *baseQuery) _getFields(omitPK bool) ([]*schema.Field, error) {
 
 func (q *baseQuery) scan(
 	ctx context.Context,
-	iquery IQuery,
+	iquery Query,
 	query string,
 	model Model,
 	hasDest bool,
@@ -488,7 +501,7 @@ func (q *baseQuery) scan(
 
 func (q *baseQuery) exec(
 	ctx context.Context,
-	iquery IQuery,
+	iquery Query,
 	query string,
 ) (sql.Result, error) {
 	ctx, event := q.db.beforeQuery(ctx, iquery, query, nil, q.model)
@@ -623,11 +636,23 @@ func (q *whereBaseQuery) appendWhere(
 			b = append(b, q.tableModel.Table().SQLAlias...)
 			b = append(b, '.')
 		}
-		b = append(b, q.tableModel.Table().SoftDeleteField.SQLName...)
-		if q.flags.Has(deletedFlag) {
-			b = append(b, " IS NOT NULL"...)
+
+		field := q.tableModel.Table().SoftDeleteField
+		b = append(b, field.SQLName...)
+
+		if field.NullZero {
+			if q.flags.Has(deletedFlag) {
+				b = append(b, " IS NOT NULL"...)
+			} else {
+				b = append(b, " IS NULL"...)
+			}
 		} else {
-			b = append(b, " IS NULL"...)
+			if q.flags.Has(deletedFlag) {
+				b = append(b, " != "...)
+			} else {
+				b = append(b, " = "...)
+			}
+			b = fmter.Dialect().AppendTime(b, time.Time{})
 		}
 	}
 
@@ -794,9 +819,11 @@ func (q *returningQuery) addReturningField(field *schema.Field) {
 
 func (q *returningQuery) hasReturning() bool {
 	if len(q.returning) == 1 {
-		switch q.returning[0].Query {
-		case "null", "NULL":
-			return false
+		if ret := q.returning[0]; len(ret.Args) == 0 {
+			switch ret.Query {
+			case "", "null", "NULL":
+				return false
+			}
 		}
 	}
 	return len(q.returning) > 0 || len(q.returningFields) > 0

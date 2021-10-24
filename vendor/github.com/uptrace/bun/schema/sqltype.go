@@ -61,6 +61,14 @@ func DiscoverSQLType(typ reflect.Type) string {
 	case nullStringType:
 		return sqltype.VarChar
 	}
+
+	switch typ.Kind() {
+	case reflect.Slice:
+		if typ.Elem().Kind() == reflect.Uint8 {
+			return sqltype.Blob
+		}
+	}
+
 	return sqlTypes[typ.Kind()]
 }
 
@@ -99,7 +107,7 @@ func (tm NullTime) AppendQuery(fmter Formatter, b []byte) ([]byte, error) {
 	if tm.IsZero() {
 		return dialect.AppendNull(b), nil
 	}
-	return dialect.AppendTime(b, tm.Time), nil
+	return fmter.Dialect().AppendTime(b, tm.Time), nil
 }
 
 func (tm *NullTime) Scan(src interface{}) error {
