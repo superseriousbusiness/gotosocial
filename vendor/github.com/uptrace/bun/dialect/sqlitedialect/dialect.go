@@ -2,8 +2,7 @@ package sqlitedialect
 
 import (
 	"database/sql"
-	"reflect"
-	"sync"
+	"encoding/hex"
 
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/feature"
@@ -12,11 +11,10 @@ import (
 )
 
 type Dialect struct {
+	schema.BaseDialect
+
 	tables   *schema.Tables
 	features feature.Feature
-
-	appenderMap sync.Map
-	scannerMap  sync.Map
 }
 
 func New() *Dialect {
@@ -50,48 +48,36 @@ func (d *Dialect) OnTable(table *schema.Table) {
 }
 
 func (d *Dialect) onField(field *schema.Field) {
-	// INTEGER PRIMARY KEY is an alias for the ROWID.
-	// It is safe to convert all ints to INTEGER, because SQLite types don't have size.
-	switch field.DiscoveredSQLType {
-	case sqltype.SmallInt, sqltype.BigInt:
-		field.DiscoveredSQLType = sqltype.Integer
-	}
+	field.DiscoveredSQLType = fieldSQLType(field)
 }
 
 func (d *Dialect) IdentQuote() byte {
 	return '"'
 }
 
-func (d *Dialect) Append(fmter schema.Formatter, b []byte, v interface{}) []byte {
-	return schema.Append(fmter, b, v, nil)
+func (d *Dialect) AppendBytes(b []byte, bs []byte) []byte {
+	if bs == nil {
+		return dialect.AppendNull(b)
+	}
+
+	b = append(b, `X'`...)
+
+	s := len(b)
+	b = append(b, make([]byte, hex.EncodedLen(len(bs)))...)
+	hex.Encode(b[s:], bs)
+
+	b = append(b, '\'')
+
+	return b
 }
 
-func (d *Dialect) Appender(typ reflect.Type) schema.AppenderFunc {
-	if v, ok := d.appenderMap.Load(typ); ok {
-		return v.(schema.AppenderFunc)
+func fieldSQLType(field *schema.Field) string {
+	switch field.DiscoveredSQLType {
+	case sqltype.SmallInt, sqltype.BigInt:
+		// INTEGER PRIMARY KEY is an alias for the ROWID.
+		// It is safe to convert all ints to INTEGER, because SQLite types don't have size.
+		return sqltype.Integer
+	default:
+		return field.DiscoveredSQLType
 	}
-
-	fn := schema.Appender(typ, nil)
-
-	if v, ok := d.appenderMap.LoadOrStore(typ, fn); ok {
-		return v.(schema.AppenderFunc)
-	}
-	return fn
-}
-
-func (d *Dialect) FieldAppender(field *schema.Field) schema.AppenderFunc {
-	return schema.FieldAppender(d, field)
-}
-
-func (d *Dialect) Scanner(typ reflect.Type) schema.ScannerFunc {
-	if v, ok := d.scannerMap.Load(typ); ok {
-		return v.(schema.ScannerFunc)
-	}
-
-	fn := scanner(typ)
-
-	if v, ok := d.scannerMap.LoadOrStore(typ, fn); ok {
-		return v.(schema.ScannerFunc)
-	}
-	return fn
 }

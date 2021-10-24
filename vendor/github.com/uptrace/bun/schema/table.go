@@ -15,8 +15,11 @@ import (
 )
 
 const (
-	beforeScanHookFlag internal.Flag = 1 << iota
+	beforeAppendModelHookFlag internal.Flag = 1 << iota
+	beforeScanHookFlag
 	afterScanHookFlag
+	beforeScanRowHookFlag
+	afterScanRowHookFlag
 )
 
 var (
@@ -84,13 +87,34 @@ func newTable(dialect Dialect, typ reflect.Type) *Table {
 		typ  reflect.Type
 		flag internal.Flag
 	}{
+		{beforeAppendModelHookType, beforeAppendModelHookFlag},
+
 		{beforeScanHookType, beforeScanHookFlag},
 		{afterScanHookType, afterScanHookFlag},
+
+		{beforeScanRowHookType, beforeScanRowHookFlag},
+		{afterScanRowHookType, afterScanRowHookFlag},
 	}
 
 	typ = reflect.PtrTo(t.Type)
 	for _, hook := range hooks {
 		if typ.Implements(hook.typ) {
+			t.flags = t.flags.Set(hook.flag)
+		}
+	}
+
+	// Deprecated.
+	deprecatedHooks := []struct {
+		typ  reflect.Type
+		flag internal.Flag
+		msg  string
+	}{
+		{beforeScanHookType, beforeScanHookFlag, "rename BeforeScan hook to BeforeScanRow"},
+		{afterScanHookType, afterScanHookFlag, "rename AfterScan hook to AfterScanRow"},
+	}
+	for _, hook := range deprecatedHooks {
+		if typ.Implements(hook.typ) {
+			internal.Deprecated.Printf("%s: %s", t.TypeName, hook.msg)
 			t.flags = t.flags.Set(hook.flag)
 		}
 	}
@@ -334,15 +358,6 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 	if tag.HasOption("pk") {
 		field.markAsPK()
 	}
-	if tag.HasOption("allowzero") {
-		if tag.HasOption("nullzero") {
-			internal.Warn.Printf(
-				"%s.%s: nullzero and allowzero options are mutually exclusive",
-				t.TypeName, f.Name,
-			)
-		}
-		field.NullZero = false
-	}
 
 	if v, ok := tag.Options["unique"]; ok {
 		// Split the value by comma, this will allow multiple names to be specified.
@@ -362,7 +377,7 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 		field.UserSQLType = s
 	}
 	field.DiscoveredSQLType = DiscoverSQLType(field.IndirectType)
-	field.Append = t.dialect.FieldAppender(field)
+	field.Append = FieldAppender(t.dialect, field)
 	field.Scan = FieldScanner(t.dialect, field)
 	field.IsZero = zeroChecker(field.StructField.Type)
 
@@ -383,6 +398,17 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 		field.NullZero = true
 		t.SoftDeleteField = field
 		t.UpdateSoftDeleteField = softDeleteFieldUpdater(field)
+	}
+
+	// Check this in the end to undo NullZero.
+	if tag.HasOption("allowzero") {
+		if tag.HasOption("nullzero") {
+			internal.Warn.Printf(
+				"%s.%s: nullzero and allowzero options are mutually exclusive",
+				t.TypeName, f.Name,
+			)
+		}
+		field.NullZero = false
 	}
 
 	return field
@@ -775,9 +801,18 @@ func (t *Table) inlineFields(field *Field, seen map[reflect.Type]struct{}) {
 
 //------------------------------------------------------------------------------
 
-func (t *Table) Dialect() Dialect        { return t.dialect }
+func (t *Table) Dialect() Dialect { return t.dialect }
+
+func (t *Table) HasBeforeAppendModelHook() bool { return t.flags.Has(beforeAppendModelHookFlag) }
+
+// DEPRECATED. Use HasBeforeScanRowHook.
 func (t *Table) HasBeforeScanHook() bool { return t.flags.Has(beforeScanHookFlag) }
-func (t *Table) HasAfterScanHook() bool  { return t.flags.Has(afterScanHookFlag) }
+
+// DEPRECATED. Use HasAfterScanRowHook.
+func (t *Table) HasAfterScanHook() bool { return t.flags.Has(afterScanHookFlag) }
+
+func (t *Table) HasBeforeScanRowHook() bool { return t.flags.Has(beforeScanRowHookFlag) }
+func (t *Table) HasAfterScanRowHook() bool  { return t.flags.Has(afterScanRowHookFlag) }
 
 //------------------------------------------------------------------------------
 

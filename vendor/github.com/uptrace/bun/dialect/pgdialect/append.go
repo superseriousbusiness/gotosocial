@@ -2,6 +2,7 @@ package pgdialect
 
 import (
 	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -28,26 +29,6 @@ var (
 	sliceFloat64Type = reflect.TypeOf([]float64(nil))
 )
 
-func customAppender(typ reflect.Type) schema.AppenderFunc {
-	switch typ.Kind() {
-	case reflect.Uint32:
-		return appendUint32ValueAsInt
-	case reflect.Uint, reflect.Uint64:
-		return appendUint64ValueAsInt
-	}
-	return nil
-}
-
-func appendUint32ValueAsInt(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
-	return strconv.AppendInt(b, int64(int32(v.Uint())), 10)
-}
-
-func appendUint64ValueAsInt(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
-	return strconv.AppendInt(b, int64(v.Uint()), 10)
-}
-
-//------------------------------------------------------------------------------
-
 func arrayAppend(fmter schema.Formatter, b []byte, v interface{}) []byte {
 	switch v := v.(type) {
 	case int64:
@@ -57,29 +38,23 @@ func arrayAppend(fmter schema.Formatter, b []byte, v interface{}) []byte {
 	case bool:
 		return dialect.AppendBool(b, v)
 	case []byte:
-		return dialect.AppendBytes(b, v)
+		return arrayAppendBytes(b, v)
 	case string:
 		return arrayAppendString(b, v)
 	case time.Time:
-		return dialect.AppendTime(b, v)
+		return fmter.Dialect().AppendTime(b, v)
 	default:
 		err := fmt.Errorf("pgdialect: can't append %T", v)
 		return dialect.AppendError(b, err)
 	}
 }
 
-func arrayElemAppender(typ reflect.Type) schema.AppenderFunc {
-	if typ.Kind() == reflect.String {
-		return arrayAppendStringValue
-	}
-	if typ.Implements(driverValuerType) {
-		return arrayAppendDriverValue
-	}
-	return schema.Appender(typ, customAppender)
-}
-
 func arrayAppendStringValue(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
 	return arrayAppendString(b, v.String())
+}
+
+func arrayAppendBytesValue(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
+	return arrayAppendBytes(b, v.Bytes())
 }
 
 func arrayAppendDriverValue(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
@@ -92,12 +67,12 @@ func arrayAppendDriverValue(fmter schema.Formatter, b []byte, v reflect.Value) [
 
 //------------------------------------------------------------------------------
 
-func arrayAppender(typ reflect.Type) schema.AppenderFunc {
+func (d *Dialect) arrayAppender(typ reflect.Type) schema.AppenderFunc {
 	kind := typ.Kind()
 
 	switch kind {
 	case reflect.Ptr:
-		if fn := arrayAppender(typ.Elem()); fn != nil {
+		if fn := d.arrayAppender(typ.Elem()); fn != nil {
 			return schema.PtrAppender(fn)
 		}
 	case reflect.Slice, reflect.Array:
@@ -121,7 +96,7 @@ func arrayAppender(typ reflect.Type) schema.AppenderFunc {
 		}
 	}
 
-	appendElem := arrayElemAppender(elemType)
+	appendElem := d.arrayElemAppender(elemType)
 	if appendElem == nil {
 		panic(fmt.Errorf("pgdialect: %s is not supported", typ))
 	}
@@ -157,6 +132,21 @@ func arrayAppender(typ reflect.Type) schema.AppenderFunc {
 
 		return b
 	}
+}
+
+func (d *Dialect) arrayElemAppender(typ reflect.Type) schema.AppenderFunc {
+	if typ.Implements(driverValuerType) {
+		return arrayAppendDriverValue
+	}
+	switch typ.Kind() {
+	case reflect.String:
+		return arrayAppendStringValue
+	case reflect.Slice:
+		if typ.Elem().Kind() == reflect.Uint8 {
+			return arrayAppendBytesValue
+		}
+	}
+	return schema.Appender(d, typ)
 }
 
 func appendStringSliceValue(fmter schema.Formatter, b []byte, v reflect.Value) []byte {
@@ -273,6 +263,22 @@ func appendFloat64Slice(b []byte, floats []float64) []byte {
 
 //------------------------------------------------------------------------------
 
+func arrayAppendBytes(b []byte, bs []byte) []byte {
+	if bs == nil {
+		return dialect.AppendNull(b)
+	}
+
+	b = append(b, `"\\x`...)
+
+	s := len(b)
+	b = append(b, make([]byte, hex.EncodedLen(len(bs)))...)
+	hex.Encode(b[s:], bs)
+
+	b = append(b, '"')
+
+	return b
+}
+
 func arrayAppendString(b []byte, s string) []byte {
 	b = append(b, '"')
 	for _, r := range s {
@@ -280,7 +286,7 @@ func arrayAppendString(b []byte, s string) []byte {
 		case 0:
 			// ignore
 		case '\'':
-			b = append(b, "'''"...)
+			b = append(b, "''"...)
 		case '"':
 			b = append(b, '\\', '"')
 		case '\\':
