@@ -155,6 +155,19 @@ type TypeConverter interface {
 	StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error)
 	// StatusURIsToASRepliesPage returns a collection page with appropriate next/part of pagination.
 	StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error)
+	// OutboxToASCollection returns an ordered collection with appropriate id, next, and last fields.
+	// The returned collection won't have any actual entries; just links to where entries can be obtained.
+	OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error)
+	// StatusesToASOutboxPage returns an ordered collection page using the given statuses and parameters as contents.
+	//
+	// The maxID and minID should be the parameters that were passed to the database to obtain the given statuses.
+	// These will be used to create the 'id' field of the collection.
+	//
+	// OutboxID is used to create the 'partOf' field in the collection.
+	//
+	// Appropriate 'next' and 'prev' fields will be created based on the highest and lowest IDs present in the statuses slice.
+	StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error)
+
 	/*
 		INTERNAL (gts) MODEL TO INTERNAL MODEL
 	*/
@@ -170,6 +183,12 @@ type TypeConverter interface {
 
 	// WrapPersonInUpdate
 	WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error)
+	// WrapNoteInCreate wraps a Note with a Create activity.
+	//
+	// If objectIRIOnly is set to true, then the function won't put the *entire* note in the Object field of the Create,
+	// but just the AP URI of the note. This is useful in cases where you want to give a remote server something to dereference,
+	// and still have control over whether or not they're allowed to actually see the contents.
+	WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error)
 }
 
 type converter struct {

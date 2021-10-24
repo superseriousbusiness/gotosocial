@@ -39,8 +39,12 @@ const (
 	PinnedKey = "pinned"
 	// MaxIDKey is for specifying the maximum ID of the status to retrieve.
 	MaxIDKey = "max_id"
-	// MediaOnlyKey is for specifying that only statuses with media should be returned in a list of returned statuses by an account.
-	MediaOnlyKey = "only_media"
+	// MinIDKey is for specifying the minimum ID of the status to retrieve.
+	MinIDKey = "min_id"
+	// OnlyMediaKey is for specifying that only statuses with media should be returned in a list of returned statuses by an account.
+	OnlyMediaKey = "only_media"
+	// OnlyPublicKey is for specifying that only statuses with visibility public should be returned in a list of returned statuses by account.
+	OnlyPublicKey = "only_public"
 
 	// IDKey is the key to use for retrieving account ID in requests
 	IDKey = "id"

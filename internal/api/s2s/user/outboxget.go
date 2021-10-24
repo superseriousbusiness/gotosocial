@@ -28,9 +28,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// StatusRepliesGETHandler swagger:operation GET /users/{username}/statuses/{status}/replies s2sRepliesGet
+// OutboxGETHandler swagger:operation GET /users/{username}/outbox s2sOutboxGet
 //
-// Get the replies collection for a status.
+// Get the public outbox collection for an actor.
 //
 // Note that the response will be a Collection with a page as `first`, as shown below, if `page` is `false`.
 //
@@ -51,24 +51,18 @@ import (
 //   description: Username of the account.
 //   in: path
 //   required: true
-// - name: status
-//   type: string
-//   description: ID of the status.
-//   in: path
-//   required: true
 // - name: page
 //   type: boolean
 //   description: Return response as a CollectionPage.
 //   in: query
 //   default: false
-// - name: only_other_accounts
-//   type: boolean
-//   description: Return replies only from accounts other than the status owner.
-//   in: query
-//   default: false
 // - name: min_id
 //   type: string
 //   description: Minimum ID of the next status, used for paging.
+//   in: query
+// - name: max_id
+//   type: string
+//   description: Maximum ID of the next status, used for paging.
 //   in: query
 //
 // responses:
@@ -84,21 +78,15 @@ import (
 //      description: forbidden
 //   '404':
 //      description: not found
-func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
+func (m *Module) OutboxGETHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
-		"func": "StatusRepliesGETHandler",
+		"func": "OutboxGETHandler",
 		"url":  c.Request.RequestURI,
 	})
 
 	requestedUsername := c.Param(UsernameKey)
 	if requestedUsername == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no username specified in request"})
-		return
-	}
-
-	requestedStatusID := c.Param(StatusIDKey)
-	if requestedStatusID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id specified in request"})
 		return
 	}
 
@@ -114,22 +102,16 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		page = i
 	}
 
-	onlyOtherAccounts := false
-	onlyOtherAccountsString := c.Query(OnlyOtherAccountsKey)
-	if onlyOtherAccountsString != "" {
-		i, err := strconv.ParseBool(onlyOtherAccountsString)
-		if err != nil {
-			l.Debugf("error parsing only_other_accounts string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse only_other_accounts query param"})
-			return
-		}
-		onlyOtherAccounts = i
-	}
-
 	minID := ""
 	minIDString := c.Query(MinIDKey)
 	if minIDString != "" {
 		minID = minIDString
+	}
+
+	maxID := ""
+	maxIDString := c.Query(MaxIDKey)
+	if maxIDString != "" {
+		maxID = maxIDString
 	}
 
 	format, err := negotiateFormat(c)
@@ -141,14 +123,14 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 
 	ctx := transferContext(c)
 
-	replies, errWithCode := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
+	outbox, errWithCode := m.processor.GetFediOutbox(ctx, requestedUsername, page, maxID, minID, c.Request.URL)
 	if errWithCode != nil {
 		l.Info(errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	b, mErr := json.Marshal(replies)
+	b, mErr := json.Marshal(outbox)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
 		l.Error(err)

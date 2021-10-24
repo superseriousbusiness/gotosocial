@@ -135,6 +135,19 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 				return idProp.GetIRI(), nil
 			}
 		}
+	case ap.ActivityCreate:
+		// CREATE
+		// ID might already be set on a Create, so check it here and return it if it is
+		create, ok := t.(vocab.ActivityStreamsCreate)
+		if !ok {
+			return nil, errors.New("newid: create couldn't be parsed into vocab.ActivityStreamsCreate")
+		}
+		idProp := create.GetJSONLDId()
+		if idProp != nil {
+			if idProp.IsIRI() {
+				return idProp.GetIRI(), nil
+			}
+		}
 	case ap.ActivityAnnounce:
 		// ANNOUNCE aka BOOST
 		// ID might already be set on an announce we've created, so check it here and return it if it is

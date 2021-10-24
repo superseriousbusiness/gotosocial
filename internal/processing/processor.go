@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	federationProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/federation"
 	mediaProcessor "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/streaming"
@@ -78,7 +79,7 @@ type Processor interface {
 	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, pinned bool, mediaOnly bool) ([]apimodel.Status, gtserror.WithCode)
+	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode)
 	// AccountFollowersGet fetches a list of the target account's followers.
 	AccountFollowersGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// AccountFollowingGet fetches a list of the accounts that target account is following.
@@ -190,32 +191,26 @@ type Processor interface {
 	// GetFediUser handles the getting of a fedi/activitypub representation of a user/account, performing appropriate authentication
 	// before returning a JSON serializable interface to the caller.
 	GetFediUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediFollowers handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediFollowers(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediFollowing handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediFollowing(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediStatus handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
 	// GetFediStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
 	// authentication before returning a JSON serializable interface to the caller.
 	GetFediStatusReplies(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
-
+	// GetFediOutbox returns the public outbox of the requested user, with the given parameters.
+	GetFediOutbox(ctx context.Context, requestedUsername string, page bool, maxID string, minID string, requestURL *url.URL) (interface{}, gtserror.WithCode)
 	// GetWebfingerAccount handles the GET for a webfinger resource. Most commonly, it will be used for returning account lookups.
 	GetWebfingerAccount(ctx context.Context, requestedUsername string) (*apimodel.WellKnownResponse, gtserror.WithCode)
-
 	// GetNodeInfoRel returns a well known response giving the path to node info.
 	GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode)
-
 	// GetNodeInfo returns a node info struct in response to a node info request.
 	GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode)
-
 	// InboxPost handles POST requests to a user's inbox for new activitypub messages.
 	//
 	// InboxPost returns true if the request was handled as an ActivityPub POST to an actor's inbox.
@@ -248,12 +243,13 @@ type processor struct {
 		SUB-PROCESSORS
 	*/
 
-	accountProcessor   account.Processor
-	adminProcessor     admin.Processor
-	statusProcessor    status.Processor
-	streamingProcessor streaming.Processor
-	mediaProcessor     mediaProcessor.Processor
-	userProcessor      user.Processor
+	accountProcessor    account.Processor
+	adminProcessor      admin.Processor
+	statusProcessor     status.Processor
+	streamingProcessor  streaming.Processor
+	mediaProcessor      mediaProcessor.Processor
+	userProcessor       user.Processor
+	federationProcessor federationProcessor.Processor
 }
 
 // NewProcessor returns a new Processor that uses the given federator
@@ -267,6 +263,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
 	userProcessor := user.New(db, config)
+	federationProcessor := federationProcessor.New(db, tc, config, federator, fromFederator)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -282,12 +279,13 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 		db:              db,
 		filter:          visibility.NewFilter(db),
 
-		accountProcessor:   accountProcessor,
-		adminProcessor:     adminProcessor,
-		statusProcessor:    statusProcessor,
-		streamingProcessor: streamingProcessor,
-		mediaProcessor:     mediaProcessor,
-		userProcessor:      userProcessor,
+		accountProcessor:    accountProcessor,
+		adminProcessor:      adminProcessor,
+		statusProcessor:     statusProcessor,
+		streamingProcessor:  streamingProcessor,
+		mediaProcessor:      mediaProcessor,
+		userProcessor:       userProcessor,
+		federationProcessor: federationProcessor,
 	}
 }
 

@@ -239,3 +239,17 @@ func (f *filter) StatusVisible(ctx context.Context, targetStatus *gtsmodel.Statu
 	// If we reached here, all is okay
 	return true, nil
 }
+
+func (f *filter) StatusesVisible(ctx context.Context, statuses []*gtsmodel.Status, requestingAccount *gtsmodel.Account) ([]*gtsmodel.Status, error) {
+	filtered := []*gtsmodel.Status{}
+	for _, s := range statuses {
+		visible, err := f.StatusVisible(ctx, s, requestingAccount)
+		if err != nil {
+			return nil, err
+		}
+		if visible {
+			filtered = append(filtered, s)
+		}
+	}
+	return filtered, nil
+}

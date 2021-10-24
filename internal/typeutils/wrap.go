@@ -7,6 +7,7 @@ import (
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/activity/streams"
 	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -65,4 +66,67 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 	update.SetActivityStreamsBcc(bccProp)
 
 	return update, nil
+}
+
+func (c *converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
+	create := streams.NewActivityStreamsCreate()
+
+	// Object property
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	if objectIRIOnly {
+		objectProp.AppendIRI(note.GetJSONLDId().GetIRI())
+	} else {
+		objectProp.AppendActivityStreamsNote(note)
+	}
+	create.SetActivityStreamsObject(objectProp)
+
+	// ID property
+	idProp := streams.NewJSONLDIdProperty()
+	createID := fmt.Sprintf("%s/activity", note.GetJSONLDId().GetIRI().String())
+	createIDIRI, err := url.Parse(createID)
+	if err != nil {
+		return nil, err
+	}
+	idProp.SetIRI(createIDIRI)
+	create.SetJSONLDId(idProp)
+
+	// Actor Property
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorIRI, err := ap.ExtractAttributedTo(note)
+	if err != nil {
+		return nil, fmt.Errorf("WrapNoteInCreate: couldn't extract AttributedTo: %s", err)
+	}
+	actorProp.AppendIRI(actorIRI)
+	create.SetActivityStreamsActor(actorProp)
+
+	// Published Property
+	publishedProp := streams.NewActivityStreamsPublishedProperty()
+	published, err := ap.ExtractPublished(note)
+	if err != nil {
+		return nil, fmt.Errorf("WrapNoteInCreate: couldn't extract Published: %s", err)
+	}
+	publishedProp.Set(published)
+	create.SetActivityStreamsPublished(publishedProp)
+
+	// To Property
+	toProp := streams.NewActivityStreamsToProperty()
+	tos, err := ap.ExtractTos(note)
+	if err == nil {
+		for _, to := range tos {
+			toProp.AppendIRI(to)
+		}
+		create.SetActivityStreamsTo(toProp)
+	}
+
+	// Cc Property
+	ccProp := streams.NewActivityStreamsCcProperty()
+	ccs, err := ap.ExtractCCs(note)
+	if err == nil {
+		for _, cc := range ccs {
+			ccProp.AppendIRI(cc)
+		}
+		create.SetActivityStreamsCc(ccProp)
+	}
+
+	return create, nil
 }
