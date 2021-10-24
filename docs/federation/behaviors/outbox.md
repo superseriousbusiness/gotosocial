@@ -25,17 +25,19 @@ Note that the `OrderedCollection` itself contains no items. Callers must derefer
     "prev": "https://example.org/users/whatever/outbox?min_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
     "partOf": "https://example.org/users/whatever/outbox",
     "orderedItems": [
-        "id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
-        "type": "Create",
-        "actor": "https://example.org/users/whatever",
-        "published": "2021-10-18T20:06:18Z",
-        "to": [
-            "https://www.w3.org/ns/activitystreams#Public"
-        ],
-        "cc": [
-            "https://example.org/users/whatever/followers"
-        ],
-        "object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
+        {
+            "id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
+            "type": "Create",
+            "actor": "https://example.org/users/whatever",
+            "published": "2021-10-18T20:06:18Z",
+            "to": [
+                "https://www.w3.org/ns/activitystreams#Public"
+            ],
+            "cc": [
+                "https://example.org/users/whatever/followers"
+            ],
+            "object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
+        }
     ]
 }
 ```
