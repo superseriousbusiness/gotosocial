@@ -2,11 +2,12 @@ package schema
 
 import (
 	"database/sql"
-	"reflect"
-	"sync"
+	"strconv"
+	"time"
 
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/feature"
+	"github.com/uptrace/bun/internal/parser"
 )
 
 type Dialect interface {
@@ -19,20 +20,76 @@ type Dialect interface {
 	OnTable(table *Table)
 
 	IdentQuote() byte
-	Append(fmter Formatter, b []byte, v interface{}) []byte
-	Appender(typ reflect.Type) AppenderFunc
-	FieldAppender(field *Field) AppenderFunc
-	Scanner(typ reflect.Type) ScannerFunc
+
+	AppendUint32(b []byte, n uint32) []byte
+	AppendUint64(b []byte, n uint64) []byte
+	AppendTime(b []byte, tm time.Time) []byte
+	AppendBytes(b []byte, bs []byte) []byte
+	AppendJSON(b, jsonb []byte) []byte
+}
+
+//------------------------------------------------------------------------------
+
+type BaseDialect struct{}
+
+func (BaseDialect) AppendUint32(b []byte, n uint32) []byte {
+	return strconv.AppendUint(b, uint64(n), 10)
+}
+
+func (BaseDialect) AppendUint64(b []byte, n uint64) []byte {
+	return strconv.AppendUint(b, n, 10)
+}
+
+func (BaseDialect) AppendTime(b []byte, tm time.Time) []byte {
+	b = append(b, '\'')
+	b = tm.UTC().AppendFormat(b, "2006-01-02 15:04:05.999999-07:00")
+	b = append(b, '\'')
+	return b
+}
+
+func (BaseDialect) AppendBytes(b, bs []byte) []byte {
+	return dialect.AppendBytes(b, bs)
+}
+
+func (BaseDialect) AppendJSON(b, jsonb []byte) []byte {
+	b = append(b, '\'')
+
+	p := parser.New(jsonb)
+	for p.Valid() {
+		c := p.Read()
+		switch c {
+		case '"':
+			b = append(b, '"')
+		case '\'':
+			b = append(b, "''"...)
+		case '\000':
+			continue
+		case '\\':
+			if p.SkipBytes([]byte("u0000")) {
+				b = append(b, `\\u0000`...)
+			} else {
+				b = append(b, '\\')
+				if p.Valid() {
+					b = append(b, p.Read())
+				}
+			}
+		default:
+			b = append(b, c)
+		}
+	}
+
+	b = append(b, '\'')
+
+	return b
 }
 
 //------------------------------------------------------------------------------
 
 type nopDialect struct {
+	BaseDialect
+
 	tables   *Tables
 	features feature.Feature
-
-	appenderMap sync.Map
-	scannerMap  sync.Map
 }
 
 func newNopDialect() *nopDialect {
@@ -62,38 +119,4 @@ func (d *nopDialect) OnTable(table *Table) {}
 
 func (d *nopDialect) IdentQuote() byte {
 	return '"'
-}
-
-func (d *nopDialect) Append(fmter Formatter, b []byte, v interface{}) []byte {
-	return Append(fmter, b, v, nil)
-}
-
-func (d *nopDialect) Appender(typ reflect.Type) AppenderFunc {
-	if v, ok := d.appenderMap.Load(typ); ok {
-		return v.(AppenderFunc)
-	}
-
-	fn := Appender(typ, nil)
-
-	if v, ok := d.appenderMap.LoadOrStore(typ, fn); ok {
-		return v.(AppenderFunc)
-	}
-	return fn
-}
-
-func (d *nopDialect) FieldAppender(field *Field) AppenderFunc {
-	return FieldAppender(d, field)
-}
-
-func (d *nopDialect) Scanner(typ reflect.Type) ScannerFunc {
-	if v, ok := d.scannerMap.Load(typ); ok {
-		return v.(ScannerFunc)
-	}
-
-	fn := Scanner(typ)
-
-	if v, ok := d.scannerMap.LoadOrStore(typ, fn); ok {
-		return v.(ScannerFunc)
-	}
-	return fn
 }

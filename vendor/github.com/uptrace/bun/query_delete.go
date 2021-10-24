@@ -134,9 +134,6 @@ func (q *DeleteQuery) Operation() string {
 }
 
 func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
-	if q.err != nil {
-		return nil, q.err
-	}
 	fmter = formatterWithModel(fmter, q)
 
 	if q.isSoftDelete() {
@@ -209,17 +206,25 @@ func (q *DeleteQuery) softDeleteSet(fmter schema.Formatter, tm time.Time) string
 	}
 	b = append(b, q.table.SoftDeleteField.SQLName...)
 	b = append(b, " = "...)
-	b = q.db.Dialect().Append(fmter, b, tm)
+	b = schema.Append(fmter, b, tm)
 	return internal.String(b)
 }
 
 //------------------------------------------------------------------------------
 
 func (q *DeleteQuery) Exec(ctx context.Context, dest ...interface{}) (sql.Result, error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
 	if q.table != nil {
 		if err := q.beforeDeleteHook(ctx); err != nil {
 			return nil, err
 		}
+	}
+
+	if err := q.beforeAppendModel(ctx, q); err != nil {
+		return nil, err
 	}
 
 	queryBytes, err := q.AppendQuery(q.db.fmter, q.db.makeQueryBytes())
