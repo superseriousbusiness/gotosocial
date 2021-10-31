@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -54,6 +55,7 @@ type ServeFileTestSuite struct {
 	processor    processing.Processor
 	mediaHandler media.Handler
 	oauthServer  oauth.Server
+	emailSender  email.Sender
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -78,7 +80,9 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator)
+	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
+
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)

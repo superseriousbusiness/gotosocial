@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -48,6 +49,8 @@ type AccountStandardTestSuite struct {
 	httpClient          pub.HttpClient
 	transportController transport.Controller
 	federator           federation.Federator
+	emailSender         email.Sender
+	sentEmails          map[string]string
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -84,6 +87,8 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.httpClient = testrig.NewMockHTTPClient(nil)
 	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
+	suite.sentEmails = make(map[string]string)
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaHandler, suite.oauthServer, suite.fromClientAPIChan, suite.federator, suite.config)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

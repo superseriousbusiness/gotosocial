@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -54,6 +55,7 @@ type ProcessingStandardTestSuite struct {
 	oauthServer         oauth.Server
 	mediaHandler        media.Handler
 	timelineManager     timeline.Manager
+	emailSender         email.Sender
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -219,8 +221,9 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
+	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.config, suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db)
+	suite.processor = processing.NewProcessor(suite.config, suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")

@@ -28,6 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -179,6 +180,9 @@ type Processor interface {
 
 	// UserChangePassword changes the password for the given user, with the given form.
 	UserChangePassword(ctx context.Context, authed *oauth.Auth, form *apimodel.PasswordChangeRequest) gtserror.WithCode
+	// UserConfirmEmail confirms an email address using the given token.
+	// The user belonging to the confirmed email is also returned.
+	UserConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode)
 
 	/*
 		FEDERATION API-FACING PROCESSING FUNCTIONS
@@ -252,8 +256,17 @@ type processor struct {
 	federationProcessor federationProcessor.Processor
 }
 
-// NewProcessor returns a new Processor that uses the given federator
-func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator federation.Federator, oauthServer oauth.Server, mediaHandler media.Handler, storage *kv.KVStore, timelineManager timeline.Manager, db db.DB) Processor {
+// NewProcessor returns a new Processor.
+func NewProcessor(
+	config *config.Config,
+	tc typeutils.TypeConverter,
+	federator federation.Federator,
+	oauthServer oauth.Server,
+	mediaHandler media.Handler,
+	storage *kv.KVStore,
+	timelineManager timeline.Manager,
+	db db.DB,
+	emailSender email.Sender) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
@@ -262,7 +275,7 @@ func NewProcessor(config *config.Config, tc typeutils.TypeConverter, federator f
 	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
 	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
-	userProcessor := user.New(db, config)
+	userProcessor := user.New(db, emailSender, config)
 	federationProcessor := federationProcessor.New(db, tc, config, federator, fromFederator)
 
 	return &processor{

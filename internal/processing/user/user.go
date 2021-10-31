@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -32,17 +33,23 @@ type Processor interface {
 	// ChangePassword changes the specified user's password from old => new,
 	// or returns an error if the new password is too weak, or the old password is incorrect.
 	ChangePassword(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode
+	// SendConfirmEmail sends a 'confirm-your-email-address' type email to a user.
+	SendConfirmEmail(ctx context.Context, user *gtsmodel.User, username string) error
+	// ConfirmEmail confirms an email address using the given token.
+	ConfirmEmail(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode)
 }
 
 type processor struct {
-	config *config.Config
-	db     db.DB
+	config      *config.Config
+	emailSender email.Sender
+	db          db.DB
 }
 
 // New returns a new user processor
-func New(db db.DB, config *config.Config) Processor {
+func New(db db.DB, emailSender email.Sender, config *config.Config) Processor {
 	return &processor{
-		config: config,
-		db:     db,
+		config:      config,
+		emailSender: emailSender,
+		db:          db,
 	}
 }

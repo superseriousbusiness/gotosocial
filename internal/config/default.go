@@ -67,6 +67,13 @@ func TestDefault() *Config {
 			ClientSecret:     defaults.OIDCClientSecret,
 			Scopes:           defaults.OIDCScopes,
 		},
+		SMTPConfig: &SMTPConfig{
+			Host:     defaults.SMTPHost,
+			Port:     defaults.SMTPPort,
+			Username: defaults.SMTPUsername,
+			Password: defaults.SMTPPassword,
+			From:     defaults.SMTPFrom,
+		},
 	}
 }
 
@@ -134,6 +141,13 @@ func Default() *Config {
 			ClientSecret:     defaults.OIDCClientSecret,
 			Scopes:           defaults.OIDCScopes,
 		},
+		SMTPConfig: &SMTPConfig{
+			Host:     defaults.SMTPHost,
+			Port:     defaults.SMTPPort,
+			Username: defaults.SMTPUsername,
+			Password: defaults.SMTPPassword,
+			From:     defaults.SMTPFrom,
+		},
 	}
 }
 
@@ -195,6 +209,12 @@ func GetDefaults() Defaults {
 		OIDCClientID:         "",
 		OIDCClientSecret:     "",
 		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+
+		SMTPHost:     "",
+		SMTPPort:     0,
+		SMTPUsername: "",
+		SMTPPassword: "",
+		SMTPFrom:     "GoToSocial",
 	}
 }
 
@@ -253,5 +273,11 @@ func GetTestDefaults() Defaults {
 		OIDCClientID:         "",
 		OIDCClientSecret:     "",
 		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+
+		SMTPHost:     "",
+		SMTPPort:     0,
+		SMTPUsername: "",
+		SMTPPassword: "",
+		SMTPFrom:     "GoToSocial",
 	}
 }

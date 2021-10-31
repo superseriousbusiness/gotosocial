@@ -16,18 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package status_test
+package config
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/suite"
-)
-
-type StatusGetTestSuite struct {
-	StatusStandardTestSuite
-}
-
-func TestStatusGetTestSuite(t *testing.T) {
-	suite.Run(t, new(StatusGetTestSuite))
+// SMTPConfig holds configuration for sending emails using the smtp protocol.
+type SMTPConfig struct {
+	// Host of the smtp server.
+	Host string `yaml:"host"`
+	// Port of the smtp server.
+	Port int `yaml:"port"`
+	// Username to use when authenticating with the smtp server.
+	Username string `yaml:"username"`
+	// Password to use when authenticating with the smtp server.
+	Password string `yaml:"password"`
+	// From address to use when sending emails.
+	From string `yaml:"from"`
 }

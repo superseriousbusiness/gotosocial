@@ -18,15 +18,25 @@
 
 package testrig
 
-import (
-	"git.iim.gay/grufwub/go-store/kv"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-)
+import "github.com/superseriousbusiness/gotosocial/internal/email"
 
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender) processing.Processor {
-	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, NewTestTimelineManager(db), db, emailSender)
+// NewEmailSender returns a noop email sender that won't make any remote calls.
+//
+// If sentEmails is not nil, the noop callback function will place sent emails in
+// the map, with email address of the recipient as the key, and the value as the
+// parsed email message as it would have been sent.
+func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.Sender {
+	var sendCallback func(toAddress string, message string)
+
+	if sentEmails != nil {
+		sendCallback = func(toAddress string, message string) {
+			sentEmails[toAddress] = message
+		}
+	}
+
+	s, err := email.NewNoopSender(templateBaseDir, sendCallback)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }

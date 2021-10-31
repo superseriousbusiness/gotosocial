@@ -52,7 +52,7 @@ func postformat(in string) string {
 	s = html.UnescapeString(s)
 
 	// 3. minify html to remove any trailing newlines, spaces, unnecessary elements, etc etc
-	mini, err := minifyHTML(s)
+	mini, err := MinifyHTML(s)
 	if err != nil {
 		// if the minify failed, just return what we have
 		return s

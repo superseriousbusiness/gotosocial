@@ -16,5 +16,24 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Package email provides a service for interacting with an SMTP server
-package email
+package email_test
+
+import (
+	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/testrig"
+)
+
+type EmailTestSuite struct {
+	suite.Suite
+
+	sender email.Sender
+
+	sentEmails map[string]string
+}
+
+func (suite *EmailTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	suite.sentEmails = make(map[string]string)
+	suite.sender = testrig.NewEmailSender("../../web/template/", suite.sentEmails)
+}
