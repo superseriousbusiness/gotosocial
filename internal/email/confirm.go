@@ -21,8 +21,6 @@ package email
 import (
 	"bytes"
 	"net/smtp"
-
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 const (
@@ -35,11 +33,7 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 	if err := s.template.ExecuteTemplate(buf, confirmTemplate, data); err != nil {
 		return err
 	}
-
-	confirmBody, err := text.MinifyHTML(buf.String())
-	if err != nil {
-		return err
-	}
+	confirmBody := buf.String()
 
 	msg := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
