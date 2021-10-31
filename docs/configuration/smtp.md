@@ -1,6 +1,6 @@
 # Email Config (smtp)
 
-GoToSocial supports sending emails to users via the [Simple Mail Transfer Protocol](https://nl.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol) or **smtp**.
+GoToSocial supports sending emails to users via the [Simple Mail Transfer Protocol](https://wikipedia.org/wiki/Simple_Mail_Transfer_Protocol) or **smtp**.
 
 Configuring GoToSocial to send emails is **not required** in order to have a properly running instance. Still, it's very useful for doing things like sending confirmation emails and notifications, and handling password reset requests.
 
