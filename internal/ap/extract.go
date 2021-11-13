@@ -31,7 +31,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -669,5 +669,23 @@ func isFollowers(uris []*url.URL, followersURI string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// ExtractSensitive extracts whether or not an item is 'sensitive'.
+// If no sensitive property is set on the item at all, or if this property
+// isn't a boolean, then false will be returned by default.
+func ExtractSensitive(withSensitive WithSensitive) bool {
+	sensitiveProp := withSensitive.GetActivityStreamsSensitive()
+	if sensitiveProp == nil {
+		return false
+	}
+
+	for iter := sensitiveProp.Begin(); iter != sensitiveProp.End(); iter = iter.Next() {
+		if iter.IsXMLSchemaBoolean() {
+			return iter.Get()
+		}
+	}
+
 	return false
 }

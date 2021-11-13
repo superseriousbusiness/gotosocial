@@ -22,7 +22,7 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"

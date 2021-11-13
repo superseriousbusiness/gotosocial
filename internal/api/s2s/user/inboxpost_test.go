@@ -29,9 +29,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"

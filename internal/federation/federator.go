@@ -22,7 +22,7 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 

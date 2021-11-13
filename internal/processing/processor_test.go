@@ -27,8 +27,8 @@ import (
 	"net/http"
 
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"

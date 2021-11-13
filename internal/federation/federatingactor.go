@@ -23,8 +23,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
 // federatingActor implements the go-fed federating protocol interface

@@ -18,7 +18,7 @@
 
 package ap
 
-import "github.com/go-fed/activity/streams/vocab"
+import "github.com/superseriousbusiness/activity/streams/vocab"
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // This interface is fulfilled by: Person, Application, Organization, Service, and Group
@@ -249,9 +249,9 @@ type WithCC interface {
 	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
 }
 
-// WithSensitive ...
+// WithSensitive represents an activity with ActivityStreamsSensitiveProperty
 type WithSensitive interface {
-	// TODO
+	GetActivityStreamsSensitive() vocab.ActivityStreamsSensitiveProperty
 }
 
 // WithConversation ...

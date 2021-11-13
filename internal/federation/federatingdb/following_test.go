@@ -23,8 +23,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 

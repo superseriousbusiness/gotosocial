@@ -294,7 +294,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	status.Likeable = true
 
 	// sensitive
-	// TODO: this is a bool
+	status.Sensitive = ap.ExtractSensitive(statusable)
 
 	// language
 	// we might be able to extract this from the contentMap field

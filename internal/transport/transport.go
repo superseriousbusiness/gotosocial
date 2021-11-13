@@ -24,8 +24,8 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
