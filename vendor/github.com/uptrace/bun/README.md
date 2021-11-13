@@ -30,8 +30,7 @@ Main features are:
 
 Resources:
 
-- To ask questions, join [Discord](https://discord.gg/rWtp5Aj) or use
-  [Discussions](https://github.com/uptrace/bun/discussions).
+- [Discussions](https://github.com/uptrace/bun/discussions).
 - [Newsletter](https://blog.uptrace.dev/pages/newsletter.html) to get latest updates.
 - [Examples](https://github.com/uptrace/bun/tree/master/example)
 - [Documentation](https://bun.uptrace.dev/)
@@ -41,6 +40,7 @@ Resources:
 Projects using Bun:
 
 - [gotosocial](https://github.com/superseriousbusiness/gotosocial) - Golang fediverse server.
+- [input-output-hk/cicero](https://github.com/input-output-hk/cicero)
 - [RealWorld app](https://github.com/go-bun/bun-realworld-app)
 
 <details>
@@ -95,6 +95,55 @@ Projects using Bun:
 
 </details>
 
+## Why another database client?
+
+So you can elegantly write complex queries:
+
+```go
+regionalSales := db.NewSelect().
+	ColumnExpr("region").
+	ColumnExpr("SUM(amount) AS total_sales").
+	TableExpr("orders").
+	GroupExpr("region")
+
+topRegions := db.NewSelect().
+	ColumnExpr("region").
+	TableExpr("regional_sales").
+	Where("total_sales > (SELECT SUM(total_sales) / 10 FROM regional_sales)")
+
+err := db.NewSelect().
+	With("regional_sales", regionalSales).
+	With("top_regions", topRegions).
+	ColumnExpr("region").
+	ColumnExpr("product").
+	ColumnExpr("SUM(quantity) AS product_units").
+	ColumnExpr("SUM(amount) AS product_sales").
+	TableExpr("orders").
+	Where("region IN (SELECT region FROM top_regions)").
+	GroupExpr("region").
+	GroupExpr("product").
+	Scan(ctx)
+```
+
+```sql
+WITH regional_sales AS (
+    SELECT region, SUM(amount) AS total_sales
+    FROM orders
+    GROUP BY region
+), top_regions AS (
+    SELECT region
+    FROM regional_sales
+    WHERE total_sales > (SELECT SUM(total_sales)/10 FROM regional_sales)
+)
+SELECT region,
+       product,
+       SUM(quantity) AS product_units,
+       SUM(amount) AS product_sales
+FROM orders
+WHERE region IN (SELECT region FROM top_regions)
+GROUP BY region, product
+```
+
 ## Installation
 
 ```go
@@ -147,30 +196,6 @@ err := db.NewSelect().
 	OrderExpr("id ASC").
 	Limit(1).
 	Scan(ctx)
-```
-
-The code above is equivalent to:
-
-```go
-query := "SELECT id, name FROM users AS user WHERE name != '' ORDER BY id ASC LIMIT 1"
-
-rows, err := sqldb.QueryContext(ctx, query)
-if err != nil {
-	panic(err)
-}
-
-if !rows.Next() {
-    panic(sql.ErrNoRows)
-}
-
-user := new(User)
-if err := db.ScanRow(ctx, rows, user); err != nil {
-	panic(err)
-}
-
-if err := rows.Err(); err != nil {
-    panic(err)
-}
 ```
 
 ## Basic example
