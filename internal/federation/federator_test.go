@@ -25,10 +25,10 @@ import (
 	"testing"
 
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/pub"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

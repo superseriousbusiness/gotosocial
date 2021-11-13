@@ -22,8 +22,9 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-fed/activity/streams"
-	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // InboxContains returns true if the OrderedCollection at 'inbox'
@@ -55,4 +56,26 @@ func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox voc
 // Implementation note: we don't allow inbox setting so just return nil here.
 func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
+}
+
+// InboxForActor fetches the inbox corresponding to the given actorIRI.
+//
+// It is acceptable to just return nil for the inboxIRI. In this case, the library will
+// attempt to resolve the inbox of the actor by remote dereferencing instead.
+//
+// The library makes this call only after acquiring a lock first.
+func (f *federatingDB) InboxForActor(c context.Context, actorIRI *url.URL) (inboxIRI *url.URL, err error) {
+	account, err := f.db.GetAccountByURI(c, actorIRI.String())
+	if err != nil {
+		// if there are just no entries for this account yet it's fine, return nil
+		// and go-fed will try to dereference it instead
+		if err == db.ErrNoEntries {
+			return nil, nil
+		}
+		// there's been an actual error...
+		return nil, err
+	}
+
+	// we got it!
+	return url.Parse(account.InboxURI)
 }

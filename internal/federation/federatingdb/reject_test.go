@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-fed/activity/streams"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"

@@ -22,10 +22,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams"
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -48,6 +48,10 @@ func document1() vocab.ActivityStreamsDocument {
 	dBlurhash := streams.NewTootBlurhashProperty()
 	dBlurhash.Set("UxQ0EkRP_4tRxtRjWBt7%hozM_ayV@oLf6WB")
 	d.SetTootBlurhash(dBlurhash)
+
+	dSensitive := streams.NewActivityStreamsSensitiveProperty()
+	dSensitive.AppendXMLSchemaBoolean(true)
+	d.SetActivityStreamsSensitive(dSensitive)
 
 	return d
 }

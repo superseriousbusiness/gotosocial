@@ -21,7 +21,7 @@ package federation
 import (
 	"time"
 
-	"github.com/go-fed/activity/pub"
+	"github.com/superseriousbusiness/activity/pub"
 )
 
 /*

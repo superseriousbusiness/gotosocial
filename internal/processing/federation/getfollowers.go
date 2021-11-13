@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/go-fed/activity/streams"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 

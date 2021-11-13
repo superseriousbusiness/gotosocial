@@ -23,8 +23,8 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 

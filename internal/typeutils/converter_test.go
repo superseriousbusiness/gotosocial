@@ -19,8 +19,8 @@
 package typeutils_test
 
 import (
-	"github.com/go-fed/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"

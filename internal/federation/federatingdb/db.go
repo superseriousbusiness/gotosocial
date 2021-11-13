@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-fed/activity/pub"
-	"github.com/go-fed/activity/streams/vocab"
+	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"

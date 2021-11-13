@@ -20,8 +20,8 @@ package account_test
 
 import (
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/go-fed/activity/pub"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
