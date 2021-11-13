@@ -109,21 +109,6 @@ func (suite *AuthTestSuite) SetupTest() {
 	}
 
 	suite.db = db
-
-	models := []interface{}{
-		&gtsmodel.Client{},
-		&gtsmodel.Token{},
-		&gtsmodel.User{},
-		&gtsmodel.Account{},
-		&gtsmodel.Application{},
-	}
-
-	for _, m := range models {
-		if err := suite.db.CreateTable(context.Background(), m); err != nil {
-			logrus.Panicf("db connection error: %s", err)
-		}
-	}
-
 	suite.oauthServer = oauth.New(context.Background(), suite.db)
 
 	if err := suite.db.Put(context.Background(), suite.testAccount); err != nil {

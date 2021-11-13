@@ -58,10 +58,6 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	if err := dbService.CreateAllTables(ctx); err != nil {
-		return fmt.Errorf("error creating database tables: %s", err)
-	}
-
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
 	}

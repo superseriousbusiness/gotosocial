@@ -1,12 +1,3 @@
-# Migrations
-
-## How do I write a migration file?
-
-[See here](https://bun.uptrace.dev/guide/migrations.html#migration-names)
-
-As a template, take one of the existing migration files and modify it, or use the below code snippet:
-
-```go
 /*
    GoToSocial
    Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
@@ -30,21 +21,48 @@ package migrations
 import (
 	"context"
 
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
-            return nil
-		})
+		models := []interface{}{
+			&gtsmodel.Account{},
+			&gtsmodel.Application{},
+			&gtsmodel.Block{},
+			&gtsmodel.DomainBlock{},
+			&gtsmodel.EmailDomainBlock{},
+			&gtsmodel.Follow{},
+			&gtsmodel.FollowRequest{},
+			&gtsmodel.MediaAttachment{},
+			&gtsmodel.Mention{},
+			&gtsmodel.Status{},
+			&gtsmodel.StatusToEmoji{},
+			&gtsmodel.StatusToTag{},
+			&gtsmodel.StatusFave{},
+			&gtsmodel.StatusBookmark{},
+			&gtsmodel.StatusMute{},
+			&gtsmodel.Tag{},
+			&gtsmodel.User{},
+			&gtsmodel.Emoji{},
+			&gtsmodel.Instance{},
+			&gtsmodel.Notification{},
+			&gtsmodel.RouterSession{},
+			&gtsmodel.Token{},
+			&gtsmodel.Client{},
+		}
+		for _, i := range models {
+			if _, err := db.NewCreateTable().Model(i).IfNotExists().Exec(ctx); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
-            return nil
+			return nil
 		})
 	}
 
@@ -52,19 +70,3 @@ func init() {
 		panic(err)
 	}
 }
-```
-
-## File format
-
-Bun requires a very specific format: 14 digits, then letters or underscores.
-
-You can use the following bash command on your branch to generate a suitable migration filename.
-
-```bash
-echo "$(date --utc +%Y%m%d%H%M%S | head -c 14)_$(git rev-parse --abbrev-ref HEAD).go"
-```
-
-## Rules of thumb
-
-1. **DON'T DROP TABLES**!!!!!!!!
-2. Don't make something `NOT NULL` if it's likely to already contain `null` fields.
