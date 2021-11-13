@@ -3,7 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
-	git.iim.gay/grufwub/go-store v0.4.2
+	codeberg.org/gruf/go-store v1.0.3
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.0.0
@@ -18,7 +18,7 @@ require (
 	github.com/h2non/filetype v1.1.1
 	github.com/jackc/pgconn v1.10.0
 	github.com/jackc/pgx/v4 v4.13.0
-	github.com/microcosm-cc/bluemonday v1.0.15
+	github.com/microcosm-cc/bluemonday v1.0.16
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/oklog/ulid v1.3.1
@@ -28,9 +28,9 @@ require (
 	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.21
-	github.com/uptrace/bun v1.0.14
-	github.com/uptrace/bun/dialect/pgdialect v1.0.14
-	github.com/uptrace/bun/dialect/sqlitedialect v1.0.14
+	github.com/uptrace/bun v1.0.17
+	github.com/uptrace/bun/dialect/pgdialect v1.0.17
+	github.com/uptrace/bun/dialect/sqlitedialect v1.0.17
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
@@ -42,13 +42,14 @@ require (
 )
 
 require (
-	git.iim.gay/grufwub/fastpath v0.2.2 // indirect
-	git.iim.gay/grufwub/go-bufpool v0.2.1 // indirect
-	git.iim.gay/grufwub/go-bytes v0.7.0 // indirect
-	git.iim.gay/grufwub/go-errors v0.2.3 // indirect
-	git.iim.gay/grufwub/go-hashenc v0.3.0 // indirect
-	git.iim.gay/grufwub/go-mutexes v0.5.1 // indirect
-	git.iim.gay/grufwub/go-nowish v0.3.5 // indirect
+	codeberg.org/gruf/go-bytes v1.0.2 // indirect
+	codeberg.org/gruf/go-errors v1.0.0 // indirect
+	codeberg.org/gruf/go-fastpath v1.0.2 // indirect
+	codeberg.org/gruf/go-hashenc v1.0.1 // indirect
+	codeberg.org/gruf/go-logger v1.0.3 // indirect
+	codeberg.org/gruf/go-mutexes v1.0.0 // indirect
+	codeberg.org/gruf/go-nowish v1.0.2 // indirect
+	codeberg.org/gruf/go-pools v1.0.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

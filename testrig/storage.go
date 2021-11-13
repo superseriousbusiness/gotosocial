@@ -25,9 +25,9 @@ import (
 	"io"
 	"os"
 
-	"git.iim.gay/grufwub/go-store/kv"
-	"git.iim.gay/grufwub/go-store/storage"
-	"git.iim.gay/grufwub/go-store/util"
+	"codeberg.org/gruf/go-store/kv"
+	"codeberg.org/gruf/go-store/storage"
+	"codeberg.org/gruf/go-store/util"
 )
 
 // NewTestStorage returns a new in memory storage with the default test config

@@ -300,11 +300,11 @@ func (t *Table) processBaseModelField(f reflect.StructField) {
 		t.setName(tag.Name)
 	}
 
-	if s, ok := tag.Options["select"]; ok {
+	if s, ok := tag.Option("select"); ok {
 		t.SQLNameForSelects = t.quoteTableName(s)
 	}
 
-	if s, ok := tag.Options["alias"]; ok {
+	if s, ok := tag.Option("alias"); ok {
 		t.Alias = s
 		t.SQLAlias = t.quoteIdent(s)
 	}
@@ -315,15 +315,14 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 	tag := tagparser.Parse(f.Tag.Get("bun"))
 
 	sqlName := internal.Underscore(f.Name)
-	if tag.Name != "" {
+	if tag.Name != "" && tag.Name != sqlName {
+		if isKnownFieldOption(tag.Name) {
+			internal.Warn.Printf(
+				"%s.%s tag name %q is also an option name; is it a mistake?",
+				t.TypeName, f.Name, tag.Name,
+			)
+		}
 		sqlName = tag.Name
-	}
-
-	if tag.Name != sqlName && isKnownFieldOption(tag.Name) {
-		internal.Warn.Printf(
-			"%s.%s tag name %q is also an option name; is it a mistake?",
-			t.TypeName, f.Name, tag.Name,
-		)
 	}
 
 	for name := range tag.Options {
@@ -360,20 +359,27 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 	}
 
 	if v, ok := tag.Options["unique"]; ok {
-		// Split the value by comma, this will allow multiple names to be specified.
-		// We can use this to create multiple named unique constraints where a single column
-		// might be included in multiple constraints.
-		for _, uniqueName := range strings.Split(v, ",") {
+		var names []string
+		if len(v) == 1 {
+			// Split the value by comma, this will allow multiple names to be specified.
+			// We can use this to create multiple named unique constraints where a single column
+			// might be included in multiple constraints.
+			names = strings.Split(v[0], ",")
+		} else {
+			names = v
+		}
+
+		for _, uniqueName := range names {
 			if t.Unique == nil {
 				t.Unique = make(map[string][]*Field)
 			}
 			t.Unique[uniqueName] = append(t.Unique[uniqueName], field)
 		}
 	}
-	if s, ok := tag.Options["default"]; ok {
+	if s, ok := tag.Option("default"); ok {
 		field.SQLDefault = s
 	}
-	if s, ok := field.Tag.Options["type"]; ok {
+	if s, ok := field.Tag.Option("type"); ok {
 		field.UserSQLType = s
 	}
 	field.DiscoveredSQLType = DiscoverSQLType(field.IndirectType)
@@ -381,7 +387,7 @@ func (t *Table) newField(f reflect.StructField, index []int) *Field {
 	field.Scan = FieldScanner(t.dialect, field)
 	field.IsZero = zeroChecker(field.StructField.Type)
 
-	if v, ok := tag.Options["alt"]; ok {
+	if v, ok := tag.Option("alt"); ok {
 		t.FieldMap[v] = field
 	}
 
@@ -433,7 +439,7 @@ func (t *Table) initRelations() {
 }
 
 func (t *Table) tryRelation(field *Field) bool {
-	if rel, ok := field.Tag.Options["rel"]; ok {
+	if rel, ok := field.Tag.Option("rel"); ok {
 		t.initRelation(field, rel)
 		return true
 	}
@@ -444,7 +450,7 @@ func (t *Table) tryRelation(field *Field) bool {
 
 	if field.Tag.HasOption("join") {
 		internal.Warn.Printf(
-			`%s.%s option "join" requires a relation type`,
+			`%s.%s "join" option must come together with "rel" option`,
 			t.TypeName, field.GoName,
 		)
 	}
@@ -609,7 +615,7 @@ func (t *Table) hasManyRelation(field *Field) *Relation {
 	}
 
 	joinTable := t.dialect.Tables().Ref(indirectType(field.IndirectType.Elem()))
-	polymorphicValue, isPolymorphic := field.Tag.Options["polymorphic"]
+	polymorphicValue, isPolymorphic := field.Tag.Option("polymorphic")
 	rel := &Relation{
 		Type:      HasManyRelation,
 		Field:     field,
@@ -706,7 +712,7 @@ func (t *Table) m2mRelation(field *Field) *Relation {
 		panic(err)
 	}
 
-	m2mTableName, ok := field.Tag.Options["m2m"]
+	m2mTableName, ok := field.Tag.Option("m2m")
 	if !ok {
 		panic(fmt.Errorf("bun: %s must have m2m tag option", field.GoName))
 	}
@@ -891,8 +897,14 @@ func removeField(fields []*Field, field *Field) []*Field {
 	return fields
 }
 
-func parseRelationJoin(join string) ([]string, []string) {
-	ss := strings.Split(join, ",")
+func parseRelationJoin(join []string) ([]string, []string) {
+	var ss []string
+	if len(join) == 1 {
+		ss = strings.Split(join[0], ",")
+	} else {
+		ss = join
+	}
+
 	baseColumns := make([]string, len(ss))
 	joinColumns := make([]string, len(ss))
 	for i, s := range ss {

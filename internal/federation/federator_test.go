@@ -24,7 +24,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"git.iim.gay/grufwub/go-store/kv"
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/go-fed/activity/pub"
 	"github.com/go-fed/httpsig"
 	"github.com/stretchr/testify/assert"
