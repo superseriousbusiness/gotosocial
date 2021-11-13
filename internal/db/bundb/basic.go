@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"errors"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"

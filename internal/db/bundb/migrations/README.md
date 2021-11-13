@@ -28,29 +28,29 @@ As a template, take one of the existing migration files and modify it, or use th
 package migrations
 
 import (
-	"context"
+    "context"
 
-	"github.com/uptrace/bun"
+    "github.com/uptrace/bun"
 )
 
 func init() {
-	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
+    up := func(ctx context.Context, db *bun.DB) error {
+        return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+            // your logic here
             return nil
-		})
-	}
+        })
+    }
 
-	down := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
+    down := func(ctx context.Context, db *bun.DB) error {
+        return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+            // your logic here
             return nil
-		})
-	}
+        })
+    }
 
-	if err := Migrations.Register(up, down); err != nil {
-		panic(err)
-	}
+    if err := Migrations.Register(up, down); err != nil {
+        panic(err)
+    }
 }
 ```
 
@@ -61,7 +61,7 @@ Bun requires a very specific format: 14 digits, then letters or underscores.
 You can use the following bash command on your branch to generate a suitable migration filename.
 
 ```bash
-echo "$(date --utc +%Y%m%H%M%S%N | head -c 14)_$(git rev-parse --abbrev-ref HEAD).go"
+echo "$(date --utc +%Y%m%d%H%M%S | head -c 14)_$(git rev-parse --abbrev-ref HEAD).go"
 ```
 
 ## Rules of thumb

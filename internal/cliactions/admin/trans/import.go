@@ -43,10 +43,6 @@ var Import cliactions.GTSAction = func(ctx context.Context, c *config.Config) er
 		return errors.New("no path set")
 	}
 
-	if err := dbConn.CreateAllTables(ctx); err != nil {
-		return err
-	}
-
 	if err := importer.Import(ctx, path); err != nil {
 		return err
 	}
