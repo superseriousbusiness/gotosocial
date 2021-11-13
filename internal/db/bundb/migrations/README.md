@@ -28,29 +28,29 @@ As a template, take one of the existing migration files and modify it, or use th
 package migrations
 
 import (
-	"context"
+    "context"
 
-	"github.com/uptrace/bun"
+    "github.com/uptrace/bun"
 )
 
 func init() {
-	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
+    up := func(ctx context.Context, db *bun.DB) error {
+        return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+            // your logic here
             return nil
-		})
-	}
+        })
+    }
 
-	down := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// your logic here
+    down := func(ctx context.Context, db *bun.DB) error {
+        return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+            // your logic here
             return nil
-		})
-	}
+        })
+    }
 
-	if err := Migrations.Register(up, down); err != nil {
-		panic(err)
-	}
+    if err := Migrations.Register(up, down); err != nil {
+        panic(err)
+    }
 }
 ```
 
