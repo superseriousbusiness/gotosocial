@@ -10,3 +10,36 @@ extra_javascript:
 
 extra_css:
   - assets/css/swagger-ui.css
+
+nav:
+  - "Home": "index.md"
+  - "Installation Guide":
+    - "installation_guide/index.md"
+    - "installation_guide/binary.md"
+    - "installation_guide/docker.md"
+  - "Configuration":
+    - "configuration/index.md"
+    - "configuration/general.md"
+    - "configuration/database.md"
+    - "configuration/template.md"
+    - "configuration/accounts.md"
+    - "configuration/media.md"
+    - "configuration/storage.md"
+    - "configuration/statuses.md"
+    - "configuration/letsencrypt.md"
+    - "configuration/oidc.md"
+    - "configuration/smtp.md"
+  - "Admin":
+    - "admin/admin_panel.md"
+    - "admin/cli.md"
+    - "admin/backup_and_restore.md"
+  - "User Guide":
+    - "user_guide/posts.md"
+    - "user_guide/password_management.md"
+  - "Federation":
+    - "federation/index.md"
+    - "federation/security.md"
+    - "federation/behaviors/outbox.md"
+    - "federation/behaviors/conversation_threads.md"
+  - "API Documentation":
+    - "api/swagger.md"
