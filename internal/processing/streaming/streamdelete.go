@@ -37,7 +37,7 @@ func (p *processor) StreamDelete(statusID string) error {
 
 	// stream the delete to every account
 	for _, accountID := range accountIDs {
-		if err := p.streamToAccount(statusID, stream.EventTypeDelete, accountID); err != nil {
+		if err := p.streamToAccount(statusID, stream.EventTypeDelete, stream.AllStatusTimelines, accountID); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

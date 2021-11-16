@@ -27,11 +27,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-func (p *processor) StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account) error {
+func (p *processor) StreamUpdateToAccount(s *apimodel.Status, account *gtsmodel.Account, timeline string) error {
 	bytes, err := json.Marshal(s)
 	if err != nil {
 		return fmt.Errorf("error marshalling status to json: %s", err)
 	}
 
-	return p.streamToAccount(string(bytes), stream.EventTypeUpdate, account.ID)
+	return p.streamToAccount(string(bytes), stream.EventTypeUpdate, []string{timeline}, account.ID)
 }

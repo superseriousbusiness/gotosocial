@@ -25,7 +25,7 @@ import (
 )
 
 // streamToAccount streams the given payload with the given event type to any streams currently open for the given account ID.
-func (p *processor) streamToAccount(payload string, event stream.EventType, accountID string) error {
+func (p *processor) streamToAccount(payload string, event string, timelines []string, accountID string) error {
 	v, ok := p.streamMap.Load(accountID)
 	if !ok {
 		// no open connections so nothing to stream
@@ -42,11 +42,17 @@ func (p *processor) streamToAccount(payload string, event stream.EventType, acco
 	for _, s := range streamsForAccount.Streams {
 		s.Lock()
 		defer s.Unlock()
-		if s.Connected {
-			s.Messages <- &stream.Message{
-				Stream:  []string{s.Type},
-				Event:   string(event),
-				Payload: payload,
+		if !s.Connected {
+			continue
+		}
+
+		for _, t := range timelines {
+			if s.Timeline == string(t) {
+				s.Messages <- &stream.Message{
+					Stream:  []string{string(t)},
+					Event:   string(event),
+					Payload: payload,
+				}
 			}
 		}
 	}

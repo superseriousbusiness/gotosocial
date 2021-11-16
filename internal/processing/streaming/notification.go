@@ -33,5 +33,5 @@ func (p *processor) StreamNotificationToAccount(n *apimodel.Notification, accoun
 		return fmt.Errorf("error marshalling notification to json: %s", err)
 	}
 
-	return p.streamToAccount(string(bytes), stream.EventTypeNotification, account.ID)
+	return p.streamToAccount(string(bytes), stream.EventTypeNotification, []string{stream.TimelineNotifications, stream.TimelineHome}, account.ID)
 }
