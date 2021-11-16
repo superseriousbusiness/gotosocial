@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -160,7 +161,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, "user")
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, stream.TimelineNotifications)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -210,10 +211,10 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	suite.False(notif.Read)
 
 	// 2. a notification should be streamed
-	msg := <-stream.Messages
+	msg := <-wssStream.Messages
 	suite.Equal("notification", msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{"user"}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
 }
 
 // TestProcessFaveWithDifferentReceivingAccount ensures that when an account receives a fave that's for
