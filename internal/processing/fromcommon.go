@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 func (p *processor) notifyStatus(ctx context.Context, status *gtsmodel.Status) error {
@@ -412,24 +413,15 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 		return
 	}
 
-	// the status was inserted to stream it to the user
+	// the status was inserted so stream it to the user
 	if inserted {
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
 		if err != nil {
 			errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
 		} else {
-			if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount); err != nil {
+			if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount, stream.TimelineHome); err != nil {
 				errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 			}
-		}
-	}
-
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, timelineAccount)
-	if err != nil {
-		errors <- fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %s", status.ID, err)
-	} else {
-		if err := p.streamingProcessor.StreamUpdateToAccount(apiStatus, timelineAccount); err != nil {
-			errors <- fmt.Errorf("timelineStatusForAccount: error streaming status %s: %s", status.ID, err)
 		}
 	}
 }
