@@ -127,13 +127,13 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 
 	q := a.newAccountQ(account)
 
-	if domain == "" {
+	if domain != "" {
 		q = q.
 			Where("account.username = ?", domain).
 			Where("account.domain = ?", domain)
 	} else {
 		q = q.
-			Where("account.username = ?", domain).
+			Where("account.username = ?", a.config.Host).
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 

@@ -37,7 +37,7 @@ func (suite *AdminTestSuite) TestCreateInstanceAccount() {
 	testrig.CreateTestTables(suite.db)
 
 	// make sure there's no instance account in the db yet
-	acct, err := suite.db.GetInstanceAccount(context.Background(), suite.config.Host)
+	acct, err := suite.db.GetInstanceAccount(context.Background(), "")
 	suite.Error(err)
 	suite.Nil(acct)
 
@@ -46,7 +46,7 @@ func (suite *AdminTestSuite) TestCreateInstanceAccount() {
 	suite.NoError(err)
 
 	// and now check it exists
-	acct, err = suite.db.GetInstanceAccount(context.Background(), suite.config.Host)
+	acct, err = suite.db.GetInstanceAccount(context.Background(), "")
 	suite.NoError(err)
 	suite.NotNil(acct)
 }
