@@ -178,18 +178,19 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 	username := a.config.Host
 
-	// check if instance account already exists
-	existsQ := a.conn.
+	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.Account{}).
 		Where("username = ?", username).
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
-	count, err := existsQ.Count(ctx)
-	if err != nil && count == 1 {
+
+	exists, err := a.conn.Exists(ctx, q)
+	if err != nil {
+		return err
+	}
+	if exists {
 		logrus.Infof("instance account %s already exists", username)
 		return nil
-	} else if err != sql.ErrNoRows {
-		return a.conn.ProcessError(err)
 	}
 
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
