@@ -27,8 +27,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/ReneKroon/ttlcache"
@@ -123,16 +125,35 @@ func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
 		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 	case dbTypeSqlite:
 		// SQLITE
+		var err error
 
 		// Drop anything fancy from DB address
 		c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
 		c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
 
+		providedPath, err := filepath.Abs(c.DBConfig.Address)
+		if err != nil {
+			providedPath = c.DBConfig.Address
+		}
+		parentFolderInfo, err := os.Stat(filepath.Dir(providedPath))
+		if err != nil {
+			return nil, fmt.Errorf("could not open sqlite db: could not determine parent folder permissions for '%s': %s", providedPath, err)
+		}
+		parentFolderStat := parentFolderInfo.Sys().(*syscall.Stat_t)
+		readWritableBecauseUser := ((parentFolderInfo.Mode() & 0600) == 0600) && os.Geteuid() == int(parentFolderStat.Uid)
+		readWritableBecauseGroup := ((parentFolderInfo.Mode() & 0060) == 0060) && os.Getegid() == int(parentFolderStat.Gid)
+		readWritableBecauseEveryone := ((parentFolderInfo.Mode() & 0006) == 0006)
+
 		// Append our own SQLite preferences
 		c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
 
+		logrus.Infof("attempting to open sqlite database with address %s", c.DBConfig.Address)
+		if !(readWritableBecauseUser || readWritableBecauseGroup || readWritableBecauseEveryone) {
+			logrus.Warnf("WARNING: parent folder permissions for '%s' do not seem to allow us to read and write", providedPath)
+		}
+
 		// Open new DB instance
-		var err error
+
 		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
 		if err != nil {
 			return nil, fmt.Errorf("could not open sqlite db: %s", err)
