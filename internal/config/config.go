@@ -114,87 +114,87 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	//    as a command-line argument or an env variable, which takes priority.
 
 	// general flags
-	if c.LogLevel == "" || f.IsSet(fn.LogLevel) {
+	if f.IsSet(fn.LogLevel) {
 		c.LogLevel = f.String(fn.LogLevel)
 	}
 
-	if c.ApplicationName == "" || f.IsSet(fn.ApplicationName) {
+	if f.IsSet(fn.ApplicationName) {
 		c.ApplicationName = f.String(fn.ApplicationName)
 	}
 
-	if c.Host == "" || f.IsSet(fn.Host) {
+	if f.IsSet(fn.Host) {
 		c.Host = f.String(fn.Host)
 	}
 	if c.Host == "" {
 		return errors.New("host was not set")
 	}
 
-	if c.AccountDomain == "" || f.IsSet(fn.AccountDomain) {
+	if f.IsSet(fn.AccountDomain) {
 		c.AccountDomain = f.String(fn.AccountDomain)
 	}
 	if c.AccountDomain == "" {
 		c.AccountDomain = c.Host // default to whatever the host is, if this is empty
 	}
 
-	if c.Protocol == "" || f.IsSet(fn.Protocol) {
+	if f.IsSet(fn.Protocol) {
 		c.Protocol = f.String(fn.Protocol)
 	}
 	if c.Protocol == "" {
 		return errors.New("protocol was not set")
 	}
 
-	if c.BindAddress == "" || f.IsSet(fn.BindAddress) {
+	if f.IsSet(fn.BindAddress) {
 		c.BindAddress = f.String(fn.BindAddress)
 	}
 
-	if c.Port == 0 || f.IsSet(fn.Port) {
+	if f.IsSet(fn.Port) {
 		c.Port = f.Int(fn.Port)
 	}
 
-	if len(c.TrustedProxies) == 0 || f.IsSet(fn.TrustedProxies) {
+	if f.IsSet(fn.TrustedProxies) {
 		c.TrustedProxies = f.StringSlice(fn.TrustedProxies)
 	}
 
 	// db flags
-	if c.DBConfig.Type == "" || f.IsSet(fn.DbType) {
+	if f.IsSet(fn.DbType) {
 		c.DBConfig.Type = f.String(fn.DbType)
 	}
 
-	if c.DBConfig.Address == "" || f.IsSet(fn.DbAddress) {
+	if f.IsSet(fn.DbAddress) {
 		c.DBConfig.Address = f.String(fn.DbAddress)
 	}
 
-	if c.DBConfig.Port == 0 || f.IsSet(fn.DbPort) {
+	if f.IsSet(fn.DbPort) {
 		c.DBConfig.Port = f.Int(fn.DbPort)
 	}
 
-	if c.DBConfig.User == "" || f.IsSet(fn.DbUser) {
+	if f.IsSet(fn.DbUser) {
 		c.DBConfig.User = f.String(fn.DbUser)
 	}
 
-	if c.DBConfig.Password == "" || f.IsSet(fn.DbPassword) {
+	if f.IsSet(fn.DbPassword) {
 		c.DBConfig.Password = f.String(fn.DbPassword)
 	}
 
-	if c.DBConfig.Database == "" || f.IsSet(fn.DbDatabase) {
+	if f.IsSet(fn.DbDatabase) {
 		c.DBConfig.Database = f.String(fn.DbDatabase)
 	}
 
-	if c.DBConfig.TLSMode == DBTLSModeUnset || f.IsSet(fn.DbTLSMode) {
+	if f.IsSet(fn.DbTLSMode) {
 		c.DBConfig.TLSMode = DBTLSMode(f.String(fn.DbTLSMode))
 	}
 
-	if c.DBConfig.TLSCACert == "" || f.IsSet(fn.DbTLSCACert) {
+	if f.IsSet(fn.DbTLSCACert) {
 		c.DBConfig.TLSCACert = f.String(fn.DbTLSCACert)
 	}
 
 	// template flags
-	if c.TemplateConfig.BaseDir == "" || f.IsSet(fn.TemplateBaseDir) {
+	if f.IsSet(fn.TemplateBaseDir) {
 		c.TemplateConfig.BaseDir = f.String(fn.TemplateBaseDir)
 	}
 
 	// template flags
-	if c.TemplateConfig.AssetBaseDir == "" || f.IsSet(fn.AssetBaseDir) {
+	if f.IsSet(fn.AssetBaseDir) {
 		c.TemplateConfig.AssetBaseDir = f.String(fn.AssetBaseDir)
 	}
 
@@ -208,57 +208,57 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	}
 
 	// media flags
-	if c.MediaConfig.MaxImageSize == 0 || f.IsSet(fn.MediaMaxImageSize) {
+	if f.IsSet(fn.MediaMaxImageSize) {
 		c.MediaConfig.MaxImageSize = f.Int(fn.MediaMaxImageSize)
 	}
 
-	if c.MediaConfig.MaxVideoSize == 0 || f.IsSet(fn.MediaMaxVideoSize) {
+	if f.IsSet(fn.MediaMaxVideoSize) {
 		c.MediaConfig.MaxVideoSize = f.Int(fn.MediaMaxVideoSize)
 	}
 
-	if c.MediaConfig.MinDescriptionChars == 0 || f.IsSet(fn.MediaMinDescriptionChars) {
+	if f.IsSet(fn.MediaMinDescriptionChars) {
 		c.MediaConfig.MinDescriptionChars = f.Int(fn.MediaMinDescriptionChars)
 	}
 
-	if c.MediaConfig.MaxDescriptionChars == 0 || f.IsSet(fn.MediaMaxDescriptionChars) {
+	if f.IsSet(fn.MediaMaxDescriptionChars) {
 		c.MediaConfig.MaxDescriptionChars = f.Int(fn.MediaMaxDescriptionChars)
 	}
 
 	// storage flags
-	if c.StorageConfig.Backend == "" || f.IsSet(fn.StorageBackend) {
+	if f.IsSet(fn.StorageBackend) {
 		c.StorageConfig.Backend = f.String(fn.StorageBackend)
 	}
 
-	if c.StorageConfig.BasePath == "" || f.IsSet(fn.StorageBasePath) {
+	if f.IsSet(fn.StorageBasePath) {
 		c.StorageConfig.BasePath = f.String(fn.StorageBasePath)
 	}
 
-	if c.StorageConfig.ServeProtocol == "" || f.IsSet(fn.StorageServeProtocol) {
+	if f.IsSet(fn.StorageServeProtocol) {
 		c.StorageConfig.ServeProtocol = f.String(fn.StorageServeProtocol)
 	}
 
-	if c.StorageConfig.ServeHost == "" || f.IsSet(fn.StorageServeHost) {
+	if f.IsSet(fn.StorageServeHost) {
 		c.StorageConfig.ServeHost = f.String(fn.StorageServeHost)
 	}
 
-	if c.StorageConfig.ServeBasePath == "" || f.IsSet(fn.StorageServeBasePath) {
+	if f.IsSet(fn.StorageServeBasePath) {
 		c.StorageConfig.ServeBasePath = f.String(fn.StorageServeBasePath)
 	}
 
 	// statuses flags
-	if c.StatusesConfig.MaxChars == 0 || f.IsSet(fn.StatusesMaxChars) {
+	if f.IsSet(fn.StatusesMaxChars) {
 		c.StatusesConfig.MaxChars = f.Int(fn.StatusesMaxChars)
 	}
-	if c.StatusesConfig.CWMaxChars == 0 || f.IsSet(fn.StatusesCWMaxChars) {
+	if f.IsSet(fn.StatusesCWMaxChars) {
 		c.StatusesConfig.CWMaxChars = f.Int(fn.StatusesCWMaxChars)
 	}
-	if c.StatusesConfig.PollMaxOptions == 0 || f.IsSet(fn.StatusesPollMaxOptions) {
+	if f.IsSet(fn.StatusesPollMaxOptions) {
 		c.StatusesConfig.PollMaxOptions = f.Int(fn.StatusesPollMaxOptions)
 	}
-	if c.StatusesConfig.PollOptionMaxChars == 0 || f.IsSet(fn.StatusesPollOptionMaxChars) {
+	if f.IsSet(fn.StatusesPollOptionMaxChars) {
 		c.StatusesConfig.PollOptionMaxChars = f.Int(fn.StatusesPollOptionMaxChars)
 	}
-	if c.StatusesConfig.MaxMediaFiles == 0 || f.IsSet(fn.StatusesMaxMediaFiles) {
+	if f.IsSet(fn.StatusesMaxMediaFiles) {
 		c.StatusesConfig.MaxMediaFiles = f.Int(fn.StatusesMaxMediaFiles)
 	}
 
@@ -267,15 +267,15 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.LetsEncryptConfig.Enabled = f.Bool(fn.LetsEncryptEnabled)
 	}
 
-	if c.LetsEncryptConfig.Port == 0 || f.IsSet(fn.LetsEncryptPort) {
+	if f.IsSet(fn.LetsEncryptPort) {
 		c.LetsEncryptConfig.Port = f.Int(fn.LetsEncryptPort)
 	}
 
-	if c.LetsEncryptConfig.CertDir == "" || f.IsSet(fn.LetsEncryptCertDir) {
+	if f.IsSet(fn.LetsEncryptCertDir) {
 		c.LetsEncryptConfig.CertDir = f.String(fn.LetsEncryptCertDir)
 	}
 
-	if c.LetsEncryptConfig.EmailAddress == "" || f.IsSet(fn.LetsEncryptEmailAddress) {
+	if f.IsSet(fn.LetsEncryptEmailAddress) {
 		c.LetsEncryptConfig.EmailAddress = f.String(fn.LetsEncryptEmailAddress)
 	}
 
@@ -284,7 +284,7 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.OIDCConfig.Enabled = f.Bool(fn.OIDCEnabled)
 	}
 
-	if c.OIDCConfig.IDPName == "" || f.IsSet(fn.OIDCIdpName) {
+	if f.IsSet(fn.OIDCIdpName) {
 		c.OIDCConfig.IDPName = f.String(fn.OIDCIdpName)
 	}
 
@@ -292,40 +292,40 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 		c.OIDCConfig.SkipVerification = f.Bool(fn.OIDCSkipVerification)
 	}
 
-	if c.OIDCConfig.Issuer == "" || f.IsSet(fn.OIDCIssuer) {
+	if f.IsSet(fn.OIDCIssuer) {
 		c.OIDCConfig.Issuer = f.String(fn.OIDCIssuer)
 	}
 
-	if c.OIDCConfig.ClientID == "" || f.IsSet(fn.OIDCClientID) {
+	if f.IsSet(fn.OIDCClientID) {
 		c.OIDCConfig.ClientID = f.String(fn.OIDCClientID)
 	}
 
-	if c.OIDCConfig.ClientSecret == "" || f.IsSet(fn.OIDCClientSecret) {
+	if f.IsSet(fn.OIDCClientSecret) {
 		c.OIDCConfig.ClientSecret = f.String(fn.OIDCClientSecret)
 	}
 
-	if len(c.OIDCConfig.Scopes) == 0 || f.IsSet(fn.OIDCScopes) {
+	if f.IsSet(fn.OIDCScopes) {
 		c.OIDCConfig.Scopes = f.StringSlice(fn.OIDCScopes)
 	}
 
 	// smtp flags
-	if c.SMTPConfig.Host == "" || f.IsSet(fn.SMTPHost) {
+	if f.IsSet(fn.SMTPHost) {
 		c.SMTPConfig.Host = f.String(fn.SMTPHost)
 	}
 
-	if c.SMTPConfig.Port == 0 || f.IsSet(fn.SMTPPort) {
+	if f.IsSet(fn.SMTPPort) {
 		c.SMTPConfig.Port = f.Int(fn.SMTPPort)
 	}
 
-	if c.SMTPConfig.Username == "" || f.IsSet(fn.SMTPUsername) {
+	if f.IsSet(fn.SMTPUsername) {
 		c.SMTPConfig.Username = f.String(fn.SMTPUsername)
 	}
 
-	if c.SMTPConfig.Password == "" || f.IsSet(fn.SMTPPassword) {
+	if f.IsSet(fn.SMTPPassword) {
 		c.SMTPConfig.Password = f.String(fn.SMTPPassword)
 	}
 
-	if c.SMTPConfig.From == "" || f.IsSet(fn.SMTPFrom) {
+	if f.IsSet(fn.SMTPFrom) {
 		c.SMTPConfig.From = f.String(fn.SMTPFrom)
 	}
 
