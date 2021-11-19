@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -200,7 +199,6 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	}
 
 	// accounts flags
-	logrus.Infof("f.IsSet(fn.AccountsOpenRegistration): %t", f.IsSet(fn.AccountsOpenRegistration))
 	if f.IsSet(fn.AccountsOpenRegistration) {
 		c.AccountsConfig.OpenRegistration = f.Bool(fn.AccountsOpenRegistration)
 	}
