@@ -24,7 +24,6 @@ import (
 )
 
 func accountsFlags(flagNames, envNames config.Flags, defaults config.Defaults) []cli.Flag {
-
 	return []cli.Flag{
 		&cli.BoolFlag{
 			Name:    flagNames.AccountsOpenRegistration,
