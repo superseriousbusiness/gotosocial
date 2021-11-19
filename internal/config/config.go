@@ -83,24 +83,7 @@ func FromFile(path string) (*Config, error) {
 		}
 		return c, nil
 	}
-	return Empty(), nil
-}
-
-// Empty just returns a new empty config
-func Empty() *Config {
-	return &Config{
-		DBConfig:          &DBConfig{},
-		TemplateConfig:    &TemplateConfig{},
-		AccountsConfig:    &AccountsConfig{},
-		MediaConfig:       &MediaConfig{},
-		StorageConfig:     &StorageConfig{},
-		StatusesConfig:    &StatusesConfig{},
-		LetsEncryptConfig: &LetsEncryptConfig{},
-		OIDCConfig:        &OIDCConfig{},
-		SMTPConfig:        &SMTPConfig{},
-		AccountCLIFlags:   make(map[string]string),
-		ExportCLIFlags:    make(map[string]string),
-	}
+	return Default(), nil
 }
 
 // loadFromFile takes a path to a yaml file and attempts to load a Config object from it
@@ -110,7 +93,7 @@ func loadFromFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("could not read file at path %s: %s", path, err)
 	}
 
-	config := Empty()
+	config := Default()
 	if err := yaml.Unmarshal(bytes, config); err != nil {
 		return nil, fmt.Errorf("could not unmarshal file at path %s: %s", path, err)
 	}
