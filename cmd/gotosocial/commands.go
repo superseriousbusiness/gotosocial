@@ -22,12 +22,12 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func getCommands() []*cli.Command {
+func getCommands(allFlags []cli.Flag) []*cli.Command {
 	commands := []*cli.Command{}
 	commandSets := [][]*cli.Command{
-		serverCommands(),
-		adminCommands(),
-		testrigCommands(),
+		serverCommands(allFlags),
+		adminCommands(allFlags),
+		testrigCommands(allFlags),
 	}
 	for _, cs := range commandSets {
 		commands = append(commands, cs...)

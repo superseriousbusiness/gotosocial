@@ -25,7 +25,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func adminCommands() []*cli.Command {
+func adminCommands(allFlags []cli.Flag) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:  "admin",
@@ -56,7 +56,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Create)
+								return runAction(c, allFlags, account.Create)
 							},
 						},
 						{
@@ -70,7 +70,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Confirm)
+								return runAction(c, allFlags, account.Confirm)
 							},
 						},
 						{
@@ -84,7 +84,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Promote)
+								return runAction(c, allFlags, account.Promote)
 							},
 						},
 						{
@@ -98,7 +98,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Demote)
+								return runAction(c, allFlags, account.Demote)
 							},
 						},
 						{
@@ -112,7 +112,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Disable)
+								return runAction(c, allFlags, account.Disable)
 							},
 						},
 						{
@@ -126,7 +126,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Suspend)
+								return runAction(c, allFlags, account.Suspend)
 							},
 						},
 						{
@@ -145,7 +145,7 @@ func adminCommands() []*cli.Command {
 								},
 							},
 							Action: func(c *cli.Context) error {
-								return runAction(c, account.Password)
+								return runAction(c, allFlags, account.Password)
 							},
 						},
 					},
@@ -161,7 +161,7 @@ func adminCommands() []*cli.Command {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						return runAction(c, trans.Export)
+						return runAction(c, allFlags, trans.Export)
 					},
 				},
 				{
@@ -175,7 +175,7 @@ func adminCommands() []*cli.Command {
 						},
 					},
 					Action: func(c *cli.Context) error {
-						return runAction(c, trans.Import)
+						return runAction(c, allFlags, trans.Import)
 					},
 				},
 			},
