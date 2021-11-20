@@ -60,7 +60,7 @@ func FilePathOk(path string) error {
 
 			err = os.Remove(ioTestFilename)
 			if err != nil {
-				return fmt.Errorf("I cannot read and write a file inside '%s', but deleting it failed: %s", folderPath, err)
+				return fmt.Errorf("I can read and write a file inside '%s', but deleting it failed: %s", folderPath, err)
 			}
 
 			return nil
