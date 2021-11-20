@@ -41,8 +41,6 @@ func FilePathOk(path string) error {
 	onlyOwnerCanReadAndWrite := fs.FileMode(0600)
 
 	theFile, err := os.OpenFile(absPath, os.O_RDWR, onlyOwnerCanReadAndWrite)
-	defer theFile.Close()
-
 	if err != nil {
 
 		if os.IsNotExist(err) {
@@ -70,6 +68,8 @@ func FilePathOk(path string) error {
 
 		return err
 	}
+
+	theFile.Close()
 
 	return nil
 }
