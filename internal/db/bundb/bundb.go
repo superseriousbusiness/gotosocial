@@ -137,18 +137,18 @@ func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
 		if c.DBConfig.Address != ":memory:" {
 			absPathForLog, err := filepath.Abs(c.DBConfig.Address)
 			if err != nil {
-				absPathForLog = c.DBConfig.Address
-			}
-			logrus.Infof("attempting to open sqlite database at %s", absPathForLog)
-
-			exists, err := util.FilePathExistsAndIsReadWritable(c.DBConfig.Address)
-
-			if !exists {
-				return nil, fmt.Errorf("could not open sqlite db: %s", err)
-			} else if err != nil {
-				logrus.Warnf("WARNING (sqlite initialization): %s", err)
+				return nil, fmt.Errorf("could not open sqlite db: could not determine absolute filepath for '%s': %s", c.DBConfig.Address, err)
 			}
 
+			err = util.FilePathOk(c.DBConfig.Address)
+			if err != nil {
+				return nil, fmt.Errorf("could not open sqlite db: checking read/write access failed: %s", err)
+			} else {
+				logrus.Infof(
+					"file or directory exists and permissions seem ok, attempting to open sqlite database at '%s'",
+					absPathForLog,
+				)
+			}
 		}
 
 		// Append our own SQLite preferences

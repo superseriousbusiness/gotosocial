@@ -20,42 +20,56 @@ package util
 
 import (
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
-func FilePathExistsAndIsReadWritable(path string) (exists bool, err error) {
+// If the file already exists, this function will perform a write and a read on that file,
+// then clean up after itself, reporting any errors along the way.
+// If the file does not already exist, it will instead try to create and then read from a separate test file
+// in the same parent folder, then clean up after itself, reporting any errors along the way.
+func FilePathOk(path string) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		absPath = path
+		return fmt.Errorf("error obtaining absolute path from '%s': %s", path, err)
 	}
-	parentFolderInfo, err := os.Stat(filepath.Dir(absPath))
-	if err != nil {
-		return false, fmt.Errorf("could not determine parent folder permissions for '%s': %s", absPath, err)
-	}
-	parentFolderStat := parentFolderInfo.Sys().(*syscall.Stat_t)
-	processUserOwnsFolder := os.Geteuid() == int(parentFolderStat.Uid)
-	processIsRunningAsRoot := os.Geteuid() == 0
-	processHasGroupMatchForFolder := os.Getegid() == int(parentFolderStat.Gid)
-	folderAllowsOwnerToReadAndWrite := (parentFolderInfo.Mode() & 0600) == 0600
-	folderAllowsGroupMembersToReadAndWrite := (parentFolderInfo.Mode() & 0060) == 0060
-	folderAllowsAnyoneToReadAndWrite := (parentFolderInfo.Mode() & 0006) == 0006
-	readWritableBecauseUser := processUserOwnsFolder && folderAllowsOwnerToReadAndWrite
-	// could use os.Getgroups() here to determine if the process user has membership in the group for the folder...
-	// but does it really matter that much just for a warning message? 99% of the time the process UID should own the folder anyways
-	readWritableBecauseGroup := processHasGroupMatchForFolder && folderAllowsGroupMembersToReadAndWrite
 
-	if !(processIsRunningAsRoot || readWritableBecauseUser || readWritableBecauseGroup || folderAllowsAnyoneToReadAndWrite) {
-		extraInfo := ""
-		if !processUserOwnsFolder {
-			extraInfo = fmt.Sprintf(": GoToSocial is running as user id %d, however the folder is owned by user %d", os.Geteuid(), int(parentFolderStat.Uid))
-		} else if !folderAllowsOwnerToReadAndWrite {
-			extraInfo = fmt.Sprintf(": GoToSocial (user id %d) owns the folder, however the owner is not allowed to read and write", os.Geteuid())
+	// these file permissions are not used, as the O_CREATE flag is not passed,
+	// however they are required by the os.OpenFile API
+	onlyOwnerCanReadAndWrite := fs.FileMode(0600)
+
+	theFile, err := os.OpenFile(absPath, os.O_RDWR, onlyOwnerCanReadAndWrite)
+	defer theFile.Close()
+
+	if err != nil {
+
+		if os.IsNotExist(err) {
+
+			// The file does not exist yet.
+			// So check the permissions of the parent folder instead.
+			folderPath := filepath.Dir(absPath)
+			ioTestFilename := fmt.Sprintf("%s.iotest", absPath)
+			err = ioutil.WriteFile(ioTestFilename, []byte("check_to_see_if_file_is_writable"), onlyOwnerCanReadAndWrite)
+			if err != nil {
+				return fmt.Errorf("I cannot write a file inside '%s': %s", folderPath, err)
+			}
+			_, err = ioutil.ReadFile(ioTestFilename)
+			if err != nil {
+				return fmt.Errorf("I cannot read a file inside '%s': %s", folderPath, err)
+			}
+
+			err = os.Remove(ioTestFilename)
+			if err != nil {
+				return fmt.Errorf("I cannot read and write a file inside '%s', but deleting it failed: %s", folderPath, err)
+			}
+
+			return nil
 		}
 
-		return true, fmt.Errorf("parent folder permissions for '%s' do not seem to allow us to read and write%s", absPath, extraInfo)
+		return err
 	}
 
-	return true, nil
+	return nil
 }
