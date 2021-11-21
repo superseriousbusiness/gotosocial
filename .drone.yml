@@ -13,7 +13,7 @@ steps:
 # We use golangci-lint for linting.
 # See: https://golangci-lint.run/
 - name: lint
-  image: golangci/golangci-lint:v1.42.1
+  image: golangci/golangci-lint:v1.43.0
   volumes:
   - name: go-build-cache
     path: /root/.cache/go-build
@@ -22,7 +22,7 @@ steps:
   - name: go-src
     path: /go
   commands:
-  - golangci-lint run --timeout 5m0s --tests=false --verbose
+  - golangci-lint run
   when:
     event:
       include:
@@ -115,6 +115,6 @@ trigger:
 
 ---
 kind: signature
-hmac: aa44c4655421fb0ed3141b8d7255a9a240dd4312244081d9e95929c4a196fd92
+hmac: 07d6ed18510f9591c6b347d6768cbe8e613561b3759f1a8dda8721d1d231a522
 
 ...
