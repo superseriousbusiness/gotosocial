@@ -220,7 +220,7 @@ func sqliteConn(ctx context.Context, c *config.Config) (*DBConn, error) {
 	}
 
 	tweakConnectionValues(sqldb)
-	
+
 	if c.DBConfig.Address == "file::memory:?cache=shared" {
 		logrus.Warn("sqlite in-memory database should only be used for debugging")
 		// don't close connections on disconnect -- otherwise
@@ -248,11 +248,11 @@ func pgConn(ctx context.Context, c *config.Config) (*DBConn, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 	}
-	
+
 	sqldb := stdlib.OpenDB(*opts)
-	
+
 	tweakConnectionValues(sqldb)
-	
+
 	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 
 	// ping to check the db is there and listening
