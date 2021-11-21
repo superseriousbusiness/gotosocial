@@ -55,7 +55,7 @@ const (
 	dbTypeSqlite   = "sqlite"
 )
 
-var registerTables []interface{} = []interface{}{
+var registerTables = []interface{}{
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
 }
@@ -273,6 +273,7 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	case config.DBTLSModeDisable, config.DBTLSModeUnset:
 		break // nothing to do
 	case config.DBTLSModeEnable:
+		/* #nosec G402 */
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
@@ -280,6 +281,7 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
 			ServerName:         c.DBConfig.Address,
+			MinVersion:         tls.VersionTLS12,
 		}
 	}
 

@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
+/* #nosec G101 */
 const (
 	// AuthSignInPath is the API path for users to sign in through
 	AuthSignInPath = "/auth/sign_in"

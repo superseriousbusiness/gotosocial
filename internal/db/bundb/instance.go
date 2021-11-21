@@ -116,8 +116,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 		q = q.Limit(limit)
 	}
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, i.conn.ProcessError(err)
 	}
 	return accounts, nil

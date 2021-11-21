@@ -23,6 +23,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -206,7 +207,11 @@ func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Statu
 	children := []*gtsmodel.Status{}
 	for e := foundStatuses.Front(); e != nil; e = e.Next() {
 		// only append children, not the overall parent status
-		entry := e.Value.(*gtsmodel.Status)
+		entry, ok := e.Value.(*gtsmodel.Status)
+		if !ok {
+			logrus.Panic("GetStatusChildren: found status could not be asserted to *gtsmodel.Status")
+		}
+
 		if entry.ID != status.ID {
 			children = append(children, entry)
 		}
@@ -233,7 +238,11 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 	for _, child := range immediateChildren {
 	insertLoop:
 		for e := foundStatuses.Front(); e != nil; e = e.Next() {
-			entry := e.Value.(*gtsmodel.Status)
+			entry, ok := e.Value.(*gtsmodel.Status)
+			if !ok {
+				logrus.Panic("statusChildren: found status could not be asserted to *gtsmodel.Status")
+			}
+
 			if child.InReplyToAccountID != "" && entry.ID == child.InReplyToID {
 				foundStatuses.InsertAfter(child, e)
 				break insertLoop
@@ -306,8 +315,7 @@ func (s *statusDB) GetStatusFaves(ctx context.Context, status *gtsmodel.Status) 
 	q := s.newFaveQ(&faves).
 		Where("status_id = ?", status.ID)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 	return faves, nil
@@ -319,8 +327,7 @@ func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status
 	q := s.newStatusQ(&reblogs).
 		Where("boost_of_id = ?", status.ID)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
 	return reblogs, nil

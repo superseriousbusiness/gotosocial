@@ -67,6 +67,6 @@ const (
 	ObjectRelationship   = "Relationship"   // ActivityStreamsRelationship https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship
 	ObjectTombstone      = "Tombstone"      // ActivityStreamsTombstone https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tombstone
 	ObjectVideo          = "Video"          // ActivityStreamsVideo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
-	ObjectCollection     = "Collection"     //ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
+	ObjectCollection     = "Collection"     // ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
 	ObjectCollectionPage = "CollectionPage" // ActivityStreamsCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collectionpage
 )

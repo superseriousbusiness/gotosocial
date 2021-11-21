@@ -64,8 +64,7 @@ func (p *processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 		}
 	case ap.ActivityUpdate:
 		// UPDATE SOMETHING
-		switch federatorMsg.APObjectType {
-		case ap.ObjectProfile:
+		if federatorMsg.APObjectType == ap.ObjectProfile {
 			// UPDATE AN ACCOUNT
 			return p.processUpdateAccountFromFederator(ctx, federatorMsg)
 		}

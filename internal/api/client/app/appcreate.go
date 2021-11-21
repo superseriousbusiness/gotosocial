@@ -20,12 +20,20 @@ package app
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+const (
+	// permitted length for most fields
+	formFieldLen = 64
+	// redirect can be a bit bigger because we probably need to encode data in the redirect uri
+	formRedirectLen = 512
 )
 
 // AppsPOSTHandler swagger:operation POST /api/v1/apps appCreate
@@ -78,11 +86,6 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
-
-	// permitted length for most fields
-	formFieldLen := 64
-	// redirect can be a bit bigger because we probably need to encode data in the redirect uri
-	formRedirectLen := 512
 
 	// check lengths of fields before proceeding so the user can't spam huge entries into the database
 	if len(form.ClientName) > formFieldLen {

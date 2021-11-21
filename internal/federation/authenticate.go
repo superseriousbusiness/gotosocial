@@ -149,7 +149,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	requestingPublicKeyID, err := url.Parse(verifier.KeyId())
 	if err != nil {
 		l.Debug("couldn't parse public key URL")
-		return nil, false, nil // couldn't parse the public key ID url
+		return nil, false, err // couldn't parse the public key ID url
 	}
 
 	requestingRemoteAccount := &gtsmodel.Account{}

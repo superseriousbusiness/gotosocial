@@ -125,8 +125,7 @@ func (n *notificationDB) getNotificationDB(ctx context.Context, id string, dst *
 	q := n.newNotificationQ(dst).
 		Where("notification.id = ?", id)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return n.conn.ProcessError(err)
 	}
 

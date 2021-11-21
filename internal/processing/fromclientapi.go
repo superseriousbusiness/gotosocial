@@ -64,15 +64,13 @@ func (p *processor) ProcessFromClientAPI(ctx context.Context, clientMsg messages
 		}
 	case ap.ActivityAccept:
 		// ACCEPT
-		switch clientMsg.APObjectType {
-		case ap.ActivityFollow:
+		if clientMsg.APObjectType == ap.ActivityFollow {
 			// ACCEPT FOLLOW
 			return p.processAcceptFollowFromClientAPI(ctx, clientMsg)
 		}
 	case ap.ActivityReject:
 		// REJECT
-		switch clientMsg.APObjectType {
-		case ap.ActivityFollow:
+		if clientMsg.APObjectType == ap.ActivityFollow {
 			// REJECT FOLLOW (request)
 			return p.processRejectFollowFromClientAPI(ctx, clientMsg)
 		}

@@ -91,8 +91,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	q = q.WhereGroup(" AND ", whereGroup)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, t.conn.ProcessError(err)
 	}
 	return statuses, nil
@@ -136,8 +135,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 		q = q.Limit(limit)
 	}
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, t.conn.ProcessError(err)
 	}
 	return statuses, nil

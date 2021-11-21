@@ -46,4 +46,4 @@ var DBTLSModeEnable DBTLSMode = "enable"
 var DBTLSModeRequire DBTLSMode = "require"
 
 // DBTLSModeUnset means that the TLS mode has not been set.
-var DBTLSModeUnset DBTLSMode = ""
+var DBTLSModeUnset DBTLSMode
