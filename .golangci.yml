@@ -8,6 +8,8 @@
 run:
   # include test files or not, default is true
   tests: false
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 5m
 
 linters:
   # enable some extra linters, see here for the list: https://golangci-lint.run/usage/linters/
