@@ -46,8 +46,7 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
 
-	// blank import for the sqlite driver for bun
-	_ "modernc.org/sqlite"
+	"modernc.org/sqlite"
 )
 
 const (
@@ -107,67 +106,38 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
-	var sqldb *sql.DB
 	var conn *DBConn
-
-	// depending on the database type we're trying to create, we need to use a different driver...
+	var err error
 	switch strings.ToLower(c.DBConfig.Type) {
 	case dbTypePostgres:
-		// POSTGRES
-		opts, err := deriveBunDBPGOptions(c)
+		conn, err = pgConn(ctx, c)
 		if err != nil {
-			return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
+			return nil, err
 		}
-		sqldb = stdlib.OpenDB(*opts)
-		tweakConnectionValues(sqldb)
-		conn = WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 	case dbTypeSqlite:
-		// SQLITE
-
-		// Drop anything fancy from DB address
-		c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
-		c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
-
-		// Append our own SQLite preferences
-		c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
-
-		// Open new DB instance
-		var err error
-		sqldb, err = sql.Open("sqlite", c.DBConfig.Address)
+		conn, err = sqliteConn(ctx, c)
 		if err != nil {
-			return nil, fmt.Errorf("could not open sqlite db: %s", err)
-		}
-		tweakConnectionValues(sqldb)
-		conn = WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
-
-		if c.DBConfig.Address == "file::memory:?cache=shared" {
-			logrus.Warn("sqlite in-memory database should only be used for debugging")
-
-			// don't close connections on disconnect -- otherwise
-			// the SQLite database will be deleted when there
-			// are no active connections
-			sqldb.SetConnMaxLifetime(0)
+			return nil, err
 		}
 	default:
 		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
 	}
 
+	// add a hook to just log queries and the time they take
+	// only do this for trace logging where performance isn't 1st concern
 	if logrus.GetLevel() >= logrus.TraceLevel {
-		// add a hook to just log queries and the time they take
 		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 
-	// actually *begin* the connection so that we can tell if the db is there and listening
-	if err := conn.Ping(); err != nil {
-		return nil, fmt.Errorf("db connection error: %s", err)
-	}
-	logrus.Info("connected to database")
-
+	// table registration is needed for many-to-many, see:
+	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range registerTables {
-		// https://bun.uptrace.dev/orm/many-to-many-relation/
 		conn.RegisterModel(t)
 	}
 
+	// perform any pending database migrations: this includes
+	// the very first 'migration' on startup which just creates
+	// necessary tables
 	if err := doMigration(ctx, conn.DB); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
@@ -230,6 +200,68 @@ func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
 
 	// we can confidently return this useable service now
 	return ps, nil
+}
+
+func sqliteConn(ctx context.Context, c *config.Config) (*DBConn, error) {
+	// Drop anything fancy from DB address
+	c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
+	c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
+
+	// Append our own SQLite preferences
+	c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
+
+	// Open new DB instance
+	sqldb, err := sql.Open("sqlite", c.DBConfig.Address)
+	if err != nil {
+		if errWithCode, ok := err.(*sqlite.Error); ok {
+			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
+		}
+		return nil, fmt.Errorf("could not open sqlite db: %s", err)
+	}
+
+	tweakConnectionValues(sqldb)
+	
+	if c.DBConfig.Address == "file::memory:?cache=shared" {
+		logrus.Warn("sqlite in-memory database should only be used for debugging")
+		// don't close connections on disconnect -- otherwise
+		// the SQLite database will be deleted when there
+		// are no active connections
+		sqldb.SetConnMaxLifetime(0)
+	}
+
+	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
+
+	// ping to check the db is there and listening
+	if err := conn.PingContext(ctx); err != nil {
+		if errWithCode, ok := err.(*sqlite.Error); ok {
+			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
+		}
+		return nil, fmt.Errorf("sqlite ping: %s", err)
+	}
+
+	logrus.Info("connected to SQLITE database")
+	return conn, nil
+}
+
+func pgConn(ctx context.Context, c *config.Config) (*DBConn, error) {
+	opts, err := deriveBunDBPGOptions(c)
+	if err != nil {
+		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
+	}
+	
+	sqldb := stdlib.OpenDB(*opts)
+	
+	tweakConnectionValues(sqldb)
+	
+	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
+
+	// ping to check the db is there and listening
+	if err := conn.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("postgres ping: %s", err)
+	}
+
+	logrus.Info("connected to POSTGRES database")
+	return conn, nil
 }
 
 /*
