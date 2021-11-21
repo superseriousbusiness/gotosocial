@@ -22,7 +22,7 @@ steps:
   - name: go-src
     path: /go
   commands:
-  - golangci-lint run
+  - golangci-lint run --timeout 5m0s
   when:
     event:
       include:
@@ -115,6 +115,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 07d6ed18510f9591c6b347d6768cbe8e613561b3759f1a8dda8721d1d231a522
+hmac: fe80c7579221a43004359311025c5d9e0223592e8c458dc3e3fc95bdd121979b
 
 ...
