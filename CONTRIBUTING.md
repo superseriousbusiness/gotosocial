@@ -21,7 +21,9 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
     - [SQLite](#sqlite)
     - [Postgres](#postgres)
     - [Both](#both)
-- [Linting](#linting)
+- [Project Structure](#project-structure)
+- [Style](#style)
+- [Linting and Formatting](#linting-and-formatting)
 - [Updating Swagger docs](#updating-swagger-docs)
 - [CI/CD configuration](#cicd-configuration)
 - [Building releases and Docker containers](#building-releases-and-docker-containers)
@@ -179,33 +181,48 @@ Finally, to run tests against both database types one after the other, use:
 ./scripts/test.sh
 ```
 
-## Linting
+## Project Structure
 
-We use [golangci-lint](https://golangci-lint.run/) for linting. To run this locally, first install the linter following the instructions [here](https://golangci-lint.run/usage/install/#local-installation).
+For project structure, GoToSocial follows a standard and widely-accepted project layout [defined here](https://github.com/golang-standards/project-layout). As the author writes:
+
+> This is a basic layout for Go application projects. It's not an official standard defined by the core Go dev team; however, it is a set of common historical and emerging project layout patterns in the Go ecosystem.
+
+Most of the crucial business logic of the application is found inside the various packages and subpackages of the `internal` directory.
+
+Where possible, we prefer more files and packages of shorter length that very clearly pertain to definable chunks of application logic, rather than fewer but longer files: if one `.go` file is pushing 1,000 lines of code, it's probably too long.
+
+## Style
+
+It is a good idea to read the short official [Effective Go](https://golang.org/doc/effective_go) page before submitting code: this document is the foundation of many a style guide, for good reason, and GoToSocial more or less follows its advice.
+
+Another useful style guide that we try to follow: [this one](https://github.com/bahlo/go-styleguide).
+
+In addition, here are some specific highlights from Uber's Go style guide which agree with what we try to do in GtS:
+
+- [Group Similar Declarations](https://github.com/uber-go/guide/blob/master/style.md#group-similar-declarations).
+- [Reduce Nesting](https://github.com/uber-go/guide/blob/master/style.md#reduce-nesting).
+- [Unnecessary Else](https://github.com/uber-go/guide/blob/master/style.md#unnecessary-else).
+- [Local Variable Declarations](https://github.com/uber-go/guide/blob/master/style.md#local-variable-declarations).
+- [Reduce Scope of Variables](https://github.com/uber-go/guide/blob/master/style.md#reduce-scope-of-variables).
+- [Initializing Structs](https://github.com/uber-go/guide/blob/master/style.md#initializing-structs).
+
+## Linting and Formatting
+
+Before you submit any code, make sure to run `go fmt ./...` to update whitespace and other opinionated formatting.
+
+We use [golangci-lint](https://golangci-lint.run/) for linting, which allows us to catch style inconsistencies and potential bugs or security issues, using static code analysis.
+
+If you make a PR that doesn't pass the linter, it will be rejected. As such, it's good practice to run the linter locally before pushing or opening a PR.
+
+To do this, first install the linter following the instructions [here](https://golangci-lint.run/usage/install/#local-installation).
 
 Then, you can run the linter with:
 
 ```bash
-golangci-lint run --tests=false
+golangci-lint run
 ```
 
-Note that this linter also runs as a job on the Github repo, so if you make a PR that doesn't pass the linter, it will be rejected. As such, it's good practice to run the linter locally before pushing or opening a PR.
-
-Another useful linter is [golint](https://pkg.go.dev/github.com/360EntSecGroup-Skylar/goreporter/linters/golint), which catches some style issues that golangci-lint does not.
-
-To install golint, run:
-
-```bash
-go get -u github.com/golang/lint/golint
-```
-
-To run the linter, use:
-
-```bash
-golint ./internal/...
-```
-
-Then make sure to run `go fmt ./...` to update whitespace and other opinionated formatting.
+If there's no output, great! It passed :)
 
 ## Updating Swagger docs
 
