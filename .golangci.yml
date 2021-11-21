@@ -1,0 +1,24 @@
+# Configuration file for golangci-lint linter.
+# This will be automatically picked up when golangci-lint is invoked.
+# For all config options, see https://golangci-lint.run/usage/configuration/#config-file
+#
+# For GoToSocial we mostly take the default linters, but we add a few to catch style issues as well.
+
+# options for analysis running
+run:
+  # include test files or not, default is true
+  tests: false
+
+linters:
+  # enable some extra linters, see here for the list: https://golangci-lint.run/usage/linters/
+  enable:
+    - contextcheck
+    - forcetypeassert
+    - goconst
+    - gocritic
+    - gofmt
+    - gosec
+    - ifshort
+    - nilerr
+    - revive
+    - wastedassign
