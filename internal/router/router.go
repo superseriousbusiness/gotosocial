@@ -72,7 +72,8 @@ func (r *router) Start() {
 	if r.config.LetsEncryptConfig.Enabled {
 		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
-			if err := http.ListenAndServe(fmt.Sprintf(":%d", r.config.LetsEncryptConfig.Port), r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
+			listen := fmt.Sprintf("%s:%d", r.config.BindAddress, r.config.LetsEncryptConfig.Port)
+			if err := http.ListenAndServe(listen, r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
 				logrus.Fatalf("listen: %s", err)
 			}
 		}()
@@ -138,8 +139,9 @@ func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
 	}
 
 	// create the http server here, passing the gin engine as handler
+	listen := fmt.Sprintf("%s:%d", cfg.BindAddress, cfg.Port)
 	s := &http.Server{
-		Addr:              fmt.Sprintf(":%d", cfg.Port),
+		Addr:              listen,
 		Handler:           engine,
 		ReadTimeout:       readTimeout,
 		WriteTimeout:      writeTimeout,
