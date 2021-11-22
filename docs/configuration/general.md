@@ -49,11 +49,11 @@ accountDomain: ""
 protocol: "https"
 
 # String. Address to bind the GoToSocial server to.
-# This can be an IPv4 address or an IPv6 address (surrounded in square brackets).
+# This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
 # Default value will bind to all interfaces.
 # You probably won't need to change this unless you're setting GoToSocial up in some fancy way or
 # you have specific networking requirements.
-# Examples: ["0.0.0.0", "172.128.0.16", "[::]", "[2a02:1807:1430:500:13f5:5efb:3f3a:1191]"]
+# Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2a02:1807:1430:500:13f5:5efb:3f3a:1191]"]
 # Default: "0.0.0.0"
 bindAddress: "0.0.0.0"
 
