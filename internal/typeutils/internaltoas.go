@@ -464,9 +464,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	case gtsmodel.VisibilityDirect:
 		// if DIRECT, then only mentioned users should be added to TO, and nothing to CC
 		for _, m := range s.Mentions {
-			iri, err := url.Parse(m.OriginAccount.URI)
+			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.OriginAccount.URI, err)
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
 			}
 			toProp.AppendIRI(iri)
 		}
@@ -476,9 +476,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		// if FOLLOWERS ONLY then we want to add followers to TO, and mentions to CC
 		toProp.AppendIRI(authorFollowersURI)
 		for _, m := range s.Mentions {
-			iri, err := url.Parse(m.OriginAccount.URI)
+			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.OriginAccount.URI, err)
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
@@ -487,9 +487,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		toProp.AppendIRI(authorFollowersURI)
 		ccProp.AppendIRI(publicURI)
 		for _, m := range s.Mentions {
-			iri, err := url.Parse(m.OriginAccount.URI)
+			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.OriginAccount.URI, err)
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
@@ -498,9 +498,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		toProp.AppendIRI(publicURI)
 		ccProp.AppendIRI(authorFollowersURI)
 		for _, m := range s.Mentions {
-			iri, err := url.Parse(m.OriginAccount.URI)
+			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.OriginAccount.URI, err)
+				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
