@@ -91,6 +91,25 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","attachment":[],"attributedTo":"http://localhost:8080/users/the_mighty_zork","cc":"http://localhost:8080/users/the_mighty_zork/followers","content":"hello everyone!","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-10-20T12:40:37+02:00","replies":{"first":{"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"Collection"},"sensitive":true,"summary":"introduction post","tag":[],"to":"https://www.w3.org/ns/activitystreams#Public","type":"Note","url":"http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"}`, string(bytes))
 }
 
+func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
+	testStatusID := suite.testStatuses["admin_account_status_3"].ID
+	ctx := context.Background()
+
+	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
+	suite.NoError(err)
+
+	asStatus, err := suite.typeconverter.StatusToAS(ctx, testStatus)
+	suite.NoError(err)
+
+	ser, err := streams.Serialize(asStatus)
+	assert.NoError(suite.T(), err)
+
+	bytes, err := json.Marshal(ser)
+	suite.NoError(err)
+
+	suite.Equal(`{"@context":"https://www.w3.org/ns/activitystreams","attachment":[],"attributedTo":"http://localhost:8080/users/admin","cc":["http://localhost:8080/users/admin/followers","http://localhost:8080/users/the_mighty_zork"],"content":"hi @the_mighty_zork welcome to the instance!","id":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0","inReplyTo":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY","published":"2021-11-20T13:32:16Z","replies":{"first":{"id":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0/replies?page=true","next":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0/replies","type":"Collection"},"sensitive":false,"summary":"","tag":{"href":"http://localhost:8080/users/the_mighty_zork","name":"@the_mighty_zork@localhost:8080","type":"Mention"},"to":"https://www.w3.org/ns/activitystreams#Public","type":"Note","url":"http://localhost:8080/@admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0"}`, string(bytes))
+}
+
 func (suite *InternalToASTestSuite) TestStatusToASNotSensitive() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 
