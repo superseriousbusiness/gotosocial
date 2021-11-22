@@ -50,7 +50,7 @@ func (p *postIndex) insertIndexed(i *postIndexEntry) (bool, error) {
 	// We need to iterate through the index to make sure we put this post in the appropriate place according to when it was created.
 	// We also need to make sure we're not inserting a duplicate post -- this can happen sometimes and it's not nice UX (*shudder*).
 	for e := p.data.Front(); e != nil; e = e.Next() {
-		position = position + 1
+		position++
 
 		entry, ok := e.Value.(*postIndexEntry)
 		if !ok {

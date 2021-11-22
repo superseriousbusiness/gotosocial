@@ -52,7 +52,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	}
 	for _, e := range removeIndexes {
 		t.postIndex.data.Remove(e)
-		removed = removed + 1
+		removed++
 	}
 
 	// remove entr(ies) from prepared posts
@@ -71,7 +71,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 	}
 	for _, e := range removePrepared {
 		t.preparedPosts.data.Remove(e)
-		removed = removed + 1
+		removed++
 	}
 
 	l.Debugf("removed %d entries", removed)
@@ -104,7 +104,7 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 	}
 	for _, e := range removeIndexes {
 		t.postIndex.data.Remove(e)
-		removed = removed + 1
+		removed++
 	}
 
 	// remove entr(ies) from prepared posts
@@ -123,7 +123,7 @@ func (t *timeline) RemoveAllBy(ctx context.Context, accountID string) (int, erro
 	}
 	for _, e := range removePrepared {
 		t.preparedPosts.data.Remove(e)
-		removed = removed + 1
+		removed++
 	}
 
 	l.Debugf("removed %d entries", removed)

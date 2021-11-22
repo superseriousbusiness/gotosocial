@@ -24,6 +24,8 @@ import (
 	"net/url"
 	"sync"
 	"sync/atomic"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Lock takes a lock for the object at the specified id. If an error
@@ -54,7 +56,10 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 	// Get mutex, or create new
 	mu, ok := f.locks[idStr]
 	if !ok {
-		mu = f.pool.Get().(*mutex)
+		mu, ok = f.pool.Get().(*mutex)
+		if !ok {
+			logrus.Panic("Lock: pool entry was not a *mutex")
+		}
 		f.locks[idStr] = mu
 	}
 

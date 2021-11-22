@@ -172,7 +172,7 @@ pageLoop:
 		l.Debugf("dereferencing page %s", currentPageIRI)
 		nextPage, err := d.DereferenceCollectionPage(ctx, username, currentPageIRI)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		// next items could be either a list of URLs or a list of statuses
@@ -188,19 +188,19 @@ pageLoop:
 			// We're looking for a url to feed to GetRemoteStatus.
 			// Items can be either an IRI, or a Note.
 			// If a note, we grab the ID from it and call it, rather than parsing the note.
-
 			var itemURI *url.URL
-			if iter.IsIRI() {
+			switch {
+			case iter.IsIRI():
 				// iri, easy
 				itemURI = iter.GetIRI()
-			} else if iter.IsActivityStreamsNote() {
+			case iter.IsActivityStreamsNote():
 				// note, get the id from it to use as iri
 				n := iter.GetActivityStreamsNote()
 				id := n.GetJSONLDId()
 				if id != nil && id.IsIRI() {
 					itemURI = id.GetIRI()
 				}
-			} else {
+			default:
 				// if it's not an iri or a note, we don't know how to process it
 				continue
 			}
@@ -211,7 +211,7 @@ pageLoop:
 			}
 
 			// we can confidently say now that we found something
-			foundReplies = foundReplies + 1
+			foundReplies++
 
 			// get the remote statusable and put it in the db
 			_, statusable, new, err := d.GetRemoteStatus(ctx, username, itemURI, false, false)

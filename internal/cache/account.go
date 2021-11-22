@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/ReneKroon/ttlcache"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -26,7 +27,10 @@ func NewAccountCache() *AccountCache {
 
 	// Set callback to purge lookup maps on expiration
 	c.cache.SetExpirationCallback(func(key string, value interface{}) {
-		account := value.(*gtsmodel.Account)
+		account, ok := value.(*gtsmodel.Account)
+		if !ok {
+			logrus.Panicf("AccountCache could not assert entry with key %s to *gtsmodel.Account", key)
+		}
 
 		c.mutex.Lock()
 		delete(c.urls, account.URL)

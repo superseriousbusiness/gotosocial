@@ -127,7 +127,7 @@ func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]*apimodel.Sta
 			return nil, errors.New("GetXFromTop: could not parse e as a preparedPostsEntry")
 		}
 		statuses = append(statuses, entry.prepared)
-		served = served + 1
+		served++
 		if served >= amount {
 			break
 		}
@@ -145,7 +145,7 @@ func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string
 	})
 
 	newAttempts := *attempts
-	newAttempts = newAttempts + 1
+	newAttempts++
 	attempts = &newAttempts
 
 	// make a slice of statuses with the length we need to return
@@ -161,7 +161,7 @@ func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string
 
 findMarkLoop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		position = position + 1
+		position++
 		entry, ok := e.Value.(*preparedPostsEntry)
 		if !ok {
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
@@ -218,7 +218,7 @@ serveloop:
 
 		// serve up to the amount requested
 		statuses = append(statuses, entry.prepared)
-		served = served + 1
+		served++
 		if served >= amount {
 			break serveloop
 		}
@@ -272,7 +272,7 @@ findMarkLoop:
 
 			// serve up to the amount requested
 			statuses = append(statuses, entry.prepared)
-			served = served + 1
+			served++
 			if served >= amount {
 				break serveloopFromTop
 			}
@@ -288,7 +288,7 @@ findMarkLoop:
 
 			// serve up to the amount requested
 			statuses = append(statuses, entry.prepared)
-			served = served + 1
+			served++
 			if served >= amount {
 				break serveloopFromBottom
 			}
@@ -311,7 +311,7 @@ func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID strin
 	var behindIDMark *list.Element
 findMarkLoop:
 	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		position = position + 1
+		position++
 		entry, ok := e.Value.(*preparedPostsEntry)
 		if !ok {
 			return nil, errors.New("GetXBetweenID: could not parse e as a preparedPostsEntry")
@@ -350,7 +350,7 @@ serveloop:
 
 		// serve up to the amount requested
 		statuses = append(statuses, entry.prepared)
-		served = served + 1
+		served++
 		if served >= amount {
 			break serveloop
 		}

@@ -102,9 +102,8 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	page := false
-	pageString := c.Query(PageKey)
-	if pageString != "" {
+	var page bool
+	if pageString := c.Query(PageKey); pageString != "" {
 		i, err := strconv.ParseBool(pageString)
 		if err != nil {
 			l.Debugf("error parsing page string: %s", err)

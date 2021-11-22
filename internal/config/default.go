@@ -180,8 +180,8 @@ func GetDefaults() Defaults {
 		AccountsRequireApproval:  true,
 		AccountsReasonRequired:   true,
 
-		MediaMaxImageSize:        2097152,  //2mb
-		MediaMaxVideoSize:        10485760, //10mb
+		MediaMaxImageSize:        2097152,  // 2mb
+		MediaMaxVideoSize:        10485760, // 10mb
 		MediaMinDescriptionChars: 0,
 		MediaMaxDescriptionChars: 500,
 
@@ -244,8 +244,8 @@ func GetTestDefaults() Defaults {
 		AccountsRequireApproval:  true,
 		AccountsReasonRequired:   true,
 
-		MediaMaxImageSize:        1048576, //1mb
-		MediaMaxVideoSize:        5242880, //5mb
+		MediaMaxImageSize:        1048576, // 1mb
+		MediaMaxVideoSize:        5242880, // 5mb
 		MediaMinDescriptionChars: 0,
 		MediaMaxDescriptionChars: 500,
 

@@ -308,17 +308,29 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) {
 	receivingAccountI := ctx.Value(util.APReceivingAccount)
 	if receivingAccountI != nil {
-		receivingAccount = receivingAccountI.(*gtsmodel.Account)
+		var ok bool
+		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
+		if !ok {
+			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", util.APReceivingAccount)
+		}
 	}
 
 	requestingAcctI := ctx.Value(util.APRequestingAccount)
 	if requestingAcctI != nil {
-		requestingAccount = requestingAcctI.(*gtsmodel.Account)
+		var ok bool
+		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
+		if !ok {
+			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", util.APRequestingAccount)
+		}
 	}
 
 	fromFederatorChanI := ctx.Value(util.APFromFederatorChanKey)
 	if fromFederatorChanI != nil {
-		fromFederatorChan = fromFederatorChanI.(chan messages.FromFederator)
+		var ok bool
+		fromFederatorChan, ok = fromFederatorChanI.(chan messages.FromFederator)
+		if !ok {
+			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to chan messages.FromFederator", util.APFromFederatorChanKey)
+		}
 	}
 
 	return

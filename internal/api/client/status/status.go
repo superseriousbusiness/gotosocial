@@ -19,9 +19,10 @@
 package status
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -110,13 +111,13 @@ func (m *Module) muxHandler(c *gin.Context) {
 	logrus.Debug("entering mux handler")
 	ru := c.Request.RequestURI
 
-	switch c.Request.Method {
-	case http.MethodGet:
-		if strings.HasPrefix(ru, ContextPath) {
+	if c.Request.Method == http.MethodGet {
+		switch {
+		case strings.HasPrefix(ru, ContextPath):
 			// TODO
-		} else if strings.HasPrefix(ru, FavouritedPath) {
+		case strings.HasPrefix(ru, FavouritedPath):
 			m.StatusFavedByGETHandler(c)
-		} else {
+		default:
 			m.StatusGETHandler(c)
 		}
 	}

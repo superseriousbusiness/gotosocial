@@ -47,7 +47,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 		return nil, s.conn.ProcessError(err)
 	}
 
-	if len(rss) <= 0 {
+	if len(rss) == 0 {
 		// no session created yet, so make one
 		return s.createSession(ctx)
 	}

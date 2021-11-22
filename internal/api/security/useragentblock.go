@@ -31,8 +31,7 @@ func (m *Module) UserAgentBlock(c *gin.Context) {
 		"func": "UserAgentBlock",
 	})
 
-	ua := c.Request.UserAgent()
-	if ua == "" {
+	if ua := c.Request.UserAgent(); ua == "" {
 		l.Debug("aborting request because there's no user-agent set")
 		c.AbortWithStatus(http.StatusTeapot)
 		return

@@ -107,7 +107,7 @@ prepareloop:
 				// we're done
 				break prepareloop
 			}
-			prepared = prepared + 1
+			prepared++
 		}
 	}
 
@@ -162,7 +162,7 @@ prepareloop:
 				// we're done
 				break prepareloop
 			}
-			prepared = prepared + 1
+			prepared++
 		}
 	}
 
@@ -214,7 +214,7 @@ prepareloop:
 			continue
 		}
 
-		prepared = prepared + 1
+		prepared++
 		if prepared == amount {
 			// we're done
 			l.Trace("leaving prepareloop")
