@@ -49,8 +49,7 @@ func main() {
 		Commands: getCommands(),
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
+	if err := app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
 	}
 }

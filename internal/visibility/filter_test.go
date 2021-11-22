@@ -16,18 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package text_test
+package visibility_test
 
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type TextStandardTestSuite struct {
+type FilterStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	config *config.Config
@@ -44,11 +44,10 @@ type TextStandardTestSuite struct {
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
 
-	// module being tested
-	formatter text.Formatter
+	filter visibility.Filter
 }
 
-func (suite *TextStandardTestSuite) SetupSuite() {
+func (suite *FilterStandardTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -60,14 +59,16 @@ func (suite *TextStandardTestSuite) SetupSuite() {
 	suite.testMentions = testrig.NewTestMentions()
 }
 
-func (suite *TextStandardTestSuite) SetupTest() {
+func (suite *FilterStandardTestSuite) SetupTest() {
+	testrig.InitTestLog()
+
 	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
-	suite.formatter = text.NewFormatter(suite.config, suite.db)
+	suite.filter = visibility.NewFilter(suite.db)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
-func (suite *TextStandardTestSuite) TearDownTest() {
+func (suite *FilterStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }

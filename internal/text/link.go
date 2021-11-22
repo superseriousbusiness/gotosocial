@@ -98,7 +98,7 @@ func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
 		shortString := thisURL.Hostname()
 
 		if thisURL.Path != "" {
-			shortString = shortString + thisURL.Path
+			shortString += thisURL.Path
 		}
 
 		if thisURL.Fragment != "" {

@@ -182,7 +182,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	//
 	// note that for the first iteration, iString is still "" when the check is made, so our first choice
 	// is still the raw username with no integer stuck on the end
-	for i := 1; !found; i = i + 1 {
+	for i := 1; !found; i++ {
 		usernameAvailable, err := m.db.IsUsernameAvailable(ctx, username+iString)
 		if err != nil {
 			return nil, err
@@ -190,7 +190,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 		if usernameAvailable {
 			// no error so we've found a username that works
 			found = true
-			username = username + iString
+			username += iString
 			continue
 		}
 		iString = strconv.Itoa(i)

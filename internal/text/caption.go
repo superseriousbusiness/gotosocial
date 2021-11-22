@@ -16,24 +16,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package security
+package text
 
-import (
-	"net/http"
+// SanitizeCaption runs image captions (or indeed any plain text) through basic sanitization.
+// It returns plain text rather than HTML, in contrast to other functions in this package.
+func SanitizeCaption(in string) string {
+	content := preformat(in)
 
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-)
+	content = RemoveHTML(content)
 
-// UserAgentBlock blocks requests with undesired, empty, or invalid user-agent strings.
-func (m *Module) UserAgentBlock(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "UserAgentBlock",
-	})
-
-	if ua := c.Request.UserAgent(); ua == "" {
-		l.Debug("aborting request because there's no user-agent set")
-		c.AbortWithStatus(http.StatusTeapot)
-		return
-	}
+	return postformat(content)
 }

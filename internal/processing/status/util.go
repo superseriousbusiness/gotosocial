@@ -38,14 +38,15 @@ func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.Advanc
 	replyable := true
 	likeable := true
 
-	var vis gtsmodel.Visibility
 	// If visibility isn't set on the form, then just take the account default.
 	// If that's also not set, take the default for the whole instance.
-	if form.Visibility != "" {
+	var vis gtsmodel.Visibility
+	switch {
+	case form.Visibility != "":
 		vis = p.tc.APIVisToVis(form.Visibility)
-	} else if accountDefaultVis != "" {
+	case accountDefaultVis != "":
 		vis = accountDefaultVis
-	} else {
+	default:
 		vis = gtsmodel.VisibilityDefault
 	}
 

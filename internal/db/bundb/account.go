@@ -127,18 +127,17 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 
 	q := a.newAccountQ(account)
 
-	if domain == "" {
+	if domain != "" {
 		q = q.
 			Where("account.username = ?", domain).
 			Where("account.domain = ?", domain)
 	} else {
 		q = q.
-			Where("account.username = ?", domain).
+			Where("account.username = ?", a.config.Host).
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
 	return account, nil
@@ -155,8 +154,7 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string) 
 		Where("account_id = ?", accountID).
 		Column("created_at")
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return time.Time{}, a.conn.ProcessError(err)
 	}
 	return status.CreatedAt, nil
@@ -168,11 +166,12 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 	}
 
 	var headerOrAVI string
-	if mediaAttachment.Avatar {
+	switch {
+	case mediaAttachment.Avatar:
 		headerOrAVI = "avatar"
-	} else if mediaAttachment.Header {
+	case mediaAttachment.Header:
 		headerOrAVI = "header"
-	} else {
+	default:
 		return errors.New("given media attachment was neither a header nor an avatar")
 	}
 
@@ -202,8 +201,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 		Where("username = ?", username).
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}
 	return account, nil
@@ -308,8 +306,7 @@ func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxI
 		fq = fq.Limit(limit)
 	}
 
-	err := fq.Scan(ctx)
-	if err != nil {
+	if err := fq.Scan(ctx); err != nil {
 		return nil, "", "", a.conn.ProcessError(err)
 	}
 

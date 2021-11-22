@@ -26,8 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 const (
@@ -47,30 +45,6 @@ Text`
 
 type PlainTestSuite struct {
 	TextStandardTestSuite
-}
-
-func (suite *PlainTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-	suite.testTags = testrig.NewTestTags()
-	suite.testMentions = testrig.NewTestMentions()
-}
-
-func (suite *PlainTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	suite.formatter = text.NewFormatter(suite.config, suite.db)
-
-	testrig.StandardDBSetup(suite.db, nil)
-}
-
-func (suite *PlainTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *PlainTestSuite) TestParseSimple() {

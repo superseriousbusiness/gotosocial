@@ -56,7 +56,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		AccountID:   account.ID,
-		Description: text.RemoveHTML(form.Description),
+		Description: text.SanitizeCaption(form.Description),
 		FileMeta: gtsmodel.FileMeta{
 			Focus: gtsmodel.Focus{
 				X: focusx,

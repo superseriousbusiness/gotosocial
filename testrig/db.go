@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-var testModels []interface{} = []interface{}{
+var testModels = []interface{}{
 	&gtsmodel.Account{},
 	&gtsmodel.Application{},
 	&gtsmodel.Block{},

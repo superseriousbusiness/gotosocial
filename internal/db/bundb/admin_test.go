@@ -23,47 +23,34 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type BasicTestSuite struct {
+type AdminTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *BasicTestSuite) TestGetAccountByID() {
-	testAccount := suite.testAccounts["local_account_1"]
+func (suite *AdminTestSuite) TestCreateInstanceAccount() {
+	// we need to take an empty db for this...
+	testrig.StandardDBTeardown(suite.db)
+	// ...with tables created but no data
+	testrig.CreateTestTables(suite.db)
 
-	a := &gtsmodel.Account{}
-	err := suite.db.GetByID(context.Background(), testAccount.ID, a)
+	// make sure there's no instance account in the db yet
+	acct, err := suite.db.GetInstanceAccount(context.Background(), "")
+	suite.Error(err)
+	suite.Nil(acct)
+
+	// create it
+	err = suite.db.CreateInstanceAccount(context.Background())
 	suite.NoError(err)
+
+	// and now check it exists
+	acct, err = suite.db.GetInstanceAccount(context.Background(), "")
+	suite.NoError(err)
+	suite.NotNil(acct)
 }
 
-func (suite *BasicTestSuite) TestGetAllStatuses() {
-	s := []*gtsmodel.Status{}
-	err := suite.db.GetAll(context.Background(), &s)
-	suite.NoError(err)
-	suite.Len(s, 14)
-}
-
-func (suite *BasicTestSuite) TestGetAllNotNull() {
-	where := []db.Where{{
-		Key:   "domain",
-		Value: nil,
-		Not:   true,
-	}}
-
-	a := []*gtsmodel.Account{}
-
-	err := suite.db.GetWhere(context.Background(), where, &a)
-	suite.NoError(err)
-	suite.NotEmpty(a)
-
-	for _, acct := range a {
-		suite.NotEmpty(acct.Domain)
-	}
-}
-
-func TestBasicTestSuite(t *testing.T) {
-	suite.Run(t, new(BasicTestSuite))
+func TestAdminTestSuite(t *testing.T) {
+	suite.Run(t, new(AdminTestSuite))
 }

@@ -51,6 +51,7 @@ func oddOrEven(n int) string {
 }
 
 func noescape(str string) template.HTML {
+	/* #nosec G203 */
 	return template.HTML(str)
 }
 
@@ -67,19 +68,21 @@ type iconWithLabel struct {
 func visibilityIcon(visibility model.Visibility) template.HTML {
 	var icon iconWithLabel
 
-	if visibility == model.VisibilityPublic {
+	switch visibility {
+	case model.VisibilityPublic:
 		icon = iconWithLabel{"globe", "public"}
-	} else if visibility == model.VisibilityUnlisted {
+	case model.VisibilityUnlisted:
 		icon = iconWithLabel{"unlock", "unlisted"}
-	} else if visibility == model.VisibilityPrivate {
+	case model.VisibilityPrivate:
 		icon = iconWithLabel{"lock", "private"}
-	} else if visibility == model.VisibilityMutualsOnly {
+	case model.VisibilityMutualsOnly:
 		icon = iconWithLabel{"handshake-o", "mutuals only"}
-	} else if visibility == model.VisibilityDirect {
+	case model.VisibilityDirect:
 		icon = iconWithLabel{"envelope", "direct"}
 	}
 
-	return template.HTML(fmt.Sprintf(`<i aria-label="Visiblity: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
+	/* #nosec G203 */
+	return template.HTML(fmt.Sprintf(`<i aria-label="Visibility: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
 }
 
 func loadTemplateFunctions(engine *gin.Engine) {

@@ -90,9 +90,8 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			continue
 		}
 
-		switch iter.GetType().GetTypeName() {
-		// we have the whole object so we can figure out what we're rejecting
-		case ap.ActivityFollow:
+		if iter.GetType().GetTypeName() == ap.ActivityFollow {
+			// we have the whole object so we can figure out what we're rejecting
 			// REJECT FOLLOW
 			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
 			if !ok {

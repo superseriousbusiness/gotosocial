@@ -74,8 +74,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, account1 string, account2
 		Where("block.account_id = ?", account1).
 		Where("block.target_account_id = ?", account2)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 	return block, nil
@@ -286,8 +285,7 @@ func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID
 	q := r.newFollowQ(&followRequests).
 		Where("target_account_id = ?", accountID)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 	return followRequests, nil
@@ -299,8 +297,7 @@ func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string
 	q := r.newFollowQ(&follows).
 		Where("account_id = ?", accountID)
 
-	err := q.Scan(ctx)
-	if err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, r.conn.ProcessError(err)
 	}
 	return follows, nil

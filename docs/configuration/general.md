@@ -1,6 +1,6 @@
 # General
 
-The top-level configuration for GoToSocial, including basic things like host and transport protocol.
+The top-level configuration for GoToSocial, including basic things like host, port, bind address and transport protocol.
 
 The only things you *really* need to set here are `host`, which should be the hostname where your instance is reachable, and probably `port`.
 
@@ -47,6 +47,15 @@ accountDomain: ""
 # Options: ["http","https"]
 # Default: "https"
 protocol: "https"
+
+# String. Address to bind the GoToSocial server to.
+# This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
+# Default value will bind to all interfaces.
+# You probably won't need to change this unless you're setting GoToSocial up in some fancy way or
+# you have specific networking requirements.
+# Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2a02:1807:1430:500:13f5:5efb:3f3a:1191]"]
+# Default: "0.0.0.0"
+bindAddress: "0.0.0.0"
 
 # Int. Listen port for the GoToSocial webserver + API. If you're running behind a reverse proxy and/or in a docker,
 # container, just set this to whatever you like (or leave the default), and make sure it's forwarded properly.

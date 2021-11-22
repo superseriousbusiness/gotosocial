@@ -11,6 +11,7 @@ func TestDefault() *Config {
 		Host:            defaults.Host,
 		AccountDomain:   defaults.AccountDomain,
 		Protocol:        defaults.Protocol,
+		BindAddress:     defaults.BindAddress,
 		Port:            defaults.Port,
 		TrustedProxies:  defaults.TrustedProxies,
 		SoftwareVersion: defaults.SoftwareVersion,
@@ -85,6 +86,7 @@ func Default() *Config {
 		ApplicationName: defaults.ApplicationName,
 		Host:            defaults.Host,
 		Protocol:        defaults.Protocol,
+		BindAddress:     defaults.BindAddress,
 		Port:            defaults.Port,
 		TrustedProxies:  defaults.TrustedProxies,
 		SoftwareVersion: defaults.SoftwareVersion,
@@ -161,6 +163,7 @@ func GetDefaults() Defaults {
 		Host:            "",
 		AccountDomain:   "",
 		Protocol:        "https",
+		BindAddress:     "0.0.0.0",
 		Port:            8080,
 		TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
 
@@ -180,8 +183,8 @@ func GetDefaults() Defaults {
 		AccountsRequireApproval:  true,
 		AccountsReasonRequired:   true,
 
-		MediaMaxImageSize:        2097152,  //2mb
-		MediaMaxVideoSize:        10485760, //10mb
+		MediaMaxImageSize:        2097152,  // 2mb
+		MediaMaxVideoSize:        10485760, // 10mb
 		MediaMinDescriptionChars: 0,
 		MediaMaxDescriptionChars: 500,
 
@@ -227,6 +230,7 @@ func GetTestDefaults() Defaults {
 		Host:            "localhost:8080",
 		AccountDomain:   "localhost:8080",
 		Protocol:        "http",
+		BindAddress:     "127.0.0.1",
 		Port:            8080,
 		TrustedProxies:  []string{"127.0.0.1/32"},
 
@@ -244,8 +248,8 @@ func GetTestDefaults() Defaults {
 		AccountsRequireApproval:  true,
 		AccountsReasonRequired:   true,
 
-		MediaMaxImageSize:        1048576, //1mb
-		MediaMaxVideoSize:        5242880, //5mb
+		MediaMaxImageSize:        1048576, // 1mb
+		MediaMaxVideoSize:        5242880, // 5mb
 		MediaMinDescriptionChars: 0,
 		MediaMaxDescriptionChars: 500,
 
