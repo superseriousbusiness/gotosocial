@@ -24,9 +24,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// nolint
 type TextStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
@@ -46,4 +46,28 @@ type TextStandardTestSuite struct {
 
 	// module being tested
 	formatter text.Formatter
+}
+
+func (suite *TextStandardTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTags = testrig.NewTestTags()
+	suite.testMentions = testrig.NewTestMentions()
+}
+
+func (suite *TextStandardTestSuite) SetupTest() {
+	suite.config = testrig.NewTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.formatter = text.NewFormatter(suite.config, suite.db)
+
+	testrig.StandardDBSetup(suite.db, nil)
+}
+
+func (suite *TextStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
 }
