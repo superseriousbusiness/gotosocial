@@ -1037,7 +1037,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			InReplyToID:              "",
 			BoostOfID:                "",
 			ContentWarning:           "",
-			Visibility:               gtsmodel.VisibilityMutualsOnly,
+			Visibility:               gtsmodel.VisibilityFollowersOnly,
 			Sensitive:                false,
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
