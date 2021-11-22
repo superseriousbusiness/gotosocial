@@ -134,6 +134,7 @@ func (f *filter) relevantAccounts(ctx context.Context, status *gtsmodel.Status, 
 		}
 		if mentionIn(m, status.MentionIDs) {
 			nm = append(nm, m)
+			relAccts.MentionedAccounts = append(relAccts.MentionedAccounts, m.TargetAccount)
 		}
 	}
 	status.Mentions = nm
