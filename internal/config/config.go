@@ -53,6 +53,7 @@ type Config struct {
 	Host              string             `yaml:"host"`
 	AccountDomain     string             `yaml:"accountDomain"`
 	Protocol          string             `yaml:"protocol"`
+	BindAddress       string             `yaml:"bindAddress"`
 	Port              int                `yaml:"port"`
 	TrustedProxies    []string           `yaml:"trustedProxies"`
 	DBConfig          *DBConfig          `yaml:"db"`
@@ -157,6 +158,10 @@ func (c *Config) ParseCLIFlags(f KeyedFlags, version string) error {
 	}
 	if c.Protocol == "" {
 		return errors.New("protocol was not set")
+	}
+
+	if c.BindAddress == "" || f.IsSet(fn.BindAddress) {
+		c.BindAddress = f.String(fn.BindAddress)
 	}
 
 	if c.Port == 0 || f.IsSet(fn.Port) {
@@ -374,6 +379,7 @@ type Flags struct {
 	Host            string
 	AccountDomain   string
 	Protocol        string
+	BindAddress     string
 	Port            string
 	TrustedProxies  string
 
@@ -438,6 +444,7 @@ type Defaults struct {
 	Host            string
 	AccountDomain   string
 	Protocol        string
+	BindAddress     string
 	Port            int
 	TrustedProxies  []string
 	SoftwareVersion string
@@ -505,6 +512,7 @@ func GetFlagNames() Flags {
 		Host:            "host",
 		AccountDomain:   "account-domain",
 		Protocol:        "protocol",
+		BindAddress:     "bind-address",
 		Port:            "port",
 		TrustedProxies:  "trusted-proxies",
 
@@ -572,6 +580,7 @@ func GetEnvNames() Flags {
 		Host:            "GTS_HOST",
 		AccountDomain:   "GTS_ACCOUNT_DOMAIN",
 		Protocol:        "GTS_PROTOCOL",
+		BindAddress:     "GTS_BIND_ADDRESS",
 		Port:            "GTS_PORT",
 		TrustedProxies:  "GTS_TRUSTED_PROXIES",
 
