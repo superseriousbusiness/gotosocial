@@ -44,8 +44,13 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 	postingAccount := suite.testAccounts["admin_account"]
 	receivingAccount := suite.testAccounts["local_account_1"]
 
-	// open a stream for zork
+	// open a home timeline stream for zork
 	wssStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelineHome)
+	suite.NoError(errWithCode)
+
+	// open another stream for zork, but for a different timeline;
+	// this shouldn't get stuff streamed into it, since it's for the public timeline
+	irrelevantStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelinePublic)
 	suite.NoError(errWithCode)
 
 	// make a new status from admin account
@@ -66,7 +71,7 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 		InReplyToID:              "",
 		BoostOfID:                "",
 		ContentWarning:           "",
-		Visibility:               gtsmodel.VisibilityPublic,
+		Visibility:               gtsmodel.VisibilityFollowersOnly,
 		Sensitive:                false,
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
@@ -103,6 +108,9 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 
 	// and stream should now be empty
 	suite.Empty(wssStream.Messages)
+
+	// the irrelevant messages stream should also be empty
+	suite.Empty(irrelevantStream.Messages)
 }
 
 func TestFromClientAPITestSuite(t *testing.T) {
