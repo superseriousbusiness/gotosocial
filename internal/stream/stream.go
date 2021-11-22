@@ -2,17 +2,35 @@ package stream
 
 import "sync"
 
-// EventType models a type of stream event.
-type EventType string
-
 const (
 	// EventTypeNotification -- a user should be shown a notification
-	EventTypeNotification EventType = "notification"
+	EventTypeNotification string = "notification"
 	// EventTypeUpdate -- a user should be shown an update in their timeline
-	EventTypeUpdate EventType = "update"
+	EventTypeUpdate string = "update"
 	// EventTypeDelete -- something should be deleted from a user
-	EventTypeDelete EventType = "delete"
+	EventTypeDelete string = "delete"
 )
+
+const (
+	// TimelineLocal -- public statuses from the LOCAL timeline.
+	TimelineLocal string = "public:local"
+	// TimelinePublic -- public statuses, including federated ones.
+	TimelinePublic string = "public"
+	// TimelineHome -- statuses for a user's Home timeline.
+	TimelineHome string = "user"
+	// TimelineNotifications -- notification events.
+	TimelineNotifications string = "user:notification"
+	// TimelineDirect -- statuses sent to a user directly.
+	TimelineDirect string = "direct"
+)
+
+// AllStatusTimelines contains all Timelines that a status could conceivably be delivered to -- useful for doing deletes.
+var AllStatusTimelines = []string{
+	TimelineLocal,
+	TimelinePublic,
+	TimelineHome,
+	TimelineDirect,
+}
 
 // StreamsForAccount is a wrapper for the multiple streams that one account can have running at the same time.
 // TODO: put a limit on this
@@ -27,8 +45,8 @@ type StreamsForAccount struct {
 type Stream struct {
 	// ID of this stream, generated during creation.
 	ID string
-	// Type of this stream: user/public/etc
-	Type string
+	// Timeline of this stream: user/public/etc
+	Timeline string
 	// Channel of messages for the client to read from
 	Messages chan *Message
 	// Channel to close when the client drops away

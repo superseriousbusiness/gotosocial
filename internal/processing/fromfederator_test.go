@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -115,6 +116,9 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 		Likeable:            true,
 	}
 
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), repliedAccount, stream.TimelineHome)
+	suite.NoError(errWithCode)
+
 	// id the status based on the time it was created
 	statusID, err := id.NewULIDFromTime(replyingStatus.CreatedAt)
 	suite.NoError(err)
@@ -153,6 +157,17 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
 	suite.Equal(replyingStatus.ID, notif.StatusID)
 	suite.False(notif.Read)
+
+	// the notification should also be streamed
+	msg := <-wssStream.Messages
+	suite.Equal(stream.EventTypeNotification, msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	notifStreamed := &model.Notification{}
+	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
+	suite.NoError(err)
+	suite.Equal("mention", notifStreamed.Type)
+	suite.Equal(replyingAccount.ID, notifStreamed.Account.ID)
 }
 
 func (suite *FromFederatorTestSuite) TestProcessFave() {
@@ -160,7 +175,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, "user")
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), favedAccount, stream.TimelineNotifications)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -210,10 +225,10 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	suite.False(notif.Read)
 
 	// 2. a notification should be streamed
-	msg := <-stream.Messages
-	suite.Equal("notification", msg.Event)
+	msg := <-wssStream.Messages
+	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{"user"}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
 }
 
 // TestProcessFaveWithDifferentReceivingAccount ensures that when an account receives a fave that's for
@@ -227,7 +242,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), receivingAccount, "user")
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), receivingAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -277,7 +292,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	suite.False(notif.Read)
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
-	suite.Empty(stream.Messages)
+	suite.Empty(wssStream.Messages)
 }
 
 func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
@@ -368,7 +383,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	// target is a locked account
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, "user")
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already
@@ -397,10 +412,10 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	suite.NoError(err)
 
 	// a notification should be streamed
-	msg := <-stream.Messages
-	suite.Equal("notification", msg.Event)
+	msg := <-wssStream.Messages
+	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{"user"}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notif := &model.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
@@ -419,7 +434,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	// target is an unlocked account
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	stream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, "user")
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already
@@ -448,10 +463,10 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	suite.NoError(err)
 
 	// a notification should be streamed
-	msg := <-stream.Messages
-	suite.Equal("notification", msg.Event)
+	msg := <-wssStream.Messages
+	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{"user"}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notif := &model.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
