@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func testrigCommands() []*cli.Command {
+func testrigCommands(allFlags []cli.Flag) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:  "testrig",
@@ -33,7 +33,7 @@ func testrigCommands() []*cli.Command {
 					Name:  "start",
 					Usage: "start the gotosocial testrig",
 					Action: func(c *cli.Context) error {
-						return runAction(c, testrig.Start)
+						return runAction(c, allFlags, testrig.Start)
 					},
 				},
 			},
