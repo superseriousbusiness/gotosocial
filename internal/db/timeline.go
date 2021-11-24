@@ -37,6 +37,12 @@ type Timeline interface {
 	// Statuses should be returned in descending order of when they were created (newest first).
 	GetPublicTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, Error)
 
+	// GetTagTimeline fetches the tag timeline -- ie., posts and replies that are public.
+	// It will use the given filters and try to return as many statuses as possible up to the limit.
+	//
+	// Statuses should be returned in descending order of when they were created (newest first).
+	GetTagTimeline(ctx context.Context, accountID string, hashtag string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, Error)
+
 	// GetFavedTimeline fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
 	//

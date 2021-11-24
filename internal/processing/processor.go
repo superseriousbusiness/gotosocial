@@ -170,6 +170,8 @@ type Processor interface {
 	HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// PublicTimelineGet returns statuses from the public/local timeline, with the given filters/parameters.
 	PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
+	// TagTimelineGet returns tagged statuses timeline, with the given filters/parameters.
+	TagTimelineGet(ctx context.Context, authed *oauth.Auth, hashtag string, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 	// FavedTimelineGet returns faved statuses, with the given filters/parameters.
 	FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode)
 

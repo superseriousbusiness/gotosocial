@@ -34,6 +34,8 @@ const (
 	HomeTimeline = BasePath + "/home"
 	// PublicTimeline is the path for the public (and public local) timeline
 	PublicTimeline = BasePath + "/public"
+	// TagTimeline is the path for the tagged timeline
+	TagTimeline = BasePath + "/tag"
 	// MaxIDKey is the url query for setting a max status ID to return
 	MaxIDKey = "max_id"
 	// SinceIDKey is the url query for returning results newer than the given ID
@@ -44,6 +46,8 @@ const (
 	LimitKey = "limit"
 	// LocalKey is for specifying whether only local statuses should be returned
 	LocalKey = "local"
+	// TagKey is the url query for return results of hashtag
+	TagKey = "hashtag"
 )
 
 // Module implements the ClientAPIModule interface for everything relating to viewing timelines
@@ -64,5 +68,6 @@ func New(config *config.Config, processor processing.Processor) api.ClientModule
 func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
 	r.AttachHandler(http.MethodGet, PublicTimeline, m.PublicTimelineGETHandler)
+	r.AttachHandler(http.MethodGet, TagTimeline, m.TagTimelineGETHandler)
 	return nil
 }

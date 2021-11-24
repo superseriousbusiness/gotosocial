@@ -21,8 +21,9 @@ package processing
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -100,6 +101,33 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	}
 
 	return p.packageStatusResponse(s, "api/v1/timelines/public", s[len(s)-1].ID, s[0].ID, limit)
+}
+
+func (p *processor) TagTimelineGet(ctx context.Context, authed *oauth.Auth, hashtag string, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+	statuses, err := p.db.GetTagTimeline(ctx, authed.Account.ID, hashtag, maxID, sinceID, minID, limit, local)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			// there are just no entries left
+			return &apimodel.StatusTimelineResponse{
+				Statuses: []*apimodel.Status{},
+			}, nil
+		}
+		// there's an actual error
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	s, err := p.filterPublicStatuses(ctx, authed, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if len(s) == 0 {
+		return &apimodel.StatusTimelineResponse{
+			Statuses: []*apimodel.Status{},
+		}, nil
+	}
+
+	return p.packageStatusResponse(s, "api/v1/timelines/tag/{hashtag}", s[len(s)-1].ID, s[0].ID, limit)
 }
 
 func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
