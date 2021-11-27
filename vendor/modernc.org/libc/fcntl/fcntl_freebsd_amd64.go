@@ -673,8 +673,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -748,13 +748,13 @@ type Pid_t = X__pid_t /* fcntl.h:63:18 */
 // Advisory file segment locking data type -
 // information passed to system by user
 type Flock = struct {
-	Fl_start  Off_t
-	Fl_len    Off_t
-	Fl_pid    Pid_t
-	Fl_type   int16
-	Fl_whence int16
-	Fl_sysid  int32
-	_         [4]byte
+	Fl_start     Off_t
+	Fl_len       Off_t
+	Fl_pid       Pid_t
+	Fl_type      int16
+	Fl_whence    int16
+	Fl_sysid     int32
+	F__ccgo_pad1 [4]byte
 } /* fcntl.h:294:1 */
 
 // Old advisory file segment locking data type,

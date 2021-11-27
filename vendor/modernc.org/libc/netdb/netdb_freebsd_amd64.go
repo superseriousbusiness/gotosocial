@@ -650,8 +650,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -692,18 +692,18 @@ type Netent = struct {
 } /* netdb.h:115:1 */
 
 type Servent = struct {
-	Fs_name    uintptr
-	Fs_aliases uintptr
-	Fs_port    int32
-	_          [4]byte
-	Fs_proto   uintptr
+	Fs_name      uintptr
+	Fs_aliases   uintptr
+	Fs_port      int32
+	F__ccgo_pad1 [4]byte
+	Fs_proto     uintptr
 } /* netdb.h:122:1 */
 
 type Protoent = struct {
-	Fp_name    uintptr
-	Fp_aliases uintptr
-	Fp_proto   int32
-	_          [4]byte
+	Fp_name      uintptr
+	Fp_aliases   uintptr
+	Fp_proto     int32
+	F__ccgo_pad1 [4]byte
 } /* netdb.h:129:1 */
 
 type Addrinfo = struct {
@@ -712,7 +712,7 @@ type Addrinfo = struct {
 	Fai_socktype  int32
 	Fai_protocol  int32
 	Fai_addrlen   Socklen_t
-	_             [4]byte
+	F__ccgo_pad1  [4]byte
 	Fai_canonname uintptr
 	Fai_addr      uintptr
 	Fai_next      uintptr

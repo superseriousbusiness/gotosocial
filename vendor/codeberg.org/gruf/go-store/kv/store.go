@@ -196,7 +196,7 @@ func (st *KVStore) Iterator(matchFn func(string) bool) (*KVIterator, error) {
 	}
 
 	// Walk keys in the storage
-	err := st.storage.WalkKeys(&storage.WalkKeysOptions{WalkFn: walkFn})
+	err := st.storage.WalkKeys(storage.WalkKeysOptions{WalkFn: walkFn})
 	if err != nil {
 		st.mutex.RUnlock()
 		return nil, err

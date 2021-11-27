@@ -6,18 +6,22 @@ package libc // import "modernc.org/libc"
 
 import (
 	"bufio"
+	"encoding/hex"
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
 
+	guuid "github.com/google/uuid"
 	"golang.org/x/sys/unix"
 	"modernc.org/libc/errno"
 	"modernc.org/libc/fcntl"
@@ -31,16 +35,19 @@ import (
 	"modernc.org/libc/pwd"
 	"modernc.org/libc/signal"
 	"modernc.org/libc/stdio"
+	"modernc.org/libc/stdlib"
 	"modernc.org/libc/sys/socket"
 	"modernc.org/libc/sys/stat"
 	"modernc.org/libc/sys/types"
 	"modernc.org/libc/termios"
 	ctime "modernc.org/libc/time"
 	"modernc.org/libc/unistd"
+	"modernc.org/libc/uuid/uuid"
 )
 
 var (
 	in6_addr_any in.In6_addr
+	_            = X__ctype_b_loc
 )
 
 type (
@@ -69,6 +76,7 @@ func newFile(t *TLS, fd int32) uintptr {
 	if p == 0 {
 		return 0
 	}
+
 	file(p).setFd(fd)
 	return p
 }
@@ -104,46 +112,6 @@ func Xgetrusage(t *TLS, who int32, usage uintptr) int32 {
 	}
 
 	return 0
-}
-
-// char *fgets(char *s, int size, FILE *stream);
-func Xfgets(t *TLS, s uintptr, size int32, stream uintptr) uintptr {
-	fd := int((*stdio.FILE)(unsafe.Pointer(stream)).F_fileno)
-	var b []byte
-	buf := [1]byte{}
-	for ; size > 0; size-- {
-		n, err := unix.Read(fd, buf[:])
-		if n != 0 {
-			b = append(b, buf[0])
-			if buf[0] == '\n' {
-				b = append(b, 0)
-				copy((*RawMem)(unsafe.Pointer(s))[:len(b):len(b)], b)
-				return s
-			}
-
-			continue
-		}
-
-		switch {
-		case n == 0 && err == nil && len(b) == 0:
-			return 0
-		default:
-			panic(todo(""))
-		}
-
-		// if err == nil {
-		// 	panic("internal error")
-		// }
-
-		// if len(b) != 0 {
-		// 		b = append(b, 0)
-		// 		copy((*RawMem)(unsafe.Pointer(s)[:len(b)]), b)
-		// 		return s
-		// }
-
-		// t.setErrno(err)
-	}
-	panic(todo(""))
 }
 
 // int lstat(const char *pathname, struct stat *statbuf);
@@ -223,7 +191,7 @@ func Xopen64(t *TLS, pathname uintptr, flags int32, args uintptr) int32 {
 	//TODO- flags |= fcntl.O_LARGEFILE
 	var mode types.Mode_t
 	if args != 0 {
-		mode = *(*types.Mode_t)(unsafe.Pointer(args))
+		mode = (types.Mode_t)(VaUint32(&args))
 	}
 	fdcwd := fcntl.AT_FDCWD
 	n, _, err := unix.Syscall6(unix.SYS_OPENAT, uintptr(fdcwd), pathname, uintptr(flags|unix.O_LARGEFILE), uintptr(mode), 0, 0)
@@ -1264,7 +1232,27 @@ func Xmkstemps64(t *TLS, template uintptr, suffixlen int32) int32 {
 		}
 	}
 
-	fd, err := tempFile(template, x)
+	fd, err := tempFile(template, x, 0)
+	if err != 0 {
+		t.setErrno(err)
+		return -1
+	}
+
+	return int32(fd)
+}
+
+// int mkostemp(char *template, int flags);
+func Xmkostemp(t *TLS, template uintptr, flags int32) int32 {
+	len := uintptr(Xstrlen(t, template))
+	x := template + uintptr(len-6)
+	for i := uintptr(0); i < 6; i++ {
+		if *(*byte)(unsafe.Pointer(x + i)) != 'X' {
+			t.setErrno(errno.EINVAL)
+			return -1
+		}
+	}
+
+	fd, err := tempFile(template, x, flags)
 	if err != 0 {
 		t.setErrno(err)
 		return -1
@@ -1493,9 +1481,14 @@ func Xstrerror(t *TLS, errnum int32) uintptr {
 	return uintptr(unsafe.Pointer(&strerrorBuf[0]))
 }
 
+// int strerror_r(int errnum, char *buf, size_t buflen);
+func Xstrerror_r(t *TLS, errnum int32, buf uintptr, buflen size_t) int32 {
+	panic(todo(""))
+}
+
 // void *dlopen(const char *filename, int flags);
 func Xdlopen(t *TLS, filename uintptr, flags int32) uintptr {
-	panic(todo(""))
+	panic(todo("%q", GoString(filename)))
 }
 
 // char *dlerror(void);
@@ -1723,16 +1716,6 @@ func Xferror(t *TLS, stream uintptr) int32 {
 	return Bool32(file(stream).err())
 }
 
-// int fgetc(FILE *stream);
-func Xfgetc(t *TLS, stream uintptr) int32 {
-	panic(todo(""))
-}
-
-// int getc(FILE *stream);
-func Xgetc(t *TLS, stream uintptr) int32 {
-	return Xfgetc(t, stream)
-}
-
 // int ungetc(int c, FILE *stream);
 func Xungetc(t *TLS, c int32, stream uintptr) int32 {
 	panic(todo(""))
@@ -1740,11 +1723,6 @@ func Xungetc(t *TLS, c int32, stream uintptr) int32 {
 
 // int fscanf(FILE *stream, const char *format, ...);
 func Xfscanf(t *TLS, stream, format, va uintptr) int32 {
-	panic(todo(""))
-}
-
-// FILE *fdopen(int fd, const char *mode);
-func Xfdopen(t *TLS, fd int32, mode uintptr) uintptr {
 	panic(todo(""))
 }
 
@@ -1944,11 +1922,6 @@ func X__isoc99_sscanf(t *TLS, str, format, va uintptr) int32 {
 	return r
 }
 
-// int sched_yield(void);
-func Xsched_yield(t *TLS) {
-	runtime.Gosched()
-}
-
 var ctimeStaticBuf [32]byte
 
 // char *ctime(const time_t *timep);
@@ -1963,4 +1936,142 @@ func Xctime_r(t *TLS, timep, buf uintptr) uintptr {
 	s := tm.Format(time.ANSIC) + "\n\x00"
 	copy((*RawMem)(unsafe.Pointer(buf))[:26:26], s)
 	return buf
+}
+
+// ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+func Xpwrite(t *TLS, fd int32, buf uintptr, count types.Size_t, offset types.Off_t) types.Ssize_t {
+	var n int
+	var err error
+	switch {
+	case count == 0:
+		n, err = unix.Pwrite(int(fd), nil, int64(offset))
+	default:
+		n, err = unix.Pwrite(int(fd), (*RawMem)(unsafe.Pointer(buf))[:count:count], int64(offset))
+		if dmesgs {
+			dmesg("%v: fd %v, off %#x, count %#x\n%s", origin(1), fd, offset, count, hex.Dump((*RawMem)(unsafe.Pointer(buf))[:count:count]))
+		}
+	}
+	if err != nil {
+		if dmesgs {
+			dmesg("%v: %v FAIL", origin(1), err)
+		}
+		t.setErrno(err)
+		return -1
+	}
+
+	if dmesgs {
+		dmesg("%v: ok", origin(1))
+	}
+	return types.Ssize_t(n)
+}
+
+// int fstatfs(int fd, struct statfs *buf);
+func Xfstatfs(t *TLS, fd int32, buf uintptr) int32 {
+	if err := unix.Fstatfs(int(fd), (*unix.Statfs_t)(unsafe.Pointer(buf))); err != nil {
+		t.setErrno(err)
+		return -1
+	}
+
+	return 0
+}
+
+// ssize_t getrandom(void *buf, size_t buflen, unsigned int flags);
+func Xgetrandom(t *TLS, buf uintptr, buflen size_t, flags uint32) ssize_t {
+	n, err := unix.Getrandom((*RawMem)(unsafe.Pointer(buf))[:buflen], int(flags))
+	if err != nil {
+		t.setErrno(err)
+		return -1
+	}
+
+	return ssize_t(n)
+}
+
+// int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+func Xposix_fadvise(t *TLS, fd int32, offset, len types.Off_t, advice int32) int32 {
+	if err := unix.Fadvise(int(fd), int64(offset), int64(len), int(advice)); err != nil {
+		return int32(err.(unix.Errno))
+	}
+
+	return 0
+}
+
+// void uuid_generate_random(uuid_t out);
+func Xuuid_generate_random(t *TLS, out uintptr) {
+	panic(todo(""))
+}
+
+// void uuid_unparse(uuid_t uu, char *out);
+func Xuuid_unparse(t *TLS, uu, out uintptr) {
+	s := (*guuid.UUID)(unsafe.Pointer(uu)).String()
+	copy((*RawMem)(unsafe.Pointer(out))[:], s)
+	*(*byte)(unsafe.Pointer(out + uintptr(len(s)))) = 0
+}
+
+// int uuid_parse( char *in, uuid_t uu);
+func Xuuid_parse(t *TLS, in uintptr, uu uintptr) int32 {
+	r, err := guuid.Parse(GoString(in))
+	if err != nil {
+		return -1
+	}
+
+	copy((*RawMem)(unsafe.Pointer(uu))[:unsafe.Sizeof(uuid.Uuid_t{})], r[:])
+	return 0
+}
+
+// The initstate_r() function is like initstate(3) except that it initializes
+// the state in the object pointed to by buf, rather than initializing the
+// global state  variable.   Before  calling this function, the buf.state field
+// must be initialized to NULL.  The initstate_r() function records a pointer
+// to the statebuf argument inside the structure pointed to by buf.  Thus,
+// state‐ buf should not be deallocated so long as buf is still in use.  (So,
+// statebuf should typically be allocated as a static variable, or allocated on
+// the heap using malloc(3) or similar.)
+//
+// char *initstate_r(unsigned int seed, char *statebuf, size_t statelen, struct random_data *buf);
+func Xinitstate_r(t *TLS, seed uint32, statebuf uintptr, statelen types.Size_t, buf uintptr) int32 {
+	if buf == 0 {
+		panic(todo(""))
+	}
+
+	randomDataMu.Lock()
+
+	defer randomDataMu.Unlock()
+
+	randomData[buf] = rand.New(rand.NewSource(int64(seed)))
+	return 0
+}
+
+var (
+	randomData   = map[uintptr]*rand.Rand{}
+	randomDataMu sync.Mutex
+)
+
+// int random_r(struct random_data *buf, int32_t *result);
+func Xrandom_r(t *TLS, buf, result uintptr) int32 {
+	randomDataMu.Lock()
+
+	defer randomDataMu.Unlock()
+
+	mr := randomData[buf]
+	if stdlib.RAND_MAX != math.MaxInt32 {
+		panic(todo(""))
+	}
+	*(*int32)(unsafe.Pointer(result)) = mr.Int31()
+	return 0
+}
+
+// void uuid_copy(uuid_t dst, uuid_t src);
+func Xuuid_copy(t *TLS, dst, src uintptr) {
+	*(*uuid.Uuid_t)(unsafe.Pointer(dst)) = *(*uuid.Uuid_t)(unsafe.Pointer(src))
+}
+
+// int fgetc(FILE *stream);
+func Xfgetc(t *TLS, stream uintptr) int32 {
+	fd := int((*stdio.FILE)(unsafe.Pointer(stream)).F_fileno)
+	var buf [1]byte
+	if n, _ := unix.Read(fd, buf[:]); n != 0 {
+		return int32(buf[0])
+	}
+
+	return stdio.EOF
 }

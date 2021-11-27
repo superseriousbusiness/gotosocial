@@ -778,8 +778,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -950,9 +950,9 @@ type Timeval = struct {
 } /* _timeval.h:49:1 */
 
 type Pthread_once = struct {
-	Fstate int32
-	_      [4]byte
-	Fmutex Pthread_mutex_t
+	Fstate       int32
+	F__ccgo_pad1 [4]byte
+	Fmutex       Pthread_mutex_t
 } /* _pthreadtypes.h:52:1 */
 
 // Primitive system data type definitions required by P1003.1c.
@@ -1812,18 +1812,18 @@ type Clockinfo = struct {
 // These macros are also in sys/time.h.
 
 type Tm = struct {
-	Ftm_sec    int32
-	Ftm_min    int32
-	Ftm_hour   int32
-	Ftm_mday   int32
-	Ftm_mon    int32
-	Ftm_year   int32
-	Ftm_wday   int32
-	Ftm_yday   int32
-	Ftm_isdst  int32
-	_          [4]byte
-	Ftm_gmtoff int64
-	Ftm_zone   uintptr
+	Ftm_sec      int32
+	Ftm_min      int32
+	Ftm_hour     int32
+	Ftm_mday     int32
+	Ftm_mon      int32
+	Ftm_year     int32
+	Ftm_wday     int32
+	Ftm_yday     int32
+	Ftm_isdst    int32
+	F__ccgo_pad1 [4]byte
+	Ftm_gmtoff   int64
+	Ftm_zone     uintptr
 } /* time.h:129:1 */
 
 // -

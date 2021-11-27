@@ -105,6 +105,25 @@ func Data(err error) ErrorData {
 	return nil
 }
 
+// UnwrapAll fully unwraps an error stack to produce a string output.
+func UnwrapAll(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	// Start error output
+	out := err.Error()
+	err = Unwrap(err)
+
+	// Unwrap and append each
+	for err != nil {
+		out += ": " + err.Error()
+		err = Unwrap(err)
+	}
+
+	return out
+}
+
 // stringError is the simplest ErrorContext implementation
 type stringError string
 

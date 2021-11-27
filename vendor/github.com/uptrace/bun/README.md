@@ -9,7 +9,6 @@
 [![build workflow](https://github.com/uptrace/bun/actions/workflows/build.yml/badge.svg)](https://github.com/uptrace/bun/actions)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/bun)](https://pkg.go.dev/github.com/uptrace/bun)
 [![Documentation](https://img.shields.io/badge/bun-documentation-informational)](https://bun.uptrace.dev/)
-[![Chat](https://discordapp.com/api/guilds/752070105847955518/widget.png)](https://discord.gg/rWtp5Aj)
 
 **Status**: API freeze (stable release). Note that all sub-packages (mainly extra/\* packages) are
 not part of the API freeze and are developed independently. You can think of them as of 3rd party
@@ -20,10 +19,10 @@ Main features are:
 - Works with [PostgreSQL](https://bun.uptrace.dev/guide/drivers.html#postgresql),
   [MySQL](https://bun.uptrace.dev/guide/drivers.html#mysql) (including MariaDB),
   [SQLite](https://bun.uptrace.dev/guide/drivers.html#sqlite).
-- [Selecting](/example/basic/) into a map, struct, slice of maps/structs/vars.
-- [Bulk inserts](https://bun.uptrace.dev/guide/queries.html#insert).
-- [Bulk updates](https://bun.uptrace.dev/guide/queries.html#update) using common table expressions.
-- [Bulk deletes](https://bun.uptrace.dev/guide/queries.html#delete).
+- [Selecting](/example/basic/) into scalars, structs, maps, slices of maps/structs/scalars.
+- [Bulk inserts](https://bun.uptrace.dev/guide/query-insert.html).
+- [Bulk updates](https://bun.uptrace.dev/guide/query-update.html) using common table expressions.
+- [Bulk deletes](https://bun.uptrace.dev/guide/query-delete.html).
 - [Fixtures](https://bun.uptrace.dev/guide/fixtures.html).
 - [Migrations](https://bun.uptrace.dev/guide/migrations.html).
 - [Soft deletes](https://bun.uptrace.dev/guide/soft-deletes.html).
@@ -40,7 +39,8 @@ Resources:
 Projects using Bun:
 
 - [gotosocial](https://github.com/superseriousbusiness/gotosocial) - Golang fediverse server.
-- [input-output-hk/cicero](https://github.com/input-output-hk/cicero)
+- [qvalet](https://github.com/cmaster11/qvalet) listens for HTTP requests and executes commands on
+  demand.
 - [RealWorld app](https://github.com/go-bun/bun-realworld-app)
 
 <details>
@@ -111,6 +111,7 @@ topRegions := db.NewSelect().
 	TableExpr("regional_sales").
 	Where("total_sales > (SELECT SUM(total_sales) / 10 FROM regional_sales)")
 
+var items map[string]interface{}
 err := db.NewSelect().
 	With("regional_sales", regionalSales).
 	With("top_regions", topRegions).
@@ -122,7 +123,7 @@ err := db.NewSelect().
 	Where("region IN (SELECT region FROM top_regions)").
 	GroupExpr("region").
 	GroupExpr("product").
-	Scan(ctx)
+	Scan(ctx, &items)
 ```
 
 ```sql
@@ -143,6 +144,8 @@ FROM orders
 WHERE region IN (SELECT region FROM top_regions)
 GROUP BY region, product
 ```
+
+And scan results into scalars, structs, maps, slices of structs/maps/scalars.
 
 ## Installation
 
@@ -212,13 +215,13 @@ db.RegisterModel((*User)(nil), (*Story)(nil))
 // WithRecreateTables tells Bun to drop existing tables and create new ones.
 fixture := dbfixture.New(db, dbfixture.WithRecreateTables())
 
-// Load fixture.yaml which contains data for User and Story models.
-if err := fixture.Load(ctx, os.DirFS("."), "fixture.yaml"); err != nil {
+// Load fixture.yml which contains data for User and Story models.
+if err := fixture.Load(ctx, os.DirFS("."), "fixture.yml"); err != nil {
 	panic(err)
 }
 ```
 
-The `fixture.yaml` looks like this:
+The `fixture.yml` looks like this:
 
 ```yaml
 - model: User

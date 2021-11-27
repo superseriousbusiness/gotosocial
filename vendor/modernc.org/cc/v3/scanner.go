@@ -1178,10 +1178,6 @@ func (c *ppCache) getFile(ctx *context, name string, sys bool, doNotCache bool) 
 
 	size := int(fi.Size())
 	if !filepath.IsAbs(name) { // Never cache relative paths
-		if isTesting {
-			panic(internalError())
-		}
-
 		f, err := ctx.openFile(name, sys)
 		if err != nil {
 			return nil, err

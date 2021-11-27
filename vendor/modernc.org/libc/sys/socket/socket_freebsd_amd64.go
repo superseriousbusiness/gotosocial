@@ -823,8 +823,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -1020,10 +1020,10 @@ type Sockaddr_storage = struct {
 type Msghdr = struct {
 	Fmsg_name       uintptr
 	Fmsg_namelen    Socklen_t
-	_               [4]byte
+	F__ccgo_pad1    [4]byte
 	Fmsg_iov        uintptr
 	Fmsg_iovlen     int32
-	_               [4]byte
+	F__ccgo_pad2    [4]byte
 	Fmsg_control    uintptr
 	Fmsg_controllen Socklen_t
 	Fmsg_flags      int32
@@ -1059,7 +1059,7 @@ type Cmsgcred = struct {
 	Fcmcred_euid    Uid_t
 	Fcmcred_gid     Gid_t
 	Fcmcred_ngroups int16
-	_               [2]byte
+	F__ccgo_pad1    [2]byte
 	Fcmcred_groups  [16]Gid_t
 } /* socket.h:503:1 */
 
@@ -1114,13 +1114,13 @@ type Osockaddr = struct {
 type Omsghdr = struct {
 	Fmsg_name         uintptr
 	Fmsg_namelen      int32
-	_                 [4]byte
+	F__ccgo_pad1      [4]byte
 	Fmsg_iov          uintptr
 	Fmsg_iovlen       int32
-	_                 [4]byte
+	F__ccgo_pad2      [4]byte
 	Fmsg_accrights    uintptr
 	Fmsg_accrightslen int32
-	_                 [4]byte
+	F__ccgo_pad3      [4]byte
 } /* socket.h:615:1 */
 
 // howto arguments for shutdown(2), specified by Posix.1g.
@@ -1130,12 +1130,12 @@ type Omsghdr = struct {
 
 // sendfile(2) header/trailer struct
 type Sf_hdtr = struct {
-	Fheaders  uintptr
-	Fhdr_cnt  int32
-	_         [4]byte
-	Ftrailers uintptr
-	Ftrl_cnt  int32
-	_         [4]byte
+	Fheaders     uintptr
+	Fhdr_cnt     int32
+	F__ccgo_pad1 [4]byte
+	Ftrailers    uintptr
+	Ftrl_cnt     int32
+	F__ccgo_pad2 [4]byte
 } /* socket.h:644:1 */
 
 // Sendfile-specific flag(s)
@@ -1145,10 +1145,10 @@ type Mmsghdr = struct {
 	Fmsg_hdr struct {
 		Fmsg_name       uintptr
 		Fmsg_namelen    Socklen_t
-		_               [4]byte
+		F__ccgo_pad1    [4]byte
 		Fmsg_iov        uintptr
 		Fmsg_iovlen     int32
-		_               [4]byte
+		F__ccgo_pad2    [4]byte
 		Fmsg_control    uintptr
 		Fmsg_controllen Socklen_t
 		Fmsg_flags      int32

@@ -670,6 +670,7 @@ func (n *AssignmentExpression) Position() (r token.Position) {
 //	AtomicTypeSpecifier:
 //	        "_Atomic" '(' TypeName ')'
 type AtomicTypeSpecifier struct {
+	list     []*TypeSpecifier
 	Token    Token
 	Token2   Token
 	Token3   Token
@@ -1339,6 +1340,7 @@ type Declarator struct {
 	called                 bool
 	fnDef                  bool
 	hasInitializer         bool
+	implicit               bool
 	AttributeSpecifierList *AttributeSpecifierList
 	DirectDeclarator       *DirectDeclarator
 	Pointer                *Pointer

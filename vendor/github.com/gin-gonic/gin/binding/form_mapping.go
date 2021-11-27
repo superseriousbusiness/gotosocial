@@ -16,26 +16,14 @@ import (
 	"github.com/gin-gonic/gin/internal/json"
 )
 
-var (
-	errUnknownType = errors.New("unknown type")
+var errUnknownType = errors.New("unknown type")
 
-	// ErrConvertMapStringSlice can not covert to map[string][]string
-	ErrConvertMapStringSlice = errors.New("can not convert to map slices of strings")
-
-	// ErrConvertToMapString can not convert to map[string]string
-	ErrConvertToMapString = errors.New("can not convert to map of strings")
-)
-
-func mapURI(ptr interface{}, m map[string][]string) error {
+func mapUri(ptr interface{}, m map[string][]string) error {
 	return mapFormByTag(ptr, m, "uri")
 }
 
 func mapForm(ptr interface{}, form map[string][]string) error {
 	return mapFormByTag(ptr, form, "form")
-}
-
-func MapFormWithTag(ptr interface{}, form map[string][]string, tag string) error {
-	return mapFormByTag(ptr, form, tag)
 }
 
 var emptyField = reflect.StructField{}
@@ -83,7 +71,7 @@ func mapping(value reflect.Value, field reflect.StructField, setter setter, tag 
 		return false, nil
 	}
 
-	vKind := value.Kind()
+	var vKind = value.Kind()
 
 	if vKind == reflect.Ptr {
 		var isNew bool
@@ -121,7 +109,7 @@ func mapping(value reflect.Value, field reflect.StructField, setter setter, tag 
 			if sf.PkgPath != "" && !sf.Anonymous { // unexported
 				continue
 			}
-			ok, err := mapping(value.Field(i), sf, setter, tag)
+			ok, err := mapping(value.Field(i), tValue.Field(i), setter, tag)
 			if err != nil {
 				return false, err
 			}
@@ -210,7 +198,7 @@ func setWithProperType(val string, value reflect.Value, field reflect.StructFiel
 	case reflect.Int64:
 		switch value.Interface().(type) {
 		case time.Duration:
-			return setTimeDuration(val, value)
+			return setTimeDuration(val, value, field)
 		}
 		return setIntField(val, 64, value)
 	case reflect.Uint:
@@ -310,6 +298,7 @@ func setTimeField(val string, structField reflect.StructField, value reflect.Val
 		t := time.Unix(tv/int64(d), tv%int64(d))
 		value.Set(reflect.ValueOf(t))
 		return nil
+
 	}
 
 	if val == "" {
@@ -359,7 +348,7 @@ func setSlice(vals []string, value reflect.Value, field reflect.StructField) err
 	return nil
 }
 
-func setTimeDuration(val string, value reflect.Value) error {
+func setTimeDuration(val string, value reflect.Value, field reflect.StructField) error {
 	d, err := time.ParseDuration(val)
 	if err != nil {
 		return err
@@ -382,7 +371,7 @@ func setFormMap(ptr interface{}, form map[string][]string) error {
 	if el.Kind() == reflect.Slice {
 		ptrMap, ok := ptr.(map[string][]string)
 		if !ok {
-			return ErrConvertMapStringSlice
+			return errors.New("cannot convert to map slices of strings")
 		}
 		for k, v := range form {
 			ptrMap[k] = v
@@ -393,7 +382,7 @@ func setFormMap(ptr interface{}, form map[string][]string) error {
 
 	ptrMap, ok := ptr.(map[string]string)
 	if !ok {
-		return ErrConvertToMapString
+		return errors.New("cannot convert to map of strings")
 	}
 	for k, v := range form {
 		ptrMap[k] = v[len(v)-1] // pick last

@@ -43,7 +43,7 @@ type Logger struct {
 
 // New returns a new Logger instance with defaults
 func New(out io.Writer) *Logger {
-	return NewWith(0 /* all */, true, NewLogFmt(false), 512, out)
+	return NewWith(0 /* all */, true, DefaultTextFormat, 512, out)
 }
 
 // NewWith returns a new Logger instance with supplied configuration

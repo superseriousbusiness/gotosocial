@@ -1,4 +1,19 @@
 
+v1.0.3 / 2021-11-21
+===================
+
+  * fix(#108): add application file matchers
+  * Merge pull request #106 from hannesbraun/aiff-support
+  * Add AIFF support
+  * fix(archive): format issue indentation
+  * feat(version): bump patch
+  * Merge pull request #100 from da2018/master
+  * Enhance Zstd support
+  * Merge pull request #98 from cfergeau/zstd
+  * Add zstd support
+  * Merge pull request #99 from cfergeau/byteprefixmatcher
+  * Introduce bytePrefixMatcher helper
+
 v1.1.0 / 2020-06-06
 ===================
 

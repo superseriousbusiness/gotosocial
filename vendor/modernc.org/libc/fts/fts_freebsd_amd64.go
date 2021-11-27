@@ -15,51 +15,214 @@ var _ atomic.Value
 var _ unsafe.Pointer
 
 const (
-	FTS_AGAIN            = 1
-	FTS_COMFOLLOW        = 0x001
-	FTS_D                = 1
-	FTS_DC               = 2
-	FTS_DEFAULT          = 3
-	FTS_DNR              = 4
-	FTS_DONTCHDIR        = 0x01
-	FTS_DOT              = 5
-	FTS_DP               = 6
-	FTS_ERR              = 7
-	FTS_F                = 8
-	FTS_FOLLOW           = 2
-	FTS_INIT             = 9
-	FTS_ISW              = 0x04
-	FTS_LOGICAL          = 0x002
-	FTS_NAMEONLY         = 0x100
-	FTS_NOCHDIR          = 0x004
-	FTS_NOINSTR          = 3
-	FTS_NOSTAT           = 0x008
-	FTS_NS               = 10
-	FTS_NSOK             = 11
-	FTS_OPTIONMASK       = 0x0ff
-	FTS_PHYSICAL         = 0x010
-	FTS_ROOTLEVEL        = 0
-	FTS_ROOTPARENTLEVEL  = -1
-	FTS_SEEDOT           = 0x020
-	FTS_SKIP             = 4
-	FTS_SL               = 12
-	FTS_SLNONE           = 13
-	FTS_STOP             = 0x200
-	FTS_SYMFOLLOW        = 0x02
-	FTS_W                = 14
-	FTS_WHITEOUT         = 0x080
-	FTS_XDEV             = 0x040
-	X_FILE_OFFSET_BITS   = 64
-	X_FTS_H_             = 0
-	X_LP64               = 1
-	X_MACHINE__LIMITS_H_ = 0
-	X_MACHINE__TYPES_H_  = 0
-	X_Nonnull            = 0
-	X_Null_unspecified   = 0
-	X_Nullable           = 0
-	X_SYS_CDEFS_H_       = 0
-	X_SYS__TYPES_H_      = 0
-	Unix                 = 1
+	ACCESSPERMS              = 511
+	ALLPERMS                 = 4095
+	BIG_ENDIAN               = 4321
+	BYTE_ORDER               = 1234
+	CLK_TCK                  = 128
+	CLOCKS_PER_SEC           = 128
+	CLOCK_MONOTONIC          = 4
+	CLOCK_MONOTONIC_FAST     = 12
+	CLOCK_MONOTONIC_PRECISE  = 11
+	CLOCK_PROCESS_CPUTIME_ID = 15
+	CLOCK_PROF               = 2
+	CLOCK_REALTIME           = 0
+	CLOCK_REALTIME_FAST      = 10
+	CLOCK_REALTIME_PRECISE   = 9
+	CLOCK_SECOND             = 13
+	CLOCK_THREAD_CPUTIME_ID  = 14
+	CLOCK_UPTIME             = 5
+	CLOCK_UPTIME_FAST        = 8
+	CLOCK_UPTIME_PRECISE     = 7
+	CLOCK_VIRTUAL            = 1
+	CPUCLOCK_WHICH_PID       = 0
+	CPUCLOCK_WHICH_TID       = 1
+	DEFFILEMODE              = 438
+	DST_AUST                 = 2
+	DST_CAN                  = 6
+	DST_EET                  = 5
+	DST_MET                  = 4
+	DST_NONE                 = 0
+	DST_USA                  = 1
+	DST_WET                  = 3
+	FD_SETSIZE               = 1024
+	FTS_AGAIN                = 1
+	FTS_COMFOLLOW            = 0x001
+	FTS_D                    = 1
+	FTS_DC                   = 2
+	FTS_DEFAULT              = 3
+	FTS_DNR                  = 4
+	FTS_DONTCHDIR            = 0x01
+	FTS_DOT                  = 5
+	FTS_DP                   = 6
+	FTS_ERR                  = 7
+	FTS_F                    = 8
+	FTS_FOLLOW               = 2
+	FTS_INIT                 = 9
+	FTS_ISW                  = 0x04
+	FTS_LOGICAL              = 0x002
+	FTS_NAMEONLY             = 0x100
+	FTS_NOCHDIR              = 0x004
+	FTS_NOINSTR              = 3
+	FTS_NOSTAT               = 0x008
+	FTS_NS                   = 10
+	FTS_NSOK                 = 11
+	FTS_OPTIONMASK           = 0x0ff
+	FTS_PHYSICAL             = 0x010
+	FTS_ROOTLEVEL            = 0
+	FTS_ROOTPARENTLEVEL      = -1
+	FTS_SEEDOT               = 0x020
+	FTS_SKIP                 = 4
+	FTS_SL                   = 12
+	FTS_SLNONE               = 13
+	FTS_STOP                 = 0x200
+	FTS_SYMFOLLOW            = 0x02
+	FTS_W                    = 14
+	FTS_WHITEOUT             = 0x080
+	FTS_XDEV                 = 0x040
+	ITIMER_PROF              = 2
+	ITIMER_REAL              = 0
+	ITIMER_VIRTUAL           = 1
+	LITTLE_ENDIAN            = 1234
+	PDP_ENDIAN               = 3412
+	SBT_MAX                  = 0x7fffffffffffffff
+	SF_APPEND                = 0x00040000
+	SF_ARCHIVED              = 0x00010000
+	SF_IMMUTABLE             = 0x00020000
+	SF_NOUNLINK              = 0x00100000
+	SF_SETTABLE              = 0xffff0000
+	SF_SNAPSHOT              = 0x00200000
+	S_BLKSIZE                = 512
+	S_IEXEC                  = 64
+	S_IFBLK                  = 0060000
+	S_IFCHR                  = 0020000
+	S_IFDIR                  = 0040000
+	S_IFIFO                  = 0010000
+	S_IFLNK                  = 0120000
+	S_IFMT                   = 0170000
+	S_IFREG                  = 0100000
+	S_IFSOCK                 = 0140000
+	S_IFWHT                  = 0160000
+	S_IREAD                  = 256
+	S_IRGRP                  = 0000040
+	S_IROTH                  = 0000004
+	S_IRUSR                  = 0000400
+	S_IRWXG                  = 0000070
+	S_IRWXO                  = 0000007
+	S_IRWXU                  = 0000700
+	S_ISGID                  = 0002000
+	S_ISTXT                  = 0001000
+	S_ISUID                  = 0004000
+	S_ISVTX                  = 0001000
+	S_IWGRP                  = 0000020
+	S_IWOTH                  = 0000002
+	S_IWRITE                 = 128
+	S_IWUSR                  = 0000200
+	S_IXGRP                  = 0000010
+	S_IXOTH                  = 0000001
+	S_IXUSR                  = 0000100
+	TIMER_ABSTIME            = 0x1
+	TIMER_RELTIME            = 0x0
+	TIME_UTC                 = 1
+	UF_APPEND                = 0x00000004
+	UF_ARCHIVE               = 0x00000800
+	UF_HIDDEN                = 0x00008000
+	UF_IMMUTABLE             = 0x00000002
+	UF_NODUMP                = 0x00000001
+	UF_NOUNLINK              = 0x00000010
+	UF_OFFLINE               = 0x00000200
+	UF_OPAQUE                = 0x00000008
+	UF_READONLY              = 0x00001000
+	UF_REPARSE               = 0x00000400
+	UF_SETTABLE              = 0x0000ffff
+	UF_SPARSE                = 0x00000100
+	UF_SYSTEM                = 0x00000080
+	UTIME_NOW                = -1
+	UTIME_OMIT               = -2
+	X_ACCMODE_T_DECLARED     = 0
+	X_BIG_ENDIAN             = 4321
+	X_BLKCNT_T_DECLARED      = 0
+	X_BLKSIZE_T_DECLARED     = 0
+	X_BYTE_ORDER             = 1234
+	X_CAP_IOCTL_T_DECLARED   = 0
+	X_CAP_RIGHTS_T_DECLARED  = 0
+	X_CLOCKID_T_DECLARED     = 0
+	X_CLOCK_T_DECLARED       = 0
+	X_DEV_T_DECLARED         = 0
+	X_FFLAGS_T_DECLARED      = 0
+	X_FILE_OFFSET_BITS       = 64
+	X_FSBLKCNT_T_DECLARED    = 0
+	X_FTRUNCATE_DECLARED     = 0
+	X_FTS_H_                 = 0
+	X_GID_T_DECLARED         = 0
+	X_ID_T_DECLARED          = 0
+	X_INO_T_DECLARED         = 0
+	X_INT16_T_DECLARED       = 0
+	X_INT32_T_DECLARED       = 0
+	X_INT64_T_DECLARED       = 0
+	X_INT8_T_DECLARED        = 0
+	X_INTMAX_T_DECLARED      = 0
+	X_INTPTR_T_DECLARED      = 0
+	X_IN_ADDR_T_DECLARED     = 0
+	X_IN_PORT_T_DECLARED     = 0
+	X_KEY_T_DECLARED         = 0
+	X_LITTLE_ENDIAN          = 1234
+	X_LOCALE_T_DEFINED       = 0
+	X_LP64                   = 1
+	X_LSEEK_DECLARED         = 0
+	X_LWPID_T_DECLARED       = 0
+	X_MACHINE_ENDIAN_H_      = 0
+	X_MACHINE__LIMITS_H_     = 0
+	X_MACHINE__TYPES_H_      = 0
+	X_MKNOD_DECLARED         = 0
+	X_MMAP_DECLARED          = 0
+	X_MODE_T_DECLARED        = 0
+	X_MQD_T_DECLARED         = 0
+	X_NLINK_T_DECLARED       = 0
+	X_Nonnull                = 0
+	X_Null_unspecified       = 0
+	X_Nullable               = 0
+	X_OFF64_T_DECLARED       = 0
+	X_OFF_T_DECLARED         = 0
+	X_PDP_ENDIAN             = 3412
+	X_PID_T_DECLARED         = 0
+	X_PTHREAD_T_DECLARED     = 0
+	X_QUAD_HIGHWORD          = 1
+	X_QUAD_LOWWORD           = 0
+	X_RLIM_T_DECLARED        = 0
+	X_SELECT_DECLARED        = 0
+	X_SIGSET_T_DECLARED      = 0
+	X_SIG_MAXSIG             = 128
+	X_SIG_WORDS              = 4
+	X_SIZE_T_DECLARED        = 0
+	X_SSIZE_T_DECLARED       = 0
+	X_SUSECONDS_T_DECLARED   = 0
+	X_SYS_CDEFS_H_           = 0
+	X_SYS_SELECT_H_          = 0
+	X_SYS_STAT_H_            = 0
+	X_SYS_TIMESPEC_H_        = 0
+	X_SYS_TIME_H_            = 0
+	X_SYS_TYPES_H_           = 0
+	X_SYS__PTHREADTYPES_H_   = 0
+	X_SYS__SIGSET_H_         = 0
+	X_SYS__STDINT_H_         = 0
+	X_SYS__TIMESPEC_H_       = 0
+	X_SYS__TIMEVAL_H_        = 0
+	X_SYS__TYPES_H_          = 0
+	X_TIMER_T_DECLARED       = 0
+	X_TIME_H_                = 0
+	X_TIME_T_DECLARED        = 0
+	X_TRUNCATE_DECLARED      = 0
+	X_UID_T_DECLARED         = 0
+	X_UINT16_T_DECLARED      = 0
+	X_UINT32_T_DECLARED      = 0
+	X_UINT64_T_DECLARED      = 0
+	X_UINT8_T_DECLARED       = 0
+	X_UINTMAX_T_DECLARED     = 0
+	X_UINTPTR_T_DECLARED     = 0
+	X_USECONDS_T_DECLARED    = 0
+	X_XLOCALE_LOCALE1_H      = 0
+	Unix                     = 1
 )
 
 type Ptrdiff_t = int64 /* <builtin>:3:26 */
@@ -83,8 +246,13 @@ type X__float128 = float64        /* <builtin>:47:21 */
 // -
 // SPDX-License-Identifier: BSD-3-Clause
 //
-// Copyright (c) 1989, 1993
+// Copyright (c) 1982, 1986, 1991, 1993, 1994
 //	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -110,36 +278,7 @@ type X__float128 = float64        /* <builtin>:47:21 */
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 //
-//	@(#)fts.h	8.3 (Berkeley) 8/14/94
-// $FreeBSD$
-
-// -
-// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
-//
-// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-//
-// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
-//
+//	@(#)types.h	8.6 (Berkeley) 2/19/95
 // $FreeBSD$
 
 // -
@@ -364,6 +503,145 @@ type X__float128 = float64        /* <builtin>:47:21 */
 
 // Guard variables and structure members by lock.
 
+// Machine type dependent parameters.
+// -
+// This file is in the public domain.
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1987, 1991 Regents of the University of California.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)endian.h	7.8 (Berkeley) 4/3/91
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
 // -
 // This file is in the public domain.
 // $FreeBSD$
@@ -575,8 +853,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -584,11 +862,1344 @@ type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
 // Types for varargs. These are all provided by builtin types these
 // days, so centralize their definition.
 type X__va_list = X__builtin_va_list /* _types.h:133:27 */ // internally known to gcc
-type X__gnuc_va_list = X__va_list    /* _types.h:140:20 */ // compatibility w/GNU headers
+type X__gnuc_va_list = X__va_list    /* _types.h:140:20 */
+type Pthread_once = struct {
+	Fstate       int32
+	F__ccgo_pad1 [4]byte
+	Fmutex       Pthread_mutex_t
+} /* _pthreadtypes.h:52:1 */
 
-// When the following macro is defined, the system uses 64-bit inode numbers.
-// Programs can use this to avoid including <sys/param.h>, with its associated
-// namespace pollution.
+// Primitive system data type definitions required by P1003.1c.
+//
+// Note that P1003.1c specifies that there are no defined comparison
+// or assignment operators for the types pthread_attr_t, pthread_cond_t,
+// pthread_condattr_t, pthread_mutex_t, pthread_mutexattr_t.
+type Pthread_t = uintptr             /* _pthreadtypes.h:67:26 */
+type Pthread_attr_t = uintptr        /* _pthreadtypes.h:70:30 */
+type Pthread_mutex_t = uintptr       /* _pthreadtypes.h:71:31 */
+type Pthread_mutexattr_t = uintptr   /* _pthreadtypes.h:72:35 */
+type Pthread_cond_t = uintptr        /* _pthreadtypes.h:73:30 */
+type Pthread_condattr_t = uintptr    /* _pthreadtypes.h:74:34 */
+type Pthread_key_t = int32           /* _pthreadtypes.h:75:20 */
+type Pthread_once_t = Pthread_once   /* _pthreadtypes.h:76:30 */
+type Pthread_rwlock_t = uintptr      /* _pthreadtypes.h:77:32 */
+type Pthread_rwlockattr_t = uintptr  /* _pthreadtypes.h:78:35 */
+type Pthread_barrier_t = uintptr     /* _pthreadtypes.h:79:33 */
+type Pthread_barrierattr_t = uintptr /* _pthreadtypes.h:80:36 */
+type Pthread_spinlock_t = uintptr    /* _pthreadtypes.h:81:33 */
+
+// Additional type definitions:
+//
+// Note that P1003.1c reserves the prefixes pthread_ and PTHREAD_ for
+// use in header symbols.
+type Pthread_addr_t = uintptr         /* _pthreadtypes.h:89:14 */
+type Pthread_startroutine_t = uintptr /* _pthreadtypes.h:90:14 */
+
+type U_char = uint8   /* types.h:52:23 */
+type U_short = uint16 /* types.h:53:24 */
+type U_int = uint32   /* types.h:54:22 */
+type U_long = uint64  /* types.h:55:23 */
+type Ushort = uint16  /* types.h:57:24 */ // Sys V compatibility
+type Uint = uint32    /* types.h:58:22 */ // Sys V compatibility
+
+// XXX POSIX sized integrals that should appear only in <sys/stdint.h>.
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2011 David E. O'Brien <obrien@FreeBSD.org>
+// Copyright (c) 2001 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+type Int8_t = X__int8_t /* _stdint.h:36:19 */
+
+type Int16_t = X__int16_t /* _stdint.h:41:20 */
+
+type Int32_t = X__int32_t /* _stdint.h:46:20 */
+
+type Int64_t = X__int64_t /* _stdint.h:51:20 */
+
+type Uint8_t = X__uint8_t /* _stdint.h:56:20 */
+
+type Uint16_t = X__uint16_t /* _stdint.h:61:21 */
+
+type Uint32_t = X__uint32_t /* _stdint.h:66:21 */
+
+type Uint64_t = X__uint64_t /* _stdint.h:71:21 */
+
+type Intptr_t = X__intptr_t   /* _stdint.h:76:21 */
+type Uintptr_t = X__uintptr_t /* _stdint.h:80:22 */
+type Intmax_t = X__intmax_t   /* _stdint.h:84:21 */
+type Uintmax_t = X__uintmax_t /* _stdint.h:88:22 */
+
+type U_int8_t = X__uint8_t   /* types.h:67:19 */ // unsigned integrals (deprecated)
+type U_int16_t = X__uint16_t /* types.h:68:20 */
+type U_int32_t = X__uint32_t /* types.h:69:20 */
+type U_int64_t = X__uint64_t /* types.h:70:20 */
+
+type U_quad_t = X__uint64_t /* types.h:72:20 */ // quads (deprecated)
+type Quad_t = X__int64_t    /* types.h:73:19 */
+type Qaddr_t = uintptr      /* types.h:74:16 */
+
+type Caddr_t = uintptr   /* types.h:76:14 */ // core address
+type C_caddr_t = uintptr /* types.h:77:20 */ // core address, pointer to const
+
+type Blksize_t = X__blksize_t /* types.h:80:21 */
+
+type Cpuwhich_t = X__cpuwhich_t /* types.h:84:22 */
+type Cpulevel_t = X__cpulevel_t /* types.h:85:22 */
+type Cpusetid_t = X__cpusetid_t /* types.h:86:22 */
+
+type Blkcnt_t = X__blkcnt_t /* types.h:89:20 */
+
+type Clock_t = X__clock_t /* types.h:94:19 */
+
+type Clockid_t = X__clockid_t /* types.h:99:21 */
+
+type Critical_t = X__critical_t /* types.h:103:22 */ // Critical section value
+type Daddr_t = X__daddr_t       /* types.h:104:19 */ // disk address
+
+type Dev_t = X__dev_t /* types.h:107:18 */ // device number or struct cdev
+
+type Fflags_t = X__fflags_t /* types.h:112:20 */ // file flags
+
+type Fixpt_t = X__fixpt_t /* types.h:116:19 */ // fixed point number
+
+type Fsblkcnt_t = X__fsblkcnt_t /* types.h:119:22 */
+type Fsfilcnt_t = X__fsfilcnt_t /* types.h:120:22 */
+
+type Gid_t = X__gid_t /* types.h:125:18 */ // group id
+
+type In_addr_t = X__uint32_t /* types.h:130:20 */ // base type for internet address
+
+type In_port_t = X__uint16_t /* types.h:135:20 */
+
+type Id_t = X__id_t /* types.h:140:17 */ // can hold a uid_t or pid_t
+
+type Ino_t = X__ino_t /* types.h:145:18 */ // inode number
+
+type Key_t = X__key_t /* types.h:150:18 */ // IPC key (for Sys V IPC)
+
+type Lwpid_t = X__lwpid_t /* types.h:155:19 */ // Thread ID (a.k.a. LWP)
+
+type Mode_t = X__mode_t /* types.h:160:18 */ // permissions
+
+type Accmode_t = X__accmode_t /* types.h:165:21 */ // access permissions
+
+type Nlink_t = X__nlink_t /* types.h:170:19 */ // link count
+
+type Off_t = X__off_t /* types.h:175:18 */ // file offset
+
+type Off64_t = X__off64_t /* types.h:180:19 */ // file offset (alias)
+
+type Pid_t = X__pid_t /* types.h:185:18 */ // process id
+
+type Register_t = X__register_t /* types.h:189:22 */
+
+type Rlim_t = X__rlim_t /* types.h:192:18 */ // resource limit
+
+type Sbintime_t = X__int64_t /* types.h:196:19 */
+
+type Segsz_t = X__segsz_t /* types.h:198:19 */
+
+type Ssize_t = X__ssize_t /* types.h:206:19 */
+
+type Suseconds_t = X__suseconds_t /* types.h:211:23 */ // microseconds (signed)
+
+type Time_t = X__time_t /* types.h:216:18 */
+
+type Timer_t = X__timer_t /* types.h:221:19 */
+
+type Mqd_t = X__mqd_t /* types.h:226:17 */
+
+type U_register_t = X__u_register_t /* types.h:230:24 */
+
+type Uid_t = X__uid_t /* types.h:233:18 */ // user id
+
+type Useconds_t = X__useconds_t /* types.h:238:22 */ // microseconds (unsigned)
+
+type Cap_ioctl_t = uint64 /* types.h:244:23 */
+
+// Types suitable for exporting physical addresses, virtual addresses
+// (pointers), and memory object sizes from the kernel independent of native
+// word size.  These should be used in place of vm_paddr_t, (u)intptr_t, and
+// size_t in structs which contain such types that are shared with userspace.
+type Kpaddr_t = X__uint64_t /* types.h:260:20 */
+type Kvaddr_t = X__uint64_t /* types.h:261:20 */
+type Ksize_t = X__uint64_t  /* types.h:262:20 */
+type Kssize_t = X__int64_t  /* types.h:263:19 */
+
+type Vm_offset_t = X__vm_offset_t /* types.h:265:23 */
+type Vm_ooffset_t = X__uint64_t   /* types.h:266:20 */
+type Vm_paddr_t = X__vm_paddr_t   /* types.h:267:22 */
+type Vm_pindex_t = X__uint64_t    /* types.h:268:20 */
+type Vm_size_t = X__vm_size_t     /* types.h:269:21 */
+
+type Rman_res_t = X__rman_res_t /* types.h:271:25 */
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1992, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1989, 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)signal.h	8.4 (Berkeley) 5/4/95
+// $FreeBSD$
+
+// sigset_t macros.
+
+type X__sigset = struct{ F__bits [4]X__uint32_t } /* _sigset.h:53:9 */
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1992, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1989, 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)signal.h	8.4 (Berkeley) 5/4/95
+// $FreeBSD$
+
+// sigset_t macros.
+
+type X__sigset_t = X__sigset /* _sigset.h:55:3 */
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// Structure returned by gettimeofday(2) system call, and used in other calls.
+type Timeval = struct {
+	Ftv_sec  Time_t
+	Ftv_usec Suseconds_t
+} /* _timeval.h:49:1 */
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// from: FreeBSD: src/sys/sys/time.h,v 1.43 2000/03/20 14:09:05 phk Exp
+//	$FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// from: FreeBSD: src/sys/sys/time.h,v 1.43 2000/03/20 14:09:05 phk Exp
+//	$FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+type Timespec = struct {
+	Ftv_sec  Time_t
+	Ftv_nsec int64
+} /* _timespec.h:46:1 */
+
+// Structure defined by POSIX.1b to be like a itimerval, but with
+// timespecs. Used in the timer_*() system calls.
+type Itimerspec = struct {
+	Fit_interval struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+	Fit_value struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+} /* timespec.h:60:1 */
+
+type X__fd_mask = uint64  /* select.h:44:23 */
+type Fd_mask = X__fd_mask /* select.h:46:19 */
+
+type Sigset_t = X__sigset_t /* select.h:51:20 */
+
+// Select uses bit masks of file descriptors in longs.  These macros
+// manipulate such bit fields (the filesystem macros use chars).
+// FD_SETSIZE may be defined by the user, but the default here should
+// be enough for most uses.
+
+type Fd_set1 = struct{ F__fds_bits [16]X__fd_mask } /* select.h:73:9 */
+
+// Select uses bit masks of file descriptors in longs.  These macros
+// manipulate such bit fields (the filesystem macros use chars).
+// FD_SETSIZE may be defined by the user, but the default here should
+// be enough for most uses.
+
+type Fd_set = Fd_set1 /* select.h:75:3 */
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1989, 1993
+//	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)stat.h	8.12 (Berkeley) 6/16/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// from: FreeBSD: src/sys/sys/time.h,v 1.43 2000/03/20 14:09:05 phk Exp
+//	$FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// XXX We get miscellaneous namespace pollution with this.
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1991, 1993, 1994
+//	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)types.h	8.6 (Berkeley) 2/19/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// from: FreeBSD: src/sys/sys/time.h,v 1.43 2000/03/20 14:09:05 phk Exp
+//	$FreeBSD$
+
+type Timezone = struct {
+	Ftz_minuteswest int32
+	Ftz_dsttime     int32
+} /* time.h:42:1 */
+
+type Bintime = struct {
+	Fsec  Time_t
+	Ffrac Uint64_t
+} /* time.h:55:1 */
+
+// Operations on timespecs
+
+// Names of the interval timers, and structure
+// defining a timer setting.
+
+type Itimerval = struct {
+	Fit_interval struct {
+		Ftv_sec  Time_t
+		Ftv_usec Suseconds_t
+	}
+	Fit_value struct {
+		Ftv_sec  Time_t
+		Ftv_usec Suseconds_t
+	}
+} /* time.h:447:1 */
+
+// Getkerninfo clock information structure
+type Clockinfo = struct {
+	Fhz     int32
+	Ftick   int32
+	Fspare  int32
+	Fstathz int32
+	Fprofhz int32
+} /* time.h:455:1 */
+
+// These macros are also in time.h.
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1989, 1993
+//	The Regents of the University of California.  All rights reserved.
+// (c) UNIX System Laboratories, Inc.
+// All or some portions of this file are derived from material licensed
+// to the University of California by American Telephone and Telegraph
+// Co. or Unix System Laboratories, Inc. and are reproduced herein with
+// the permission of UNIX System Laboratories, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.3 (Berkeley) 1/21/94
+
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1991, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// This code is derived from software contributed to Berkeley by
+// Berkeley Software Design, Inc.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2003 Marcel Moolenaar
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+// IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+// NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+// THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+// Frequency of the clock ticks reported by times().  Deprecated - use
+// sysconf(_SC_CLK_TCK) instead.  (Removed in 1003.1-2001.)
+
+// Frequency of the clock ticks reported by clock().
+
+// New in POSIX 1003.1b-1993.
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1982, 1986, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)time.h	8.5 (Berkeley) 5/4/95
+// from: FreeBSD: src/sys/sys/time.h,v 1.43 2000/03/20 14:09:05 phk Exp
+//	$FreeBSD$
+
+// These macros are also in sys/time.h.
+
+type Tm = struct {
+	Ftm_sec      int32
+	Ftm_min      int32
+	Ftm_hour     int32
+	Ftm_mday     int32
+	Ftm_mon      int32
+	Ftm_year     int32
+	Ftm_wday     int32
+	Ftm_yday     int32
+	Ftm_isdst    int32
+	F__ccgo_pad1 [4]byte
+	Ftm_gmtoff   int64
+	Ftm_zone     uintptr
+} /* time.h:129:1 */
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2011, 2012 The FreeBSD Foundation
+// All rights reserved.
+//
+// This software was developed by David Chisnall under sponsorship from
+// the FreeBSD Foundation.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
+
+type Locale_t = uintptr /* _time.h:36:25 */
+
+type Stat = struct {
+	Fst_dev      Dev_t
+	Fst_ino      Ino_t
+	Fst_nlink    Nlink_t
+	Fst_mode     Mode_t
+	Fst_padding0 X__int16_t
+	Fst_uid      Uid_t
+	Fst_gid      Gid_t
+	Fst_padding1 X__int32_t
+	Fst_rdev     Dev_t
+	Fst_atim     struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+	Fst_mtim struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+	Fst_ctim struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+	Fst_birthtim struct {
+		Ftv_sec  Time_t
+		Ftv_nsec int64
+	}
+	Fst_size    Off_t
+	Fst_blocks  Blkcnt_t
+	Fst_blksize Blksize_t
+	Fst_flags   Fflags_t
+	Fst_gen     X__uint64_t
+	Fst_spare   [10]X__uint64_t
+} /* stat.h:160:1 */
+
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1989, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)fts.h	8.3 (Berkeley) 8/14/94
+// $FreeBSD$
+
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
 
 type X_ftsent = struct {
 	Ffts_cycle   uintptr
@@ -609,17 +2220,73 @@ type X_ftsent = struct {
 	Ffts_info    int32
 	Ffts_flags   uint32
 	Ffts_instr   int32
-	_            [4]byte
+	F__ccgo_pad1 [4]byte
 	Ffts_statp   uintptr
 	Ffts_name    uintptr
 	Ffts_fts     uintptr
 } /* fts.h:41:2 */
 
-// compatibility w/GNU headers
+// -
+// SPDX-License-Identifier: BSD-3-Clause
+//
+// Copyright (c) 1989, 1993
+//	The Regents of the University of California.  All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. Neither the name of the University nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+//	@(#)fts.h	8.3 (Berkeley) 8/14/94
+// $FreeBSD$
 
-// When the following macro is defined, the system uses 64-bit inode numbers.
-// Programs can use this to avoid including <sys/param.h>, with its associated
-// namespace pollution.
+// -
+// SPDX-License-Identifier: BSD-2-Clause-FreeBSD
+//
+// Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
+// $FreeBSD$
 
 type FTS = struct {
 	Ffts_cur       uintptr
@@ -628,15 +2295,15 @@ type FTS = struct {
 	Ffts_dev       X__dev_t
 	Ffts_path      uintptr
 	Ffts_rfd       int32
-	_              [4]byte
+	F__ccgo_pad1   [4]byte
 	Ffts_pathlen   X__size_t
 	Ffts_nitems    X__size_t
 	Ffts_compar    uintptr
 	Ffts_options   int32
-	_              [4]byte
+	F__ccgo_pad2   [4]byte
 	Ffts_clientptr uintptr
 } /* fts.h:66:3 */
 
 type FTSENT = X_ftsent /* fts.h:120:3 */
 
-var _ int8 /* gen.c:2:13: */
+var _ int8 /* gen.c:5:13: */

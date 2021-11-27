@@ -2,15 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build linux || darwin || freebsd
-// +build linux darwin freebsd
+//go:build linux || darwin || freebsd || netbsd
+// +build linux darwin freebsd netbsd
 
 package libc // import "modernc.org/libc"
 
 import (
+	"io/ioutil"
 	"os"
 	gosignal "os/signal"
 	"reflect"
+	"strings"
 	"syscall"
 	"unsafe"
 
@@ -216,4 +218,46 @@ func Xgetresuid(t *TLS, ruid, euid, suid uintptr) int32 {
 // int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
 func Xgetresgid(t *TLS, rgid, egid, sgid uintptr) int32 {
 	panic(todo(""))
+}
+
+// FILE *tmpfile(void);
+func Xtmpfile(t *TLS) uintptr {
+	f, err := ioutil.TempFile("", "tmpfile-")
+	if err != nil {
+		t.setErrno(err)
+		return 0
+	}
+
+	cf := newFile(t, int32(f.Fd()))
+	AtExit(func() {
+		nm := f.Name()
+		file(cf).close(t)
+		os.Remove(nm)
+	})
+
+	return cf
+}
+
+// FILE *fdopen(int fd, const char *mode);
+func Xfdopen(t *TLS, fd int32, mode uintptr) uintptr {
+	m := strings.ReplaceAll(GoString(mode), "b", "")
+	switch m {
+	case
+		"a",
+		"a+",
+		"r",
+		"r+",
+		"w",
+		"w+":
+	default:
+		t.setErrno(errno.EINVAL)
+		return 0
+	}
+
+	if p := newFile(t, fd); p != 0 {
+		return p
+	}
+
+	t.setErrno(errno.EINVAL)
+	return 0
 }
