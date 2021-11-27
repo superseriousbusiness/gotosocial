@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -33,13 +34,15 @@ const robotsPath = "/robots.txt"
 type Module struct {
 	config *config.Config
 	db     db.DB
+	server oauth.Server
 }
 
 // New returns a new security module
-func New(config *config.Config, db db.DB) api.ClientModule {
+func New(config *config.Config, db db.DB, server oauth.Server) api.ClientModule {
 	return &Module{
 		config: config,
 		db:     db,
+		server: server,
 	}
 }
 
@@ -49,6 +52,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachMiddleware(m.FlocBlock)
 	s.AttachMiddleware(m.ExtraHeaders)
 	s.AttachMiddleware(m.UserAgentBlock)
+	s.AttachMiddleware(m.TokenCheck)
 	s.AttachHandler(http.MethodGet, robotsPath, m.RobotsGETHandler)
 	return nil
 }
