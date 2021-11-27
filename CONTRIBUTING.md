@@ -160,7 +160,7 @@ There are a few different ways of running tests. Each requires the use of the `-
 If you want to run tests as quickly as possible, using an SQLite in-memory database, use:
 
 ```bash
-GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -p 1 ./...
+GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
 ```
 
 #### Postgres

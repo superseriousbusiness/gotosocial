@@ -36,7 +36,7 @@ steps:
   - name: go-src
     path: /go
   commands:
-  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test -p 1 ./...
+  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
   when:
     event:
       include:
@@ -115,6 +115,6 @@ trigger:
 
 ---
 kind: signature
-hmac: 07d6ed18510f9591c6b347d6768cbe8e613561b3759f1a8dda8721d1d231a522
+hmac: 8a363baa3c7b5e581bd101a7774422042833b7d297faf5d93c9156cf54a31124
 
 ...
