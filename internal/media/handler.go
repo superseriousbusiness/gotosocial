@@ -84,15 +84,13 @@ type Handler interface {
 }
 
 type mediaHandler struct {
-	config  *config.Config
 	db      db.DB
 	storage *kv.KVStore
 }
 
-// New returns a new handler with the given config, db, and storage
-func New(config *config.Config, database db.DB, storage *kv.KVStore) Handler {
+// New returns a new handler with the given db and storage
+func New(database db.DB, storage *kv.KVStore) Handler {
 	return &mediaHandler{
-		config:  config,
 		db:      database,
 		storage: storage,
 	}

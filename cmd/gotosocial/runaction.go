@@ -21,62 +21,20 @@ package main
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/urfave/cli/v2"
 )
 
-type MonkeyPatchedCLIContext struct {
-	CLIContext *cli.Context
-	AllFlags   []cli.Flag
-}
-
-func (f MonkeyPatchedCLIContext) Bool(k string) bool            { return f.CLIContext.Bool(k) }
-func (f MonkeyPatchedCLIContext) String(k string) string        { return f.CLIContext.String(k) }
-func (f MonkeyPatchedCLIContext) StringSlice(k string) []string { return f.CLIContext.StringSlice(k) }
-func (f MonkeyPatchedCLIContext) Int(k string) int              { return f.CLIContext.Int(k) }
-func (f MonkeyPatchedCLIContext) IsSet(k string) bool {
-	for _, flag := range f.AllFlags {
-		flagNames := flag.Names()
-		for _, name := range flagNames {
-			if name == k {
-				return flag.IsSet()
-			}
-		}
-
-	}
-	return false
-}
-
-// runAction builds up the config and logger necessary for any
+// runAction builds up the logger necessary for any
 // gotosocial action, and then executes the action.
-func runAction(c *cli.Context, allFlags []cli.Flag, a cliactions.GTSAction) error {
-
-	// create a new *config.Config based on the config path provided...
-	conf, err := config.FromFile(c.String(config.GetFlagNames().ConfigPath))
-	if err != nil {
-		return fmt.Errorf("error creating config: %s", err)
-	}
-
-	// ... and the flags set on the *cli.Context by urfave
-	//
-	// The IsSet function on the cli.Context object `c` here appears to have some issues right now, it always returns false in my tests.
-	// However we can re-create the behaviour we want by simply referencing the flag objects we created previously
-	// https://picopublish.sequentialread.com/files/chatlog_2021_11_18.txt
-	monkeyPatchedCLIContext := MonkeyPatchedCLIContext{
-		CLIContext: c,
-		AllFlags:   allFlags,
-	}
-	if err := conf.ParseCLIFlags(monkeyPatchedCLIContext, c.App.Version); err != nil {
-		return fmt.Errorf("error parsing config: %s", err)
-	}
-
+func runAction(cmd *cobra.Command, a cliactions.GTSAction) error {
 	// initialize the global logger to the log level, with formatting and output splitter already set
-	err = log.Initialize(conf.LogLevel)
+	err := log.Initialize(viper.GetString("log-level"))
 	if err != nil {
 		return fmt.Errorf("error creating logger: %s", err)
 	}
 
-	return a(c.Context, conf)
+	return a(cmd.Context())
 }

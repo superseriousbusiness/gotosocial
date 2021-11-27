@@ -19,24 +19,25 @@
 package main
 
 import (
+	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
-	"github.com/urfave/cli/v2"
 )
 
-func serverCommands(allFlags []cli.Flag) []*cli.Command {
-	return []*cli.Command{
-		{
-			Name:  "server",
-			Usage: "gotosocial server-related tasks",
-			Subcommands: []*cli.Command{
-				{
-					Name:  "start",
-					Usage: "start the gotosocial server",
-					Action: func(c *cli.Context) error {
-						return runAction(c, allFlags, server.Start)
-					},
-				},
-			},
+func serverCommands() []*cobra.Command {
+	command := &cobra.Command{
+		Use:   "server",
+		Short: "gotosocial server-related tasks",
+	}
+
+	command.AddCommand(&cobra.Command{
+		Use:   "start",
+		Short: "start the gotosocial server",
+		Run: func(cmd *cobra.Command, args []string) {
+			runAction(cmd, server.Start)
 		},
+	})
+
+	return []*cobra.Command{
+		command,
 	}
 }
