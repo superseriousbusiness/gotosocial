@@ -36,6 +36,8 @@ const (
 // the output stream; and conversion specifications, each of which results in
 // fetching zero or more subsequent arguments.
 func printf(format, args uintptr) []byte {
+	format0 := format
+	args0 := args
 	buf := bytes.NewBuffer(nil)
 	for {
 		switch c := *(*byte)(unsafe.Pointer(format)); c {
@@ -43,7 +45,7 @@ func printf(format, args uintptr) []byte {
 			format = printfConversion(buf, format, &args)
 		case 0:
 			if dmesgs {
-				dmesg("%v: %q", origin(1), buf.Bytes())
+				dmesg("%v: %q, %#x -> %q", origin(1), GoString(format0), args0, buf.Bytes())
 			}
 			return buf.Bytes()
 		default:
@@ -385,7 +387,7 @@ more:
 			switch {
 			case hasPrecision:
 				f = fmt.Sprintf("%s.%ds", spec, prec)
-				str = fmt.Sprintf(f, GoBytes(arg, prec))
+				str = fmt.Sprintf(f, GoString(arg))
 			default:
 				f = spec + "s"
 				str = fmt.Sprintf(f, GoString(arg))

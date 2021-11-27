@@ -6,6 +6,7 @@ package libc // import "modernc.org/libc"
 
 import (
 	"bufio"
+	crand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -16,20 +17,19 @@ import (
 	"strings"
 	"syscall"
 	gotime "time"
+	"unicode"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 	"modernc.org/libc/errno"
 	"modernc.org/libc/fcntl"
 	"modernc.org/libc/fts"
-
 	gonetdb "modernc.org/libc/honnef.co/go/netdb"
 	"modernc.org/libc/langinfo"
 	"modernc.org/libc/limits"
 	"modernc.org/libc/netdb"
 	"modernc.org/libc/netinet/in"
 	"modernc.org/libc/pwd"
-
 	"modernc.org/libc/signal"
 	"modernc.org/libc/stdio"
 	"modernc.org/libc/sys/socket"
@@ -38,6 +38,7 @@ import (
 	"modernc.org/libc/termios"
 	"modernc.org/libc/time"
 	"modernc.org/libc/unistd"
+	"modernc.org/libc/wctype"
 )
 
 const (
@@ -57,6 +58,8 @@ type (
 var X__stderrp = Xstdout
 var X__stdinp = Xstdin
 var X__stdoutp = Xstdout
+
+var startTime = gotime.Now() // For clock(3)
 
 type file uintptr
 
@@ -217,44 +220,15 @@ func Xgetrusage(t *TLS, who int32, usage uintptr) int32 {
 	// return 0
 }
 
-// char *fgets(char *s, int size, FILE *stream);
-func Xfgets(t *TLS, s uintptr, size int32, stream uintptr) uintptr {
+// int fgetc(FILE *stream);
+func Xfgetc(t *TLS, stream uintptr) int32 {
 	fd := int((*stdio.FILE)(unsafe.Pointer(stream)).F_file)
-	var b []byte
-	buf := [1]byte{}
-	for ; size > 0; size-- {
-		n, err := unix.Read(fd, buf[:])
-		if n != 0 {
-			b = append(b, buf[0])
-			if buf[0] == '\n' {
-				b = append(b, 0)
-				copy((*RawMem)(unsafe.Pointer(s))[:len(b):len(b)], b)
-				return s
-			}
-
-			continue
-		}
-
-		switch {
-		case n == 0 && err == nil && len(b) == 0:
-			return 0
-		default:
-			panic(todo(""))
-		}
-
-		// if err == nil {
-		// 	panic("internal error")
-		// }
-
-		// if len(b) != 0 {
-		// 		b = append(b, 0)
-		// 		copy((*RawMem)(unsafe.Pointer(s)[:len(b)]), b)
-		// 		return s
-		// }
-
-		// t.setErrno(err)
+	var buf [1]byte
+	if n, _ := unix.Read(fd, buf[:]); n != 0 {
+		return int32(buf[0])
 	}
-	panic(todo(""))
+
+	return stdio.EOF
 }
 
 // int lstat(const char *pathname, struct stat *statbuf);
@@ -332,7 +306,7 @@ func Xlocaltime_r(_ *TLS, timep, result uintptr) uintptr {
 func Xopen(t *TLS, pathname uintptr, flags int32, args uintptr) int32 {
 	var mode types.Mode_t
 	if args != 0 {
-		mode = *(*types.Mode_t)(unsafe.Pointer(args))
+		mode = (types.Mode_t)(VaUint32(&args))
 	}
 	fd, err := unix.Open(GoString(pathname), int(flags), uint32(mode))
 	if err != nil {
@@ -530,13 +504,12 @@ func Xfchmod(t *TLS, fd int32, mode types.Mode_t) int32 {
 
 // int fchown(int fd, uid_t owner, gid_t group);
 func Xfchown(t *TLS, fd int32, owner types.Uid_t, group types.Gid_t) int32 {
-	panic(todo(""))
-	// if _, _, err := unix.Syscall(unix.SYS_FCHOWN, uintptr(fd), uintptr(owner), uintptr(group)); err != 0 {
-	// 	t.setErrno(err)
-	// 	return -1
-	// }
+	if _, _, err := unix.Syscall(unix.SYS_FCHOWN, uintptr(fd), uintptr(owner), uintptr(group)); err != 0 {
+		t.setErrno(err)
+		return -1
+	}
 
-	// return 0
+	return 0
 }
 
 // uid_t geteuid(void);
@@ -1695,21 +1668,6 @@ func Xferror(t *TLS, stream uintptr) int32 {
 	return Bool32(file(stream).err())
 }
 
-// int fgetc(FILE *stream);
-func Xfgetc(t *TLS, stream uintptr) int32 {
-	panic(todo(""))
-}
-
-// // int getc(FILE *stream);
-// func Xgetc(t *TLS, stream uintptr) int32 {
-// 	return Xfgetc(t, stream)
-// }
-
-// FILE *fdopen(int fd, const char *mode);
-func Xfdopen(t *TLS, fd int32, mode uintptr) uintptr {
-	panic(todo(""))
-}
-
 // int fputs(const char *s, FILE *stream);
 func Xfputs(t *TLS, s, stream uintptr) int32 {
 	panic(todo(""))
@@ -2128,4 +2086,73 @@ func Xsscanf(t *TLS, str, format, va uintptr) int32 {
 	// 	dmesg("%v: %q %q: %d", origin(1), GoString(str), GoString(format), r)
 	// }
 	return r
+}
+
+// int posix_fadvise(int fd, off_t offset, off_t len, int advice);
+func Xposix_fadvise(t *TLS, fd int32, offset, len types.Off_t, advice int32) int32 {
+	panic(todo(""))
+}
+
+// clock_t clock(void);
+func Xclock(t *TLS) time.Clock_t {
+	return time.Clock_t(gotime.Since(startTime) * gotime.Duration(time.CLOCKS_PER_SEC) / gotime.Second)
+}
+
+// int iswspace(wint_t wc);
+func Xiswspace(t *TLS, wc wctype.Wint_t) int32 {
+	return Bool32(unicode.IsSpace(rune(wc)))
+}
+
+// int iswalnum(wint_t wc);
+func Xiswalnum(t *TLS, wc wctype.Wint_t) int32 {
+	return Bool32(unicode.IsLetter(rune(wc)) || unicode.IsNumber(rune(wc)))
+}
+
+// void arc4random_buf(void *buf, size_t nbytes);
+func Xarc4random_buf(t *TLS, buf uintptr, buflen size_t) {
+	if _, err := crand.Read((*RawMem)(unsafe.Pointer(buf))[:buflen]); err != nil {
+		panic(todo(""))
+	}
+}
+
+func X__ccgo_pthreadMutexattrGettype(tls *TLS, a uintptr) int32 { /* pthread_attr_get.c:93:5: */
+	return (int32((*pthread_mutexattr_t)(unsafe.Pointer(a)).__attr & uint32(3)))
+}
+
+func X__ccgo_getMutexType(tls *TLS, m uintptr) int32 { /* pthread_mutex_lock.c:3:5: */
+	return (*(*int32)(unsafe.Pointer((m /* &.__u */ /* &.__i */))) & 15)
+}
+
+func X__ccgo_pthreadAttrGetDetachState(tls *TLS, a uintptr) int32 { /* pthread_attr_get.c:3:5: */
+	return *(*int32)(unsafe.Pointer((a /* &.__u */ /* &.__i */) + 6*4))
+}
+
+func Xpthread_attr_getdetachstate(tls *TLS, a uintptr, state uintptr) int32 { /* pthread_attr_get.c:7:5: */
+	*(*int32)(unsafe.Pointer(state)) = *(*int32)(unsafe.Pointer((a /* &.__u */ /* &.__i */) + 6*4))
+	return 0
+}
+
+func Xpthread_attr_setdetachstate(tls *TLS, a uintptr, state int32) int32 { /* pthread_attr_setdetachstate.c:3:5: */
+	if uint32(state) > 1 {
+		return 22
+	}
+	*(*int32)(unsafe.Pointer((a /* &.__u */ /* &.__i */) + 6*4)) = state
+	return 0
+}
+
+func Xpthread_mutexattr_destroy(tls *TLS, a uintptr) int32 { /* pthread_mutexattr_destroy.c:3:5: */
+	return 0
+}
+
+func Xpthread_mutexattr_init(tls *TLS, a uintptr) int32 { /* pthread_mutexattr_init.c:3:5: */
+	*(*pthread_mutexattr_t)(unsafe.Pointer(a)) = pthread_mutexattr_t{}
+	return 0
+}
+
+func Xpthread_mutexattr_settype(tls *TLS, a uintptr, type1 int32) int32 { /* pthread_mutexattr_settype.c:3:5: */
+	if uint32(type1) > uint32(2) {
+		return 22
+	}
+	(*pthread_mutexattr_t)(unsafe.Pointer(a)).__attr = (((*pthread_mutexattr_t)(unsafe.Pointer(a)).__attr & Uint32FromInt32(CplInt32(3))) | uint32(type1))
+	return 0
 }

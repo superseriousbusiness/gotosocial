@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 //go:generate go run generator.go
-//go:generate go fmt ./...
+//go:generate gofmt -l -s -w .
 
 package sqlite // import "modernc.org/sqlite"
 
@@ -334,6 +334,22 @@ func (c *conn) parseTimeString(s0 string, x int) (interface{}, bool) {
 	}
 
 	return s0, false
+}
+
+// writeTimeFormats are the names and formats supported
+// by the `_time_format` DSN query param.
+var writeTimeFormats = map[string]string{
+	"sqlite": parseTimeFormats[0],
+}
+
+func (c *conn) formatTime(t time.Time) string {
+	// Before configurable write time formats were supported,
+	// time.Time.String was used. Maintain that default to
+	// keep existing driver users formatting times the same.
+	if c.writeTimeFormat == "" {
+		return t.String()
+	}
+	return t.Format(c.writeTimeFormat)
 }
 
 // RowsColumnTypeDatabaseTypeName may be implemented by Rows. It should return
@@ -726,6 +742,8 @@ type conn struct {
 	// Context handling can cause conn.Close and conn.interrupt to be invoked
 	// concurrently.
 	sync.Mutex
+
+	writeTimeFormat string
 }
 
 func newConn(dsn string) (*conn, error) {
@@ -759,7 +777,7 @@ func newConn(dsn string) (*conn, error) {
 		return nil, err
 	}
 
-	if err = applyPragmas(c, query); err != nil {
+	if err = applyQueryParams(c, query); err != nil {
 		c.Close()
 		return nil, err
 	}
@@ -767,11 +785,12 @@ func newConn(dsn string) (*conn, error) {
 	return c, nil
 }
 
-func applyPragmas(c *conn, query string) error {
+func applyQueryParams(c *conn, query string) error {
 	q, err := url.ParseQuery(query)
 	if err != nil {
 		return err
 	}
+
 	for _, v := range q["_pragma"] {
 		cmd := "pragma " + v
 		_, err := c.exec(context.Background(), cmd, nil)
@@ -779,6 +798,16 @@ func applyPragmas(c *conn, query string) error {
 			return err
 		}
 	}
+
+	if v := q.Get("_time_format"); v != "" {
+		f, ok := writeTimeFormats[v]
+		if !ok {
+			return fmt.Errorf("unknown _time_format %q", v)
+		}
+		c.writeTimeFormat = f
+		return nil
+	}
+
 	return nil
 }
 
@@ -872,12 +901,17 @@ func (c *conn) changes() (int, error) {
 func (c *conn) step(pstmt uintptr) (int, error) {
 	for {
 		switch rc := sqlite3.Xsqlite3_step(c.tls, pstmt); rc {
-		case sqliteLockedSharedcache, sqlite3.SQLITE_BUSY:
+		case sqliteLockedSharedcache:
 			if err := c.retry(pstmt); err != nil {
 				return sqlite3.SQLITE_LOCKED, err
 			}
-		default:
+		case
+			sqlite3.SQLITE_DONE,
+			sqlite3.SQLITE_ROW:
+
 			return int(rc), nil
+		default:
+			return int(rc), c.errstr(rc)
 		}
 	}
 }
@@ -1000,7 +1034,7 @@ func (c *conn) bind(pstmt uintptr, n int, args []driver.NamedValue) (allocs []ui
 				return allocs, err
 			}
 		case time.Time:
-			if p, err = c.bindText(pstmt, i, x.String()); err != nil {
+			if p, err = c.bindText(pstmt, i, c.formatTime(x)); err != nil {
 				return allocs, err
 			}
 		case nil:
@@ -1135,7 +1169,7 @@ func (c *conn) prepareV2(zSQL *uintptr) (pstmt uintptr, err error) {
 		case sqlite3.SQLITE_OK:
 			*zSQL = *(*uintptr)(unsafe.Pointer(pptail))
 			return *(*uintptr)(unsafe.Pointer(ppstmt)), nil
-		case sqliteLockedSharedcache, sqlite3.SQLITE_BUSY:
+		case sqliteLockedSharedcache:
 			if err := c.retry(0); err != nil {
 				return 0, err
 			}
@@ -1219,11 +1253,15 @@ func (c *conn) errstr(rc int32) error {
 	p := sqlite3.Xsqlite3_errstr(c.tls, rc)
 	str := libc.GoString(p)
 	p = sqlite3.Xsqlite3_errmsg(c.tls, c.db)
+	var s string
+	if rc == sqlite3.SQLITE_BUSY {
+		s = " (SQLITE_BUSY)"
+	}
 	switch msg := libc.GoString(p); {
 	case msg == str:
-		return &Error{msg: fmt.Sprintf("%s (%v)", str, rc), code: int(rc)}
+		return &Error{msg: fmt.Sprintf("%s (%v)%s", str, rc, s), code: int(rc)}
 	default:
-		return &Error{msg: fmt.Sprintf("%s: %s (%v)", str, msg, rc), code: int(rc)}
+		return &Error{msg: fmt.Sprintf("%s: %s (%v)%s", str, msg, rc, s), code: int(rc)}
 	}
 }
 

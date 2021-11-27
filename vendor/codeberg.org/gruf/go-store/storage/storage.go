@@ -41,7 +41,7 @@ type Storage interface {
 	Remove(key string) error
 
 	// WalkKeys walks the keys in the storage
-	WalkKeys(opts *WalkKeysOptions) error
+	WalkKeys(opts WalkKeysOptions) error
 }
 
 // WalkKeysOptions defines how to walk the keys in a storage implementation

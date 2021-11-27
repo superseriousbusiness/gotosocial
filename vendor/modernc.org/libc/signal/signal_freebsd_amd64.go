@@ -712,8 +712,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -1227,9 +1227,9 @@ type Sigcontext = struct {
 } /* signal.h:114:1 */
 
 type Pthread_once = struct {
-	Fstate int32
-	_      [4]byte
-	Fmutex Pthread_mutex_t
+	Fstate       int32
+	F__ccgo_pad1 [4]byte
+	Fmutex       Pthread_mutex_t
 } /* _pthreadtypes.h:52:1 */
 
 // Primitive system data type definitions required by P1003.1c.
@@ -1333,23 +1333,23 @@ type Uid_t = X__uid_t /* signal.h:61:18 */
 type Sigset_t = X__sigset_t /* signal.h:166:20 */
 
 type Sigval = struct {
-	_          [0]uint64
-	Fsival_int int32
-	_          [4]byte
+	F__ccgo_pad1 [0]uint64
+	Fsival_int   int32
+	F__ccgo_pad2 [4]byte
 } /* signal.h:171:1 */
 
 type Sigevent = struct {
 	Fsigev_notify int32
 	Fsigev_signo  int32
 	Fsigev_value  struct {
-		_          [0]uint64
-		Fsival_int int32
-		_          [4]byte
+		F__ccgo_pad1 [0]uint64
+		Fsival_int   int32
+		F__ccgo_pad2 [4]byte
 	}
 	F_sigev_un struct {
-		_          [0]uint64
-		F_threadid X__lwpid_t
-		_          [60]byte
+		F__ccgo_pad1 [0]uint64
+		F_threadid   X__lwpid_t
+		F__ccgo_pad2 [60]byte
 	}
 } /* signal.h:195:1 */
 
@@ -1362,14 +1362,14 @@ type X__siginfo = struct {
 	Fsi_status int32
 	Fsi_addr   uintptr
 	Fsi_value  struct {
-		_          [0]uint64
-		Fsival_int int32
-		_          [4]byte
+		F__ccgo_pad1 [0]uint64
+		Fsival_int   int32
+		F__ccgo_pad2 [4]byte
 	}
 	F_reason struct {
-		_       [0]uint64
-		F_fault struct{ F_trapno int32 }
-		_       [36]byte
+		F__ccgo_pad1 [0]uint64
+		F_fault      struct{ F_trapno int32 }
+		F__ccgo_pad2 [36]byte
 	}
 } /* signal.h:229:9 */
 
@@ -1380,7 +1380,7 @@ type Sigaction = struct {
 	F__sigaction_u struct{ F__sa_handler uintptr }
 	Fsa_flags      int32
 	Fsa_mask       Sigset_t
-	_              [4]byte
+	F__ccgo_pad1   [4]byte
 } /* signal.h:368:1 */
 
 // If SA_SIGINFO is set, sa_sigaction must be used instead of sa_handler.
@@ -1392,10 +1392,10 @@ type Sigaction = struct {
 type Sig_t = uintptr /* signal.h:420:24 */
 
 type Sigaltstack = struct {
-	Fss_sp    uintptr
-	Fss_size  X__size_t
-	Fss_flags int32
-	_         [4]byte
+	Fss_sp       uintptr
+	Fss_size     X__size_t
+	Fss_flags    int32
+	F__ccgo_pad1 [4]byte
 } /* signal.h:428:9 */
 
 type Stack_t = Sigaltstack /* signal.h:428:26 */
@@ -1412,9 +1412,9 @@ type Sigvec = struct {
 
 // Structure used in sigstack call.
 type Sigstack = struct {
-	Fss_sp      uintptr
-	Fss_onstack int32
-	_           [4]byte
+	Fss_sp       uintptr
+	Fss_onstack  int32
+	F__ccgo_pad1 [4]byte
 } /* signal.h:479:1 */
 
 // -
@@ -1572,14 +1572,14 @@ type X__ucontext = struct {
 	Fuc_mcontext Mcontext_t
 	Fuc_link     uintptr
 	Fuc_stack    struct {
-		Fss_sp    uintptr
-		Fss_size  X__size_t
-		Fss_flags int32
-		_         [4]byte
+		Fss_sp       uintptr
+		Fss_size     X__size_t
+		Fss_flags    int32
+		F__ccgo_pad1 [4]byte
 	}
-	Fuc_flags  int32
-	F__spare__ [4]int32
-	_          [4]byte
+	Fuc_flags    int32
+	F__spare__   [4]int32
+	F__ccgo_pad1 [4]byte
 } /* _ucontext.h:36:9 */
 
 // -

@@ -509,13 +509,17 @@ type Config struct {
 
 	PragmaHandler func(Pragma, []Token) // Called on pragmas, other than #pragma STDC ..., if non nil
 
-	// SharedFunctionDefinitions collects function definitions having the
-	// same position and definition. This can happen, for example, when a
-	// function is defined in a header file included multiple times. Either
-	// within a single translation unit or across translation units. In the
-	// later case just supply the same SharedFunctionDefinitions in Config
-	// when translating/parsing each translation unit.
+	// SharedFunctionDefinitions collects function definitions having the same
+	// position and definition. This can happen, for example, when a function is
+	// defined in a header file included multiple times. Either within a single
+	// translation unit or across translation units. In the later case just supply
+	// the same SharedFunctionDefinitions in Config when translating/parsing each
+	// translation unit.
 	SharedFunctionDefinitions *SharedFunctionDefinitions
+
+	// IncludeFileHandler, when non nil, is called by the preprocessor for every
+	// successfully included file.
+	IncludeFileHandler func(pos gotoken.Position, includePath string)
 
 	MaxErrors int // 0: default (10), < 0: unlimited, n: n.
 

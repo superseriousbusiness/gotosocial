@@ -637,8 +637,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -669,9 +669,9 @@ type Va_list = X__va_list /* stdio.h:77:19 */
 
 // stdio buffers
 type X__sbuf = struct {
-	F_base uintptr
-	F_size int32
-	_      [4]byte
+	F_base       uintptr
+	F_size       int32
+	F__ccgo_pad1 [4]byte
 } /* stdio.h:91:1 */
 
 // stdio state variables.
@@ -701,40 +701,40 @@ type X__sbuf = struct {
 // inline functions.  To preserve ABI compat, these members must not
 // be disturbed.  These members are marked below with (*).
 type X__sFILE = struct {
-	F_p     uintptr
-	F_r     int32
-	F_w     int32
-	F_flags int16
-	F_file  int16
-	_       [4]byte
-	F_bf    struct {
-		F_base uintptr
-		F_size int32
-		_      [4]byte
+	F_p          uintptr
+	F_r          int32
+	F_w          int32
+	F_flags      int16
+	F_file       int16
+	F__ccgo_pad1 [4]byte
+	F_bf         struct {
+		F_base       uintptr
+		F_size       int32
+		F__ccgo_pad1 [4]byte
 	}
-	F_lbfsize int32
-	_         [4]byte
-	F_cookie  uintptr
-	F_close   uintptr
-	F_read    uintptr
-	F_seek    uintptr
-	F_write   uintptr
-	F_ub      struct {
-		F_base uintptr
-		F_size int32
-		_      [4]byte
+	F_lbfsize    int32
+	F__ccgo_pad2 [4]byte
+	F_cookie     uintptr
+	F_close      uintptr
+	F_read       uintptr
+	F_seek       uintptr
+	F_write      uintptr
+	F_ub         struct {
+		F_base       uintptr
+		F_size       int32
+		F__ccgo_pad1 [4]byte
 	}
 	F_up   uintptr
 	F_ur   int32
 	F_ubuf [3]uint8
 	F_nbuf [1]uint8
 	F_lb   struct {
-		F_base uintptr
-		F_size int32
-		_      [4]byte
+		F_base       uintptr
+		F_size       int32
+		F__ccgo_pad1 [4]byte
 	}
 	F_blksize     int32
-	_             [4]byte
+	F__ccgo_pad3  [4]byte
 	F_offset      Fpos_t
 	F_fl_mutex    uintptr
 	F_fl_owner    uintptr
@@ -742,7 +742,7 @@ type X__sFILE = struct {
 	F_orientation int32
 	F_mbstate     X__mbstate_t
 	F_flags2      int32
-	_             [4]byte
+	F__ccgo_pad4  [4]byte
 } /* stdio.h:124:1 */
 
 type FILE = X__sFILE /* stdio.h:165:24 */

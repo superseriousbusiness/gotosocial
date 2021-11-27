@@ -21,11 +21,11 @@ type Levels map[LEVEL]string
 // DefaultLevels returns the default set of log levels
 func DefaultLevels() Levels {
 	return Levels{
-		DEBUG: "debug",
-		INFO:  "info",
-		WARN:  "warn",
-		ERROR: "error",
-		FATAL: "fatal",
+		DEBUG: "DEBUG",
+		INFO:  "INFO",
+		WARN:  "WARN",
+		ERROR: "ERROR",
+		FATAL: "FATAL",
 	}
 }
 

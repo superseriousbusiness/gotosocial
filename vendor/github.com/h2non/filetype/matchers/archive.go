@@ -1,5 +1,12 @@
 package matchers
 
+import "encoding/binary"
+
+const (
+	ZstdMagicSkippableStart = 0x184D2A50
+	ZstdMagicSkippableMask  = 0xFFFFFFF0
+)
+
 var (
 	TypeEpub   = newType("epub", "application/epub+zip")
 	TypeZip    = newType("zip", "application/zip")
@@ -9,6 +16,7 @@ var (
 	TypeBz2    = newType("bz2", "application/x-bzip2")
 	Type7z     = newType("7z", "application/x-7z-compressed")
 	TypeXz     = newType("xz", "application/x-xz")
+	TypeZstd   = newType("zst", "application/zstd")
 	TypePdf    = newType("pdf", "application/pdf")
 	TypeExe    = newType("exe", "application/vnd.microsoft.portable-executable")
 	TypeSwf    = newType("swf", "application/x-shockwave-flash")
@@ -31,28 +39,29 @@ var (
 )
 
 var Archive = Map{
-	TypeEpub:   Epub,
+	TypeEpub:   bytePrefixMatcher(epubMagic),
 	TypeZip:    Zip,
 	TypeTar:    Tar,
 	TypeRar:    Rar,
-	TypeGz:     Gz,
-	TypeBz2:    Bz2,
-	Type7z:     SevenZ,
-	TypeXz:     Xz,
-	TypePdf:    Pdf,
-	TypeExe:    Exe,
+	TypeGz:     bytePrefixMatcher(gzMagic),
+	TypeBz2:    bytePrefixMatcher(bz2Magic),
+	Type7z:     bytePrefixMatcher(sevenzMagic),
+	TypeXz:     bytePrefixMatcher(xzMagic),
+	TypeZstd:   Zst,
+	TypePdf:    bytePrefixMatcher(pdfMagic),
+	TypeExe:    bytePrefixMatcher(exeMagic),
 	TypeSwf:    Swf,
-	TypeRtf:    Rtf,
+	TypeRtf:    bytePrefixMatcher(rtfMagic),
 	TypeEot:    Eot,
-	TypePs:     Ps,
-	TypeSqlite: Sqlite,
-	TypeNes:    Nes,
-	TypeCrx:    Crx,
+	TypePs:     bytePrefixMatcher(psMagic),
+	TypeSqlite: bytePrefixMatcher(sqliteMagic),
+	TypeNes:    bytePrefixMatcher(nesMagic),
+	TypeCrx:    bytePrefixMatcher(crxMagic),
 	TypeCab:    Cab,
-	TypeDeb:    Deb,
-	TypeAr:     Ar,
+	TypeDeb:    bytePrefixMatcher(debMagic),
+	TypeAr:     bytePrefixMatcher(arMagic),
 	TypeZ:      Z,
-	TypeLz:     Lz,
+	TypeLz:     bytePrefixMatcher(lzMagic),
 	TypeRpm:    Rpm,
 	TypeElf:    Elf,
 	TypeDcm:    Dcm,
@@ -60,16 +69,38 @@ var Archive = Map{
 	TypeMachO:  MachO,
 }
 
-func Epub(buf []byte) bool {
-	return len(buf) > 57 &&
-		buf[0] == 0x50 && buf[1] == 0x4B && buf[2] == 0x3 && buf[3] == 0x4 &&
-		buf[30] == 0x6D && buf[31] == 0x69 && buf[32] == 0x6D && buf[33] == 0x65 &&
-		buf[34] == 0x74 && buf[35] == 0x79 && buf[36] == 0x70 && buf[37] == 0x65 &&
-		buf[38] == 0x61 && buf[39] == 0x70 && buf[40] == 0x70 && buf[41] == 0x6C &&
-		buf[42] == 0x69 && buf[43] == 0x63 && buf[44] == 0x61 && buf[45] == 0x74 &&
-		buf[46] == 0x69 && buf[47] == 0x6F && buf[48] == 0x6E && buf[49] == 0x2F &&
-		buf[50] == 0x65 && buf[51] == 0x70 && buf[52] == 0x75 && buf[53] == 0x62 &&
-		buf[54] == 0x2B && buf[55] == 0x7A && buf[56] == 0x69 && buf[57] == 0x70
+var (
+	epubMagic = []byte{
+		0x50, 0x4B, 0x03, 0x04, 0x6D, 0x69, 0x6D, 0x65,
+		0x74, 0x79, 0x70, 0x65, 0x61, 0x70, 0x70, 0x6C,
+		0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2F,
+		0x65, 0x70, 0x75, 0x62, 0x2B, 0x7A, 0x69, 0x70,
+	}
+	gzMagic     = []byte{0x1F, 0x8B, 0x08}
+	bz2Magic    = []byte{0x42, 0x5A, 0x68}
+	sevenzMagic = []byte{0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C}
+	pdfMagic    = []byte{0x25, 0x50, 0x44, 0x46}
+	exeMagic    = []byte{0x4D, 0x5A}
+	rtfMagic    = []byte{0x7B, 0x5C, 0x72, 0x74, 0x66}
+	nesMagic    = []byte{0x4E, 0x45, 0x53, 0x1A}
+	crxMagic    = []byte{0x43, 0x72, 0x32, 0x34}
+	psMagic     = []byte{0x25, 0x21}
+	xzMagic     = []byte{0xFD, 0x37, 0x7A, 0x58, 0x5A, 0x00}
+	sqliteMagic = []byte{0x53, 0x51, 0x4C, 0x69}
+	debMagic    = []byte{
+		0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E, 0x0A,
+		0x64, 0x65, 0x62, 0x69, 0x61, 0x6E, 0x2D, 0x62,
+		0x69, 0x6E, 0x61, 0x72, 0x79,
+	}
+	arMagic   = []byte{0x21, 0x3C, 0x61, 0x72, 0x63, 0x68, 0x3E}
+	zstdMagic = []byte{0x28, 0xB5, 0x2F, 0xFD}
+	lzMagic   = []byte{0x4C, 0x5A, 0x49, 0x50}
+)
+
+func bytePrefixMatcher(magicPattern []byte) Matcher {
+	return func(data []byte) bool {
+		return compareBytes(data, magicPattern, 0)
+	}
 }
 
 func Zip(buf []byte) bool {
@@ -93,56 +124,10 @@ func Rar(buf []byte) bool {
 		(buf[6] == 0x0 || buf[6] == 0x1)
 }
 
-func Gz(buf []byte) bool {
-	return len(buf) > 2 &&
-		buf[0] == 0x1F && buf[1] == 0x8B && buf[2] == 0x8
-}
-
-func Bz2(buf []byte) bool {
-	return len(buf) > 2 &&
-		buf[0] == 0x42 && buf[1] == 0x5A && buf[2] == 0x68
-}
-
-func SevenZ(buf []byte) bool {
-	return len(buf) > 5 &&
-		buf[0] == 0x37 && buf[1] == 0x7A && buf[2] == 0xBC &&
-		buf[3] == 0xAF && buf[4] == 0x27 && buf[5] == 0x1C
-}
-
-func Pdf(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x25 && buf[1] == 0x50 &&
-		buf[2] == 0x44 && buf[3] == 0x46
-}
-
-func Exe(buf []byte) bool {
-	return len(buf) > 1 &&
-		buf[0] == 0x4D && buf[1] == 0x5A
-}
-
 func Swf(buf []byte) bool {
 	return len(buf) > 2 &&
 		(buf[0] == 0x43 || buf[0] == 0x46) &&
 		buf[1] == 0x57 && buf[2] == 0x53
-}
-
-func Rtf(buf []byte) bool {
-	return len(buf) > 4 &&
-		buf[0] == 0x7B && buf[1] == 0x5C &&
-		buf[2] == 0x72 && buf[3] == 0x74 &&
-		buf[4] == 0x66
-}
-
-func Nes(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x4E && buf[1] == 0x45 &&
-		buf[2] == 0x53 && buf[3] == 0x1A
-}
-
-func Crx(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x43 && buf[1] == 0x72 &&
-		buf[2] == 0x32 && buf[3] == 0x34
 }
 
 func Cab(buf []byte) bool {
@@ -161,53 +146,10 @@ func Eot(buf []byte) bool {
 				buf[10] == 0x02))
 }
 
-func Ps(buf []byte) bool {
-	return len(buf) > 1 &&
-		buf[0] == 0x25 && buf[1] == 0x21
-}
-
-func Xz(buf []byte) bool {
-	return len(buf) > 5 &&
-		buf[0] == 0xFD && buf[1] == 0x37 &&
-		buf[2] == 0x7A && buf[3] == 0x58 &&
-		buf[4] == 0x5A && buf[5] == 0x00
-}
-
-func Sqlite(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x53 && buf[1] == 0x51 &&
-		buf[2] == 0x4C && buf[3] == 0x69
-}
-
-func Deb(buf []byte) bool {
-	return len(buf) > 20 &&
-		buf[0] == 0x21 && buf[1] == 0x3C && buf[2] == 0x61 &&
-		buf[3] == 0x72 && buf[4] == 0x63 && buf[5] == 0x68 &&
-		buf[6] == 0x3E && buf[7] == 0x0A && buf[8] == 0x64 &&
-		buf[9] == 0x65 && buf[10] == 0x62 && buf[11] == 0x69 &&
-		buf[12] == 0x61 && buf[13] == 0x6E && buf[14] == 0x2D &&
-		buf[15] == 0x62 && buf[16] == 0x69 && buf[17] == 0x6E &&
-		buf[18] == 0x61 && buf[19] == 0x72 && buf[20] == 0x79
-}
-
-func Ar(buf []byte) bool {
-	return len(buf) > 6 &&
-		buf[0] == 0x21 && buf[1] == 0x3C &&
-		buf[2] == 0x61 && buf[3] == 0x72 &&
-		buf[4] == 0x63 && buf[5] == 0x68 &&
-		buf[6] == 0x3E
-}
-
 func Z(buf []byte) bool {
 	return len(buf) > 1 &&
 		((buf[0] == 0x1F && buf[1] == 0xA0) ||
 			(buf[0] == 0x1F && buf[1] == 0x9D))
-}
-
-func Lz(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x4C && buf[1] == 0x5A &&
-		buf[2] == 0x49 && buf[3] == 0x50
 }
 
 func Rpm(buf []byte) bool {
@@ -243,4 +185,27 @@ func MachO(buf []byte) bool {
 		(buf[0] == 0xCF && buf[1] == 0xFA && buf[2] == 0xED && buf[3] == 0xFE) ||
 		(buf[0] == 0xCE && buf[1] == 0xFA && buf[2] == 0xED && buf[3] == 0xFE) ||
 		(buf[0] == 0xCA && buf[1] == 0xFE && buf[2] == 0xBA && buf[3] == 0xBE))
+}
+
+// Zstandard compressed data is made of one or more frames.
+// There are two frame formats defined by Zstandard: Zstandard frames and Skippable frames.
+// See more details from https://tools.ietf.org/id/draft-kucherawy-dispatch-zstd-00.html#rfc.section.2
+func Zst(buf []byte) bool {
+  if compareBytes(buf, zstdMagic, 0) {
+    return true
+  } else {
+		// skippable frames
+    if len(buf) < 8 {
+      return false
+    }
+    if binary.LittleEndian.Uint32(buf[:4]) & ZstdMagicSkippableMask == ZstdMagicSkippableStart {
+      userDataLength := binary.LittleEndian.Uint32(buf[4:8])
+      if len(buf) < 8 + int(userDataLength) {
+        return false
+      }
+      nextFrame := buf[8+userDataLength:]
+      return Zst(nextFrame)
+    }
+    return false
+  }
 }

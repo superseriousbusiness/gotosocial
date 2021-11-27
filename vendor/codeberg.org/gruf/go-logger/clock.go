@@ -12,7 +12,7 @@ var (
 	clockOnce = sync.Once{}
 )
 
-// startClock starts the global nowish clock
+// startClock starts the global nowish clock.
 func startClock() {
 	clockOnce.Do(func() {
 		clock.Start(time.Millisecond * 10)

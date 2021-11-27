@@ -16,6 +16,7 @@ package libc // import "modernc.org/libc"
 
 import (
 	"bufio"
+	crand "crypto/rand"
 	"fmt"
 	"math"
 	mbits "math/bits"
@@ -31,6 +32,8 @@ import (
 	"unsafe"
 
 	"github.com/mattn/go-isatty"
+	"modernc.org/libc/errno"
+	"modernc.org/libc/stdio"
 	"modernc.org/libc/sys/types"
 	"modernc.org/libc/time"
 	"modernc.org/libc/unistd"
@@ -216,38 +219,51 @@ func write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func X__builtin_abort(t *TLS)                                        { Xabort(t) }
-func X__builtin_abs(t *TLS, j int32) int32                           { return Xabs(t, j) }
-func X__builtin_clzll(t *TLS, n uint64) int32                        { return int32(mbits.LeadingZeros64(n)) }
-func X__builtin_constant_p_impl()                                    { panic(todo("internal error: should never be called")) }
-func X__builtin_copysign(t *TLS, x, y float64) float64               { return Xcopysign(t, x, y) }
-func X__builtin_copysignf(t *TLS, x, y float32) float32              { return Xcopysignf(t, x, y) }
-func X__builtin_exit(t *TLS, status int32)                           { Xexit(t, status) }
-func X__builtin_expect(t *TLS, exp, c long) long                     { return exp }
-func X__builtin_fabs(t *TLS, x float64) float64                      { return Xfabs(t, x) }
-func X__builtin_free(t *TLS, ptr uintptr)                            { Xfree(t, ptr) }
-func X__builtin_huge_val(t *TLS) float64                             { return math.Inf(1) }
-func X__builtin_huge_valf(t *TLS) float32                            { return float32(math.Inf(1)) }
-func X__builtin_inf(t *TLS) float64                                  { return math.Inf(1) }
-func X__builtin_inff(t *TLS) float32                                 { return float32(math.Inf(1)) }
-func X__builtin_malloc(t *TLS, size types.Size_t) uintptr            { return Xmalloc(t, size) }
-func X__builtin_memcmp(t *TLS, s1, s2 uintptr, n types.Size_t) int32 { return Xmemcmp(t, s1, s2, n) }
-func X__builtin_nanf(t *TLS, s uintptr) float32                      { return float32(math.NaN()) }
-func X__builtin_prefetch(t *TLS, addr, args uintptr)                 {}
-func X__builtin_printf(t *TLS, s, args uintptr) int32                { return Xprintf(t, s, args) }
-func X__builtin_strchr(t *TLS, s uintptr, c int32) uintptr           { return Xstrchr(t, s, c) }
-func X__builtin_strcmp(t *TLS, s1, s2 uintptr) int32                 { return Xstrcmp(t, s1, s2) }
-func X__builtin_strcpy(t *TLS, dest, src uintptr) uintptr            { return Xstrcpy(t, dest, src) }
-func X__builtin_strlen(t *TLS, s uintptr) types.Size_t               { return Xstrlen(t, s) }
-func X__builtin_trap(t *TLS)                                         { Xabort(t) }
-func X__isnan(t *TLS, arg float64) int32                             { return X__builtin_isnan(t, arg) }
-func X__isnanf(t *TLS, arg float32) int32                            { return Xisnanf(t, arg) }
-func X__isnanl(t *TLS, arg float64) int32                            { return Xisnanl(t, arg) }
-func Xvfprintf(t *TLS, stream, format, ap uintptr) int32             { return Xfprintf(t, stream, format, ap) }
+func X__builtin_abort(t *TLS)                                         { Xabort(t) }
+func X__builtin_abs(t *TLS, j int32) int32                            { return Xabs(t, j) }
+func X__builtin_clz(t *TLS, n uint32) int32                           { return int32(mbits.LeadingZeros32(n)) }
+func X__builtin_clzl(t *TLS, n ulong) int32                           { return int32(mbits.LeadingZeros64(uint64(n))) }
+func X__builtin_clzll(t *TLS, n uint64) int32                         { return int32(mbits.LeadingZeros64(n)) }
+func X__builtin_constant_p_impl()                                     { panic(todo("internal error: should never be called")) }
+func X__builtin_copysign(t *TLS, x, y float64) float64                { return Xcopysign(t, x, y) }
+func X__builtin_copysignf(t *TLS, x, y float32) float32               { return Xcopysignf(t, x, y) }
+func X__builtin_copysignl(t *TLS, x, y float64) float64               { return Xcopysign(t, x, y) }
+func X__builtin_exit(t *TLS, status int32)                            { Xexit(t, status) }
+func X__builtin_expect(t *TLS, exp, c long) long                      { return exp }
+func X__builtin_fabs(t *TLS, x float64) float64                       { return Xfabs(t, x) }
+func X__builtin_free(t *TLS, ptr uintptr)                             { Xfree(t, ptr) }
+func X__builtin_getentropy(t *TLS, buf uintptr, n types.Size_t) int32 { return Xgetentropy(t, buf, n) }
+func X__builtin_huge_val(t *TLS) float64                              { return math.Inf(1) }
+func X__builtin_huge_valf(t *TLS) float32                             { return float32(math.Inf(1)) }
+func X__builtin_inf(t *TLS) float64                                   { return math.Inf(1) }
+func X__builtin_inff(t *TLS) float32                                  { return float32(math.Inf(1)) }
+func X__builtin_infl(t *TLS) float64                                  { return math.Inf(1) }
+func X__builtin_malloc(t *TLS, size types.Size_t) uintptr             { return Xmalloc(t, size) }
+func X__builtin_memcmp(t *TLS, s1, s2 uintptr, n types.Size_t) int32  { return Xmemcmp(t, s1, s2, n) }
+func X__builtin_nan(t *TLS, s uintptr) float64                        { return math.NaN() }
+func X__builtin_nanf(t *TLS, s uintptr) float32                       { return float32(math.NaN()) }
+func X__builtin_nanl(t *TLS, s uintptr) float64                       { return math.NaN() }
+func X__builtin_prefetch(t *TLS, addr, args uintptr)                  {}
+func X__builtin_printf(t *TLS, s, args uintptr) int32                 { return Xprintf(t, s, args) }
+func X__builtin_strchr(t *TLS, s uintptr, c int32) uintptr            { return Xstrchr(t, s, c) }
+func X__builtin_strcmp(t *TLS, s1, s2 uintptr) int32                  { return Xstrcmp(t, s1, s2) }
+func X__builtin_strcpy(t *TLS, dest, src uintptr) uintptr             { return Xstrcpy(t, dest, src) }
+func X__builtin_strlen(t *TLS, s uintptr) types.Size_t                { return Xstrlen(t, s) }
+func X__builtin_trap(t *TLS)                                          { Xabort(t) }
+func X__isnan(t *TLS, arg float64) int32                              { return X__builtin_isnan(t, arg) }
+func X__isnanf(t *TLS, arg float32) int32                             { return Xisnanf(t, arg) }
+func X__isnanl(t *TLS, arg float64) int32                             { return Xisnanl(t, arg) }
+
+func Xvfprintf(t *TLS, stream, format, ap uintptr) int32 { return Xfprintf(t, stream, format, ap) }
 
 // int __builtin_popcount (unsigned int x)
 func X__builtin_popcount(t *TLS, x uint32) int32 {
 	return int32(mbits.OnesCount32(x))
+}
+
+// int __builtin_popcountl (unsigned long x)
+func X__builtin_popcountl(t *TLS, x ulong) int32 {
+	return int32(mbits.OnesCount64(uint64(x)))
 }
 
 // char * __builtin___strcpy_chk (char *dest, const char *src, size_t os);
@@ -436,7 +452,7 @@ func Xvprintf(t *TLS, s, ap uintptr) int32 { return Xprintf(t, s, ap) }
 
 // int vsprintf(char *str, const char *format, va_list ap);
 func Xvsprintf(t *TLS, str, format, va uintptr) int32 {
-	panic(todo(""))
+	return Xsprintf(t, str, format, va)
 }
 
 // int vsnprintf(char *str, size_t size, const char *format, va_list ap);
@@ -501,21 +517,22 @@ func Xprintf(t *TLS, format, args uintptr) int32 {
 
 // int snprintf(char *str, size_t size, const char *format, ...);
 func Xsnprintf(t *TLS, str uintptr, size types.Size_t, format, args uintptr) (r int32) {
-	switch size {
-	case 0:
-		return 0
-	case 1:
-		*(*byte)(unsafe.Pointer(str)) = 0
+	if format == 0 {
 		return 0
 	}
 
 	b := printf(format, args)
+	r = int32(len(b))
+	if size == 0 {
+		return r
+	}
+
 	if len(b)+1 > int(size) {
 		b = b[:size-1]
 	}
-	r = int32(len(b))
-	copy((*RawMem)(unsafe.Pointer(str))[:r:r], b)
-	*(*byte)(unsafe.Pointer(str + uintptr(r))) = 0
+	n := len(b)
+	copy((*RawMem)(unsafe.Pointer(str))[:n:n], b)
+	*(*byte)(unsafe.Pointer(str + uintptr(n))) = 0
 	return r
 }
 
@@ -751,8 +768,8 @@ func Xmemset(t *TLS, s uintptr, c int32, n types.Size_t) uintptr {
 	if n != 0 {
 		c := byte(c & 0xff)
 
-		//this will make sure that on platforms where they are not equally alligned
-		//we clear out the first few bytes until allignment
+		// This will make sure that on platforms where they are not equally aligned we
+		// clear out the first few bytes until allignment
 		bytesBeforeAllignment := s % unsafe.Alignof(uint64(0))
 		if bytesBeforeAllignment > uintptr(n) {
 			bytesBeforeAllignment = uintptr(n)
@@ -781,13 +798,9 @@ func Xmemset(t *TLS, s uintptr, c int32, n types.Size_t) uintptr {
 
 // void *memcpy(void *dest, const void *src, size_t n);
 func Xmemcpy(t *TLS, dest, src uintptr, n types.Size_t) (r uintptr) {
-	if n == 0 {
-		return dest
+	if n != 0 {
+		copy((*RawMem)(unsafe.Pointer(dest))[:n:n], (*RawMem)(unsafe.Pointer(src))[:n:n])
 	}
-
-	s := (*RawMem)(unsafe.Pointer(src))[:n:n]
-	d := (*RawMem)(unsafe.Pointer(dest))[:n:n]
-	copy(d, s)
 	return dest
 }
 
@@ -1001,40 +1014,6 @@ func Xstrcasecmp(t *TLS, s1, s2 uintptr) int32 {
 			return r
 		}
 	}
-}
-
-var __ctype_b_table = [...]uint16{ //TODO use symbolic constants
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002,
-	0x0002, 0x2003, 0x2002, 0x2002, 0x2002, 0x2002, 0x0002, 0x0002,
-	0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002,
-	0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002,
-	0x6001, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004,
-	0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004,
-	0xd808, 0xd808, 0xd808, 0xd808, 0xd808, 0xd808, 0xd808, 0xd808,
-	0xd808, 0xd808, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004,
-	0xc004, 0xd508, 0xd508, 0xd508, 0xd508, 0xd508, 0xd508, 0xc508,
-	0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508,
-	0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508, 0xc508,
-	0xc508, 0xc508, 0xc508, 0xc004, 0xc004, 0xc004, 0xc004, 0xc004,
-	0xc004, 0xd608, 0xd608, 0xd608, 0xd608, 0xd608, 0xd608, 0xc608,
-	0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608,
-	0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608, 0xc608,
-	0xc608, 0xc608, 0xc608, 0xc004, 0xc004, 0xc004, 0xc004, 0x0002,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-}
-
-var ptable = uintptr(unsafe.Pointer(&__ctype_b_table[128]))
-
-// const unsigned short * * __ctype_b_loc (void);
-func X__ctype_b_loc(t *TLS) uintptr {
-	return uintptr(unsafe.Pointer(&ptable))
 }
 
 func Xntohs(t *TLS, netshort uint16) uint16 {
@@ -1267,22 +1246,6 @@ func Xclock_gettime(t *TLS, clk_id int32, tp uintptr) int32 {
 	panic(todo(""))
 }
 
-// int posix_fadvise(int fd, off_t offset, off_t len, int advice);
-func Xposix_fadvise(t *TLS, fd int32, offset, len types.Off_t, advice int32) int32 {
-	panic(todo(""))
-}
-
-// int initstate_r(unsigned int seed, char *statebuf,
-//                        size_t statelen, struct random_data *buf);
-func Xinitstate_r(t *TLS, seed uint32, statebuf uintptr, statelen types.Size_t, buf uintptr) int32 {
-	panic(todo(""))
-}
-
-// int random_r(struct random_data *buf, int32_t *result);
-func Xrandom_r(t *TLS, buf, result uintptr) int32 {
-	panic(todo(""))
-}
-
 // AtExit will attempt to run f at process exit. The execution cannot be
 // guaranteed, neither its ordering with respect to any other handlers
 // registered by AtExit.
@@ -1290,4 +1253,117 @@ func AtExit(f func()) {
 	atExitMu.Lock()
 	atExit = append(atExit, f)
 	atExitMu.Unlock()
+}
+
+func X__ccgo_dmesg(t *TLS, fmt uintptr, va uintptr) {
+	if dmesgs {
+		dmesg("%s", printf(fmt, va))
+	}
+}
+
+// int getentropy(void *buffer, size_t length);
+//
+// The  getentropy() function writes length bytes of high-quality random data
+// to the buffer starting at the location pointed to by buffer. The maximum
+// permitted value for the length argument is 256.
+func Xgetentropy(t *TLS, buffer uintptr, length size_t) int32 {
+	const max = 256
+	switch {
+	case length == 0:
+		return 0
+	case buffer == 0:
+		t.setErrno(errno.EFAULT)
+		return -1
+	case length > max:
+		t.setErrno(errno.EIO)
+		return -1
+	}
+
+	if _, err := crand.Read((*RawMem)(unsafe.Pointer(buffer))[:length]); err != nil {
+		t.setErrno(errno.EIO)
+		return -1
+	}
+
+	return 0
+}
+
+// void * reallocarray(void *ptr, size_t nmemb, size_t size);
+func Xreallocarray(t *TLS, ptr uintptr, nmemb, size size_t) uintptr {
+	hi, lo := mathutil.MulUint128_64(uint64(nmemb), uint64(size))
+	if hi != 0 || lo > uint64(unsafe.Sizeof(RawMem{})) {
+		t.setErrno(errno.ENOMEM)
+		return 0
+	}
+
+	return Xrealloc(t, ptr, size_t(lo))
+}
+
+// int setjmp(jmp_buf env);
+func Xsetjmp(t *TLS, env uintptr) int32 {
+	return 0 //TODO
+}
+
+// void longjmp(jmp_buf env, int val);
+func Xlongjmp(t *TLS, env uintptr, val int32) {
+	panic(todo(""))
+}
+
+// https://linux.die.net/man/3/_setjmp
+//
+// The _longjmp() and _setjmp() functions shall be equivalent to longjmp() and
+// setjmp(), respectively, with the additional restriction that _longjmp() and
+// _setjmp() shall not manipulate the signal mask.
+
+// int _setjmp(jmp_buf env);
+func X_setjmp(t *TLS, env uintptr) int32 {
+	return 0 //TODO
+}
+
+// void _longjmp(jmp_buf env, int val);
+func X_longjmp(t *TLS, env uintptr, val int32) {
+	panic(todo(""))
+}
+
+// unsigned __sync_add_and_fetch_uint32(*unsigned, unsigned)
+func X__sync_add_and_fetch_uint32(t *TLS, p uintptr, v uint32) uint32 {
+	return atomic.AddUint32((*uint32)(unsafe.Pointer(p)), v)
+}
+
+// unsigned __sync_sub_and_fetch_uint32(*unsigned, unsigned)
+func X__sync_sub_and_fetch_uint32(t *TLS, p uintptr, v uint32) uint32 {
+	return atomic.AddUint32((*uint32)(unsafe.Pointer(p)), -v)
+}
+
+// int sched_yield(void);
+func Xsched_yield(t *TLS) {
+	runtime.Gosched()
+}
+
+// int getc(FILE *stream);
+func Xgetc(t *TLS, stream uintptr) int32 {
+	return Xfgetc(t, stream)
+}
+
+// char *fgets(char *s, int size, FILE *stream);
+func Xfgets(t *TLS, s uintptr, size int32, stream uintptr) uintptr {
+	var b []byte
+out:
+	for ; size > 0; size-- {
+		switch c := Xfgetc(t, stream); c {
+		case '\n':
+			b = append(b, byte(c))
+			break out
+		case stdio.EOF:
+			break out
+		default:
+			b = append(b, byte(c))
+		}
+	}
+	if len(b) == 0 {
+		return 0
+	}
+
+	b = append(b, 0)
+	copy((*RawMem)(unsafe.Pointer(s))[:len(b):len(b)], b)
+	return s
 }

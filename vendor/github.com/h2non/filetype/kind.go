@@ -71,6 +71,17 @@ func IsDocument(buf []byte) bool {
 	return kind != types.Unknown
 }
 
+// Application tries to match a file as an application type
+func Application(buf []byte) (types.Type, error) {
+	return doMatchMap(buf, matchers.Application)
+}
+
+// IsApplication checks if the given buffer is an application type
+func IsApplication(buf []byte) bool {
+	kind, _ := Application(buf)
+	return kind != types.Unknown
+}
+
 func doMatchMap(buf []byte, machers matchers.Map) (types.Type, error) {
 	kind := MatchMap(buf, machers)
 	if kind != types.Unknown {

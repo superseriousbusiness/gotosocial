@@ -7,7 +7,7 @@ import (
 	"codeberg.org/gruf/go-bytes"
 )
 
-// Entry defines an entry in the log
+// Entry defines an entry in the log, it is NOT safe for concurrent use
 type Entry struct {
 	ctx context.Context
 	lvl LEVEL
@@ -187,13 +187,34 @@ func (e *Entry) Fields(fields map[string]interface{}) *Entry {
 	return e
 }
 
-// Msg appends the formatted final message to the log and calls .Send()
+// Value appends the given value to the log entry formatted as a value, without a key.
+func (e *Entry) Value(value interface{}) *Entry {
+	e.log.Format.AppendValue(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Values appends the given values to the log entry formatted as values, without a key.
+func (e *Entry) Values(values ...interface{}) *Entry {
+	e.log.Format.AppendValues(e.buf, values)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Args appends the given args formatted using the log formatter (usually faster than printf) without any key-value / value formatting.
+func (e *Entry) Args(a ...interface{}) *Entry {
+	e.log.Format.AppendArgs(e.buf, a)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Msg appends the fmt.Sprint() formatted final message to the log and calls .Send()
 func (e *Entry) Msg(a ...interface{}) {
 	e.log.Format.AppendMsg(e.buf, a...)
 	e.Send()
 }
 
-// Msgf appends the formatted final message to the log and calls .Send()
+// Msgf appends the fmt.Sprintf() formatted final message to the log and calls .Send()
 func (e *Entry) Msgf(s string, a ...interface{}) {
 	e.log.Format.AppendMsgf(e.buf, s, a...)
 	e.Send()
@@ -210,7 +231,7 @@ func (e *Entry) Send() {
 		return
 	}
 
-	// Final new line
+	// Ensure a final new line
 	if e.buf.B[e.buf.Len()-1] != '\n' {
 		e.buf.WriteByte('\n')
 	}

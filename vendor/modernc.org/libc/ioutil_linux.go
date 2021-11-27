@@ -43,13 +43,14 @@ func nextRandom(x uintptr) {
 	copy((*RawMem)(unsafe.Pointer(x))[:6:6], fmt.Sprintf("%06d", int(1e9+r%1e9)%1e6))
 }
 
-func tempFile(s, x uintptr) (fd, err int) {
+func tempFile(s, x uintptr, flags int32) (fd, err int) {
 	const maxTry = 10000
 	nconflict := 0
+	flags |= int32(os.O_RDWR | os.O_CREATE | os.O_EXCL | unix.O_LARGEFILE)
 	for i := 0; i < maxTry; i++ {
 		nextRandom(x)
 		fdcwd := fcntl.AT_FDCWD
-		n, _, err := unix.Syscall6(unix.SYS_OPENAT, uintptr(fdcwd), s, uintptr(os.O_RDWR|os.O_CREATE|os.O_EXCL|unix.O_LARGEFILE), 0600, 0, 0)
+		n, _, err := unix.Syscall6(unix.SYS_OPENAT, uintptr(fdcwd), s, uintptr(flags), 0600, 0, 0)
 		if err == 0 {
 			return int(n), 0
 		}
