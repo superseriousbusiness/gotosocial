@@ -81,7 +81,5 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
 
 	s.AttachHandler(http.MethodGet, CallbackPath, m.CallbackGETHandler)
-
-	s.AttachMiddleware(m.OauthTokenMiddleware)
 	return nil
 }
