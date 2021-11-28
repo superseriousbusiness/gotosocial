@@ -59,6 +59,7 @@ Code: https://github.com/superseriousbusiness/gotosocial`,
 
 	// add subcommands
 	cmd.AddCommand(serverCommands())
+	cmd.AddCommand(testrigCommands())
 
 	// initialize viper config
 	if err := config.InitViper(cmd.Flags(), v); err != nil {
