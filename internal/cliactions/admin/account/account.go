@@ -34,8 +34,8 @@ import (
 )
 
 // Create creates a new account in the database using the provided flags.
-var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Create cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -73,8 +73,8 @@ var Create cliactions.GTSAction = func(ctx context.Context, c *config.Config) er
 }
 
 // Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
-var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Confirm cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -108,8 +108,8 @@ var Confirm cliactions.GTSAction = func(ctx context.Context, c *config.Config) e
 }
 
 // Promote sets a user to admin.
-var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Promote cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -140,8 +140,8 @@ var Promote cliactions.GTSAction = func(ctx context.Context, c *config.Config) e
 }
 
 // Demote sets admin on a user to false.
-var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Demote cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -172,8 +172,8 @@ var Demote cliactions.GTSAction = func(ctx context.Context, c *config.Config) er
 }
 
 // Disable sets Disabled to true on a user.
-var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Disable cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -204,14 +204,14 @@ var Disable cliactions.GTSAction = func(ctx context.Context, c *config.Config) e
 }
 
 // Suspend suspends the target account, cleanly removing all of its media, followers, following, likes, statuses, etc.
-var Suspend cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
+var Suspend cliactions.GTSAction = func(ctx context.Context) error {
 	// TODO
 	return nil
 }
 
 // Password sets the password of target account.
-var Password cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Password cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}

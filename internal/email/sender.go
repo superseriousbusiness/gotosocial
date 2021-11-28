@@ -23,6 +23,7 @@ import (
 	"html/template"
 	"net/smtp"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -36,18 +37,25 @@ type Sender interface {
 }
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
-func NewSender(cfg *config.Config) (Sender, error) {
-	t, err := loadTemplates(cfg.TemplateConfig.BaseDir)
+func NewSender() (Sender, error) {
+	flags := config.FlagNames
+
+	templateBaseDir := viper.GetString(flags.TemplateBaseDir)
+	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
 		return nil, err
 	}
 
-	auth := smtp.PlainAuth("", cfg.SMTPConfig.Username, cfg.SMTPConfig.Password, cfg.SMTPConfig.Host)
+	username := viper.GetString(flags.SMTPUsername)
+	password := viper.GetString(flags.SMTPPassword)
+	host := viper.GetString(flags.SMTPHost)
+	port := viper.GetInt(flags.SMTPPort)
+	from := viper.GetString(flags.SMTPFrom)
 
 	return &sender{
-		hostAddress: fmt.Sprintf("%s:%d", cfg.SMTPConfig.Host, cfg.SMTPConfig.Port),
-		from:        cfg.SMTPConfig.From,
-		auth:        auth,
+		hostAddress: fmt.Sprintf("%s:%d", host, port),
+		from:        from,
+		auth:        smtp.PlainAuth("", username, password, host),
 		template:    t,
 	}, nil
 }

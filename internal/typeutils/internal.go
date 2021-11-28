@@ -25,7 +25,7 @@ func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.Follo
 
 func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
 	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
-	uris := util.GenerateURIsForAccount(boostingAccount.Username, c.config.Protocol, c.config.Host)
+	uris := util.GenerateURIsForAccount(boostingAccount.Username)
 	boostWrapperStatusID, err := id.NewULID()
 	if err != nil {
 		return nil, err

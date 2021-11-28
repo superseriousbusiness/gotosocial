@@ -24,7 +24,6 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
@@ -73,7 +72,6 @@ type Federator interface {
 }
 
 type federator struct {
-	config              *config.Config
 	db                  db.DB
 	federatingDB        federatingdb.DB
 	clock               pub.Clock
@@ -85,12 +83,11 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, config *config.Config, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
-	dereferencer := dereferencing.NewDereferencer(config, db, typeConverter, transportController, mediaHandler)
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
+	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaHandler)
 
 	clock := &Clock{}
 	f := &federator{
-		config:              config,
 		db:                  db,
 		federatingDB:        federatingDB,
 		clock:               &Clock{},

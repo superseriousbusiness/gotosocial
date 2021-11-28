@@ -26,6 +26,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -40,14 +41,12 @@ const (
 
 // Module implements the api.ClientModule interface for web pages.
 type Module struct {
-	config    *config.Config
 	processor processing.Processor
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(config *config.Config, processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) api.ClientModule {
 	return &Module{
-		config:    config,
 		processor: processor,
 	}
 }
@@ -56,7 +55,8 @@ func (m *Module) baseHandler(c *gin.Context) {
 	l := logrus.WithField("func", "BaseGETHandler")
 	l.Trace("serving index html")
 
-	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
+	host := viper.GetString(config.FlagNames.Host)
+	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -73,7 +73,8 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	l := logrus.WithField("func", "404")
 	l.Trace("serving 404 html")
 
-	instance, err := m.processor.InstanceGet(c.Request.Context(), m.config.Host)
+	host := viper.GetString(config.FlagNames.Host)
+	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -87,17 +88,17 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
-
 	// serve static files from /assets
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
-	assetPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir)
+	assetBaseDir := viper.GetString(config.FlagNames.AssetBaseDir)
+	assetPath := filepath.Join(cwd, assetBaseDir)
 	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
 
 	// Admin panel route, if it exists
-	adminPath := filepath.Join(cwd, m.config.TemplateConfig.AssetBaseDir, "/admin")
+	adminPath := filepath.Join(cwd, assetBaseDir, "/admin")
 	s.AttachStaticFS("/admin", fileSystem{http.Dir(adminPath)})
 
 	// serve front-page

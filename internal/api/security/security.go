@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -32,15 +31,13 @@ const robotsPath = "/robots.txt"
 
 // Module implements the ClientAPIModule interface for security middleware
 type Module struct {
-	config *config.Config
 	db     db.DB
 	server oauth.Server
 }
 
 // New returns a new security module
-func New(config *config.Config, db db.DB, server oauth.Server) api.ClientModule {
+func New(db db.DB, server oauth.Server) api.ClientModule {
 	return &Module{
-		config: config,
 		db:     db,
 		server: server,
 	}

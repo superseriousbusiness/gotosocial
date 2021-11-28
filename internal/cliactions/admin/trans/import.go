@@ -30,8 +30,8 @@ import (
 )
 
 // Import imports info from a file into the database
-var Import cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Import cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}

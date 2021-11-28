@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -31,7 +32,7 @@ import (
 // gotosocial action, and then executes the action.
 func runAction(cmd *cobra.Command, a cliactions.GTSAction) error {
 	// initialize the global logger to the log level, with formatting and output splitter already set
-	err := log.Initialize(viper.GetString("log-level"))
+	err := log.Initialize(viper.GetString(config.FlagNames.LogLevel))
 	if err != nil {
 		return fmt.Errorf("error creating logger: %s", err)
 	}

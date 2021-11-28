@@ -24,15 +24,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type basicDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (b *basicDB) Put(ctx context.Context, i interface{}) db.Error {

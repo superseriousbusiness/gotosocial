@@ -24,6 +24,8 @@ import (
 	"strconv"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -66,27 +68,23 @@ var testModels = []interface{}{
 // If the environment variable GTS_DB_PORT is set, it will take that
 // value as the port instead.
 func NewTestDB() db.DB {
-	config := NewTestConfig()
-	alternateAddress := os.Getenv("GTS_DB_ADDRESS")
-	if alternateAddress != "" {
-		config.DBConfig.Address = alternateAddress
+	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
+		viper.Set(config.FlagNames.DbAddress, alternateAddress)
 	}
 
-	alternateDBType := os.Getenv("GTS_DB_TYPE")
-	if alternateDBType != "" {
-		config.DBConfig.Type = alternateDBType
+	if alternateDBType := os.Getenv("GTS_DB_TYPE"); alternateDBType != "" {
+		viper.Set(config.FlagNames.DbType, alternateDBType)
 	}
 
-	alternateDBPort := os.Getenv("GTS_DB_PORT")
-	if alternateDBPort != "" {
+	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
 		port, err := strconv.ParseInt(alternateDBPort, 10, 64)
 		if err != nil {
 			panic(err)
 		}
-		config.DBConfig.Port = int(port)
+		viper.Set(config.FlagNames.DbPort, port)
 	}
 
-	testDB, err := bundb.NewBunDBService(context.Background(), config)
+	testDB, err := bundb.NewBunDBService(context.Background())
 	if err != nil {
 		logrus.Panic(err)
 	}

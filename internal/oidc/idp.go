@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"golang.org/x/oauth2"
 )
@@ -54,42 +55,56 @@ type idp struct {
 // If the passed config contains a nil value for the OIDCConfig, or OIDCConfig.Enabled
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.
-func NewIDP(ctx context.Context, config *config.Config) (IDP, error) {
+func NewIDP(ctx context.Context) (IDP, error) {
+	flags := config.FlagNames
 
-	// oidc isn't enabled so we don't need to do anything
-	if config.OIDCConfig == nil || !config.OIDCConfig.Enabled {
+	oidcEnabled := viper.GetBool(flags.OIDCEnabled)
+	if !oidcEnabled {
+		// oidc isn't enabled so we don't need to do anything
 		return nil, nil
 	}
 
 	// validate config fields
-	if config.OIDCConfig.IDPName == "" {
+	idpName := viper.GetString(flags.OIDCIdpName)
+	if idpName == "" {
 		return nil, fmt.Errorf("not set: IDPName")
 	}
-	if config.OIDCConfig.Issuer == "" {
+
+	issuer := viper.GetString(flags.OIDCIssuer)
+	if issuer == "" {
 		return nil, fmt.Errorf("not set: Issuer")
 	}
-	if config.OIDCConfig.ClientID == "" {
+
+	clientID := viper.GetString(flags.OIDCClientID)
+	if clientID == "" {
 		return nil, fmt.Errorf("not set: ClientID")
 	}
-	if config.OIDCConfig.ClientSecret == "" {
+
+	clientSecret := viper.GetString(flags.OIDCClientSecret)
+	if clientSecret == "" {
 		return nil, fmt.Errorf("not set: ClientSecret")
 	}
-	if len(config.OIDCConfig.Scopes) == 0 {
+
+	scopes := viper.GetStringSlice(flags.OIDCScopes)
+	if len(scopes) == 0 {
 		return nil, fmt.Errorf("not set: Scopes")
 	}
 
-	provider, err := oidc.NewProvider(ctx, config.OIDCConfig.Issuer)
+	provider, err := oidc.NewProvider(ctx, issuer)
 	if err != nil {
 		return nil, err
 	}
 
+	protocol := viper.GetString(flags.Protocol)
+	host := viper.GetString(flags.Host)
+
 	oauth2Config := oauth2.Config{
 		// client_id and client_secret of the client.
-		ClientID:     config.OIDCConfig.ClientID,
-		ClientSecret: config.OIDCConfig.ClientSecret,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 
 		// The redirectURL.
-		RedirectURL: fmt.Sprintf("%s://%s%s", config.Protocol, config.Host, CallbackPath),
+		RedirectURL: fmt.Sprintf("%s://%s%s", protocol, host, CallbackPath),
 
 		// Discovery returns the OAuth2 endpoints.
 		Endpoint: provider.Endpoint(),
@@ -97,14 +112,16 @@ func NewIDP(ctx context.Context, config *config.Config) (IDP, error) {
 		// "openid" is a required scope for OpenID Connect flows.
 		//
 		// Other scopes, such as "groups" can be requested.
-		Scopes: config.OIDCConfig.Scopes,
+		Scopes: scopes,
 	}
 
 	// create a config for verifier creation
 	oidcConf := &oidc.Config{
-		ClientID: config.OIDCConfig.ClientID,
+		ClientID: clientID,
 	}
-	if config.OIDCConfig.SkipVerification {
+
+	skipVerification := viper.GetBool(flags.OIDCSkipVerification)
+	if skipVerification {
 		oidcConf.SkipClientIDCheck = true
 		oidcConf.SkipExpiryCheck = true
 		oidcConf.SkipIssuerCheck = true

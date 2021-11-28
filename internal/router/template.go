@@ -27,11 +27,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // loadTemplates loads html templates for use by the given engine
-func loadTemplates(cfg *config.Config, engine *gin.Engine) error {
+func loadTemplates(engine *gin.Engine) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("error getting current working directory: %s", err)

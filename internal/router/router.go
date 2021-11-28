@@ -26,6 +26,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"golang.org/x/crypto/acme/autocert"
@@ -58,7 +59,6 @@ type Router interface {
 type router struct {
 	engine      *gin.Engine
 	srv         *http.Server
-	config      *config.Config
 	certManager *autocert.Manager
 }
 
@@ -69,10 +69,16 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
-	if r.config.LetsEncryptConfig.Enabled {
+	flags := config.FlagNames
+	leEnabled := viper.GetBool(flags.LetsEncryptEnabled)
+
+	if leEnabled {
+		bindAddress := viper.GetString(flags.BindAddress)
+		lePort := viper.GetInt(flags.LetsEncryptPort)
+		
 		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
-			listen := fmt.Sprintf("%s:%d", r.config.BindAddress, r.config.LetsEncryptConfig.Port)
+			listen := fmt.Sprintf("%s:%d", bindAddress, lePort)
 			if err := http.ListenAndServe(listen, r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
 				logrus.Fatalf("listen: %s", err)
 			}
@@ -103,7 +109,7 @@ func (r *router) Stop(ctx context.Context) error {
 //
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
-func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
+func New(ctx context.Context, db db.DB) (Router, error) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
@@ -121,7 +127,7 @@ func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
 	}
 
 	// enable cors on the engine
-	if err := useCors(cfg, engine); err != nil {
+	if err := useCors(engine); err != nil {
 		return nil, err
 	}
 
@@ -129,12 +135,12 @@ func New(ctx context.Context, cfg *config.Config, db db.DB) (Router, error) {
 	loadTemplateFunctions(engine)
 
 	// load templates onto the engine
-	if err := loadTemplates(cfg, engine); err != nil {
+	if err := loadTemplates(engine); err != nil {
 		return nil, err
 	}
 
 	// enable session store middleware on the engine
-	if err := useSession(ctx, cfg, db, engine); err != nil {
+	if err := useSession(ctx, db, engine); err != nil {
 		return nil, err
 	}
 

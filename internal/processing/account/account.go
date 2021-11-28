@@ -23,7 +23,6 @@ import (
 	"mime/multipart"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -78,7 +77,6 @@ type Processor interface {
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	config        *config.Config
 	mediaHandler  media.Handler
 	fromClientAPI chan messages.FromClientAPI
 	oauthServer   oauth.Server
@@ -89,15 +87,14 @@ type processor struct {
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, config *config.Config) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator) Processor {
 	return &processor{
 		tc:            tc,
-		config:        config,
 		mediaHandler:  mediaHandler,
 		fromClientAPI: fromClientAPI,
 		oauthServer:   oauthServer,
 		filter:        visibility.NewFilter(db),
-		formatter:     text.NewFormatter(config, db),
+		formatter:     text.NewFormatter(db),
 		db:            db,
 		federator:     federator,
 	}

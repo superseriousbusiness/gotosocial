@@ -20,18 +20,16 @@ package status_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// nolint
 type StatusStandardTestSuite struct {
 	suite.Suite
-	config            *config.Config
 	db                db.DB
 	typeConverter     typeutils.TypeConverter
 	fromClientAPIChan chan messages.FromClientAPI
@@ -49,4 +47,32 @@ type StatusStandardTestSuite struct {
 
 	// module being tested
 	status status.Processor
+}
+
+func (suite *StatusStandardTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testClients = testrig.NewTestClients()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTags = testrig.NewTestTags()
+	suite.testMentions = testrig.NewTestMentions()
+}
+
+func (suite *StatusStandardTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
+	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
+	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
+	suite.status = status.New(suite.db, suite.typeConverter, suite.fromClientAPIChan)
+
+	testrig.StandardDBSetup(suite.db, nil)
+}
+
+func (suite *StatusStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
 }

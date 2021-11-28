@@ -30,8 +30,8 @@ import (
 )
 
 // Export exports info from the database into a file
-var Export cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbConn, err := bundb.NewBunDBService(ctx, c)
+var Export cliactions.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}

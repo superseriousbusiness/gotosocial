@@ -76,7 +76,7 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		AccountID:       requestingAccount.ID,
 		TargetAccountID: form.ID,
 		ShowReblogs:     true,
-		URI:             util.GenerateURIForFollow(requestingAccount.Username, p.config.Protocol, p.config.Host, newFollowID),
+		URI:             util.GenerateURIForFollow(requestingAccount.Username, newFollowID),
 		Notify:          false,
 	}
 	if form.Reblogs != nil {

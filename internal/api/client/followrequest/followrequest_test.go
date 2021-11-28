@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -39,7 +40,6 @@ import (
 
 type FollowRequestStandardTestSuite struct {
 	suite.Suite
-	config      *config.Config
 	db          db.DB
 	storage     *kv.KVStore
 	federator   federation.Federator
@@ -70,14 +70,14 @@ func (suite *FollowRequestStandardTestSuite) SetupSuite() {
 }
 
 func (suite *FollowRequestStandardTestSuite) SetupTest() {
+	testrig.InitTestConfig()
 	testrig.InitTestLog()
-	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
-	suite.followRequestModule = followrequest.New(suite.config, suite.processor).(*followrequest.Module)
+	suite.followRequestModule = followrequest.New(suite.processor).(*followrequest.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
@@ -95,7 +95,10 @@ func (suite *FollowRequestStandardTestSuite) newContext(recorder *httptest.Respo
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 
-	baseURI := fmt.Sprintf("%s://%s", suite.config.Protocol, suite.config.Host)
+	protocol := viper.GetString(config.FlagNames.Protocol)
+	host := viper.GetString(config.FlagNames.Host)
+
+	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
 
 	ctx.Request = httptest.NewRequest(requestMethod, requestURI, bytes.NewReader(requestBody)) // the endpoint we're hitting

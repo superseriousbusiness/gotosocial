@@ -20,7 +20,6 @@ package visibility_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -30,8 +29,7 @@ import (
 type FilterStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config *config.Config
-	db     db.DB
+	db db.DB
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -61,8 +59,8 @@ func (suite *FilterStandardTestSuite) SetupSuite() {
 
 func (suite *FilterStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
 
-	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.filter = visibility.NewFilter(suite.db)
 

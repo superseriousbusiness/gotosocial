@@ -24,8 +24,10 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -124,7 +126,8 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}
 
-		if updatedAcct.Domain == f.config.Host {
+		host := viper.GetString(config.FlagNames.Host)
+		if updatedAcct.Domain == host {
 			// no need to update local accounts
 			// in fact, if we do this will break the shit out of things so do NOT
 			return nil

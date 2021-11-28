@@ -22,15 +22,13 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type domainDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {

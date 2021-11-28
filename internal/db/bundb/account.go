@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -32,9 +33,8 @@ import (
 )
 
 type accountDB struct {
-	config *config.Config
-	conn   *DBConn
-	cache  *cache.AccountCache
+	conn  *DBConn
+	cache *cache.AccountCache
 }
 
 func (a *accountDB) newAccountQ(account *gtsmodel.Account) *bun.SelectQuery {
@@ -132,8 +132,9 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 			Where("account.username = ?", domain).
 			Where("account.domain = ?", domain)
 	} else {
+		host := viper.GetString(config.FlagNames.Host)
 		q = q.
-			Where("account.username = ?", a.config.Host).
+			Where("account.username = ?", host).
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 

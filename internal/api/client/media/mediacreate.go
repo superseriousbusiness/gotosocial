@@ -21,8 +21,10 @@ package media
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -102,7 +104,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateMedia(form, m.config.MediaConfig); err != nil {
+	if err := validateCreateMedia(form); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -119,24 +121,30 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, apiAttachment)
 }
 
-func validateCreateMedia(form *model.AttachmentRequest, config *config.MediaConfig) error {
+func validateCreateMedia(form *model.AttachmentRequest) error {
 	// check there actually is a file attached and it's not size 0
 	if form.File == nil {
 		return errors.New("no attachment given")
 	}
 
+	flags := config.FlagNames
+	maxVideoSize := viper.GetInt(flags.MediaMaxVideoSize)
+	maxImageSize := viper.GetInt(flags.MediaMaxImageSize)
+	minDescriptionChars := viper.GetInt(flags.MediaMinDescriptionChars)
+	maxDescriptionChars := viper.GetInt(flags.MediaMaxDescriptionChars)
+
 	// a very superficial check to see if no size limits are exceeded
 	// we still don't actually know which media types we're dealing with but the other handlers will go into more detail there
-	maxSize := config.MaxVideoSize
-	if config.MaxImageSize > maxSize {
-		maxSize = config.MaxImageSize
+	maxSize := maxVideoSize
+	if maxImageSize > maxSize {
+		maxSize = maxImageSize
 	}
 	if form.File.Size > int64(maxSize) {
 		return fmt.Errorf("file size limit exceeded: limit is %d bytes but attachment was %d bytes", maxSize, form.File.Size)
 	}
 
-	if len(form.Description) < config.MinDescriptionChars || len(form.Description) > config.MaxDescriptionChars {
-		return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", config.MinDescriptionChars, config.MaxDescriptionChars, len(form.Description))
+	if len(form.Description) < minDescriptionChars || len(form.Description) > maxDescriptionChars {
+		return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", minDescriptionChars, maxDescriptionChars, len(form.Description))
 	}
 
 	// TODO: validate focus here

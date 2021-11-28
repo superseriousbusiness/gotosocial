@@ -20,7 +20,6 @@ package bundb_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -29,8 +28,7 @@ import (
 type BunDBStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config *config.Config
-	db     db.DB
+	db db.DB
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -57,10 +55,10 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
 
+	suite.db = testrig.NewTestDB()
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 

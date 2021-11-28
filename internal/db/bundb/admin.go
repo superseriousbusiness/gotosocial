@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -41,8 +42,7 @@ import (
 )
 
 type adminDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
@@ -101,7 +101,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		Scan(ctx)
 	if err != nil {
 		// we just don't have an account yet create one
-		newAccountURIs := util.GenerateURIsForAccount(username, a.config.Protocol, a.config.Host)
+		newAccountURIs := util.GenerateURIsForAccount(username)
 		newAccountID, err := id.NewRandomULID()
 		if err != nil {
 			return nil, err
@@ -176,7 +176,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 }
 
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
-	username := a.config.Host
+	username := viper.GetString(config.FlagNames.Host)
 
 	q := a.conn.
 		NewSelect().
@@ -204,10 +204,10 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 
-	newAccountURIs := util.GenerateURIsForAccount(username, a.config.Protocol, a.config.Host)
+	newAccountURIs := util.GenerateURIsForAccount(username)
 	acct := &gtsmodel.Account{
 		ID:                    aID,
-		Username:              a.config.Host,
+		Username:              username,
 		DisplayName:           username,
 		URL:                   newAccountURIs.UserURL,
 		PrivateKey:            key,
@@ -235,13 +235,14 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 }
 
 func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
-	domain := a.config.Host
+	protocol := viper.GetString(config.FlagNames.Protocol)
+	host := viper.GetString(config.FlagNames.Host)
 
 	// check if instance entry already exists
 	q := a.conn.
 		NewSelect().
 		Model(&gtsmodel.Instance{}).
-		Where("domain = ?", domain)
+		Where("domain = ?", host)
 
 	exists, err := a.conn.Exists(ctx, q)
 	if err != nil {
@@ -259,9 +260,9 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 
 	i := &gtsmodel.Instance{
 		ID:     iID,
-		Domain: domain,
-		Title:  domain,
-		URI:    fmt.Sprintf("%s://%s", a.config.Protocol, a.config.Host),
+		Domain: host,
+		Title:  host,
+		URI:    fmt.Sprintf("%s://%s", protocol, host),
 	}
 
 	insertQ := a.conn.
@@ -273,6 +274,6 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
 		return a.conn.ProcessError(err)
 	}
 
-	logrus.Infof("created instance instance %s with id %s", domain, i.ID)
+	logrus.Infof("created instance instance %s with id %s", host, i.ID)
 	return nil
 }

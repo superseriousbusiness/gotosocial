@@ -23,7 +23,6 @@ import (
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -42,17 +41,14 @@ const (
 // FileServer implements the RESTAPIModule interface.
 // The goal here is to serve requested media files if the gotosocial server is configured to use local storage.
 type FileServer struct {
-	config      *config.Config
 	processor   processing.Processor
 	storageBase string
 }
 
 // New returns a new fileServer module
-func New(config *config.Config, processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) api.ClientModule {
 	return &FileServer{
-		config:      config,
-		processor:   processor,
-		storageBase: config.StorageConfig.ServeBasePath,
+		processor: processor,
 	}
 }
 

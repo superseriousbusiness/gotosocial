@@ -23,7 +23,6 @@ import (
 	"mime/multipart"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -44,17 +43,15 @@ type Processor interface {
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	config        *config.Config
 	mediaHandler  media.Handler
 	fromClientAPI chan messages.FromClientAPI
 	db            db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI, config *config.Config) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI) Processor {
 	return &processor{
 		tc:            tc,
-		config:        config,
 		mediaHandler:  mediaHandler,
 		fromClientAPI: fromClientAPI,
 		db:            db,

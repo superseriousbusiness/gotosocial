@@ -21,7 +21,6 @@ package typeutils_test
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -324,7 +323,6 @@ const (
 
 type TypeUtilsTestSuite struct {
 	suite.Suite
-	config       *config.Config
 	db           db.DB
 	testAccounts map[string]*gtsmodel.Account
 	testStatuses map[string]*gtsmodel.Status
@@ -334,13 +332,14 @@ type TypeUtilsTestSuite struct {
 }
 
 func (suite *TypeUtilsTestSuite) SetupSuite() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testPeople = testrig.NewTestFediPeople()
-	suite.typeconverter = typeutils.NewConverter(suite.config, suite.db)
+	suite.typeconverter = typeutils.NewConverter(suite.db)
 }
 
 func (suite *TypeUtilsTestSuite) SetupTest() {

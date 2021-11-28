@@ -18,9 +18,18 @@
 
 package testrig
 
-import "github.com/superseriousbusiness/gotosocial/internal/config"
+import (
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+)
 
-// NewTestConfig returns a config initialized with test defaults
-func NewTestConfig() *config.Config {
-	return config.TestDefault()
+// InitTestConfig resets + initializes the viper configuration with test defaults
+func InitTestConfig() {
+	viper.Reset()
+
+	flags := pflag.NewFlagSet("testrig", pflag.PanicOnError)
+
+	config.AttachFlags(flags, config.TestDefaults)
+	config.InitViper(flags, "testrig")
 }

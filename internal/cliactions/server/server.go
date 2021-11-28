@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -53,8 +52,8 @@ import (
 )
 
 // Start creates and starts a gotosocial server
-var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) error {
-	dbService, err := bundb.NewBunDBService(ctx, c)
+var Start cliactions.GTSAction = func(ctx context.Context) error {
+	dbService, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -67,15 +66,15 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
-	federatingDB := federatingdb.New(dbService, c)
+	federatingDB := federatingdb.New(dbService)
 
-	router, err := router.New(ctx, c, dbService)
+	router, err := router.New(ctx, dbService)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
 
 	// build converters and util
-	typeConverter := typeutils.NewConverter(c, dbService)
+	typeConverter := typeutils.NewConverter(dbService)
 	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c)
 
 	// Open the storage backend
@@ -85,16 +84,16 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 	}
 
 	// build backend handlers
-	mediaHandler := media.New(c, dbService, storage)
+	mediaHandler := media.New(dbService, storage)
 	oauthServer := oauth.New(ctx, dbService)
-	transportController := transport.NewController(c, dbService, &federation.Clock{}, http.DefaultClient)
-	federator := federation.NewFederator(dbService, federatingDB, transportController, c, typeConverter, mediaHandler)
+	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaHandler)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
 	var emailSender email.Sender
 	if c.SMTPConfig.Host != "" {
 		// host is defined so create a proper sender
-		emailSender, err = email.NewSender(c)
+		emailSender, err = email.NewSender()
 		if err != nil {
 			return fmt.Errorf("error creating email sender: %s", err)
 		}
@@ -107,41 +106,41 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(c, typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
-	idp, err := oidc.NewIDP(ctx, c)
+	idp, err := oidc.NewIDP(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}
 
 	// build client api modules
-	authModule := auth.New(c, dbService, oauthServer, idp)
-	accountModule := account.New(c, processor)
-	instanceModule := instance.New(c, processor)
-	appsModule := app.New(c, processor)
-	followRequestsModule := followrequest.New(c, processor)
-	webfingerModule := webfinger.New(c, processor)
-	nodeInfoModule := nodeinfo.New(c, processor)
-	webBaseModule := web.New(c, processor)
-	usersModule := user.New(c, processor)
-	timelineModule := timeline.New(c, processor)
-	notificationModule := notification.New(c, processor)
-	searchModule := search.New(c, processor)
-	filtersModule := filter.New(c, processor)
-	emojiModule := emoji.New(c, processor)
-	listsModule := list.New(c, processor)
-	mm := mediaModule.New(c, processor)
-	fileServerModule := fileserver.New(c, processor)
-	adminModule := admin.New(c, processor)
-	statusModule := status.New(c, processor)
-	securityModule := security.New(c, dbService, oauthServer)
-	streamingModule := streaming.New(c, processor)
-	favouritesModule := favourites.New(c, processor)
-	blocksModule := blocks.New(c, processor)
-	userClientModule := userClient.New(c, processor)
+	authModule := auth.New(dbService, oauthServer, idp)
+	accountModule := account.New(processor)
+	instanceModule := instance.New(processor)
+	appsModule := app.New(processor)
+	followRequestsModule := followrequest.New(processor)
+	webfingerModule := webfinger.New(processor)
+	nodeInfoModule := nodeinfo.New(processor)
+	webBaseModule := web.New(processor)
+	usersModule := user.New(processor)
+	timelineModule := timeline.New(processor)
+	notificationModule := notification.New(processor)
+	searchModule := search.New(processor)
+	filtersModule := filter.New(processor)
+	emojiModule := emoji.New(processor)
+	listsModule := list.New(processor)
+	mm := mediaModule.New(processor)
+	fileServerModule := fileserver.New(processor)
+	adminModule := admin.New(processor)
+	statusModule := status.New(processor)
+	securityModule := security.New(dbService, oauthServer)
+	streamingModule := streaming.New(processor)
+	favouritesModule := favourites.New(processor)
+	blocksModule := blocks.New(processor)
+	userClientModule := userClient.New(processor)
 
 	apis := []api.ClientModule{
 		// modules with middleware go first
@@ -179,7 +178,7 @@ var Start cliactions.GTSAction = func(ctx context.Context, c *config.Config) err
 		}
 	}
 
-	gts, err := gotosocial.NewServer(dbService, router, federator, c)
+	gts, err := gotosocial.NewServer(dbService, router, federator)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

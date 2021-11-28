@@ -32,7 +32,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -47,7 +46,6 @@ import (
 type ServeFileTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config       *config.Config
 	db           db.DB
 	storage      *kv.KVStore
 	federator    federation.Federator
@@ -75,9 +73,9 @@ type ServeFileTestSuite struct {
 
 func (suite *ServeFileTestSuite) SetupSuite() {
 	// setup standard items
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
+	testrig.InitTestConfig()
 	testrig.InitTestLog()
+	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
@@ -88,7 +86,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
-	suite.fileServer = fileserver.New(suite.config, suite.processor).(*fileserver.FileServer)
+	suite.fileServer = fileserver.New(suite.processor).(*fileserver.FileServer)
 }
 
 func (suite *ServeFileTestSuite) TearDownSuite() {

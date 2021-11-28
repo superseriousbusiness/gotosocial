@@ -19,24 +19,23 @@
 package main
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions/testrig"
 	"github.com/urfave/cli/v2"
 )
 
 func testrigCommands(allFlags []cli.Flag) []*cli.Command {
 	return []*cli.Command{
-		{
-			Name:  "testrig",
-			Usage: "gotosocial testrig tasks",
-			Subcommands: []*cli.Command{
-				{
-					Name:  "start",
-					Usage: "start the gotosocial testrig",
-					Action: func(c *cli.Context) error {
-						return runAction(c, allFlags, testrig.Start)
-					},
-				},
-			},
-		},
+		// {
+		// 	Name:  "testrig",
+		// 	Usage: "gotosocial testrig tasks",
+		// 	Subcommands: []*cli.Command{
+		// 		{
+		// 			Name:  "start",
+		// 			Usage: "start the gotosocial testrig",
+		// 			Action: func(c *cli.Context) error {
+		// 				return runAction(c, allFlags, testrig.Start)
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 }

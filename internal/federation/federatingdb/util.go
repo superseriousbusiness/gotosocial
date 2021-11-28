@@ -26,9 +26,11 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -104,7 +106,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 						if err != nil {
 							return nil, err
 						}
-						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, f.config.Protocol, f.config.Host, newID))
+						return url.Parse(util.GenerateURIForFollow(actorAccount.Username, newID))
 					}
 				}
 			}
@@ -207,7 +209,10 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 	if err != nil {
 		return nil, err
 	}
-	return url.Parse(fmt.Sprintf("%s://%s/%s", f.config.Protocol, f.config.Host, newID))
+
+	protocol := viper.GetString(config.FlagNames.Protocol)
+	host := viper.GetString(config.FlagNames.Host)
+	return url.Parse(fmt.Sprintf("%s://%s/%s", protocol, host, newID))
 }
 
 // ActorForOutbox fetches the actor's IRI for the given outbox IRI.

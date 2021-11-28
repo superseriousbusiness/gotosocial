@@ -23,15 +23,13 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type relationshipDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (r *relationshipDB) newBlockQ(block *gtsmodel.Block) *bun.SelectQuery {

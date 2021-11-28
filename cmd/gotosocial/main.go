@@ -20,8 +20,10 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 
 	_ "github.com/superseriousbusiness/gotosocial/docs"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Version is the software version of GtS being used
@@ -39,7 +41,16 @@ func main() {
 		v = Version + " " + Commit[:7]
 	}
 
-	if err := rootCommand(v).Execute(); err != nil {
+	cmd := &cobra.Command{
+		Use:     "gotosocial",
+		Short:   "a fediverse social media server",
+		Version: v,
+	}
+
+	config.AttachFlags(cmd.Flags(), config.Defaults)
+	config.InitViper(cmd.Flags(), v)
+
+	if err := cmd.Execute(); err != nil {
 		logrus.Fatal(err)
 	}
 }

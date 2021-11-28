@@ -23,9 +23,11 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -51,14 +53,18 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 		return nil, fmt.Errorf("username %s in use", form.Username)
 	}
 
+	flags := config.FlagNames
+	reasonRequired := viper.GetBool(flags.AccountsReasonRequired)
+	approvalRequired := viper.GetBool(flags.AccountsApprovalRequired)
+
 	// don't store a reason if we don't require one
 	reason := form.Reason
-	if !p.config.AccountsConfig.ReasonRequired {
+	if !reasonRequired {
 		reason = ""
 	}
 
 	l.Trace("creating new username and account")
-	user, err := p.db.NewSignup(ctx, form.Username, text.RemoveHTML(reason), p.config.AccountsConfig.RequireApproval, form.Email, form.Password, form.IP, form.Locale, application.ID, false, false)
+	user, err := p.db.NewSignup(ctx, form.Username, text.RemoveHTML(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, false)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new signup in the database: %s", err)
 	}

@@ -25,9 +25,11 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -620,7 +622,8 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
 	var domain string
 	if m.TargetAccount.Domain == "" {
-		domain = c.config.AccountDomain
+		accountDomain := viper.GetString(config.FlagNames.AccountDomain)
+		domain = accountDomain
 	} else {
 		domain = m.TargetAccount.Domain
 	}

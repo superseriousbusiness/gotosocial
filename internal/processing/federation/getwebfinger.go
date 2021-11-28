@@ -22,7 +22,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -41,9 +43,11 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
 
+	accountDomain := viper.GetString(config.FlagNames.AccountDomain)
+	
 	// return the webfinger representation
 	return &apimodel.WellKnownResponse{
-		Subject: fmt.Sprintf("%s:%s@%s", webfingerAccount, requestedAccount.Username, p.config.AccountDomain),
+		Subject: fmt.Sprintf("%s:%s@%s", webfingerAccount, requestedAccount.Username, accountDomain),
 		Aliases: []string{
 			requestedAccount.URI,
 			requestedAccount.URL,

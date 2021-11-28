@@ -18,9 +18,7 @@
 
 package config
 
-import (
-	"github.com/coreos/go-oidc/v3/oidc"
-)
+import "github.com/spf13/pflag"
 
 // Flags and usage strings for configuration.
 const (
@@ -37,6 +35,80 @@ const (
 	TransPathUsage = "the path of the file to import from/export to"
 )
 
+func AttachFlags(flags *pflag.FlagSet, values Values) {
+	// general config
+	flags.String(FlagNames.LogLevel, values.LogLevel, FlagUsage.LogLevel)
+	flags.String(FlagNames.ApplicationName, values.ApplicationName, FlagUsage.ApplicationName)
+	flags.String(FlagNames.ConfigPath, values.ConfigPath, FlagUsage.ConfigPath)
+	flags.String(FlagNames.Host, values.Host, FlagUsage.Host)
+	flags.String(FlagNames.AccountDomain, values.AccountDomain, FlagUsage.AccountDomain)
+	flags.String(FlagNames.Protocol, values.Protocol, FlagUsage.Protocol)
+	flags.String(FlagNames.BindAddress, values.BindAddress, FlagUsage.BindAddress)
+	flags.Int(FlagNames.Port, values.Port, FlagUsage.Port)
+	flags.StringArray(FlagNames.TrustedProxies, values.TrustedProxies, FlagUsage.TrustedProxies)
+
+	// database config
+	flags.String(FlagNames.DbType, values.DbType, FlagUsage.DbType)
+	flags.String(FlagNames.DbAddress, values.DbAddress, FlagUsage.DbAddress)
+	flags.Int(FlagNames.DbPort, values.DbPort, FlagUsage.DbPort)
+	flags.String(FlagNames.DbUser, values.DbUser, FlagUsage.DbUser)
+	flags.String(FlagNames.DbPassword, values.DbPassword, FlagUsage.DbPassword)
+	flags.String(FlagNames.DbDatabase, values.DbDatabase, FlagUsage.DbDatabase)
+	flags.String(FlagNames.DbTLSMode, values.DbTLSMode, FlagUsage.DbTLSMode)
+	flags.String(FlagNames.DbTlsCACert, values.DbTlsCACert, FlagUsage.DbTlsCACert)
+
+	// template config
+	flags.String(FlagNames.TemplateBaseDir, values.TemplateBaseDir, FlagUsage.TemplateBaseDir)
+	flags.String(FlagNames.AssetBaseDir, values.AssetBaseDir, FlagUsage.AssetBaseDir)
+
+	// accounts config
+	flags.Bool(FlagNames.AccountsOpenRegistration, values.AccountsOpenRegistration, FlagUsage.AccountsOpenRegistration)
+	flags.Bool(FlagNames.AccountsApprovalRequired, values.AccountsApprovalRequired, FlagUsage.AccountsApprovalRequired)
+	flags.Bool(FlagNames.AccountsReasonRequired, values.AccountsReasonRequired, FlagUsage.AccountsReasonRequired)
+
+	// media config
+	flags.Int(FlagNames.MediaMaxImageSize, values.MediaMaxImageSize, FlagUsage.MediaMaxImageSize)
+	flags.Int(FlagNames.MediaMaxVideoSize, values.MediaMaxVideoSize, FlagUsage.MediaMaxVideoSize)
+	flags.Int(FlagNames.MediaMinDescriptionChars, values.MediaMinDescriptionChars, FlagUsage.MediaMinDescriptionChars)
+	flags.Int(FlagNames.MediaMaxDescriptionChars, values.MediaMaxDescriptionChars, FlagUsage.MediaMaxDescriptionChars)
+
+	// storage config
+	flags.String(FlagNames.StorageBackend, values.StorageBackend, FlagUsage.StorageBackend)
+	flags.String(FlagNames.StorageBasePath, values.StorageBasePath, FlagUsage.StorageBasePath)
+	flags.String(FlagNames.StorageServeProtocol, values.StorageServeProtocol, FlagUsage.StorageServeProtocol)
+	flags.String(FlagNames.StorageServeHost, values.StorageServeHost, FlagUsage.StorageServeHost)
+	flags.String(FlagNames.StorageServeBasePath, values.StorageServeBasePath, FlagUsage.StorageServeBasePath)
+
+	// statuses config
+	flags.Int(FlagNames.StatusesMaxChars, values.StatusesMaxChars, FlagUsage.StatusesMaxChars)
+	flags.Int(FlagNames.StatusesCWMaxChars, values.StatusesCWMaxChars, FlagUsage.StatusesCWMaxChars)
+	flags.Int(FlagNames.StatusesPollMaxOptions, values.StatusesPollMaxOptions, FlagUsage.StatusesPollMaxOptions)
+	flags.Int(FlagNames.StatusesPollOptionMaxChars, values.StatusesPollOptionMaxChars, FlagUsage.StatusesPollOptionMaxChars)
+	flags.Int(FlagNames.StatusesMaxMediaFiles, values.StatusesMaxMediaFiles, FlagUsage.StatusesMaxMediaFiles)
+
+	// letsencrypt config
+	flags.Bool(FlagNames.LetsEncryptEnabled, values.LetsEncryptEnabled, FlagUsage.LetsEncryptEnabled)
+	flags.Int(FlagNames.LetsEncryptPort, values.LetsEncryptPort, FlagUsage.LetsEncryptPort)
+	flags.String(FlagNames.LetsEncryptCertDir, values.LetsEncryptCertDir, FlagUsage.LetsEncryptCertDir)
+	flags.String(FlagNames.LetsEncryptEmailAddress, values.LetsEncryptEmailAddress, FlagUsage.LetsEncryptEmailAddress)
+
+	// oidc config
+	flags.Bool(FlagNames.OIDCEnabled, values.OIDCEnabled, FlagUsage.OIDCEnabled)
+	flags.String(FlagNames.OIDCIdpName, values.OIDCIdpName, FlagUsage.OIDCIdpName)
+	flags.Bool(FlagNames.OIDCSkipVerification, values.OIDCSkipVerification, FlagUsage.OIDCSkipVerification)
+	flags.String(FlagNames.OIDCIssuer, values.OIDCIssuer, FlagUsage.OIDCIssuer)
+	flags.String(FlagNames.OIDCClientID, values.OIDCClientID, FlagUsage.OIDCClientID)
+	flags.String(FlagNames.OIDCClientSecret, values.OIDCClientSecret, FlagUsage.OIDCClientSecret)
+	flags.StringArray(FlagNames.OIDCScopes, values.OIDCScopes, FlagUsage.OIDCScopes)
+
+	// smtp config
+	flags.String(FlagNames.SMTPHost, values.SMTPHost, FlagUsage.SMTPHost)
+	flags.Int(FlagNames.SMTPPort, values.SMTPPort, FlagUsage.SMTPPort)
+	flags.String(FlagNames.SMTPUsername, values.SMTPUsername, FlagUsage.SMTPUsername)
+	flags.String(FlagNames.SMTPPassword, values.SMTPPassword, FlagUsage.SMTPPassword)
+	flags.String(FlagNames.SMTPFrom, values.SMTPFrom, FlagUsage.SMTPFrom)
+}
+
 // Flags is used for storing the names of the various flags used for
 // initializing and storing flag variables.
 type Flags struct {
@@ -49,6 +121,7 @@ type Flags struct {
 	BindAddress     string
 	Port            string
 	TrustedProxies  string
+	SoftwareVersion string
 
 	DbType      string
 	DbAddress   string
@@ -57,7 +130,7 @@ type Flags struct {
 	DbPassword  string
 	DbDatabase  string
 	DbTLSMode   string
-	DbTLSCACert string
+	DbTlsCACert string
 
 	TemplateBaseDir string
 	AssetBaseDir    string
@@ -103,335 +176,133 @@ type Flags struct {
 	SMTPFrom     string
 }
 
-// Values contains all the default values for a gotosocial config
-type Values struct {
-	LogLevel        string
-	ApplicationName string
-	ConfigPath      string
-	Host            string
-	AccountDomain   string
-	Protocol        string
-	BindAddress     string
-	Port            int
-	TrustedProxies  []string
-	SoftwareVersion string
+// FlagNames contains the names of the various flags used for initializing and storing flag variables.
+var FlagNames = Flags{
+	LogLevel:        "log-level",
+	ApplicationName: "application-name",
+	ConfigPath:      "config-path",
+	Host:            "host",
+	AccountDomain:   "account-domain",
+	Protocol:        "protocol",
+	BindAddress:     "bind-address",
+	Port:            "port",
+	TrustedProxies:  "trusted-proxies",
+	SoftwareVersion: "software-version",
 
-	DbType      string
-	DbAddress   string
-	DbPort      int
-	DbUser      string
-	DbPassword  string
-	DbDatabase  string
-	DBTlsMode   string
-	DBTlsCACert string
+	DbType:      "db-type",
+	DbAddress:   "db-address",
+	DbPort:      "db-port",
+	DbUser:      "db-user",
+	DbPassword:  "db-password",
+	DbDatabase:  "db-database",
+	DbTLSMode:   "db-tls-mode",
+	DbTlsCACert: "db-tls-ca-cert",
 
-	TemplateBaseDir string
-	AssetBaseDir    string
+	TemplateBaseDir: "template-basedir",
+	AssetBaseDir:    "asset-basedir",
 
-	AccountsOpenRegistration bool
-	AccountsRequireApproval  bool
-	AccountsReasonRequired   bool
+	AccountsOpenRegistration: "accounts-open-registration",
+	AccountsApprovalRequired: "accounts-approval-required",
+	AccountsReasonRequired:   "accounts-reason-required",
 
-	MediaMaxImageSize        int
-	MediaMaxVideoSize        int
-	MediaMinDescriptionChars int
-	MediaMaxDescriptionChars int
+	MediaMaxImageSize:        "media-max-image-size",
+	MediaMaxVideoSize:        "media-max-video-size",
+	MediaMinDescriptionChars: "media-min-description-chars",
+	MediaMaxDescriptionChars: "media-max-description-chars",
 
-	StorageBackend       string
-	StorageBasePath      string
-	StorageServeProtocol string
-	StorageServeHost     string
-	StorageServeBasePath string
+	StorageBackend:       "storage-backend",
+	StorageBasePath:      "storage-base-path",
+	StorageServeProtocol: "storage-serve-protocol",
+	StorageServeHost:     "storage-serve-host",
+	StorageServeBasePath: "storage-serve-base-path",
 
-	StatusesMaxChars           int
-	StatusesCWMaxChars         int
-	StatusesPollMaxOptions     int
-	StatusesPollOptionMaxChars int
-	StatusesMaxMediaFiles      int
+	StatusesMaxChars:           "statuses-max-chars",
+	StatusesCWMaxChars:         "statuses-cw-max-chars",
+	StatusesPollMaxOptions:     "statuses-poll-max-options",
+	StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
+	StatusesMaxMediaFiles:      "statuses-max-media-files",
 
-	LetsEncryptEnabled      bool
-	LetsEncryptCertDir      string
-	LetsEncryptEmailAddress string
-	LetsEncryptPort         int
+	LetsEncryptEnabled:      "letsencrypt-enabled",
+	LetsEncryptPort:         "letsencrypt-port",
+	LetsEncryptCertDir:      "letsencrypt-cert-dir",
+	LetsEncryptEmailAddress: "letsencrypt-email",
 
-	OIDCEnabled          bool
-	OIDCIdpName          string
-	OIDCSkipVerification bool
-	OIDCIssuer           string
-	OIDCClientID         string
-	OIDCClientSecret     string
-	OIDCScopes           []string
+	OIDCEnabled:          "oidc-enabled",
+	OIDCIdpName:          "oidc-idp-name",
+	OIDCSkipVerification: "oidc-skip-verification",
+	OIDCIssuer:           "oidc-issuer",
+	OIDCClientID:         "oidc-client-id",
+	OIDCClientSecret:     "oidc-client-secret",
+	OIDCScopes:           "oidc-scopes",
 
-	SMTPHost     string
-	SMTPPort     int
-	SMTPUsername string
-	SMTPPassword string
-	SMTPFrom     string
+	SMTPHost:     "smtp-host",
+	SMTPPort:     "smtp-port",
+	SMTPUsername: "smtp-username",
+	SMTPPassword: "smtp-password",
+	SMTPFrom:     "smtp-from",
 }
 
-// FlagNames returns a struct containing the names of the various flags used for
-// initializing and storing flag variables.
-func FlagNames() Flags {
-	return Flags{
-		LogLevel:        "log-level",
-		ApplicationName: "application-name",
-		ConfigPath:      "config-path",
-		Host:            "host",
-		AccountDomain:   "account-domain",
-		Protocol:        "protocol",
-		BindAddress:     "bind-address",
-		Port:            "port",
-		TrustedProxies:  "trusted-proxies",
+// FlagUsage contains the usage text for all flags.
+var FlagUsage = Flags{
+	LogLevel:        "Log level to run at: debug, info, warn, fatal",
+	ApplicationName: "Name of the application, used in various places internally",
+	ConfigPath:      "Path to a yaml file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
+	Host:            "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",
+	AccountDomain:   "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!",
+	Protocol:        "Protocol to use for the REST api of the server (only use http for debugging and tests!)",
+	BindAddress:     "Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces.",
+	Port:            "Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine.",
+	TrustedProxies:  "Proxies to trust when parsing x-forwarded headers into real IPs.",
 
-		DbType:      "db-type",
-		DbAddress:   "db-address",
-		DbPort:      "db-port",
-		DbUser:      "db-user",
-		DbPassword:  "db-password",
-		DbDatabase:  "db-database",
-		DbTLSMode:   "db-tls-mode",
-		DbTLSCACert: "db-tls-ca-cert",
+	DbType:      "Database type: eg., postgres",
+	DbAddress:   "Database ipv4 address, hostname, or filename",
+	DbPort:      "Database port",
+	DbUser:      "Database username",
+	DbPassword:  "Database password",
+	DbDatabase:  "Database name",
+	DbTLSMode:   "Database tls mode",
+	DbTlsCACert: "Path to CA cert for db tls connection",
 
-		TemplateBaseDir: "template-basedir",
-		AssetBaseDir:    "asset-basedir",
+	TemplateBaseDir: "Basedir for html templating files for rendering pages and composing emails.",
+	AssetBaseDir:    "Directory to serve static assets from, accessible at example.org/assets/",
 
-		AccountsOpenRegistration: "accounts-open-registration",
-		AccountsApprovalRequired: "accounts-approval-required",
-		AccountsReasonRequired:   "accounts-reason-required",
+	AccountsOpenRegistration: "Allow anyone to submit an account signup request. If false, server will be invite-only.",
+	AccountsApprovalRequired: "Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved.",
+	AccountsReasonRequired:   "Do new account signups require a reason to be submitted on registration?",
 
-		MediaMaxImageSize:        "media-max-image-size",
-		MediaMaxVideoSize:        "media-max-video-size",
-		MediaMinDescriptionChars: "media-min-description-chars",
-		MediaMaxDescriptionChars: "media-max-description-chars",
+	MediaMaxImageSize:        "Max size of accepted images in bytes",
+	MediaMaxVideoSize:        "Max size of accepted videos in bytes",
+	MediaMinDescriptionChars: "Min required chars for an image description",
+	MediaMaxDescriptionChars: "Max permitted chars for an image description",
 
-		StorageBackend:       "storage-backend",
-		StorageBasePath:      "storage-base-path",
-		StorageServeProtocol: "storage-serve-protocol",
-		StorageServeHost:     "storage-serve-host",
-		StorageServeBasePath: "storage-serve-base-path",
+	StorageBackend:       "Storage backend to use for media attachments",
+	StorageBasePath:      "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
+	StorageServeProtocol: "Protocol to use for serving media attachments (use https if storage is local)",
+	StorageServeHost:     "Hostname to serve media attachments from (use the same value as host if storage is local)",
+	StorageServeBasePath: "Path to append to protocol and hostname to create the base path from which media files will be served (default will mostly be fine)",
 
-		StatusesMaxChars:           "statuses-max-chars",
-		StatusesCWMaxChars:         "statuses-cw-max-chars",
-		StatusesPollMaxOptions:     "statuses-poll-max-options",
-		StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
-		StatusesMaxMediaFiles:      "statuses-max-media-files",
+	StatusesMaxChars:           "Max permitted characters for posted statuses",
+	StatusesCWMaxChars:         "Max permitted characters for content/spoiler warnings on statuses",
+	StatusesPollMaxOptions:     "Max amount of options permitted on a poll",
+	StatusesPollOptionMaxChars: "Max amount of characters for a poll option",
+	StatusesMaxMediaFiles:      "Maximum number of media files/attachments per status",
 
-		LetsEncryptEnabled:      "letsencrypt-enabled",
-		LetsEncryptPort:         "letsencrypt-port",
-		LetsEncryptCertDir:      "letsencrypt-cert-dir",
-		LetsEncryptEmailAddress: "letsencrypt-email",
+	LetsEncryptEnabled:      "Enable letsencrypt TLS certs for this server. If set to true, then cert dir also needs to be set (or take the default).",
+	LetsEncryptPort:         "Port to listen on for letsencrypt certificate challenges. Must not be the same as the GtS webserver/API port.",
+	LetsEncryptCertDir:      "Directory to store acquired letsencrypt certificates.",
+	LetsEncryptEmailAddress: "Email address to use when requesting letsencrypt certs. Will receive updates on cert expiry etc.",
 
-		OIDCEnabled:          "oidc-enabled",
-		OIDCIdpName:          "oidc-idp-name",
-		OIDCSkipVerification: "oidc-skip-verification",
-		OIDCIssuer:           "oidc-issuer",
-		OIDCClientID:         "oidc-client-id",
-		OIDCClientSecret:     "oidc-client-secret",
-		OIDCScopes:           "oidc-scopes",
+	OIDCEnabled:          "Enabled OIDC authorization for this instance. If set to true, then the other OIDC flags must also be set.",
+	OIDCIdpName:          "Name of the OIDC identity provider. Will be shown to the user when logging in.",
+	OIDCSkipVerification: "Skip verification of tokens returned by the OIDC provider. Should only be set to 'true' for testing purposes, never in a production environment!",
+	OIDCIssuer:           "Address of the OIDC issuer. Should be the web address, including protocol, at which the issuer can be reached. Eg., 'https://example.org/auth'",
+	OIDCClientID:         "ClientID of GoToSocial, as registered with the OIDC provider.",
+	OIDCClientSecret:     "ClientSecret of GoToSocial, as registered with the OIDC provider.",
+	OIDCScopes:           "OIDC scopes.",
 
-		SMTPHost:     "smtp-host",
-		SMTPPort:     "smtp-port",
-		SMTPUsername: "smtp-username",
-		SMTPPassword: "smtp-password",
-		SMTPFrom:     "smtp-from",
-	}
-}
-
-func FlagUsage() Flags {
-	return Flags{
-		LogLevel:        "Log level to run at: debug, info, warn, fatal",
-		ApplicationName: "Name of the application, used in various places internally",
-		ConfigPath:      "Path to a yaml file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
-		Host:            "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",
-		AccountDomain:   "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!",
-		Protocol:        "Protocol to use for the REST api of the server (only use http for debugging and tests!)",
-		BindAddress:     "Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces.",
-		Port:            "Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine.",
-		TrustedProxies:  "Proxies to trust when parsing x-forwarded headers into real IPs.",
-
-		DbType:      "Database type: eg., postgres",
-		DbAddress:   "Database ipv4 address, hostname, or filename",
-		DbPort:      "Database port",
-		DbUser:      "Database username",
-		DbPassword:  "Database password",
-		DbDatabase:  "Database name",
-		DbTLSMode:   "Database tls mode",
-		DbTLSCACert: "Path to CA cert for db tls connection",
-
-		TemplateBaseDir: "Basedir for html templating files for rendering pages and composing emails.",
-		AssetBaseDir:    "Directory to serve static assets from, accessible at example.org/assets/",
-
-		AccountsOpenRegistration: "Allow anyone to submit an account signup request. If false, server will be invite-only.",
-		AccountsApprovalRequired: "Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved.",
-		AccountsReasonRequired:   "Do new account signups require a reason to be submitted on registration?",
-
-		MediaMaxImageSize:        "Max size of accepted images in bytes",
-		MediaMaxVideoSize:        "Max size of accepted videos in bytes",
-		MediaMinDescriptionChars: "Min required chars for an image description",
-		MediaMaxDescriptionChars: "Max permitted chars for an image description",
-
-		StorageBackend:       "Storage backend to use for media attachments",
-		StorageBasePath:      "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
-		StorageServeProtocol: "Protocol to use for serving media attachments (use https if storage is local)",
-		StorageServeHost:     "Hostname to serve media attachments from (use the same value as host if storage is local)",
-		StorageServeBasePath: "Path to append to protocol and hostname to create the base path from which media files will be served (default will mostly be fine)",
-
-		StatusesMaxChars:           "Max permitted characters for posted statuses",
-		StatusesCWMaxChars:         "Max permitted characters for content/spoiler warnings on statuses",
-		StatusesPollMaxOptions:     "Max amount of options permitted on a poll",
-		StatusesPollOptionMaxChars: "Max amount of characters for a poll option",
-		StatusesMaxMediaFiles:      "Maximum number of media files/attachments per status",
-
-		LetsEncryptEnabled:      "Enable letsencrypt TLS certs for this server. If set to true, then cert dir also needs to be set (or take the default).",
-		LetsEncryptPort:         "Port to listen on for letsencrypt certificate challenges. Must not be the same as the GtS webserver/API port.",
-		LetsEncryptCertDir:      "Directory to store acquired letsencrypt certificates.",
-		LetsEncryptEmailAddress: "Email address to use when requesting letsencrypt certs. Will receive updates on cert expiry etc.",
-
-		OIDCEnabled:          "Enabled OIDC authorization for this instance. If set to true, then the other OIDC flags must also be set.",
-		OIDCIdpName:          "Name of the OIDC identity provider. Will be shown to the user when logging in.",
-		OIDCSkipVerification: "Skip verification of tokens returned by the OIDC provider. Should only be set to 'true' for testing purposes, never in a production environment!",
-		OIDCIssuer:           "Address of the OIDC issuer. Should be the web address, including protocol, at which the issuer can be reached. Eg., 'https://example.org/auth'",
-		OIDCClientID:         "ClientID of GoToSocial, as registered with the OIDC provider.",
-		OIDCClientSecret:     "ClientSecret of GoToSocial, as registered with the OIDC provider.",
-		OIDCScopes:           "OIDC scopes.",
-
-		SMTPHost:     "Host of the smtp server. Eg., 'smtp.eu.mailgun.org'",
-		SMTPPort:     "Port of the smtp server. Eg., 587",
-		SMTPUsername: "Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'",
-		SMTPPassword: "Password to pass to the smtp server.",
-		SMTPFrom:     "Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'",
-	}
-}
-
-// Defaults returns a populated Defaults struct with most of the values set to reasonable defaults.
-// Note that if you use this function, you still need to set Host and, if desired, ConfigPath.
-func Defaults() Values {
-	return Values{
-		LogLevel:        "info",
-		ApplicationName: "gotosocial",
-		ConfigPath:      "",
-		Host:            "",
-		AccountDomain:   "",
-		Protocol:        "https",
-		BindAddress:     "0.0.0.0",
-		Port:            8080,
-		TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
-
-		DbType:      "postgres",
-		DbAddress:   "localhost",
-		DbPort:      5432,
-		DbUser:      "postgres",
-		DbPassword:  "postgres",
-		DbDatabase:  "postgres",
-		DBTlsMode:   "disable",
-		DBTlsCACert: "",
-
-		TemplateBaseDir: "./web/template/",
-		AssetBaseDir:    "./web/assets/",
-
-		AccountsOpenRegistration: true,
-		AccountsRequireApproval:  true,
-		AccountsReasonRequired:   true,
-
-		MediaMaxImageSize:        2097152,  // 2mb
-		MediaMaxVideoSize:        10485760, // 10mb
-		MediaMinDescriptionChars: 0,
-		MediaMaxDescriptionChars: 500,
-
-		StorageBackend:       "local",
-		StorageBasePath:      "/gotosocial/storage",
-		StorageServeProtocol: "https",
-		StorageServeHost:     "localhost",
-		StorageServeBasePath: "/fileserver",
-
-		StatusesMaxChars:           5000,
-		StatusesCWMaxChars:         100,
-		StatusesPollMaxOptions:     6,
-		StatusesPollOptionMaxChars: 50,
-		StatusesMaxMediaFiles:      6,
-
-		LetsEncryptEnabled:      true,
-		LetsEncryptPort:         80,
-		LetsEncryptCertDir:      "/gotosocial/storage/certs",
-		LetsEncryptEmailAddress: "",
-
-		OIDCEnabled:          false,
-		OIDCIdpName:          "",
-		OIDCSkipVerification: false,
-		OIDCIssuer:           "",
-		OIDCClientID:         "",
-		OIDCClientSecret:     "",
-		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
-
-		SMTPHost:     "",
-		SMTPPort:     0,
-		SMTPUsername: "",
-		SMTPPassword: "",
-		SMTPFrom:     "GoToSocial",
-	}
-}
-
-// TestDefaults returns a Defaults struct with values set that are suitable for local testing.
-func TestDefaults() Values {
-	return Values{
-		LogLevel:        "trace",
-		ApplicationName: "gotosocial",
-		ConfigPath:      "",
-		Host:            "localhost:8080",
-		AccountDomain:   "localhost:8080",
-		Protocol:        "http",
-		BindAddress:     "127.0.0.1",
-		Port:            8080,
-		TrustedProxies:  []string{"127.0.0.1/32"},
-
-		DbType:     "sqlite",
-		DbAddress:  ":memory:",
-		DbPort:     5432,
-		DbUser:     "postgres",
-		DbPassword: "postgres",
-		DbDatabase: "postgres",
-
-		TemplateBaseDir: "./web/template/",
-		AssetBaseDir:    "./web/assets/",
-
-		AccountsOpenRegistration: true,
-		AccountsRequireApproval:  true,
-		AccountsReasonRequired:   true,
-
-		MediaMaxImageSize:        1048576, // 1mb
-		MediaMaxVideoSize:        5242880, // 5mb
-		MediaMinDescriptionChars: 0,
-		MediaMaxDescriptionChars: 500,
-
-		StorageBackend:       "local",
-		StorageBasePath:      "/gotosocial/storage",
-		StorageServeProtocol: "http",
-		StorageServeHost:     "localhost:8080",
-		StorageServeBasePath: "/fileserver",
-
-		StatusesMaxChars:           5000,
-		StatusesCWMaxChars:         100,
-		StatusesPollMaxOptions:     6,
-		StatusesPollOptionMaxChars: 50,
-		StatusesMaxMediaFiles:      6,
-
-		LetsEncryptEnabled:      false,
-		LetsEncryptPort:         0,
-		LetsEncryptCertDir:      "",
-		LetsEncryptEmailAddress: "",
-
-		OIDCEnabled:          false,
-		OIDCIdpName:          "",
-		OIDCSkipVerification: false,
-		OIDCIssuer:           "",
-		OIDCClientID:         "",
-		OIDCClientSecret:     "",
-		OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
-
-		SMTPHost:     "",
-		SMTPPort:     0,
-		SMTPUsername: "",
-		SMTPPassword: "",
-		SMTPFrom:     "GoToSocial",
-	}
+	SMTPHost:     "Host of the smtp server. Eg., 'smtp.eu.mailgun.org'",
+	SMTPPort:     "Port of the smtp server. Eg., 587",
+	SMTPUsername: "Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'",
+	SMTPPassword: "Password to pass to the smtp server.",
+	SMTPFrom:     "Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'",
 }

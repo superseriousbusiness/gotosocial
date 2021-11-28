@@ -29,7 +29,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -46,7 +45,6 @@ import (
 type ProcessingStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config              *config.Config
 	db                  db.DB
 	storage             *kv.KVStore
 	typeconverter       typeutils.TypeConverter
@@ -99,7 +97,8 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestConfig()
+
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
@@ -223,7 +222,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.config, suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db, suite.emailSender)
+	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")

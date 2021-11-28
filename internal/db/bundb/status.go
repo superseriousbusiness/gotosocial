@@ -25,16 +25,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type statusDB struct {
-	config *config.Config
-	conn   *DBConn
-	cache  *cache.StatusCache
+	conn  *DBConn
+	cache *cache.StatusCache
 
 	// TODO: keep method definitions in same place but instead have receiver
 	//       all point to one single "db" type, so they can all share methods
