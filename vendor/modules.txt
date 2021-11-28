@@ -41,9 +41,6 @@ github.com/buckket/go-blurhash/base83
 # github.com/coreos/go-oidc/v3 v3.1.0
 ## explicit; go 1.14
 github.com/coreos/go-oidc/v3/oidc
-# github.com/cpuguy83/go-md2man/v2 v2.0.1
-## explicit; go 1.11
-github.com/cpuguy83/go-md2man/v2/md2man
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -509,9 +506,6 @@ github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.0.18
 ## explicit; go 1.16
 github.com/uptrace/bun/dialect/sqlitedialect
-# github.com/urfave/cli/v2 v2.3.0
-## explicit; go 1.11
-github.com/urfave/cli/v2
 # github.com/vmihailenco/msgpack/v5 v5.3.5
 ## explicit; go 1.11
 github.com/vmihailenco/msgpack/v5

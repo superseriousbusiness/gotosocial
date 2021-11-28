@@ -18,164 +18,162 @@
 
 package main
 
-import (
-	"github.com/urfave/cli/v2"
-)
+import "github.com/spf13/cobra"
 
-func adminCommands(allFlags []cli.Flag) []*cli.Command {
-	return []*cli.Command{
-		// {
-		// 	Name:  "admin",
-		// 	Usage: "gotosocial admin-related tasks",
-		// 	Subcommands: []*cli.Command{
-		// 		{
-		// 			Name:  "account",
-		// 			Usage: "admin commands related to accounts",
-		// 			Subcommands: []*cli.Command{
-		// 				{
-		// 					Name:  "create",
-		// 					Usage: "create a new account",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 						&cli.StringFlag{
-		// 							Name:     config.EmailFlag,
-		// 							Usage:    config.EmailUsage,
-		// 							Required: true,
-		// 						},
-		// 						&cli.StringFlag{
-		// 							Name:     config.PasswordFlag,
-		// 							Usage:    config.PasswordUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Create)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "confirm",
-		// 					Usage: "confirm an existing account manually, thereby skipping email confirmation",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Confirm)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "promote",
-		// 					Usage: "promote an account to admin",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Promote)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "demote",
-		// 					Usage: "demote an account from admin to normal user",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Demote)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "disable",
-		// 					Usage: "prevent an account from signing in or posting etc, but don't delete anything",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Disable)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "suspend",
-		// 					Usage: "completely remove an account and all of its posts, media, etc",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Suspend)
-		// 					},
-		// 				},
-		// 				{
-		// 					Name:  "password",
-		// 					Usage: "set a new password for the given account",
-		// 					Flags: []cli.Flag{
-		// 						&cli.StringFlag{
-		// 							Name:     config.UsernameFlag,
-		// 							Usage:    config.UsernameUsage,
-		// 							Required: true,
-		// 						},
-		// 						&cli.StringFlag{
-		// 							Name:     config.PasswordFlag,
-		// 							Usage:    config.PasswordUsage,
-		// 							Required: true,
-		// 						},
-		// 					},
-		// 					Action: func(c *cli.Context) error {
-		// 						return runAction(c, allFlags, account.Password)
-		// 					},
-		// 				},
-		// 			},
-		// 		},
-		// 		{
-		// 			Name:  "export",
-		// 			Usage: "export data from the database to file at the given path",
-		// 			Flags: []cli.Flag{
-		// 				&cli.StringFlag{
-		// 					Name:     config.TransPathFlag,
-		// 					Usage:    config.TransPathUsage,
-		// 					Required: true,
-		// 				},
-		// 			},
-		// 			Action: func(c *cli.Context) error {
-		// 				return runAction(c, allFlags, trans.Export)
-		// 			},
-		// 		},
-		// 		{
-		// 			Name:  "import",
-		// 			Usage: "import data from a file into the database",
-		// 			Flags: []cli.Flag{
-		// 				&cli.StringFlag{
-		// 					Name:     config.TransPathFlag,
-		// 					Usage:    config.TransPathUsage,
-		// 					Required: true,
-		// 				},
-		// 			},
-		// 			Action: func(c *cli.Context) error {
-		// 				return runAction(c, allFlags, trans.Import)
-		// 			},
-		// 		},
-		// 	},
-		// },
-	}
+func adminCommands() *cobra.Command {
+	return nil
+	// {
+	// 	Name:  "admin",
+	// 	Usage: "gotosocial admin-related tasks",
+	// 	Subcommands: []*cli.Command{
+	// 		{
+	// 			Name:  "account",
+	// 			Usage: "admin commands related to accounts",
+	// 			Subcommands: []*cli.Command{
+	// 				{
+	// 					Name:  "create",
+	// 					Usage: "create a new account",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 						&cli.StringFlag{
+	// 							Name:     config.EmailFlag,
+	// 							Usage:    config.EmailUsage,
+	// 							Required: true,
+	// 						},
+	// 						&cli.StringFlag{
+	// 							Name:     config.PasswordFlag,
+	// 							Usage:    config.PasswordUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Create)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "confirm",
+	// 					Usage: "confirm an existing account manually, thereby skipping email confirmation",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Confirm)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "promote",
+	// 					Usage: "promote an account to admin",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Promote)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "demote",
+	// 					Usage: "demote an account from admin to normal user",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Demote)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "disable",
+	// 					Usage: "prevent an account from signing in or posting etc, but don't delete anything",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Disable)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "suspend",
+	// 					Usage: "completely remove an account and all of its posts, media, etc",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Suspend)
+	// 					},
+	// 				},
+	// 				{
+	// 					Name:  "password",
+	// 					Usage: "set a new password for the given account",
+	// 					Flags: []cli.Flag{
+	// 						&cli.StringFlag{
+	// 							Name:     config.UsernameFlag,
+	// 							Usage:    config.UsernameUsage,
+	// 							Required: true,
+	// 						},
+	// 						&cli.StringFlag{
+	// 							Name:     config.PasswordFlag,
+	// 							Usage:    config.PasswordUsage,
+	// 							Required: true,
+	// 						},
+	// 					},
+	// 					Action: func(c *cli.Context) error {
+	// 						return runAction(c, allFlags, account.Password)
+	// 					},
+	// 				},
+	// 			},
+	// 		},
+	// 		{
+	// 			Name:  "export",
+	// 			Usage: "export data from the database to file at the given path",
+	// 			Flags: []cli.Flag{
+	// 				&cli.StringFlag{
+	// 					Name:     config.TransPathFlag,
+	// 					Usage:    config.TransPathUsage,
+	// 					Required: true,
+	// 				},
+	// 			},
+	// 			Action: func(c *cli.Context) error {
+	// 				return runAction(c, allFlags, trans.Export)
+	// 			},
+	// 		},
+	// 		{
+	// 			Name:  "import",
+	// 			Usage: "import data from a file into the database",
+	// 			Flags: []cli.Flag{
+	// 				&cli.StringFlag{
+	// 					Name:     config.TransPathFlag,
+	// 					Usage:    config.TransPathUsage,
+	// 					Required: true,
+	// 				},
+	// 			},
+	// 			Action: func(c *cli.Context) error {
+	// 				return runAction(c, allFlags, trans.Import)
+	// 			},
+	// 		},
+	// 	},
+	// },
+
 }
