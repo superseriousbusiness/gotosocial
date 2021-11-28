@@ -328,7 +328,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		}
 	}
 
-	caCertPath := viper.GetString(flags.DbTlsCACert)
+	caCertPath := viper.GetString(flags.DbTLSCACert)
 	if tlsConfig != nil && caCertPath != "" {
 		// load the system cert pool first -- we'll append the given CA cert to this
 		certPool, err := x509.SystemCertPool()

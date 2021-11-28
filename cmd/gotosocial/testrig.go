@@ -19,23 +19,29 @@
 package main
 
 import (
-	"fmt"
-
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/testrig"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// runAction builds up the logger necessary for any
-// gotosocial action, and then executes the action.
-func runAction(cmd *cobra.Command, a cliactions.GTSAction) error {
-	// initialize the global logger to the log level, with formatting and output splitter already set
-	err := log.Initialize(viper.GetString(config.FlagNames.LogLevel))
-	if err != nil {
-		return fmt.Errorf("error creating logger: %s", err)
+func testrigCommands() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "testrig",
+		Short: "gotosocial server-related tasks",
 	}
 
-	return a(cmd.Context())
+	config.AttachServerFlags(command.Flags(), config.TestDefaults)
+
+	command.AddCommand(&cobra.Command{
+		Use:   "start",
+		Short: "start the gotosocial testrig server",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := testrig.Start(cmd.Context()); err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	})
+
+	return command
 }

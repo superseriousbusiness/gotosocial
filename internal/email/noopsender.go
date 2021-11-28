@@ -23,13 +23,17 @@ import (
 	"html/template"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // NewNoopSender returns a no-op email sender that will just execute the given sendCallback
 // every time it would otherwise send an email to the given toAddress with the given message value.
 //
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
-func NewNoopSender(templateBaseDir string, sendCallback func(toAddress string, message string)) (Sender, error) {
+func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
+	templateBaseDir := viper.GetString(config.FlagNames.TemplateBaseDir)
+
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
 		return nil, err

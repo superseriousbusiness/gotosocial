@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -40,24 +41,24 @@ var Create cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	email, ok := c.AccountCLIFlags[config.EmailFlag]
-	if !ok {
+	email := viper.GetString(config.FlagNames.AdminAccountEmail)
+	if email == "" {
 		return errors.New("no email set")
 	}
 	if err := validate.Email(email); err != nil {
 		return err
 	}
 
-	password, ok := c.AccountCLIFlags[config.PasswordFlag]
-	if !ok {
+	password := viper.GetString(config.FlagNames.AdminAccountPassword)
+	if password == "" {
 		return errors.New("no password set")
 	}
 	if err := validate.NewPassword(password); err != nil {
@@ -79,8 +80,8 @@ var Confirm cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
@@ -114,8 +115,8 @@ var Promote cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
@@ -146,8 +147,8 @@ var Demote cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
@@ -178,8 +179,8 @@ var Disable cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
@@ -216,16 +217,16 @@ var Password cliactions.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username, ok := c.AccountCLIFlags[config.UsernameFlag]
-	if !ok {
+	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	if username == "" {
 		return errors.New("no username set")
 	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	password, ok := c.AccountCLIFlags[config.PasswordFlag]
-	if !ok {
+	password := viper.GetString(config.FlagNames.AdminAccountPassword)
+	if password == "" {
 		return errors.New("no password set")
 	}
 	if err := validate.NewPassword(password); err != nil {

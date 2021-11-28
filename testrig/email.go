@@ -18,7 +18,11 @@
 
 package testrig
 
-import "github.com/superseriousbusiness/gotosocial/internal/email"
+import (
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
+)
 
 // NewEmailSender returns a noop email sender that won't make any remote calls.
 //
@@ -26,6 +30,8 @@ import "github.com/superseriousbusiness/gotosocial/internal/email"
 // the map, with email address of the recipient as the key, and the value as the
 // parsed email message as it would have been sent.
 func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.Sender {
+	viper.Set(config.FlagNames.TemplateBaseDir, templateBaseDir)
+
 	var sendCallback func(toAddress string, message string)
 
 	if sentEmails != nil {
@@ -34,7 +40,7 @@ func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.
 		}
 	}
 
-	s, err := email.NewNoopSender(templateBaseDir, sendCallback)
+	s, err := email.NewNoopSender(sendCallback)
 	if err != nil {
 		panic(err)
 	}

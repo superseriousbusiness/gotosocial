@@ -118,7 +118,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 // according to the provided account create request. If the account isn't eligible, an error will be returned.
 func validateCreateAccount(form *model.AccountCreateRequest) error {
 	flags := config.FlagNames
-	
+
 	if !viper.GetBool(flags.AccountsOpenRegistration) {
 		return errors.New("registration is not open for this server")
 	}

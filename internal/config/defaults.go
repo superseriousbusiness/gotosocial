@@ -22,7 +22,7 @@ type Values struct {
 	DbPassword  string
 	DbDatabase  string
 	DbTLSMode   string
-	DbTlsCACert string
+	DbTLSCACert string
 
 	TemplateBaseDir string
 	AssetBaseDir    string
@@ -88,7 +88,7 @@ var Defaults = Values{
 	DbPassword:  "postgres",
 	DbDatabase:  "postgres",
 	DbTLSMode:   "disable",
-	DbTlsCACert: "",
+	DbTLSCACert: "",
 
 	TemplateBaseDir: "./web/template/",
 	AssetBaseDir:    "./web/assets/",

@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
@@ -79,7 +81,12 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, err
 	}
 
-	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	flags := config.FlagNames
+	serveProtocol := viper.GetString(flags.StorageServeProtocol)
+	serveHost := viper.GetString(flags.StorageServeHost)
+	serveBasePath := viper.GetString(flags.StorageServeBasePath)
+
+	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
 	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
 	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
 

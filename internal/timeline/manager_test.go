@@ -38,7 +38,7 @@ func (suite *ManagerTestSuite) SetupSuite() {
 func (suite *ManagerTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
-	
+
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 

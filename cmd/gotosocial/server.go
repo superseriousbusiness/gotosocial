@@ -19,23 +19,30 @@
 package main
 
 import (
-	"github.com/urfave/cli/v2"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-func testrigCommands(allFlags []cli.Flag) []*cli.Command {
-	return []*cli.Command{
-		// {
-		// 	Name:  "testrig",
-		// 	Usage: "gotosocial testrig tasks",
-		// 	Subcommands: []*cli.Command{
-		// 		{
-		// 			Name:  "start",
-		// 			Usage: "start the gotosocial testrig",
-		// 			Action: func(c *cli.Context) error {
-		// 				return runAction(c, allFlags, testrig.Start)
-		// 			},
-		// 		},
-		// 	},
-		// },
+// serverCommands returns the 'server' subcommand
+func serverCommands() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "server",
+		Short: "gotosocial server-related tasks",
 	}
+
+	config.AttachServerFlags(command.Flags(), config.Defaults)
+
+	command.AddCommand(&cobra.Command{
+		Use:   "start",
+		Short: "start the gotosocial server",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := server.Start(cmd.Context()); err != nil {
+				logrus.Fatal(err)
+			}
+		},
+	})
+
+	return command
 }

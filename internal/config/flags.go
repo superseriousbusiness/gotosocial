@@ -20,23 +20,8 @@ package config
 
 import "github.com/spf13/pflag"
 
-// Flags and usage strings for configuration.
-const (
-	UsernameFlag  = "username"
-	UsernameUsage = "the username to create/delete/etc"
-
-	EmailFlag  = "email"
-	EmailUsage = "the email address of this account"
-
-	PasswordFlag  = "password"
-	PasswordUsage = "the password to set for this account"
-
-	TransPathFlag  = "path"
-	TransPathUsage = "the path of the file to import from/export to"
-)
-
-func AttachFlags(flags *pflag.FlagSet, values Values) {
-	// general config
+// AttachGeneralFlags attaches flags pertaining to general config.
+func AttachGeneralFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.LogLevel, values.LogLevel, FlagUsage.LogLevel)
 	flags.String(FlagNames.ApplicationName, values.ApplicationName, FlagUsage.ApplicationName)
 	flags.String(FlagNames.ConfigPath, values.ConfigPath, FlagUsage.ConfigPath)
@@ -46,8 +31,10 @@ func AttachFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.BindAddress, values.BindAddress, FlagUsage.BindAddress)
 	flags.Int(FlagNames.Port, values.Port, FlagUsage.Port)
 	flags.StringArray(FlagNames.TrustedProxies, values.TrustedProxies, FlagUsage.TrustedProxies)
+}
 
-	// database config
+// AttachDatabaseFlags attaches flags pertaining to database config.
+func AttachDatabaseFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.DbType, values.DbType, FlagUsage.DbType)
 	flags.String(FlagNames.DbAddress, values.DbAddress, FlagUsage.DbAddress)
 	flags.Int(FlagNames.DbPort, values.DbPort, FlagUsage.DbPort)
@@ -55,44 +42,58 @@ func AttachFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.DbPassword, values.DbPassword, FlagUsage.DbPassword)
 	flags.String(FlagNames.DbDatabase, values.DbDatabase, FlagUsage.DbDatabase)
 	flags.String(FlagNames.DbTLSMode, values.DbTLSMode, FlagUsage.DbTLSMode)
-	flags.String(FlagNames.DbTlsCACert, values.DbTlsCACert, FlagUsage.DbTlsCACert)
+	flags.String(FlagNames.DbTLSCACert, values.DbTLSCACert, FlagUsage.DbTLSCACert)
+}
 
-	// template config
+// AttachTemplateFlags attaches flags pertaining to templating config.
+func AttachTemplateFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.TemplateBaseDir, values.TemplateBaseDir, FlagUsage.TemplateBaseDir)
 	flags.String(FlagNames.AssetBaseDir, values.AssetBaseDir, FlagUsage.AssetBaseDir)
+}
 
-	// accounts config
+// AttachAccountsFlags attaches flags pertaining to account config.
+func AttachAccountsFlags(flags *pflag.FlagSet, values Values) {
 	flags.Bool(FlagNames.AccountsOpenRegistration, values.AccountsOpenRegistration, FlagUsage.AccountsOpenRegistration)
 	flags.Bool(FlagNames.AccountsApprovalRequired, values.AccountsApprovalRequired, FlagUsage.AccountsApprovalRequired)
 	flags.Bool(FlagNames.AccountsReasonRequired, values.AccountsReasonRequired, FlagUsage.AccountsReasonRequired)
+}
 
-	// media config
+// AttachMediaFlags attaches flags pertaining to media config.
+func AttachMediaFlags(flags *pflag.FlagSet, values Values) {
 	flags.Int(FlagNames.MediaMaxImageSize, values.MediaMaxImageSize, FlagUsage.MediaMaxImageSize)
 	flags.Int(FlagNames.MediaMaxVideoSize, values.MediaMaxVideoSize, FlagUsage.MediaMaxVideoSize)
 	flags.Int(FlagNames.MediaMinDescriptionChars, values.MediaMinDescriptionChars, FlagUsage.MediaMinDescriptionChars)
 	flags.Int(FlagNames.MediaMaxDescriptionChars, values.MediaMaxDescriptionChars, FlagUsage.MediaMaxDescriptionChars)
+}
 
-	// storage config
+// AttachStorageFlags attaches flags pertaining to storage config.
+func AttachStorageFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.StorageBackend, values.StorageBackend, FlagUsage.StorageBackend)
 	flags.String(FlagNames.StorageBasePath, values.StorageBasePath, FlagUsage.StorageBasePath)
 	flags.String(FlagNames.StorageServeProtocol, values.StorageServeProtocol, FlagUsage.StorageServeProtocol)
 	flags.String(FlagNames.StorageServeHost, values.StorageServeHost, FlagUsage.StorageServeHost)
 	flags.String(FlagNames.StorageServeBasePath, values.StorageServeBasePath, FlagUsage.StorageServeBasePath)
+}
 
-	// statuses config
+// AttachStatusesFlags attaches flags pertaining to statuses config.
+func AttachStatusesFlags(flags *pflag.FlagSet, values Values) {
 	flags.Int(FlagNames.StatusesMaxChars, values.StatusesMaxChars, FlagUsage.StatusesMaxChars)
 	flags.Int(FlagNames.StatusesCWMaxChars, values.StatusesCWMaxChars, FlagUsage.StatusesCWMaxChars)
 	flags.Int(FlagNames.StatusesPollMaxOptions, values.StatusesPollMaxOptions, FlagUsage.StatusesPollMaxOptions)
 	flags.Int(FlagNames.StatusesPollOptionMaxChars, values.StatusesPollOptionMaxChars, FlagUsage.StatusesPollOptionMaxChars)
 	flags.Int(FlagNames.StatusesMaxMediaFiles, values.StatusesMaxMediaFiles, FlagUsage.StatusesMaxMediaFiles)
+}
 
-	// letsencrypt config
+// AttachLetsEncryptFlags attaches flags pertaining to letsencrypt config.
+func AttachLetsEncryptFlags(flags *pflag.FlagSet, values Values) {
 	flags.Bool(FlagNames.LetsEncryptEnabled, values.LetsEncryptEnabled, FlagUsage.LetsEncryptEnabled)
 	flags.Int(FlagNames.LetsEncryptPort, values.LetsEncryptPort, FlagUsage.LetsEncryptPort)
 	flags.String(FlagNames.LetsEncryptCertDir, values.LetsEncryptCertDir, FlagUsage.LetsEncryptCertDir)
 	flags.String(FlagNames.LetsEncryptEmailAddress, values.LetsEncryptEmailAddress, FlagUsage.LetsEncryptEmailAddress)
+}
 
-	// oidc config
+// AttachOIDCFlags attaches flags pertaining to oidc config.
+func AttachOIDCFlags(flags *pflag.FlagSet, values Values) {
 	flags.Bool(FlagNames.OIDCEnabled, values.OIDCEnabled, FlagUsage.OIDCEnabled)
 	flags.String(FlagNames.OIDCIdpName, values.OIDCIdpName, FlagUsage.OIDCIdpName)
 	flags.Bool(FlagNames.OIDCSkipVerification, values.OIDCSkipVerification, FlagUsage.OIDCSkipVerification)
@@ -100,8 +101,10 @@ func AttachFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.OIDCClientID, values.OIDCClientID, FlagUsage.OIDCClientID)
 	flags.String(FlagNames.OIDCClientSecret, values.OIDCClientSecret, FlagUsage.OIDCClientSecret)
 	flags.StringArray(FlagNames.OIDCScopes, values.OIDCScopes, FlagUsage.OIDCScopes)
+}
 
-	// smtp config
+// AttachSMTPFlags attaches flags pertaining to smtp/email config.
+func AttachSMTPFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.SMTPHost, values.SMTPHost, FlagUsage.SMTPHost)
 	flags.Int(FlagNames.SMTPPort, values.SMTPPort, FlagUsage.SMTPPort)
 	flags.String(FlagNames.SMTPUsername, values.SMTPUsername, FlagUsage.SMTPUsername)
@@ -109,9 +112,24 @@ func AttachFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.SMTPFrom, values.SMTPFrom, FlagUsage.SMTPFrom)
 }
 
+// AttachServerFlags attaches all flags pertaining to running the GtS server or testrig.
+func AttachServerFlags(flags *pflag.FlagSet, values Values) {
+	AttachGeneralFlags(flags, values)
+	AttachDatabaseFlags(flags, values)
+	AttachTemplateFlags(flags, values)
+	AttachAccountsFlags(flags, values)
+	AttachMediaFlags(flags, values)
+	AttachStorageFlags(flags, values)
+	AttachStatusesFlags(flags, values)
+	AttachLetsEncryptFlags(flags, values)
+	AttachOIDCFlags(flags, values)
+	AttachSMTPFlags(flags, values)
+}
+
 // Flags is used for storing the names of the various flags used for
 // initializing and storing flag variables.
 type Flags struct {
+	// general flags
 	LogLevel        string
 	ApplicationName string
 	ConfigPath      string
@@ -123,6 +141,7 @@ type Flags struct {
 	TrustedProxies  string
 	SoftwareVersion string
 
+	// database flags
 	DbType      string
 	DbAddress   string
 	DbPort      string
@@ -130,37 +149,44 @@ type Flags struct {
 	DbPassword  string
 	DbDatabase  string
 	DbTLSMode   string
-	DbTlsCACert string
+	DbTLSCACert string
 
+	// template flags
 	TemplateBaseDir string
 	AssetBaseDir    string
 
+	// accounts flags
 	AccountsOpenRegistration string
 	AccountsApprovalRequired string
 	AccountsReasonRequired   string
 
+	// media flags
 	MediaMaxImageSize        string
 	MediaMaxVideoSize        string
 	MediaMinDescriptionChars string
 	MediaMaxDescriptionChars string
 
+	// storage flags
 	StorageBackend       string
 	StorageBasePath      string
 	StorageServeProtocol string
 	StorageServeHost     string
 	StorageServeBasePath string
 
+	// statuses flags
 	StatusesMaxChars           string
 	StatusesCWMaxChars         string
 	StatusesPollMaxOptions     string
 	StatusesPollOptionMaxChars string
 	StatusesMaxMediaFiles      string
 
+	// letsencrypt flags
 	LetsEncryptEnabled      string
 	LetsEncryptCertDir      string
 	LetsEncryptEmailAddress string
 	LetsEncryptPort         string
 
+	// oidc flags
 	OIDCEnabled          string
 	OIDCIdpName          string
 	OIDCSkipVerification string
@@ -169,11 +195,18 @@ type Flags struct {
 	OIDCClientSecret     string
 	OIDCScopes           string
 
+	// smtp flags
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
 	SMTPPassword string
 	SMTPFrom     string
+
+	// admin flags
+	AdminAccountUsername string
+	AdminAccountEmail    string
+	AdminAccountPassword string
+	AdminTransPath       string
 }
 
 // FlagNames contains the names of the various flags used for initializing and storing flag variables.
@@ -196,7 +229,7 @@ var FlagNames = Flags{
 	DbPassword:  "db-password",
 	DbDatabase:  "db-database",
 	DbTLSMode:   "db-tls-mode",
-	DbTlsCACert: "db-tls-ca-cert",
+	DbTLSCACert: "db-tls-ca-cert",
 
 	TemplateBaseDir: "template-basedir",
 	AssetBaseDir:    "asset-basedir",
@@ -240,6 +273,11 @@ var FlagNames = Flags{
 	SMTPUsername: "smtp-username",
 	SMTPPassword: "smtp-password",
 	SMTPFrom:     "smtp-from",
+
+	AdminAccountUsername: "username",
+	AdminAccountEmail:    "email",
+	AdminAccountPassword: "password",
+	AdminTransPath:       "path",
 }
 
 // FlagUsage contains the usage text for all flags.
@@ -261,7 +299,7 @@ var FlagUsage = Flags{
 	DbPassword:  "Database password",
 	DbDatabase:  "Database name",
 	DbTLSMode:   "Database tls mode",
-	DbTlsCACert: "Path to CA cert for db tls connection",
+	DbTLSCACert: "Path to CA cert for db tls connection",
 
 	TemplateBaseDir: "Basedir for html templating files for rendering pages and composing emails.",
 	AssetBaseDir:    "Directory to serve static assets from, accessible at example.org/assets/",
@@ -305,4 +343,10 @@ var FlagUsage = Flags{
 	SMTPUsername: "Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'",
 	SMTPPassword: "Password to pass to the smtp server.",
 	SMTPFrom:     "Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'",
+
+	AdminAccountUsername: "the username to create/delete/etc",
+	AdminAccountEmail:    "the email address of this account",
+	AdminAccountPassword: "the password to set for this account",
+
+	AdminTransPath: "the path of the file to import from/export to",
 }

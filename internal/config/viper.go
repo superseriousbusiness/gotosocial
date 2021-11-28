@@ -19,6 +19,7 @@
 package config
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -34,7 +35,9 @@ func InitViper(f *pflag.FlagSet, version string) error {
 	viper.AutomaticEnv()
 
 	// flag stuff
-	viper.BindPFlags(f)
+	if err := viper.BindPFlags(f); err != nil {
+		return fmt.Errorf("error with viper: %s", err)
+	}
 
 	// override software version with whatever we've been passed
 	viper.Set(FlagNames.SoftwareVersion, version)

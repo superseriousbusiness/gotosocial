@@ -26,7 +26,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // loadTemplates loads html templates for use by the given engine
@@ -36,7 +38,8 @@ func loadTemplates(engine *gin.Engine) error {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
 
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", cfg.TemplateConfig.BaseDir))
+	templateBaseDir := viper.GetString(config.FlagNames.TemplateBaseDir)
+	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
 
 	engine.LoadHTMLGlob(tmPath)
 	return nil

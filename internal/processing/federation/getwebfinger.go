@@ -44,7 +44,7 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 	}
 
 	accountDomain := viper.GetString(config.FlagNames.AccountDomain)
-	
+
 	// return the webfinger representation
 	return &apimodel.WellKnownResponse{
 		Subject: fmt.Sprintf("%s:%s@%s", webfingerAccount, requestedAccount.Username, accountDomain),

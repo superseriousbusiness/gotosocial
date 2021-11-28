@@ -30,6 +30,8 @@ func InitTestConfig() {
 
 	flags := pflag.NewFlagSet("testrig", pflag.PanicOnError)
 
-	config.AttachFlags(flags, config.TestDefaults)
-	config.InitViper(flags, "testrig")
+	config.AttachServerFlags(flags, config.TestDefaults)
+	if err := config.InitViper(flags, "testrig"); err != nil {
+		panic(err)
+	}
 }

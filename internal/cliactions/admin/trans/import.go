@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -38,8 +39,8 @@ var Import cliactions.GTSAction = func(ctx context.Context) error {
 
 	importer := trans.NewImporter(dbConn)
 
-	path, ok := c.ExportCLIFlags[config.TransPathFlag]
-	if !ok {
+	path := viper.GetString(config.FlagNames.AdminTransPath)
+	if path == "" {
 		return errors.New("no path set")
 	}
 

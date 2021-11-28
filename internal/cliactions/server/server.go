@@ -10,6 +10,7 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
@@ -35,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -75,10 +77,11 @@ var Start cliactions.GTSAction = func(ctx context.Context) error {
 
 	// build converters and util
 	typeConverter := typeutils.NewConverter(dbService)
-	timelineManager := timelineprocessing.NewManager(dbService, typeConverter, c)
+	timelineManager := timelineprocessing.NewManager(dbService, typeConverter)
 
 	// Open the storage backend
-	storage, err := kv.OpenFile(c.StorageConfig.BasePath, nil)
+	storageBasePath := viper.GetString(config.FlagNames.StorageBasePath)
+	storage, err := kv.OpenFile(storageBasePath, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
@@ -91,7 +94,8 @@ var Start cliactions.GTSAction = func(ctx context.Context) error {
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
 	var emailSender email.Sender
-	if c.SMTPConfig.Host != "" {
+	smtpHost := viper.GetString(config.FlagNames.SMTPHost)
+	if smtpHost != "" {
 		// host is defined so create a proper sender
 		emailSender, err = email.NewSender()
 		if err != nil {
@@ -99,7 +103,7 @@ var Start cliactions.GTSAction = func(ctx context.Context) error {
 		}
 	} else {
 		// no host is defined so create a noop sender
-		emailSender, err = email.NewNoopSender(c.TemplateConfig.BaseDir, nil)
+		emailSender, err = email.NewNoopSender(nil)
 		if err != nil {
 			return fmt.Errorf("error creating noop email sender: %s", err)
 		}
