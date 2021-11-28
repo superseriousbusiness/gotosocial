@@ -45,10 +45,17 @@ func main() {
 
 	// instantiate the root command
 	cmd := &cobra.Command{
-		Use:     "gotosocial",
-		Short:   "a fediverse social media server",
+		Use:   "gotosocial",
+		Short: "GoToSocial - a fediverse social media server",
+		Long: `GoToSocial - a fediverse social media server
+
+For help, see: https://docs.gotosocial.org.
+
+Code: https://github.com/superseriousbusiness/gotosocial`,
 		Version: v,
 	}
+
+	config.AttachRootFlags(cmd.Flags(), config.TestDefaults)
 
 	// add subcommands
 	cmd.AddCommand(serverCommands())

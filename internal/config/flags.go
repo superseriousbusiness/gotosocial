@@ -20,11 +20,15 @@ package config
 
 import "github.com/spf13/pflag"
 
+// AttachRootFlags
+func AttachRootFlags(flags *pflag.FlagSet, values Values) {
+	flags.String(FlagNames.LogLevel, values.LogLevel, FlagUsage.LogLevel)
+	flags.String(FlagNames.ConfigPath, values.ConfigPath, FlagUsage.ConfigPath)
+}
+
 // AttachGeneralFlags attaches flags pertaining to general config.
 func AttachGeneralFlags(flags *pflag.FlagSet, values Values) {
-	flags.String(FlagNames.LogLevel, values.LogLevel, FlagUsage.LogLevel)
 	flags.String(FlagNames.ApplicationName, values.ApplicationName, FlagUsage.ApplicationName)
-	flags.String(FlagNames.ConfigPath, values.ConfigPath, FlagUsage.ConfigPath)
 	flags.String(FlagNames.Host, values.Host, FlagUsage.Host)
 	flags.String(FlagNames.AccountDomain, values.AccountDomain, FlagUsage.AccountDomain)
 	flags.String(FlagNames.Protocol, values.Protocol, FlagUsage.Protocol)
@@ -129,10 +133,12 @@ func AttachServerFlags(flags *pflag.FlagSet, values Values) {
 // Flags is used for storing the names of the various flags used for
 // initializing and storing flag variables.
 type Flags struct {
-	// general flags
+	// root flags
 	LogLevel        string
-	ApplicationName string
 	ConfigPath      string
+	
+	// general flags
+	ApplicationName string
 	Host            string
 	AccountDomain   string
 	Protocol        string
