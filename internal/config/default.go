@@ -150,6 +150,8 @@ func Default() *Config {
 			Password: defaults.SMTPPassword,
 			From:     defaults.SMTPFrom,
 		},
+		AccountCLIFlags: make(map[string]string),
+		ExportCLIFlags:  make(map[string]string),
 	}
 }
 

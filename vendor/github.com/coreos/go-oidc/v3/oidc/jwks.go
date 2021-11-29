@@ -18,8 +18,8 @@ import (
 // exposed for providers that don't support discovery or to prevent round trips to the
 // discovery URL.
 //
-// The returned KeySet is a long lived verifier that caches keys based on cache-control
-// headers. Reuse a common remote key set instead of creating new ones as needed.
+// The returned KeySet is a long lived verifier that caches keys based on any
+// keys change. Reuse a common remote key set instead of creating new ones as needed.
 func NewRemoteKeySet(ctx context.Context, jwksURL string) *RemoteKeySet {
 	return newRemoteKeySet(ctx, jwksURL, time.Now)
 }
@@ -39,7 +39,7 @@ type RemoteKeySet struct {
 	now     func() time.Time
 
 	// guard all other fields
-	mu sync.Mutex
+	mu sync.RWMutex
 
 	// inflight suppresses parallel execution of updateKeys and allows
 	// multiple goroutines to wait for its result.
@@ -131,8 +131,8 @@ func (r *RemoteKeySet) verify(ctx context.Context, jws *jose.JSONWebSignature) (
 }
 
 func (r *RemoteKeySet) keysFromCache() (keys []jose.JSONWebKey) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	return r.cachedKeys
 }
 

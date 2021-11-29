@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package sqlite is a CGo-free port of SQLite.
+// Package sqlite is a CGo-free port of SQLite/SQLite3 v3.36.0.
 //
 // SQLite is an in-process implementation of a self-contained, serverless,
 // zero-configuration, transactional SQL database engine.
@@ -20,14 +20,6 @@
 // 	linux	arm64
 // 	windows	amd64
 //
-// The windows/amd64 has currently experimental/preview status. Tcl tests
-// report an unresolved yet memory leak, see
-// https://gitlab.com/cznic/sqlite/-/issues/23 for more details.
-//
-// Planned platforms and architectures
-//
-// 	windows	386
-//
 // Builders
 //
 // Builder results available at
@@ -35,6 +27,11 @@
 //	https://modern-c.appspot.com/-/builder/?importpath=modernc.org%2fsqlite
 //
 // Changelog
+//
+// 2021-11-13 v1.14.0:
+//
+// Support windows/amd64. This target had previously only experimental status
+// because of a now resolved memory leak.
 //
 // 2021-09-07 v1.13.0:
 //

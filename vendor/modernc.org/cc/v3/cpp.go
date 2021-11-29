@@ -7,6 +7,7 @@ package cc // import "modernc.org/cc/v3"
 import (
 	"bytes"
 	"fmt"
+	gotoken "go/token"
 	"math"
 	"os"
 	"path/filepath"
@@ -2182,6 +2183,8 @@ func decodeEscapeSequence(ctx *context, tok cppToken, s string) (rune, int) {
 		return 7, 2
 	case 'b':
 		return 8, 2
+	case 'e':
+		return 0x1b, 2
 	case 'f':
 		return 12, 2
 	case 'n':
@@ -2444,21 +2447,7 @@ func (n *ppIncludeDirective) translationPhase4(c *cpp) {
 				v = dir
 			}
 
-			var p string
-			switch {
-			case strings.HasPrefix(nm, "./"):
-				wd := c.ctx.cfg.WorkingDir
-				if wd == "" {
-					var err error
-					if wd, err = os.Getwd(); err != nil {
-						c.err(toks[0], "cannot determine working dir: %v", err)
-						return
-					}
-				}
-				p = filepath.Join(wd, nm)
-			default:
-				p = filepath.Join(v, nm)
-			}
+			p := filepath.Join(v, nm)
 			fi, err := c.ctx.statFile(p, sys)
 			if err != nil || fi.IsDir() {
 				continue
@@ -2475,6 +2464,17 @@ func (n *ppIncludeDirective) translationPhase4(c *cpp) {
 		return
 	}
 
+	if h := c.ctx.cfg.IncludeFileHandler; h != nil {
+		var position gotoken.Position
+		if p := toks[0].Pos(); p.IsValid() {
+			position = gotoken.Position(c.file.PositionFor(p, true))
+		}
+		apath, err := filepath.Abs(path)
+		if err != nil {
+			c.err(toks[0], "%s: cannot compute absolute path: %v", path, err)
+		}
+		h(position, apath)
+	}
 	cf, err := cache.getFile(c.ctx, path, sys, false)
 	if err != nil {
 		c.err(toks[0], "%s: %v", path, err)

@@ -585,8 +585,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -603,11 +603,11 @@ type X__gnuc_va_list = X__va_list    /* _types.h:140:20 */ // compatibility w/GN
 type Gid_t = X__gid_t /* grp.h:49:18 */
 
 type Group = struct {
-	Fgr_name   uintptr
-	Fgr_passwd uintptr
-	Fgr_gid    Gid_t
-	_          [4]byte
-	Fgr_mem    uintptr
+	Fgr_name     uintptr
+	Fgr_passwd   uintptr
+	Fgr_gid      Gid_t
+	F__ccgo_pad1 [4]byte
+	Fgr_mem      uintptr
 } /* grp.h:58:1 */
 
 var _ int8 /* gen.c:2:13: */

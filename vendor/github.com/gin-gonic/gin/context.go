@@ -40,8 +40,7 @@ const (
 // BodyBytesKey indicates a default body bytes key.
 const BodyBytesKey = "_gin-gonic/gin/bodybyteskey"
 
-// abortIndex represents a typical value used in abort functions.
-const abortIndex int8 = math.MaxInt8 >> 1
+const abortIndex int8 = math.MaxInt8 / 2
 
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
@@ -55,8 +54,9 @@ type Context struct {
 	index    int8
 	fullPath string
 
-	engine *Engine
-	params *Params
+	engine       *Engine
+	params       *Params
+	skippedNodes *[]skippedNode
 
 	// This mutex protect Keys map
 	mu sync.RWMutex
@@ -88,17 +88,18 @@ type Context struct {
 
 func (c *Context) reset() {
 	c.Writer = &c.writermem
-	c.Params = c.Params[:0]
+	c.Params = c.Params[0:0]
 	c.handlers = nil
 	c.index = -1
 
 	c.fullPath = ""
 	c.Keys = nil
-	c.Errors = c.Errors[:0]
+	c.Errors = c.Errors[0:0]
 	c.Accepted = nil
 	c.queryCache = nil
 	c.formCache = nil
 	*c.params = (*c.params)[:0]
+	*c.skippedNodes = (*c.skippedNodes)[:0]
 }
 
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
@@ -383,15 +384,6 @@ func (c *Context) Param(key string) string {
 	return c.Params.ByName(key)
 }
 
-// AddParam adds param to context and
-// replaces path param key with given value for e2e testing purposes
-// Example Route: "/user/:id"
-// AddParam("id", 1)
-// Result: "/user/1"
-func (c *Context) AddParam(key, value string) {
-	c.Params = append(c.Params, Param{Key: key, Value: value})
-}
-
 // Query returns the keyed url query value if it exists,
 // otherwise it returns an empty string `("")`.
 // It is shortcut for `c.Request.URL.Query().Get(key)`
@@ -400,9 +392,9 @@ func (c *Context) AddParam(key, value string) {
 // 	   c.Query("name") == "Manu"
 // 	   c.Query("value") == ""
 // 	   c.Query("wtf") == ""
-func (c *Context) Query(key string) (value string) {
-	value, _ = c.GetQuery(key)
-	return
+func (c *Context) Query(key string) string {
+	value, _ := c.GetQuery(key)
+	return value
 }
 
 // DefaultQuery returns the keyed url query value if it exists,
@@ -436,9 +428,9 @@ func (c *Context) GetQuery(key string) (string, bool) {
 
 // QueryArray returns a slice of strings for a given query key.
 // The length of the slice depends on the number of params with the given key.
-func (c *Context) QueryArray(key string) (values []string) {
-	values, _ = c.GetQueryArray(key)
-	return
+func (c *Context) QueryArray(key string) []string {
+	values, _ := c.GetQueryArray(key)
+	return values
 }
 
 func (c *Context) initQueryCache() {
@@ -453,16 +445,18 @@ func (c *Context) initQueryCache() {
 
 // GetQueryArray returns a slice of strings for a given query key, plus
 // a boolean value whether at least one value exists for the given key.
-func (c *Context) GetQueryArray(key string) (values []string, ok bool) {
+func (c *Context) GetQueryArray(key string) ([]string, bool) {
 	c.initQueryCache()
-	values, ok = c.queryCache[key]
-	return
+	if values, ok := c.queryCache[key]; ok && len(values) > 0 {
+		return values, true
+	}
+	return []string{}, false
 }
 
 // QueryMap returns a map for a given query key.
-func (c *Context) QueryMap(key string) (dicts map[string]string) {
-	dicts, _ = c.GetQueryMap(key)
-	return
+func (c *Context) QueryMap(key string) map[string]string {
+	dicts, _ := c.GetQueryMap(key)
+	return dicts
 }
 
 // GetQueryMap returns a map for a given query key, plus a boolean value
@@ -474,9 +468,9 @@ func (c *Context) GetQueryMap(key string) (map[string]string, bool) {
 
 // PostForm returns the specified key from a POST urlencoded form or multipart form
 // when it exists, otherwise it returns an empty string `("")`.
-func (c *Context) PostForm(key string) (value string) {
-	value, _ = c.GetPostForm(key)
-	return
+func (c *Context) PostForm(key string) string {
+	value, _ := c.GetPostForm(key)
+	return value
 }
 
 // DefaultPostForm returns the specified key from a POST urlencoded form or multipart form
@@ -505,9 +499,9 @@ func (c *Context) GetPostForm(key string) (string, bool) {
 
 // PostFormArray returns a slice of strings for a given form key.
 // The length of the slice depends on the number of params with the given key.
-func (c *Context) PostFormArray(key string) (values []string) {
-	values, _ = c.GetPostFormArray(key)
-	return
+func (c *Context) PostFormArray(key string) []string {
+	values, _ := c.GetPostFormArray(key)
+	return values
 }
 
 func (c *Context) initFormCache() {
@@ -525,16 +519,18 @@ func (c *Context) initFormCache() {
 
 // GetPostFormArray returns a slice of strings for a given form key, plus
 // a boolean value whether at least one value exists for the given key.
-func (c *Context) GetPostFormArray(key string) (values []string, ok bool) {
+func (c *Context) GetPostFormArray(key string) ([]string, bool) {
 	c.initFormCache()
-	values, ok = c.formCache[key]
-	return
+	if values := c.formCache[key]; len(values) > 0 {
+		return values, true
+	}
+	return []string{}, false
 }
 
 // PostFormMap returns a map for a given form key.
-func (c *Context) PostFormMap(key string) (dicts map[string]string) {
-	dicts, _ = c.GetPostFormMap(key)
-	return
+func (c *Context) PostFormMap(key string) map[string]string {
+	dicts, _ := c.GetPostFormMap(key)
+	return dicts
 }
 
 // GetPostFormMap returns a map for a given form key, plus a boolean value
@@ -732,20 +728,16 @@ func (c *Context) ShouldBindBodyWith(obj interface{}, bb binding.BindingBody) (e
 	return bb.BindBody(body, obj)
 }
 
-// ClientIP implements a best effort algorithm to return the real client IP.
+// ClientIP implements one best effort algorithm to return the real client IP.
 // It called c.RemoteIP() under the hood, to check if the remote IP is a trusted proxy or not.
-// If it's it will then try to parse the headers defined in Engine.RemoteIPHeaders (defaulting to [X-Forwarded-For, X-Real-Ip]).
-// If the headers are nots syntactically valid OR the remote IP does not correspong to a trusted proxy,
+// If it is it will then try to parse the headers defined in Engine.RemoteIPHeaders (defaulting to [X-Forwarded-For, X-Real-Ip]).
+// If the headers are not syntactically valid OR the remote IP does not correspond to a trusted proxy,
 // the remote IP (coming form Request.RemoteAddr) is returned.
 func (c *Context) ClientIP() string {
-	// Check if we're running on a trusted platform
-	switch c.engine.TrustedPlatform {
-	case PlatformGoogleAppEngine:
-		if addr := c.requestHeader("X-Appengine-Remote-Addr"); addr != "" {
-			return addr
-		}
-	case PlatformCloudflare:
-		if addr := c.requestHeader("CF-Connecting-IP"); addr != "" {
+	// Check if we're running on a trusted platform, continue running backwards if error
+	if c.engine.TrustedPlatform != "" {
+		// Developers can define their own header of Trusted Platform or use predefined constants
+		if addr := c.requestHeader(c.engine.TrustedPlatform); addr != "" {
 			return addr
 		}
 	}
@@ -765,7 +757,7 @@ func (c *Context) ClientIP() string {
 
 	if trusted && c.engine.ForwardedByClientIP && c.engine.RemoteIPHeaders != nil {
 		for _, headerName := range c.engine.RemoteIPHeaders {
-			ip, valid := validateHeader(c.requestHeader(headerName))
+			ip, valid := c.engine.validateHeader(c.requestHeader(headerName))
 			if valid {
 				return ip
 			}
@@ -774,10 +766,21 @@ func (c *Context) ClientIP() string {
 	return remoteIP.String()
 }
 
+func (e *Engine) isTrustedProxy(ip net.IP) bool {
+	if e.trustedCIDRs != nil {
+		for _, cidr := range e.trustedCIDRs {
+			if cidr.Contains(ip) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // RemoteIP parses the IP from Request.RemoteAddr, normalizes and returns the IP (without the port).
 // It also checks if the remoteIP is a trusted proxy or not.
 // In order to perform this validation, it will see if the IP is contained within at least one of the CIDR blocks
-// defined in Engine.TrustedProxies
+// defined by Engine.SetTrustedProxies()
 func (c *Context) RemoteIP() (net.IP, bool) {
 	ip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request.RemoteAddr))
 	if err != nil {
@@ -788,35 +791,25 @@ func (c *Context) RemoteIP() (net.IP, bool) {
 		return nil, false
 	}
 
-	if c.engine.trustedCIDRs != nil {
-		for _, cidr := range c.engine.trustedCIDRs {
-			if cidr.Contains(remoteIP) {
-				return remoteIP, true
-			}
-		}
-	}
-
-	return remoteIP, false
+	return remoteIP, c.engine.isTrustedProxy(remoteIP)
 }
 
-func validateHeader(header string) (clientIP string, valid bool) {
+func (e *Engine) validateHeader(header string) (clientIP string, valid bool) {
 	if header == "" {
 		return "", false
 	}
 	items := strings.Split(header, ",")
-	for i, ipStr := range items {
-		ipStr = strings.TrimSpace(ipStr)
+	for i := len(items) - 1; i >= 0; i-- {
+		ipStr := strings.TrimSpace(items[i])
 		ip := net.ParseIP(ipStr)
 		if ip == nil {
 			return "", false
 		}
 
-		// We need to return the first IP in the list, but,
-		// we should not early return since we need to validate that
-		// the rest of the header is syntactically valid
-		if i == 0 {
-			clientIP = ipStr
-			valid = true
+		// X-Forwarded-For is appended by proxy
+		// Check IPs in reverse order and stop when find untrusted proxy
+		if (i == 0) || (!e.isTrustedProxy(ip)) {
+			return ipStr, true
 		}
 	}
 	return
@@ -1166,28 +1159,22 @@ func (c *Context) SetAccepted(formats ...string) {
 /***** GOLANG.ORG/X/NET/CONTEXT *****/
 /************************************/
 
-// Deadline returns that there is no deadline (ok==false) when c.Request has no Context.
+// Deadline always returns that there is no deadline (ok==false),
+// maybe you want to use Request.Context().Deadline() instead.
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	if c.Request == nil || c.Request.Context() == nil {
-		return
-	}
-	return c.Request.Context().Deadline()
+	return
 }
 
-// Done returns nil (chan which will wait forever) when c.Request has no Context.
+// Done always returns nil (chan which will wait forever),
+// if you want to abort your work when the connection was closed
+// you should use Request.Context().Done() instead.
 func (c *Context) Done() <-chan struct{} {
-	if c.Request == nil || c.Request.Context() == nil {
-		return nil
-	}
-	return c.Request.Context().Done()
+	return nil
 }
 
-// Err returns nil when c.Request has no Context.
+// Err always returns nil, maybe you want to use Request.Context().Err() instead.
 func (c *Context) Err() error {
-	if c.Request == nil || c.Request.Context() == nil {
-		return nil
-	}
-	return c.Request.Context().Err()
+	return nil
 }
 
 // Value returns the value associated with this context for key, or nil
@@ -1198,12 +1185,8 @@ func (c *Context) Value(key interface{}) interface{} {
 		return c.Request
 	}
 	if keyAsString, ok := key.(string); ok {
-		if val, exists := c.Get(keyAsString); exists {
-			return val
-		}
+		val, _ := c.Get(keyAsString)
+		return val
 	}
-	if c.Request == nil || c.Request.Context() == nil {
-		return nil
-	}
-	return c.Request.Context().Value(key)
+	return nil
 }

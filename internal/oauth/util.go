@@ -85,6 +85,9 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 		if a.User.Disabled || !a.User.Approved {
 			return nil, errors.New("user disabled or not approved")
 		}
+		if a.User.Email == "" {
+			return nil, errors.New("user has no confirmed email address")
+		}
 	}
 
 	if requireAccount {

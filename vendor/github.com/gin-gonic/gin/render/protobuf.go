@@ -7,7 +7,7 @@ package render
 import (
 	"net/http"
 
-	"google.golang.org/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 // ProtoBuf contains the given interface object.

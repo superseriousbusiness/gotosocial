@@ -123,6 +123,7 @@ func (l *Lexer) Next() (TokenType, []byte) {
 
 	if l.rawTag != 0 {
 		if rawText := l.shiftRawText(); len(rawText) > 0 {
+			l.text = rawText
 			l.rawTag = 0
 			return TextToken, rawText
 		}

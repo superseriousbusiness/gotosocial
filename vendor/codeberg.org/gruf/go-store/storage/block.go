@@ -569,7 +569,7 @@ func (st *BlockStorage) Remove(key string) error {
 }
 
 // WalkKeys implements Storage.WalkKeys()
-func (st *BlockStorage) WalkKeys(opts *WalkKeysOptions) error {
+func (st *BlockStorage) WalkKeys(opts WalkKeysOptions) error {
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)

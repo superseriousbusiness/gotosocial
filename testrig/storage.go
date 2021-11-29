@@ -168,8 +168,8 @@ func (s *inMemStorage) Remove(key string) error {
 	return nil
 }
 
-func (s *inMemStorage) WalkKeys(opts *storage.WalkKeysOptions) error {
-	if opts == nil || opts.WalkFn == nil {
+func (s *inMemStorage) WalkKeys(opts storage.WalkKeysOptions) error {
+	if opts.WalkFn == nil {
 		return errors.New("invalid walkfn")
 	}
 	for key := range s.storage {

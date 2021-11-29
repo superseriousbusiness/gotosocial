@@ -25,11 +25,13 @@ all:
 	go test 2>&1 -timeout 1h | tee -a $(log)
 	GOOS=darwin GOARCH=amd64 go build
 	GOOS=darwin GOARCH=arm64 go build
+	GOOS=freebsd GOARCH=amd64 go build
 	GOOS=linux GOARCH=386 go build
 	GOOS=linux GOARCH=amd64 go build
 	GOOS=linux GOARCH=arm go build
 	GOOS=linux GOARCH=arm64 go build
 	GOOS=linux GOARCH=s390x go build
+	GOOS=netbsd GOARCH=amd64 go build
 	GOOS=windows GOARCH=386 go build
 	GOOS=windows GOARCH=amd64 go build
 	go vet -unsafeptr=false 2>&1 | grep -v $(ngrep) || true
@@ -43,32 +45,42 @@ all:
 	date 2>&1 | tee -a $(log)
 
 darwin_amd64:
-	TARGET_GOOS=darwin TARGET_GOARCH=amd64 go generate
-	GOOS=darwin GOARCH=amd64 go build -v ./...
+	@echo "Should be executed only on darwin/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 darwin_arm64:
-	TARGET_GOOS=darwin TARGET_GOARCH=arm64 go generate
-	GOOS=darwin GOARCH=arm64 go build -v ./...
+	@echo "Should be executed only on darwin/arm64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 # only on freebsd/amd64
 freebsd_amd64:
-	TARGET_GOOS=freebsd TARGET_GOARCH=amd64 go generate
-	GOOS=freebsd GOARCH=amd64 go build -v ./...
+	@echo "Should be executed only on freebsd/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
+
+# only on netbsd/amd64
+netbsd_amd64:
+	@echo "Should be executed only on netbsd/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 linux_amd64:
-	TARGET_GOOS=linux TARGET_GOARCH=amd64 go generate
-	GOOS=linux GOARCH=amd64 go build -v ./...
+	@echo "Should be executed only on linux/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 linux_386:
 	CCGO_CPP=i686-linux-gnu-cpp TARGET_GOOS=linux TARGET_GOARCH=386 go generate
 	GOOS=linux GOARCH=386 go build -v ./...
 
 linux_arm:
-	CCGO_CPP=arm-linux-gnueabi-cpp-8 TARGET_GOOS=linux TARGET_GOARCH=arm go generate
+	CCGO_CPP=arm-linux-gnueabi-cpp TARGET_GOOS=linux TARGET_GOARCH=arm go generate
 	GOOS=linux GOARCH=arm go build -v ./...
 
 linux_arm64:
-	CCGO_CPP=aarch64-linux-gnu-cpp-8 TARGET_GOOS=linux TARGET_GOARCH=arm64 go generate
+	CCGO_CPP=aarch64-linux-gnu-cpp TARGET_GOOS=linux TARGET_GOARCH=arm64 go generate
 	GOOS=linux GOARCH=arm64 go build -v ./...
 
 linux_s390x:
@@ -76,10 +88,12 @@ linux_s390x:
 	GOOS=linux GOARCH=s390x go build -v ./...
 
 windows_amd64:
-	CCGO_CPP=x86_64-w64-mingw32-cpp TARGET_GOOS=windows TARGET_GOARCH=amd64 go generate
-	GOOS=windows GOARCH=amd64 go build -v ./...
+	@echo "Should be executed only on windows/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
 
 windows_386:
+	@echo "Should be executed only on linux/amd64."
 	CCGO_CPP=i686-w64-mingw32-cpp TARGET_GOOS=windows TARGET_GOARCH=386 go generate
 	GOOS=windows GOARCH=386 go build -v ./...
 
@@ -88,15 +102,27 @@ all_targets: linux_amd64 linux_386 linux_arm linux_arm64 windows_amd64 windows_3
 
 build_all_targets:
 	GOOS=darwin GOARCH=amd64 go build -v ./...
+	GOOS=darwin GOARCH=amd64 go test -c -o /dev/null
 	GOOS=darwin GOARCH=arm64 go build -v ./...
+	GOOS=darwin GOARCH=arm64 go test -c -o /dev/null
 	GOOS=freebsd GOARCH=amd64 go build -v ./...
+	GOOS=freebsd GOARCH=amd64 go test -c -o /dev/null
 	GOOS=linux GOARCH=386 go build -v ./...
+	GOOS=linux GOARCH=386 go test -c -o /dev/null
 	GOOS=linux GOARCH=amd64 go build -v ./...
+	GOOS=linux GOARCH=amd64 go test -c -o /dev/null
 	GOOS=linux GOARCH=arm go build -v ./...
+	GOOS=linux GOARCH=arm go test -c -o /dev/null
 	GOOS=linux GOARCH=arm64 go build -v ./...
+	GOOS=linux GOARCH=arm64 go test -c -o /dev/null
 	GOOS=linux GOARCH=s390x go build -v ./...
+	GOOS=linux GOARCH=s390x go test -c -o /dev/null
+	GOOS=netbsd GOARCH=amd64 go build -v ./...
+	GOOS=netbsd GOARCH=amd64 go test -c -o /dev/null
 	GOOS=windows GOARCH=386 go build -v ./...
+	GOOS=windows GOARCH=386 go test -c -o /dev/null
 	GOOS=windows GOARCH=amd64 go build -v ./...
+	GOOS=windows GOARCH=amd64 go test -c -o /dev/null
 	echo done
 
 devbench:

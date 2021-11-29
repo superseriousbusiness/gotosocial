@@ -952,8 +952,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -1275,7 +1275,7 @@ type Ip_mreq_source = struct {
 // Filter APIs. [RFC3678]
 type Group_req = struct {
 	Fgr_interface Uint32_t
-	_             [4]byte
+	F__ccgo_pad1  [4]byte
 	Fgr_group     struct {
 		Fss_len     uint8
 		Fss_family  Sa_family_t
@@ -1287,7 +1287,7 @@ type Group_req = struct {
 
 type Group_source_req = struct {
 	Fgsr_interface Uint32_t
-	_              [4]byte
+	F__ccgo_pad1   [4]byte
 	Fgsr_group     struct {
 		Fss_len     uint8
 		Fss_family  Sa_family_t
@@ -1311,7 +1311,7 @@ type X__msfilterreq = struct {
 	Fmsfr_ifindex Uint32_t
 	Fmsfr_fmode   Uint32_t
 	Fmsfr_nsrcs   Uint32_t
-	_             [4]byte
+	F__ccgo_pad1  [4]byte
 	Fmsfr_group   struct {
 		Fss_len     uint8
 		Fss_family  Sa_family_t
@@ -1408,8 +1408,8 @@ type X__msfilterreq = struct {
 // IPv6 address
 type In6_addr = struct {
 	F__u6_addr struct {
-		_           [0]uint32
-		F__u6_addr8 [16]Uint8_t
+		F__ccgo_pad1 [0]uint32
+		F__u6_addr8  [16]Uint8_t
 	}
 } /* in6.h:97:1 */
 
@@ -1424,8 +1424,8 @@ type Sockaddr_in6 = struct {
 	Fsin6_flowinfo Uint32_t
 	Fsin6_addr     struct {
 		F__u6_addr struct {
-			_           [0]uint32
-			F__u6_addr8 [16]Uint8_t
+			F__ccgo_pad1 [0]uint32
+			F__u6_addr8  [16]Uint8_t
 		}
 	}
 	Fsin6_scope_id Uint32_t
@@ -1446,13 +1446,13 @@ type Route_in6 = struct {
 		Fsin6_flowinfo Uint32_t
 		Fsin6_addr     struct {
 			F__u6_addr struct {
-				_           [0]uint32
-				F__u6_addr8 [16]Uint8_t
+				F__ccgo_pad1 [0]uint32
+				F__u6_addr8  [16]Uint8_t
 			}
 		}
 		Fsin6_scope_id Uint32_t
 	}
-	_ [4]byte
+	F__ccgo_pad1 [4]byte
 } /* in6.h:379:1 */
 
 // Options for use with [gs]etsockopt at the IPV6 level.
@@ -1485,8 +1485,8 @@ type Route_in6 = struct {
 type Ipv6_mreq = struct {
 	Fipv6mr_multiaddr struct {
 		F__u6_addr struct {
-			_           [0]uint32
-			F__u6_addr8 [16]Uint8_t
+			F__ccgo_pad1 [0]uint32
+			F__u6_addr8  [16]Uint8_t
 		}
 	}
 	Fipv6mr_interface uint32
@@ -1496,8 +1496,8 @@ type Ipv6_mreq = struct {
 type In6_pktinfo = struct {
 	Fipi6_addr struct {
 		F__u6_addr struct {
-			_           [0]uint32
-			F__u6_addr8 [16]Uint8_t
+			F__ccgo_pad1 [0]uint32
+			F__u6_addr8  [16]Uint8_t
 		}
 	}
 	Fipi6_ifindex uint32
@@ -1512,8 +1512,8 @@ type Ip6_mtuinfo = struct {
 		Fsin6_flowinfo Uint32_t
 		Fsin6_addr     struct {
 			F__u6_addr struct {
-				_           [0]uint32
-				F__u6_addr8 [16]Uint8_t
+				F__ccgo_pad1 [0]uint32
+				F__u6_addr8  [16]Uint8_t
 			}
 		}
 		Fsin6_scope_id Uint32_t

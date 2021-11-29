@@ -7,17 +7,22 @@ import (
 	"codeberg.org/gruf/go-logger"
 )
 
-// global logfmt data formatter
-var logfmt = logger.TextFormat{Strict: false}
+// global logfmt data formatter.
+var logfmt = logger.TextFormat{
+	Strict:     logger.DefaultTextFormat.Strict,
+	MaxDepth:   logger.DefaultTextFormat.MaxDepth,
+	Levels:     nil,
+	TimeFormat: logger.DefaultTextFormat.TimeFormat,
+}
 
-// KV is a structure for setting key-value pairs in ErrorData
+// KV is a structure for setting key-value pairs in ErrorData.
 type KV struct {
 	Key   string
 	Value interface{}
 }
 
 // ErrorData defines a way to set and access contextual error data.
-// The default implementation of this is thread-safe
+// The default implementation of this is thread-safe.
 type ErrorData interface {
 	// Value will attempt to fetch value for given key in ErrorData
 	Value(string) (interface{}, bool)
@@ -29,7 +34,7 @@ type ErrorData interface {
 	String() string
 }
 
-// NewData returns a new ErrorData implementation
+// NewData returns a new ErrorData implementation.
 func NewData() ErrorData {
 	return &errorData{
 		data: make(map[string]interface{}, 10),
@@ -37,7 +42,7 @@ func NewData() ErrorData {
 }
 
 // errorData is our ErrorData implementation, this is essentially
-// just a thread-safe string-interface map implementation
+// just a thread-safe string-interface map implementation.
 type errorData struct {
 	data map[string]interface{}
 	buf  bytes.Buffer

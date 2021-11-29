@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -43,6 +44,7 @@ type UserStandardTestSuite struct {
 	emailSender    email.Sender
 	processor      processing.Processor
 	storage        *kv.KVStore
+	oauthServer    oauth.Server
 	securityModule *security.Module
 
 	// standard suite models
@@ -80,7 +82,8 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
-	suite.securityModule = security.New(suite.config, suite.db).(*security.Module)
+	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.securityModule = security.New(suite.config, suite.db, suite.oauthServer).(*security.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

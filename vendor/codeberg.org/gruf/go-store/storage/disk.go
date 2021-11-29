@@ -251,7 +251,7 @@ func (st *DiskStorage) Remove(key string) error {
 }
 
 // WalkKeys implements Storage.WalkKeys()
-func (st *DiskStorage) WalkKeys(opts *WalkKeysOptions) error {
+func (st *DiskStorage) WalkKeys(opts WalkKeysOptions) error {
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)

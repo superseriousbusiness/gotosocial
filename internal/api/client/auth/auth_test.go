@@ -47,7 +47,7 @@ type AuthTestSuite struct {
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *AuthTestSuite) SetupSuite() {
-	c := config.Empty()
+	c := config.Default()
 	// we're running on localhost without https so set the protocol to http
 	c.Protocol = "http"
 	// just for testing

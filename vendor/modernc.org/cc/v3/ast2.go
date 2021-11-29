@@ -414,16 +414,16 @@ func Preprocess(cfg *Config, includePaths, sysIncludePaths []string, sources []S
 func wTok(w io.Writer, tok Token) (err error) {
 	switch tok.Rune {
 	case STRINGLITERAL, LONGSTRINGLITERAL:
-		_, err = fmt.Fprintf(w, `%s"%s"`, tok.Sep, cQuotedString(tok.String()))
+		_, err = fmt.Fprintf(w, `%s"%s"`, tok.Sep, cQuotedString(tok.String(), true))
 	case CHARCONST, LONGCHARCONST:
-		_, err = fmt.Fprintf(w, `%s'%s'`, tok.Sep, cQuotedString(tok.String()))
+		_, err = fmt.Fprintf(w, `%s'%s'`, tok.Sep, cQuotedString(tok.String(), false))
 	default:
 		_, err = fmt.Fprintf(w, "%s%s", tok.Sep, tok)
 	}
 	return err
 }
 
-func cQuotedString(s string) []byte {
+func cQuotedString(s string, isString bool) []byte {
 	var b []byte
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -447,7 +447,20 @@ func cQuotedString(s string) []byte {
 			b = append(b, '\\', '\\')
 			continue
 		case '"':
-			b = append(b, '\\', '"')
+			switch {
+			case isString:
+				b = append(b, '\\', '"')
+			default:
+				b = append(b, '"')
+			}
+			continue
+		case '\'':
+			switch {
+			case isString:
+				b = append(b, '\'')
+			default:
+				b = append(b, '\\', '\'')
+			}
 			continue
 		}
 
@@ -590,7 +603,11 @@ func (n *BlockItem) Closure() map[StringID]struct{} { return n.closure }
 // FunctionDefinition returns the nested function (case BlockItemFuncDef).
 func (n *BlockItem) FunctionDefinition() *FunctionDefinition { return n.fn }
 
-func (n *Declarator) IsStatic() bool          { return n.td != nil && n.td.static() }
+func (n *Declarator) IsStatic() bool { return n.td != nil && n.td.static() }
+
+// IsImplicit reports whether n was not declared nor defined, only inferred.
+func (n *Declarator) IsImplicit() bool { return n.implicit }
+
 func (n *Declarator) isVisible(at int32) bool { return at == 0 || n.DirectDeclarator.ends() < at }
 
 func (n *Declarator) setLHS(lhs *Declarator) {
@@ -790,7 +807,8 @@ func (n *AndExpression) Promote() Type { return n.promote }
 
 func (n *InitDeclarator) Value() *InitializerValue { return n.initializer }
 
-// FirstDesignatorField returns the first field a designator denotes, if any.
+// FirstDesignatorField returns the first field a designator of an union type
+// denotes, if any.
 func (n *Initializer) FirstDesignatorField() Field { return n.field0 }
 
 // TrailingComma returns the comma token following n, if any.
@@ -893,6 +911,15 @@ func (n *EnumSpecifier) LexicalScope() Scope { return n.lexicalScope }
 // // ResolvedIn reports which scope the identifier of case
 // // TypeSpecifierTypedefName was resolved in, if any.
 // func (n *TypeSpecifier) ResolvedIn() Scope { return n.resolvedIn }
+
+func (n *TypeSpecifier) list() (r []*TypeSpecifier) {
+	switch n.Case {
+	case TypeSpecifierAtomic:
+		return n.AtomicTypeSpecifier.list
+	default:
+		return []*TypeSpecifier{n}
+	}
+}
 
 // // LexicalScope returns the lexical scope of n.
 // func (n *UnaryExpression) LexicalScope() Scope { return n.lexicalScope }

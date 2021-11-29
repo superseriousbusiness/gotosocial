@@ -95,7 +95,9 @@ at initialization. ie. before any route is registered or the router is listening
 }
 
 func debugPrintError(err error) {
-	if err != nil && IsDebugging() {
-		fmt.Fprintf(DefaultErrorWriter, "[GIN-debug] [ERROR] %v\n", err)
+	if err != nil {
+		if IsDebugging() {
+			fmt.Fprintf(DefaultErrorWriter, "[GIN-debug] [ERROR] %v\n", err)
+		}
 	}
 }

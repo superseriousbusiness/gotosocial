@@ -221,6 +221,7 @@ func main() {
 - **wav** - `audio/x-wav`
 - **amr** - `audio/amr`
 - **aac** - `audio/aac`
+- **aiff** - `audio/x-aiff`
 
 #### Archive
 
@@ -232,6 +233,7 @@ func main() {
 - **bz2** - `application/x-bzip2`
 - **7z** - `application/x-7z-compressed`
 - **xz** - `application/x-xz`
+- **zstd** - `application/zstd`
 - **pdf** - `application/pdf`
 - **exe** - `application/vnd.microsoft.portable-executable`
 - **swf** - `application/x-shockwave-flash`

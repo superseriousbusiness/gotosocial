@@ -619,8 +619,8 @@ type X__fixpt_t = X__uint32_t /* _types.h:115:20 */ // fixed point number
 // mbstate_t is an opaque object to keep conversion state during multibyte
 // stream conversions.
 type X__mbstate_t = struct {
-	_           [0]uint64
-	F__mbstate8 [128]int8
+	F__ccgo_pad1 [0]uint64
+	F__mbstate8  [128]int8
 } /* _types.h:124:3 */
 
 type X__rman_res_t = X__uintmax_t /* _types.h:126:25 */
@@ -659,18 +659,18 @@ type Uid_t = X__uid_t /* pwd.h:57:18 */
 // as well.
 
 type Passwd = struct {
-	Fpw_name   uintptr
-	Fpw_passwd uintptr
-	Fpw_uid    Uid_t
-	Fpw_gid    Gid_t
-	Fpw_change Time_t
-	Fpw_class  uintptr
-	Fpw_gecos  uintptr
-	Fpw_dir    uintptr
-	Fpw_shell  uintptr
-	Fpw_expire Time_t
-	Fpw_fields int32
-	_          [4]byte
+	Fpw_name     uintptr
+	Fpw_passwd   uintptr
+	Fpw_uid      Uid_t
+	Fpw_gid      Gid_t
+	Fpw_change   Time_t
+	Fpw_class    uintptr
+	Fpw_gecos    uintptr
+	Fpw_dir      uintptr
+	Fpw_shell    uintptr
+	Fpw_expire   Time_t
+	Fpw_fields   int32
+	F__ccgo_pad1 [4]byte
 } /* pwd.h:114:1 */
 
 var _ int8 /* gen.c:2:13: */

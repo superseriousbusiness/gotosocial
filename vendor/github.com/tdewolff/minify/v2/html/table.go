@@ -205,7 +205,7 @@ var attrMap = map[Hash]traits{
 	Poster:          urlAttr,
 	Profile:         urlAttr,
 	Readonly:        booleanAttr,
-	Rel:             caselessAttr,
+	Rel:             caselessAttr | trimAttr,
 	Required:        booleanAttr,
 	Rev:             caselessAttr,
 	Reversed:        booleanAttr,

@@ -23,7 +23,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func serverCommands() []*cli.Command {
+func serverCommands(allFlags []cli.Flag) []*cli.Command {
 	return []*cli.Command{
 		{
 			Name:  "server",
@@ -33,7 +33,7 @@ func serverCommands() []*cli.Command {
 					Name:  "start",
 					Usage: "start the gotosocial server",
 					Action: func(c *cli.Context) error {
-						return runAction(c, server.Start)
+						return runAction(c, allFlags, server.Start)
 					},
 				},
 			},

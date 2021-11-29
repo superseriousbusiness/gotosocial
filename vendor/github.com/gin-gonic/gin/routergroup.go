@@ -11,11 +11,6 @@ import (
 	"strings"
 )
 
-var (
-	// reg match english letters for http method name
-	regEnLetter = regexp.MustCompile("^[A-Z]+$")
-)
-
 // IRouter defines all router handle interface includes single and group router.
 type IRouter interface {
 	IRoutes
@@ -92,7 +87,7 @@ func (group *RouterGroup) handle(httpMethod, relativePath string, handlers Handl
 // frequently used, non-standardized or custom methods (e.g. for internal
 // communication with a proxy).
 func (group *RouterGroup) Handle(httpMethod, relativePath string, handlers ...HandlerFunc) IRoutes {
-	if matched := regEnLetter.MatchString(httpMethod); !matched {
+	if matches, err := regexp.MatchString("^[A-Z]+$", httpMethod); !matches || err != nil {
 		panic("http method " + httpMethod + " is not valid")
 	}
 	return group.handle(httpMethod, relativePath, handlers)
@@ -214,7 +209,9 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 
 func (group *RouterGroup) combineHandlers(handlers HandlersChain) HandlersChain {
 	finalSize := len(group.Handlers) + len(handlers)
-	assert1(finalSize < int(abortIndex), "too many handlers")
+	if finalSize >= int(abortIndex) {
+		panic("too many handlers")
+	}
 	mergedHandlers := make(HandlersChain, finalSize)
 	copy(mergedHandlers, group.Handlers)
 	copy(mergedHandlers[len(group.Handlers):], handlers)
