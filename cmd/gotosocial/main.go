@@ -21,11 +21,8 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	_ "github.com/superseriousbusiness/gotosocial/docs"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Version is the software version of GtS being used
@@ -45,31 +42,17 @@ func main() {
 
 	// instantiate the root command
 	cmd := &cobra.Command{
-		Use:   "gotosocial",
-		Short: "GoToSocial - a fediverse social media server",
-		Long: `GoToSocial - a fediverse social media server
-
-For help, see: https://docs.gotosocial.org.
-
-Code: https://github.com/superseriousbusiness/gotosocial`,
-		Version: v,
+		Use:           "gotosocial",
+		Short:         "GoToSocial - a fediverse social media server",
+		Long:          "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
+		Version:       v,
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
-
-	config.AttachRootFlags(cmd.Flags(), config.TestDefaults)
 
 	// add subcommands
-	cmd.AddCommand(serverCommands())
-	cmd.AddCommand(testrigCommands())
-
-	// initialize viper config
-	if err := config.InitViper(cmd.Flags(), v); err != nil {
-		logrus.Fatalf("error initializing config: %s", err)
-	}
-
-	// initialize the global logger to the provided log level, with formatting and output splitter already set
-	if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
-		logrus.Fatalf("error creating logger: %s", err)
-	}
+	cmd.AddCommand(serverCommands(v))
+	cmd.AddCommand(testrigCommands(v))
 
 	// run the damn diggity thing
 	if err := cmd.Execute(); err != nil {

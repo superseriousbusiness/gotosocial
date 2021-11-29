@@ -45,7 +45,6 @@ import (
 // Start creates and starts a gotosocial testrig server
 var Start cliactions.GTSAction = func(ctx context.Context) error {
 	testrig.InitTestLog()
-	testrig.InitTestConfig()
 
 	dbService := testrig.NewTestDB()
 	testrig.StandardDBSetup(dbService, nil)

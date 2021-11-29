@@ -23,11 +23,41 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 func InitViper(f *pflag.FlagSet, version string) error {
+	// config file stuff
+	// check if we have a config path set on the flag
+	configPath, err := f.GetString(FlagNames.ConfigPath)
+	if err != nil {
+		return err
+	}
+
+	if configPath != "" {
+		logrus.Infof("proceeding with config file %s", configPath)
+		// register all aliases so that we can retrieve values set in the config file, using the standard keys
+		for alias, key := range Aliases {
+			viper.RegisterAlias(alias, key)
+		}
+
+		// we have a config path set; we need to juggle it so that viper can read it properly
+		// see https://github.com/spf13/viper#reading-config-files
+		dir, file := filepath.Split(configPath)        // return eg., /some/dir/ , config.yaml
+		extension := filepath.Ext(file)                // return eg., .yaml
+		fileName := strings.TrimRight(file, extension) // return eg., config
+
+		viper.SetConfigName(fileName)                           // config
+		viper.SetConfigType(strings.TrimPrefix(extension, ".")) // yaml
+		viper.AddConfigPath(dir)                                // /some/dir/
+
+		if err := viper.ReadInConfig(); err != nil {
+			return err
+		}
+	}
+
 	// environment variable stuff
 	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
 	viper.SetEnvPrefix("gts")
@@ -35,6 +65,7 @@ func InitViper(f *pflag.FlagSet, version string) error {
 	viper.AutomaticEnv()
 
 	// flag stuff
+	// bind all of the flags in flag set to viper so that we can retrieve values from the viper store
 	if err := viper.BindPFlags(f); err != nil {
 		return fmt.Errorf("error with viper: %s", err)
 	}
@@ -42,27 +73,5 @@ func InitViper(f *pflag.FlagSet, version string) error {
 	// override software version with whatever we've been passed
 	viper.Set(FlagNames.SoftwareVersion, version)
 
-	// config file stuff
-	// first check if we have a config path set on the flag
-	configPath, err := f.GetString(FlagNames.ConfigPath)
-	if err != nil {
-		return err
-	}
-
-	// no config path so nothing left to do here
-	if configPath == "" {
-		return nil
-	}
-
-	// we have a config path set; we need to juggle it so that viper can read it properly
-	// see https://github.com/spf13/viper#reading-config-files
-	dir, file := filepath.Split(configPath)        // return eg., /some/dir/ , config.yaml
-	extension := filepath.Ext(file)                // return eg., yaml
-	fileName := strings.TrimRight(file, extension) // return eg., config
-
-	viper.SetConfigName(fileName)  // config
-	viper.SetConfigType(extension) // yaml
-	viper.AddConfigPath(dir)       // /some/dir/
-
-	return viper.ReadInConfig()
+	return nil
 }

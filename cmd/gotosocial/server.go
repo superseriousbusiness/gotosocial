@@ -19,30 +19,33 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // serverCommands returns the 'server' subcommand
-func serverCommands() *cobra.Command {
+func serverCommands(version string) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "server",
 		Short: "gotosocial server-related tasks",
 	}
 
-	config.AttachServerFlags(command.Flags(), config.Defaults)
-
-	command.AddCommand(&cobra.Command{
+	start := &cobra.Command{
 		Use:   "start",
 		Short: "start the gotosocial server",
-		Run: func(cmd *cobra.Command, args []string) {
-			if err := server.Start(cmd.Context()); err != nil {
-				logrus.Fatal(err)
-			}
-		},
-	})
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 
+			return commonInit(cmd, version)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return server.Start(cmd.Context())
+		},
+	}
+
+	config.AttachCommonFlags(start.Flags(), config.Defaults)
+	config.AttachServerFlags(start.Flags(), config.Defaults)
+
+	command.AddCommand(start)
 	return command
 }

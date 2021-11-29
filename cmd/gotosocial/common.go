@@ -20,29 +20,18 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions/testrig"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func testrigCommands(version string) *cobra.Command {
-	command := &cobra.Command{
-		Use:   "testrig",
-		Short: "gotosocial server-related tasks",
+func commonInit(cmd *cobra.Command, version string) error {
+	if err := config.InitViper(cmd.Flags(), version); err != nil {
+		return err
 	}
 
-	start := &cobra.Command{
-		Use:   "start",
-		Short: "start the gotosocial testrig server",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return commonInit(cmd, version)
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return testrig.Start(cmd.Context())
-		},
+	if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
+		return err
 	}
-	config.AttachCommonFlags(start.Flags(), config.TestDefaults)
-	config.AttachServerFlags(start.Flags(), config.TestDefaults)
-
-	command.AddCommand(start)
-	return command
+	return nil
 }
