@@ -35,7 +35,7 @@ const (
 	// PublicTimeline is the path for the public (and public local) timeline
 	PublicTimeline = BasePath + "/public"
 	// TagTimeline is the path for the tagged timeline
-	TagTimeline = BasePath + "/tag"
+	TagTimeline = BasePath + "/tag/:hashtag"
 	// MaxIDKey is the url query for setting a max status ID to return
 	MaxIDKey = "max_id"
 	// SinceIDKey is the url query for returning results newer than the given ID

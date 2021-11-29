@@ -38,6 +38,20 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 	suite.Len(s, 6)
 }
 
+func (suite *TimelineTestSuite) TestGetTagTimeline() {
+	viewingAccount := suite.testAccounts["local_account_1"]
+
+	tags, err := suite.db.TagStringsToTags(context.Background(), []string{"welcome"}, viewingAccount.ID)
+
+	suite.NoError(err)
+	suite.Len(tags, 1)
+
+	s, err := suite.db.GetTagTimeline(context.Background(), viewingAccount.ID, tags[0], "", "", "", 20, false)
+	suite.NoError(err)
+
+	suite.Len(s, 1)
+}
+
 func TestTimelineTestSuite(t *testing.T) {
 	suite.Run(t, new(TimelineTestSuite))
 }

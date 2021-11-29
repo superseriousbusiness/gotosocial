@@ -141,47 +141,55 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, accountID string, ma
 	return statuses, nil
 }
 
-func (t *timelineDB) GetTagTimeline(ctx context.Context, accountID string, hashtag string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetTagTimeline(ctx context.Context, accountID string, hashtag *gtsmodel.Tag, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
 	if limit < 0 {
 		limit = 0
 	}
 
-	statuses := make([]*gtsmodel.Status, 0, limit)
+	newTag := new(gtsmodel.Tag)
 
 	q := t.conn.
 		NewSelect().
-		Model(&statuses).
-		Where("visibility = ?", gtsmodel.VisibilityPublic).
-		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id")).
-		WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
-		WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
-		Order("status.id DESC")
+		Model(newTag).
+		Relation("Statuses", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			bsq := sq.
+				Where("visibility = ?", gtsmodel.VisibilityPublic).
+				WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id")).
+				WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_uri")).
+				WhereGroup(" AND ", whereEmptyOrNull("boost_of_id")).
+				Order("status.id DESC")
 
-	if maxID != "" {
-		q = q.Where("status.id < ?", maxID)
-	}
+			if maxID != "" {
+				bsq = bsq.Where("status.id < ?", maxID)
+			}
 
-	if sinceID != "" {
-		q = q.Where("status.id > ?", sinceID)
-	}
+			if sinceID != "" {
+				bsq = bsq.Where("status.id > ?", sinceID)
+			}
 
-	if minID != "" {
-		q = q.Where("status.id > ?", minID)
-	}
+			if minID != "" {
+				bsq = bsq.Where("status.id > ?", minID)
+			}
 
-	if local {
-		q = q.Where("status.local = ?", local)
-	}
+			if local {
+				bsq = bsq.Where("status.local = ?", local)
+			}
+
+			return bsq
+		}).
+		Where("listable = ?", true).
+		Where("useable = ?", true).
+		Order("tag.id DESC")
 
 	if limit > 0 {
 		q = q.Limit(limit)
 	}
 
-	if err := q.Scan(ctx); err != nil {
+	if err := q.Where("tag.id = ?", hashtag.ID).Scan(ctx); err != nil {
 		return nil, t.conn.ProcessError(err)
 	}
 
-	return statuses, nil
+	return newTag.Statuses, nil
 }
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!

@@ -104,7 +104,19 @@ func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 }
 
 func (p *processor) TagTimelineGet(ctx context.Context, authed *oauth.Auth, hashtag string, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
-	statuses, err := p.db.GetTagTimeline(ctx, authed.Account.ID, hashtag, maxID, sinceID, minID, limit, local)
+	tags, err := p.db.TagStringsToTags(ctx, []string{hashtag}, authed.Account.ID)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			return &apimodel.StatusTimelineResponse{
+				Statuses: []*apimodel.Status{},
+			}, nil
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// statuses, err := p.db.
+
+	statuses, err := p.db.GetTagTimeline(ctx, authed.Account.ID, tags[0], maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
@@ -127,7 +139,7 @@ func (p *processor) TagTimelineGet(ctx context.Context, authed *oauth.Auth, hash
 		}, nil
 	}
 
-	return p.packageStatusResponse(s, "api/v1/timelines/tag/{hashtag}", s[len(s)-1].ID, s[0].ID, limit)
+	return p.packageStatusResponse(s, "api/v1/timelines/tag/:hashtag", s[len(s)-1].ID, s[0].ID, limit)
 }
 
 func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
