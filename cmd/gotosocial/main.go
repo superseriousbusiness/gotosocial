@@ -54,7 +54,7 @@ func main() {
 
 	// attach global flags to the root command so that they can be accessed from any subcommand
 	config.AttachGlobalFlags(rootCommand.PersistentFlags(), config.Defaults)
-	
+
 	// bind the config-path flag to viper early so that we can call it in the pre-run of following commands
 	if err := viper.BindPFlag(config.FlagNames.ConfigPath, rootCommand.PersistentFlags().Lookup(config.FlagNames.ConfigPath)); err != nil {
 		logrus.Fatalf("error attaching config flag: %s", err)

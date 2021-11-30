@@ -40,7 +40,7 @@ func preRun(cmd *cobra.Command, version string) error {
 	if err := config.InitViper(cmd.Flags(), version); err != nil {
 		return fmt.Errorf("error initializing viper: %s", err)
 	}
-	
+
 	if err := config.InitConfig(); err != nil {
 		return fmt.Errorf("error initializing config: %s", err)
 	}
