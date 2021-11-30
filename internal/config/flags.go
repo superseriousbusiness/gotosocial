@@ -20,8 +20,8 @@ package config
 
 import "github.com/spf13/pflag"
 
-// AttachCommonFlags attaches flags that are common to all commands.
-func AttachCommonFlags(flags *pflag.FlagSet, values Values) {
+// AttachGlobalFlags attaches flags that are common to all commands.
+func AttachGlobalFlags(flags *pflag.FlagSet, values Values) {
 	flags.String(FlagNames.LogLevel, values.LogLevel, FlagUsage.LogLevel)
 	flags.String(FlagNames.ConfigPath, values.ConfigPath, FlagUsage.ConfigPath)
 }

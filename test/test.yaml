@@ -26,14 +26,14 @@ log-level: "info"
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"
-application-name: "aaaaaaaaaaaaaaa"
+application-name: "gotosocial"
 
 # String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
 # DO NOT change this after your server has already run once, or you will break things!
 # Examples: ["gts.example.org","some.server.com"]
 # Default: "localhost"
-host: "wooooooo"
+host: "gts.example.org"
 
 # String. Domain to use when federating profiles. This is useful when you want your server to be at
 # eg., "gts.example.org", but you want the domain on accounts to be "example.org" because it looks better
@@ -45,7 +45,7 @@ host: "wooooooo"
 # DO NOT change this after your server has already run once, or you will break things!
 # Examples: ["example.org","server.com"]
 # Default: ""
-account-domain: "eeeeeeee"
+account-domain: "example.org"
 
 # String. Protocol to use for the server. Only change to http for local testing!
 # This should be the protocol part of the URI that your server is actually reachable on. So even if you're
@@ -53,7 +53,7 @@ account-domain: "eeeeeeee"
 # letsencrypt, it should still be https.
 # Options: ["http","https"]
 # Default: "https"
-protocol: "no"
+protocol: "https"
 
 # String. Address to bind the GoToSocial server to.
 # This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
@@ -71,7 +71,7 @@ bind-address: "0.0.0.0"
 # This *MUST NOT* be the same as the letsencrypt port specified below, unless letsencrypt is turned off.
 # Examples: [443, 6666, 8080]
 # Default: 8080
-port: 6969
+port: 8080
 
 # Array of string. CIDRs or IP addresses of proxies that should be trusted when determining real client IP from behind a reverse proxy.
 # If you're running inside a Docker container behind Traefik or Nginx, for example, add the subnet of your docker network,
@@ -91,12 +91,12 @@ trusted-proxies:
 # String. Database type.
 # Options: ["postgres","sqlite"]
 # Default: "postgres"
-db-type: "sqlite"
+db-type: "postgres"
 
 # String. Database address or parameters.
 # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
 # Default: "localhost"
-db-address: "8.8.8.8"
+db-address: "127.0.0.1"
 
 # Int. Port for database connection.
 # Examples: [5432, 1234, 6969]
@@ -134,21 +134,21 @@ db-tls-mode: "disable"
 # Default: ""
 db-tls-ca-cert: ""
 
-###############################
-##### WEB TEMPLATE CONFIG #####
-###############################
+######################
+##### WEB CONFIG #####
+######################
 
-# Config pertaining to templating of web pages/email notifications and the like
+# Config pertaining to templating and serving of web pages/email notifications and the like
 
 # String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
 # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
 # Default: "./web/template/"
-template-base-dir: "./web/template/"
+web-template-base-dir: "./web/template/"
 
 # String. Directory from which gotosocial will attempt to serve static web assets (images, scripts).
 # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
 # Default: "./web/assets/"
-template-asset-base-dir: "./web/assets/"
+web-asset-base-dir: "./web/assets/"
 
 ###########################
 ##### ACCOUNTS CONFIG #####
@@ -159,12 +159,12 @@ template-asset-base-dir: "./web/assets/"
 # Bool. Do we want people to be able to just submit sign up requests, or do we want invite only?
 # Options: [true, false]
 # Default: true
-accounts-open-registration: true
+accounts-registration-open: true
 
 # Bool. Do sign up requests require approval from an admin/moderator before an account can sign in/use the server?
 # Options: [true, false]
 # Default: true
-accounts-require-approval: true
+accounts-approval-required: true
 
 # Bool. Are sign up requests required to submit a reason for the request (eg., an explanation of why they want to join the instance)?
 # Options: [true, false]
@@ -180,22 +180,22 @@ accounts-reason-required: true
 # Int. Maximum allowed image upload size in bytes.
 # Examples: [2097152, 10485760]
 # Default: 2097152 -- aka 2MB
-media-max-image-size: 2097152
+media-image-max-size: 2097152
 
 # Int. Maximum allowed video upload size in bytes.
 # Examples: [2097152, 10485760]
 # Default: 10485760 -- aka 10MB
-media-max-video-size: 10485760
+media-video-max-size: 10485760
 
 # Int. Minimum amount of characters required as an image or video description.
 # Examples: [500, 1000, 1500]
 # Default: 0 (not required)
-media-min-description-chars: 0
+media-description-min-chars: 0
 
 # Int. Maximum amount of characters permitted in an image or video description.
 # Examples: [500, 1000, 1500]
 # Default: 500
-media-max-description-chars: 500
+media-description-max-chars: 500
 
 ##########################
 ##### STORAGE CONFIG #####
@@ -208,7 +208,7 @@ media-max-description-chars: 500
 # Default: "local" (storage on local disk)
 # NOTE: s3 storage is not yet supported!
 storage-backend: "local"
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
 # String. Directory to use as a base path for storing files.
 # Make sure whatever user/group gotosocial is running as has permission to access
 # this directly, and create new subdirectories and files with in.
@@ -270,7 +270,7 @@ statuses-poll-option-max-chars: 50
 # Note that going way higher than the default might break federation.
 # Examples: [4, 6, 10]
 # Default: 6
-statuses-max-media-files: 6
+statuses-media-max-files: 6
 
 ##############################
 ##### LETSENCRYPT CONFIG #####
@@ -373,27 +373,27 @@ oidc-scopes:
 # If this is not set, smtp will not be used to send emails, and you can ignore the other settings.
 # Examples: ["mail.example.org", "localhost"]
 # Default: ""
-smtp-host: ""
+smtp-host: "verycoolemailhost.mail"
 
 # Int. Port to use to connect to the smtp server.
 # Examples: []
 # Default: 0
-smtp-port: 0
+smtp-port: 8888
 
 # String. Username to use when authenticating with the smtp server.
 # This should have been provided to you by your smtp host.
 # This is often, but not always, an email address.
 # Examples: ["maillord@example.org"]
 # Default: ""
-smtp-username: ""
+smtp-username: "smtp-username"
 
 # String. Password to use when authenticating with the smtp server.
 # This should have been provided to you by your smtp host.
 # Examples: ["1234", "password"]
 # Default: ""
-smtp-password: ""
+smtp-password: "smtp-password"
 
 # String. 'From' address for sent emails.
 # Examples: ["mail@example.org"]
 # Default: ""
-smtp-from: ""
+smtp-from: "someone@example.org"

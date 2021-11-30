@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitConfig() {
+func InitConfig() error {
 	// environment variable stuff
 	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
 	viper.SetEnvPrefix("gts")
@@ -18,7 +18,9 @@ func InitConfig() {
 	if configPath := viper.GetString(FlagNames.ConfigPath); configPath != "" {
 		viper.SetConfigFile(configPath)
 		if err := viper.ReadInConfig(); err != nil {
-			panic(err)
+			return err
 		}
 	}
+
+	return nil
 }

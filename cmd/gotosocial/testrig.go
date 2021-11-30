@@ -34,7 +34,7 @@ func testrigCommands(version string) *cobra.Command {
 		Use:   "start",
 		Short: "start the gotosocial testrig server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return config.InitViper(cmd.Flags(), version)
+			return preRun(cmd, version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return testrig.Start(cmd.Context())
