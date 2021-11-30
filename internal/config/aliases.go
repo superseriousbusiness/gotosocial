@@ -4,11 +4,10 @@ package config
 // flags to be read from a configuration file via Viper.
 //
 // The key of the map is the command-line flag / viper key, and the value
-// is the field name to be used in the config file.
+// is the alias -- the field name used in the config file.
 var Aliases = map[string]string{
 	FlagNames.LogLevel:        "logLevel",
 	FlagNames.ApplicationName: "applicationName",
-	FlagNames.ConfigPath:      "configPath",
 	FlagNames.Host:            "host",
 	FlagNames.AccountDomain:   "accountDomain",
 	FlagNames.Protocol:        "protocol",
