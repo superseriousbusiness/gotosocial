@@ -53,6 +53,7 @@ func main() {
 	// add subcommands
 	cmd.AddCommand(serverCommands(v))
 	cmd.AddCommand(testrigCommands(v))
+	cmd.AddCommand(debugCommands(v))
 
 	// run the damn diggity thing
 	if err := cmd.Execute(); err != nil {
