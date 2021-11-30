@@ -23,26 +23,28 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 func InitViper(f *pflag.FlagSet, version string) error {
-	// config file stuff
-	// check if we have a config path set on the flag
-	configPath, err := f.GetString(FlagNames.ConfigPath)
-	if err != nil {
-		return err
+	// environment variable stuff
+	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
+	viper.SetEnvPrefix("gts")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
+
+	// register all aliases so that we can retrieve values set in the config file, using the standard keys
+	for flagName, configKey := range Aliases {
+		viper.RegisterAlias(flagName, configKey)
 	}
 
-	if configPath != "" {
-		logrus.Infof("proceeding with config file %s", configPath)
-		// register all aliases so that we can retrieve values set in the config file, using the standard keys
-		for alias, key := range Aliases {
-			viper.RegisterAlias(alias, key)
-		}
+	// bind this flag early so we know where to load the config file from
+	viper.BindPFlag(FlagNames.ConfigPath, f.Lookup(FlagNames.ConfigPath))
 
+	// config file stuff
+	// check if we have a config path set (either by cli arg or env var)
+	if configPath := viper.GetString(FlagNames.ConfigPath); configPath != "" {
 		// we have a config path set; we need to juggle it so that viper can read it properly
 		// see https://github.com/spf13/viper#reading-config-files
 		dir, file := filepath.Split(configPath)        // return eg., /some/dir/ , config.yaml
@@ -58,14 +60,8 @@ func InitViper(f *pflag.FlagSet, version string) error {
 		}
 	}
 
-	// environment variable stuff
-	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
-	viper.SetEnvPrefix("gts")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv()
-
 	// flag stuff
-	// bind all of the flags in flag set to viper so that we can retrieve values from the viper store
+	// bind all of the flags in flag set to viper so that we can retrieve their values from the viper store
 	if err := viper.BindPFlags(f); err != nil {
 		return fmt.Errorf("error with viper: %s", err)
 	}
