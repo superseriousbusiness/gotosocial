@@ -25,9 +25,9 @@ func NewTagCache() *TagCache {
 			logrus.Panicf("TagCache cloud not assert entry with key %s to *gtsmode.Tag", key)
 		}
 
-		c.mutext.Lock()
+		// c.mutext.Lock()
 		// do other things here
-		c.mutext.Unlock()
+		// c.mutext.Unlock()
 	})
 
 	return &c

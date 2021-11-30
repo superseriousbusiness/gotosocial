@@ -5,19 +5,20 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
+//nolint:golint,unused
 type tagDB struct {
-	config *config.Config
-	conn   *DBConn
+	// config *config.Config //nolint:golint,unused
+	conn *DBConn
 	// TODO
 	cache *cache.TagCache
 }
 
+//nolint:golint,unused
 func (t *tagDB) newTagQ(tag interface{}) *bun.SelectQuery {
 	logrus.Debug("newTagQ")
 	return t.conn.
@@ -26,6 +27,7 @@ func (t *tagDB) newTagQ(tag interface{}) *bun.SelectQuery {
 		Relation("Statuses")
 }
 
+//nolint:golint,unused
 func (t *tagDB) GetTagByID(ctx context.Context, id string) (*gtsmodel.Tag, db.Error) {
 	return t.getTag(
 		ctx,
@@ -38,6 +40,7 @@ func (t *tagDB) GetTagByID(ctx context.Context, id string) (*gtsmodel.Tag, db.Er
 	)
 }
 
+//nolint:golint,unused
 func (t *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, db.Error) {
 	tag := new(gtsmodel.Tag)
 	if err := t.newTagQ(tag).
@@ -48,6 +51,7 @@ func (t *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, d
 	return tag, nil
 }
 
+//nolint:golint,unused
 func (t *tagDB) getTag(ctx context.Context, cacheGet func() (*gtsmodel.Tag, bool), dbQuery func(*gtsmodel.Tag) error) (*gtsmodel.Tag, db.Error) {
 	tag, cached := cacheGet()
 
