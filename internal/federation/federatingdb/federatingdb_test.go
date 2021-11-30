@@ -57,13 +57,13 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testBlocks = testrig.NewTestBlocks()
-	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 }
 
 func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 	suite.db = testrig.NewTestDB()
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

@@ -50,16 +50,16 @@ type ProtocolTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *ProtocolTestSuite) SetupSuite() {
 	// setup standard items
-	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()
-	suite.activities = testrig.NewTestActivities(suite.accounts)
 }
 
 func (suite *ProtocolTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.activities = testrig.NewTestActivities(suite.accounts)
 	testrig.StandardDBSetup(suite.db, suite.accounts)
 }
 

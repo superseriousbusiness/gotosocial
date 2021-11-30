@@ -91,7 +91,6 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 			Account:     suite.testAccounts["local_account_1"],
 		},
 	}
-	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.testBlocks = testrig.NewTestBlocks()
 }
 
@@ -100,6 +99,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 
 	suite.db = testrig.NewTestDB()
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.storage = testrig.NewTestStorage()
 	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
 
