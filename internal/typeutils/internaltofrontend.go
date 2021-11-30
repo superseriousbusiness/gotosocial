@@ -588,7 +588,7 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			mi.Stats["domain_count"] = domainCount
 		}
 
-		mi.Registrations = viper.GetBool(flags.AccountsOpenRegistration)
+		mi.Registrations = viper.GetBool(flags.AccountsRegistrationOpen)
 		mi.ApprovalRequired = viper.GetBool(flags.AccountsApprovalRequired)
 		mi.InvitesEnabled = false // TODO
 		mi.MaxTootChars = uint(viper.GetInt(flags.StatusesMaxChars))

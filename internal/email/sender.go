@@ -40,7 +40,7 @@ type Sender interface {
 func NewSender() (Sender, error) {
 	flags := config.FlagNames
 
-	templateBaseDir := viper.GetString(flags.TemplateBaseDir)
+	templateBaseDir := viper.GetString(flags.WebTemplateBaseDir)
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
 		return nil, err

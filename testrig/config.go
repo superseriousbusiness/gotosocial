@@ -33,7 +33,5 @@ func InitTestConfig() {
 	config.AttachCommonFlags(flags, config.TestDefaults)
 	config.AttachServerFlags(flags, config.TestDefaults)
 
-	if err := config.InitViper(flags, "testrig"); err != nil {
-		panic(err)
-	}
+	config.InitViper(flags, "testrig")
 }

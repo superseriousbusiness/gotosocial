@@ -51,23 +51,23 @@ func AttachDatabaseFlags(flags *pflag.FlagSet, values Values) {
 
 // AttachTemplateFlags attaches flags pertaining to templating config.
 func AttachTemplateFlags(flags *pflag.FlagSet, values Values) {
-	flags.String(FlagNames.TemplateBaseDir, values.TemplateBaseDir, FlagUsage.TemplateBaseDir)
-	flags.String(FlagNames.AssetBaseDir, values.AssetBaseDir, FlagUsage.AssetBaseDir)
+	flags.String(FlagNames.WebTemplateBaseDir, values.TemplateBaseDir, FlagUsage.WebTemplateBaseDir)
+	flags.String(FlagNames.WebAssetBaseDir, values.AssetBaseDir, FlagUsage.WebAssetBaseDir)
 }
 
 // AttachAccountsFlags attaches flags pertaining to account config.
 func AttachAccountsFlags(flags *pflag.FlagSet, values Values) {
-	flags.Bool(FlagNames.AccountsOpenRegistration, values.AccountsOpenRegistration, FlagUsage.AccountsOpenRegistration)
+	flags.Bool(FlagNames.AccountsRegistrationOpen, values.AccountsOpenRegistration, FlagUsage.AccountsRegistrationOpen)
 	flags.Bool(FlagNames.AccountsApprovalRequired, values.AccountsApprovalRequired, FlagUsage.AccountsApprovalRequired)
 	flags.Bool(FlagNames.AccountsReasonRequired, values.AccountsReasonRequired, FlagUsage.AccountsReasonRequired)
 }
 
 // AttachMediaFlags attaches flags pertaining to media config.
 func AttachMediaFlags(flags *pflag.FlagSet, values Values) {
-	flags.Int(FlagNames.MediaMaxImageSize, values.MediaMaxImageSize, FlagUsage.MediaMaxImageSize)
-	flags.Int(FlagNames.MediaMaxVideoSize, values.MediaMaxVideoSize, FlagUsage.MediaMaxVideoSize)
-	flags.Int(FlagNames.MediaMinDescriptionChars, values.MediaMinDescriptionChars, FlagUsage.MediaMinDescriptionChars)
-	flags.Int(FlagNames.MediaMaxDescriptionChars, values.MediaMaxDescriptionChars, FlagUsage.MediaMaxDescriptionChars)
+	flags.Int(FlagNames.MediaImageMaxSize, values.MediaMaxImageSize, FlagUsage.MediaImageMaxSize)
+	flags.Int(FlagNames.MediaVideoMaxSize, values.MediaMaxVideoSize, FlagUsage.MediaVideoMaxSize)
+	flags.Int(FlagNames.MediaDescriptionMinChars, values.MediaMinDescriptionChars, FlagUsage.MediaDescriptionMinChars)
+	flags.Int(FlagNames.MediaDescriptionMaxChars, values.MediaMaxDescriptionChars, FlagUsage.MediaDescriptionMaxChars)
 }
 
 // AttachStorageFlags attaches flags pertaining to storage config.
@@ -85,7 +85,7 @@ func AttachStatusesFlags(flags *pflag.FlagSet, values Values) {
 	flags.Int(FlagNames.StatusesCWMaxChars, values.StatusesCWMaxChars, FlagUsage.StatusesCWMaxChars)
 	flags.Int(FlagNames.StatusesPollMaxOptions, values.StatusesPollMaxOptions, FlagUsage.StatusesPollMaxOptions)
 	flags.Int(FlagNames.StatusesPollOptionMaxChars, values.StatusesPollOptionMaxChars, FlagUsage.StatusesPollOptionMaxChars)
-	flags.Int(FlagNames.StatusesMaxMediaFiles, values.StatusesMaxMediaFiles, FlagUsage.StatusesMaxMediaFiles)
+	flags.Int(FlagNames.StatusesMediaMaxFiles, values.StatusesMaxMediaFiles, FlagUsage.StatusesMediaMaxFiles)
 }
 
 // AttachLetsEncryptFlags attaches flags pertaining to letsencrypt config.
@@ -158,19 +158,19 @@ type Flags struct {
 	DbTLSCACert string
 
 	// template flags
-	TemplateBaseDir string
-	AssetBaseDir    string
+	WebTemplateBaseDir string
+	WebAssetBaseDir    string
 
 	// accounts flags
-	AccountsOpenRegistration string
+	AccountsRegistrationOpen string
 	AccountsApprovalRequired string
 	AccountsReasonRequired   string
 
 	// media flags
-	MediaMaxImageSize        string
-	MediaMaxVideoSize        string
-	MediaMinDescriptionChars string
-	MediaMaxDescriptionChars string
+	MediaImageMaxSize        string
+	MediaVideoMaxSize        string
+	MediaDescriptionMinChars string
+	MediaDescriptionMaxChars string
 
 	// storage flags
 	StorageBackend       string
@@ -184,7 +184,7 @@ type Flags struct {
 	StatusesCWMaxChars         string
 	StatusesPollMaxOptions     string
 	StatusesPollOptionMaxChars string
-	StatusesMaxMediaFiles      string
+	StatusesMediaMaxFiles      string
 
 	// letsencrypt flags
 	LetsEncryptEnabled      string
@@ -237,17 +237,17 @@ var FlagNames = Flags{
 	DbTLSMode:   "db-tls-mode",
 	DbTLSCACert: "db-tls-ca-cert",
 
-	TemplateBaseDir: "template-basedir",
-	AssetBaseDir:    "asset-basedir",
+	WebTemplateBaseDir: "web-template-base-dir",
+	WebAssetBaseDir:    "web-asset-base-dir",
 
-	AccountsOpenRegistration: "accounts-open-registration",
+	AccountsRegistrationOpen: "accounts-registration-open",
 	AccountsApprovalRequired: "accounts-approval-required",
 	AccountsReasonRequired:   "accounts-reason-required",
 
-	MediaMaxImageSize:        "media-max-image-size",
-	MediaMaxVideoSize:        "media-max-video-size",
-	MediaMinDescriptionChars: "media-min-description-chars",
-	MediaMaxDescriptionChars: "media-max-description-chars",
+	MediaImageMaxSize:        "media-image-max-size",
+	MediaVideoMaxSize:        "media-video-max-size",
+	MediaDescriptionMinChars: "media-description-min-chars",
+	MediaDescriptionMaxChars: "media-description-max-chars",
 
 	StorageBackend:       "storage-backend",
 	StorageBasePath:      "storage-base-path",
@@ -259,12 +259,12 @@ var FlagNames = Flags{
 	StatusesCWMaxChars:         "statuses-cw-max-chars",
 	StatusesPollMaxOptions:     "statuses-poll-max-options",
 	StatusesPollOptionMaxChars: "statuses-poll-option-max-chars",
-	StatusesMaxMediaFiles:      "statuses-max-media-files",
+	StatusesMediaMaxFiles:      "statuses-media-max-files",
 
 	LetsEncryptEnabled:      "letsencrypt-enabled",
 	LetsEncryptPort:         "letsencrypt-port",
 	LetsEncryptCertDir:      "letsencrypt-cert-dir",
-	LetsEncryptEmailAddress: "letsencrypt-email",
+	LetsEncryptEmailAddress: "letsencrypt-email-address",
 
 	OIDCEnabled:          "oidc-enabled",
 	OIDCIdpName:          "oidc-idp-name",
@@ -307,17 +307,17 @@ var FlagUsage = Flags{
 	DbTLSMode:   "Database tls mode",
 	DbTLSCACert: "Path to CA cert for db tls connection",
 
-	TemplateBaseDir: "Basedir for html templating files for rendering pages and composing emails.",
-	AssetBaseDir:    "Directory to serve static assets from, accessible at example.org/assets/",
+	WebTemplateBaseDir: "Basedir for html templating files for rendering pages and composing emails.",
+	WebAssetBaseDir:    "Directory to serve static assets from, accessible at example.org/assets/",
 
-	AccountsOpenRegistration: "Allow anyone to submit an account signup request. If false, server will be invite-only.",
+	AccountsRegistrationOpen: "Allow anyone to submit an account signup request. If false, server will be invite-only.",
 	AccountsApprovalRequired: "Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved.",
 	AccountsReasonRequired:   "Do new account signups require a reason to be submitted on registration?",
 
-	MediaMaxImageSize:        "Max size of accepted images in bytes",
-	MediaMaxVideoSize:        "Max size of accepted videos in bytes",
-	MediaMinDescriptionChars: "Min required chars for an image description",
-	MediaMaxDescriptionChars: "Max permitted chars for an image description",
+	MediaImageMaxSize:        "Max size of accepted images in bytes",
+	MediaVideoMaxSize:        "Max size of accepted videos in bytes",
+	MediaDescriptionMinChars: "Min required chars for an image description",
+	MediaDescriptionMaxChars: "Max permitted chars for an image description",
 
 	StorageBackend:       "Storage backend to use for media attachments",
 	StorageBasePath:      "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
@@ -329,7 +329,7 @@ var FlagUsage = Flags{
 	StatusesCWMaxChars:         "Max permitted characters for content/spoiler warnings on statuses",
 	StatusesPollMaxOptions:     "Max amount of options permitted on a poll",
 	StatusesPollOptionMaxChars: "Max amount of characters for a poll option",
-	StatusesMaxMediaFiles:      "Maximum number of media files/attachments per status",
+	StatusesMediaMaxFiles:      "Maximum number of media files/attachments per status",
 
 	LetsEncryptEnabled:      "Enable letsencrypt TLS certs for this server. If set to true, then cert dir also needs to be set (or take the default).",
 	LetsEncryptPort:         "Port to listen on for letsencrypt certificate challenges. Must not be the same as the GtS webserver/API port.",

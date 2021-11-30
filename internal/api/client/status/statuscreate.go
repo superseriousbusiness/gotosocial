@@ -126,7 +126,7 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 
 	flags := config.FlagNames
 	maxChars := viper.GetInt(flags.StatusesMaxChars)
-	maxMediaFiles := viper.GetInt(flags.StatusesMaxMediaFiles)
+	maxMediaFiles := viper.GetInt(flags.StatusesMediaMaxFiles)
 	maxPollOptions := viper.GetInt(flags.StatusesPollMaxOptions)
 	maxPollChars := viper.GetInt(flags.StatusesPollOptionMaxChars)
 	maxCwChars := viper.GetInt(flags.StatusesCWMaxChars)

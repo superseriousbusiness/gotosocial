@@ -119,7 +119,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 func validateCreateAccount(form *model.AccountCreateRequest) error {
 	flags := config.FlagNames
 
-	if !viper.GetBool(flags.AccountsOpenRegistration) {
+	if !viper.GetBool(flags.AccountsRegistrationOpen) {
 		return errors.New("registration is not open for this server")
 	}
 

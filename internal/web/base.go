@@ -93,7 +93,7 @@ func (m *Module) Route(s router.Router) error {
 	if err != nil {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
-	assetBaseDir := viper.GetString(config.FlagNames.AssetBaseDir)
+	assetBaseDir := viper.GetString(config.FlagNames.WebAssetBaseDir)
 	assetPath := filepath.Join(cwd, assetBaseDir)
 	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
 

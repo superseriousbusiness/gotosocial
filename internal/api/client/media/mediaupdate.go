@@ -136,8 +136,8 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 
 func validateUpdateMedia(form *model.AttachmentUpdateRequest) error {
 	flags := config.FlagNames
-	minDescriptionChars := viper.GetInt(flags.MediaMinDescriptionChars)
-	maxDescriptionChars := viper.GetInt(flags.MediaMaxDescriptionChars)
+	minDescriptionChars := viper.GetInt(flags.MediaDescriptionMinChars)
+	maxDescriptionChars := viper.GetInt(flags.MediaDescriptionMaxChars)
 
 	if form.Description != nil {
 		if len(*form.Description) < minDescriptionChars || len(*form.Description) > maxDescriptionChars {

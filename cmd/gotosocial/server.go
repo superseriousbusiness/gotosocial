@@ -35,15 +35,12 @@ func serverCommands(version string) *cobra.Command {
 		Use:   "start",
 		Short: "start the gotosocial server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-
-			return commonInit(cmd, version)
+			return config.InitViper(cmd.Flags(), version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return server.Start(cmd.Context())
 		},
 	}
-
-	config.AttachCommonFlags(start.Flags(), config.Defaults)
 	config.AttachServerFlags(start.Flags(), config.Defaults)
 
 	command.AddCommand(start)

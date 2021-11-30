@@ -138,7 +138,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // the account's new avatar image.
 func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
-	maxImageSize := viper.GetInt(config.FlagNames.MediaMaxImageSize)
+	maxImageSize := viper.GetInt(config.FlagNames.MediaImageMaxSize)
 	if int(avatar.Size) > maxImageSize {
 		err = fmt.Errorf("avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 		return nil, err
@@ -172,7 +172,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 // the account's new header image.
 func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
 	var err error
-	maxImageSize := viper.GetInt(config.FlagNames.MediaMaxImageSize)
+	maxImageSize := viper.GetInt(config.FlagNames.MediaImageMaxSize)
 	if int(header.Size) > maxImageSize {
 		err = fmt.Errorf("header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 		return nil, err

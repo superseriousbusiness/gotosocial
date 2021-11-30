@@ -20,8 +20,10 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	configcliactions "github.com/superseriousbusiness/gotosocial/internal/cliactions/debug/config"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func debugCommands(version string) *cobra.Command {
@@ -34,13 +36,15 @@ func debugCommands(version string) *cobra.Command {
 		Use:   "config",
 		Short: "print the collated config (derived from env, flags, and config file) to stdout",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return commonInit(cmd, version)
+			return config.InitViper(cmd.Flags(), version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
+				return err
+			}
 			return configcliactions.Config(cmd.Context())
 		},
 	}
-	config.AttachCommonFlags(conf.Flags(), config.Defaults)
 	config.AttachServerFlags(conf.Flags(), config.Defaults)
 
 	command.AddCommand(conf)

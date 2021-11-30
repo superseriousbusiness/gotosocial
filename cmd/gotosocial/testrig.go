@@ -34,13 +34,12 @@ func testrigCommands(version string) *cobra.Command {
 		Use:   "start",
 		Short: "start the gotosocial testrig server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return commonInit(cmd, version)
+			return config.InitViper(cmd.Flags(), version)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return testrig.Start(cmd.Context())
 		},
 	}
-	config.AttachCommonFlags(start.Flags(), config.TestDefaults)
 	config.AttachServerFlags(start.Flags(), config.TestDefaults)
 
 	command.AddCommand(start)

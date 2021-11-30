@@ -54,7 +54,7 @@ func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (
 }
 
 func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
-	openRegistration := viper.GetBool(config.FlagNames.AccountsOpenRegistration)
+	openRegistration := viper.GetBool(config.FlagNames.AccountsRegistrationOpen)
 	softwareVersion := viper.GetString(config.FlagNames.SoftwareVersion)
 
 	return &apimodel.Nodeinfo{

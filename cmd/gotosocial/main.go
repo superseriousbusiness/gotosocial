@@ -21,8 +21,10 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	_ "github.com/superseriousbusiness/gotosocial/docs"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Version is the software version of GtS being used
@@ -33,6 +35,8 @@ var Commit string
 
 //go:generate swagger generate spec
 func main() {
+	cobra.OnInitialize(config.InitConfig)
+
 	var v string
 	if Commit == "" {
 		v = Version
@@ -40,8 +44,8 @@ func main() {
 		v = Version + " " + Commit[:7]
 	}
 
-	// instantiate the root command
-	cmd := &cobra.Command{
+	// instantiate the root rootCommand
+	rootCommand := &cobra.Command{
 		Use:           "gotosocial",
 		Short:         "GoToSocial - a fediverse social media server",
 		Long:          "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
@@ -50,13 +54,16 @@ func main() {
 		SilenceUsage:  true,
 	}
 
+	config.AttachCommonFlags(rootCommand.PersistentFlags(), config.Defaults)
+	viper.BindPFlag(config.FlagNames.ConfigPath, rootCommand.PersistentFlags().Lookup(config.FlagNames.ConfigPath))
+
 	// add subcommands
-	cmd.AddCommand(serverCommands(v))
-	cmd.AddCommand(testrigCommands(v))
-	cmd.AddCommand(debugCommands(v))
+	rootCommand.AddCommand(serverCommands(v))
+	rootCommand.AddCommand(testrigCommands(v))
+	rootCommand.AddCommand(debugCommands(v))
 
 	// run the damn diggity thing
-	if err := cmd.Execute(); err != nil {
+	if err := rootCommand.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %s", err)
 	}
 }

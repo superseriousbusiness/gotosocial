@@ -21,12 +21,12 @@
 # String. Log level to use throughout the application. Must be lower-case.
 # Options: ["trace","debug","info","warn","error","fatal"]
 # Default: "info"
-logLevel: "info"
+log-level: "info"
 
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"
-applicationName: "gotosocial"
+application-name: "gotosocial"
 
 # String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
@@ -45,7 +45,7 @@ host: "localhost"
 # DO NOT change this after your server has already run once, or you will break things!
 # Examples: ["example.org","server.com"]
 # Default: ""
-accountDomain: ""
+account-domain: ""
 
 # String. Protocol to use for the server. Only change to http for local testing!
 # This should be the protocol part of the URI that your server is actually reachable on. So even if you're
@@ -62,7 +62,7 @@ protocol: "https"
 # you have specific networking requirements.
 # Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2001:db8::fed1]"]
 # Default: "0.0.0.0"
-bindAddress: "0.0.0.0"
+bind-address: "0.0.0.0"
 
 # Int. Listen port for the GoToSocial webserver + API. If you're running behind a reverse proxy and/or in a docker,
 # container, just set this to whatever you like (or leave the default), and make sure it's forwarded properly.
@@ -78,7 +78,7 @@ port: 8080
 # or the gateway of the docker network, and/or the address of the reverse proxy (if it's not running on the host network).
 # Example: ["127.0.0.1/32", "172.20.0.1"]
 # Default: ["127.0.0.1/32"] (localhost)
-trustedProxies:
+trusted-proxies:
   - "127.0.0.1/32"
 
 ############################
@@ -86,318 +86,313 @@ trustedProxies:
 ############################
 
 # Config pertaining to the Gotosocial database connection
-db:
 
-  # String. Database type.
-  # Options: ["postgres","sqlite"]
-  # Default: "postgres"
-  type: "postgres"
+# String. Database type.
+# Options: ["postgres","sqlite"]
+# Default: "postgres"
+db-type: "postgres"
 
-  # String. Database address or parameters.
-  # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
-  # Default: "localhost"
-  address: "127.0.0.1"
+# String. Database address or parameters.
+# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
+# Default: "localhost"
+db-address: "127.0.0.1"
 
-  # Int. Port for database connection.
-  # Examples: [5432, 1234, 6969]
-  # Default: 5432
-  port: 5432
+# Int. Port for database connection.
+# Examples: [5432, 1234, 6969]
+# Default: 5432
+db-port: 5432
 
-  # String. Username for the database connection.
-  # Examples: ["mydbuser","postgres","gotosocial"]
-  # Default: "postgres"
-  user: "postgres"
+# String. Username for the database connection.
+# Examples: ["mydbuser","postgres","gotosocial"]
+# Default: "postgres"
+db-user: "postgres"
 
-  # REQUIRED
-  # String. Password to use for the database connection
-  # Examples: ["password123","verysafepassword","postgres"]
-  # Default: "postgres"
-  password: "postgres"
+# REQUIRED
+# String. Password to use for the database connection
+# Examples: ["password123","verysafepassword","postgres"]
+# Default: "postgres"
+db-password: "postgres"
 
-  # String. Name of the database to use within the provided database type.
-  # Examples: ["mydb","postgres","gotosocial"]
-  # Default: "postgres"
-  database: "postgres"
+# String. Name of the database to use within the provided database type.
+# Examples: ["mydb","postgres","gotosocial"]
+# Default: "postgres"
+db-database: "postgres"
 
-  # String. Disable, enable, or require SSL/TLS connection to the database.
-  # If "disable" then no TLS connection will be attempted.
-  # If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
-  # If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
-  # Options: ["disable", "enable", "require"]
-  # Default: "disable"
-  tlsMode: "disable"
+# String. Disable, enable, or require SSL/TLS connection to the database.
+# If "disable" then no TLS connection will be attempted.
+# If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
+# If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
+# Options: ["disable", "enable", "require"]
+# Default: "disable"
+db-tls-mode: "disable"
 
-  # String. Path to a CA certificate on the host machine for db certificate validation.
-  # If this is left empty, just the host certificates will be used.
-  # If filled in, the certificate will be loaded and added to host certificates.
-  # Examples: ["/path/to/some/cert.crt"]
-  # Default: ""
-  tlsCACert: ""
+# String. Path to a CA certificate on the host machine for db certificate validation.
+# If this is left empty, just the host certificates will be used.
+# If filled in, the certificate will be loaded and added to host certificates.
+# Examples: ["/path/to/some/cert.crt"]
+# Default: ""
+db-tls-ca-cert: ""
 
-###############################
-##### WEB TEMPLATE CONFIG #####
-###############################
+######################
+##### WEB CONFIG #####
+######################
 
-# Config pertaining to templating of web pages/email notifications and the like
-template:
+# Config pertaining to templating and serving of web pages/email notifications and the like
 
-  # String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
-  # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
-  # Default: "./web/template/"
-  baseDir: "./web/template/"
+# String. Directory from which gotosocial will attempt to load html templates (.tmpl files).
+# Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
+# Default: "./web/template/"
+web-template-base-dir: "./web/template/"
 
-  # String. Directory from which gotosocial will attempt to serve static web assets (images, scripts).
-  # Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
-  # Default: "./web/assets/"
-  assetBaseDir: "./web/assets/"
+# String. Directory from which gotosocial will attempt to serve static web assets (images, scripts).
+# Examples: ["/some/absolute/path/", "./relative/path/", "../../some/weird/path/"]
+# Default: "./web/assets/"
+web-asset-base-dir: "./web/assets/"
 
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################
 
 # Config pertaining to creation and maintenance of accounts on the server, as well as defaults for new accounts.
-accounts:
 
-  # Bool. Do we want people to be able to just submit sign up requests, or do we want invite only?
-  # Options: [true, false]
-  # Default: true
-  openRegistration: true
+# Bool. Do we want people to be able to just submit sign up requests, or do we want invite only?
+# Options: [true, false]
+# Default: true
+accounts-registration-open: true
 
-  # Bool. Do sign up requests require approval from an admin/moderator before an account can sign in/use the server?
-  # Options: [true, false]
-  # Default: true
-  requireApproval: true
+# Bool. Do sign up requests require approval from an admin/moderator before an account can sign in/use the server?
+# Options: [true, false]
+# Default: true
+accounts-approval-required: true
 
-  # Bool. Are sign up requests required to submit a reason for the request (eg., an explanation of why they want to join the instance)?
-  # Options: [true, false]
-  # Default: true
-  reasonRequired: true
+# Bool. Are sign up requests required to submit a reason for the request (eg., an explanation of why they want to join the instance)?
+# Options: [true, false]
+# Default: true
+accounts-reason-required: true
 
 ########################
 ##### MEDIA CONFIG #####
 ########################
 
 # Config pertaining to user media uploads (videos, image, image descriptions).
-media:
 
-  # Int. Maximum allowed image upload size in bytes.
-  # Examples: [2097152, 10485760]
-  # Default: 2097152 -- aka 2MB
-  maxImageSize: 2097152
+# Int. Maximum allowed image upload size in bytes.
+# Examples: [2097152, 10485760]
+# Default: 2097152 -- aka 2MB
+media-image-max-size: 2097152
 
-  # Int. Maximum allowed video upload size in bytes.
-  # Examples: [2097152, 10485760]
-  # Default: 10485760 -- aka 10MB
-  maxVideoSize: 10485760
+# Int. Maximum allowed video upload size in bytes.
+# Examples: [2097152, 10485760]
+# Default: 10485760 -- aka 10MB
+media-video-max-size: 10485760
 
-  # Int. Minimum amount of characters required as an image or video description.
-  # Examples: [500, 1000, 1500]
-  # Default: 0 (not required)
-  minDescriptionChars: 0
+# Int. Minimum amount of characters required as an image or video description.
+# Examples: [500, 1000, 1500]
+# Default: 0 (not required)
+media-description-min-chars: 0
 
-  # Int. Maximum amount of characters permitted in an image or video description.
-  # Examples: [500, 1000, 1500]
-  # Default: 500
-  maxDescriptionChars: 500
+# Int. Maximum amount of characters permitted in an image or video description.
+# Examples: [500, 1000, 1500]
+# Default: 500
+media-description-max-chars: 500
 
 ##########################
 ##### STORAGE CONFIG #####
 ##########################
 
 # Config pertaining to storage of user-created uploads (videos, images, etc).
-storage:
 
-  # String. Type of storage backend to use.
-  # Examples: ["local", "s3"]
-  # Default: "local" (storage on local disk)
-  # NOTE: s3 storage is not yet supported!
-  backend: "local"
+# String. Type of storage backend to use.
+# Examples: ["local", "s3"]
+# Default: "local" (storage on local disk)
+# NOTE: s3 storage is not yet supported!
+storage-backend: "local"
 
-  # String. Directory to use as a base path for storing files.
-  # Make sure whatever user/group gotosocial is running as has permission to access
-  # this directly, and create new subdirectories and files with in.
-  # Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
-  # Default: "/gotosocial/storage"
-  basePath: "/gotosocial/storage"
+# String. Directory to use as a base path for storing files.
+# Make sure whatever user/group gotosocial is running as has permission to access
+# this directly, and create new subdirectories and files with in.
+# Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
+# Default: "/gotosocial/storage"
+storage-base-path: "/gotosocial/storage"
 
-  # String. Protocol to use for serving stored files.
-  # It's very unlikely that you'll need to change this ever, but there might be edge cases.
-  # Examples: ["http", "https"]
-  serveProtocol: "https"
+# String. Protocol to use for serving stored files.
+# It's very unlikely that you'll need to change this ever, but there might be edge cases.
+# Examples: ["http", "https"]
+storage-serve-protocol: "https"
 
-  # String. Host for serving stored files.
-  # If you're using local storage, this should be THE SAME as the value you've set for Host, above.
-  # It should only be a different value if you're serving stored files from a host
-  # other than the one your instance is running on.
-  # Examples: ["localhost", "example.org"]
-  # Default: "localhost" -- you should absolutely change this.
-  serveHost: "localhost"
+# String. Host for serving stored files.
+# If you're using local storage, this should be THE SAME as the value you've set for Host, above.
+# It should only be a different value if you're serving stored files from a host
+# other than the one your instance is running on.
+# Examples: ["localhost", "example.org"]
+# Default: "localhost" -- you should absolutely change this.
+storage-serve-host: "localhost"
 
-  # String. Base path for serving stored files. This will be added to serveHost and serveProtocol
-  # to form the prefix url of your stored files. Eg., https://example.org/fileserver/.....
-  # It's unlikely that you will need to change this.
-  # Examples: ["/fileserver", "/media"]
-  # Default: "/fileserver"
-  serveBasePath: "/fileserver"
+# String. Base path for serving stored files. This will be added to serveHost and serveProtocol
+# to form the prefix url of your stored files. Eg., https://example.org/fileserver/.....
+# It's unlikely that you will need to change this.
+# Examples: ["/fileserver", "/media"]
+# Default: "/fileserver"
+storage-serve-base-path: "/fileserver"
 
 ###########################
 ##### STATUSES CONFIG #####
 ###########################
 
 # Config pertaining to the creation of statuses/posts, and permitted limits.
-statuses:
 
-  # Int. Maximum amount of characters permitted for a new status.
-  # Note that going way higher than the default might break federation.
-  # Examples: [140, 500, 5000]
-  # Default: 5000
-  maxChars: 5000
+# Int. Maximum amount of characters permitted for a new status.
+# Note that going way higher than the default might break federation.
+# Examples: [140, 500, 5000]
+# Default: 5000
+statuses-max-chars: 5000
 
-  # Int. Maximum amount of characters allowed in the CW/subject header of a status.
-  # Note that going way higher than the default might break federation.
-  # Examples: [100, 200]
-  # Default: 100
-  cwMaxChars: 100
+# Int. Maximum amount of characters allowed in the CW/subject header of a status.
+# Note that going way higher than the default might break federation.
+# Examples: [100, 200]
+# Default: 100
+statuses-cw-max-chars: 100
 
-  # Int. Maximum amount of options to permit when creating a new poll.
-  # Note that going way higher than the default might break federation.
-  # Examples: [4, 6, 10]
-  # Default: 6
-  pollMaxOptions: 6
+# Int. Maximum amount of options to permit when creating a new poll.
+# Note that going way higher than the default might break federation.
+# Examples: [4, 6, 10]
+# Default: 6
+statuses-poll-max-options: 6
 
-  # Int. Maximum amount of characters to permit per poll option when creating a new poll.
-  # Note that going way higher than the default might break federation.
-  # Examples: [50, 100, 150]
-  # Default: 50
-  pollOptionMaxChars: 50
+# Int. Maximum amount of characters to permit per poll option when creating a new poll.
+# Note that going way higher than the default might break federation.
+# Examples: [50, 100, 150]
+# Default: 50
+statuses-poll-option-max-chars: 50
 
-  # Int. Maximum amount of media files that can be attached to a new status.
-  # Note that going way higher than the default might break federation.
-  # Examples: [4, 6, 10]
-  # Default: 6
-  maxMediaFiles: 6
+# Int. Maximum amount of media files that can be attached to a new status.
+# Note that going way higher than the default might break federation.
+# Examples: [4, 6, 10]
+# Default: 6
+statuses-media-max-files: 6
 
 ##############################
 ##### LETSENCRYPT CONFIG #####
 ##############################
 
 # Config pertaining to the automatic acquisition and use of LetsEncrypt HTTPS certificates.
-letsEncrypt:
 
-  # Bool. Whether or not letsencrypt should be enabled for the server.
-  # If false, the rest of the settings here will be ignored.
-  # You should only change this if you want to serve GoToSocial behind a reverse proxy
-  # like Traefik, HAProxy, or Nginx.
-  # Options: [true, false]
-  # Default: true
-  enabled: true
+# Bool. Whether or not letsencrypt should be enabled for the server.
+# If false, the rest of the settings here will be ignored.
+# You should only change this if you want to serve GoToSocial behind a reverse proxy
+# like Traefik, HAProxy, or Nginx.
+# Options: [true, false]
+# Default: true
+letsencrypt-enabled: true
 
-  # Int. Port to listen for letsencrypt certificate challenges on.
-  # If letsencrypt is enabled, this port must be reachable or you won't be able to obtain certs.
-  # If letsencrypt is disabled, this port will not be used.
-  # This *must not* be the same as the webserver/API port specified above.
-  # Examples: [80, 8000, 1312]
-  # Default: 80
-  port: 80
+# Int. Port to listen for letsencrypt certificate challenges on.
+# If letsencrypt is enabled, this port must be reachable or you won't be able to obtain certs.
+# If letsencrypt is disabled, this port will not be used.
+# This *must not* be the same as the webserver/API port specified above.
+# Examples: [80, 8000, 1312]
+# Default: 80
+letsencrypt-port: 80
 
-  # String. Directory in which to store LetsEncrypt certificates.
-  # It is a good move to make this a sub-path within your storage directory, as it makes
-  # backup easier, but you might wish to move them elsewhere if they're also accessed by other services.
-  # In any case, make sure GoToSocial has permissions to write to / read from this directory.
-  # Examples: ["/home/gotosocial/storage/certs", "/acmecerts"]
-  # Default: "/gotosocial/storage/certs"
-  certDir: "/gotosocial/storage/certs"
+# String. Directory in which to store LetsEncrypt certificates.
+# It is a good move to make this a sub-path within your storage directory, as it makes
+# backup easier, but you might wish to move them elsewhere if they're also accessed by other services.
+# In any case, make sure GoToSocial has permissions to write to / read from this directory.
+# Examples: ["/home/gotosocial/storage/certs", "/acmecerts"]
+# Default: "/gotosocial/storage/certs"
+letsencrypt-cert-dir: "/gotosocial/storage/certs"
 
-  # String. Email address to use when registering LetsEncrypt certs.
-  # Most likely, this will be the email address of the instance administrator.
-  # LetsEncrypt will send notifications about expiring certificates etc to this address.
-  # Examples: ["admin@example.org"]
-  # Default: ""
-  emailAddress: ""
+# String. Email address to use when registering LetsEncrypt certs.
+# Most likely, this will be the email address of the instance administrator.
+# LetsEncrypt will send notifications about expiring certificates etc to this address.
+# Examples: ["admin@example.org"]
+# Default: ""
+letsencrypt-email-address: ""
 
 #######################
 ##### OIDC CONFIG #####
 #######################
 
 # Config for authentication with an external OIDC provider (Dex, Google, Auth0, etc).
-oidc:
 
-  # Bool. Enable authentication with external OIDC provider. If set to true, then
-  # the other OIDC options must be set as well. If this is set to false, then the standard
-  # internal oauth flow will be used, where users sign in to GtS with username/password.
-  # Options: [true, false]
-  # Default: false
-  enabled: false
+# Bool. Enable authentication with external OIDC provider. If set to true, then
+# the other OIDC options must be set as well. If this is set to false, then the standard
+# internal oauth flow will be used, where users sign in to GtS with username/password.
+# Options: [true, false]
+# Default: false
+oidc-enabled: false
 
-  # String. Name of the oidc idp (identity provider). This will be shown to users when
-  # they log in.
-  # Examples: ["Google", "Dex", "Auth0"]
-  # Default: ""
-  idpName: ""
+# String. Name of the oidc idp (identity provider). This will be shown to users when
+# they log in.
+# Examples: ["Google", "Dex", "Auth0"]
+# Default: ""
+oidc-idp-name: ""
 
-  # Bool. Skip the normal verification flow of tokens returned from the OIDC provider, ie.,
-  # don't check the expiry or signature. This should only be used in debugging or testing,
-  # never ever in a production environment as it's extremely unsafe!
-  # Options: [true, false]
-  # Default: false
-  skipVerification: false
+# Bool. Skip the normal verification flow of tokens returned from the OIDC provider, ie.,
+# don't check the expiry or signature. This should only be used in debugging or testing,
+# never ever in a production environment as it's extremely unsafe!
+# Options: [true, false]
+# Default: false
+oidc-skip-verification: false
 
-  # String. The OIDC issuer URI. This is where GtS will redirect users to for login.
-  # Typically this will look like a standard web URL.
-  # Examples: ["https://auth.example.org", "https://example.org/auth"]
-  # Default: ""
-  issuer: ""
+# String. The OIDC issuer URI. This is where GtS will redirect users to for login.
+# Typically this will look like a standard web URL.
+# Examples: ["https://auth.example.org", "https://example.org/auth"]
+# Default: ""
+oidc-issuer: ""
 
-  # String. The ID for this client as registered with the OIDC provider.
-  # Examples: ["some-client-id", "fda3772a-ad35-41c9-9a59-f1943ad18f54"]
-  # Default: ""
-  clientID: ""
+# String. The ID for this client as registered with the OIDC provider.
+# Examples: ["some-client-id", "fda3772a-ad35-41c9-9a59-f1943ad18f54"]
+# Default: ""
+oidc-client-id: ""
 
-  # String. The secret for this client as registered with the OIDC provider.
-  # Examples: ["super-secret-business", "79379cf5-8057-426d-bb83-af504d98a7b0"]
-  # Default: ""
-  clientSecret: ""
+# String. The secret for this client as registered with the OIDC provider.
+# Examples: ["super-secret-business", "79379cf5-8057-426d-bb83-af504d98a7b0"]
+# Default: ""
+oidc-client-secret: ""
 
-  # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
-  # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
-  # 'profile' is used to extract a username for the newly created user.
-  # 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
-  # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
-  # Default: ["openid", "email", "profile", "groups"]
-  scopes:
-    - "openid"
-    - "email"
-    - "profile"
-    - "groups"
+# Array of string. Scopes to request from the OIDC provider. The returned values will be used to
+# populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
+# 'profile' is used to extract a username for the newly created user.
+# 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
+# Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
+# Default: ["openid", "email", "profile", "groups"]
+oidc-scopes:
+  - "openid"
+  - "email"
+  - "profile"
+  - "groups"
 
 #######################
 ##### SMTP CONFIG #####
 #######################
 
 # Config for sending emails via an smtp server. See https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
-smtp:
 
-  # String. The hostname of the smtp server you want to use.
-  # If this is not set, smtp will not be used to send emails, and you can ignore the other settings.
-  # Examples: ["mail.example.org", "localhost"]
-  # Default: ""
-  host: ""
-  # Int. Port to use to connect to the smtp server.
-  # Examples: []
-  # Default: 0
-  port: 0
-  # String. Username to use when authenticating with the smtp server.
-  # This should have been provided to you by your smtp host.
-  # This is often, but not always, an email address.
-  # Examples: ["maillord@example.org"]
-  # Default: ""
-  username:
-  # String. Password to use when authenticating with the smtp server.
-  # This should have been provided to you by your smtp host.
-  # Examples: ["1234", "password"]
-  # Default: ""
-  password:
-  # String. 'From' address for sent emails.
-  # Examples: ["mail@example.org"]
-  # Default: ""
-  from: ""
+# String. The hostname of the smtp server you want to use.
+# If this is not set, smtp will not be used to send emails, and you can ignore the other settings.
+# Examples: ["mail.example.org", "localhost"]
+# Default: ""
+smtp-host: ""
+
+# Int. Port to use to connect to the smtp server.
+# Examples: []
+# Default: 0
+smtp-port: 0
+
+# String. Username to use when authenticating with the smtp server.
+# This should have been provided to you by your smtp host.
+# This is often, but not always, an email address.
+# Examples: ["maillord@example.org"]
+# Default: ""
+smtp-username: ""
+
+# String. Password to use when authenticating with the smtp server.
+# This should have been provided to you by your smtp host.
+# Examples: ["1234", "password"]
+# Default: ""
+smtp-password: ""
+
+# String. 'From' address for sent emails.
+# Examples: ["mail@example.org"]
+# Default: ""
+smtp-from: ""
