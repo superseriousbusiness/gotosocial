@@ -33,5 +33,6 @@ func commonInit(cmd *cobra.Command, version string) error {
 	if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
 		return err
 	}
+
 	return nil
 }
