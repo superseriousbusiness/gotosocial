@@ -19,11 +19,19 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 func InitViper(f *pflag.FlagSet, version string) error {
+	// environment variable stuff
+	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
+	viper.SetEnvPrefix("gts")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
+
 	// flag stuff
 	// bind all of the flags in flagset to viper so that we can retrieve their values from the viper store
 	if err := viper.BindPFlags(f); err != nil {
