@@ -20,6 +20,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,10 +38,11 @@ import (
 // env vars or cli flags.
 func preRun(cmd *cobra.Command, version string) error {
 	if err := config.InitViper(cmd.Flags(), version); err != nil {
-		return err
+		return fmt.Errorf("error initializing viper: %s", err)
 	}
+	
 	if err := config.InitConfig(); err != nil {
-		return err
+		return fmt.Errorf("error initializing config: %s", err)
 	}
 
 	return nil
@@ -51,12 +53,8 @@ func preRun(cmd *cobra.Command, version string) error {
 // context, after initializing any last-minute things like loggers etc.
 func run(ctx context.Context, action cliactions.GTSAction) error {
 	if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
-		return err
+		return fmt.Errorf("error initializing log: %s", err)
 	}
 
-	if err := action(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return action(ctx)
 }
