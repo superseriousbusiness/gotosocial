@@ -4,8 +4,6 @@ GoToSocial aims to be as configurable as possible, to fit lots of different use 
 
 We try to provide sensible defaults wherever possible, but you can't run a GoToSocial instance without managing *some* configuration.
 
-In this section, we describe the different methods available for configuring GoToSocial, 
-
 ## Configuration Methods
 
 There are three different methods for configuring a GoToSocial instance, which can be combined depending on your setup.
