@@ -3,43 +3,39 @@
 ## Settings
 
 ```yaml
-##########################
-##### STORAGE CONFIG #####
-##########################
+###########################
+##### STATUSES CONFIG #####
+###########################
 
-# Config pertaining to storage of user-created uploads (videos, images, etc).
-storage:
+# Config pertaining to the creation of statuses/posts, and permitted limits.
 
-  # String. Type of storage backend to use.
-  # Examples: ["local", "s3"]
-  # Default: "local" (storage on local disk)
-  # NOTE: s3 storage is not yet supported!
-  backend: "local"
+# Int. Maximum amount of characters permitted for a new status.
+# Note that going way higher than the default might break federation.
+# Examples: [140, 500, 5000]
+# Default: 5000
+statuses-max-chars: 5000
 
-  # String. Directory to use as a base path for storing files.
-  # Make sure whatever user/group gotosocial is running as has permission to access
-  # this directly, and create new subdirectories and files with in.
-  # Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
-  # Default: "/gotosocial/storage"
-  basePath: "/gotosocial/storage"
+# Int. Maximum amount of characters allowed in the CW/subject header of a status.
+# Note that going way higher than the default might break federation.
+# Examples: [100, 200]
+# Default: 100
+statuses-cw-max-chars: 100
 
-  # String. Protocol to use for serving stored files.
-  # It's very unlikely that you'll need to change this ever, but there might be edge cases.
-  # Examples: ["http", "https"]
-  serveProtocol: "https"
+# Int. Maximum amount of options to permit when creating a new poll.
+# Note that going way higher than the default might break federation.
+# Examples: [4, 6, 10]
+# Default: 6
+statuses-poll-max-options: 6
 
-  # String. Host for serving stored files.
-  # If you're using local storage, this should be THE SAME as the value you've set for Host, above.
-  # It should only be a different value if you're serving stored files from a host
-  # other than the one your instance is running on.
-  # Examples: ["localhost", "example.org"]
-  # Default: "localhost" -- you should absolutely change this.
-  serveHost: "localhost"
+# Int. Maximum amount of characters to permit per poll option when creating a new poll.
+# Note that going way higher than the default might break federation.
+# Examples: [50, 100, 150]
+# Default: 50
+statuses-poll-option-max-chars: 50
 
-  # String. Base path for serving stored files. This will be added to serveHost and serveProtocol
-  # to form the prefix url of your stored files. Eg., https://example.org/fileserver/.....
-  # It's unlikely that you will need to change this.
-  # Examples: ["/fileserver", "/media"]
-  # Default: "/fileserver"
-  serveBasePath: "/fileserver"
+# Int. Maximum amount of media files that can be attached to a new status.
+# Note that going way higher than the default might break federation.
+# Examples: [4, 6, 10]
+# Default: 6
+statuses-media-max-files: 6
 ```
