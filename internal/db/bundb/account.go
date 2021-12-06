@@ -132,7 +132,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 			Where("account.username = ?", domain).
 			Where("account.domain = ?", domain)
 	} else {
-		host := viper.GetString(config.FlagNames.Host)
+		host := viper.GetString(config.Keys.Host)
 		q = q.
 			Where("account.username = ?", host).
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))

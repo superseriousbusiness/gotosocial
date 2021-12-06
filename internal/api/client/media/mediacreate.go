@@ -127,11 +127,11 @@ func validateCreateMedia(form *model.AttachmentRequest) error {
 		return errors.New("no attachment given")
 	}
 
-	flags := config.FlagNames
-	maxVideoSize := viper.GetInt(flags.MediaVideoMaxSize)
-	maxImageSize := viper.GetInt(flags.MediaImageMaxSize)
-	minDescriptionChars := viper.GetInt(flags.MediaDescriptionMinChars)
-	maxDescriptionChars := viper.GetInt(flags.MediaDescriptionMaxChars)
+	keys := config.Keys
+	maxVideoSize := viper.GetInt(keys.MediaVideoMaxSize)
+	maxImageSize := viper.GetInt(keys.MediaImageMaxSize)
+	minDescriptionChars := viper.GetInt(keys.MediaDescriptionMinChars)
+	maxDescriptionChars := viper.GetInt(keys.MediaDescriptionMaxChars)
 
 	// a very superficial check to see if no size limits are exceeded
 	// we still don't actually know which media types we're dealing with but the other handlers will go into more detail there

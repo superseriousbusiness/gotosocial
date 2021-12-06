@@ -38,7 +38,7 @@ func loadTemplates(engine *gin.Engine) error {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
 
-	templateBaseDir := viper.GetString(config.FlagNames.WebTemplateBaseDir)
+	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
 	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
 
 	engine.LoadHTMLGlob(tmPath)

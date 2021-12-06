@@ -2,7 +2,7 @@
 
 set -eu
 
-COMMIT="${COMMIT:-12345678}"
+COMMIT="${COMMIT:-1234567}"
 VERSION="${VERSION:-0.0.0}"
 
 CGO_ENABLED=0 go build -trimpath \

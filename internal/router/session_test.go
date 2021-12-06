@@ -37,8 +37,8 @@ func (suite *SessionTestSuite) SetupTest() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
-	viper.Set(config.FlagNames.Protocol, "http")
-	viper.Set(config.FlagNames.Host, "localhost:8080")
+	viper.Set(config.Keys.Protocol, "http")
+	viper.Set(config.Keys.Host, "localhost:8080")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -46,8 +46,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
-	viper.Set(config.FlagNames.Protocol, "http")
-	viper.Set(config.FlagNames.Host, "localhost")
+	viper.Set(config.Keys.Protocol, "http")
+	viper.Set(config.Keys.Host, "localhost")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -55,8 +55,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
-	viper.Set(config.FlagNames.Protocol, "")
-	viper.Set(config.FlagNames.Host, "localhost")
+	viper.Set(config.Keys.Protocol, "")
+	viper.Set(config.Keys.Host, "localhost")
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "parse \"://localhost\": missing protocol scheme")
@@ -64,9 +64,9 @@ func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
-	viper.Set(config.FlagNames.Protocol, "https")
-	viper.Set(config.FlagNames.Host, "")
-	viper.Set(config.FlagNames.Port, 0)
+	viper.Set(config.Keys.Protocol, "https")
+	viper.Set(config.Keys.Host, "")
+	viper.Set(config.Keys.Port, 0)
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "could not derive hostname without port from https://")
@@ -74,8 +74,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionOK() {
-	viper.Set(config.FlagNames.Protocol, "https")
-	viper.Set(config.FlagNames.Host, "example.org")
+	viper.Set(config.Keys.Protocol, "https")
+	viper.Set(config.Keys.Host, "example.org")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)

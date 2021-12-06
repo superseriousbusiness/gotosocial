@@ -104,4 +104,14 @@ else
     echo "TEST_10 OK"
 fi
 
+echo "TEST_11 Test loading a partial config file. Default values should be used apart from those set in the config file."
+TEST_11_EXPECTED='{"account-domain":"peepee.poopoo","accounts-approval-required":true,"accounts-reason-required":true,"accounts-registration-open":true,"application-name":"gotosocial","bind-address":"0.0.0.0","config-path":"./test/test2.yaml","db-address":"localhost","db-database":"postgres","db-password":"postgres","db-port":5432,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"postgres","db-user":"postgres","help":false,"host":"","letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-level":"trace","media-description-max-chars":500,"media-description-min-chars":0,"media-image-max-size":2097152,"media-video-max-size":10485760,"oidc-client-id":"","oidc-client-secret":"","oidc-enabled":false,"oidc-idp-name":"","oidc-issuer":"","oidc-scopes":["openid","profile","email","groups"],"oidc-skip-verification":false,"port":8080,"protocol":"https","smtp-from":"GoToSocial","smtp-host":"","smtp-password":"","smtp-port":0,"smtp-username":"","software-version":"","statuses-cw-max-chars":100,"statuses-max-chars":5000,"statuses-media-max-files":6,"statuses-poll-max-options":6,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-base-path":"/gotosocial/storage","storage-serve-base-path":"/fileserver","storage-serve-host":"localhost","storage-serve-protocol":"https","trusted-proxies":["127.0.0.1/32"],"web-asset-base-dir":"./web/assets/","web-template-base-dir":"./web/template/"}'
+TEST_11="$(go run ./cmd/gotosocial/... --config-path ./test/test2.yaml debug config)"
+if [ "${TEST_11}" != "${TEST_11_EXPECTED}" ]; then
+    echo "TEST_11 not equal TEST_11_EXPECTED"
+    exit 1
+else
+    echo "TEST_11 OK"
+fi
+
 echo "FINISHED CLI TESTS"

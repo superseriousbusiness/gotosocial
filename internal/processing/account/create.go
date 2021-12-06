@@ -53,9 +53,9 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 		return nil, fmt.Errorf("username %s in use", form.Username)
 	}
 
-	flags := config.FlagNames
-	reasonRequired := viper.GetBool(flags.AccountsReasonRequired)
-	approvalRequired := viper.GetBool(flags.AccountsApprovalRequired)
+	keys := config.Keys
+	reasonRequired := viper.GetBool(keys.AccountsReasonRequired)
+	approvalRequired := viper.GetBool(keys.AccountsApprovalRequired)
 
 	// don't store a reason if we don't require one
 	reason := form.Reason

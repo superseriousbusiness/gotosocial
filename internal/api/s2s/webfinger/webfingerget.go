@@ -68,8 +68,8 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	accountDomain := viper.GetString(config.FlagNames.AccountDomain)
-	host := viper.GetString(config.FlagNames.Host)
+	accountDomain := viper.GetString(config.Keys.AccountDomain)
+	host := viper.GetString(config.Keys.Host)
 
 	if requestedAccountDomain != accountDomain && requestedAccountDomain != host {
 		l.Debugf("aborting request because accountDomain %s does not belong to this instance", requestedAccountDomain)

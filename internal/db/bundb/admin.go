@@ -176,7 +176,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 }
 
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
-	username := viper.GetString(config.FlagNames.Host)
+	username := viper.GetString(config.Keys.Host)
 
 	q := a.conn.
 		NewSelect().
@@ -235,8 +235,8 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 }
 
 func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 
 	// check if instance entry already exists
 	q := a.conn.

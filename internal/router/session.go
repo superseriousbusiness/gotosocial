@@ -37,7 +37,7 @@ import (
 func sessionOptions() sessions.Options {
 	return sessions.Options{
 		Path:     "/",
-		Domain:   viper.GetString(config.FlagNames.Host),
+		Domain:   viper.GetString(config.Keys.Host),
 		MaxAge:   120,                      // 2 minutes
 		Secure:   true,                     // only use cookie over https
 		HttpOnly: true,                     // exclude javascript from inspecting cookie
@@ -48,8 +48,8 @@ func sessionOptions() sessions.Options {
 // SessionName is a utility function that derives an appropriate session name from the hostname.
 func SessionName() (string, error) {
 	// parse the protocol + host
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	u, err := url.Parse(fmt.Sprintf("%s://%s", protocol, host))
 	if err != nil {
 		return "", err

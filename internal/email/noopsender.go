@@ -32,7 +32,7 @@ import (
 //
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
 func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
-	templateBaseDir := viper.GetString(config.FlagNames.WebTemplateBaseDir)
+	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
 
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {

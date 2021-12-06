@@ -51,7 +51,7 @@ type FileServer struct {
 func New(processor processing.Processor) api.ClientModule {
 	return &FileServer{
 		processor:            processor,
-		storageServeBasePath: viper.GetString(config.FlagNames.StorageServeBasePath),
+		storageServeBasePath: viper.GetString(config.Keys.StorageServeBasePath),
 	}
 }
 

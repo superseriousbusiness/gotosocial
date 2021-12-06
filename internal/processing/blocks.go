@@ -64,8 +64,8 @@ func (p *processor) packageBlocksResponse(accounts []*apimodel.Account, path str
 
 	// prepare the next and previous links
 	if len(accounts) != 0 {
-		protocol := viper.GetString(config.FlagNames.Protocol)
-		host := viper.GetString(config.FlagNames.Host)
+		protocol := viper.GetString(config.Keys.Protocol)
+		host := viper.GetString(config.Keys.Host)
 
 		nextLink := &url.URL{
 			Scheme:   protocol,

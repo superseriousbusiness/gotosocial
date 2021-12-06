@@ -45,7 +45,7 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 	l.Debug("entering DereferenceThread")
 
 	// if it's our status we already have everything stashed so we can bail early
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if statusIRI.Host == host {
 		l.Debug("iri belongs to us, bailing")
 		return nil
@@ -80,7 +80,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 	l.Debug("entering iterateAncestors")
 
 	// if it's our status we don't need to dereference anything so we can immediately move up the chain
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if statusIRI.Host == host {
 		l.Debug("iri belongs to us, moving up to next ancestor")
 
@@ -133,7 +133,7 @@ func (d *deref) iterateDescendants(ctx context.Context, username string, statusI
 	l.Debug("entering iterateDescendants")
 
 	// if it's our status we already have descendants stashed so we can bail early
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if statusIRI.Host == host {
 		l.Debug("iri belongs to us, bailing")
 		return nil
@@ -210,7 +210,7 @@ pageLoop:
 				continue
 			}
 
-			host := viper.GetString(config.FlagNames.Host)
+			host := viper.GetString(config.Keys.Host)
 			if itemURI.Host == host {
 				// skip if the reply is from us -- we already have it then
 				continue

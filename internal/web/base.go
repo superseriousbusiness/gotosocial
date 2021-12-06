@@ -55,7 +55,7 @@ func (m *Module) baseHandler(c *gin.Context) {
 	l := logrus.WithField("func", "BaseGETHandler")
 	l.Trace("serving index html")
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
@@ -73,7 +73,7 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	l := logrus.WithField("func", "404")
 	l.Trace("serving 404 html")
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
@@ -93,7 +93,7 @@ func (m *Module) Route(s router.Router) error {
 	if err != nil {
 		return fmt.Errorf("error getting current working directory: %s", err)
 	}
-	assetBaseDir := viper.GetString(config.FlagNames.WebAssetBaseDir)
+	assetBaseDir := viper.GetString(config.Keys.WebAssetBaseDir)
 	assetPath := filepath.Join(cwd, assetBaseDir)
 	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
 

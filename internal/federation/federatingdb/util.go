@@ -210,8 +210,8 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		return nil, err
 	}
 
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return url.Parse(fmt.Sprintf("%s://%s/%s", protocol, host, newID))
 }
 

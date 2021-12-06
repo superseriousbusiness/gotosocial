@@ -54,7 +54,7 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)

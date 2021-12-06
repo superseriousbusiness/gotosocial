@@ -35,7 +35,7 @@ import (
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 	l := logrus.WithField("func", "InstanceInformationGETHandler")
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {

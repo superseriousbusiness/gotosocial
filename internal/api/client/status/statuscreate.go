@@ -124,12 +124,12 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 		return errors.New("can't post media + poll in same status")
 	}
 
-	flags := config.FlagNames
-	maxChars := viper.GetInt(flags.StatusesMaxChars)
-	maxMediaFiles := viper.GetInt(flags.StatusesMediaMaxFiles)
-	maxPollOptions := viper.GetInt(flags.StatusesPollMaxOptions)
-	maxPollChars := viper.GetInt(flags.StatusesPollOptionMaxChars)
-	maxCwChars := viper.GetInt(flags.StatusesCWMaxChars)
+	keys := config.Keys
+	maxChars := viper.GetInt(keys.StatusesMaxChars)
+	maxMediaFiles := viper.GetInt(keys.StatusesMediaMaxFiles)
+	maxPollOptions := viper.GetInt(keys.StatusesPollMaxOptions)
+	maxPollChars := viper.GetInt(keys.StatusesPollOptionMaxChars)
+	maxCwChars := viper.GetInt(keys.StatusesCWMaxChars)
 
 	// validate status
 	if form.Status != "" {

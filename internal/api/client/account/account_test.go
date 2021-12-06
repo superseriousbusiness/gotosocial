@@ -83,8 +83,8 @@ func (suite *AccountStandardTestSuite) newContext(recorder *httptest.ResponseRec
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)

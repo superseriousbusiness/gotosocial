@@ -45,7 +45,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

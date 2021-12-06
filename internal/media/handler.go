@@ -178,7 +178,7 @@ func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes [
 // *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 // in the database.
 func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
-	flags := config.FlagNames
+	keys := config.Keys
 
 	var clean []byte
 	var err error
@@ -235,9 +235,9 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	extension := strings.Split(contentType, "/")[1]
 
 	// create the urls and storage paths
-	serveProtocol := viper.GetString(flags.StorageServeProtocol)
-	serveHost := viper.GetString(flags.StorageServeHost)
-	serveBasePath := viper.GetString(flags.StorageServeBasePath)
+	serveProtocol := viper.GetString(keys.StorageServeProtocol)
+	serveHost := viper.GetString(keys.StorageServeHost)
+	serveBasePath := viper.GetString(keys.StorageServeBasePath)
 	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
 
 	// generate a id for the new emoji
@@ -248,8 +248,8 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 
 	// webfinger uri for the emoji -- unrelated to actually serving the image
 	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c
-	protocol := viper.GetString(flags.Protocol)
-	host := viper.GetString(flags.Host)
+	protocol := viper.GetString(keys.Protocol)
+	host := viper.GetString(keys.Host)
 	emojiURI := fmt.Sprintf("%s://%s/%s/%s", protocol, host, Emoji, newEmojiID)
 
 	// serve url and storage path for the original emoji -- can be png or gif

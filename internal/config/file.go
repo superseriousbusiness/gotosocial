@@ -19,23 +19,19 @@
 package config
 
 import (
-	"strings"
-
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-func InitViper(f *pflag.FlagSet) error {
-	// environment variable stuff
-	// flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
-	viper.SetEnvPrefix("gts")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv()
-
-	// flag stuff
-	// bind all of the flags in flagset to viper so that we can retrieve their values from the viper store
-	if err := viper.BindPFlags(f); err != nil {
-		return err
+// ReadFromFile checks if there's already a path to the config file set in viper.
+// If there is, it will attempt to read the config file into viper.
+func ReadFromFile() error {
+	// config file stuff
+	// check if we have a config path set (either by cli arg or env var)
+	if configPath := viper.GetString(Keys.ConfigPath); configPath != "" {
+		viper.SetConfigFile(configPath)
+		if err := viper.ReadInConfig(); err != nil {
+			return err
+		}
 	}
 
 	return nil

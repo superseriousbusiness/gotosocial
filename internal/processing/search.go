@@ -166,7 +166,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if domain == host {
 		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
 		if err != nil {

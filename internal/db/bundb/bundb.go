@@ -119,7 +119,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 func NewBunDBService(ctx context.Context) (db.DB, error) {
 	var conn *DBConn
 	var err error
-	dbType := strings.ToLower(viper.GetString(config.FlagNames.DbType))
+	dbType := strings.ToLower(viper.GetString(config.Keys.DbType))
 
 	switch dbType {
 	case dbTypePostgres:
@@ -204,7 +204,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 }
 
 func sqliteConn(ctx context.Context) (*DBConn, error) {
-	dbAddress := viper.GetString(config.FlagNames.DbAddress)
+	dbAddress := viper.GetString(config.Keys.DbAddress)
 
 	// Drop anything fancy from DB address
 	dbAddress = strings.Split(dbAddress, "?")[0]
@@ -274,44 +274,44 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	flags := config.FlagNames
+	keys := config.Keys
 
-	if strings.ToUpper(viper.GetString(flags.DbType)) != db.DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, viper.GetString(flags.DbType))
+	if strings.ToUpper(viper.GetString(keys.DbType)) != db.DBTypePostgres {
+		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, viper.GetString(keys.DbType))
 	}
 
 	// validate port
-	port := viper.GetInt(flags.DbPort)
+	port := viper.GetInt(keys.DbPort)
 	if port == 0 {
 		return nil, errors.New("no port set")
 	}
 
 	// validate address
-	address := viper.GetString(flags.DbAddress)
+	address := viper.GetString(keys.DbAddress)
 	if address == "" {
 		return nil, errors.New("no address set")
 	}
 
 	// validate username
-	username := viper.GetString(flags.DbUser)
+	username := viper.GetString(keys.DbUser)
 	if username == "" {
 		return nil, errors.New("no user set")
 	}
 
 	// validate that there's a password
-	password := viper.GetString(flags.DbPassword)
+	password := viper.GetString(keys.DbPassword)
 	if password == "" {
 		return nil, errors.New("no password set")
 	}
 
 	// validate database
-	database := viper.GetString(flags.DbDatabase)
+	database := viper.GetString(keys.DbDatabase)
 	if database == "" {
 		return nil, errors.New("no database set")
 	}
 
 	var tlsConfig *tls.Config
-	tlsMode := viper.GetString(flags.DbTLSMode)
+	tlsMode := viper.GetString(keys.DbTLSMode)
 	switch tlsMode {
 	case dbTLSModeDisable, dbTLSModeUnset:
 		break // nothing to do
@@ -323,12 +323,12 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	case dbTLSModeRequire:
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
-			ServerName:         viper.GetString(flags.DbAddress),
+			ServerName:         viper.GetString(keys.DbAddress),
 			MinVersion:         tls.VersionTLS12,
 		}
 	}
 
-	caCertPath := viper.GetString(flags.DbTLSCACert)
+	caCertPath := viper.GetString(keys.DbTLSCACert)
 	if tlsConfig != nil && caCertPath != "" {
 		// load the system cert pool first -- we'll append the given CA cert to this
 		certPool, err := x509.SystemCertPool()
@@ -370,7 +370,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	cfg.TLSConfig = tlsConfig
 	cfg.Database = database
 	cfg.PreferSimpleProtocol = true
-	cfg.RuntimeParams["application_name"] = viper.GetString(flags.ApplicationName)
+	cfg.RuntimeParams["application_name"] = viper.GetString(keys.ApplicationName)
 
 	return cfg, nil
 }
@@ -467,8 +467,8 @@ func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAcco
 }
 
 func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {

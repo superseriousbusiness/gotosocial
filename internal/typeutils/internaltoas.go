@@ -622,7 +622,7 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 	// name -- this should be the namestring of the mentioned user, something like @whatever@example.org
 	var domain string
 	if m.TargetAccount.Domain == "" {
-		accountDomain := viper.GetString(config.FlagNames.AccountDomain)
+		accountDomain := viper.GetString(config.Keys.AccountDomain)
 		domain = accountDomain
 	} else {
 		domain = m.TargetAccount.Domain

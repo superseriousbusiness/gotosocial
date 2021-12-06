@@ -40,8 +40,8 @@ var (
 )
 
 func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
-	protocol := viper.GetString(config.FlagNames.Protocol)
-	host := viper.GetString(config.FlagNames.Host)
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 
 	return &apimodel.WellKnownResponse{
 		Links: []apimodel.Link{
@@ -54,8 +54,8 @@ func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (
 }
 
 func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
-	openRegistration := viper.GetBool(config.FlagNames.AccountsRegistrationOpen)
-	softwareVersion := viper.GetString(config.FlagNames.SoftwareVersion)
+	openRegistration := viper.GetBool(config.Keys.AccountsRegistrationOpen)
+	softwareVersion := viper.GetString(config.Keys.SoftwareVersion)
 
 	return &apimodel.Nodeinfo{
 		Version: nodeInfoVersion,

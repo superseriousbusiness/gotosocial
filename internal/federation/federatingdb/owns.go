@@ -44,7 +44,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if id.Host != host {
 		l.Tracef("we DO NOT own activity because the host is %s not %s", id.Host, host)
 		return false, nil

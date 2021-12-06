@@ -56,36 +56,36 @@ type idp struct {
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.
 func NewIDP(ctx context.Context) (IDP, error) {
-	flags := config.FlagNames
+	keys := config.Keys
 
-	oidcEnabled := viper.GetBool(flags.OIDCEnabled)
+	oidcEnabled := viper.GetBool(keys.OIDCEnabled)
 	if !oidcEnabled {
 		// oidc isn't enabled so we don't need to do anything
 		return nil, nil
 	}
 
 	// validate config fields
-	idpName := viper.GetString(flags.OIDCIdpName)
+	idpName := viper.GetString(keys.OIDCIdpName)
 	if idpName == "" {
 		return nil, fmt.Errorf("not set: IDPName")
 	}
 
-	issuer := viper.GetString(flags.OIDCIssuer)
+	issuer := viper.GetString(keys.OIDCIssuer)
 	if issuer == "" {
 		return nil, fmt.Errorf("not set: Issuer")
 	}
 
-	clientID := viper.GetString(flags.OIDCClientID)
+	clientID := viper.GetString(keys.OIDCClientID)
 	if clientID == "" {
 		return nil, fmt.Errorf("not set: ClientID")
 	}
 
-	clientSecret := viper.GetString(flags.OIDCClientSecret)
+	clientSecret := viper.GetString(keys.OIDCClientSecret)
 	if clientSecret == "" {
 		return nil, fmt.Errorf("not set: ClientSecret")
 	}
 
-	scopes := viper.GetStringSlice(flags.OIDCScopes)
+	scopes := viper.GetStringSlice(keys.OIDCScopes)
 	if len(scopes) == 0 {
 		return nil, fmt.Errorf("not set: Scopes")
 	}
@@ -95,8 +95,8 @@ func NewIDP(ctx context.Context) (IDP, error) {
 		return nil, err
 	}
 
-	protocol := viper.GetString(flags.Protocol)
-	host := viper.GetString(flags.Host)
+	protocol := viper.GetString(keys.Protocol)
+	host := viper.GetString(keys.Host)
 
 	oauth2Config := oauth2.Config{
 		// client_id and client_secret of the client.
@@ -120,7 +120,7 @@ func NewIDP(ctx context.Context) (IDP, error) {
 		ClientID: clientID,
 	}
 
-	skipVerification := viper.GetBool(flags.OIDCSkipVerification)
+	skipVerification := viper.GetBool(keys.OIDCSkipVerification)
 	if skipVerification {
 		oidcConf.SkipClientIDCheck = true
 		oidcConf.SkipExpiryCheck = true

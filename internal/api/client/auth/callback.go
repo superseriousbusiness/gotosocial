@@ -213,7 +213,7 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 	password := uuid.NewString() + uuid.NewString()
 
 	// create the user! this will also create an account and store it in the database so we don't need to do that here
-	requireApproval := viper.GetBool(config.FlagNames.AccountsApprovalRequired)
+	requireApproval := viper.GetBool(config.Keys.AccountsApprovalRequired)
 	user, err = m.db.NewSignup(ctx, username, "", requireApproval, claims.Email, password, ip, "", appID, claims.EmailVerified, admin)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %s", err)

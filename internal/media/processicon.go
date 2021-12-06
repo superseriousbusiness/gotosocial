@@ -81,10 +81,10 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, err
 	}
 
-	flags := config.FlagNames
-	serveProtocol := viper.GetString(flags.StorageServeProtocol)
-	serveHost := viper.GetString(flags.StorageServeHost)
-	serveBasePath := viper.GetString(flags.StorageServeBasePath)
+	keys := config.Keys
+	serveProtocol := viper.GetString(keys.StorageServeProtocol)
+	serveHost := viper.GetString(keys.StorageServeHost)
+	serveBasePath := viper.GetString(keys.StorageServeBasePath)
 
 	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
 	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)

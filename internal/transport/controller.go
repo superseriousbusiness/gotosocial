@@ -46,8 +46,8 @@ type controller struct {
 
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(db db.DB, clock pub.Clock, client pub.HttpClient) Controller {
-	applicationName := viper.GetString(config.FlagNames.ApplicationName)
-	host := viper.GetString(config.FlagNames.Host)
+	applicationName := viper.GetString(config.Keys.ApplicationName)
+	host := viper.GetString(config.Keys.Host)
 	appAgent := fmt.Sprintf("%s %s", applicationName, host)
 
 	return &controller{
@@ -96,7 +96,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	// Otherwise, we can take the instance account and use those credentials to make the request.
 	var u string
 	if username == "" {
-		u = viper.GetString(config.FlagNames.Host)
+		u = viper.GetString(config.Keys.Host)
 	} else {
 		u = username
 	}

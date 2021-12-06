@@ -44,7 +44,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	// setup request
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
@@ -66,8 +66,8 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
-	viper.Set(config.FlagNames.Host, "gts.example.org")
-	viper.Set(config.FlagNames.AccountDomain, "example.org")
+	viper.Set(config.Keys.Host, "gts.example.org")
+	viper.Set(config.Keys.AccountDomain, "example.org")
 	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 
@@ -77,7 +77,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 	}
 
 	// setup request
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
@@ -99,8 +99,8 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
-	viper.Set(config.FlagNames.Host, "gts.example.org")
-	viper.Set(config.FlagNames.AccountDomain, "example.org")
+	viper.Set(config.Keys.Host, "gts.example.org")
+	viper.Set(config.Keys.AccountDomain, "example.org")
 	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 
@@ -110,7 +110,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 	}
 
 	// setup request
-	accountDomain := viper.GetString(config.FlagNames.AccountDomain)
+	accountDomain := viper.GetString(config.Keys.AccountDomain)
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, accountDomain)
 
 	recorder := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	// setup request -- leave out the 'acct:' prefix, which is prettymuch what pixelfed currently does
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()

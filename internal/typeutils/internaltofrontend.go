@@ -570,8 +570,8 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
-	flags := config.FlagNames
-	host := viper.GetString(flags.Host)
+	keys := config.Keys
+	host := viper.GetString(keys.Host)
 	if i.Domain == host {
 		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
@@ -588,14 +588,14 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			mi.Stats["domain_count"] = domainCount
 		}
 
-		mi.Registrations = viper.GetBool(flags.AccountsRegistrationOpen)
-		mi.ApprovalRequired = viper.GetBool(flags.AccountsApprovalRequired)
+		mi.Registrations = viper.GetBool(keys.AccountsRegistrationOpen)
+		mi.ApprovalRequired = viper.GetBool(keys.AccountsApprovalRequired)
 		mi.InvitesEnabled = false // TODO
-		mi.MaxTootChars = uint(viper.GetInt(flags.StatusesMaxChars))
+		mi.MaxTootChars = uint(viper.GetInt(keys.StatusesMaxChars))
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: fmt.Sprintf("wss://%s", host),
 		}
-		mi.Version = viper.GetString(flags.SoftwareVersion)
+		mi.Version = viper.GetString(keys.SoftwareVersion)
 	}
 
 	// get the instance account if it exists and just skip if it doesn't

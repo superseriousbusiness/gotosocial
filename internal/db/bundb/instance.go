@@ -41,7 +41,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 		Where("username != ?", domain).
 		Where("? IS NULL", bun.Ident("suspended_at"))
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if domain == host {
 		// if the domain is *this* domain, just count where the domain field is null
 		q = q.WhereGroup(" AND ", whereEmptyOrNull("domain"))
@@ -61,7 +61,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 		NewSelect().
 		Model(&[]*gtsmodel.Status{})
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if domain == host {
 		// if the domain is *this* domain, just count where local is true
 		q = q.Where("local = ?", true)
@@ -83,7 +83,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 		NewSelect().
 		Model(&[]*gtsmodel.Instance{})
 
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if domain == host {
 		// if the domain is *this* domain, just count other instances it knows about
 		// exclude domains that are blocked

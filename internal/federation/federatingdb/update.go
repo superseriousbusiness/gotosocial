@@ -126,7 +126,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 			return fmt.Errorf("UPDATE: error converting to account: %s", err)
 		}
 
-		host := viper.GetString(config.FlagNames.Host)
+		host := viper.GetString(config.Keys.Host)
 		if updatedAcct.Domain == host {
 			// no need to update local accounts
 			// in fact, if we do this will break the shit out of things so do NOT

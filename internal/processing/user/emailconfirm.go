@@ -57,7 +57,7 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 
 	// pull our instance entry from the database so we can greet the user nicely in the email
 	instance := &gtsmodel.Instance{}
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
 	}

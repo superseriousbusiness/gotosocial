@@ -69,11 +69,11 @@ var testModels = []interface{}{
 // value as the port instead.
 func NewTestDB() db.DB {
 	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
-		viper.Set(config.FlagNames.DbAddress, alternateAddress)
+		viper.Set(config.Keys.DbAddress, alternateAddress)
 	}
 
 	if alternateDBType := os.Getenv("GTS_DB_TYPE"); alternateDBType != "" {
-		viper.Set(config.FlagNames.DbType, alternateDBType)
+		viper.Set(config.Keys.DbType, alternateDBType)
 	}
 
 	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
@@ -81,7 +81,7 @@ func NewTestDB() db.DB {
 		if err != nil {
 			panic(err)
 		}
-		viper.Set(config.FlagNames.DbPort, port)
+		viper.Set(config.Keys.DbPort, port)
 	}
 
 	testDB, err := bundb.NewBunDBService(context.Background())

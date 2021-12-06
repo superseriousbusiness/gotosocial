@@ -69,12 +69,12 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
-	flags := config.FlagNames
-	leEnabled := viper.GetBool(flags.LetsEncryptEnabled)
+	keys := config.Keys
+	leEnabled := viper.GetBool(keys.LetsEncryptEnabled)
 
 	if leEnabled {
-		bindAddress := viper.GetString(flags.BindAddress)
-		lePort := viper.GetInt(flags.LetsEncryptPort)
+		bindAddress := viper.GetString(keys.BindAddress)
+		lePort := viper.GetInt(keys.LetsEncryptPort)
 
 		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
@@ -110,7 +110,7 @@ func (r *router) Stop(ctx context.Context) error {
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
 func New(ctx context.Context, db db.DB) (Router, error) {
-	flags := config.FlagNames
+	keys := config.Keys
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -124,7 +124,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	engine.MaxMultipartMemory = 8 << 20
 
 	// set up IP forwarding via x-forward-* headers.
-	trustedProxies := viper.GetStringSlice(flags.TrustedProxies)
+	trustedProxies := viper.GetStringSlice(keys.TrustedProxies)
 	if err := engine.SetTrustedProxies(trustedProxies); err != nil {
 		return nil, err
 	}
@@ -148,8 +148,8 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	}
 
 	// create the http server here, passing the gin engine as handler
-	bindAddress := viper.GetString(flags.BindAddress)
-	port := viper.GetInt(flags.Port)
+	bindAddress := viper.GetString(keys.BindAddress)
+	port := viper.GetInt(keys.Port)
 	listen := fmt.Sprintf("%s:%d", bindAddress, port)
 	s := &http.Server{
 		Addr:              listen,
@@ -162,14 +162,14 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
 	// In either case, the gin engine will still be used for routing requests.
-	leEnabled := viper.GetBool(flags.LetsEncryptEnabled)
+	leEnabled := viper.GetBool(keys.LetsEncryptEnabled)
 
 	var m *autocert.Manager
 	if leEnabled {
 		// le IS enabled, so roll up an autocert manager for handling letsencrypt requests
-		host := viper.GetString(flags.Host)
-		leCertDir := viper.GetString(flags.LetsEncryptCertDir)
-		leEmailAddress := viper.GetString(flags.LetsEncryptEmailAddress)
+		host := viper.GetString(keys.Host)
+		leCertDir := viper.GetString(keys.LetsEncryptCertDir)
+		leEmailAddress := viper.GetString(keys.LetsEncryptEmailAddress)
 		m = &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(host),

@@ -38,19 +38,19 @@ type Sender interface {
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
 func NewSender() (Sender, error) {
-	flags := config.FlagNames
+	keys := config.Keys
 
-	templateBaseDir := viper.GetString(flags.WebTemplateBaseDir)
+	templateBaseDir := viper.GetString(keys.WebTemplateBaseDir)
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
 		return nil, err
 	}
 
-	username := viper.GetString(flags.SMTPUsername)
-	password := viper.GetString(flags.SMTPPassword)
-	host := viper.GetString(flags.SMTPHost)
-	port := viper.GetInt(flags.SMTPPort)
-	from := viper.GetString(flags.SMTPFrom)
+	username := viper.GetString(keys.SMTPUsername)
+	password := viper.GetString(keys.SMTPPassword)
+	host := viper.GetString(keys.SMTPHost)
+	port := viper.GetInt(keys.SMTPPort)
+	from := viper.GetString(keys.SMTPFrom)
 
 	return &sender{
 		hostAddress: fmt.Sprintf("%s:%d", host, port),

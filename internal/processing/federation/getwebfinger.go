@@ -43,7 +43,7 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting account with username %s: %s", requestedUsername, err))
 	}
 
-	accountDomain := viper.GetString(config.FlagNames.AccountDomain)
+	accountDomain := viper.GetString(config.Keys.AccountDomain)
 
 	// return the webfinger representation
 	return &apimodel.WellKnownResponse{

@@ -157,7 +157,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	requestingRemoteAccount := &gtsmodel.Account{}
 	requestingLocalAccount := &gtsmodel.Account{}
 	requestingHost := requestingPublicKeyID.Host
-	host := viper.GetString(config.FlagNames.Host)
+	host := viper.GetString(config.Keys.Host)
 	if strings.EqualFold(requestingHost, host) {
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
