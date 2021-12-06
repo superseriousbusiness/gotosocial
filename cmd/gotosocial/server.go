@@ -20,29 +20,30 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions/server"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/server"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // serverCommands returns the 'server' subcommand
-func serverCommands(version string) *cobra.Command {
-	command := &cobra.Command{
+func serverCommands() *cobra.Command {
+	serverCmd := &cobra.Command{
 		Use:   "server",
 		Short: "gotosocial server-related tasks",
 	}
 
-	start := &cobra.Command{
+	serverStartCmd := &cobra.Command{
 		Use:   "start",
 		Short: "start the gotosocial server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd, version)
+			return preRun(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return server.Start(cmd.Context())
+			return run(cmd.Context(), server.Start)
 		},
 	}
-	config.AttachServerFlags(start.Flags(), config.Defaults)
+	flag.Server(serverStartCmd, config.Defaults)
 
-	command.AddCommand(start)
-	return command
+	serverCmd.AddCommand(serverStartCmd)
+	return serverCmd
 }

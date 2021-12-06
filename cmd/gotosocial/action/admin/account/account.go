@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -35,13 +35,13 @@ import (
 )
 
 // Create creates a new account in the database using the provided flags.
-var Create cliactions.GTSAction = func(ctx context.Context) error {
+var Create action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -49,7 +49,7 @@ var Create cliactions.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	email := viper.GetString(config.FlagNames.AdminAccountEmail)
+	email := viper.GetString(config.Keys.AdminAccountEmail)
 	if email == "" {
 		return errors.New("no email set")
 	}
@@ -57,7 +57,7 @@ var Create cliactions.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	password := viper.GetString(config.FlagNames.AdminAccountPassword)
+	password := viper.GetString(config.Keys.AdminAccountPassword)
 	if password == "" {
 		return errors.New("no password set")
 	}
@@ -74,13 +74,13 @@ var Create cliactions.GTSAction = func(ctx context.Context) error {
 }
 
 // Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
-var Confirm cliactions.GTSAction = func(ctx context.Context) error {
+var Confirm action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -109,13 +109,13 @@ var Confirm cliactions.GTSAction = func(ctx context.Context) error {
 }
 
 // Promote sets a user to admin.
-var Promote cliactions.GTSAction = func(ctx context.Context) error {
+var Promote action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -141,13 +141,13 @@ var Promote cliactions.GTSAction = func(ctx context.Context) error {
 }
 
 // Demote sets admin on a user to false.
-var Demote cliactions.GTSAction = func(ctx context.Context) error {
+var Demote action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -173,13 +173,13 @@ var Demote cliactions.GTSAction = func(ctx context.Context) error {
 }
 
 // Disable sets Disabled to true on a user.
-var Disable cliactions.GTSAction = func(ctx context.Context) error {
+var Disable action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -205,19 +205,19 @@ var Disable cliactions.GTSAction = func(ctx context.Context) error {
 }
 
 // Suspend suspends the target account, cleanly removing all of its media, followers, following, likes, statuses, etc.
-var Suspend cliactions.GTSAction = func(ctx context.Context) error {
+var Suspend action.GTSAction = func(ctx context.Context) error {
 	// TODO
 	return nil
 }
 
 // Password sets the password of target account.
-var Password cliactions.GTSAction = func(ctx context.Context) error {
+var Password action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.FlagNames.AdminAccountUsername)
+	username := viper.GetString(config.Keys.AdminAccountUsername)
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -225,7 +225,7 @@ var Password cliactions.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	password := viper.GetString(config.FlagNames.AdminAccountPassword)
+	password := viper.GetString(config.Keys.AdminAccountPassword)
 	if password == "" {
 		return errors.New("no password set")
 	}

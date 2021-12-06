@@ -18,162 +18,152 @@
 
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+)
 
 func adminCommands() *cobra.Command {
-	return nil
-	// {
-	// 	Name:  "admin",
-	// 	Usage: "gotosocial admin-related tasks",
-	// 	Subcommands: []*cli.Command{
-	// 		{
-	// 			Name:  "account",
-	// 			Usage: "admin commands related to accounts",
-	// 			Subcommands: []*cli.Command{
-	// 				{
-	// 					Name:  "create",
-	// 					Usage: "create a new account",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 						&cli.StringFlag{
-	// 							Name:     config.EmailFlag,
-	// 							Usage:    config.EmailUsage,
-	// 							Required: true,
-	// 						},
-	// 						&cli.StringFlag{
-	// 							Name:     config.PasswordFlag,
-	// 							Usage:    config.PasswordUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Create)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "confirm",
-	// 					Usage: "confirm an existing account manually, thereby skipping email confirmation",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Confirm)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "promote",
-	// 					Usage: "promote an account to admin",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Promote)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "demote",
-	// 					Usage: "demote an account from admin to normal user",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Demote)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "disable",
-	// 					Usage: "prevent an account from signing in or posting etc, but don't delete anything",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Disable)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "suspend",
-	// 					Usage: "completely remove an account and all of its posts, media, etc",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Suspend)
-	// 					},
-	// 				},
-	// 				{
-	// 					Name:  "password",
-	// 					Usage: "set a new password for the given account",
-	// 					Flags: []cli.Flag{
-	// 						&cli.StringFlag{
-	// 							Name:     config.UsernameFlag,
-	// 							Usage:    config.UsernameUsage,
-	// 							Required: true,
-	// 						},
-	// 						&cli.StringFlag{
-	// 							Name:     config.PasswordFlag,
-	// 							Usage:    config.PasswordUsage,
-	// 							Required: true,
-	// 						},
-	// 					},
-	// 					Action: func(c *cli.Context) error {
-	// 						return runAction(c, allFlags, account.Password)
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 		{
-	// 			Name:  "export",
-	// 			Usage: "export data from the database to file at the given path",
-	// 			Flags: []cli.Flag{
-	// 				&cli.StringFlag{
-	// 					Name:     config.TransPathFlag,
-	// 					Usage:    config.TransPathUsage,
-	// 					Required: true,
-	// 				},
-	// 			},
-	// 			Action: func(c *cli.Context) error {
-	// 				return runAction(c, allFlags, trans.Export)
-	// 			},
-	// 		},
-	// 		{
-	// 			Name:  "import",
-	// 			Usage: "import data from a file into the database",
-	// 			Flags: []cli.Flag{
-	// 				&cli.StringFlag{
-	// 					Name:     config.TransPathFlag,
-	// 					Usage:    config.TransPathUsage,
-	// 					Required: true,
-	// 				},
-	// 			},
-	// 			Action: func(c *cli.Context) error {
-	// 				return runAction(c, allFlags, trans.Import)
-	// 			},
-	// 		},
-	// 	},
-	// },
+	adminCmd := &cobra.Command{
+		Use:   "admin",
+		Short: "gotosocial admin-related tasks",
+	}
 
+	/*
+	   ADMIN ACCOUNT COMMANDS
+	*/
+
+	adminAccountCmd := &cobra.Command{
+		Use:   "account",
+		Short: "admin commands related to accounts",
+	}
+	flag.AdminAccount(adminAccountCmd, config.Defaults)
+
+	adminAccountCreateCmd := &cobra.Command{
+		Use:   "create",
+		Short: "create a new account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Create)
+		},
+	}
+	flag.AdminAccountCreate(adminAccountCreateCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountCreateCmd)
+
+	adminAccountConfirmCmd := &cobra.Command{
+		Use:   "confirm",
+		Short: "confirm an existing account manually, thereby skipping email confirmation",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Confirm)
+		},
+	}
+	flag.AdminAccount(adminAccountConfirmCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountConfirmCmd)
+
+	adminAccountPromoteCmd := &cobra.Command{
+		Use:   "promote",
+		Short: "promote an account to admin",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Promote)
+		},
+	}
+	flag.AdminAccount(adminAccountPromoteCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountPromoteCmd)
+
+	adminAccountDemoteCmd := &cobra.Command{
+		Use:   "demote",
+		Short: "demote an account from admin to normal user",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Demote)
+		},
+	}
+	flag.AdminAccount(adminAccountDemoteCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountDemoteCmd)
+
+	adminAccountDisableCmd := &cobra.Command{
+		Use:   "disable",
+		Short: "prevent an account from signing in or posting etc, but don't delete anything",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Disable)
+		},
+	}
+	flag.AdminAccount(adminAccountDisableCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountDisableCmd)
+
+	adminAccountSuspendCmd := &cobra.Command{
+		Use:   "suspend",
+		Short: "completely remove an account and all of its posts, media, etc",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Suspend)
+		},
+	}
+	flag.AdminAccount(adminAccountSuspendCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountSuspendCmd)
+
+	adminAccountPasswordCmd := &cobra.Command{
+		Use:   "password",
+		Short: "set a new password for the given account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Password)
+		},
+	}
+	flag.AdminAccountPassword(adminAccountPasswordCmd, config.Defaults)
+	adminAccountCmd.AddCommand(adminAccountPasswordCmd)
+
+	adminCmd.AddCommand(adminAccountCmd)
+
+	/*
+	   ADMIN IMPORT/EXPORT COMMANDS
+	*/
+
+	adminExportCmd := &cobra.Command{
+		Use:   "export",
+		Short: "export data from the database to file at the given path",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), trans.Export)
+		},
+	}
+	flag.AdminTrans(adminExportCmd, config.Defaults)
+	adminCmd.AddCommand(adminExportCmd)
+
+	adminImportCmd := &cobra.Command{
+		Use:   "import",
+		Short: "import data from a file into the database",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(cmd)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), trans.Import)
+		},
+	}
+	flag.AdminTrans(adminImportCmd, config.Defaults)
+	adminCmd.AddCommand(adminImportCmd)
+
+	return adminCmd
 }

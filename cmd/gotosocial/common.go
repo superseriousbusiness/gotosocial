@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -35,13 +35,13 @@ import (
 //
 // The order of these is important: the init-config function reads the location
 // of the config file from the viper store so that it can be picked up by either
-// env vars or cli flags.
-func preRun(cmd *cobra.Command, version string) error {
-	if err := config.InitViper(cmd.Flags(), version); err != nil {
+// env vars or cli flag.
+func preRun(cmd *cobra.Command) error {
+	if err := config.InitViper(cmd.Flags()); err != nil {
 		return fmt.Errorf("error initializing viper: %s", err)
 	}
 
-	if err := config.InitConfig(); err != nil {
+	if err := config.ReadFromFile(); err != nil {
 		return fmt.Errorf("error initializing config: %s", err)
 	}
 
@@ -51,9 +51,13 @@ func preRun(cmd *cobra.Command, version string) error {
 // run should be used during the run stage of every cobra command.
 // The idea here is to take a GTSAction and run it with the given
 // context, after initializing any last-minute things like loggers etc.
-func run(ctx context.Context, action cliactions.GTSAction) error {
-	if err := log.Initialize(viper.GetString(config.FlagNames.LogLevel)); err != nil {
-		return fmt.Errorf("error initializing log: %s", err)
+func run(ctx context.Context, action action.GTSAction) error {
+	// if log level has been set...
+	if logLevel := viper.GetString(config.Keys.LogLevel); logLevel != "" {
+		// then try to initialize the logger to that level
+		if err := log.Initialize(logLevel); err != nil {
+			return fmt.Errorf("error initializing log: %s", err)
+		}
 	}
 
 	return action(ctx)

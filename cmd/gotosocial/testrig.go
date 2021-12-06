@@ -20,28 +20,23 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions/testrig"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/testrig"
 )
 
-func testrigCommands(version string) *cobra.Command {
-	command := &cobra.Command{
+func testrigCommands() *cobra.Command {
+	testrigCmd := &cobra.Command{
 		Use:   "testrig",
-		Short: "gotosocial server-related tasks",
+		Short: "gotosocial testrig-related tasks",
 	}
 
-	start := &cobra.Command{
+	testrigStartCmd := &cobra.Command{
 		Use:   "start",
 		Short: "start the gotosocial testrig server",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd, version)
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return testrig.Start(cmd.Context())
+			return run(cmd.Context(), testrig.Start)
 		},
 	}
-	config.AttachServerFlags(start.Flags(), config.TestDefaults)
 
-	command.AddCommand(start)
-	return command
+	testrigCmd.AddCommand(testrigStartCmd)
+	return testrigCmd
 }

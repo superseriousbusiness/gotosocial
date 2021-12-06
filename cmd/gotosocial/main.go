@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
 	_ "github.com/superseriousbusiness/gotosocial/docs"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -36,14 +37,17 @@ var Commit string
 //go:generate swagger generate spec
 func main() {
 	var v string
-	if Commit == "" {
+	if len(Commit) < 7 {
 		v = Version
 	} else {
 		v = Version + " " + Commit[:7]
 	}
 
+	// override software version in viper store
+	viper.Set(config.Keys.SoftwareVersion, v)
+
 	// instantiate the root command
-	rootCommand := &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:           "gotosocial",
 		Short:         "GoToSocial - a fediverse social media server",
 		Long:          "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
@@ -53,20 +57,21 @@ func main() {
 	}
 
 	// attach global flags to the root command so that they can be accessed from any subcommand
-	config.AttachGlobalFlags(rootCommand.PersistentFlags(), config.Defaults)
+	flag.Global(rootCmd, config.Defaults)
 
 	// bind the config-path flag to viper early so that we can call it in the pre-run of following commands
-	if err := viper.BindPFlag(config.FlagNames.ConfigPath, rootCommand.PersistentFlags().Lookup(config.FlagNames.ConfigPath)); err != nil {
+	if err := viper.BindPFlag(config.Keys.ConfigPath, rootCmd.PersistentFlags().Lookup(config.Keys.ConfigPath)); err != nil {
 		logrus.Fatalf("error attaching config flag: %s", err)
 	}
 
 	// add subcommands
-	rootCommand.AddCommand(serverCommands(v))
-	rootCommand.AddCommand(testrigCommands(v))
-	rootCommand.AddCommand(debugCommands(v))
+	rootCmd.AddCommand(serverCommands())
+	rootCmd.AddCommand(testrigCommands())
+	rootCmd.AddCommand(debugCommands())
+	rootCmd.AddCommand(adminCommands())
 
 	// run
-	if err := rootCommand.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %s", err)
 	}
 }

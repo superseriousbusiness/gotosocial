@@ -24,14 +24,14 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/trans"
 )
 
 // Export exports info from the database into a file
-var Export cliactions.GTSAction = func(ctx context.Context) error {
+var Export action.GTSAction = func(ctx context.Context) error {
 	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
@@ -39,7 +39,7 @@ var Export cliactions.GTSAction = func(ctx context.Context) error {
 
 	exporter := trans.NewExporter(dbConn)
 
-	path := viper.GetString(config.FlagNames.AdminTransPath)
+	path := viper.GetString(config.Keys.AdminTransPath)
 	if path == "" {
 		return errors.New("no path set")
 	}

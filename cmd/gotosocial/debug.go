@@ -20,28 +20,29 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	configcliactions "github.com/superseriousbusiness/gotosocial/internal/cliactions/debug/config"
+	configaction "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-func debugCommands(version string) *cobra.Command {
-	command := &cobra.Command{
+func debugCommands() *cobra.Command {
+	debugCmd := &cobra.Command{
 		Use:   "debug",
 		Short: "gotosocial debug-related tasks",
 	}
 
-	conf := &cobra.Command{
+	debugConfigCmd := &cobra.Command{
 		Use:   "config",
-		Short: "print the collated config (derived from env, flags, and config file) to stdout",
+		Short: "print the collated config (derived from env, flag, and config file) to stdout",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd, version)
+			return preRun(cmd)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), configcliactions.Config)
+			return run(cmd.Context(), configaction.Config)
 		},
 	}
-	config.AttachServerFlags(conf.Flags(), config.Defaults)
+	flag.Server(debugConfigCmd, config.Defaults)
 
-	command.AddCommand(conf)
-	return command
+	debugCmd.AddCommand(debugConfigCmd)
+	return debugCmd
 }

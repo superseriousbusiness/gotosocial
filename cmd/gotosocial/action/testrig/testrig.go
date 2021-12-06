@@ -1,16 +1,35 @@
-package server
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package testrig
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
@@ -35,82 +54,37 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
-	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// Start creates and starts a gotosocial server
-var Start cliactions.GTSAction = func(ctx context.Context) error {
-	dbService, err := bundb.NewBunDBService(ctx)
-	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
-	}
+// Start creates and starts a gotosocial testrig server
+var Start action.GTSAction = func(ctx context.Context) error {
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
-	if err := dbService.CreateInstanceAccount(ctx); err != nil {
-		return fmt.Errorf("error creating instance account: %s", err)
-	}
-
-	if err := dbService.CreateInstanceInstance(ctx); err != nil {
-		return fmt.Errorf("error creating instance instance: %s", err)
-	}
-
-	federatingDB := federatingdb.New(dbService)
-
-	router, err := router.New(ctx, dbService)
-	if err != nil {
-		return fmt.Errorf("error creating router: %s", err)
-	}
-
-	// build converters and util
-	typeConverter := typeutils.NewConverter(dbService)
-	timelineManager := timelineprocessing.NewManager(dbService, typeConverter)
-
-	// Open the storage backend
-	storageBasePath := viper.GetString(config.FlagNames.StorageBasePath)
-	storage, err := kv.OpenFile(storageBasePath, nil)
-	if err != nil {
-		return fmt.Errorf("error creating storage backend: %s", err)
-	}
+	dbService := testrig.NewTestDB()
+	testrig.StandardDBSetup(dbService, nil)
+	router := testrig.NewTestRouter(dbService)
+	storageBackend := testrig.NewTestStorage()
+	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// build backend handlers
-	mediaHandler := media.New(dbService, storage)
-	oauthServer := oauth.New(ctx, dbService)
-	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
-	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaHandler)
+	oauthServer := testrig.NewTestOauthServer(dbService)
+	transportController := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		r := ioutil.NopCloser(bytes.NewReader([]byte{}))
+		return &http.Response{
+			StatusCode: 200,
+			Body:       r,
+		}, nil
+	}), dbService)
+	federator := testrig.NewTestFederator(dbService, transportController, storageBackend)
 
-	// decide whether to create a noop email sender (won't send emails) or a real one
-	var emailSender email.Sender
-	smtpHost := viper.GetString(config.FlagNames.SMTPHost)
-	if smtpHost != "" {
-		// host is defined so create a proper sender
-		emailSender, err = email.NewSender()
-		if err != nil {
-			return fmt.Errorf("error creating email sender: %s", err)
-		}
-	} else {
-		// no host is defined so create a noop sender
-		emailSender, err = email.NewNoopSender(nil)
-		if err != nil {
-			return fmt.Errorf("error creating noop email sender: %s", err)
-		}
-	}
+	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
-	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
+	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
@@ -196,6 +170,9 @@ var Start cliactions.GTSAction = func(ctx context.Context) error {
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	sig := <-sigs
 	logrus.Infof("received signal %s, shutting down", sig)
+
+	testrig.StandardDBTeardown(dbService)
+	testrig.StandardStorageTeardown(storageBackend)
 
 	// close down all running services in order
 	if err := gts.Stop(ctx); err != nil {

@@ -16,24 +16,37 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package config
+package trans
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/cliactions"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/trans"
 )
 
-// Config just prints the collated config out to stdout as json.
-var Config cliactions.GTSAction = func(ctx context.Context) error {
-	allSettings := viper.AllSettings()
-	b, err := json.Marshal(&allSettings)
+// Import imports info from a file into the database
+var Import action.GTSAction = func(ctx context.Context) error {
+	dbConn, err := bundb.NewBunDBService(ctx)
 	if err != nil {
+		return fmt.Errorf("error creating dbservice: %s", err)
+	}
+
+	importer := trans.NewImporter(dbConn)
+
+	path := viper.GetString(config.Keys.AdminTransPath)
+	if path == "" {
+		return errors.New("no path set")
+	}
+
+	if err := importer.Import(ctx, path); err != nil {
 		return err
 	}
-	fmt.Println(string(b))
-	return nil
+
+	return dbConn.Stop(ctx)
 }
