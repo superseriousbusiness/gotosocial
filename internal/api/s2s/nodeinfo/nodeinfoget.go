@@ -25,8 +25,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// NodeInfoGETHandler returns a compliant nodeinfo response to node info queries.
-// See: https://nodeinfo.diaspora.software/
+// NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 accountGet
+//
+// Returns a compliant nodeinfo response to node info queries. See: https://nodeinfo.diaspora.software/.
+//
+// ---
+// tags:
+// - nodeinfo
+//
+// produces:
+// - application/json
+//
+// security:
+// - OAuth2 Bearer:
+//   - read:accounts
+//
+// responses:
+//   '200':
+//     schema:
+//       "$ref": "#/definitions/nodeinfo"
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":       "NodeInfoGETHandler",

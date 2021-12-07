@@ -20,18 +20,10 @@ package user
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
-
-// ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-// https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubAcceptHeaders = []string{
-	`application/activity+json`,
-	`application/ld+json; profile="https://www.w3.org/ns/activitystreams"`,
-}
 
 // transferContext transfers the signature verifier and signature from the gin context to the request context
 func transferContext(c *gin.Context) context.Context {
@@ -48,14 +40,6 @@ func transferContext(c *gin.Context) context.Context {
 	}
 
 	return ctx
-}
-
-func negotiateFormat(c *gin.Context) (string, error) {
-	format := c.NegotiateFormat(ActivityPubAcceptHeaders...)
-	if format == "" {
-		return "", fmt.Errorf("no format can be offered for Accept headers %s", c.Request.Header.Get("Accept"))
-	}
-	return format, nil
 }
 
 // SwaggerCollection represents an activitypub collection.

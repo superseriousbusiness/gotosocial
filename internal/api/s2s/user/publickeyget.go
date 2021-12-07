@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
 // PublicKeyGETHandler should be served at eg https://example.org/users/:username/main-key.
@@ -44,9 +45,9 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := negotiateFormat(c)
+	format, err := api.NegotiateAccept(c, api.ActivityPubAcceptHeaders)
 	if err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": fmt.Sprintf("could not negotiate format with given Accept header(s): %s", err)})
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 	l.Tracef("negotiated format: %s", format)
