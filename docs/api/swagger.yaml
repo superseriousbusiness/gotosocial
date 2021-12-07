@@ -49,6 +49,48 @@ definitions:
     title: Mention represents a mention of another account.
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoServices:
+    properties:
+      inbound:
+        items:
+          type: string
+        type: array
+        x-go-name: Inbound
+      outbound:
+        items:
+          type: string
+        type: array
+        x-go-name: Outbound
+    title: NodeInfoServices represents inbound and outbound services that this node
+      offers connections to.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoSoftware:
+    properties:
+      name:
+        example: gotosocial
+        type: string
+        x-go-name: Name
+      version:
+        example: 0.1.2 1234567
+        type: string
+        x-go-name: Version
+    title: NodeInfoSoftware represents the name and version number of the software
+      of this node.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoUsage:
+    properties:
+      users:
+        $ref: '#/definitions/NodeInfoUsers'
+    title: NodeInfoUsage represents usage information about this server, such as number
+      of users.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoUsers:
+    title: NodeInfoUsers is a stub for usage information, currently empty.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Source:
     description: Returned as an additional entity when verifying and updated credentials,
       as an attribute of Account.
@@ -1122,6 +1164,42 @@ definitions:
     type: object
     x-go-name: MediaMeta
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  nodeinfo:
+    description: 'See: https://nodeinfo.diaspora.software/schema.html'
+    properties:
+      metadata:
+        additionalProperties:
+          type: object
+        description: Free form key value pairs for software specific values. Clients
+          should not rely on any specific key present.
+        type: object
+        x-go-name: Metadata
+      openRegistrations:
+        description: Whether this server allows open self-registration.
+        example: false
+        type: boolean
+        x-go-name: OpenRegistrations
+      protocols:
+        description: The protocols supported on this server.
+        items:
+          type: string
+        type: array
+        x-go-name: Protocols
+      services:
+        $ref: '#/definitions/NodeInfoServices'
+      software:
+        $ref: '#/definitions/NodeInfoSoftware'
+      usage:
+        $ref: '#/definitions/NodeInfoUsage'
+      version:
+        description: The schema version
+        example: "2.0"
+        type: string
+        x-go-name: Version
+    title: Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
+    type: object
+    x-go-name: Nodeinfo
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   oauthToken:
     properties:
       access_token:
@@ -1680,7 +1758,7 @@ info:
     name: AGPL3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
   title: GoToSocial
-  version: 0.0.1
+  version: REPLACE_ME
 paths:
   /api/v1/accounts:
     post:
@@ -3529,6 +3607,22 @@ paths:
       summary: Change the password of authenticated user.
       tags:
       - user
+  /nodeinfo/2.0:
+    get:
+      operationId: accountGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/nodeinfo'
+      security:
+      - OAuth2 Bearer:
+        - read:accounts
+      summary: 'Returns a compliant nodeinfo response to node info queries. See: https://nodeinfo.diaspora.software/.'
+      tags:
+      - nodeinfo
   /users/{username}/outbox:
     get:
       description: |-

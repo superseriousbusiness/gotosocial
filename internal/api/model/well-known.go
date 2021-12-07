@@ -22,6 +22,8 @@ package model
 // For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
 //
 // See https://webfinger.net/
+//
+// swagger:model wellKnownResponse
 type WellKnownResponse struct {
 	Subject string   `json:"subject,omitempty"`
 	Aliases []string `json:"aliases,omitempty"`
@@ -40,8 +42,11 @@ type Link struct {
 
 // Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
 // See: https://nodeinfo.diaspora.software/schema.html
+//
+// swagger:model nodeinfo
 type Nodeinfo struct {
 	// The schema version
+	// example: 2.0
 	Version string `json:"version"`
 	// Metadata about server software in use.
 	Software NodeInfoSoftware `json:"software"`
@@ -50,6 +55,7 @@ type Nodeinfo struct {
 	// The third party sites this server can connect to via their application API.
 	Services NodeInfoServices `json:"services"`
 	// Whether this server allows open self-registration.
+	// example: false
 	OpenRegistrations bool `json:"openRegistrations"`
 	// Usage statistics for this server.
 	Usage NodeInfoUsage `json:"usage"`
@@ -59,7 +65,9 @@ type Nodeinfo struct {
 
 // NodeInfoSoftware represents the name and version number of the software of this node.
 type NodeInfoSoftware struct {
+	// example: gotosocial
 	Name    string `json:"name"`
+	// example: 0.1.2 1234567
 	Version string `json:"version"`
 }
 
