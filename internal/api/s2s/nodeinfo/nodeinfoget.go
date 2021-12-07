@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
 // NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 accountGet
@@ -49,6 +50,11 @@ func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 		"func":       "NodeInfoGETHandler",
 		"user-agent": c.Request.UserAgent(),
 	})
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
 
 	ni, err := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
 	if err != nil {
