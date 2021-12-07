@@ -33,7 +33,7 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 		return nil, err
 	}
 
-	idString := util.GenerateURIForUpdate(originAccount.Username, c.config.Protocol, c.config.Host, newID)
+	idString := util.GenerateURIForUpdate(originAccount.Username, newID)
 	idURI, err := url.Parse(idString)
 	if err != nil {
 		return nil, fmt.Errorf("WrapPersonInUpdate: error parsing url %s: %s", idString, err)

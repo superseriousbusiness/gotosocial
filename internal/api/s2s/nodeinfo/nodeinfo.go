@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -36,14 +35,12 @@ const (
 
 // Module implements the FederationModule interface
 type Module struct {
-	config    *config.Config
 	processor processing.Processor
 }
 
 // New returns a new nodeinfo module
-func New(config *config.Config, processor processing.Processor) api.FederationModule {
+func New(processor processing.Processor) api.FederationModule {
 	return &Module{
-		config:    config,
 		processor: processor,
 	}
 }

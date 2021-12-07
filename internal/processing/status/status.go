@@ -22,7 +22,6 @@ import (
 	"context"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -71,7 +70,6 @@ type Processor interface {
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	config        *config.Config
 	db            db.DB
 	filter        visibility.Filter
 	formatter     text.Formatter
@@ -79,13 +77,12 @@ type processor struct {
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, fromClientAPI chan messages.FromClientAPI) Processor {
 	return &processor{
 		tc:            tc,
-		config:        config,
 		db:            db,
 		filter:        visibility.NewFilter(db),
-		formatter:     text.NewFormatter(config, db),
+		formatter:     text.NewFormatter(db),
 		fromClientAPI: fromClientAPI,
 	}
 }

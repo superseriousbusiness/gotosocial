@@ -28,6 +28,7 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -84,15 +85,13 @@ type Handler interface {
 }
 
 type mediaHandler struct {
-	config  *config.Config
 	db      db.DB
 	storage *kv.KVStore
 }
 
-// New returns a new handler with the given config, db, and storage
-func New(config *config.Config, database db.DB, storage *kv.KVStore) Handler {
+// New returns a new handler with the given db and storage
+func New(database db.DB, storage *kv.KVStore) Handler {
 	return &mediaHandler{
-		config:  config,
 		db:      database,
 		storage: storage,
 	}
@@ -179,6 +178,8 @@ func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes [
 // *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 // in the database.
 func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
+	keys := config.Keys
+
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -234,7 +235,10 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	extension := strings.Split(contentType, "/")[1]
 
 	// create the urls and storage paths
-	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	serveProtocol := viper.GetString(keys.StorageServeProtocol)
+	serveHost := viper.GetString(keys.StorageServeHost)
+	serveBasePath := viper.GetString(keys.StorageServeBasePath)
+	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
 
 	// generate a id for the new emoji
 	newEmojiID, err := id.NewRandomULID()
@@ -244,7 +248,9 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 
 	// webfinger uri for the emoji -- unrelated to actually serving the image
 	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c
-	emojiURI := fmt.Sprintf("%s://%s/%s/%s", mh.config.Protocol, mh.config.Host, Emoji, newEmojiID)
+	protocol := viper.GetString(keys.Protocol)
+	host := viper.GetString(keys.Host)
+	emojiURI := fmt.Sprintf("%s://%s/%s/%s", protocol, host, Emoji, newEmojiID)
 
 	// serve url and storage path for the original emoji -- can be png or gif
 	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, Emoji, Original, newEmojiID, extension)

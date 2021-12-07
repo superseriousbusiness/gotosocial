@@ -26,7 +26,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -84,12 +83,11 @@ type Manager interface {
 }
 
 // NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
-func NewManager(db db.DB, tc typeutils.TypeConverter, config *config.Config) Manager {
+func NewManager(db db.DB, tc typeutils.TypeConverter) Manager {
 	return &manager{
 		accountTimelines: sync.Map{},
 		db:               db,
 		tc:               tc,
-		config:           config,
 	}
 }
 
@@ -97,7 +95,6 @@ type manager struct {
 	accountTimelines sync.Map
 	db               db.DB
 	tc               typeutils.TypeConverter
-	config           *config.Config
 }
 
 func (m *manager) Ingest(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error) {

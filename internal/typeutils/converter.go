@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -192,15 +191,13 @@ type TypeConverter interface {
 }
 
 type converter struct {
-	config  *config.Config
 	db      db.DB
 	asCache cache.Cache
 }
 
 // NewConverter returns a new Converter
-func NewConverter(config *config.Config, db db.DB) TypeConverter {
+func NewConverter(db db.DB) TypeConverter {
 	return &converter{
-		config:  config,
 		db:      db,
 		asCache: cache.New(),
 	}

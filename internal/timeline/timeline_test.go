@@ -20,7 +20,6 @@ package timeline_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
@@ -29,9 +28,8 @@ import (
 
 type TimelineStandardTestSuite struct {
 	suite.Suite
-	config *config.Config
-	db     db.DB
-	tc     typeutils.TypeConverter
+	db db.DB
+	tc typeutils.TypeConverter
 
 	testAccounts map[string]*gtsmodel.Account
 	testStatuses map[string]*gtsmodel.Status

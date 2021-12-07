@@ -21,7 +21,6 @@ package user
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -40,15 +39,13 @@ type Processor interface {
 }
 
 type processor struct {
-	config      *config.Config
 	emailSender email.Sender
 	db          db.DB
 }
 
 // New returns a new user processor
-func New(db db.DB, emailSender email.Sender, config *config.Config) Processor {
+func New(db db.DB, emailSender email.Sender) Processor {
 	return &processor{
-		config:      config,
 		emailSender: emailSender,
 		db:          db,
 	}

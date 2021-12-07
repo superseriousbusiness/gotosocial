@@ -20,55 +20,54 @@ GoToSocial exposes the following configuration settings for OIDC, shown below wi
 #######################
 
 # Config for authentication with an external OIDC provider (Dex, Google, Auth0, etc).
-oidc:
 
-  # Bool. Enable authentication with external OIDC provider. If set to true, then
-  # the other OIDC options must be set as well. If this is set to false, then the standard
-  # internal oauth flow will be used, where users sign in to GtS with username/password.
-  # Options: [true, false]
-  # Default: false
-  enabled: false
+# Bool. Enable authentication with external OIDC provider. If set to true, then
+# the other OIDC options must be set as well. If this is set to false, then the standard
+# internal oauth flow will be used, where users sign in to GtS with username/password.
+# Options: [true, false]
+# Default: false
+oidc-enabled: false
 
-  # String. Name of the oidc idp (identity provider). This will be shown to users when
-  # they log in.
-  # Examples: ["Google", "Dex", "Auth0"]
-  # Default: ""
-  idpName: ""
+# String. Name of the oidc idp (identity provider). This will be shown to users when
+# they log in.
+# Examples: ["Google", "Dex", "Auth0"]
+# Default: ""
+oidc-idp-name: ""
 
-  # Bool. Skip the normal verification flow of tokens returned from the OIDC provider, ie.,
-  # don't check the expiry or signature. This should only be used in debugging or testing,
-  # never ever in a production environment as it's extremely unsafe!
-  # Options: [true, false]
-  # Default: false
-  skipVerification: false
+# Bool. Skip the normal verification flow of tokens returned from the OIDC provider, ie.,
+# don't check the expiry or signature. This should only be used in debugging or testing,
+# never ever in a production environment as it's extremely unsafe!
+# Options: [true, false]
+# Default: false
+oidc-skip-verification: false
 
-  # String. The OIDC issuer URI. This is where GtS will redirect users to for login.
-  # Typically this will look like a standard web URL.
-  # Examples: ["https://auth.example.org", "https://example.org/auth"]
-  # Default: ""
-  issuer: ""
+# String. The OIDC issuer URI. This is where GtS will redirect users to for login.
+# Typically this will look like a standard web URL.
+# Examples: ["https://auth.example.org", "https://example.org/auth"]
+# Default: ""
+oidc-issuer: ""
 
-  # String. The ID for this client as registered with the OIDC provider.
-  # Examples: ["some-client-id", "fda3772a-ad35-41c9-9a59-f1943ad18f54"]
-  # Default: ""
-  clientID: ""
+# String. The ID for this client as registered with the OIDC provider.
+# Examples: ["some-client-id", "fda3772a-ad35-41c9-9a59-f1943ad18f54"]
+# Default: ""
+oidc-client-id: ""
 
-  # String. The secret for this client as registered with the OIDC provider.
-  # Examples: ["super-secret-business", "79379cf5-8057-426d-bb83-af504d98a7b0"]
-  # Default: ""
-  clientSecret: ""
+# String. The secret for this client as registered with the OIDC provider.
+# Examples: ["super-secret-business", "79379cf5-8057-426d-bb83-af504d98a7b0"]
+# Default: ""
+oidc-client-secret: ""
 
-  # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
-  # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
-  # 'profile' is used to extract a username for the newly created user.
-  # 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
-  # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
-  # Default: ["openid", "email", "profile", "groups"]
-  scopes:
-    - "openid"
-    - "email"
-    - "profile"
-    - "groups"
+# Array of string. Scopes to request from the OIDC provider. The returned values will be used to
+# populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
+# 'profile' is used to extract a username for the newly created user.
+# 'groups' is optional and can be used to determine if a user is an admin (if they're in the group 'admin' or 'admins').
+# Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
+# Default: ["openid", "email", "profile", "groups"]
+oidc-scopes:
+  - "openid"
+  - "email"
+  - "profile"
+  - "groups"
 ```
 
 ## Behavior

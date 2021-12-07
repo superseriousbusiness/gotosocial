@@ -25,6 +25,7 @@ import (
 	"sync"
 
 	"github.com/go-fed/httpsig"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -37,7 +38,6 @@ type Controller interface {
 }
 
 type controller struct {
-	config   *config.Config
 	db       db.DB
 	clock    pub.Clock
 	client   pub.HttpClient
@@ -45,13 +45,16 @@ type controller struct {
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(config *config.Config, db db.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(db db.DB, clock pub.Clock, client pub.HttpClient) Controller {
+	applicationName := viper.GetString(config.Keys.ApplicationName)
+	host := viper.GetString(config.Keys.Host)
+	appAgent := fmt.Sprintf("%s %s", applicationName, host)
+
 	return &controller{
-		config:   config,
 		db:       db,
 		clock:    clock,
 		client:   client,
-		appAgent: fmt.Sprintf("%s %s", config.ApplicationName, config.Host),
+		appAgent: appAgent,
 	}
 }
 
@@ -93,7 +96,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	// Otherwise, we can take the instance account and use those credentials to make the request.
 	var u string
 	if username == "" {
-		u = c.config.Host
+		u = viper.GetString(config.Keys.Host)
 	} else {
 		u = username
 	}

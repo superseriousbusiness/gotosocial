@@ -63,7 +63,7 @@ You can now run the binary.
 Start the GoToSocial server with the following command:
 
 ```bash
-./gotosocial --config-path ./config.yaml server start
+./gotosocial server start --config-path ./config.yaml
 ```
 
 The server should now start up and you should be able to access the splash page by navigating to your domain in the browser. Note that it might take up to a minute or so for your LetsEncrypt certificates to be created for the first time, so refresh a few times if necessary.
@@ -77,7 +77,7 @@ You can use the GoToSocial binary to also create, confirm, and promote your user
 Run the following command to create a new account:
 
 ```bash
-./gotosocial --config-path ./config.yaml admin account create --username some_username --email some_email@whatever.org --password SOME_PASSWORD
+./gotosocial admin account create --config-path ./config.yaml --username some_username --email some_email@whatever.org --password SOME_PASSWORD
 ```
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
@@ -85,7 +85,7 @@ In the above command, replace `some_username` with your desired username, `some_
 Run the following command to confirm the account you just created:
 
 ```bash
-./gotosocial --config-path ./config.yaml admin account confirm --username some_username
+./gotosocial admin account confirm --config-path ./config.yaml --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.
@@ -93,7 +93,7 @@ Replace `some_username` with the username of the account you just created.
 If you want your user to have admin rights, you can promote them using a similar command:
 
 ```bash
-./gotosocial --config-path ./config.yaml admin account promote --username some_username
+./gotosocial admin account promote --config-path ./config.yaml --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.

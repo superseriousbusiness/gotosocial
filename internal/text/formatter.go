@@ -21,7 +21,6 @@ package text
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -42,14 +41,12 @@ type Formatter interface {
 }
 
 type formatter struct {
-	cfg *config.Config
-	db  db.DB
+	db db.DB
 }
 
 // NewFormatter returns a new Formatter interface for parsing statuses and other text input into nice html.
-func NewFormatter(cfg *config.Config, db db.DB) Formatter {
+func NewFormatter(db db.DB) Formatter {
 	return &formatter{
-		cfg: cfg,
-		db:  db,
+		db: db,
 	}
 }

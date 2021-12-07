@@ -22,7 +22,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -35,7 +34,6 @@ import (
 type StatusStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config      *config.Config
 	db          db.DB
 	tc          typeutils.TypeConverter
 	federator   federation.Federator
@@ -67,15 +65,15 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 }
 
 func (suite *StatusStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
-	suite.statusModule = status.New(suite.config, suite.processor).(*status.Module)
+	suite.statusModule = status.New(suite.processor).(*status.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

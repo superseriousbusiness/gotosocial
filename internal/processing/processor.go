@@ -26,7 +26,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -236,7 +235,6 @@ type processor struct {
 	fromFederator   chan messages.FromFederator
 	federator       federation.Federator
 	stop            chan interface{}
-	config          *config.Config
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
 	mediaHandler    media.Handler
@@ -260,7 +258,6 @@ type processor struct {
 
 // NewProcessor returns a new Processor.
 func NewProcessor(
-	config *config.Config,
 	tc typeutils.TypeConverter,
 	federator federation.Federator,
 	oauthServer oauth.Server,
@@ -272,20 +269,19 @@ func NewProcessor(
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
 
-	statusProcessor := status.New(db, tc, config, fromClientAPI)
+	statusProcessor := status.New(db, tc, fromClientAPI)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator, config)
-	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI, config)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage, config)
-	userProcessor := user.New(db, emailSender, config)
-	federationProcessor := federationProcessor.New(db, tc, config, federator, fromFederator)
+	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator)
+	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage)
+	userProcessor := user.New(db, emailSender)
+	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
 		fromFederator:   fromFederator,
 		federator:       federator,
 		stop:            make(chan interface{}),
-		config:          config,
 		tc:              tc,
 		oauthServer:     oauthServer,
 		mediaHandler:    mediaHandler,

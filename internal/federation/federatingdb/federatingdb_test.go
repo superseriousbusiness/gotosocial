@@ -22,7 +22,6 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -34,7 +33,6 @@ import (
 
 type FederatingDBTestSuite struct {
 	suite.Suite
-	config       *config.Config
 	db           db.DB
 	tc           typeutils.TypeConverter
 	federatingDB federatingdb.DB
@@ -59,13 +57,13 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testBlocks = testrig.NewTestBlocks()
-	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 }
 
 func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestLog()
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestConfig()
 	suite.db = testrig.NewTestDB()
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

@@ -27,9 +27,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 const statusText1 = `Another test @foss_satan@fossbros-anonymous.io
@@ -50,33 +47,6 @@ const status2TextExpectedFull = "<p>Another test <span class=\"h-card\"><a href=
 
 type UtilTestSuite struct {
 	StatusStandardTestSuite
-}
-
-func (suite *UtilTestSuite) SetupSuite() {
-	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
-	suite.testApplications = testrig.NewTestApplications()
-	suite.testUsers = testrig.NewTestUsers()
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testAttachments = testrig.NewTestAttachments()
-	suite.testStatuses = testrig.NewTestStatuses()
-	suite.testTags = testrig.NewTestTags()
-	suite.testMentions = testrig.NewTestMentions()
-}
-
-func (suite *UtilTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	testrig.InitTestLog()
-	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
-	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.status = status.New(suite.db, suite.typeConverter, suite.config, suite.fromClientAPIChan)
-
-	testrig.StandardDBSetup(suite.db, nil)
-}
-
-func (suite *UtilTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *UtilTestSuite) TestProcessMentions1() {

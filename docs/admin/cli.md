@@ -4,35 +4,34 @@ GoToSocial compiles to an executable binary.
 
 The standard way of using this binary is to run a server with the `gotosocial server start` command.
 
-However, this binary can also be used as an admin tool.
+However, this binary can also be used as an admin tool, and for debugging.
 
 Here's the full output of `gotosocial --help`, without the big list of global config options.
 
 ```text
-NAME:
-   gotosocial - a fediverse social media server
+GoToSocial - a fediverse social media server
 
-USAGE:
-   gotosocial [global options] command [command options] [arguments...]
+For help, see: https://docs.gotosocial.org.
 
-VERSION:
-   0.1.0-SNAPSHOT a940a52
+Code: https://github.com/superseriousbusiness/gotosocial
 
-COMMANDS:
-   server   gotosocial server-related tasks
-   admin    gotosocial admin-related tasks
-   testrig  gotosocial testrig tasks
-   help, h  Shows a list of commands or help for one command
+Usage:
+  gotosocial [command]
 
-GLOBAL OPTIONS:
-   [a huge list of global options -- too much to show here]
+Available Commands:
+  admin       gotosocial admin-related tasks
+  completion  generate the autocompletion script for the specified shell
+  debug       gotosocial debug-related tasks
+  help        Help about any command
+  server      gotosocial server-related tasks
+  testrig     gotosocial testrig-related tasks
 ```
 
-Under `COMMANDS`, you can see the standard `server` command. But there are also commands doing admin and testing etc, which will be explained in this document.
+Under `Available Commands`, you can see the standard `server` command. But there are also commands doing admin and testing etc, which will be explained in this document.
 
 **Please note -- for all of these commands, you will still need to set the global options correctly so that the CLI tool knows how eg., how to connect to your database, which database to use, which host and account domain to use etc.**
 
-You can set these global options using environment variables, passing them as CLI variables after the `gotosocial` part of the command (eg., `gotosocial --host example.org [commands]`), or by just pointing the CLI tool towards your config file (eg., `gotosocial --config-path ./config.yaml [commands]`).
+You can set these options using environment variables, passing them as CLI flags (eg., `gotosocial [commands] --host example.org`), or by just pointing the CLI tool towards your config file (eg., `gotosocial  [commands] --config-path ./config.yaml`).
 
 ## gotosocial admin
 
@@ -45,17 +44,16 @@ This command can be used to create a new account on your instance.
 `gotosocial admin account create --help`:
 
 ```text
-NAME:
-   gotosocial admin account create - create a new account
+create a new account
 
-USAGE:
-   gotosocial admin account create [command options] [arguments...]
+Usage:
+  gotosocial admin account create [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --email value     the email address of this account
-   --password value  the password to set for this account
-   --help, -h        show help (default: false)
+Flags:
+      --email string      the email address of this account
+  -h, --help              help for create
+      --password string   the password to set for this account
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -74,15 +72,14 @@ This command can be used to confirm a user+account on your instance, allowing th
 `gotosocial admin account confirm --help`:
 
 ```text
-NAME:
-   gotosocial admin account confirm - confirm an existing account manually, thereby skipping email confirmation
+confirm an existing account manually, thereby skipping email confirmation
 
-USAGE:
-   gotosocial admin account confirm [command options] [arguments...]
+Usage:
+  gotosocial admin account confirm [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for confirm
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -98,15 +95,14 @@ This command can be used to promote a user to admin.
 `gotosocial admin account promote --help`:
 
 ```text
-NAME:
-   gotosocial admin account promote - promote an account to admin
+promote an account to admin
 
-USAGE:
-   gotosocial admin account promote [command options] [arguments...]
+Usage:
+  gotosocial admin account promote [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for promote
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -122,15 +118,14 @@ This command can be used to demote a user from admin to normal user.
 `gotosocial admin account demote --help`:
 
 ```text
-NAME:
-   gotosocial admin account demote - demote an account from admin to normal user
+demote an account from admin to normal user
 
-USAGE:
-   gotosocial admin account demote [command options] [arguments...]
+Usage:
+  gotosocial admin account demote [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for demote
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -146,15 +141,14 @@ This command can be used to disable an account: prevent it from signing in or do
 `gotosocial admin account disable --help`:
 
 ```text
-NAME:
-   gotosocial admin account disable - prevent an account from signing in or posting etc, but don't delete anything
+prevent an account from signing in or posting etc, but don't delete anything
 
-USAGE:
-   gotosocial admin account disable [command options] [arguments...]
+Usage:
+  gotosocial admin account disable [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for disable
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -172,15 +166,14 @@ In other words, this 'deletes' the account (without actually removing the accoun
 `gotosocial admin account suspend --help`:
 
 ```text
-NAME:
-   gotosocial admin account suspend - completely remove an account and all of its posts, media, etc
+completely remove an account and all of its posts, media, etc
 
-USAGE:
-   gotosocial admin account suspend [command options] [arguments...]
+Usage:
+  gotosocial admin account suspend [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for suspend
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -196,16 +189,15 @@ This command can be used to set a new password on the given account.
 `gotosocial admin account password --help`:
 
 ```text
-NAME:
-   gotosocial admin account password - set a new password for the given account
+set a new password for the given account
 
-USAGE:
-   gotosocial admin account password [command options] [arguments...]
+Usage:
+  gotosocial admin account password [flags]
 
-OPTIONS:
-   --username value  the username to create/delete/etc
-   --password value  the password to set for this account
-   --help, -h        show help (default: false)
+Flags:
+  -h, --help              help for password
+      --password string   the password to set for this account
+      --username string   the username to create/delete/etc
 ```
 
 Example:
@@ -223,21 +215,20 @@ The file format will be a series of newline-separated JSON objects.
 `gotosocial admin export --help`:
 
 ```text
-NAME:
-   gotosocial admin export - export data from the database to file at the given path
+export data from the database to file at the given path
 
-USAGE:
-   gotosocial admin export [command options] [arguments...]
+Usage:
+  gotosocial admin export [flags]
 
-OPTIONS:
-   --path value  the path of the file to import from/export to
-   --help, -h    show help (default: false)
+Flags:
+  -h, --help          help for export
+      --path string   the path of the file to import from/export to
 ```
 
 Example:
 
 ```bash
-gotosocial admin export --path ./example.json
+gotosocial admin export --config-file ./config.yaml --path ./example.json
 ```
 
 `example.json`:
@@ -272,19 +263,18 @@ The file format should be a series of newline-separated JSON objects (see above)
 `gotosocial admin import --help`:
 
 ```text
-NAME:
-   gotosocial admin import - import data from a file into the database
+import data from a file into the database
 
-USAGE:
-   gotosocial admin import [command options] [arguments...]
+Usage:
+  gotosocial admin import [flags]
 
-OPTIONS:
-   --path value  the path of the file to import from/export to
-   --help, -h    show help (default: false)
+Flags:
+  -h, --help          help for import
+      --path string   the path of the file to import from/export to
 ```
 
 Example:
 
 ```bash
-gotosocial admin import --path ./example.json
+gotosocial admin import --config-file ./config.yaml --path ./example.json
 ```

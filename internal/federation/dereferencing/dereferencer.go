@@ -24,7 +24,6 @@ import (
 	"sync"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -82,19 +81,17 @@ type deref struct {
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
 	mediaHandler        media.Handler
-	config              *config.Config
 	handshakes          map[string][]*url.URL
 	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(config *config.Config, db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler) Dereferencer {
+func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler) Dereferencer {
 	return &deref{
 		db:                  db,
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		mediaHandler:        mediaHandler,
-		config:              config,
 		handshakeSync:       &sync.Mutex{},
 	}
 }

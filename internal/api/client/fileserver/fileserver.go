@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -42,22 +43,20 @@ const (
 // FileServer implements the RESTAPIModule interface.
 // The goal here is to serve requested media files if the gotosocial server is configured to use local storage.
 type FileServer struct {
-	config      *config.Config
-	processor   processing.Processor
-	storageBase string
+	processor            processing.Processor
+	storageServeBasePath string
 }
 
 // New returns a new fileServer module
-func New(config *config.Config, processor processing.Processor) api.ClientModule {
+func New(processor processing.Processor) api.ClientModule {
 	return &FileServer{
-		config:      config,
-		processor:   processor,
-		storageBase: config.StorageConfig.ServeBasePath,
+		processor:            processor,
+		storageServeBasePath: viper.GetString(config.Keys.StorageServeBasePath),
 	}
 }
 
 // Route satisfies the RESTAPIModule interface
 func (m *FileServer) Route(s router.Router) error {
-	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageBase, AccountIDKey, MediaTypeKey, MediaSizeKey, FileNameKey), m.ServeFile)
+	s.AttachHandler(http.MethodGet, fmt.Sprintf("%s/:%s/:%s/:%s/:%s", m.storageServeBasePath, AccountIDKey, MediaTypeKey, MediaSizeKey, FileNameKey), m.ServeFile)
 	return nil
 }

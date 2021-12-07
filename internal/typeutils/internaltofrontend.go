@@ -21,11 +21,14 @@ package typeutils
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -567,34 +570,32 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
-	if i.Domain == c.config.Host {
-		userCountKey := "user_count"
-		statusCountKey := "status_count"
-		domainCountKey := "domain_count"
-
-		userCount, err := c.db.CountInstanceUsers(ctx, c.config.Host)
+	keys := config.Keys
+	host := viper.GetString(keys.Host)
+	if i.Domain == host {
+		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
-			mi.Stats[userCountKey] = userCount
+			mi.Stats["user_count"] = userCount
 		}
 
-		statusCount, err := c.db.CountInstanceStatuses(ctx, c.config.Host)
+		statusCount, err := c.db.CountInstanceStatuses(ctx, host)
 		if err == nil {
-			mi.Stats[statusCountKey] = statusCount
+			mi.Stats["status_count"] = statusCount
 		}
 
-		domainCount, err := c.db.CountInstanceDomains(ctx, c.config.Host)
+		domainCount, err := c.db.CountInstanceDomains(ctx, host)
 		if err == nil {
-			mi.Stats[domainCountKey] = domainCount
+			mi.Stats["domain_count"] = domainCount
 		}
 
-		mi.Registrations = c.config.AccountsConfig.OpenRegistration
-		mi.ApprovalRequired = c.config.AccountsConfig.RequireApproval
+		mi.Registrations = viper.GetBool(keys.AccountsRegistrationOpen)
+		mi.ApprovalRequired = viper.GetBool(keys.AccountsApprovalRequired)
 		mi.InvitesEnabled = false // TODO
-		mi.MaxTootChars = uint(c.config.StatusesConfig.MaxChars)
+		mi.MaxTootChars = uint(viper.GetInt(keys.StatusesMaxChars))
 		mi.URLS = &model.InstanceURLs{
-			StreamingAPI: fmt.Sprintf("wss://%s", c.config.Host),
+			StreamingAPI: fmt.Sprintf("wss://%s", host),
 		}
-		mi.Version = c.config.SoftwareVersion
+		mi.Version = viper.GetString(keys.SoftwareVersion)
 	}
 
 	// get the instance account if it exists and just skip if it doesn't

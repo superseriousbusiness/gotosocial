@@ -16,32 +16,35 @@ The configuration options for smtp are as follows:
 #######################
 
 # Config for sending emails via an smtp server. See https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
-smtp:
 
-  # String. The hostname of the smtp server you want to use.
-  # If this is not set, smtp will not be used to send emails, and you can ignore the other settings.
-  # Examples: ["mail.example.org", "localhost"]
-  # Default: ""
-  host: ""
-  # Int. Port to use to connect to the smtp server.
-  # Examples: []
-  # Default: 0
-  port: 0
-  # String. Username to use when authenticating with the smtp server.
-  # This should have been provided to you by your smtp host.
-  # This is often, but not always, an email address.
-  # Examples: ["maillord@example.org"]
-  # Default: ""
-  username:
-  # String. Password to use when authenticating with the smtp server.
-  # This should have been provided to you by your smtp host.
-  # Examples: ["1234", "password"]
-  # Default: ""
-  password:
-  # String. 'From' address for sent emails.
-  # Examples: ["mail@example.org"]
-  # Default: ""
-  from: ""
+# String. The hostname of the smtp server you want to use.
+# If this is not set, smtp will not be used to send emails, and you can ignore the other settings.
+# Examples: ["mail.example.org", "localhost"]
+# Default: ""
+smtp-host: ""
+
+# Int. Port to use to connect to the smtp server.
+# Examples: []
+# Default: 0
+smtp-port: 0
+
+# String. Username to use when authenticating with the smtp server.
+# This should have been provided to you by your smtp host.
+# This is often, but not always, an email address.
+# Examples: ["maillord@example.org"]
+# Default: ""
+smtp-username: ""
+
+# String. Password to use when authenticating with the smtp server.
+# This should have been provided to you by your smtp host.
+# Examples: ["1234", "password"]
+# Default: ""
+smtp-password: ""
+
+# String. 'From' address for sent emails.
+# Examples: ["mail@example.org"]
+# Default: ""
+smtp-from: ""
 ```
 
 Note that if you don't set `Host`, then email sending via smtp will be disabled, and the other settings will be ignored. GoToSocial will still log (at trace level) emails that *would* have been sent if smtp was enabled.

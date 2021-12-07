@@ -76,7 +76,7 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 			TargetAccount:   targetStatus.Account,
 			StatusID:        targetStatus.ID,
 			Status:          targetStatus,
-			URI:             util.GenerateURIForLike(requestingAccount.Username, p.config.Protocol, p.config.Host, thisFaveID),
+			URI:             util.GenerateURIForLike(requestingAccount.Username, thisFaveID),
 		}
 
 		if err := p.db.Put(ctx, gtsFave); err != nil {

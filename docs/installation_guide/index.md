@@ -16,7 +16,7 @@ If you decide to use a VPS instead, you can just spin yourself up something chea
 
 [Greenhost](https://greenhost.net) is also great: it has zero co2 emissions, but is a bit more costly.
 
-## Ports    
+## Ports
 
 The installation guides won't go into running [UFW](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04) and [Fail2Ban](https://linuxize.com/post/install-configure-fail2ban-on-ubuntu-20-04/) but you absolutely should do that.
 

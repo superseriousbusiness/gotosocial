@@ -24,7 +24,6 @@ import (
 	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -83,7 +82,6 @@ type Processor interface {
 
 type processor struct {
 	db            db.DB
-	config        *config.Config
 	federator     federation.Federator
 	tc            typeutils.TypeConverter
 	filter        visibility.Filter
@@ -91,10 +89,9 @@ type processor struct {
 }
 
 // New returns a new federation processor.
-func New(db db.DB, tc typeutils.TypeConverter, config *config.Config, federator federation.Federator, fromFederator chan messages.FromFederator) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator, fromFederator chan messages.FromFederator) Processor {
 	return &processor{
 		db:            db,
-		config:        config,
 		federator:     federator,
 		tc:            tc,
 		filter:        visibility.NewFilter(db),

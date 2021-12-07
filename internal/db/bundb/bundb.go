@@ -35,6 +35,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -52,6 +53,17 @@ import (
 const (
 	dbTypePostgres = "postgres"
 	dbTypeSqlite   = "sqlite"
+
+	// dbTLSModeDisable does not attempt to make a TLS connection to the database.
+	dbTLSModeDisable = "disable"
+	// dbTLSModeEnable attempts to make a TLS connection to the database, but doesn't fail if
+	// the certificate passed by the database isn't verified.
+	dbTLSModeEnable = "enable"
+	// dbTLSModeRequire attempts to make a TLS connection to the database, and requires
+	// that the certificate presented by the database is valid.
+	dbTLSModeRequire = "require"
+	// dbTLSModeUnset means that the TLS mode has not been set.
+	dbTLSModeUnset = ""
 )
 
 var registerTables = []interface{}{
@@ -73,8 +85,7 @@ type bunDBService struct {
 	db.Session
 	db.Status
 	db.Timeline
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func doMigration(ctx context.Context, db *bun.DB) error {
@@ -105,22 +116,24 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
-func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
+func NewBunDBService(ctx context.Context) (db.DB, error) {
 	var conn *DBConn
 	var err error
-	switch strings.ToLower(c.DBConfig.Type) {
+	dbType := strings.ToLower(viper.GetString(config.Keys.DbType))
+
+	switch dbType {
 	case dbTypePostgres:
-		conn, err = pgConn(ctx, c)
+		conn, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case dbTypeSqlite:
-		conn, err = sqliteConn(ctx, c)
+		conn, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("database type %s not supported for bundb", strings.ToLower(c.DBConfig.Type))
+		return nil, fmt.Errorf("database type %s not supported for bundb", dbType)
 	}
 
 	// add a hook to just log queries and the time they take
@@ -142,76 +155,66 @@ func NewBunDBService(ctx context.Context, c *config.Config) (db.DB, error) {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
-	accounts := &accountDB{config: c, conn: conn, cache: cache.NewAccountCache()}
+	accounts := &accountDB{conn: conn, cache: cache.NewAccountCache()}
 
 	ps := &bunDBService{
 		Account: accounts,
 		Admin: &adminDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Basic: &basicDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Domain: &domainDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Instance: &instanceDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Media: &mediaDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Mention: &mentionDB{
-			config: c,
-			conn:   conn,
-			cache:  ttlcache.NewCache(),
+			conn:  conn,
+			cache: ttlcache.NewCache(),
 		},
 		Notification: &notificationDB{
-			config: c,
-			conn:   conn,
-			cache:  ttlcache.NewCache(),
+			conn:  conn,
+			cache: ttlcache.NewCache(),
 		},
 		Relationship: &relationshipDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Session: &sessionDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
 		Status: &statusDB{
-			config:   c,
 			conn:     conn,
 			cache:    cache.NewStatusCache(),
 			accounts: accounts,
 		},
 		Timeline: &timelineDB{
-			config: c,
-			conn:   conn,
+			conn: conn,
 		},
-		config: c,
-		conn:   conn,
+		conn: conn,
 	}
 
 	// we can confidently return this useable service now
 	return ps, nil
 }
 
-func sqliteConn(ctx context.Context, c *config.Config) (*DBConn, error) {
+func sqliteConn(ctx context.Context) (*DBConn, error) {
+	dbAddress := viper.GetString(config.Keys.DbAddress)
+
 	// Drop anything fancy from DB address
-	c.DBConfig.Address = strings.Split(c.DBConfig.Address, "?")[0]
-	c.DBConfig.Address = strings.TrimPrefix(c.DBConfig.Address, "file:")
+	dbAddress = strings.Split(dbAddress, "?")[0]
+	dbAddress = strings.TrimPrefix(dbAddress, "file:")
 
 	// Append our own SQLite preferences
-	c.DBConfig.Address = "file:" + c.DBConfig.Address + "?cache=shared"
+	dbAddress = "file:" + dbAddress + "?cache=shared"
 
 	// Open new DB instance
-	sqldb, err := sql.Open("sqlite", c.DBConfig.Address)
+	sqldb, err := sql.Open("sqlite", dbAddress)
 	if err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
@@ -221,7 +224,7 @@ func sqliteConn(ctx context.Context, c *config.Config) (*DBConn, error) {
 
 	tweakConnectionValues(sqldb)
 
-	if c.DBConfig.Address == "file::memory:?cache=shared" {
+	if dbAddress == "file::memory:?cache=shared" {
 		logrus.Warn("sqlite in-memory database should only be used for debugging")
 		// don't close connections on disconnect -- otherwise
 		// the SQLite database will be deleted when there
@@ -243,8 +246,8 @@ func sqliteConn(ctx context.Context, c *config.Config) (*DBConn, error) {
 	return conn, nil
 }
 
-func pgConn(ctx context.Context, c *config.Config) (*DBConn, error) {
-	opts, err := deriveBunDBPGOptions(c)
+func pgConn(ctx context.Context) (*DBConn, error) {
+	opts, err := deriveBunDBPGOptions()
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
 	}
@@ -270,54 +273,63 @@ func pgConn(ctx context.Context, c *config.Config) (*DBConn, error) {
 
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
-func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
-	if strings.ToUpper(c.DBConfig.Type) != db.DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, c.DBConfig.Type)
+func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
+	keys := config.Keys
+
+	if strings.ToUpper(viper.GetString(keys.DbType)) != db.DBTypePostgres {
+		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, viper.GetString(keys.DbType))
 	}
 
 	// validate port
-	if c.DBConfig.Port == 0 {
+	port := viper.GetInt(keys.DbPort)
+	if port == 0 {
 		return nil, errors.New("no port set")
 	}
 
 	// validate address
-	if c.DBConfig.Address == "" {
+	address := viper.GetString(keys.DbAddress)
+	if address == "" {
 		return nil, errors.New("no address set")
 	}
 
 	// validate username
-	if c.DBConfig.User == "" {
+	username := viper.GetString(keys.DbUser)
+	if username == "" {
 		return nil, errors.New("no user set")
 	}
 
 	// validate that there's a password
-	if c.DBConfig.Password == "" {
+	password := viper.GetString(keys.DbPassword)
+	if password == "" {
 		return nil, errors.New("no password set")
 	}
 
 	// validate database
-	if c.DBConfig.Database == "" {
+	database := viper.GetString(keys.DbDatabase)
+	if database == "" {
 		return nil, errors.New("no database set")
 	}
 
 	var tlsConfig *tls.Config
-	switch c.DBConfig.TLSMode {
-	case config.DBTLSModeDisable, config.DBTLSModeUnset:
+	tlsMode := viper.GetString(keys.DbTLSMode)
+	switch tlsMode {
+	case dbTLSModeDisable, dbTLSModeUnset:
 		break // nothing to do
-	case config.DBTLSModeEnable:
+	case dbTLSModeEnable:
 		/* #nosec G402 */
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: true,
 		}
-	case config.DBTLSModeRequire:
+	case dbTLSModeRequire:
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
-			ServerName:         c.DBConfig.Address,
+			ServerName:         viper.GetString(keys.DbAddress),
 			MinVersion:         tls.VersionTLS12,
 		}
 	}
 
-	if tlsConfig != nil && c.DBConfig.TLSCACert != "" {
+	caCertPath := viper.GetString(keys.DbTLSCACert)
+	if tlsConfig != nil && caCertPath != "" {
 		// load the system cert pool first -- we'll append the given CA cert to this
 		certPool, err := x509.SystemCertPool()
 		if err != nil {
@@ -325,24 +337,24 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 		}
 
 		// open the file itself and make sure there's something in it
-		caCertBytes, err := os.ReadFile(c.DBConfig.TLSCACert)
+		caCertBytes, err := os.ReadFile(caCertPath)
 		if err != nil {
-			return nil, fmt.Errorf("error opening CA certificate at %s: %s", c.DBConfig.TLSCACert, err)
+			return nil, fmt.Errorf("error opening CA certificate at %s: %s", caCertPath, err)
 		}
 		if len(caCertBytes) == 0 {
-			return nil, fmt.Errorf("ca cert at %s was empty", c.DBConfig.TLSCACert)
+			return nil, fmt.Errorf("ca cert at %s was empty", caCertPath)
 		}
 
 		// make sure we have a PEM block
 		caPem, _ := pem.Decode(caCertBytes)
 		if caPem == nil {
-			return nil, fmt.Errorf("could not parse cert at %s into PEM", c.DBConfig.TLSCACert)
+			return nil, fmt.Errorf("could not parse cert at %s into PEM", caCertPath)
 		}
 
 		// parse the PEM block into the certificate
 		caCert, err := x509.ParseCertificate(caPem.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", c.DBConfig.TLSCACert, err)
+			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", caCertPath, err)
 		}
 
 		// we're happy, add it to the existing pool and then use this pool in our tls config
@@ -351,14 +363,14 @@ func deriveBunDBPGOptions(c *config.Config) (*pgx.ConnConfig, error) {
 	}
 
 	cfg, _ := pgx.ParseConfig("")
-	cfg.Host = c.DBConfig.Address
-	cfg.Port = uint16(c.DBConfig.Port)
-	cfg.User = c.DBConfig.User
-	cfg.Password = c.DBConfig.Password
+	cfg.Host = address
+	cfg.Port = uint16(port)
+	cfg.User = username
+	cfg.Password = password
 	cfg.TLSConfig = tlsConfig
-	cfg.Database = c.DBConfig.Database
+	cfg.Database = database
 	cfg.PreferSimpleProtocol = true
-	cfg.RuntimeParams["application_name"] = c.ApplicationName
+	cfg.RuntimeParams["application_name"] = viper.GetString(keys.ApplicationName)
 
 	return cfg, nil
 }
@@ -455,6 +467,9 @@ func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAcco
 }
 
 func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {
 		tag := &gtsmodel.Tag{}
@@ -468,7 +483,7 @@ func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, ori
 					return nil, err
 				}
 				tag.ID = newID
-				tag.URL = fmt.Sprintf("%s://%s/tags/%s", ps.config.Protocol, ps.config.Host, t)
+				tag.URL = fmt.Sprintf("%s://%s/tags/%s", protocol, host, t)
 				tag.Name = t
 				tag.FirstSeenFromAccountID = originAccountID
 				tag.CreatedAt = time.Now()

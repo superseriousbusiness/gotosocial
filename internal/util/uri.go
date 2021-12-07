@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
@@ -116,36 +118,49 @@ type UserURIs struct {
 
 // GenerateURIForFollow returns the AP URI for a new follow -- something like:
 // https://example.org/users/whatever_user/follow/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForFollow(username string, protocol string, host string, thisFollowID string) string {
+func GenerateURIForFollow(username string, thisFollowID string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, FollowPath, thisFollowID)
 }
 
 // GenerateURIForLike returns the AP URI for a new like/fave -- something like:
 // https://example.org/users/whatever_user/liked/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForLike(username string, protocol string, host string, thisFavedID string) string {
+func GenerateURIForLike(username string, thisFavedID string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, LikedPath, thisFavedID)
 }
 
 // GenerateURIForUpdate returns the AP URI for a new update activity -- something like:
 // https://example.org/users/whatever_user#updates/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForUpdate(username string, protocol string, host string, thisUpdateID string) string {
+func GenerateURIForUpdate(username string, thisUpdateID string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return fmt.Sprintf("%s://%s/%s/%s#%s/%s", protocol, host, UsersPath, username, UpdatePath, thisUpdateID)
 }
 
 // GenerateURIForBlock returns the AP URI for a new block activity -- something like:
 // https://example.org/users/whatever_user/blocks/01F7XTH1QGBAPMGF49WJZ91XGC
-func GenerateURIForBlock(username string, protocol string, host string, thisBlockID string) string {
+func GenerateURIForBlock(username string, thisBlockID string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
 }
 
 // GenerateURIForEmailConfirm returns a link for email confirmation -- something like:
 // https://example.org/confirm_email?token=490e337c-0162-454f-ac48-4b22bb92a205
-func GenerateURIForEmailConfirm(protocol string, host string, token string) string {
+func GenerateURIForEmailConfirm(token string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
 	return fmt.Sprintf("%s://%s/%s?token=%s", protocol, host, ConfirmEmailPath, token)
 }
 
 // GenerateURIsForAccount throws together a bunch of URIs for the given username, with the given protocol and host.
-func GenerateURIsForAccount(username string, protocol string, host string) *UserURIs {
+func GenerateURIsForAccount(username string) *UserURIs {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+
 	// The below URLs are used for serving web requests
 	hostURL := fmt.Sprintf("%s://%s", protocol, host)
 	userURL := fmt.Sprintf("%s/@%s", hostURL, username)

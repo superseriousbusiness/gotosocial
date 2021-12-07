@@ -25,6 +25,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -51,11 +53,12 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 	//      equivalent to the odds of creating a few tens of trillions of UUIDs in a
 	//      year and having one duplicate.
 	confirmationToken := uuid.NewString()
-	confirmationLink := util.GenerateURIForEmailConfirm(p.config.Protocol, p.config.Host, confirmationToken)
+	confirmationLink := util.GenerateURIForEmailConfirm(confirmationToken)
 
 	// pull our instance entry from the database so we can greet the user nicely in the email
 	instance := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: p.config.Host}}, instance); err != nil {
+	host := viper.GetString(config.Keys.Host)
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
 	}
 

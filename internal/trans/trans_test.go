@@ -30,8 +30,9 @@ type TransTestSuite struct {
 }
 
 func (suite *TransTestSuite) SetupTest() {
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
+	suite.db = testrig.NewTestDB()
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

@@ -23,7 +23,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 var corsConfig = cors.Config{
@@ -81,7 +80,7 @@ var corsConfig = cors.Config{
 }
 
 // useCors attaches the corsConfig above to the given gin engine
-func useCors(cfg *config.Config, engine *gin.Engine) error {
+func useCors(engine *gin.Engine) error {
 	c := cors.New(corsConfig)
 	engine.Use(c)
 	return nil

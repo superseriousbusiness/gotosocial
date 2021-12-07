@@ -22,7 +22,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -34,7 +33,6 @@ import (
 
 type UserStandardTestSuite struct {
 	suite.Suite
-	config      *config.Config
 	db          db.DB
 	tc          typeutils.TypeConverter
 	federator   federation.Federator
@@ -54,21 +52,21 @@ type UserStandardTestSuite struct {
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
-	suite.config = testrig.NewTestConfig()
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
-	suite.userModule = user.New(suite.config, suite.processor).(*user.Module)
+	suite.userModule = user.New(suite.processor).(*user.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

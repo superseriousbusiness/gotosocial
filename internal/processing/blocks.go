@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -62,17 +64,20 @@ func (p *processor) packageBlocksResponse(accounts []*apimodel.Account, path str
 
 	// prepare the next and previous links
 	if len(accounts) != 0 {
+		protocol := viper.GetString(config.Keys.Protocol)
+		host := viper.GetString(config.Keys.Host)
+
 		nextLink := &url.URL{
-			Scheme:   p.config.Protocol,
-			Host:     p.config.Host,
+			Scheme:   protocol,
+			Host:     host,
 			Path:     path,
 			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, nextMaxID),
 		}
 		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
 
 		prevLink := &url.URL{
-			Scheme:   p.config.Protocol,
-			Host:     p.config.Host,
+			Scheme:   protocol,
+			Host:     host,
 			Path:     path,
 			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, prevMinID),
 		}
