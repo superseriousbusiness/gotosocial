@@ -66,7 +66,7 @@ type Nodeinfo struct {
 // NodeInfoSoftware represents the name and version number of the software of this node.
 type NodeInfoSoftware struct {
 	// example: gotosocial
-	Name    string `json:"name"`
+	Name string `json:"name"`
 	// example: 0.1.2 1234567
 	Version string `json:"version"`
 }
