@@ -28,15 +28,16 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // sessionOptions returns the standard set of options to use for each session.
-func sessionOptions(cfg *config.Config) sessions.Options {
+func sessionOptions() sessions.Options {
 	return sessions.Options{
 		Path:     "/",
-		Domain:   cfg.Host,
+		Domain:   viper.GetString(config.Keys.Host),
 		MaxAge:   120,                      // 2 minutes
 		Secure:   true,                     // only use cookie over https
 		HttpOnly: true,                     // exclude javascript from inspecting cookie
@@ -44,9 +45,12 @@ func sessionOptions(cfg *config.Config) sessions.Options {
 	}
 }
 
-func sessionName(cfg *config.Config) (string, error) {
+// SessionName is a utility function that derives an appropriate session name from the hostname.
+func SessionName() (string, error) {
 	// parse the protocol + host
-	u, err := url.Parse(fmt.Sprintf("%s://%s", cfg.Protocol, cfg.Host))
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+	u, err := url.Parse(fmt.Sprintf("%s://%s", protocol, host))
 	if err != nil {
 		return "", err
 	}
@@ -54,13 +58,13 @@ func sessionName(cfg *config.Config) (string, error) {
 	// take the hostname without any port attached
 	strippedHostname := u.Hostname()
 	if strippedHostname == "" {
-		return "", fmt.Errorf("could not derive hostname without port from %s://%s", cfg.Protocol, cfg.Host)
+		return "", fmt.Errorf("could not derive hostname without port from %s://%s", protocol, host)
 	}
 
 	return fmt.Sprintf("gotosocial-%s", strippedHostname), nil
 }
 
-func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, engine *gin.Engine) error {
+func useSession(ctx context.Context, sessionDB db.Session, engine *gin.Engine) error {
 	// check if we have a saved router session already
 	rs, err := sessionDB.GetSession(ctx)
 	if err != nil {
@@ -71,9 +75,9 @@ func useSession(ctx context.Context, cfg *config.Config, sessionDB db.Session, e
 	}
 
 	store := memstore.NewStore(rs.Auth, rs.Crypt)
-	store.Options(sessionOptions(cfg))
+	store.Options(sessionOptions())
 
-	sessionName, err := sessionName(cfg)
+	sessionName, err := SessionName()
 	if err != nil {
 		return err
 	}

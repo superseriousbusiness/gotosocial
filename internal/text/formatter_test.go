@@ -20,7 +20,6 @@ package text_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -30,8 +29,7 @@ import (
 type TextStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config *config.Config
-	db     db.DB
+	db db.DB
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -61,9 +59,11 @@ func (suite *TextStandardTestSuite) SetupSuite() {
 }
 
 func (suite *TextStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
 	suite.db = testrig.NewTestDB()
-	suite.formatter = text.NewFormatter(suite.config, suite.db)
+	suite.formatter = text.NewFormatter(suite.db)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

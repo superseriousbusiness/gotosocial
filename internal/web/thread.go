@@ -19,10 +19,13 @@
 package web
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -51,7 +54,8 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	instance, err := m.processor.InstanceGet(ctx, m.config.Host)
+	host := viper.GetString(config.Keys.Host)
+	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

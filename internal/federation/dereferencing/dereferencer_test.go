@@ -29,7 +29,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -39,7 +38,6 @@ import (
 
 type DereferencerStandardTestSuite struct {
 	suite.Suite
-	config  *config.Config
 	db      db.DB
 	storage *kv.KVStore
 
@@ -61,11 +59,12 @@ func (suite *DereferencerStandardTestSuite) SetupSuite() {
 }
 
 func (suite *DereferencerStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	suite.dereferencer = dereferencing.NewDereferencer(suite.config, suite.db, testrig.NewTestTypeConverter(suite.db), suite.mockTransportController(), testrig.NewTestMediaHandler(suite.db, suite.storage))
+	suite.dereferencer = dereferencing.NewDereferencer(suite.db, testrig.NewTestTypeConverter(suite.db), suite.mockTransportController(), testrig.NewTestMediaHandler(suite.db, suite.storage))
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

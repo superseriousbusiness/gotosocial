@@ -22,7 +22,6 @@ import (
 	"net/http"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
@@ -54,16 +53,14 @@ const (
 
 // Module implements the ClientAPIModule interface for
 type Module struct {
-	config *config.Config
 	db     db.DB
 	server oauth.Server
 	idp    oidc.IDP
 }
 
 // New returns a new auth module
-func New(config *config.Config, db db.DB, server oauth.Server, idp oidc.IDP) api.ClientModule {
+func New(db db.DB, server oauth.Server, idp oidc.IDP) api.ClientModule {
 	return &Module{
-		config: config,
 		db:     db,
 		server: server,
 		idp:    idp,

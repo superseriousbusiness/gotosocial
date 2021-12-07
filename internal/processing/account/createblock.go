@@ -57,7 +57,7 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 	block.Account = requestingAccount
 	block.TargetAccountID = targetAccountID
 	block.TargetAccount = targetAccount
-	block.URI = util.GenerateURIForBlock(requestingAccount.Username, p.config.Protocol, p.config.Host, newBlockID)
+	block.URI = util.GenerateURIForBlock(requestingAccount.Username, newBlockID)
 
 	// whack it in the database
 	if err := p.db.Put(ctx, block); err != nil {

@@ -38,11 +38,13 @@ type StreamingTestSuite struct {
 }
 
 func (suite *StreamingTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testTokens = testrig.NewTestTokens()
 	suite.db = testrig.NewTestDB()
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	testrig.InitTestLog()
 	suite.streamingProcessor = streaming.New(suite.db, suite.oauthServer)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

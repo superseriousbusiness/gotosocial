@@ -48,7 +48,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 		ID:              "01FJ1S8DX3STJJ6CEYPMZ1M0R3",
 		CreatedAt:       time.Now(),
 		UpdatedAt:       time.Now(),
-		URI:             util.GenerateURIForFollow(followingAccount.Username, "http", "localhost:8080", "01FJ1S8DX3STJJ6CEYPMZ1M0R3"),
+		URI:             util.GenerateURIForFollow(followingAccount.Username, "01FJ1S8DX3STJJ6CEYPMZ1M0R3"),
 		AccountID:       followingAccount.ID,
 		TargetAccountID: followedAccount.ID,
 	}

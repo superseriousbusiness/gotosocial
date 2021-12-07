@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -42,7 +41,6 @@ import (
 type WebfingerStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config         *config.Config
 	db             db.DB
 	tc             typeutils.TypeConverter
 	federator      federation.Federator
@@ -76,17 +74,18 @@ func (suite *WebfingerStandardTestSuite) SetupSuite() {
 }
 
 func (suite *WebfingerStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
-	suite.webfingerModule = webfinger.New(suite.config, suite.processor).(*webfinger.Module)
+	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.securityModule = security.New(suite.config, suite.db, suite.oauthServer).(*security.Module)
+	suite.securityModule = security.New(suite.db, suite.oauthServer).(*security.Module)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }

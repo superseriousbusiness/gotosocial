@@ -49,7 +49,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
-	userModule := user.New(suite.config, processor).(*user.Module)
+	userModule := user.New(processor).(*user.Module)
 
 	// setup request
 	recorder := httptest.NewRecorder()

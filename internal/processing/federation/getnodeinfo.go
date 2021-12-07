@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -38,29 +40,35 @@ var (
 )
 
 func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+
 	return &apimodel.WellKnownResponse{
 		Links: []apimodel.Link{
 			{
 				Rel:  nodeInfoRel,
-				Href: fmt.Sprintf("%s://%s/nodeinfo/%s", p.config.Protocol, p.config.Host, nodeInfoVersion),
+				Href: fmt.Sprintf("%s://%s/nodeinfo/%s", protocol, host, nodeInfoVersion),
 			},
 		},
 	}, nil
 }
 
 func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
+	openRegistration := viper.GetBool(config.Keys.AccountsRegistrationOpen)
+	softwareVersion := viper.GetString(config.Keys.SoftwareVersion)
+
 	return &apimodel.Nodeinfo{
 		Version: nodeInfoVersion,
 		Software: apimodel.NodeInfoSoftware{
 			Name:    nodeInfoSoftwareName,
-			Version: p.config.SoftwareVersion,
+			Version: softwareVersion,
 		},
 		Protocols: nodeInfoProtocols,
 		Services: apimodel.NodeInfoServices{
 			Inbound:  []string{},
 			Outbound: []string{},
 		},
-		OpenRegistrations: p.config.AccountsConfig.OpenRegistration,
+		OpenRegistrations: openRegistration,
 		Usage: apimodel.NodeInfoUsage{
 			Users: apimodel.NodeInfoUsers{},
 		},

@@ -21,8 +21,10 @@ package status
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -96,7 +98,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 
 	// Give the fields on the request form a first pass to make sure the request is superficially valid.
 	l.Tracef("validating form %+v", form)
-	if err := validateCreateStatus(form, m.config.StatusesConfig); err != nil {
+	if err := validateCreateStatus(form); err != nil {
 		l.Debugf("error validating form: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -112,7 +114,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, apiStatus)
 }
 
-func validateCreateStatus(form *model.AdvancedStatusCreateForm, config *config.StatusesConfig) error {
+func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
@@ -122,16 +124,23 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm, config *config.S
 		return errors.New("can't post media + poll in same status")
 	}
 
+	keys := config.Keys
+	maxChars := viper.GetInt(keys.StatusesMaxChars)
+	maxMediaFiles := viper.GetInt(keys.StatusesMediaMaxFiles)
+	maxPollOptions := viper.GetInt(keys.StatusesPollMaxOptions)
+	maxPollChars := viper.GetInt(keys.StatusesPollOptionMaxChars)
+	maxCwChars := viper.GetInt(keys.StatusesCWMaxChars)
+
 	// validate status
 	if form.Status != "" {
-		if len(form.Status) > config.MaxChars {
-			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), config.MaxChars)
+		if len(form.Status) > maxChars {
+			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), maxChars)
 		}
 	}
 
 	// validate media attachments
-	if len(form.MediaIDs) > config.MaxMediaFiles {
-		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), config.MaxMediaFiles)
+	if len(form.MediaIDs) > maxMediaFiles {
+		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), maxMediaFiles)
 	}
 
 	// validate poll
@@ -139,20 +148,20 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm, config *config.S
 		if form.Poll.Options == nil {
 			return errors.New("poll with no options")
 		}
-		if len(form.Poll.Options) > config.PollMaxOptions {
-			return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), config.PollMaxOptions)
+		if len(form.Poll.Options) > maxPollOptions {
+			return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
 		}
 		for _, p := range form.Poll.Options {
-			if len(p) > config.PollOptionMaxChars {
-				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", len(p), config.PollOptionMaxChars)
+			if len(p) > maxPollChars {
+				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", len(p), maxPollChars)
 			}
 		}
 	}
 
 	// validate spoiler text/cw
 	if form.SpoilerText != "" {
-		if len(form.SpoilerText) > config.CWMaxChars {
-			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), config.CWMaxChars)
+		if len(form.SpoilerText) > maxCwChars {
+			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), maxCwChars)
 		}
 	}
 

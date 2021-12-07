@@ -22,16 +22,14 @@ import (
 	"context"
 
 	"github.com/ReneKroon/ttlcache"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type notificationDB struct {
-	config *config.Config
-	conn   *DBConn
-	cache  *ttlcache.Cache
+	conn  *DBConn
+	cache *ttlcache.Cache
 }
 
 func (n *notificationDB) newNotificationQ(i interface{}) *bun.SelectQuery {

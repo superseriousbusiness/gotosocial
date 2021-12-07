@@ -22,7 +22,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,7 +35,7 @@ import (
 func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
 	i := &gtsmodel.Instance{}
 	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, i); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", domain, err))
 	}
 
 	ai, err := p.tc.InstanceToAPIInstance(ctx, i)
@@ -47,14 +49,15 @@ func (p *processor) InstanceGet(ctx context.Context, domain string) (*apimodel.I
 func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.Instance, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	i := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: p.config.Host}}, i); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", p.config.Host, err))
+	host := viper.GetString(config.Keys.Host)
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, i); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", host, err))
 	}
 
 	// fetch the instance account from the db for processing
 	ia, err := p.db.GetInstanceAccount(ctx, "")
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", p.config.Host, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", host, err))
 	}
 
 	// validate & update site title if it's set on the form
@@ -148,7 +151,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	}
 
 	if err := p.db.UpdateByPrimaryKey(ctx, i); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", p.config.Host, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
 	}
 
 	ai, err := p.tc.InstanceToAPIInstance(ctx, i)

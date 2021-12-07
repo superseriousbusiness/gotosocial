@@ -35,7 +35,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -50,7 +49,6 @@ import (
 type MediaCreateTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config       *config.Config
 	db           db.DB
 	storage      *kv.KVStore
 	federator    federation.Federator
@@ -78,9 +76,9 @@ type MediaCreateTestSuite struct {
 
 func (suite *MediaCreateTestSuite) SetupSuite() {
 	// setup standard items
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
+	testrig.InitTestConfig()
 	testrig.InitTestLog()
+	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
@@ -90,7 +88,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 
 	// setup module being tested
-	suite.mediaModule = mediamodule.New(suite.config, suite.processor).(*mediamodule.Module)
+	suite.mediaModule = mediamodule.New(suite.processor).(*mediamodule.Module)
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {

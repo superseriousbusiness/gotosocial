@@ -38,9 +38,10 @@ func (suite *GetTestSuite) SetupSuite() {
 }
 
 func (suite *GetTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 
 	testrig.StandardDBSetup(suite.db, nil)

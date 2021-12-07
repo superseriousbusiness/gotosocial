@@ -22,7 +22,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -39,7 +38,6 @@ import (
 type AccountStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	config              *config.Config
 	db                  db.DB
 	tc                  typeutils.TypeConverter
 	storage             *kv.KVStore
@@ -76,9 +74,10 @@ func (suite *AccountStandardTestSuite) SetupSuite() {
 }
 
 func (suite *AccountStandardTestSuite) SetupTest() {
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
@@ -89,7 +88,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
-	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaHandler, suite.oauthServer, suite.fromClientAPIChan, suite.federator, suite.config)
+	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaHandler, suite.oauthServer, suite.fromClientAPIChan, suite.federator)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

@@ -20,7 +20,6 @@ package user_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -30,7 +29,6 @@ import (
 
 type UserStandardTestSuite struct {
 	suite.Suite
-	config      *config.Config
 	emailSender email.Sender
 	db          db.DB
 
@@ -43,13 +41,14 @@ type UserStandardTestSuite struct {
 
 func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
-	suite.config = testrig.NewTestConfig()
+	testrig.InitTestConfig()
+
 	suite.db = testrig.NewTestDB()
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 	suite.testUsers = testrig.NewTestUsers()
 
-	suite.user = user.New(suite.db, suite.emailSender, suite.config)
+	suite.user = user.New(suite.db, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

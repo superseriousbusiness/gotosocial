@@ -28,5 +28,5 @@ import (
 
 // NewTestProcessor returns a Processor suitable for testing purposes
 func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender) processing.Processor {
-	return processing.NewProcessor(NewTestConfig(), NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, NewTestTimelineManager(db), db, emailSender)
+	return processing.NewProcessor(NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, NewTestTimelineManager(db), db, emailSender)
 }

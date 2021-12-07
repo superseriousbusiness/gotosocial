@@ -21,15 +21,13 @@ package bundb
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 type mediaDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (m *mediaDB) newMediaQ(i interface{}) *bun.SelectQuery {

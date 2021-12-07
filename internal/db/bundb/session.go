@@ -23,15 +23,13 @@ import (
 	"crypto/rand"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type sessionDB struct {
-	config *config.Config
-	conn   *DBConn
+	conn *DBConn
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {

@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
@@ -67,7 +69,12 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		return nil, err
 	}
 
-	URLbase := fmt.Sprintf("%s://%s%s", mh.config.StorageConfig.ServeProtocol, mh.config.StorageConfig.ServeHost, mh.config.StorageConfig.ServeBasePath)
+	keys := config.Keys
+	serveProtocol := viper.GetString(keys.StorageServeProtocol)
+	serveHost := viper.GetString(keys.StorageServeHost)
+	serveBasePath := viper.GetString(keys.StorageServeBasePath)
+
+	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
 	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, minAttachment.AccountID, newMediaID, extension)
 	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, minAttachment.AccountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
 

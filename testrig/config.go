@@ -18,9 +18,103 @@
 
 package testrig
 
-import "github.com/superseriousbusiness/gotosocial/internal/config"
+import (
+	"reflect"
 
-// NewTestConfig returns a config initialized with test defaults
-func NewTestConfig() *config.Config {
-	return config.TestDefault()
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+)
+
+// InitTestConfig resets + initializes the viper configuration with test defaults.
+func InitTestConfig() {
+	// reset viper to an empty state
+	viper.Reset()
+
+	// get the field names of config.Keys
+	keyFields := reflect.VisibleFields(reflect.TypeOf(config.Keys))
+
+	// get the field values of config.Keys
+	keyValues := reflect.ValueOf(config.Keys)
+
+	// get the field values of TestDefaults
+	testDefaults := reflect.ValueOf(TestDefaults)
+
+	// for each config field...
+	for _, field := range keyFields {
+		// the viper config key should be the value of the key
+		key, ok := keyValues.FieldByName(field.Name).Interface().(string)
+		if !ok {
+			panic("could not convert config.Keys value to string")
+		}
+
+		// the value should be the test default corresponding to the given fieldName
+		value := testDefaults.FieldByName(field.Name).Interface()
+
+		// actually set the value in viper -- this will override everything
+		viper.Set(key, value)
+	}
+}
+
+// TestDefaults returns a Values struct with values set that are suitable for local testing.
+var TestDefaults = config.Values{
+	LogLevel:        "trace",
+	ApplicationName: "gotosocial",
+	ConfigPath:      "",
+	Host:            "localhost:8080",
+	AccountDomain:   "localhost:8080",
+	Protocol:        "http",
+	BindAddress:     "127.0.0.1",
+	Port:            8080,
+	TrustedProxies:  []string{"127.0.0.1/32"},
+
+	DbType:     "sqlite",
+	DbAddress:  ":memory:",
+	DbPort:     5432,
+	DbUser:     "postgres",
+	DbPassword: "postgres",
+	DbDatabase: "postgres",
+
+	WebTemplateBaseDir: "./web/template/",
+	WebAssetBaseDir:    "./web/assets/",
+
+	AccountsRegistrationOpen: true,
+	AccountsApprovalRequired: true,
+	AccountsReasonRequired:   true,
+
+	MediaImageMaxSize:        1048576, // 1mb
+	MediaVideoMaxSize:        5242880, // 5mb
+	MediaDescriptionMinChars: 0,
+	MediaDescriptionMaxChars: 500,
+
+	StorageBackend:       "local",
+	StorageBasePath:      "/gotosocial/storage",
+	StorageServeProtocol: "http",
+	StorageServeHost:     "localhost:8080",
+	StorageServeBasePath: "/fileserver",
+
+	StatusesMaxChars:           5000,
+	StatusesCWMaxChars:         100,
+	StatusesPollMaxOptions:     6,
+	StatusesPollOptionMaxChars: 50,
+	StatusesMediaMaxFiles:      6,
+
+	LetsEncryptEnabled:      false,
+	LetsEncryptPort:         0,
+	LetsEncryptCertDir:      "",
+	LetsEncryptEmailAddress: "",
+
+	OIDCEnabled:          false,
+	OIDCIdpName:          "",
+	OIDCSkipVerification: false,
+	OIDCIssuer:           "",
+	OIDCClientID:         "",
+	OIDCClientSecret:     "",
+	OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
+
+	SMTPHost:     "",
+	SMTPPort:     0,
+	SMTPUsername: "",
+	SMTPPassword: "",
+	SMTPFrom:     "GoToSocial",
 }

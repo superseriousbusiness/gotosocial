@@ -7,5 +7,5 @@ import (
 
 // NewTestFederatingDB returns a federating DB with the underlying db
 func NewTestFederatingDB(db db.DB) federatingdb.DB {
-	return federatingdb.New(db, NewTestConfig())
+	return federatingdb.New(db)
 }

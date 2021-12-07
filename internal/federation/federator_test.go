@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -41,7 +40,6 @@ import (
 
 type ProtocolTestSuite struct {
 	suite.Suite
-	config        *config.Config
 	db            db.DB
 	storage       *kv.KVStore
 	typeConverter typeutils.TypeConverter
@@ -52,16 +50,16 @@ type ProtocolTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *ProtocolTestSuite) SetupSuite() {
 	// setup standard items
-	suite.config = testrig.NewTestConfig()
-	suite.db = testrig.NewTestDB()
-	testrig.InitTestLog()
 	suite.storage = testrig.NewTestStorage()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.accounts = testrig.NewTestAccounts()
-	suite.activities = testrig.NewTestActivities(suite.accounts)
 }
 
 func (suite *ProtocolTestSuite) SetupTest() {
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+	suite.db = testrig.NewTestDB()
+	suite.activities = testrig.NewTestActivities(suite.accounts)
 	testrig.StandardDBSetup(suite.db, suite.accounts)
 }
 
@@ -80,7 +78,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}), suite.db)
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
 	// setup request
 	ctx := context.Background()
@@ -109,7 +107,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.config, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.typeConverter, testrig.NewTestMediaHandler(suite.db, suite.storage))
 
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
 	// we need these headers for the request to be validated
