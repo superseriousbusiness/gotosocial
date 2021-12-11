@@ -149,6 +149,7 @@ func (suite *MediaCreateTestSuite) TestStatusCreatePOSTImageHandlerSuccessful() 
 	}
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)

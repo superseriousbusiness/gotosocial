@@ -123,6 +123,7 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.URL, nil)
+	ctx.Request.Header.Set("accept", "*/*")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the ServeFile function directly, we need to set them manually.

@@ -95,5 +95,7 @@ func (suite *AccountStandardTestSuite) newContext(recorder *httptest.ResponseRec
 		ctx.Request.Header.Set("Content-Type", bodyContentType)
 	}
 
+	ctx.Request.Header.Set("accept", "application/json")
+
 	return ctx
 }

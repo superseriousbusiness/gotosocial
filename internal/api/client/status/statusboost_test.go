@@ -51,6 +51,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -117,6 +118,7 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -155,6 +157,7 @@ func (suite *StatusBoostTestSuite) TestPostNotVisible() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_2"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
