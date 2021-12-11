@@ -19,10 +19,12 @@
 package account
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -66,6 +68,11 @@ func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
 	if err != nil {
 		l.Debug(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

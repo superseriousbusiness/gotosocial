@@ -106,6 +106,7 @@ func (suite *FollowRequestStandardTestSuite) newContext(recorder *httptest.Respo
 	if bodyContentType != "" {
 		ctx.Request.Header.Set("Content-Type", bodyContentType)
 	}
+	ctx.Request.Header.Set("accept", "application/json")
 
 	return ctx
 }

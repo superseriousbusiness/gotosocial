@@ -50,6 +50,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// trigger the function being tested
 	suite.webfingerModule.WebfingerGETRequest(ctx)
@@ -83,6 +84,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// trigger the function being tested
 	suite.webfingerModule.WebfingerGETRequest(ctx)
@@ -116,6 +118,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// trigger the function being tested
 	suite.webfingerModule.WebfingerGETRequest(ctx)
@@ -141,6 +144,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
 	ctx.Request = httptest.NewRequest(http.MethodGet, requestPath, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// trigger the function being tested
 	suite.webfingerModule.WebfingerGETRequest(ctx)

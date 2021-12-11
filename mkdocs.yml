@@ -21,7 +21,7 @@ nav:
     - "configuration/index.md"
     - "configuration/general.md"
     - "configuration/database.md"
-    - "configuration/template.md"
+    - "configuration/web.md"
     - "configuration/accounts.md"
     - "configuration/media.md"
     - "configuration/storage.md"

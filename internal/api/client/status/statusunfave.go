@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -70,10 +71,15 @@ func (m *Module) StatusUnfavePOSTHandler(c *gin.Context) {
 	})
 	l.Debugf("entering function")
 
-	authed, err := oauth.Authed(c, true, false, true, true) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		l.Debug("not authed so can't unfave status")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authorized"})
+		return
+	}
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -20,11 +20,13 @@ package account
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -109,6 +111,11 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 	l.Tracef("retrieved account %+v", authed.Account.ID)
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
 
 	form, err := parseUpdateAccountForm(c)
 	if err != nil {

@@ -21,11 +21,13 @@ package auth
 import (
 	"context"
 	"errors"
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
@@ -43,6 +45,12 @@ type login struct {
 func (m *Module) SignInGETHandler(c *gin.Context) {
 	l := logrus.WithField("func", "SignInGETHandler")
 	l.Trace("entering sign in handler")
+
+	if _, err := api.NegotiateAccept(c, api.HTMLAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
+
 	if m.idp != nil {
 		s := sessions.Default(c)
 

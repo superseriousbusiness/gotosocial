@@ -12,6 +12,24 @@ definitions:
     title: A FileHeader describes a file part of a multipart request.
     type: object
     x-go-package: mime/multipart
+  Link:
+    description: See https://webfinger.net/
+    properties:
+      href:
+        type: string
+        x-go-name: Href
+      rel:
+        type: string
+        x-go-name: Rel
+      template:
+        type: string
+        x-go-name: Template
+      type:
+        type: string
+        x-go-name: Type
+    title: Link represents one 'link' in a slice of links returned from a lookup request.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   MIMEHeader:
     additionalProperties:
       items:
@@ -47,6 +65,48 @@ definitions:
         type: string
         x-go-name: Username
     title: Mention represents a mention of another account.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoServices:
+    properties:
+      inbound:
+        items:
+          type: string
+        type: array
+        x-go-name: Inbound
+      outbound:
+        items:
+          type: string
+        type: array
+        x-go-name: Outbound
+    title: NodeInfoServices represents inbound and outbound services that this node
+      offers connections to.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoSoftware:
+    properties:
+      name:
+        example: gotosocial
+        type: string
+        x-go-name: Name
+      version:
+        example: 0.1.2 1234567
+        type: string
+        x-go-name: Version
+    title: NodeInfoSoftware represents the name and version number of the software
+      of this node.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoUsage:
+    properties:
+      users:
+        $ref: '#/definitions/NodeInfoUsers'
+    title: NodeInfoUsage represents usage information about this server, such as number
+      of users.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  NodeInfoUsers:
+    title: NodeInfoUsers is a stub for usage information, currently empty.
     type: object
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   Source:
@@ -1122,6 +1182,42 @@ definitions:
     type: object
     x-go-name: MediaMeta
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  nodeinfo:
+    description: 'See: https://nodeinfo.diaspora.software/schema.html'
+    properties:
+      metadata:
+        additionalProperties:
+          type: object
+        description: Free form key value pairs for software specific values. Clients
+          should not rely on any specific key present.
+        type: object
+        x-go-name: Metadata
+      openRegistrations:
+        description: Whether this server allows open self-registration.
+        example: false
+        type: boolean
+        x-go-name: OpenRegistrations
+      protocols:
+        description: The protocols supported on this server.
+        items:
+          type: string
+        type: array
+        x-go-name: Protocols
+      services:
+        $ref: '#/definitions/NodeInfoServices'
+      software:
+        $ref: '#/definitions/NodeInfoSoftware'
+      usage:
+        $ref: '#/definitions/NodeInfoUsage'
+      version:
+        description: The schema version
+        example: "2.0"
+        type: string
+        x-go-name: Version
+    title: Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
+    type: object
+    x-go-name: Nodeinfo
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   oauthToken:
     properties:
       access_token:
@@ -1670,6 +1766,28 @@ definitions:
     type: object
     x-go-name: UpdateSource
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  wellKnownResponse:
+    description: See https://webfinger.net/
+    properties:
+      aliases:
+        items:
+          type: string
+        type: array
+        x-go-name: Aliases
+      links:
+        items:
+          $ref: '#/definitions/Link'
+        type: array
+        x-go-name: Links
+      subject:
+        type: string
+        x-go-name: Subject
+    title: |-
+      WellKnownResponse represents the response to either a webfinger request for an 'acct' resource, or a request to nodeinfo.
+      For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
+    type: object
+    x-go-name: WellKnownResponse
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
 host: example.org
 info:
   contact:
@@ -1682,6 +1800,43 @@ info:
   title: GoToSocial
   version: 0.0.1
 paths:
+  /.well-known/nodeinfo:
+    get:
+      description: |-
+        eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
+        See: https://nodeinfo.diaspora.software/protocol.html
+      operationId: nodeInfoWellKnownGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/wellKnownResponse'
+      summary: Directs callers to /nodeinfo/2.0.
+      tags:
+      - nodeinfo
+  /.well-known/webfinger:
+    get:
+      description: |-
+        For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology` would return:
+
+        ```
+        {"subject":"acct:tobi@goblin.technology","aliases":["https://goblin.technology/users/tobi","https://goblin.technology/@tobi"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"https://goblin.technology/@tobi"},{"rel":"self","type":"application/activity+json","href":"https://goblin.technology/users/tobi"}]}
+        ```
+
+        See: https://webfinger.net/
+      operationId: webfingerGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/wellKnownResponse'
+      summary: Handles webfinger account lookup requests.
+      tags:
+      - webfinger
   /api/v1/accounts:
     post:
       consumes:
@@ -3529,6 +3684,20 @@ paths:
       summary: Change the password of authenticated user.
       tags:
       - user
+  /nodeinfo/2.0:
+    get:
+      description: 'See: https://nodeinfo.diaspora.software/schema.html'
+      operationId: nodeInfoGet
+      produces:
+      - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/nodeinfo'
+      summary: Returns a compliant nodeinfo response to node info queries.
+      tags:
+      - nodeinfo
   /users/{username}/outbox:
     get:
       description: |-

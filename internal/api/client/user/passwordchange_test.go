@@ -50,6 +50,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordChangePOST() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"password"},
 		"new_password": {"peepeepoopoopassword"},
@@ -83,6 +84,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordMissingOldPassword() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"new_password": {"peepeepoopoopassword"},
 	}
@@ -109,6 +111,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordIncorrectOldPassword() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"notright"},
 		"new_password": {"peepeepoopoopassword"},
@@ -136,6 +139,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", user.PasswordChangePath), nil)
+	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Request.Form = url.Values{
 		"old_password": {"password"},
 		"new_password": {"peepeepoopoo"},

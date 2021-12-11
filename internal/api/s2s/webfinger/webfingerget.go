@@ -27,26 +27,54 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// WebfingerGETRequest handles requests to, for example, https://example.org/.well-known/webfinger?resource=acct:some_user@example.org
+// WebfingerGETRequest swagger:operation GET /.well-known/webfinger webfingerGet
+//
+// Handles webfinger account lookup requests.
+//
+// For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology` would return:
+//
+// ```
+//  {"subject":"acct:tobi@goblin.technology","aliases":["https://goblin.technology/users/tobi","https://goblin.technology/@tobi"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"https://goblin.technology/@tobi"},{"rel":"self","type":"application/activity+json","href":"https://goblin.technology/users/tobi"}]}
+// ```
+//
+// See: https://webfinger.net/
+//
+// ---
+// tags:
+// - webfinger
+//
+// produces:
+// - application/json
+//
+// responses:
+//   '200':
+//     schema:
+//       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) WebfingerGETRequest(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":       "WebfingerGETRequest",
 		"user-agent": c.Request.UserAgent(),
 	})
 
-	q, set := c.GetQuery("resource")
-	if !set || q == "" {
+	resourceQuery, set := c.GetQuery("resource")
+	if !set || resourceQuery == "" {
 		l.Debug("aborting request because no resource was set in query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no 'resource' in request query"})
 		return
 	}
 
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
+
 	// remove the acct: prefix if it's present
-	trimAcct := strings.TrimPrefix(q, "acct:")
+	trimAcct := strings.TrimPrefix(resourceQuery, "acct:")
 	// remove the first @ in @whatever@example.org if it's present
 	namestring := strings.TrimPrefix(trimAcct, "@")
 

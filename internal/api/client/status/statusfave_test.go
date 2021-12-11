@@ -55,6 +55,7 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
@@ -103,6 +104,7 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(status.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
 	// normally the router would populate these params from the path values,
 	// but because we're calling the function directly, we need to set them manually.
