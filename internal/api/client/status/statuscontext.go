@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -77,6 +78,11 @@ func (m *Module) StatusContextGETHandler(c *gin.Context) {
 	if err != nil {
 		l.Errorf("error authing status context request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		return
+	}
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

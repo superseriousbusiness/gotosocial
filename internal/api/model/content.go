@@ -20,6 +20,9 @@ package model
 
 // Content wraps everything needed to serve a blob of content (some kind of media) through the API.
 type Content struct {
+	// Attachment is the attachment that owns this content.
+	// Can be null when the content is an emoji or something that's not got an attachment.
+	Attachment *Attachment
 	// MIME content type
 	ContentType string
 	// ContentLength in bytes

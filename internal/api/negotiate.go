@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package api
 
 import (
@@ -7,29 +25,30 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type offer string
+// Offer represents an offered mime-type.
+type Offer string
 
 const (
-	AppJSON           offer = `application/json`                                                     // AppJSON is the mime type for 'application/json'.
-	AppActivityJSON   offer = `application/activity+json`                                            // AppActivityJSON is the mime type for 'application/activity+json'.
-	AppActivityLDJSON offer = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` // AppActivityLDJSON is the mime type for 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-	TextHTML          offer = `text/html`                                                            // TextHTML is the mime type for 'text/html'.
+	AppJSON           Offer = `application/json`                                                     // AppJSON is the mime type for 'application/json'.
+	AppActivityJSON   Offer = `application/activity+json`                                            // AppActivityJSON is the mime type for 'application/activity+json'.
+	AppActivityLDJSON Offer = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` // AppActivityLDJSON is the mime type for 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+	TextHTML          Offer = `text/html`                                                            // TextHTML is the mime type for 'text/html'.
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
 // https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubAcceptHeaders = []offer{
+var ActivityPubAcceptHeaders = []Offer{
 	AppActivityJSON,
 	AppActivityLDJSON,
 }
 
 // JSONAcceptHeaders is a slice of offers that just contains application/json types.
-var JSONAcceptHeaders = []offer{
+var JSONAcceptHeaders = []Offer{
 	AppJSON,
 }
 
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
-var HTMLAcceptHeaders = []offer{
+var HTMLAcceptHeaders = []Offer{
 	TextHTML,
 }
 
@@ -53,7 +72,7 @@ var HTMLAcceptHeaders = []offer{
 // often-used Accept types.
 //
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_content_negotiation
-func NegotiateAccept(c *gin.Context, offers ...offer) (string, error) {
+func NegotiateAccept(c *gin.Context, offers ...Offer) (string, error) {
 	if len(offers) == 0 {
 		return "", errors.New("no format offered")
 	}

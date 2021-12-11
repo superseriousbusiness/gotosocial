@@ -24,6 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -90,14 +91,14 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	// TODO: do proper content negotiation here -- if the requester only accepts text/html we should try to serve them *something*
+	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
-	if c.NegotiateFormat(content.ContentType) == "" {
-		l.Debugf("couldn't negotiate content for Accept headers %+v: we have content type %s", c.Request.Header.Get("Accepted"), content.ContentType)
-		c.AbortWithStatus(http.StatusNotAcceptable)
+	format, err := api.NegotiateAccept(c, api.Offer(content.ContentType))
+	if err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.DataFromReader(http.StatusOK, content.ContentLength, content.ContentType, bytes.NewReader(content.Content), nil)
+	c.DataFromReader(http.StatusOK, content.ContentLength, format, bytes.NewReader(content.Content), nil)
 }

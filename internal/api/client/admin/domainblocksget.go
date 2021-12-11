@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -66,6 +67,11 @@ func (m *Module) DomainBlocksGETHandler(c *gin.Context) {
 	if !authed.User.Admin {
 		l.Debugf("user %s not an admin", authed.User.ID)
 		c.JSON(http.StatusForbidden, gin.H{"error": "not an admin"})
+		return
+	}
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

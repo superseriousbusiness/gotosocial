@@ -1802,8 +1802,9 @@ info:
 paths:
   /.well-known/nodeinfo:
     get:
-      description: "eg. `{\"links\":[{\"rel\":\"http://nodeinfo.diaspora.software/ns/schema/2.0\",\"href\":\"http://example.org/nodeinfo/2.0\"}]}`
-        \nSee: https://nodeinfo.diaspora.software/protocol.html"
+      description: |-
+        eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
+        See: https://nodeinfo.diaspora.software/protocol.html
       operationId: nodeInfoWellKnownGet
       produces:
       - application/json
@@ -1815,6 +1816,22 @@ paths:
       summary: Directs callers to /nodeinfo/2.0.
       tags:
       - nodeinfo
+  /.well-known/webfinger:
+    get:
+      description: "For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology`
+        would return: \n\n```\n{\"subject\":\"acct:tobi@goblin.technology\",\"aliases\":[\"https://goblin.technology/users/tobi\",\"https://goblin.technology/@tobi\"],\"links\":[{\"rel\":\"http://webfinger.net/rel/profile-page\",\"type\":\"text/html\",\"href\":\"https://goblin.technology/@tobi\"},{\"rel\":\"self\",\"type\":\"application/activity+json\",\"href\":\"https://goblin.technology/users/tobi\"}]}\n```\n\nSee:
+        https://webfinger.net/"
+      operationId: webfingerGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/wellKnownResponse'
+      summary: Handles webfinger account lookup requests.
+      tags:
+      - webfinger
   /api/v1/accounts:
     post:
       consumes:

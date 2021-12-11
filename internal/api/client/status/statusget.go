@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -70,10 +71,15 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 	})
 	l.Debugf("entering function")
 
-	authed, err := oauth.Authed(c, false, false, false, false) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
 		l.Errorf("error authing status faved by request: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		return
+	}
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -21,14 +21,16 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -40,6 +42,11 @@ import (
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	l := logrus.WithField("func", "AuthorizeGETHandler")
 	s := sessions.Default(c)
+
+	if _, err := api.NegotiateAccept(c, api.HTMLAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
 
 	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
 	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.

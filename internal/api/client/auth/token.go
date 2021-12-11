@@ -19,9 +19,11 @@
 package auth
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,6 +42,11 @@ type tokenBody struct {
 func (m *Module) TokenPOSTHandler(c *gin.Context) {
 	l := logrus.WithField("func", "TokenPOSTHandler")
 	l.Trace("entered TokenPOSTHandler")
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
 
 	form := &tokenBody{}
 	if err := c.ShouldBind(form); err == nil {
