@@ -19,6 +19,7 @@
 package nodeinfo
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,20 +27,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
-// NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 accountGet
+// NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
 //
-// Returns a compliant nodeinfo response to node info queries. See: https://nodeinfo.diaspora.software/.
+// Returns a compliant nodeinfo response to node info queries.
+//
+// See: https://nodeinfo.diaspora.software/schema.html
 //
 // ---
 // tags:
 // - nodeinfo
 //
 // produces:
-// - application/json
-//
-// security:
-// - OAuth2 Bearer:
-//   - read:accounts
+// - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
 //
 // responses:
 //   '200':
@@ -51,7 +50,7 @@ func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 		"user-agent": c.Request.UserAgent(),
 	})
 
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders); err != nil {
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
@@ -63,5 +62,10 @@ func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ni)
+	b, jsonErr := json.Marshal(ni)
+	if jsonErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+	}
+
+	c.Data(http.StatusOK, `application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"`, b)
 }

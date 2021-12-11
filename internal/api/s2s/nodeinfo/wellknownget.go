@@ -23,15 +23,36 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
-// NodeInfoWellKnownGETHandler returns a well known response to a query to /.well-known/nodeinfo,
-// directing (but not redirecting...) callers to the NodeInfoGETHandler.
+// NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
+//
+// Directs callers to /nodeinfo/2.0.
+//
+// eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
+// See: https://nodeinfo.diaspora.software/protocol.html
+//
+// ---
+// tags:
+// - nodeinfo
+//
+// produces:
+// - application/json
+//
+// responses:
+//   '200':
+//     schema:
+//       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
-		"func":       "NodeInfoWellKnownGETHandler",
-		"user-agent": c.Request.UserAgent(),
+		"func": "NodeInfoWellKnownGETHandler",
 	})
+
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
+		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		return
+	}
 
 	niRel, err := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
 	if err != nil {

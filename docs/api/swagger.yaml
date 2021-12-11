@@ -12,6 +12,24 @@ definitions:
     title: A FileHeader describes a file part of a multipart request.
     type: object
     x-go-package: mime/multipart
+  Link:
+    description: See https://webfinger.net/
+    properties:
+      href:
+        type: string
+        x-go-name: Href
+      rel:
+        type: string
+        x-go-name: Rel
+      template:
+        type: string
+        x-go-name: Template
+      type:
+        type: string
+        x-go-name: Type
+    title: Link represents one 'link' in a slice of links returned from a lookup request.
+    type: object
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
   MIMEHeader:
     additionalProperties:
       items:
@@ -1748,6 +1766,28 @@ definitions:
     type: object
     x-go-name: UpdateSource
     x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+  wellKnownResponse:
+    description: See https://webfinger.net/
+    properties:
+      aliases:
+        items:
+          type: string
+        type: array
+        x-go-name: Aliases
+      links:
+        items:
+          $ref: '#/definitions/Link'
+        type: array
+        x-go-name: Links
+      subject:
+        type: string
+        x-go-name: Subject
+    title: |-
+      WellKnownResponse represents the response to either a webfinger request for an 'acct' resource, or a request to nodeinfo.
+      For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
+    type: object
+    x-go-name: WellKnownResponse
+    x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
 host: example.org
 info:
   contact:
@@ -1760,6 +1800,21 @@ info:
   title: GoToSocial
   version: REPLACE_ME
 paths:
+  /.well-known/nodeinfo:
+    get:
+      description: "eg. `{\"links\":[{\"rel\":\"http://nodeinfo.diaspora.software/ns/schema/2.0\",\"href\":\"http://example.org/nodeinfo/2.0\"}]}`
+        \nSee: https://nodeinfo.diaspora.software/protocol.html"
+      operationId: nodeInfoWellKnownGet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/wellKnownResponse'
+      summary: Directs callers to /nodeinfo/2.0.
+      tags:
+      - nodeinfo
   /api/v1/accounts:
     post:
       consumes:
@@ -3609,18 +3664,16 @@ paths:
       - user
   /nodeinfo/2.0:
     get:
-      operationId: accountGet
+      description: 'See: https://nodeinfo.diaspora.software/schema.html'
+      operationId: nodeInfoGet
       produces:
-      - application/json
+      - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
       responses:
         "200":
           description: ""
           schema:
             $ref: '#/definitions/nodeinfo'
-      security:
-      - OAuth2 Bearer:
-        - read:accounts
-      summary: 'Returns a compliant nodeinfo response to node info queries. See: https://nodeinfo.diaspora.software/.'
+      summary: Returns a compliant nodeinfo response to node info queries.
       tags:
       - nodeinfo
   /users/{username}/outbox:

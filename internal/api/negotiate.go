@@ -10,27 +10,27 @@ import (
 type offer string
 
 const (
-	appJSONCharSet    offer = `application/json; charset="utf-8"`
-	appActivityJSON   offer = `application/activity+json`
-	appActivityLDJSON offer = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
-	textHTMLCharSet   offer = `text/html; charset="utf-8"`
+	AppJSON           offer = `application/json`                                                     // AppJSON is the mime type for 'application/json'.
+	AppActivityJSON   offer = `application/activity+json`                                            // AppActivityJSON is the mime type for 'application/activity+json'.
+	AppActivityLDJSON offer = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` // AppActivityLDJSON is the mime type for 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+	TextHTML          offer = `text/html`                                                            // TextHTML is the mime type for 'text/html'.
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
 // https://www.w3.org/TR/activitypub/#retrieving-objects
 var ActivityPubAcceptHeaders = []offer{
-	appActivityJSON,
-	appActivityLDJSON,
+	AppActivityJSON,
+	AppActivityLDJSON,
 }
 
 // JSONAcceptHeaders is a slice of offers that just contains application/json types.
 var JSONAcceptHeaders = []offer{
-	appJSONCharSet,
+	AppJSON,
 }
 
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
 var HTMLAcceptHeaders = []offer{
-	textHTMLCharSet,
+	TextHTML,
 }
 
 // NegotiateAccept takes the *gin.Context from an incoming request, and a
@@ -52,8 +52,8 @@ var HTMLAcceptHeaders = []offer{
 // Callers can use the offer slices exported in this package as shortcuts for
 // often-used Accept types.
 //
-// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation
-func NegotiateAccept(c *gin.Context, offers []offer) (string, error) {
+// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_content_negotiation
+func NegotiateAccept(c *gin.Context, offers ...offer) (string, error) {
 	if len(offers) == 0 {
 		return "", errors.New("no format offered")
 	}

@@ -49,7 +49,7 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := api.NegotiateAccept(c, api.ActivityPubAcceptHeaders)
+	format, err := api.NegotiateAccept(c, api.ActivityPubAcceptHeaders...)
 	if err != nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
