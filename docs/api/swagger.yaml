@@ -1798,7 +1798,7 @@ info:
     name: AGPL3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
   title: GoToSocial
-  version: REPLACE_ME
+  version: 0.0.1
 paths:
   /.well-known/nodeinfo:
     get:
@@ -1818,9 +1818,14 @@ paths:
       - nodeinfo
   /.well-known/webfinger:
     get:
-      description: "For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology`
-        would return: \n\n```\n{\"subject\":\"acct:tobi@goblin.technology\",\"aliases\":[\"https://goblin.technology/users/tobi\",\"https://goblin.technology/@tobi\"],\"links\":[{\"rel\":\"http://webfinger.net/rel/profile-page\",\"type\":\"text/html\",\"href\":\"https://goblin.technology/@tobi\"},{\"rel\":\"self\",\"type\":\"application/activity+json\",\"href\":\"https://goblin.technology/users/tobi\"}]}\n```\n\nSee:
-        https://webfinger.net/"
+      description: |-
+        For example, a GET to `https://goblin.technology/.well-known/webfinger?resource=acct:tobi@goblin.technology` would return:
+
+        ```
+        {"subject":"acct:tobi@goblin.technology","aliases":["https://goblin.technology/users/tobi","https://goblin.technology/@tobi"],"links":[{"rel":"http://webfinger.net/rel/profile-page","type":"text/html","href":"https://goblin.technology/@tobi"},{"rel":"self","type":"application/activity+json","href":"https://goblin.technology/users/tobi"}]}
+        ```
+
+        See: https://webfinger.net/
       operationId: webfingerGet
       produces:
       - application/json
