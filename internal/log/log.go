@@ -22,30 +22,59 @@ import (
 	"bytes"
 	"os"
 
+	"log/syslog"
+
 	"github.com/sirupsen/logrus"
+	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// Initialize initializes the global Logrus logger to the specified level
+// Initialize initializes the global Logrus logger, reading the desired
+// log level from the viper store, or using a default if the level
+// has not been set in viper.
+//
 // It also sets the output to log.outputSplitter,
 // so you get error logs on stderr and normal logs on stdout.
-func Initialize(level string) error {
+//
+// If syslog settings are also in viper, then Syslog will be initialized as well.
+func Initialize() error {
 	logrus.SetOutput(&outputSplitter{})
-
-	logLevel, err := logrus.ParseLevel(level)
-	if err != nil {
-		return err
-	}
-	logrus.SetLevel(logLevel)
-
-	if logLevel == logrus.TraceLevel {
-		logrus.SetReportCaller(true)
-	}
 
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
 		DisableQuote:  true,
 		FullTimestamp: true,
 	})
+
+	keys := config.Keys
+
+	// check if a desired log level has been set
+	logLevel := viper.GetString(keys.LogLevel)
+	if logLevel != "" {
+		level, err := logrus.ParseLevel(logLevel)
+		if err != nil {
+			return err
+		}
+		logrus.SetLevel(level)
+
+		if level == logrus.TraceLevel {
+			logrus.SetReportCaller(true)
+		}
+	}
+
+	// check if syslog has been enabled, and configure it if so
+	if syslogEnabled := viper.GetBool(keys.SyslogEnabled); syslogEnabled {
+		protocol := viper.GetString(keys.SyslogProtocol)
+		address := viper.GetString(keys.SyslogAddress)
+
+		hook, err := lSyslog.NewSyslogHook(protocol, address, syslog.LOG_INFO, "")
+		if err != nil {
+			return err
+		}
+
+		logrus.AddHook(hook)
+	}
 
 	return nil
 }
