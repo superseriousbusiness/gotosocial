@@ -219,6 +219,7 @@ func write(b []byte) (int, error) {
 	return len(b), nil
 }
 
+func X__builtin_bzero(t *TLS, s uintptr, n types.Size_t)              { Xbzero(t, s, n) }
 func X__builtin_abort(t *TLS)                                         { Xabort(t) }
 func X__builtin_abs(t *TLS, j int32) int32                            { return Xabs(t, j) }
 func X__builtin_clz(t *TLS, n uint32) int32                           { return int32(mbits.LeadingZeros32(n)) }
@@ -949,7 +950,7 @@ func Xatol(t *TLS, nptr uintptr) long {
 }
 
 // time_t mktime(struct tm *tm);
-func Xmktime(t *TLS, ptm uintptr) types.Time_t {
+func Xmktime(t *TLS, ptm uintptr) time.Time_t {
 	loc := gotime.Local
 	if r := getenv(Environ(), "TZ"); r != 0 {
 		zone, off := parseZone(GoString(r))
@@ -967,7 +968,7 @@ func Xmktime(t *TLS, ptm uintptr) types.Time_t {
 	)
 	(*time.Tm)(unsafe.Pointer(ptm)).Ftm_wday = int32(tt.Weekday())
 	(*time.Tm)(unsafe.Pointer(ptm)).Ftm_yday = int32(tt.YearDay() - 1)
-	return types.Time_t(tt.Unix())
+	return time.Time_t(tt.Unix())
 }
 
 // char *strpbrk(const char *s, const char *accept);
@@ -1063,7 +1064,10 @@ func X_IO_putc(t *TLS, c int32, fp uintptr) int32 {
 
 // int atexit(void (*function)(void));
 func Xatexit(t *TLS, function uintptr) int32 {
-	panic(todo(""))
+	AtExit(func() {
+		(*struct{ f func(*TLS) })(unsafe.Pointer(&struct{ uintptr }{function})).f(t)
+	})
+	return 0
 }
 
 // int vasprintf(char **strp, const char *fmt, va_list ap);
@@ -1366,4 +1370,38 @@ out:
 	b = append(b, 0)
 	copy((*RawMem)(unsafe.Pointer(s))[:len(b):len(b)], b)
 	return s
+}
+
+// void bzero(void *s, size_t n);
+func Xbzero(t *TLS, s uintptr, n types.Size_t) {
+	b := (*RawMem)(unsafe.Pointer(s))[:n]
+	for i := range b {
+		b[i] = 0
+	}
+}
+
+// char *rindex(const char *s, int c);
+func Xrindex(t *TLS, s uintptr, c int32) uintptr {
+	if s == 0 {
+		return 0
+	}
+
+	var r uintptr
+	for {
+		c2 := int32(*(*byte)(unsafe.Pointer(s)))
+		if c2 == c {
+			r = s
+		}
+
+		if c2 == 0 {
+			return r
+		}
+
+		s++
+	}
+}
+
+// int isascii(int c);
+func Xisascii(t *TLS, c int32) int32 {
+	return Bool32(c >= 0 && c <= 0x7f)
 }
