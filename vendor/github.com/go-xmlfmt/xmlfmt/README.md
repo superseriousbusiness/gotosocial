@@ -15,8 +15,18 @@ package main
 import "github.com/go-xmlfmt/xmlfmt"
 
 func main() {
-	xml1 := `<root><this><is>a</is><test /><message><org><cn>Some org-or-other</cn><ph>Wouldnt you like to know</ph></org><contact><fn>Pat</fn><ln>Califia</ln></contact></message></this></root>`
+	xmlfmt.NL = "\n"
+	xml1 := `<root><this><is>a</is><test /><message><!-- with comment --><org><cn>Some org-or-other</cn><ph>Wouldnt you like to know</ph></org><contact><fn>Pat</fn><ln>Califia</ln></contact></message></this></root>`
 	x := xmlfmt.FormatXML(xml1, "\t", "  ")
+	print(x)
+
+	// If the XML Comments have nested tags in them
+	xml1 = `<book> <author>Fred</author>
+<!--
+<price>20</price><currency>USD</currency>
+-->
+ <isbn>23456</isbn> </book>`
+	x = xmlfmt.FormatXML(xml1, "", "  ", true)
 	print(x)
 }
 
@@ -47,9 +57,24 @@ Output:
 	    </message>
 	  </this>
 	</root>
+
+
+<book>
+  <author>Fred
+  </author>
+  <!-- <price>20</price><currency>USD</currency> -->
+  <isbn>23456
+  </isbn>
+</book>
 ```
 
 There is no XML decoding and encoding involved, only pure regular expression matching and replacing. So it is much faster than going through decoding and encoding procedures. Moreover, the exact XML source string is preserved, instead of being changed by the encoder. This is why this package exists in the first place. 
+
+Note that 
+
+- the XML is mainly used in Windows environments, thus the default line ending is in Windows' `CRLF` format. To change the default line ending, see the above sample code (first line).
+- the case of XML comments nested within XML comments is ***not*** supported. Please avoid them or use any other tools to correct them before using this package.
+- don't turn on the `nestedTagsInComments` parameter blindly, as the code has become 10+ times more complicated because of it.
 
 ## Command
 
@@ -59,7 +84,8 @@ To use it on command line, check out [xmlfmt](https://github.com/AntonioSun/xmlf
 ```
 $ xmlfmt 
 XML Formatter
-built on 2019-12-08
+Version 1.1.0 built on 2021-12-06
+Copyright (C) 2021, Antonio Sun
 
 The xmlfmt will format the XML string without rewriting the document
 
@@ -69,6 +95,42 @@ Options:
   -f, --file         *The xml file to read from (or stdin)
   -p, --prefix        each element begins on a new line and this prefix
   -i, --indent[=  ]   indent string for nested elements
+  -n, --nested        nested tags in comments
+
+$ xmlfmt -f https://pastebin.com/raw/z3euQ5PR
+
+<root>
+  <this>
+    <is>a
+    </is>
+    <test />
+    <message>
+      <!-- with comment -->
+      <org>
+        <cn>Some org-or-other
+        </cn>
+        <ph>Wouldnt you like to know
+        </ph>
+      </org>
+      <contact>
+        <fn>Pat
+        </fn>
+        <ln>Califia
+        </ln>
+      </contact>
+    </message>
+  </this>
+</root>
+
+$ xmlfmt -f https://pastebin.com/raw/Zs0qy0qz -n
+
+<book>
+  <author>Fred
+  </author>
+  <!-- <price>20</price><currency>USD</currency> -->
+  <isbn>23456
+  </isbn>
+</book>
 ```
 
 

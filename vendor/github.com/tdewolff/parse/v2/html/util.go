@@ -5,7 +5,7 @@ var (
 	doubleQuoteEntityBytes = []byte("&#34;")
 )
 
-// EscapeAttrVal returns the escaped attribute value bytes without quotes.
+// EscapeAttrVal returns the escaped attribute value bytes with quotes. Either single or double quotes are used, whichever is shorter. If there are no quotes present in the value and the value is in HTML (not XML), it will return the value without quotes.
 func EscapeAttrVal(buf *[]byte, orig, b []byte, isXML bool) []byte {
 	singles := 0
 	doubles := 0

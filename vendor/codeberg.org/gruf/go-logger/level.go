@@ -5,7 +5,7 @@ type LEVEL uint8
 
 // Available levels of logging.
 const (
-	unset LEVEL = 255
+	unset LEVEL = ^LEVEL(0)
 	DEBUG LEVEL = 5
 	INFO  LEVEL = 10
 	WARN  LEVEL = 15
@@ -16,7 +16,7 @@ const (
 var unknownLevel = "unknown"
 
 // Levels defines a mapping of log LEVELs to formatted level strings
-type Levels map[LEVEL]string
+type Levels [^LEVEL(0)]string
 
 // DefaultLevels returns the default set of log levels
 func DefaultLevels() Levels {
@@ -29,11 +29,10 @@ func DefaultLevels() Levels {
 	}
 }
 
-// LevelString fetches the appropriate level string for the provided level, or "unknown"
-func (l Levels) LevelString(lvl LEVEL) string {
-	str, ok := l[lvl]
-	if !ok {
-		return unknownLevel
+// Get fetches the level string for the provided value, or "unknown"
+func (l Levels) Get(lvl LEVEL) string {
+	if str := l[int(lvl)]; str != "" {
+		return str
 	}
-	return str
+	return unknownLevel
 }

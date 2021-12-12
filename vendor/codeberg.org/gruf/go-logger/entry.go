@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"codeberg.org/gruf/go-bytes"
@@ -61,149 +62,281 @@ func (e *Entry) Hooks() *Entry {
 	return e
 }
 
-// Byte appends a byte value as key-value pair to the log entry
-func (e *Entry) Byte(key string, value byte) *Entry {
-	e.log.Format.AppendByteField(e.buf, key, value)
+// Byte appends a byte value to the log entry
+func (e *Entry) Byte(value byte) *Entry {
+	e.log.Format.AppendByte(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Bytes appends a byte slice value as key-value pair to the log entry
-func (e *Entry) Bytes(key string, value []byte) *Entry {
-	e.log.Format.AppendBytesField(e.buf, key, value)
+// ByteField appends a byte value as key-value pair to the log entry
+func (e *Entry) ByteField(key string, value byte) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendByte(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Str appends a string value as key-value pair to the log entry
-func (e *Entry) Str(key string, value string) *Entry {
-	e.log.Format.AppendStringField(e.buf, key, value)
+// Bytes appends a byte slice value as to the log entry
+func (e *Entry) Bytes(value []byte) *Entry {
+	e.log.Format.AppendBytes(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Strs appends a string slice value as key-value pair to the log entry
-func (e *Entry) Strs(key string, value []string) *Entry {
-	e.log.Format.AppendStringsField(e.buf, key, value)
+// BytesField appends a byte slice value as key-value pair to the log entry
+func (e *Entry) BytesField(key string, value []byte) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendBytes(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Int appends an int value as key-value pair to the log entry
-func (e *Entry) Int(key string, value int) *Entry {
-	e.log.Format.AppendIntField(e.buf, key, value)
+// Str appends a string value to the log entry
+func (e *Entry) Str(value string) *Entry {
+	e.log.Format.AppendString(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Ints appends an int slice value as key-value pair to the log entry
-func (e *Entry) Ints(key string, value []int) *Entry {
-	e.log.Format.AppendIntsField(e.buf, key, value)
+// StrField appends a string value as key-value pair to the log entry
+func (e *Entry) StrField(key string, value string) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendString(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Uint appends a uint value as key-value pair to the log entry
-func (e *Entry) Uint(key string, value uint) *Entry {
-	e.log.Format.AppendUintField(e.buf, key, value)
+// Strs appends a string slice value to the log entry
+func (e *Entry) Strs(value []string) *Entry {
+	e.log.Format.AppendStrings(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Uints appends a uint slice value as key-value pair to the log entry
-func (e *Entry) Uints(key string, value []uint) *Entry {
-	e.log.Format.AppendUintsField(e.buf, key, value)
+// StrsField appends a string slice value as key-value pair to the log entry
+func (e *Entry) StrsField(key string, value []string) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendStrings(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Float appends a float value as key-value pair to the log entry
-func (e *Entry) Float(key string, value float64) *Entry {
-	e.log.Format.AppendFloatField(e.buf, key, value)
+// Int appends an int value to the log entry
+func (e *Entry) Int(value int) *Entry {
+	e.log.Format.AppendInt(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Floats appends a float slice value as key-value pair to the log entry
-func (e *Entry) Floats(key string, value []float64) *Entry {
-	e.log.Format.AppendFloatsField(e.buf, key, value)
+// IntField appends an int value as key-value pair to the log entry
+func (e *Entry) IntField(key string, value int) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendInt(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Bool appends a bool value as key-value pair to the log entry
-func (e *Entry) Bool(key string, value bool) *Entry {
-	e.log.Format.AppendBoolField(e.buf, key, value)
+// Ints appends an int slice value to the log entry
+func (e *Entry) Ints(value []int) *Entry {
+	e.log.Format.AppendInts(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Bools appends a bool slice value as key-value pair to the log entry
-func (e *Entry) Bools(key string, value []bool) *Entry {
-	e.log.Format.AppendBoolsField(e.buf, key, value)
+// IntsField appends an int slice value as key-value pair to the log entry
+func (e *Entry) IntsField(key string, value []int) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendInts(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Time appends a time.Time value as key-value pair to the log entry
-func (e *Entry) Time(key string, value time.Time) *Entry {
-	e.log.Format.AppendTimeField(e.buf, key, value)
+// Uint appends a uint value to the log entry
+func (e *Entry) Uint(value uint) *Entry {
+	e.log.Format.AppendUint(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Times appends a time.Time slice value as key-value pair to the log entry
-func (e *Entry) Times(key string, value []time.Time) *Entry {
-	e.log.Format.AppendTimesField(e.buf, key, value)
+// UintField appends a uint value as key-value pair to the log entry
+func (e *Entry) UintField(key string, value uint) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendUint(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Duration appends a time.Duration value as key-value pair to the log entry
-func (e *Entry) Duration(key string, value time.Duration) *Entry {
-	e.log.Format.AppendDurationField(e.buf, key, value)
+// Uints appends a uint slice value to the log entry
+func (e *Entry) Uints(value []uint) *Entry {
+	e.log.Format.AppendUints(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Durations appends a time.Duration slice value as key-value pair to the log entry
-func (e *Entry) Durations(key string, value []time.Duration) *Entry {
-	e.log.Format.AppendDurationsField(e.buf, key, value)
+// UintsField appends a uint slice value as key-value pair to the log entry
+func (e *Entry) UintsField(key string, value []uint) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendUints(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Float appends a float value to the log entry
+func (e *Entry) Float(value float64) *Entry {
+	e.log.Format.AppendFloat(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// FloatField appends a float value as key-value pair to the log entry
+func (e *Entry) FloatField(key string, value float64) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendFloat(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Floats appends a float slice value to the log entry
+func (e *Entry) Floats(value []float64) *Entry {
+	e.log.Format.AppendFloats(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// FloatsField appends a float slice value as key-value pair to the log entry
+func (e *Entry) FloatsField(key string, value []float64) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendFloats(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Bool appends a bool value to the log entry
+func (e *Entry) Bool(value bool) *Entry {
+	e.log.Format.AppendBool(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// BoolField appends a bool value as key-value pair to the log entry
+func (e *Entry) BoolField(key string, value bool) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendBool(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Bools appends a bool slice value to the log entry
+func (e *Entry) Bools(value []bool) *Entry {
+	e.log.Format.AppendBools(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// BoolsField appends a bool slice value as key-value pair to the log entry
+func (e *Entry) BoolsField(key string, value []bool) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendBools(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Time appends a time.Time value to the log entry
+func (e *Entry) Time(value time.Time) *Entry {
+	e.log.Format.AppendTime(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// TimeField appends a time.Time value as key-value pair to the log entry
+func (e *Entry) TimeField(key string, value time.Time) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendTime(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Times appends a time.Time slice value to the log entry
+func (e *Entry) Times(value []time.Time) *Entry {
+	e.log.Format.AppendTimes(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// TimesField appends a time.Time slice value as key-value pair to the log entry
+func (e *Entry) TimesField(key string, value []time.Time) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendTimes(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// DurationField appends a time.Duration value to the log entry
+func (e *Entry) Duration(value time.Duration) *Entry {
+	e.log.Format.AppendDuration(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// DurationField appends a time.Duration value as key-value pair to the log entry
+func (e *Entry) DurationField(key string, value time.Duration) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendDuration(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// Durations appends a time.Duration slice value to the log entry
+func (e *Entry) Durations(value []time.Duration) *Entry {
+	e.log.Format.AppendDurations(e.buf, value)
+	e.buf.WriteByte(' ')
+	return e
+}
+
+// DurationsField appends a time.Duration slice value as key-value pair to the log entry
+func (e *Entry) DurationsField(key string, value []time.Duration) *Entry {
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendDurations(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
 // Field appends an interface value as key-value pair to the log entry
 func (e *Entry) Field(key string, value interface{}) *Entry {
-	e.log.Format.AppendField(e.buf, key, value)
+	e.log.Format.AppendKey(e.buf, key)
+	e.log.Format.AppendValue(e.buf, value)
 	e.buf.WriteByte(' ')
 	return e
 }
 
 // Fields appends a map of key-value pairs to the log entry
 func (e *Entry) Fields(fields map[string]interface{}) *Entry {
-	e.log.Format.AppendFields(e.buf, fields)
-	e.buf.WriteByte(' ')
-	return e
-}
-
-// Value appends the given value to the log entry formatted as a value, without a key.
-func (e *Entry) Value(value interface{}) *Entry {
-	e.log.Format.AppendValue(e.buf, value)
-	e.buf.WriteByte(' ')
+	for key, value := range fields {
+		e.Field(key, value)
+	}
 	return e
 }
 
 // Values appends the given values to the log entry formatted as values, without a key.
 func (e *Entry) Values(values ...interface{}) *Entry {
-	e.log.Format.AppendValues(e.buf, values)
+	for _, value := range values {
+		e.log.Format.AppendValue(e.buf, value)
+		e.buf.WriteByte(' ')
+	}
+	return e
+}
+
+// Append will append the given args formatted using fmt.Sprint(a...) to the Entry.
+func (e *Entry) Append(a ...interface{}) *Entry {
+	fmt.Fprint(e.buf, a...)
 	e.buf.WriteByte(' ')
 	return e
 }
 
-// Args appends the given args formatted using the log formatter (usually faster than printf) without any key-value / value formatting.
-func (e *Entry) Args(a ...interface{}) *Entry {
-	e.log.Format.AppendArgs(e.buf, a)
+// Appendf will append the given format string and args using fmt.Sprintf(s, a...) to the Entry.
+func (e *Entry) Appendf(s string, a ...interface{}) *Entry {
+	fmt.Fprintf(e.buf, s, a...)
 	e.buf.WriteByte(' ')
 	return e
 }

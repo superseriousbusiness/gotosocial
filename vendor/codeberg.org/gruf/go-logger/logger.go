@@ -2,6 +2,7 @@ package logger
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -55,7 +56,6 @@ func NewWith(lvl LEVEL, timestamp bool, fmt LogFormat, bufsize int64, out io.Wri
 		Format:    fmt,
 		BufSize:   bufsize,
 		Output:    out,
-		pool:      sync.Pool{},
 	}
 
 	// Ensure clock running
@@ -75,79 +75,113 @@ func NewWith(lvl LEVEL, timestamp bool, fmt LogFormat, bufsize int64, out io.Wri
 
 // Entry returns a new Entry from the Logger's pool with background context
 func (l *Logger) Entry() *Entry {
-	return l.pool.Get().(*Entry).WithContext(context.Background())
+	entry, _ := l.pool.Get().(*Entry)
+	entry.ctx = context.Background()
+	return entry
 }
 
 // Debug prints the provided arguments with the debug prefix
 func (l *Logger) Debug(a ...interface{}) {
-	l.Entry().TimestampIf().Level(DEBUG).Hooks().Msg(a...)
+	l.Log(DEBUG, a...)
 }
 
 // Debugf prints the provided format string and arguments with the debug prefix
 func (l *Logger) Debugf(s string, a ...interface{}) {
-	l.Entry().TimestampIf().Level(DEBUG).Hooks().Msgf(s, a...)
+	l.Logf(DEBUG, s, a...)
 }
 
 // Info prints the provided arguments with the info prefix
 func (l *Logger) Info(a ...interface{}) {
-	l.Entry().TimestampIf().Level(INFO).Hooks().Msg(a...)
+	l.Log(INFO, a...)
 }
 
 // Infof prints the provided format string and arguments with the info prefix
 func (l *Logger) Infof(s string, a ...interface{}) {
-	l.Entry().TimestampIf().Level(INFO).Hooks().Msgf(s, a...)
+	l.Logf(INFO, s, a...)
 }
 
 // Warn prints the provided arguments with the warn prefix
 func (l *Logger) Warn(a ...interface{}) {
-	l.Entry().TimestampIf().Level(WARN).Hooks().Msg(a...)
+	l.Log(WARN, a...)
 }
 
 // Warnf prints the provided format string and arguments with the warn prefix
 func (l *Logger) Warnf(s string, a ...interface{}) {
-	l.Entry().TimestampIf().Level(WARN).Hooks().Msgf(s, a...)
+	l.Logf(WARN, s, a...)
 }
 
 // Error prints the provided arguments with the error prefix
 func (l *Logger) Error(a ...interface{}) {
-	l.Entry().TimestampIf().Level(ERROR).Hooks().Msg(a...)
+	l.Log(ERROR, a...)
 }
 
 // Errorf prints the provided format string and arguments with the error prefix
 func (l *Logger) Errorf(s string, a ...interface{}) {
-	l.Entry().TimestampIf().Level(ERROR).Hooks().Msgf(s, a...)
+	l.Logf(ERROR, s, a...)
 }
 
 // Fatal prints provided arguments with the fatal prefix before exiting the program
 // with os.Exit(1)
 func (l *Logger) Fatal(a ...interface{}) {
 	defer os.Exit(1)
-	l.Entry().TimestampIf().Level(FATAL).Hooks().Msg(a...)
+	l.Log(FATAL, a...)
 }
 
 // Fatalf prints provided the provided format string and arguments with the fatal prefix
 // before exiting the program with os.Exit(1)
 func (l *Logger) Fatalf(s string, a ...interface{}) {
 	defer os.Exit(1)
-	l.Entry().TimestampIf().Level(FATAL).Hooks().Msgf(s, a...)
+	l.Logf(FATAL, s, a...)
 }
 
-// Log prints the provided arguments with the supplied log level
+// Log prints the provided arguments at the supplied log level
 func (l *Logger) Log(lvl LEVEL, a ...interface{}) {
-	l.Entry().TimestampIf().Hooks().Msg(a...)
+	if lvl >= l.Level {
+		l.Entry().TimestampIf().Level(lvl).Hooks().Msg(a...)
+	}
 }
 
-// Logf prints the provided format string and arguments with the supplied log level
+// Logf prints the provided format string and arguments at the supplied log level
 func (l *Logger) Logf(lvl LEVEL, s string, a ...interface{}) {
-	l.Entry().TimestampIf().Hooks().Msgf(s, a...)
+	if lvl >= l.Level {
+		l.Entry().TimestampIf().Level(lvl).Hooks().Msgf(s, a...)
+	}
+}
+
+// LogFields prints the provided fields formatted as key-value pairs at the supplied log level
+func (l *Logger) LogFields(lvl LEVEL, fields map[string]interface{}) {
+	if lvl >= l.Level {
+		l.Entry().TimestampIf().Level(lvl).Fields(fields).Hooks().Send()
+	}
+}
+
+// LogValues prints the provided values formatted as-so at the supplied log level
+func (l *Logger) LogValues(lvl LEVEL, a ...interface{}) {
+	if lvl >= l.Level {
+		l.Entry().TimestampIf().Level(lvl).Values(a...).Hooks().Send()
+	}
 }
 
 // Print simply prints provided arguments
 func (l *Logger) Print(a ...interface{}) {
-	l.Entry().Hooks().Msg(a...)
+	e := l.Entry().TimestampIf()
+	fmt.Fprint(e.buf, a...)
+	e.Send()
 }
 
 // Printf simply prints provided the provided format string and arguments
 func (l *Logger) Printf(s string, a ...interface{}) {
-	l.Entry().Hooks().Msgf(s, a...)
+	e := l.Entry().TimestampIf()
+	fmt.Fprintf(e.buf, s, a...)
+	e.Send()
+}
+
+// PrintFields prints the provided fields formatted as key-value pairs
+func (l *Logger) PrintFields(fields map[string]interface{}) {
+	l.Entry().TimestampIf().Fields(fields).Send()
+}
+
+// PrintValues prints the provided values formatted as-so
+func (l *Logger) PrintValues(a ...interface{}) {
+	l.Entry().TimestampIf().Values(a...).Send()
 }

@@ -4,6 +4,7 @@
 
 //go:generate go run generator.go
 //go:generate gofmt -l -s -w .
+//go:generate gofmt -l -s -w .
 
 package sqlite // import "modernc.org/sqlite"
 

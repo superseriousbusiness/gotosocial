@@ -1,7 +1,7 @@
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-errors v1.0.2
+# codeberg.org/gruf/go-errors v1.0.3
 ## explicit; go 1.15
 codeberg.org/gruf/go-errors
 # codeberg.org/gruf/go-fastpath v1.0.2
@@ -10,7 +10,7 @@ codeberg.org/gruf/go-fastpath
 # codeberg.org/gruf/go-hashenc v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-logger v1.2.3
+# codeberg.org/gruf/go-logger v1.3.1
 ## explicit; go 1.14
 codeberg.org/gruf/go-logger
 # codeberg.org/gruf/go-mutexes v1.0.1
@@ -22,7 +22,7 @@ codeberg.org/gruf/go-nowish
 # codeberg.org/gruf/go-pools v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-store v1.1.0
+# codeberg.org/gruf/go-store v1.1.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
@@ -106,7 +106,7 @@ github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.9.0
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
-# github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b
+# github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850
 ## explicit
 github.com/go-xmlfmt/xmlfmt
 # github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -119,6 +119,8 @@ github.com/golang/geo/r2
 github.com/golang/geo/r3
 github.com/golang/geo/s1
 github.com/golang/geo/s2
+# github.com/golang/mock v1.6.0
+## explicit; go 1.11
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
@@ -184,10 +186,10 @@ github.com/jackc/pgproto3/v2
 # github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgtype v1.9.0
+# github.com/jackc/pgtype v1.9.1
 ## explicit; go 1.13
 github.com/jackc/pgtype
-# github.com/jackc/pgx/v4 v4.14.0
+# github.com/jackc/pgx/v4 v4.14.1
 ## explicit; go 1.13
 github.com/jackc/pgx/v4
 github.com/jackc/pgx/v4/internal/sanitize
@@ -214,7 +216,7 @@ github.com/mattn/go-isatty
 ## explicit; go 1.16
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/mitchellh/mapstructure v1.4.2
+# github.com/mitchellh/mapstructure v1.4.3
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -263,8 +265,8 @@ github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/spf13/viper v1.9.0
-## explicit; go 1.12
+# github.com/spf13/viper v1.10.0
+## explicit; go 1.17
 github.com/spf13/viper
 github.com/spf13/viper/internal/encoding
 github.com/spf13/viper/internal/encoding/hcl
@@ -476,7 +478,7 @@ github.com/superseriousbusiness/oauth2/v4/server
 ## explicit; go 1.13
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.5.22
+# github.com/tdewolff/parse/v2 v2.5.23
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
@@ -488,7 +490,7 @@ github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/uptrace/bun v1.0.18
+# github.com/uptrace/bun v1.0.19
 ## explicit; go 1.16
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -500,10 +502,10 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.0.18
+# github.com/uptrace/bun/dialect/pgdialect v1.0.19
 ## explicit; go 1.16
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.0.18
+# github.com/uptrace/bun/dialect/sqlitedialect v1.0.19
 ## explicit; go 1.16
 github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/vmihailenco/msgpack/v5 v5.3.5
@@ -518,7 +520,7 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/wagslane/go-password-validator v0.3.0
 ## explicit; go 1.16
 github.com/wagslane/go-password-validator
-# golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+# golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 ## explicit; go 1.17
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
@@ -541,7 +543,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.5.1
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9
+# golang.org/x/net v0.0.0-20211209124913-491a49abca63
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -552,7 +554,7 @@ golang.org/x/net/idna
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20211124211545-fe61309f8881
+# golang.org/x/sys v0.0.0-20211210111614-af8b64212486
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -574,7 +576,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.1.7
+# golang.org/x/tools v0.1.8
 ## explicit; go 1.17
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
@@ -630,7 +632,7 @@ google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
 google.golang.org/protobuf/types/descriptorpb
-# gopkg.in/ini.v1 v1.63.2
+# gopkg.in/ini.v1 v1.66.2
 ## explicit
 gopkg.in/ini.v1
 # gopkg.in/square/go-jose.v2 v2.6.0
@@ -650,10 +652,10 @@ lukechampine.com/uint128
 # modernc.org/cc/v3 v3.35.18
 ## explicit; go 1.15
 modernc.org/cc/v3
-# modernc.org/ccgo/v3 v3.12.73
+# modernc.org/ccgo/v3 v3.12.92
 ## explicit; go 1.16
 modernc.org/ccgo/v3/lib
-# modernc.org/libc v1.11.83
+# modernc.org/libc v1.11.101
 ## explicit; go 1.16
 modernc.org/libc
 modernc.org/libc/errno
@@ -689,8 +691,8 @@ modernc.org/memory
 # modernc.org/opt v0.1.1
 ## explicit; go 1.13
 modernc.org/opt
-# modernc.org/sqlite v1.14.1
-## explicit; go 1.15
+# modernc.org/sqlite v1.14.2
+## explicit; go 1.16
 modernc.org/sqlite
 modernc.org/sqlite/lib
 # modernc.org/strutil v1.1.1

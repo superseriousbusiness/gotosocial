@@ -76,6 +76,16 @@ func Logf(lvl LEVEL, s string, a ...interface{}) {
 	Default().Logf(lvl, s, a...)
 }
 
+// LogFields prints the provided fields formatted as key-value pairs at the supplied log level to the global Logger instance.
+func LogFields(lvl LEVEL, fields map[string]interface{}) {
+	Default().LogFields(lvl, fields)
+}
+
+// LogValues prints the provided values formatted as-so at the supplied log level to the global Logger instance.
+func LogValues(lvl LEVEL, a ...interface{}) {
+	Default().LogValues(lvl, a...)
+}
+
 // Print simply prints provided arguments to the global Logger instance.
 func Print(a ...interface{}) {
 	Default().Print(a...)
@@ -84,4 +94,14 @@ func Print(a ...interface{}) {
 // Printf simply prints provided the provided format string and arguments to the global Logger instance.
 func Printf(s string, a ...interface{}) {
 	Default().Printf(s, a...)
+}
+
+// PrintFields prints the provided fields formatted as key-value pairs to the global Logger instance.
+func PrintFields(fields map[string]interface{}) {
+	Default().PrintFields(fields)
+}
+
+// PrintValues prints the provided values formatted as-so to the global Logger instance.
+func PrintValues(a ...interface{}) {
+	Default().PrintValues(a...)
 }

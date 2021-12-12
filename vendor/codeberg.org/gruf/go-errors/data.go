@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"fmt"
 	"sync"
 
 	"codeberg.org/gruf/go-bytes"
@@ -9,10 +10,9 @@ import (
 
 // global logfmt data formatter.
 var logfmt = logger.TextFormat{
-	Strict:     logger.DefaultTextFormat.Strict,
-	MaxDepth:   logger.DefaultTextFormat.MaxDepth,
-	Levels:     nil,
-	TimeFormat: logger.DefaultTextFormat.TimeFormat,
+	Strict:   false,
+	Verbose:  true,
+	MaxDepth: 10,
 }
 
 // KV is a structure for setting key-value pairs in ErrorData.
@@ -30,50 +30,77 @@ type ErrorData interface {
 	// Append adds the supplied key-values to ErrorData, similar keys DO overwrite
 	Append(...KV)
 
-	// String returns a string representation of the ErrorData
-	String() string
+	// Implement byte slice representation formatter.
+	logger.Formattable
+
+	// Implement string representation formatter.
+	fmt.Stringer
 }
 
 // NewData returns a new ErrorData implementation.
 func NewData() ErrorData {
 	return &errorData{
-		data: make(map[string]interface{}, 10),
+		data: make([]KV, 0, 10),
 	}
 }
 
 // errorData is our ErrorData implementation, this is essentially
 // just a thread-safe string-interface map implementation.
 type errorData struct {
-	data map[string]interface{}
-	buf  bytes.Buffer
+	data []KV
 	mu   sync.Mutex
+}
+
+func (d *errorData) set(key string, value interface{}) {
+	for i := range d.data {
+		if d.data[i].Key == key {
+			// Found existing, update!
+			d.data[i].Value = value
+			return
+		}
+	}
+
+	// Add new KV entry to slice
+	d.data = append(d.data, KV{
+		Key:   key,
+		Value: value,
+	})
 }
 
 func (d *errorData) Value(key string) (interface{}, bool) {
 	d.mu.Lock()
-	v, ok := d.data[key]
+	for i := range d.data {
+		if d.data[i].Key == key {
+			v := d.data[i].Value
+			d.mu.Unlock()
+			return v, true
+		}
+	}
 	d.mu.Unlock()
-	return v, ok
+	return nil, false
 }
 
 func (d *errorData) Append(kvs ...KV) {
 	d.mu.Lock()
 	for i := range kvs {
-		k := kvs[i].Key
-		v := kvs[i].Value
-		d.data[k] = v
+		d.set(kvs[i].Key, kvs[i].Value)
 	}
 	d.mu.Unlock()
 }
 
-func (d *errorData) String() string {
+func (d *errorData) AppendFormat(b []byte) []byte {
+	buf := bytes.Buffer{B: b}
 	d.mu.Lock()
-
-	d.buf.Reset()
-	d.buf.B = append(d.buf.B, '{')
-	logfmt.AppendFields(&d.buf, d.data)
-	d.buf.B = append(d.buf.B, '}')
-
+	buf.B = append(buf.B, '{')
+	for i := range d.data {
+		logfmt.AppendKey(&buf, d.data[i].Key)
+		logfmt.AppendValue(&buf, d.data[i].Value)
+	}
+	buf.B = append(buf.B, '}')
 	d.mu.Unlock()
-	return d.buf.StringPtr()
+	return buf.B
+}
+
+func (d *errorData) String() string {
+	return string(d.AppendFormat(nil))
 }

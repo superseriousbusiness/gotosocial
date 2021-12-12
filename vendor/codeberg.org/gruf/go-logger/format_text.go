@@ -12,35 +12,49 @@ import (
 
 // DefaultTextFormat is the default TextFormat instance
 var DefaultTextFormat = TextFormat{
-	Strict:     false,
-	MaxDepth:   5,
-	Levels:     DefaultLevels(),
-	TimeFormat: time.RFC1123,
+	Strict:   false,
+	Verbose:  false,
+	MaxDepth: 10,
+	Levels:   DefaultLevels(),
 }
 
-// TextFormat is the default LogFormat implementation, with very similar formatting to logfmt
+// TextFormat is the default LogFormat implementation, with very similar formatting to the
+// standard "fmt" package's '%#v' operator. The main difference being that pointers are
+// dereferenced as far as possible in order to reach a printable value. It is also *mildly* faster.
 type TextFormat struct {
 	// Strict defines whether to use strict key-value pair formatting, i.e. should the level
 	// timestamp and msg be formatted as key-value pairs (with forced quoting for msg)
 	Strict bool
+
+	// Verbose defines whether to increase output verbosity, i.e. include types with nil values
+	// and force values implementing .String() / .AppendFormat() to be printed as a struct etc.
+	Verbose bool
 
 	// MaxDepth specifies the max depth of fields the formatter will iterate
 	MaxDepth uint8
 
 	// Levels defines the map of log LEVELs to level strings
 	Levels Levels
-
-	// TimeFormat specifies the time formatting to use
-	TimeFormat string
 }
 
 // fmt returns a new format instance based on receiver TextFormat and given buffer
 func (f TextFormat) fmt(buf *bytes.Buffer) format {
+	var flags uint8
+	if f.Verbose {
+		flags |= vboseBit
+	}
 	return format{
-		isKey: false,
-		depth: 0,
-		txt:   f,
+		flags: flags,
+		depth: uint16(f.MaxDepth) << 8,
 		buf:   buf,
+	}
+}
+
+func (f TextFormat) AppendKey(buf *bytes.Buffer, key string) {
+	if len(key) > 0 {
+		// only append if key is non-zero length
+		appendString(f.fmt(buf).SetIsKey(true), key)
+		buf.WriteByte('=')
 	}
 }
 
@@ -48,13 +62,13 @@ func (f TextFormat) AppendLevel(buf *bytes.Buffer, lvl LEVEL) {
 	if f.Strict {
 		// Strict format, append level key
 		buf.WriteString(`level=`)
-		buf.WriteString(f.Levels.LevelString(lvl))
+		buf.WriteString(f.Levels.Get(lvl))
 		return
 	}
 
 	// Write level string
 	buf.WriteByte('[')
-	buf.WriteString(f.Levels.LevelString(lvl))
+	buf.WriteString(f.Levels.Get(lvl))
 	buf.WriteByte(']')
 }
 
@@ -70,140 +84,71 @@ func (f TextFormat) AppendTimestamp(buf *bytes.Buffer, now string) {
 	buf.WriteString(now)
 }
 
-func (f TextFormat) AppendField(buf *bytes.Buffer, key string, value interface{}) {
-	appendKey(buf, key)
-	appendIfaceOrRValue(f.fmt(buf), value)
-}
-
-func (f TextFormat) AppendFields(buf *bytes.Buffer, fields map[string]interface{}) {
-	fmt := f.fmt(buf)
-
-	// Append individual fields
-	for key, value := range fields {
-		appendKey(buf, key)
-		appendIfaceOrRValue(fmt, value)
-		buf.WriteByte(' ')
-	}
-
-	// Drop last space
-	if len(fields) > 0 {
-		buf.Truncate(1)
-	}
-}
-
 func (f TextFormat) AppendValue(buf *bytes.Buffer, value interface{}) {
-	appendIfaceOrRValue(f.fmt(buf).IsKey(true), value)
+	appendIfaceOrRValue(f.fmt(buf).SetIsKey(false), value)
 }
 
-func (f TextFormat) AppendValues(buf *bytes.Buffer, values []interface{}) {
-	// Prepare formatter
-	fmt := f.fmt(buf).IsKey(true)
-
-	// Append each of the values
-	for _, value := range values {
-		appendIfaceOrRValue(fmt, value)
-		buf.WriteByte(' ')
-	}
-
-	// Drop last space
-	if len(values) > 0 {
-		buf.Truncate(1)
-	}
-}
-
-func (f TextFormat) AppendArgs(buf *bytes.Buffer, args []interface{}) {
-	// Prepare formatter
-	fmt := f.fmt(buf).IsKey(true).IsRaw(true)
-
-	// Append each of the values
-	for _, arg := range args {
-		appendIfaceOrRValue(fmt, arg)
-		buf.WriteByte(' ')
-	}
-
-	// Drop last space
-	if len(args) > 0 {
-		buf.Truncate(1)
-	}
-}
-
-func (f TextFormat) AppendByteField(buf *bytes.Buffer, key string, value byte) {
-	appendKey(buf, key)
+func (f TextFormat) AppendByte(buf *bytes.Buffer, value byte) {
 	appendByte(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendBytesField(buf *bytes.Buffer, key string, value []byte) {
-	appendKey(buf, key)
+func (f TextFormat) AppendBytes(buf *bytes.Buffer, value []byte) {
 	appendBytes(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendStringField(buf *bytes.Buffer, key string, value string) {
-	appendKey(buf, key)
+func (f TextFormat) AppendString(buf *bytes.Buffer, value string) {
 	appendString(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendStringsField(buf *bytes.Buffer, key string, value []string) {
-	appendKey(buf, key)
+func (f TextFormat) AppendStrings(buf *bytes.Buffer, value []string) {
 	appendStringSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendBoolField(buf *bytes.Buffer, key string, value bool) {
-	appendKey(buf, key)
+func (f TextFormat) AppendBool(buf *bytes.Buffer, value bool) {
 	appendBool(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendBoolsField(buf *bytes.Buffer, key string, value []bool) {
-	appendKey(buf, key)
+func (f TextFormat) AppendBools(buf *bytes.Buffer, value []bool) {
 	appendBoolSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendIntField(buf *bytes.Buffer, key string, value int) {
-	appendKey(buf, key)
+func (f TextFormat) AppendInt(buf *bytes.Buffer, value int) {
 	appendInt(f.fmt(buf), int64(value))
 }
 
-func (f TextFormat) AppendIntsField(buf *bytes.Buffer, key string, value []int) {
-	appendKey(buf, key)
+func (f TextFormat) AppendInts(buf *bytes.Buffer, value []int) {
 	appendIntSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendUintField(buf *bytes.Buffer, key string, value uint) {
-	appendKey(buf, key)
+func (f TextFormat) AppendUint(buf *bytes.Buffer, value uint) {
 	appendUint(f.fmt(buf), uint64(value))
 }
 
-func (f TextFormat) AppendUintsField(buf *bytes.Buffer, key string, value []uint) {
-	appendKey(buf, key)
+func (f TextFormat) AppendUints(buf *bytes.Buffer, value []uint) {
 	appendUintSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendFloatField(buf *bytes.Buffer, key string, value float64) {
-	appendKey(buf, key)
+func (f TextFormat) AppendFloat(buf *bytes.Buffer, value float64) {
 	appendFloat(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendFloatsField(buf *bytes.Buffer, key string, value []float64) {
-	appendKey(buf, key)
+func (f TextFormat) AppendFloats(buf *bytes.Buffer, value []float64) {
 	appendFloatSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendTimeField(buf *bytes.Buffer, key string, value time.Time) {
-	appendKey(buf, key)
+func (f TextFormat) AppendTime(buf *bytes.Buffer, value time.Time) {
 	appendTime(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendTimesField(buf *bytes.Buffer, key string, value []time.Time) {
-	appendKey(buf, key)
+func (f TextFormat) AppendTimes(buf *bytes.Buffer, value []time.Time) {
 	appendTimeSlice(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendDurationField(buf *bytes.Buffer, key string, value time.Duration) {
-	appendKey(buf, key)
+func (f TextFormat) AppendDuration(buf *bytes.Buffer, value time.Duration) {
 	appendDuration(f.fmt(buf), value)
 }
 
-func (f TextFormat) AppendDurationsField(buf *bytes.Buffer, key string, value []time.Duration) {
-	appendKey(buf, key)
+func (f TextFormat) AppendDurations(buf *bytes.Buffer, value []time.Duration) {
 	appendDurationSlice(f.fmt(buf), value)
 }
 
@@ -233,43 +178,86 @@ func (f TextFormat) AppendMsgf(buf *bytes.Buffer, s string, a ...interface{}) {
 
 // format is the object passed among the append___ formatting functions
 type format struct {
-	raw   bool
-	isKey bool
-	depth uint8
-	txt   TextFormat
-	buf   *bytes.Buffer
+	flags uint8         // 'isKey' and 'verbose' flags
+	depth uint16        // encoded as 0b(maxDepth)(curDepth)
+	buf   *bytes.Buffer // out buffer
 }
 
-// IsKey returns format instance with key set to value
-func (f format) IsKey(is bool) format {
+const (
+	// flag bit constants
+	isKeyBit = uint8(1) << 0
+	vboseBit = uint8(1) << 1
+)
+
+// AtMaxDepth returns whether format is currently at max depth.
+func (f format) AtMaxDepth() bool {
+	return uint8(f.depth) >= uint8(f.depth>>8)
+}
+
+// IsKey returns whether the isKey flag is set.
+func (f format) IsKey() bool {
+	return (f.flags & isKeyBit) != 0
+}
+
+// Verbose returns whether the verbose flag is set.
+func (f format) Verbose() bool {
+	return (f.flags & vboseBit) != 0
+}
+
+// SetIsKey returns format instance with the isKey bit set to value.
+func (f format) SetIsKey(is bool) format {
+	flags := f.flags
+	if is {
+		flags |= isKeyBit
+	} else {
+		flags &= ^isKeyBit
+	}
 	return format{
-		raw:   f.raw,
-		isKey: is,
+		flags: flags,
 		depth: f.depth,
-		txt:   f.txt,
 		buf:   f.buf,
 	}
 }
 
-// IsRaw returns format instance with raw set to value
-func (f format) IsRaw(is bool) format {
-	return format{
-		raw:   is,
-		isKey: f.isKey,
-		depth: f.depth,
-		txt:   f.txt,
-		buf:   f.buf,
-	}
-}
-
-// IncrDepth returns format instance with depth incremented
+// IncrDepth returns format instance with depth incremented.
 func (f format) IncrDepth() format {
 	return format{
-		raw:   f.raw,
-		isKey: f.isKey,
-		depth: f.depth + 1,
-		txt:   f.txt,
+		flags: f.flags,
+		depth: (f.depth & 0b1111111100000000) | uint16(uint8(f.depth)+1),
 		buf:   f.buf,
+	}
+}
+
+// appendNilType writes nil to buf, type included if verbose.
+func appendNilType(fmt format, t string) {
+	if fmt.Verbose() {
+		fmt.buf.WriteByte('(')
+		fmt.buf.WriteString(t)
+		fmt.buf.WriteString(`)(nil)`)
+	} else {
+		fmt.buf.WriteString(`nil`)
+	}
+}
+
+// appendNilFace writes nil to buf, type included if verbose.
+func appendNilIface(fmt format, i interface{}) {
+	if fmt.Verbose() {
+		fmt.buf.WriteByte('(')
+		fmt.buf.WriteString(reflect.TypeOf(i).String())
+		fmt.buf.WriteString(`)(nil)`)
+	} else {
+		fmt.buf.WriteString(`nil`)
+	}
+}
+
+// appendNilRValue writes nil to buf, type included if verbose.
+func appendNilRValue(fmt format, v reflect.Value) {
+	if fmt.Verbose() {
+		fmt.buf.WriteByte('(')
+		fmt.buf.WriteString(v.Type().String())
+		fmt.buf.WriteString(`)(nil)`)
+	} else {
+		fmt.buf.WriteString(`nil`)
 	}
 }
 
@@ -280,7 +268,7 @@ func appendByte(fmt format, b byte) {
 
 // appendBytes writes a quoted byte slice to buf
 func appendBytes(fmt format, b []byte) {
-	if !fmt.isKey && b == nil {
+	if !fmt.IsKey() && b == nil {
 		// Values CAN be nil formatted
 		appendNilType(fmt, `[]byte`)
 	} else {
@@ -290,19 +278,16 @@ func appendBytes(fmt format, b []byte) {
 
 // appendString writes an escaped, double-quoted string to buf
 func appendString(fmt format, s string) {
-	if !fmt.raw {
-		// Only handle quoting if NOT raw
-		if !strconv.CanBackquote(s) || !fmt.isKey {
-			// All non-keys and multiline keys get quoted + escaped
-			fmt.buf.B = strconv.AppendQuote(fmt.buf.B, s)
-			return
-		} else if containsSpaceOrTab(s) {
-			// Key containing spaces/tabs, quote this
-			fmt.buf.WriteByte('"')
-			fmt.buf.WriteString(s)
-			fmt.buf.WriteByte('"')
-			return
-		}
+	if !fmt.IsKey() || !strconv.CanBackquote(s) {
+		// All non-keys and multiline keys get quoted + escaped
+		fmt.buf.B = strconv.AppendQuote(fmt.buf.B, s)
+		return
+	} else if containsSpaceOrTab(s) {
+		// Key containing spaces/tabs, quote this
+		fmt.buf.WriteByte('"')
+		fmt.buf.WriteString(s)
+		fmt.buf.WriteByte('"')
+		return
 	}
 
 	// Safe to leave unquoted
@@ -319,12 +304,9 @@ func appendStringSlice(fmt format, s []string) {
 
 	fmt.buf.WriteByte('[')
 
-	// Prepare formatter
-	fmt = fmt.IsKey(false)
-
 	// Write elements
 	for _, s := range s {
-		appendString(fmt, s)
+		appendString(fmt.SetIsKey(false), s)
 		fmt.buf.WriteByte(',')
 	}
 
@@ -454,7 +436,7 @@ func appendFloatSlice(fmt format, f []float64) {
 
 // appendTime writes a formatted, quoted time string to buf
 func appendTime(fmt format, t time.Time) {
-	appendString(fmt.IsKey(true), t.Format(fmt.txt.TimeFormat))
+	appendString(fmt.SetIsKey(true), t.Format(time.RFC1123))
 }
 
 // appendTimeSlice writes a slice of formatted time strings to buf
@@ -467,12 +449,9 @@ func appendTimeSlice(fmt format, t []time.Time) {
 
 	fmt.buf.WriteByte('[')
 
-	// Prepare formatter
-	fmt = fmt.IsKey(true)
-
 	// Write elements
 	for _, t := range t {
-		appendString(fmt, t.Format(fmt.txt.TimeFormat))
+		appendString(fmt.SetIsKey(true), t.Format(time.RFC1123))
 		fmt.buf.WriteByte(',')
 	}
 
@@ -486,7 +465,7 @@ func appendTimeSlice(fmt format, t []time.Time) {
 
 // appendDuration writes a formatted, quoted duration string to buf
 func appendDuration(fmt format, d time.Duration) {
-	appendString(fmt.IsKey(true), d.String())
+	appendString(fmt.SetIsKey(true), d.String())
 }
 
 // appendDurationSlice writes a slice of formatted, quoted duration strings to buf
@@ -499,12 +478,9 @@ func appendDurationSlice(fmt format, d []time.Duration) {
 
 	fmt.buf.WriteByte('[')
 
-	// Prepare formatter
-	fmt = fmt.IsKey(true)
-
 	// Write elements
 	for _, d := range d {
-		appendString(fmt, d.String())
+		appendString(fmt.SetIsKey(true), d.String())
 		fmt.buf.WriteByte(',')
 	}
 
@@ -560,22 +536,10 @@ func notNil(i interface{}) bool {
 	return (e.valueOf != nil)
 }
 
-// appendNilType will append a formatted nil of type 't'
-func appendNilType(fmt format, t string) {
-	fmt.buf.WriteByte('(')
-	fmt.buf.WriteString(t)
-	fmt.buf.WriteString(`)(<nil>)`)
-}
-
-// appendNilValue will append a formatted nil of type fetched from value 'v'
-func appendNilRValue(fmt format, v reflect.Value) {
-	appendNilType(fmt, v.Type().String())
-}
-
-// appendIfaceOrReflectValue will attempt to append as interface, falling back to reflection
-func appendIfaceOrRValue(fmt format, i interface{}) {
+// appendIfaceOrRValueNext performs appendIfaceOrRValue checking + incr depth
+func appendIfaceOrRValueNext(fmt format, i interface{}) {
 	// Check we haven't hit max
-	if fmt.depth >= fmt.txt.MaxDepth {
+	if fmt.AtMaxDepth() {
 		fmt.buf.WriteString("...")
 		return
 	}
@@ -583,16 +547,21 @@ func appendIfaceOrRValue(fmt format, i interface{}) {
 	// Incr the depth
 	fmt = fmt.IncrDepth()
 
-	// Attempt to append interface, fallback to reflect
+	// Make actual call
+	appendIfaceOrRValue(fmt, i)
+}
+
+// appendIfaceOrReflectValue will attempt to append as interface, falling back to reflection
+func appendIfaceOrRValue(fmt format, i interface{}) {
 	if !appendIface(fmt, i) {
 		appendRValue(fmt, reflect.ValueOf(i))
 	}
 }
 
-// appendReflectValueOrIface will attempt to interface the reflect.Value, falling back to using this directly
-func appendRValueOrIface(fmt format, v reflect.Value) {
+// appendValueOrIfaceNext performs appendRValueOrIface checking + incr depth
+func appendRValueOrIfaceNext(fmt format, v reflect.Value) {
 	// Check we haven't hit max
-	if fmt.depth >= fmt.txt.MaxDepth {
+	if fmt.AtMaxDepth() {
 		fmt.buf.WriteString("...")
 		return
 	}
@@ -600,7 +569,12 @@ func appendRValueOrIface(fmt format, v reflect.Value) {
 	// Incr the depth
 	fmt = fmt.IncrDepth()
 
-	// Attempt to interface reflect value, fallback to handling value itself
+	// Make actual call
+	appendRValueOrIface(fmt, v)
+}
+
+// appendRValueOrIface will attempt to interface the reflect.Value, falling back to using this directly
+func appendRValueOrIface(fmt format, v reflect.Value) {
 	if !v.CanInterface() || !appendIface(fmt, v.Interface()) {
 		appendRValue(fmt, v)
 	}
@@ -610,7 +584,7 @@ func appendRValueOrIface(fmt format, v reflect.Value) {
 func appendIface(fmt format, i interface{}) bool {
 	switch i := i.(type) {
 	case nil:
-		fmt.buf.WriteString(`<nil>`)
+		fmt.buf.WriteString(`nil`)
 	case byte:
 		appendByte(fmt, i)
 	case []byte:
@@ -671,13 +645,35 @@ func appendIface(fmt format, i interface{}) bool {
 		if notNil(i) /* use safer nil check */ {
 			appendString(fmt, i.Error())
 		} else {
-			appendNilType(fmt, reflect.TypeOf(i).String())
+			appendNilIface(fmt, i)
+		}
+	case Formattable:
+		switch {
+		// catch nil case first
+		case !notNil(i):
+			appendNilIface(fmt, i)
+
+		// not permitted
+		case fmt.Verbose():
+			return false
+
+		// use func
+		default:
+			fmt.buf.B = i.AppendFormat(fmt.buf.B)
 		}
 	case stdfmt.Stringer:
-		if notNil(i) /* use safer nil check */ {
+		switch {
+		// catch nil case first
+		case !notNil(i):
+			appendNilIface(fmt, i)
+
+		// not permitted
+		case fmt.Verbose():
+			return false
+
+		// use func
+		default:
 			appendString(fmt, i.String())
-		} else {
-			appendNilType(fmt, reflect.TypeOf(i).String())
 		}
 	default:
 		return false // could not handle
@@ -720,7 +716,7 @@ func appendRValue(fmt format, v reflect.Value) {
 			fmt.buf.WriteString("0x")
 			fmt.buf.B = strconv.AppendUint(fmt.buf.B, uint64(u), 16)
 		} else {
-			fmt.buf.WriteString(`<nil>`)
+			fmt.buf.WriteString(`nil`)
 		}
 		fmt.buf.WriteByte(')')
 	case reflect.Uintptr:
@@ -730,7 +726,7 @@ func appendRValue(fmt format, v reflect.Value) {
 			fmt.buf.WriteString("0x")
 			fmt.buf.B = strconv.AppendUint(fmt.buf.B, u, 16)
 		} else {
-			fmt.buf.WriteString(`<nil>`)
+			fmt.buf.WriteString(`nil`)
 		}
 		fmt.buf.WriteByte(')')
 	case reflect.String:
@@ -758,15 +754,11 @@ func appendIfaceMap(fmt format, v map[string]interface{}) {
 
 	fmt.buf.WriteByte('{')
 
-	// Prepare formatters
-	fmtKey := fmt.IsKey(true)
-	fmtVal := fmt.IsKey(false)
-
 	// Write map pairs!
 	for key, value := range v {
-		appendString(fmtKey, key)
+		appendString(fmt.SetIsKey(true), key)
 		fmt.buf.WriteByte('=')
-		appendIfaceOrRValue(fmtVal, value)
+		appendIfaceOrRValueNext(fmt.SetIsKey(false), value)
 		fmt.buf.WriteByte(' ')
 	}
 
@@ -785,12 +777,9 @@ func appendArrayType(fmt format, v reflect.Value) {
 
 	fmt.buf.WriteByte('[')
 
-	// Prepare formatter
-	fmt = fmt.IsKey(false)
-
 	// Write values
 	for i := 0; i < n; i++ {
-		appendRValueOrIface(fmt, v.Index(i))
+		appendRValueOrIfaceNext(fmt.SetIsKey(false), v.Index(i))
 		fmt.buf.WriteByte(',')
 	}
 
@@ -825,15 +814,11 @@ func appendMapType(fmt format, v reflect.Value) {
 
 	fmt.buf.WriteByte('{')
 
-	// Prepare formatters
-	fmtKey := fmt.IsKey(true)
-	fmtVal := fmt.IsKey(false)
-
 	// Iterate pairs
 	for r.Next() {
-		appendRValueOrIface(fmtKey, r.Key())
+		appendRValueOrIfaceNext(fmt.SetIsKey(true), r.Key())
 		fmt.buf.WriteByte('=')
-		appendRValueOrIface(fmtVal, r.Value())
+		appendRValueOrIfaceNext(fmt.SetIsKey(false), r.Value())
 		fmt.buf.WriteByte(' ')
 	}
 
@@ -852,24 +837,25 @@ func appendStructType(fmt format, v reflect.Value) {
 	n := v.NumField()
 	w := 0
 
-	fmt.buf.WriteByte('{')
+	// If verbose, append the type
 
-	// Prepare formatters
-	fmtKey := fmt.IsKey(true)
-	fmtVal := fmt.IsKey(false)
+	fmt.buf.WriteByte('{')
 
 	// Iterate fields
 	for i := 0; i < n; i++ {
 		vfield := v.Field(i)
+		name := t.Field(i).Name
+
+		// Append field name
+		appendString(fmt.SetIsKey(true), name)
+		fmt.buf.WriteByte('=')
 
 		if !vfield.CanInterface() {
 			// This is an unexported field
-			appendRValue(fmtVal, vfield)
+			appendRValue(fmt.SetIsKey(false), vfield)
 		} else {
 			// This is an exported field!
-			appendString(fmtKey, t.Field(i).Name)
-			fmt.buf.WriteByte('=')
-			appendRValueOrIface(fmtVal, vfield)
+			appendRValueOrIfaceNext(fmt.SetIsKey(false), vfield)
 		}
 
 		// Iter written count
@@ -883,25 +869,6 @@ func appendStructType(fmt format, v reflect.Value) {
 	}
 
 	fmt.buf.WriteByte('}')
-}
-
-// appendKey should only be used in the case of directly setting key-value pairs,
-// not in the case of appendMapType, appendStructType
-func appendKey(buf *bytes.Buffer, key string) {
-	if len(key) > 0 {
-		if containsSpaceOrTab(key) {
-			// Key containing spaces/tabs, quote this
-			buf.WriteByte('"')
-			buf.WriteString(key)
-			buf.WriteByte('"')
-		} else {
-			// Key is safe to leave unquoted
-			buf.WriteString(key)
-		}
-
-		// Write final '='
-		buf.WriteByte('=')
-	}
 }
 
 // containsSpaceOrTab checks if "s" contains space or tabs
