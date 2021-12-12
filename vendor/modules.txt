@@ -119,6 +119,8 @@ github.com/golang/geo/r2
 github.com/golang/geo/r3
 github.com/golang/geo/s1
 github.com/golang/geo/s2
+# github.com/golang/mock v1.6.0
+## explicit; go 1.11
 # github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
