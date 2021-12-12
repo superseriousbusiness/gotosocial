@@ -19,14 +19,37 @@
 package testrig
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"gopkg.in/mcuadros/go-syslog.v2"
+	"gopkg.in/mcuadros/go-syslog.v2/format"
 )
 
 // InitTestLog sets the global logger to trace level for logging
 func InitTestLog() {
-	err := log.Initialize(logrus.TraceLevel.String())
-	if err != nil {
+	if err := log.Initialize(); err != nil {
 		panic(err)
 	}
+}
+
+// InitTestSyslog returns a test syslog running on port 42069 and a channel for reading
+// messages sent to the server, or an error if something goes wrong.
+//
+// Callers of this function should call Kill() on the server when they're finished with it!
+func InitTestSyslog() (*syslog.Server, chan format.LogParts, error) {
+	channel := make(syslog.LogPartsChannel)
+	handler := syslog.NewChannelHandler(channel)
+
+	server := syslog.NewServer()
+	server.SetFormat(syslog.Automatic)
+	server.SetHandler(handler)
+
+	if err := server.ListenUDP("localhost:42069"); err != nil {
+		return nil, nil, err
+	}
+
+	if err := server.Boot(); err != nil {
+		return nil, nil, err
+	}
+
+	return server, channel, nil
 }

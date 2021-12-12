@@ -38,6 +38,7 @@ require (
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/text v0.3.7
+	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	modernc.org/sqlite v1.14.2
 	mvdan.cc/xurls/v2 v2.3.0
 )

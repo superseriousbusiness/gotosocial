@@ -83,6 +83,10 @@ type Values struct {
 	SMTPPassword string
 	SMTPFrom     string
 
+	SyslogEnabled  bool
+	SyslogProtocol string
+	SyslogAddress  string
+
 	AdminAccountUsername string
 	AdminAccountEmail    string
 	AdminAccountPassword string

@@ -117,4 +117,8 @@ var TestDefaults = config.Values{
 	SMTPUsername: "",
 	SMTPPassword: "",
 	SMTPFrom:     "GoToSocial",
+
+	SyslogEnabled:  false,
+	SyslogProtocol: "udp",
+	SyslogAddress:  "localhost:514",
 }

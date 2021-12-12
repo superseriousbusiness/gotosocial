@@ -34,6 +34,7 @@ func Server(cmd *cobra.Command, values config.Values) {
 	OIDC(cmd, values)
 	SMTP(cmd, values)
 	Router(cmd, values)
+	Syslog(cmd, values)
 }
 
 // Router attaches flags pertaining to the gin router.
@@ -108,4 +109,11 @@ func SMTP(cmd *cobra.Command, values config.Values) {
 	cmd.Flags().String(config.Keys.SMTPUsername, values.SMTPUsername, usage.SMTPUsername)
 	cmd.Flags().String(config.Keys.SMTPPassword, values.SMTPPassword, usage.SMTPPassword)
 	cmd.Flags().String(config.Keys.SMTPFrom, values.SMTPFrom, usage.SMTPFrom)
+}
+
+// Syslog attaches flags pertaining to syslog config.
+func Syslog(cmd *cobra.Command, values config.Values) {
+	cmd.Flags().Bool(config.Keys.SyslogEnabled, values.SyslogEnabled, usage.SyslogEnabled)
+	cmd.Flags().String(config.Keys.SyslogProtocol, values.SyslogProtocol, usage.SyslogProtocol)
+	cmd.Flags().String(config.Keys.SyslogAddress, values.SyslogAddress, usage.SyslogAddress)
 }

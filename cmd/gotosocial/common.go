@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -52,12 +51,8 @@ func preRun(cmd *cobra.Command) error {
 // The idea here is to take a GTSAction and run it with the given
 // context, after initializing any last-minute things like loggers etc.
 func run(ctx context.Context, action action.GTSAction) error {
-	// if log level has been set...
-	if logLevel := viper.GetString(config.Keys.LogLevel); logLevel != "" {
-		// then try to initialize the logger to that level
-		if err := log.Initialize(logLevel); err != nil {
-			return fmt.Errorf("error initializing log: %s", err)
-		}
+	if err := log.Initialize(); err != nil {
+		return fmt.Errorf("error initializing log: %s", err)
 	}
 
 	return action(ctx)

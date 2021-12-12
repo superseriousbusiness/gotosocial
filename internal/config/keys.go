@@ -95,6 +95,11 @@ type KeyNames struct {
 	SMTPPassword string
 	SMTPFrom     string
 
+	// syslog
+	SyslogEnabled  string
+	SyslogProtocol string
+	SyslogAddress  string
+
 	// admin
 	AdminAccountUsername string
 	AdminAccountEmail    string
@@ -167,6 +172,10 @@ var Keys = KeyNames{
 	SMTPUsername: "smtp-username",
 	SMTPPassword: "smtp-password",
 	SMTPFrom:     "smtp-from",
+
+	SyslogEnabled:  "syslog-enabled",
+	SyslogProtocol: "syslog-protocol",
+	SyslogAddress:  "syslog-address",
 
 	AdminAccountUsername: "username",
 	AdminAccountEmail:    "email",

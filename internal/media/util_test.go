@@ -19,10 +19,12 @@
 package media
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"io/ioutil"
 	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -38,11 +40,11 @@ type MediaUtilTestSuite struct {
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *MediaUtilTestSuite) SetupSuite() {
 	// doesn't use testrig.InitTestLog() helper to prevent import cycle
-	err := log.Initialize(logrus.TraceLevel.String())
+	viper.Set(config.Keys.LogLevel, "trace")
+	err := log.Initialize()
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func (suite *MediaUtilTestSuite) TearDownSuite() {
