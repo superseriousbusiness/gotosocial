@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror" //nolint:typecheck
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
