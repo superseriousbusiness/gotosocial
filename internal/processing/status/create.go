@@ -30,17 +30,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
-	uris := util.GenerateURIsForAccount(account.Username)
+	accountURIs := uris.GenerateURIsForAccount(account.Username)
 	thisStatusID, err := id.NewULID()
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-	thisStatusURI := fmt.Sprintf("%s/%s", uris.StatusesURI, thisStatusID)
-	thisStatusURL := fmt.Sprintf("%s/%s", uris.StatusesURL, thisStatusID)
+	thisStatusURI := fmt.Sprintf("%s/%s", accountURIs.StatusesURI, thisStatusID)
+	thisStatusURL := fmt.Sprintf("%s/%s", accountURIs.StatusesURL, thisStatusID)
 
 	newStatus := &gtsmodel.Status{
 		ID:                       thisStatusID,

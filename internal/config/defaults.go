@@ -54,11 +54,8 @@ var Defaults = Values{
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 
-	StorageBackend:       "local",
-	StorageBasePath:      "/gotosocial/storage",
-	StorageServeProtocol: "https",
-	StorageServeHost:     "localhost",
-	StorageServeBasePath: "/fileserver",
+	StorageBackend:      "local",
+	StorageFileBasePath: "/gotosocial/storage",
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,

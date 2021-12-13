@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // DereferenceThread takes a statusable (something that has withReplies and withInReplyTo),
@@ -85,7 +85,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 		l.Debug("iri belongs to us, moving up to next ancestor")
 
 		// since this is our status, we know we can extract the id from the status path
-		_, id, err := util.ParseStatusesPath(&statusIRI)
+		_, id, err := uris.ParseStatusesPath(&statusIRI)
 		if err != nil {
 			return err
 		}

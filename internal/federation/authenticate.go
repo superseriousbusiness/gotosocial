@@ -35,10 +35,10 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 /*
@@ -123,7 +123,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	var err error
 
 	// thanks to signaturecheck.go in the security package, we should already have a signature verifier set on the context
-	vi := ctx.Value(util.APRequestingPublicKeyVerifier)
+	vi := ctx.Value(ap.ContextRequestingPublicKeyVerifier)
 	if vi == nil {
 		l.Debug("request wasn't signed")
 		return nil, false, nil // request wasn't signed
@@ -136,7 +136,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	}
 
 	// we should have the signature itself set too
-	si := ctx.Value(util.APRequestingPublicKeySignature)
+	si := ctx.Value(ap.ContextRequestingPublicKeySignature)
 	if vi == nil {
 		l.Debug("request wasn't signed")
 		return nil, false, nil // request wasn't signed

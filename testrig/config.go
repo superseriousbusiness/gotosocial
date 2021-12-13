@@ -87,11 +87,8 @@ var TestDefaults = config.Values{
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 
-	StorageBackend:       "local",
-	StorageBasePath:      "/gotosocial/storage",
-	StorageServeProtocol: "http",
-	StorageServeHost:     "localhost:8080",
-	StorageServeBasePath: "/fileserver",
+	StorageBackend:      "local",
+	StorageFileBasePath: "/gotosocial/storage",
 
 	StatusesMaxChars:           5000,
 	StatusesCWMaxChars:         100,

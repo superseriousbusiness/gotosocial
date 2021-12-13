@@ -1,13 +1,14 @@
 package security
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 
+	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-fed/httpsig"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // SignatureCheck checks whether an incoming http request has been signed. If so, it will check if the domain
@@ -42,10 +43,10 @@ func (m *Module) SignatureCheck(c *gin.Context) {
 			}
 
 			// set the verifier and signature on the context here to save some work further down the line
-			c.Set(string(util.APRequestingPublicKeyVerifier), verifier)
+			c.Set(string(ap.ContextRequestingPublicKeyVerifier), verifier)
 			signature := c.GetHeader("Signature")
 			if signature != "" {
-				c.Set(string(util.APRequestingPublicKeySignature), signature)
+				c.Set(string(ap.ContextRequestingPublicKeySignature), signature)
 			}
 		}
 	}

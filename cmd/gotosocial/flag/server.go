@@ -68,10 +68,7 @@ func Media(cmd *cobra.Command, values config.Values) {
 // Storage attaches flags pertaining to storage config.
 func Storage(cmd *cobra.Command, values config.Values) {
 	cmd.Flags().String(config.Keys.StorageBackend, values.StorageBackend, usage.StorageBackend)
-	cmd.Flags().String(config.Keys.StorageBasePath, values.StorageBasePath, usage.StorageBasePath)
-	cmd.Flags().String(config.Keys.StorageServeProtocol, values.StorageServeProtocol, usage.StorageServeProtocol)
-	cmd.Flags().String(config.Keys.StorageServeHost, values.StorageServeHost, usage.StorageServeHost)
-	cmd.Flags().String(config.Keys.StorageServeBasePath, values.StorageServeBasePath, usage.StorageServeBasePath)
+	cmd.Flags().String(config.Keys.StorageFileBasePath, values.StorageFileBasePath, usage.StorageFileBasePath)
 }
 
 // Statuses attaches flags pertaining to statuses config.

@@ -51,10 +51,7 @@
     "statuses-poll-max-options": 6,
     "statuses-poll-option-max-chars": 50,
     "storage-backend": "local",
-    "storage-base-path": "/gotosocial/storage",
-    "storage-serve-base-path": "/fileserver",
-    "storage-serve-host": "localhost",
-    "storage-serve-protocol": "https",
+    "storage-file-base-path": "/gotosocial/storage",
     "trusted-proxies": [
         "127.0.0.1/32",
         "0.0.0.0/0"

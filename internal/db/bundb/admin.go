@@ -37,7 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -100,30 +100,30 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		WhereGroup(" AND ", whereEmptyOrNull("domain")).
 		Scan(ctx)
 	if err != nil {
-		// we just don't have an account yet create one
-		newAccountURIs := util.GenerateURIsForAccount(username)
-		newAccountID, err := id.NewRandomULID()
+		// we just don't have an account yet so create one
+		accountURIs := uris.GenerateURIsForAccount(username)
+		accountID, err := id.NewRandomULID()
 		if err != nil {
 			return nil, err
 		}
 
 		acct = &gtsmodel.Account{
-			ID:                    newAccountID,
+			ID:                    accountID,
 			Username:              username,
 			DisplayName:           username,
 			Reason:                reason,
 			Privacy:               gtsmodel.VisibilityDefault,
-			URL:                   newAccountURIs.UserURL,
+			URL:                   accountURIs.UserURL,
 			PrivateKey:            key,
 			PublicKey:             &key.PublicKey,
-			PublicKeyURI:          newAccountURIs.PublicKeyURI,
+			PublicKeyURI:          accountURIs.PublicKeyURI,
 			ActorType:             ap.ActorPerson,
-			URI:                   newAccountURIs.UserURI,
-			InboxURI:              newAccountURIs.InboxURI,
-			OutboxURI:             newAccountURIs.OutboxURI,
-			FollowersURI:          newAccountURIs.FollowersURI,
-			FollowingURI:          newAccountURIs.FollowingURI,
-			FeaturedCollectionURI: newAccountURIs.CollectionURI,
+			URI:                   accountURIs.UserURI,
+			InboxURI:              accountURIs.InboxURI,
+			OutboxURI:             accountURIs.OutboxURI,
+			FollowersURI:          accountURIs.FollowersURI,
+			FollowingURI:          accountURIs.FollowingURI,
+			FeaturedCollectionURI: accountURIs.CollectionURI,
 		}
 		if _, err = a.conn.
 			NewInsert().
@@ -204,7 +204,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		return err
 	}
 
-	newAccountURIs := util.GenerateURIsForAccount(username)
+	newAccountURIs := uris.GenerateURIsForAccount(username)
 	acct := &gtsmodel.Account{
 		ID:                    aID,
 		Username:              username,

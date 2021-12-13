@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.AccountFollowRequest) (*apimodel.Relationship, gtserror.WithCode) {
@@ -76,7 +76,7 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		AccountID:       requestingAccount.ID,
 		TargetAccountID: form.ID,
 		ShowReblogs:     true,
-		URI:             util.GenerateURIForFollow(requestingAccount.Username, newFollowID),
+		URI:             uris.GenerateURIForFollow(requestingAccount.Username, newFollowID),
 		Notify:          false,
 	}
 	if form.Reblogs != nil {

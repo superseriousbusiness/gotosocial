@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) GetUser(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
@@ -39,13 +39,13 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 
 	var requestedPerson vocab.ActivityStreamsPerson
 	switch {
-	case util.IsPublicKeyPath(requestURL):
+	case uris.IsPublicKeyPath(requestURL):
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
 		requestedPerson, err = p.tc.AccountToASMinimal(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	case util.IsUserPath(requestURL):
+	case uris.IsUserPath(requestURL):
 		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
 		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 		if err != nil || !authenticated {

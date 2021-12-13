@@ -30,11 +30,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -91,7 +91,7 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	assert.NotNil(suite.T(), newContext)
 
 	// activity should be set on context now
-	activityI := newContext.Value(util.APActivity)
+	activityI := newContext.Value(ap.ContextActivity)
 	assert.NotNil(suite.T(), activityI)
 	returnedActivity, ok := activityI.(pub.Activity)
 	assert.True(suite.T(), ok)
@@ -121,10 +121,10 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	ctx := context.Background()
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
-	ctxWithAccount := context.WithValue(ctx, util.APReceivingAccount, inboxAccount)
-	ctxWithActivity := context.WithValue(ctxWithAccount, util.APActivity, activity)
-	ctxWithVerifier := context.WithValue(ctxWithActivity, util.APRequestingPublicKeyVerifier, verifier)
-	ctxWithSignature := context.WithValue(ctxWithVerifier, util.APRequestingPublicKeySignature, activity.SignatureHeader)
+	ctxWithAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithActivity := context.WithValue(ctxWithAccount, ap.ContextActivity, activity)
+	ctxWithVerifier := context.WithValue(ctxWithActivity, ap.ContextRequestingPublicKeyVerifier, verifier)
+	ctxWithSignature := context.WithValue(ctxWithVerifier, ap.ContextRequestingPublicKeySignature, activity.SignatureHeader)
 
 	// we can pass this recorder as a writer and read it back after
 	recorder := httptest.NewRecorder()
@@ -135,7 +135,7 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	assert.True(suite.T(), authed)
 
 	// since we know this account already it should be set on the context
-	requestingAccountI := newContext.Value(util.APRequestingAccount)
+	requestingAccountI := newContext.Value(ap.ContextRequestingAccount)
 	assert.NotNil(suite.T(), requestingAccountI)
 	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
 	assert.True(suite.T(), ok)

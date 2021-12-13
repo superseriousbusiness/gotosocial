@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode) {
@@ -57,7 +57,7 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 	block.Account = requestingAccount
 	block.TargetAccountID = targetAccountID
 	block.TargetAccount = targetAccount
-	block.URI = util.GenerateURIForBlock(requestingAccount.Username, newBlockID)
+	block.URI = uris.GenerateURIForBlock(requestingAccount.Username, newBlockID)
 
 	// whack it in the database
 	if err := p.db.Put(ctx, block); err != nil {

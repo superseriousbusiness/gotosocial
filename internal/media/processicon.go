@@ -24,20 +24,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType string, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
 	switch mediaType {
-	case Header:
+	case TypeHeader:
 		isHeader = true
-	case Avatar:
+	case TypeAvatar:
 		isAvatar = true
 	default:
 		return nil, errors.New("header or avatar not selected")
@@ -81,23 +80,16 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, err
 	}
 
-	keys := config.Keys
-	serveProtocol := viper.GetString(keys.StorageServeProtocol)
-	serveHost := viper.GetString(keys.StorageServeHost)
-	serveBasePath := viper.GetString(keys.StorageServeBasePath)
-
-	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
-	originalURL := fmt.Sprintf("%s/%s/%s/original/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/%s/small/%s.%s", URLbase, accountID, mediaType, newMediaID, extension)
-
+	originalURL := uris.GenerateURIForAttachment(accountID, mediaType, SizeOriginal, newMediaID, extension)
+	smallURL := uris.GenerateURIForAttachment(accountID, mediaType, SizeSmall, newMediaID, extension)
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, Original, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, SizeOriginal, newMediaID, extension)
 	if err := mh.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, Small, newMediaID, extension)
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, SizeSmall, newMediaID, extension)
 	if err := mh.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}

@@ -24,7 +24,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // NewTransport returns a new Transport on behalf of a specific actor.
@@ -55,13 +55,13 @@ func (f *federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofe
 	var err error
 
 	switch {
-	case util.IsInboxPath(actorBoxIRI):
-		username, err = util.ParseInboxPath(actorBoxIRI)
+	case uris.IsInboxPath(actorBoxIRI):
+		username, err = uris.ParseInboxPath(actorBoxIRI)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't parse path %s as an inbox: %s", actorBoxIRI.String(), err)
 		}
-	case util.IsOutboxPath(actorBoxIRI):
-		username, err = util.ParseOutboxPath(actorBoxIRI)
+	case uris.IsOutboxPath(actorBoxIRI):
+		username, err = uris.ParseOutboxPath(actorBoxIRI)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't parse path %s as an outbox: %s", actorBoxIRI.String(), err)
 		}

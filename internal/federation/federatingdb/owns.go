@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Owns returns true if the IRI belongs to this instance, and if
@@ -52,8 +52,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 
 	// apparently it belongs to this host, so what *is* it?
 	// check if it's a status, eg /users/example_username/statuses/SOME_UUID_OF_A_STATUS
-	if util.IsStatusesPath(id) {
-		_, uid, err := util.ParseStatusesPath(id)
+	if uris.IsStatusesPath(id) {
+		_, uid, err := uris.ParseStatusesPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
@@ -69,8 +69,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		return status.Local, nil
 	}
 
-	if util.IsUserPath(id) {
-		username, err := util.ParseUserPath(id)
+	if uris.IsUserPath(id) {
+		username, err := uris.ParseUserPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
@@ -86,8 +86,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		return true, nil
 	}
 
-	if util.IsFollowersPath(id) {
-		username, err := util.ParseFollowersPath(id)
+	if uris.IsFollowersPath(id) {
+		username, err := uris.ParseFollowersPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
@@ -103,8 +103,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		return true, nil
 	}
 
-	if util.IsFollowingPath(id) {
-		username, err := util.ParseFollowingPath(id)
+	if uris.IsFollowingPath(id) {
+		username, err := uris.ParseFollowingPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing statuses path for url %s: %s", id.String(), err)
 		}
@@ -120,8 +120,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		return true, nil
 	}
 
-	if util.IsLikePath(id) {
-		username, likeID, err := util.ParseLikedPath(id)
+	if uris.IsLikePath(id) {
+		username, likeID, err := uris.ParseLikedPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing like path for url %s: %s", id.String(), err)
 		}
@@ -145,8 +145,8 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 		return true, nil
 	}
 
-	if util.IsBlockPath(id) {
-		username, blockID, err := util.ParseBlockPath(id)
+	if uris.IsBlockPath(id) {
+		username, blockID, err := uris.ParseBlockPath(id)
 		if err != nil {
 			return false, fmt.Errorf("error parsing block path for url %s: %s", id.String(), err)
 		}

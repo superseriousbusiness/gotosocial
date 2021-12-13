@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
@@ -65,7 +65,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		if iter.IsIRI() {
 			// we have just the URI of whatever is being rejected, so we need to find out what it is
 			rejectedObjectIRI := iter.GetIRI()
-			if util.IsFollowPath(rejectedObjectIRI) {
+			if uris.IsFollowPath(rejectedObjectIRI) {
 				// REJECT FOLLOW
 				gtsFollowRequest := &gtsmodel.FollowRequest{}
 				if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: rejectedObjectIRI.String()}}, gtsFollowRequest); err != nil {

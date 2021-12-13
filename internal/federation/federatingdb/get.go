@@ -25,7 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Get returns the database entry for the specified id.
@@ -40,7 +40,7 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 	)
 	l.Debug("entering Get")
 
-	if util.IsUserPath(id) {
+	if uris.IsUserPath(id) {
 		acct, err := f.db.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
@@ -48,7 +48,7 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 		return f.typeConverter.AccountToAS(ctx, acct)
 	}
 
-	if util.IsStatusesPath(id) {
+	if uris.IsStatusesPath(id) {
 		status, err := f.db.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
@@ -56,11 +56,11 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 		return f.typeConverter.StatusToAS(ctx, status)
 	}
 
-	if util.IsFollowersPath(id) {
+	if uris.IsFollowersPath(id) {
 		return f.Followers(ctx, id)
 	}
 
-	if util.IsFollowingPath(id) {
+	if uris.IsFollowingPath(id) {
 		return f.Following(ctx, id)
 	}
 

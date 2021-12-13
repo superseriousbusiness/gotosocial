@@ -60,11 +60,8 @@ type KeyNames struct {
 	MediaDescriptionMaxChars string
 
 	// storage
-	StorageBackend       string
-	StorageBasePath      string
-	StorageServeProtocol string
-	StorageServeHost     string
-	StorageServeBasePath string
+	StorageBackend      string
+	StorageFileBasePath string
 
 	// statuses
 	StatusesMaxChars           string
@@ -142,11 +139,8 @@ var Keys = KeyNames{
 	MediaDescriptionMinChars: "media-description-min-chars",
 	MediaDescriptionMaxChars: "media-description-max-chars",
 
-	StorageBackend:       "storage-backend",
-	StorageBasePath:      "storage-base-path",
-	StorageServeProtocol: "storage-serve-protocol",
-	StorageServeHost:     "storage-serve-host",
-	StorageServeBasePath: "storage-serve-base-path",
+	StorageBackend:      "storage-backend",
+	StorageFileBasePath: "storage-file-base-path",
 
 	StatusesMaxChars:           "statuses-max-chars",
 	StatusesCWMaxChars:         "statuses-cw-max-chars",

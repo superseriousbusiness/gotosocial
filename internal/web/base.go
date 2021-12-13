@@ -31,11 +31,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
-	confirmEmailPath = "/" + util.ConfirmEmailPath
+	confirmEmailPath = "/" + uris.ConfirmEmailPath
 	tokenParam       = "token"
 )
 

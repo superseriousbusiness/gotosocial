@@ -22,21 +22,21 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
 // transferContext transfers the signature verifier and signature from the gin context to the request context
 func transferContext(c *gin.Context) context.Context {
 	ctx := c.Request.Context()
 
-	verifier, signed := c.Get(string(util.APRequestingPublicKeyVerifier))
+	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
 	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeyVerifier, verifier)
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
 	}
 
-	signature, signed := c.Get(string(util.APRequestingPublicKeySignature))
+	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
 	if signed {
-		ctx = context.WithValue(ctx, util.APRequestingPublicKeySignature, signature)
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
 	}
 
 	return ctx
