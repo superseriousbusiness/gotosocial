@@ -1,5 +1,109 @@
 # Posts
 
+## Privacy Settings
+
+GoToSocial offers Mastodon-style privacy settings for posts. In order from most to least private, these are:
+
+* Direct
+* Mutuals-only
+* Private/Followers-only
+* Unlisted
+* Public
+
+Whatever privacy setting you choose for a post, GoToSocial will do the best it can to ensure that your posts don't appear to users on instances that you've blocked, or to users that you've blocked directly.
+
+Unlike with some other fediverse server implementations, GoToSocial uses a default post setting of `unlisted` rather than `public` for new accounts. Our philosophy here is that posting something public should always be a conscious decision rather than a default.
+
+Please note that while GoToSocial respects these privacy settings very strictly, other server implementations cannot necessarily be trusted to do so: there are bad actors on the fediverse. As with any social media, you should think carefully about what you post and to whom.
+
+### Direct
+
+Posts with a visibility of `direct` will only appear to the post author, and to users who are mentioned in the post. Take the following post for example:
+
+```text
+Hey @whoever@example.org, this is a private/direct post! Only we can see this!
+```
+
+If this message was written by `@someone@server.com` then only `@whoever@example.org` and `@someone@server.com` would be able to see it.
+
+As the name implies, `direct` posts are best used when you want to communicate directly with one or more people.
+
+However, `direct` posts are **not** a suitable replacement for end-to-end encrypted messaging offered by things like [Signal](https://signal.org/) and [Matrix](https://matrix.org/). If you want to communicate directly, but you're not communicating sensitive information, then direct posts are fine. If you need to have a sensitive + secure conversation, use something else!
+
+Direct posts can be liked/faved, but they cannot be boosted.
+
+Direct posts are **not** accessible via a web URL on your GoToSocial instance.
+
+### Mutuals-only
+
+Posts with a visibility of `mutuals_only` will only appear to the post author, and to *mutual follows* of the post author. In other words, they can only be seen by others if two conditions are met:
+
+1. The other account follows the post author.
+2. The post author follows the other account back.
+
+This is useful for when you want to post something that you only want friends to see.
+
+Mutuals-only posts can be liked/faved, but they cannot be boosted.
+
+Mutuals-only posts are **not** accessible via a web URL on your GoToSocial instance.
+
+### Private/Followers-only
+
+Posts with a visibility of `private` will only be visible to the post author, and to people who follow the post author. This is similar to `mutuals_only`, but only the first condition needs to met; the post author doesn't need to follow the other account back.
+
+This is useful for when you want to make announcements to people who follow you, or share something slightly less private than `mutuals_only`.
+
+Private/followers-only posts can be liked/faved, but they cannot be boosted.
+
+Private/followers-only posts are **not** accessible via a web URL on your GoToSocial instance.
+
+### Unlisted
+
+Posts with a visibility of `unlisted` (sometimes called `unlocked` posts) are semi-public. They will be sent to anyone who follows you, and they can be boosted into the timelines of people who don't follow you, but they won't appear on Federated or Local timelines, and they won't appear on your public profile.
+
+Unlisted posts are useful when you want to allow a post to spread, but you don't want it to be immediately visible to everyone. They are also useful when you want to make public-ish posts, but without clogging up Federated/Local timelines.
+
+Unlisted posts can be liked/faved, and they can be boosted.
+
+Unlike with Mastodon, unlisted posts are **not** accessible via a web URL on your GoToSocial instance!
+
+### Public
+
+Posts with a visibility of `public` are *fully* public. That is, they can be seen via the web, and they will appear in Local and Federated timelines, and they are fully boostable. `public` is the ultimate 'let my post be seen everywhere' setting, for when you want something to be widely available and easy to distribute.
+
+Public posts can be liked/faved, and they can be boosted.
+
+**Public posts are accessible via a web URL on your GoToSocial instance!**
+
+## Extra Flags
+
+GoToSocial offers four extra flags on posts, which can be used to tweak how your post can be interacted with by others. These are:
+
+* `federated`
+* `boostable`
+* `replyable`
+* `likeable`
+
+By default, all these flags are set to `true`.
+
+Please note that while GoToSocial strictly respects these settings, other fediverse server implementations might not be aware of them. A consequence of this is that users on non-GoToSocial servers might think they are replying/boosting/liking your post, and their instance might behave as though that behavior was allowed, but those interactions will be denied by your GoToSocial server and you won't see them.
+
+### Federated
+
+When set to `false`, this post will not be federated out to other fediverse servers, and will be viewable only to accounts on your GoToSocial instance. This is sometimes called 'local-only' posting.
+
+### Boostable
+
+When set to `false`, your post will not be boostable, even if it is unlisted or public. GoToSocial enforces this by refusing dereferencing requests from remote servers in the event that someone tries to boost the post.
+
+### Replyable
+
+When set to `false`, replies to your post will not be accepted by your GoToSocial server, and will not appear in your timeline or create notifications. GoToSocial enforces this by giving an error message to attempted replies to the post from federated servers.
+
+### Likeable
+
+When set to `false`, likes/faves of your post will not be accepted by your GoToSocial server, and will not create notifications. GoToSocial enforces this by giving an error message to attempted likes/faves on the post from federated servers.
+
 ## Input Types
 
 GoToSocial currently accepts two different types of input for posts. These are:
