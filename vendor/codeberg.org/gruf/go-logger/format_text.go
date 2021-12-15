@@ -45,7 +45,8 @@ func (f TextFormat) fmt(buf *bytes.Buffer) format {
 	}
 	return format{
 		flags: flags,
-		depth: uint16(f.MaxDepth) << 8,
+		curd:  0,
+		maxd:  f.MaxDepth,
 		buf:   buf,
 	}
 }
@@ -179,7 +180,9 @@ func (f TextFormat) AppendMsgf(buf *bytes.Buffer, s string, a ...interface{}) {
 // format is the object passed among the append___ formatting functions
 type format struct {
 	flags uint8         // 'isKey' and 'verbose' flags
-	depth uint16        // encoded as 0b(maxDepth)(curDepth)
+	drefs uint8         // current value deref count
+	curd  uint8         // current depth
+	maxd  uint8         // maximum depth
 	buf   *bytes.Buffer // out buffer
 }
 
@@ -191,7 +194,12 @@ const (
 
 // AtMaxDepth returns whether format is currently at max depth.
 func (f format) AtMaxDepth() bool {
-	return uint8(f.depth) >= uint8(f.depth>>8)
+	return f.curd >= f.maxd
+}
+
+// Derefs returns no. times current value has been dereferenced.
+func (f format) Derefs() uint8 {
+	return f.drefs
 }
 
 // IsKey returns whether the isKey flag is set.
@@ -214,7 +222,9 @@ func (f format) SetIsKey(is bool) format {
 	}
 	return format{
 		flags: flags,
-		depth: f.depth,
+		drefs: f.drefs,
+		curd:  f.curd,
+		maxd:  f.maxd,
 		buf:   f.buf,
 	}
 }
@@ -223,16 +233,37 @@ func (f format) SetIsKey(is bool) format {
 func (f format) IncrDepth() format {
 	return format{
 		flags: f.flags,
-		depth: (f.depth & 0b1111111100000000) | uint16(uint8(f.depth)+1),
+		drefs: f.drefs,
+		curd:  f.curd + 1,
+		maxd:  f.maxd,
 		buf:   f.buf,
 	}
+}
+
+// IncrDerefs returns format instance with dereference count incremented.
+func (f format) IncrDerefs() format {
+	return format{
+		flags: f.flags,
+		drefs: f.drefs + 1,
+		curd:  f.curd,
+		maxd:  f.maxd,
+		buf:   f.buf,
+	}
+}
+
+// appendType appends a type using supplied type str.
+func appendType(fmt format, t string) {
+	for i := uint8(0); i < fmt.Derefs(); i++ {
+		fmt.buf.WriteByte('*')
+	}
+	fmt.buf.WriteString(t)
 }
 
 // appendNilType writes nil to buf, type included if verbose.
 func appendNilType(fmt format, t string) {
 	if fmt.Verbose() {
 		fmt.buf.WriteByte('(')
-		fmt.buf.WriteString(t)
+		appendType(fmt, t)
 		fmt.buf.WriteString(`)(nil)`)
 	} else {
 		fmt.buf.WriteString(`nil`)
@@ -243,7 +274,7 @@ func appendNilType(fmt format, t string) {
 func appendNilIface(fmt format, i interface{}) {
 	if fmt.Verbose() {
 		fmt.buf.WriteByte('(')
-		fmt.buf.WriteString(reflect.TypeOf(i).String())
+		appendType(fmt, reflect.TypeOf(i).String())
 		fmt.buf.WriteString(`)(nil)`)
 	} else {
 		fmt.buf.WriteString(`nil`)
@@ -254,7 +285,7 @@ func appendNilIface(fmt format, i interface{}) {
 func appendNilRValue(fmt format, v reflect.Value) {
 	if fmt.Verbose() {
 		fmt.buf.WriteByte('(')
-		fmt.buf.WriteString(v.Type().String())
+		appendType(fmt, v.Type().String())
 		fmt.buf.WriteString(`)(nil)`)
 	} else {
 		fmt.buf.WriteString(`nil`)
@@ -272,7 +303,8 @@ func appendBytes(fmt format, b []byte) {
 		// Values CAN be nil formatted
 		appendNilType(fmt, `[]byte`)
 	} else {
-		appendString(fmt, bytes.BytesToString(b))
+		// unsafe cast as string to prevent reallocation
+		appendString(fmt, *(*string)(unsafe.Pointer(&b)))
 	}
 }
 
@@ -707,7 +739,7 @@ func appendRValue(fmt format, v reflect.Value) {
 		if v.IsNil() {
 			appendNilRValue(fmt, v)
 		} else {
-			appendRValue(fmt, v.Elem())
+			appendRValue(fmt.IncrDerefs(), v.Elem())
 		}
 	case reflect.UnsafePointer:
 		fmt.buf.WriteString("(unsafe.Pointer)")

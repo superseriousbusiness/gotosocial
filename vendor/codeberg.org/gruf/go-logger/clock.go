@@ -15,7 +15,7 @@ var (
 // startClock starts the global nowish clock.
 func startClock() {
 	clockOnce.Do(func() {
-		clock.Start(time.Millisecond * 10)
+		clock.Start(time.Millisecond * 100)
 		clock.SetFormat("2006-01-02 15:04:05")
 	})
 }

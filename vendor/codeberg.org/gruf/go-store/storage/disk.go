@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	"codeberg.org/gruf/go-bytes"
@@ -69,7 +70,6 @@ func getDiskConfig(cfg *DiskConfig) DiskConfig {
 // DiskStorage is a Storage implementation that stores directly to a filesystem
 type DiskStorage struct {
 	path   string           // path is the root path of this store
-	dots   int              // dots is the "dotdot" count for the root store path
 	bufp   pools.BufferPool // bufp is the buffer pool for this DiskStorage
 	config DiskConfig       // cfg is the supplied configuration for this store
 }
@@ -120,7 +120,6 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 	// Return new DiskStorage
 	return &DiskStorage{
 		path:   path,
-		dots:   util.CountDotdots(path),
 		bufp:   pools.NewBufferPool(config.WriteBufSize),
 		config: config,
 	}, nil
@@ -282,10 +281,18 @@ func (st *DiskStorage) filepath(key string) (string, error) {
 	pb.AppendString(st.path)
 	pb.AppendString(key)
 
-	// If path is dir traversal, and traverses FURTHER
-	// than store root, this is an error
-	if util.CountDotdots(pb.StringPtr()) > st.dots {
+	if st.path == "." {
+		// Root is in $PWD
+
+		// Check for dir traversal out of this
+		if strings.HasPrefix(pb.StringPtr(), "../") {
+			return "", ErrInvalidKey
+		}
+
+		// All other cases, the keypath MUST be prefixed by root
+	} else if !strings.HasPrefix(pb.StringPtr(), st.path) {
 		return "", ErrInvalidKey
 	}
+
 	return pb.String(), nil
 }
