@@ -70,8 +70,8 @@ codeberg.org/gruf/go-nowish v1.1.0/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K
 codeberg.org/gruf/go-pools v1.0.2 h1:B0X6yoCL9FVmnvyoizb1SYRwMYPWwEJBjPnBMM5ILos=
 codeberg.org/gruf/go-pools v1.0.2/go.mod h1:MjUV3H6IASyBeBPCyCr7wjPpSNu8E2N87LG4r4TAyok=
 codeberg.org/gruf/go-runners v1.1.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
-codeberg.org/gruf/go-store v1.1.4 h1:7LTtRsuW+pAF9/xVoaU9CtBBze9SnuC6k0U4QuFIrK8=
-codeberg.org/gruf/go-store v1.1.4/go.mod h1:Q6ev500ddKghDQ8KS4IstL/W9fptDKa2T9oeHP+tXsI=
+codeberg.org/gruf/go-store v1.1.5 h1:fp28vzGD15OsAF51CCwi7woH+Y3vb0aMl4OFh9JSjA0=
+codeberg.org/gruf/go-store v1.1.5/go.mod h1:Q6ev500ddKghDQ8KS4IstL/W9fptDKa2T9oeHP+tXsI=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=

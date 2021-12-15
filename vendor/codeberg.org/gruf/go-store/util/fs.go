@@ -3,10 +3,29 @@ package util
 import (
 	"io/fs"
 	"os"
+	"strings"
 	"syscall"
 
 	"codeberg.org/gruf/go-fastpath"
 )
+
+// IsDirTraversal will check if rootPlusPath is a dir traversal outside of root,
+// assuming that both are cleaned and that rootPlusPath is path.Join(root, somePath)
+func IsDirTraversal(root string, rootPlusPath string) bool {
+	switch {
+	// Root is $PWD, check for traversal out of
+	case root == ".":
+		return strings.HasPrefix(rootPlusPath, "../")
+
+	// The path MUST be prefixed by root
+	case !strings.HasPrefix(rootPlusPath, root):
+		return true
+
+	// In all other cases, check not equal
+	default:
+		return len(root) == len(rootPlusPath)
+	}
+}
 
 // WalkDir traverses the dir tree of the supplied path, performing the supplied walkFn on each entry
 func WalkDir(pb *fastpath.Builder, path string, walkFn func(string, fs.DirEntry)) error {

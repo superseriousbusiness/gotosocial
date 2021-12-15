@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path"
-	"strings"
 	"syscall"
 
 	"codeberg.org/gruf/go-bytes"
@@ -281,16 +280,8 @@ func (st *DiskStorage) filepath(key string) (string, error) {
 	pb.AppendString(st.path)
 	pb.AppendString(key)
 
-	if st.path == "." {
-		// Root is in $PWD
-
-		// Check for dir traversal out of this
-		if strings.HasPrefix(pb.StringPtr(), "../") {
-			return "", ErrInvalidKey
-		}
-
-		// All other cases, the keypath MUST be prefixed by root
-	} else if !strings.HasPrefix(pb.StringPtr(), st.path) {
+	// Check for dir traversal outside of root
+	if util.IsDirTraversal(st.path, pb.StringPtr()) {
 		return "", ErrInvalidKey
 	}
 
