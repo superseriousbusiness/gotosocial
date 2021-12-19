@@ -79,8 +79,9 @@ func (r *router) Start() {
 		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
 		go func() {
 			listen := fmt.Sprintf("%s:%d", bindAddress, lePort)
+			logrus.Infof("letsencrypt listening on %s", listen)
 			if err := http.ListenAndServe(listen, r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
-				logrus.Fatalf("listen: %s", err)
+				logrus.Fatalf("letsencrypt: listen: %s", err)
 			}
 		}()
 
