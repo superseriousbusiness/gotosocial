@@ -87,6 +87,7 @@ func (r *router) Start() {
 
 		// and serve the actual TLS handler
 		go func() {
+			logrus.Infof("listening on %s", r.srv.Addr)
 			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
 				logrus.Fatalf("listen: %s", err)
 			}
@@ -94,6 +95,7 @@ func (r *router) Start() {
 	} else {
 		// no tls required
 		go func() {
+			logrus.Infof("listening on %s", r.srv.Addr)
 			if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logrus.Fatalf("listen: %s", err)
 			}
