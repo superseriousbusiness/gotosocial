@@ -20,5 +20,5 @@ storage-backend: "local"
 # this directly, and create new subdirectories and files with in.
 # Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
 # Default: "/gotosocial/storage"
-storage-file-base-path: "/gotosocial/storage"
+storage-local-base-path: "/gotosocial/storage"
 ```

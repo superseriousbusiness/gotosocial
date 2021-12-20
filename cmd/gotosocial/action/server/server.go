@@ -98,7 +98,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	timelineManager := timelineprocessing.NewManager(dbService, typeConverter)
 
 	// Open the storage backend
-	storageBasePath := viper.GetString(config.Keys.StorageFileBasePath)
+	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
 	storage, err := kv.OpenFile(storageBasePath, nil)
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)

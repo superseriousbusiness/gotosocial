@@ -210,10 +210,10 @@ storage-backend: "local"
 
 # String. Directory to use as a base path for storing files.
 # Make sure whatever user/group gotosocial is running as has permission to access
-# this directly, and create new subdirectories and files with in.
+# this directory, and create new subdirectories and files within it.
 # Examples: ["/home/gotosocial/storage", "/opt/gotosocial/datastorage"]
 # Default: "/gotosocial/storage"
-storage-file-base-path: "/gotosocial/storage"
+storage-local-base-path: "/gotosocial/storage"
 
 ###########################
 ##### STATUSES CONFIG #####

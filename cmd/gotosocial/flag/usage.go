@@ -48,7 +48,7 @@ var usage = config.KeyNames{
 	MediaDescriptionMinChars:   "Min required chars for an image description",
 	MediaDescriptionMaxChars:   "Max permitted chars for an image description",
 	StorageBackend:             "Storage backend to use for media attachments",
-	StorageFileBasePath:        "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
+	StorageLocalBasePath:       "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
 	StatusesMaxChars:           "Max permitted characters for posted statuses",
 	StatusesCWMaxChars:         "Max permitted characters for content/spoiler warnings on statuses",
 	StatusesPollMaxOptions:     "Max amount of options permitted on a poll",
