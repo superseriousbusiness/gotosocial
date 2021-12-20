@@ -56,17 +56,18 @@ var HTMLAcceptHeaders = []Offer{
 // slice of Offers, and performs content negotiation for the given request
 // with the given content-type offers. It will return a string representation
 // of the first suitable content-type, or an error if something goes wrong or
-// a suiteable content-type cannot be matched.
+// a suitable content-type cannot be matched.
 //
 // For example, if the request in the *gin.Context has Accept headers of value
 // [application/json, text/html], and the provided offers are of value
 // [application/json, application/xml], then the returned string will be
 // 'application/json', which indicates the content-type that should be returned.
 //
-// If there are no Accept headers in the request, or the length of offers is 0,
-// then an error will be returned, so this function should only be called in places
-// where format negotiation is actually needed and headers are expected to be present
-// on incoming requests.
+// If the length of offers is 0, then an error will be returned, so this function
+// should only be called in places where format negotiation is actually needed.
+//
+// If there are no Accept headers in the request, then the first offer will be returned,
+// under the assumption that it's better to serve *something* than error out completely.
 //
 // Callers can use the offer slices exported in this package as shortcuts for
 // often-used Accept types.
@@ -77,14 +78,15 @@ func NegotiateAccept(c *gin.Context, offers ...Offer) (string, error) {
 		return "", errors.New("no format offered")
 	}
 
-	accepts := c.Request.Header.Values("Accept")
-	if len(accepts) == 0 {
-		return "", fmt.Errorf("no Accept header(s) set on incoming request; this endpoint offers %s", offers)
-	}
-
 	strings := []string{}
 	for _, o := range offers {
 		strings = append(strings, string(o))
+	}
+
+	accepts := c.Request.Header.Values("Accept")
+	if len(accepts) == 0 {
+		// there's no accept header set, just return the first offer
+		return strings[0], nil
 	}
 
 	format := c.NegotiateFormat(strings...)
