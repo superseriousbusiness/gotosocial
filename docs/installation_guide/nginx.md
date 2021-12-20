@@ -50,7 +50,7 @@ server {
 
 Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on and change `server_name` to your own domain name.
 If your domain name is `gotosocial.example.com` then `server_name gotosocial.example.com;` would be the correct value.
-If you're running GoToSocial on another machine with the local ip of 192.168.178.69 and on port 8080 then `proxy_pass http://192.168.178.69` would be the correct value.
+If you're running GoToSocial on another machine with the local ip of 192.168.178.69 and on port 8080 then `proxy_pass http://192.168.178.69:8080` would be the correct value.
 
 Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
 
