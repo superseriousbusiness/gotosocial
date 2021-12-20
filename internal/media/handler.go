@@ -35,18 +35,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
+const EmojiMaxBytes = 51200
+
+type Size string
+
 const (
-	SizeSmall    string = "small"    // SizeSmall is the key for small/thumbnail versions of media
-	SizeOriginal string = "original" // SizeOriginal is the key for original/fullsize versions of media and emoji
-	SizeStatic   string = "static"   // SizeStatic is the key for static (non-animated) versions of emoji
+	SizeSmall    Size = "small"    // SizeSmall is the key for small/thumbnail versions of media
+	SizeOriginal Size = "original" // SizeOriginal is the key for original/fullsize versions of media and emoji
+	SizeStatic   Size = "static"   // SizeStatic is the key for static (non-animated) versions of emoji
+)
 
-	TypeAttachment string = "attachment" // TypeAttachment is the key for media attachments
-	TypeHeader     string = "header"     // TypeHeader is the key for profile header requests
-	TypeAvatar     string = "avatar"     // TypeAvatar is the key for profile avatar requests
-	TypeEmoji      string = "emoji"      // TypeEmoji is the key for emoji type requests
+type Type string
 
-	// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
-	EmojiMaxBytes = 51200
+const (
+	TypeAttachment Type = "attachment" // TypeAttachment is the key for media attachments
+	TypeHeader     Type = "header"     // TypeHeader is the key for profile header requests
+	TypeAvatar     Type = "avatar"     // TypeAvatar is the key for profile avatar requests
+	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
 )
 
 // Handler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
@@ -54,7 +60,7 @@ type Handler interface {
 	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType string, remoteURL string) (*gtsmodel.MediaAttachment, error)
+	ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error)
 
 	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
 	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
@@ -90,7 +96,7 @@ func New(database db.DB, storage *kv.KVStore) Handler {
 // ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
 // puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
 // and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	l := logrus.WithField("func", "SetHeaderForAccountID")
 
 	if mediaType != TypeHeader && mediaType != TypeAvatar {
@@ -229,11 +235,11 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	emojiURI := uris.GenerateURIForEmoji(newEmojiID)
 
 	// serve url and storage path for the original emoji -- can be png or gif
-	emojiURL := uris.GenerateURIForAttachment(instanceAccount.ID, TypeEmoji, SizeOriginal, newEmojiID, extension)
+	emojiURL := uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeOriginal), newEmojiID, extension)
 	emojiPath := fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeOriginal, newEmojiID, extension)
 
 	// serve url and storage path for the static version -- will always be png
-	emojiStaticURL := uris.GenerateURIForAttachment(instanceAccount.ID, TypeEmoji, SizeStatic, newEmojiID, "png")
+	emojiStaticURL := uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), newEmojiID, "png")
 	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s.png", instanceAccount.ID, TypeEmoji, SizeStatic, newEmojiID)
 
 	// Store the original emoji
@@ -281,7 +287,7 @@ func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t trans
 		return nil, errors.New("provided attachment was set to both header and avatar")
 	}
 
-	var headerOrAvi string
+	var headerOrAvi Type
 	if currentAttachment.Header {
 		headerOrAvi = TypeHeader
 	} else if currentAttachment.Avatar {

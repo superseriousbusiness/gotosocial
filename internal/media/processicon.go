@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType string, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string, mediaType Type, accountID string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	var isHeader bool
 	var isAvatar bool
 
@@ -80,8 +80,8 @@ func (mh *mediaHandler) processHeaderOrAvi(imageBytes []byte, contentType string
 		return nil, err
 	}
 
-	originalURL := uris.GenerateURIForAttachment(accountID, mediaType, SizeOriginal, newMediaID, extension)
-	smallURL := uris.GenerateURIForAttachment(accountID, mediaType, SizeSmall, newMediaID, extension)
+	originalURL := uris.GenerateURIForAttachment(accountID, string(mediaType), string(SizeOriginal), newMediaID, extension)
+	smallURL := uris.GenerateURIForAttachment(accountID, string(mediaType), string(SizeSmall), newMediaID, extension)
 	// we store the original...
 	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, mediaType, SizeOriginal, newMediaID, extension)
 	if err := mh.storage.Put(originalPath, original.image); err != nil {

@@ -294,28 +294,28 @@ type imageAndMeta struct {
 }
 
 // ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
-func ParseMediaType(s string) (string, error) {
+func ParseMediaType(s string) (Type, error) {
 	switch s {
-	case TypeAttachment:
+	case string(TypeAttachment):
 		return TypeAttachment, nil
-	case TypeHeader:
+	case string(TypeHeader):
 		return TypeHeader, nil
-	case TypeAvatar:
+	case string(TypeAvatar):
 		return TypeAvatar, nil
-	case TypeEmoji:
+	case string(TypeEmoji):
 		return TypeEmoji, nil
 	}
 	return "", fmt.Errorf("%s not a recognized MediaType", s)
 }
 
 // ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
-func ParseMediaSize(s string) (string, error) {
+func ParseMediaSize(s string) (Size, error) {
 	switch s {
-	case SizeSmall:
+	case string(SizeSmall):
 		return SizeSmall, nil
-	case SizeOriginal:
+	case string(SizeOriginal):
 		return SizeOriginal, nil
-	case SizeStatic:
+	case string(SizeStatic):
 		return SizeStatic, nil
 	}
 	return "", fmt.Errorf("%s not a recognized MediaSize", s)

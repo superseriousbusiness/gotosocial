@@ -68,8 +68,8 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		return nil, err
 	}
 
-	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, TypeAttachment, SizeOriginal, newMediaID, extension)
-	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, TypeAttachment, SizeSmall, newMediaID, "jpeg") // all thumbnails/smalls are encoded as jpeg
+	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeOriginal), newMediaID, extension)
+	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeSmall), newMediaID, "jpeg") // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
 	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, TypeAttachment, SizeOriginal, newMediaID, extension)
