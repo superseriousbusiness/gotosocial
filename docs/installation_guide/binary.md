@@ -46,14 +46,15 @@ cp ./example/config.yaml .
 
 Now open the file in your text editor of choice so that you can set some important configuration values. Change the following settings:
 
-* Set `host` to whatever hostname you're going to be running the server on (eg., `example.org`).
-* Set `port` to `443`.
-* Set `db-type` to `sqlite`.
-* Set `db-address` to `sqlite.db`.
-* Set `storage-local-base-path` to the storage directory you created above (eg., `/gotosocial/storage`).
-* Set `letsencrypt-cert-dir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).
+- Set `host` to whatever hostname you're going to be running the server on (eg., `example.org`).
+- Set `port` to `443`.
+- Set `db.type` to `sqlite`.
+- Set `db.address` to `sqlite.db`.
+- Set `storage.basePath` to the storage directory you created above (eg., `/gotosocial/storage`).
+- Set `storage.serveHost` to whatever you set the `host` value to above (eg., `example.org`).
+- Set `letsEncrypt.certDir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).
 
-The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../configuration/database.md) for the config options.
+  The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../configuration/database.md) for the config options.
 
 ## 4: Run the Binary
 
@@ -101,6 +102,43 @@ Replace `some_username` with the username of the account you just created.
 
 You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Pinafore](https://pinafore.social) or [Tusky](https://tusky.app) for this.
 
-## 7. Install the Admin Control Panel (optional)
+## 7. Enable the systemd service
+
+If you don't like manually starting GoToSocial on every boot you might want to create a systemd service that does that for you.
+First create a new user and group for your gotosocial installation.
+
+```bash
+sudo useradd -r gotosocial
+sudo groupadd gotosocial
+sudo usermod -a -G gotosocial gotosocial
+```
+
+Then make them the owner of your GoToSocial installation since they will need to read and write in it.
+
+```bash
+sudo chown -R gotosocial:gotosocial /gotosocial
+```
+
+sudo chown -R gotosocial:gotosocial /gotosocial
+You can find a `gotosocial.service` file in the `example` folder on [github](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) or your installation.
+Copy it to `/etc/systemd/system/gotosocial.service`.
+
+```bash
+sudo cp /gotosocial/example/gotosocial.service /etc/systemd/system/
+```
+
+Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
+If you have been following this guide word for word the defaults should be fine.
+After you're done enable the service.
+
+```bash
+sudo systemctl enable --now gotosocial.service
+```
+
+## 8. Install the Admin Control Panel (optional)
 
 At some point you'll likely want to do things like change instance information, and block domains you don't want to interact with. See the [admin panel](../admin/admin_panel.md) instructions for this.
+
+## 9. Reverse proxy with nginx (optional)
+
+If you want to run other webservers on port 433 or simply want to add an additional layer of security you might want to [use nginx as a reverse proxy](./nginx.md).
