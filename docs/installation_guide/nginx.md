@@ -23,6 +23,25 @@ sudo pacman -S certbot certbot-nginx nginx
 sudo zypper install nginx python3-certbot python3-certbot-nginx
 ```
 
+## Configure GoToSocial
+
+In your GoToSocial config turn off letsencrypt.
+First open the file in your text editor.
+
+```bash
+sudoedit /gotosocial/config.yaml
+```
+
+Then set `letsencrypt-enabled: true`.
+
+If GoToSocial is already running, restart it.
+
+```bash
+sudo systemctl restart gotosocial.service
+```
+
+Or if you don't have a systemd service just restart it manually.
+
 ## Set up nginx
 
 First we will set up nginx to serve GoToSocial as unsecured http and then later use certbot to automatically upgrade to https.
