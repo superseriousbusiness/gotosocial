@@ -585,14 +585,18 @@ func (st *BlockStorage) WalkKeys(opts WalkKeysOptions) error {
 
 // nodePathForKey calculates the node file path for supplied key
 func (st *BlockStorage) nodePathForKey(key string) (string, error) {
-	// Path separators are illegal
-	if strings.Contains(key, "/") {
+	// Path separators are illegal, as directory paths
+	if strings.Contains(key, "/") || key == "." || key == ".." {
 		return "", ErrInvalidKey
 	}
 
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
+
+	// Append the nodepath to key
+	pb.AppendString(st.nodePath)
+	pb.AppendString(key)
 
 	// Return joined + cleaned node-path
 	return pb.Join(st.nodePath, key), nil

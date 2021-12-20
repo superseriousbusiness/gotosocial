@@ -16,8 +16,6 @@ func Start(precision time.Duration) (*Clock, func()) {
 }
 
 type Clock struct {
-	noCopy noCopy //nolint noCopy because a copy will fuck with atomics
-
 	// format stores the time formatting style string
 	format string
 
@@ -35,11 +33,13 @@ type Clock struct {
 	now unsafe.Pointer
 }
 
-// Start starts the clock with the provided precision, the
-// returned function is the stop function for the underlying timer
+// Start starts the clock with the provided precision, the returned
+// function is the stop function for the underlying timer. For >= 2ms,
+// actual precision is usually within AT LEAST 10% of requested precision,
+// less than this and the actual precision very quickly deteriorates.
 func (c *Clock) Start(precision time.Duration) func() {
 	// Create ticker from duration
-	tick := time.NewTicker(precision)
+	tick := time.NewTicker(precision / 10)
 
 	// Set initial time
 	t := time.Now()
@@ -63,7 +63,7 @@ func (c *Clock) Start(precision time.Duration) func() {
 	return tick.Stop
 }
 
-// run is the internal clock ticking loop
+// run is the internal clock ticking loop.
 func (c *Clock) run(tick *time.Ticker) {
 	for {
 		// Wait on tick
@@ -83,12 +83,12 @@ func (c *Clock) run(tick *time.Ticker) {
 	}
 }
 
-// Now returns a good (ish) estimate of the current 'now' time
+// Now returns a good (ish) estimate of the current 'now' time.
 func (c *Clock) Now() time.Time {
 	return *(*time.Time)(atomic.LoadPointer(&c.now))
 }
 
-// NowFormat returns the formatted "now" time, cached until next tick and "now" updates
+// NowFormat returns the formatted "now" time, cached until next tick and "now" updates.
 func (c *Clock) NowFormat() string {
 	// If format still valid, return this
 	if atomic.LoadUint32(&c.valid) == 1 {
@@ -105,27 +105,18 @@ func (c *Clock) NowFormat() string {
 	}
 
 	// Calculate time format
-	b := c.Now().AppendFormat(
-		make([]byte, 0, len(c.format)),
-		c.format,
-	)
+	nowfmt := c.Now().Format(c.format)
 
 	// Update the stored value and set valid!
-	atomic.StorePointer(&c.nowfmt, unsafe.Pointer(&b))
+	atomic.StorePointer(&c.nowfmt, unsafe.Pointer(&nowfmt))
 	atomic.StoreUint32(&c.valid, 1)
 
 	// Unlock and return
 	c.mutex.Unlock()
-
-	// Note:
-	// it's safe to do this conversion here
-	// because this byte slice will never change.
-	// and we have the direct pointer to it, we're
-	// not requesting it atomicly via c.Format
-	return *(*string)(unsafe.Pointer(&b))
+	return nowfmt
 }
 
-// SetFormat sets the time format string used by .NowFormat()
+// SetFormat sets the time format string used by .NowFormat().
 func (c *Clock) SetFormat(format string) {
 	// Get mutex lock
 	c.mutex.Lock()

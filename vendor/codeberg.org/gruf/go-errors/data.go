@@ -12,7 +12,7 @@ import (
 var logfmt = logger.TextFormat{
 	Strict:   false,
 	Verbose:  true,
-	MaxDepth: 10,
+	MaxDepth: 5,
 }
 
 // KV is a structure for setting key-value pairs in ErrorData.

@@ -9,14 +9,22 @@ import (
 	"codeberg.org/gruf/go-fastpath"
 )
 
-var dotdot = "../"
+// IsDirTraversal will check if rootPlusPath is a dir traversal outside of root,
+// assuming that both are cleaned and that rootPlusPath is path.Join(root, somePath)
+func IsDirTraversal(root string, rootPlusPath string) bool {
+	switch {
+	// Root is $PWD, check for traversal out of
+	case root == ".":
+		return strings.HasPrefix(rootPlusPath, "../")
 
-// CountDotdots returns the number of "dot-dots" (../) in a cleaned filesystem path
-func CountDotdots(path string) int {
-	if !strings.HasSuffix(path, dotdot) {
-		return 0
+	// The path MUST be prefixed by root
+	case !strings.HasPrefix(rootPlusPath, root):
+		return true
+
+	// In all other cases, check not equal
+	default:
+		return len(root) == len(rootPlusPath)
 	}
-	return strings.Count(path, dotdot)
 }
 
 // WalkDir traverses the dir tree of the supplied path, performing the supplied walkFn on each entry

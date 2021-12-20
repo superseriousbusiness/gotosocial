@@ -212,32 +212,34 @@ func (st *KVStore) Iterator(matchFn func(string) bool) (*KVIterator, error) {
 	}, nil
 }
 
-// Read provides a read-only window to the store, holding it in a read-locked state until
-// the supplied function returns
-func (st *KVStore) Read(do func(*StateRO)) {
-	// Get store read lock
+// Read provides a read-only window to the store, holding it in a read-locked state until release
+func (st *KVStore) Read() *StateRO {
 	st.mutex.RLock()
-	defer st.mutex.RUnlock()
-
-	// Create new store state (defer close)
-	state := &StateRO{store: st}
-	defer state.close()
-
-	// Pass state
-	do(state)
+	return &StateRO{store: st}
 }
 
-// Update provides a read-write window to the store, holding it in a read-write-locked state
-// until the supplied functions returns
-func (st *KVStore) Update(do func(*StateRW)) {
-	// Get store lock
+// ReadFn provides a read-only window to the store, holding it in a read-locked state until fn return.
+func (st *KVStore) ReadFn(fn func(*StateRO)) {
+	// Acquire read-only state
+	state := st.Read()
+	defer state.Release()
+
+	// Pass to fn
+	fn(state)
+}
+
+// Update provides a read-write window to the store, holding it in a write-locked state until release
+func (st *KVStore) Update() *StateRW {
 	st.mutex.Lock()
-	defer st.mutex.Unlock()
+	return &StateRW{store: st}
+}
 
-	// Create new store state (defer close)
-	state := &StateRW{store: st}
-	defer state.close()
+// UpdateFn provides a read-write window to the store, holding it in a write-locked state until fn return.
+func (st *KVStore) UpdateFn(fn func(*StateRW)) {
+	// Acquire read-write state
+	state := st.Update()
+	defer state.Release()
 
-	// Pass state
-	do(state)
+	// Pass to fn
+	fn(state)
 }
