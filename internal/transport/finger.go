@@ -1,6 +1,6 @@
 /*
    GoToSocial
-   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published by
@@ -21,10 +21,11 @@ package transport
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
 )
 
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
