@@ -17,6 +17,7 @@ nav:
     - "installation_guide/index.md"
     - "installation_guide/binary.md"
     - "installation_guide/docker.md"
+    - "installation_guide/nginx.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"

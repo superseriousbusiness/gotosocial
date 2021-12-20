@@ -48,13 +48,12 @@ Now open the file in your text editor of choice so that you can set some importa
 
 - Set `host` to whatever hostname you're going to be running the server on (eg., `example.org`).
 - Set `port` to `443`.
-- Set `db.type` to `sqlite`.
-- Set `db.address` to `sqlite.db`.
-- Set `storage.basePath` to the storage directory you created above (eg., `/gotosocial/storage`).
-- Set `storage.serveHost` to whatever you set the `host` value to above (eg., `example.org`).
-- Set `letsEncrypt.certDir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).
+- Set `db-type` to `sqlite`.
+- Set `db-address` to `sqlite.db`.
+- Set `storage-local-base-path` to the storage directory you created above (eg., `/gotosocial/storage`).
+- Set `letsencrypt-cert-dir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).
 
-  The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../configuration/database.md) for the config options.
+The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../configuration/database.md) for the config options.
 
 ## 4: Run the Binary
 
