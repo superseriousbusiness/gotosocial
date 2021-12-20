@@ -38,7 +38,7 @@ var Defaults = Values{
 	DbPort:      5432,
 	DbUser:      "postgres",
 	DbPassword:  "postgres",
-	DbDatabase:  "postgres",
+	DbDatabase:  "gotosocial",
 	DbTLSMode:   "disable",
 	DbTLSCACert: "",
 
