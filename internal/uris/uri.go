@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package uris
 
 import (
 	"fmt"
@@ -28,64 +28,24 @@ import (
 )
 
 const (
-	// UsersPath is for serving users info
-	UsersPath = "users"
-	// ActorsPath is for serving actors info
-	ActorsPath = "actors"
-	// StatusesPath is for serving statuses
-	StatusesPath = "statuses"
-	// InboxPath represents the webfinger inbox location
-	InboxPath = "inbox"
-	// OutboxPath represents the webfinger outbox location
-	OutboxPath = "outbox"
-	// FollowersPath represents the webfinger followers location
-	FollowersPath = "followers"
-	// FollowingPath represents the webfinger following location
-	FollowingPath = "following"
-	// LikedPath represents the webfinger liked location
-	LikedPath = "liked"
-	// CollectionsPath represents the webfinger collections location
-	CollectionsPath = "collections"
-	// FeaturedPath represents the webfinger featured location
-	FeaturedPath = "featured"
-	// PublicKeyPath is for serving an account's public key
-	PublicKeyPath = "main-key"
-	// FollowPath used to generate the URI for an individual follow or follow request
-	FollowPath = "follow"
-	// UpdatePath is used to generate the URI for an account update
-	UpdatePath = "updates"
-	// BlocksPath is used to generate the URI for a block
-	BlocksPath = "blocks"
-	// ConfirmEmailPath is used to generate the URI for an email confirmation link
-	ConfirmEmailPath = "confirm_email"
+	UsersPath        = "users"         // UsersPath is for serving users info
+	ActorsPath       = "actors"        // ActorsPath is for serving actors info
+	StatusesPath     = "statuses"      // StatusesPath is for serving statuses
+	InboxPath        = "inbox"         // InboxPath represents the activitypub inbox location
+	OutboxPath       = "outbox"        // OutboxPath represents the activitypub outbox location
+	FollowersPath    = "followers"     // FollowersPath represents the activitypub followers location
+	FollowingPath    = "following"     // FollowingPath represents the activitypub following location
+	LikedPath        = "liked"         // LikedPath represents the activitypub liked location
+	CollectionsPath  = "collections"   // CollectionsPath represents the activitypub collections location
+	FeaturedPath     = "featured"      // FeaturedPath represents the activitypub featured location
+	PublicKeyPath    = "main-key"      // PublicKeyPath is for serving an account's public key
+	FollowPath       = "follow"        // FollowPath used to generate the URI for an individual follow or follow request
+	UpdatePath       = "updates"       // UpdatePath is used to generate the URI for an account update
+	BlocksPath       = "blocks"        // BlocksPath is used to generate the URI for a block
+	ConfirmEmailPath = "confirm_email" // ConfirmEmailPath is used to generate the URI for an email confirmation link
+	FileserverPath   = "fileserver"    // FileserverPath is a path component for serving attachments + media
+	EmojiPath        = "emoji"         // EmojiPath represents the activitypub emoji location
 )
-
-// APContextKey is a type used specifically for settings values on contexts within go-fed AP request chains
-type APContextKey string
-
-const (
-	// APActivity can be used to set and retrieve the actual go-fed pub.Activity within a context.
-	APActivity APContextKey = "activity"
-	// APReceivingAccount can be used the set and retrieve the account being interacted with / receiving an activity in their inbox.
-	APReceivingAccount APContextKey = "account"
-	// APRequestingAccount can be used to set and retrieve the account of an incoming federation request.
-	// This will often be the actor of the instance that's posting the request.
-	APRequestingAccount APContextKey = "requestingAccount"
-	// APRequestingActorIRI can be used to set and retrieve the actor of an incoming federation request.
-	// This will usually be the owner of whatever activity is being posted.
-	APRequestingActorIRI APContextKey = "requestingActorIRI"
-	// APRequestingPublicKeyVerifier can be used to set and retrieve the public key verifier of an incoming federation request.
-	APRequestingPublicKeyVerifier APContextKey = "requestingPublicKeyVerifier"
-	// APRequestingPublicKeySignature can be used to set and retrieve the value of the signature header of an incoming federation request.
-	APRequestingPublicKeySignature APContextKey = "requestingPublicKeySignature"
-	// APFromFederatorChanKey can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
-	APFromFederatorChanKey APContextKey = "fromFederatorChan"
-)
-
-type ginContextKey struct{}
-
-// GinContextKey is used solely for setting and retrieving the gin context from a context.Context
-var GinContextKey = &ginContextKey{}
 
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
 type UserURIs struct {
@@ -96,21 +56,21 @@ type UserURIs struct {
 	// The web URL for statuses of this user, eg., https://example.org/@example_user/statuses
 	StatusesURL string
 
-	// The webfinger URI of this user, eg., https://example.org/users/example_user
+	// The activitypub URI of this user, eg., https://example.org/users/example_user
 	UserURI string
-	// The webfinger URI for this user's statuses, eg., https://example.org/users/example_user/statuses
+	// The activitypub URI for this user's statuses, eg., https://example.org/users/example_user/statuses
 	StatusesURI string
-	// The webfinger URI for this user's activitypub inbox, eg., https://example.org/users/example_user/inbox
+	// The activitypub URI for this user's activitypub inbox, eg., https://example.org/users/example_user/inbox
 	InboxURI string
-	// The webfinger URI for this user's activitypub outbox, eg., https://example.org/users/example_user/outbox
+	// The activitypub URI for this user's activitypub outbox, eg., https://example.org/users/example_user/outbox
 	OutboxURI string
-	// The webfinger URI for this user's followers, eg., https://example.org/users/example_user/followers
+	// The activitypub URI for this user's followers, eg., https://example.org/users/example_user/followers
 	FollowersURI string
-	// The webfinger URI for this user's following, eg., https://example.org/users/example_user/following
+	// The activitypub URI for this user's following, eg., https://example.org/users/example_user/following
 	FollowingURI string
-	// The webfinger URI for this user's liked posts eg., https://example.org/users/example_user/liked
+	// The activitypub URI for this user's liked posts eg., https://example.org/users/example_user/liked
 	LikedURI string
-	// The webfinger URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
+	// The activitypub URI for this user's featured collections, eg., https://example.org/users/example_user/collections/featured
 	CollectionURI string
 	// The URI for this user's public key, eg., https://example.org/users/example_user/publickey
 	PublicKeyURI string
@@ -192,6 +152,23 @@ func GenerateURIsForAccount(username string) *UserURIs {
 		CollectionURI: collectionURI,
 		PublicKeyURI:  publicKeyURI,
 	}
+}
+
+// GenerateURIForAttachment generates a URI for an attachment/emoji/header etc.
+// Will produced something like https://example.org/fileserver/01FPST95B8FC3HG3AGCDKPQNQ2/attachment/original/01FPST9QK4V5XWS3F9Z4F2G1X7.gif
+func GenerateURIForAttachment(accountID string, mediaType string, mediaSize string, mediaID string, extension string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s/%s.%s", protocol, host, FileserverPath, accountID, mediaType, mediaSize, mediaID, extension)
+}
+
+// GenerateURIForEmoji generates an activitypub uri for a new emoji.
+func GenerateURIForEmoji(emojiID string) string {
+	protocol := viper.GetString(config.Keys.Protocol)
+	host := viper.GetString(config.Keys.Host)
+
+	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, EmojiPath, emojiID)
 }
 
 // IsUserPath returns true if the given URL path corresponds to eg /users/example_username

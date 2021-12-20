@@ -29,9 +29,10 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 /*
@@ -73,7 +74,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		return nil, err
 	}
 	// set the activity on the context for use later on
-	return context.WithValue(ctx, util.APActivity, activity), nil
+	return context.WithValue(ctx, ap.ContextActivity, activity), nil
 }
 
 // AuthenticatePostInbox delegates the authentication of a POST to an
@@ -100,11 +101,11 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	})
 	l.Trace("received request to authenticate")
 
-	if !util.IsInboxPath(r.URL) {
+	if !uris.IsInboxPath(r.URL) {
 		return nil, false, fmt.Errorf("path %s was not an inbox path", r.URL.String())
 	}
 
-	username, err := util.ParseInboxPath(r.URL)
+	username, err := uris.ParseInboxPath(r.URL)
 	if err != nil {
 		return nil, false, fmt.Errorf("could not parse path %s: %s", r.URL.String(), err)
 	}
@@ -157,8 +158,8 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}
 
-	withRequesting := context.WithValue(ctx, util.APRequestingAccount, requestingAccount)
-	withReceiving := context.WithValue(withRequesting, util.APReceivingAccount, receivingAccount)
+	withRequesting := context.WithValue(ctx, ap.ContextRequestingAccount, requestingAccount)
+	withReceiving := context.WithValue(withRequesting, ap.ContextReceivingAccount, receivingAccount)
 	return withReceiving, true, nil
 }
 
@@ -182,7 +183,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	})
 	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
 
-	receivingAccountI := ctx.Value(util.APReceivingAccount)
+	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
 	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
 	if !ok {
 		l.Errorf("receiving account not set on request context")

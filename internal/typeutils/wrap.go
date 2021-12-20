@@ -10,7 +10,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
@@ -33,7 +33,7 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 		return nil, err
 	}
 
-	idString := util.GenerateURIForUpdate(originAccount.Username, newID)
+	idString := uris.GenerateURIForUpdate(originAccount.Username, newID)
 	idURI, err := url.Parse(idString)
 	if err != nil {
 		return nil, fmt.Errorf("WrapPersonInUpdate: error parsing url %s: %s", idString, err)

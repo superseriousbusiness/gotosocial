@@ -24,7 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
@@ -42,23 +42,23 @@ const (
 	PageKey = "page"
 
 	// UsersBasePath is the base path for serving information about Users eg https://example.org/users
-	UsersBasePath = "/" + util.UsersPath
+	UsersBasePath = "/" + uris.UsersPath
 	// UsersBasePathWithUsername is just the users base path with the Username key in it.
 	// Use this anywhere you need to know the username of the user being queried.
 	// Eg https://example.org/users/:username
 	UsersBasePathWithUsername = UsersBasePath + "/:" + UsernameKey
 	// UsersPublicKeyPath is a path to a user's public key, for serving bare minimum AP representations.
-	UsersPublicKeyPath = UsersBasePathWithUsername + "/" + util.PublicKeyPath
+	UsersPublicKeyPath = UsersBasePathWithUsername + "/" + uris.PublicKeyPath
 	// UsersInboxPath is for serving POST requests to a user's inbox with the given username key.
-	UsersInboxPath = UsersBasePathWithUsername + "/" + util.InboxPath
+	UsersInboxPath = UsersBasePathWithUsername + "/" + uris.InboxPath
 	// UsersOutboxPath is for serving GET requests to a user's outbox with the given username key.
-	UsersOutboxPath = UsersBasePathWithUsername + "/" + util.OutboxPath
+	UsersOutboxPath = UsersBasePathWithUsername + "/" + uris.OutboxPath
 	// UsersFollowersPath is for serving GET request's to a user's followers list, with the given username key.
-	UsersFollowersPath = UsersBasePathWithUsername + "/" + util.FollowersPath
+	UsersFollowersPath = UsersBasePathWithUsername + "/" + uris.FollowersPath
 	// UsersFollowingPath is for serving GET request's to a user's following list, with the given username key.
-	UsersFollowingPath = UsersBasePathWithUsername + "/" + util.FollowingPath
+	UsersFollowingPath = UsersBasePathWithUsername + "/" + uris.FollowingPath
 	// UsersStatusPath is for serving GET requests to a particular status by a user, with the given username key and status ID
-	UsersStatusPath = UsersBasePathWithUsername + "/" + util.StatusesPath + "/:" + StatusIDKey
+	UsersStatusPath = UsersBasePathWithUsername + "/" + uris.StatusesPath + "/:" + StatusIDKey
 	// UsersStatusRepliesPath is for serving the replies collection of a status.
 	UsersStatusRepliesPath = UsersStatusPath + "/replies"
 )

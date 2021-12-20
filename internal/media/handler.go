@@ -28,39 +28,31 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// Size describes the *size* of a piece of media
+// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
+const EmojiMaxBytes = 51200
+
 type Size string
 
-// Type describes the *type* of a piece of media
+const (
+	SizeSmall    Size = "small"    // SizeSmall is the key for small/thumbnail versions of media
+	SizeOriginal Size = "original" // SizeOriginal is the key for original/fullsize versions of media and emoji
+	SizeStatic   Size = "static"   // SizeStatic is the key for static (non-animated) versions of emoji
+)
+
 type Type string
 
 const (
-	// Small is the key for small/thumbnail versions of media
-	Small Size = "small"
-	// Original is the key for original/fullsize versions of media and emoji
-	Original Size = "original"
-	// Static is the key for static (non-animated) versions of emoji
-	Static Size = "static"
-
-	// Attachment is the key for media attachments
-	Attachment Type = "attachment"
-	// Header is the key for profile header requests
-	Header Type = "header"
-	// Avatar is the key for profile avatar requests
-	Avatar Type = "avatar"
-	// Emoji is the key for emoji type requests
-	Emoji Type = "emoji"
-
-	// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
-	EmojiMaxBytes = 51200
+	TypeAttachment Type = "attachment" // TypeAttachment is the key for media attachments
+	TypeHeader     Type = "header"     // TypeHeader is the key for profile header requests
+	TypeAvatar     Type = "avatar"     // TypeAvatar is the key for profile avatar requests
+	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
 )
 
 // Handler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
@@ -107,7 +99,7 @@ func New(database db.DB, storage *kv.KVStore) Handler {
 func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 	l := logrus.WithField("func", "SetHeaderForAccountID")
 
-	if mediaType != Header && mediaType != Avatar {
+	if mediaType != TypeHeader && mediaType != TypeAvatar {
 		return nil, errors.New("header or avatar not selected")
 	}
 
@@ -178,8 +170,6 @@ func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes [
 // *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 // in the database.
 func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
-	keys := config.Keys
-
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -234,31 +224,23 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	// the file extension (either png or gif)
 	extension := strings.Split(contentType, "/")[1]
 
-	// create the urls and storage paths
-	serveProtocol := viper.GetString(keys.StorageServeProtocol)
-	serveHost := viper.GetString(keys.StorageServeHost)
-	serveBasePath := viper.GetString(keys.StorageServeBasePath)
-	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
-
-	// generate a id for the new emoji
+	// generate a ulid for the new emoji
 	newEmojiID, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
 	}
 
-	// webfinger uri for the emoji -- unrelated to actually serving the image
-	// will be something like https://example.org/emoji/70a7f3d7-7e35-4098-8ce3-9b5e8203bb9c
-	protocol := viper.GetString(keys.Protocol)
-	host := viper.GetString(keys.Host)
-	emojiURI := fmt.Sprintf("%s://%s/%s/%s", protocol, host, Emoji, newEmojiID)
+	// activitypub uri for the emoji -- unrelated to actually serving the image
+	// will be something like https://example.org/emoji/01FPSVBK3H8N7V8XK6KGSQ86EC
+	emojiURI := uris.GenerateURIForEmoji(newEmojiID)
 
 	// serve url and storage path for the original emoji -- can be png or gif
-	emojiURL := fmt.Sprintf("%s/%s/%s/%s/%s.%s", URLbase, instanceAccount.ID, Emoji, Original, newEmojiID, extension)
-	emojiPath := fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, Emoji, Original, newEmojiID, extension)
+	emojiURL := uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeOriginal), newEmojiID, extension)
+	emojiPath := fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeOriginal, newEmojiID, extension)
 
 	// serve url and storage path for the static version -- will always be png
-	emojiStaticURL := fmt.Sprintf("%s/%s/%s/%s/%s.png", URLbase, instanceAccount.ID, Emoji, Static, newEmojiID)
-	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s.png", instanceAccount.ID, Emoji, Static, newEmojiID)
+	emojiStaticURL := uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), newEmojiID, "png")
+	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s.png", instanceAccount.ID, TypeEmoji, SizeStatic, newEmojiID)
 
 	// Store the original emoji
 	if err := mh.storage.Put(emojiPath, original.image); err != nil {
@@ -307,9 +289,9 @@ func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t trans
 
 	var headerOrAvi Type
 	if currentAttachment.Header {
-		headerOrAvi = Header
+		headerOrAvi = TypeHeader
 	} else if currentAttachment.Avatar {
-		headerOrAvi = Avatar
+		headerOrAvi = TypeAvatar
 	}
 
 	if currentAttachment.RemoteURL == "" {

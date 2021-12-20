@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
@@ -66,7 +66,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		if iter.IsIRI() {
 			// we have just the URI of whatever is being accepted, so we need to find out what it is
 			acceptedObjectIRI := iter.GetIRI()
-			if util.IsFollowPath(acceptedObjectIRI) {
+			if uris.IsFollowPath(acceptedObjectIRI) {
 				// ACCEPT FOLLOW
 				gtsFollowRequest := &gtsmodel.FollowRequest{}
 				if err := f.db.GetWhere(ctx, []db.Where{{Key: "uri", Value: acceptedObjectIRI.String()}}, gtsFollowRequest); err != nil {

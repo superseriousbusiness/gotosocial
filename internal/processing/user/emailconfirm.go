@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 var (
@@ -53,7 +53,7 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 	//      equivalent to the odds of creating a few tens of trillions of UUIDs in a
 	//      year and having one duplicate.
 	confirmationToken := uuid.NewString()
-	confirmationLink := util.GenerateURIForEmailConfirm(confirmationToken)
+	confirmationLink := uris.GenerateURIForEmailConfirm(confirmationToken)
 
 	// pull our instance entry from the database so we can greet the user nicely in the email
 	instance := &gtsmodel.Instance{}

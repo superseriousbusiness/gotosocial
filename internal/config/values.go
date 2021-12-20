@@ -53,10 +53,7 @@ type Values struct {
 	MediaDescriptionMaxChars int
 
 	StorageBackend       string
-	StorageBasePath      string
-	StorageServeProtocol string
-	StorageServeHost     string
-	StorageServeBasePath string
+	StorageLocalBasePath string
 
 	StatusesMaxChars           int
 	StatusesCWMaxChars         int

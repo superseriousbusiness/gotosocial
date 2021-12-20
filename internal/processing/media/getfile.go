@@ -72,7 +72,7 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 	content := &apimodel.Content{}
 	var storagePath string
 	switch mediaType {
-	case media.Emoji:
+	case media.TypeEmoji:
 		e := &gtsmodel.Emoji{}
 		if err := p.db.GetByID(ctx, wantedMediaID, e); err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
@@ -81,16 +81,16 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedMediaID))
 		}
 		switch mediaSize {
-		case media.Original:
+		case media.SizeOriginal:
 			content.ContentType = e.ImageContentType
 			storagePath = e.ImagePath
-		case media.Static:
+		case media.SizeStatic:
 			content.ContentType = e.ImageStaticContentType
 			storagePath = e.ImageStaticPath
 		default:
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
 		}
-	case media.Attachment, media.Header, media.Avatar:
+	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
 		a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
 		if err != nil {
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
@@ -99,10 +99,10 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, form.AccountID))
 		}
 		switch mediaSize {
-		case media.Original:
+		case media.SizeOriginal:
 			content.ContentType = a.File.ContentType
 			storagePath = a.File.Path
-		case media.Small:
+		case media.SizeSmall:
 			content.ContentType = a.Thumbnail.ContentType
 			storagePath = a.Thumbnail.Path
 		default:

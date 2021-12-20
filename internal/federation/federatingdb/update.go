@@ -30,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Update sets an existing entry to the database based on the value's
@@ -66,7 +65,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		return nil
 	}
 
-	requestingAcctI := ctx.Value(util.APRequestingAccount)
+	requestingAcctI := ctx.Value(ap.ContextRequestingAccount)
 	if requestingAcctI == nil {
 		l.Error("UPDATE: requesting account wasn't set on context")
 	}

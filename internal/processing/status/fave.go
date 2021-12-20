@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
@@ -76,7 +76,7 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 			TargetAccount:   targetStatus.Account,
 			StatusID:        targetStatus.ID,
 			Status:          targetStatus,
-			URI:             util.GenerateURIForLike(requestingAccount.Username, thisFaveID),
+			URI:             uris.GenerateURIForLike(requestingAccount.Username, thisFaveID),
 		}
 
 		if err := p.db.Put(ctx, gtsFave); err != nil {

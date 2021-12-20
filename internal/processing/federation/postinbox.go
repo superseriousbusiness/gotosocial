@@ -22,11 +22,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
 func (p *processor) PostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (bool, error) {
 	// pass the fromFederator channel through to postInbox, since it'll be needed later
-	contextWithChannel := context.WithValue(ctx, util.APFromFederatorChanKey, p.fromFederator)
+	contextWithChannel := context.WithValue(ctx, ap.ContextFromFederatorChan, p.fromFederator)
 	return p.federator.FederatingActor().PostInbox(contextWithChannel, w, r)
 }

@@ -24,10 +24,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
@@ -69,23 +68,17 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		return nil, err
 	}
 
-	keys := config.Keys
-	serveProtocol := viper.GetString(keys.StorageServeProtocol)
-	serveHost := viper.GetString(keys.StorageServeHost)
-	serveBasePath := viper.GetString(keys.StorageServeBasePath)
-
-	URLbase := fmt.Sprintf("%s://%s%s", serveProtocol, serveHost, serveBasePath)
-	originalURL := fmt.Sprintf("%s/%s/attachment/original/%s.%s", URLbase, minAttachment.AccountID, newMediaID, extension)
-	smallURL := fmt.Sprintf("%s/%s/attachment/small/%s.jpeg", URLbase, minAttachment.AccountID, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeOriginal), newMediaID, extension)
+	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeSmall), newMediaID, "jpeg") // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, Attachment, Original, newMediaID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, TypeAttachment, SizeOriginal, newMediaID, extension)
 	if err := mh.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, Attachment, Small, newMediaID) // all thumbnails/smalls are encoded as jpeg
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, TypeAttachment, SizeSmall, newMediaID) // all thumbnails/smalls are encoded as jpeg
 	if err := mh.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
