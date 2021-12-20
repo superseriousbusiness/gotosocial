@@ -26,7 +26,7 @@ sudo zypper install nginx python3-certbot python3-certbot-nginx
 ## Set up nginx
 
 First we will set up nginx to serve GoToSocial as unsecured http and then later use certbot to automatically upgrade to https.
-Please do not try use it until that's done or you'll be transmitting passwords over clear text.
+Please do not try to use it until that's done or you'll be transmitting passwords over clear text.
 
 First we'll write a configuration for nginx and put it in `/etc/nginx/sites-available`.
 
@@ -52,7 +52,7 @@ Change `proxy_pass` to the ip and port that you're actually serving GoToSocial o
 If your domain name is `gotosocial.example.com` then `server_name gotosocial.example.com;` would be the correct value.
 If you're running GoToSocial on another machine with the local ip of 192.168.178.69 and on port 8080 then `proxy_pass http://192.168.178.69` would be the correct value.
 
-Next we'll need to link the file we just created to the folder that nginx reads configurations for actives sites from.
+Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
 
 ```bash
 sudo mkdir /etc/nginx/sites-enabled
@@ -86,7 +86,7 @@ You should now be able to run certbot and it will guide you through the steps re
 sudo certbot --nginx
 ```
 
-After you do it should have automatically edited your configuration file to enable https.
+After you do, it should have automatically edited your configuration file to enable https.
 Just reload it one last time and after that you should be good to go!
 
 ```bash
