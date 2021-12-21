@@ -280,29 +280,11 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, viper.GetString(keys.DbType))
 	}
 
-	// validate port
+	// these are all optional, the db adapter figures out defaults
 	port := viper.GetInt(keys.DbPort)
-	if port == 0 {
-		return nil, errors.New("no port set")
-	}
-
-	// validate address
 	address := viper.GetString(keys.DbAddress)
-	if address == "" {
-		return nil, errors.New("no address set")
-	}
-
-	// validate username
 	username := viper.GetString(keys.DbUser)
-	if username == "" {
-		return nil, errors.New("no user set")
-	}
-
-	// validate that there's a password
 	password := viper.GetString(keys.DbPassword)
-	if password == "" {
-		return nil, errors.New("no password set")
-	}
 
 	// validate database
 	database := viper.GetString(keys.DbDatabase)
@@ -363,11 +345,21 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	}
 
 	cfg, _ := pgx.ParseConfig("")
-	cfg.Host = address
-	cfg.Port = uint16(port)
-	cfg.User = username
-	cfg.Password = password
-	cfg.TLSConfig = tlsConfig
+	if address != "" {
+		cfg.Host = address
+	}
+	if port > 0 {
+		cfg.Port = uint16(port)
+	}
+	if username != "" {
+		cfg.User = username
+	}
+	if password != "" {
+		cfg.Password = password
+	}
+	if tlsConfig != nil {
+		cfg.TLSConfig = tlsConfig
+	}
 	cfg.Database = database
 	cfg.PreferSimpleProtocol = true
 	cfg.RuntimeParams["application_name"] = viper.GetString(keys.ApplicationName)

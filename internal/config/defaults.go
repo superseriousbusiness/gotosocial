@@ -34,11 +34,11 @@ var Defaults = Values{
 	TrustedProxies:  []string{"127.0.0.1/32"}, // localhost
 
 	DbType:      "postgres",
-	DbAddress:   "localhost",
+	DbAddress:   "",
 	DbPort:      5432,
-	DbUser:      "postgres",
-	DbPassword:  "postgres",
-	DbDatabase:  "postgres",
+	DbUser:      "",
+	DbPassword:  "",
+	DbDatabase:  "gotosocial",
 	DbTLSMode:   "disable",
 	DbTLSCACert: "",
 
