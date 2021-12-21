@@ -16,7 +16,9 @@ Note that the `:memory:` setting will use an *in-memory database* which will be 
 
 Postgres is a heavier database format, which is useful for larger instances where you need to scale performance, or where you need to run your database on a dedicated machine separate from your GoToSocial instance (or do funky stuff like run a database cluster).
 
-GoToSocial supports connecting to Postgres using SSL/TLS. If you're running Postgres on a different machine from GoToSocial, and connecting to it via an IP address or hostname (as opposed to just running on localhost), then SSL/TLS is **CRUCIAL** to avoid leaking data all over the place!
+You can connect to Postgres using either a Unix socket connection, or via TCP, depending on what you've set as your `db-address` value.
+
+GoToSocial also supports connecting to Postgres using SSL/TLS over TCP. If you're running Postgres on a different machine from GoToSocial, and connecting to it via an IP address or hostname (as opposed to just running on localhost), then SSL/TLS is **CRUCIAL** to avoid leaking data all over the place!
 
 When you're using Postgres, GoToSocial expects whatever you've set for `db-user` to already be created in the database, and to have ownership of whatever you've set for `db-database`.
 
@@ -56,8 +58,8 @@ db-type: "postgres"
 
 # String. Database address or parameters.
 # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
-# Default: "localhost"
-db-address: "127.0.0.1"
+# Default: ""
+db-address: ""
 
 # Int. Port for database connection.
 # Examples: [5432, 1234, 6969]
@@ -66,19 +68,18 @@ db-port: 5432
 
 # String. Username for the database connection.
 # Examples: ["mydbuser","postgres","gotosocial"]
-# Default: "postgres"
-db-user: "postgres"
+# Default: ""
+db-user: ""
 
-# REQUIRED
 # String. Password to use for the database connection
 # Examples: ["password123","verysafepassword","postgres"]
-# Default: "postgres"
-db-password: "postgres"
+# Default: ""
+db-password: ""
 
 # String. Name of the database to use within the provided database type.
 # Examples: ["mydb","postgres","gotosocial"]
-# Default: "postgres"
-db-database: "postgres"
+# Default: "gotosocial"
+db-database: "gotosocial"
 
 # String. Disable, enable, or require SSL/TLS connection to the database.
 # If "disable" then no TLS connection will be attempted.
