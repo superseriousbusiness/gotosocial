@@ -94,8 +94,8 @@ db-type: "postgres"
 
 # String. Database address or parameters.
 # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
-# Default: "localhost"
-db-address: "127.0.0.1"
+# Default: ""
+db-address: ""
 
 # Int. Port for database connection.
 # Examples: [5432, 1234, 6969]
@@ -104,19 +104,18 @@ db-port: 5432
 
 # String. Username for the database connection.
 # Examples: ["mydbuser","postgres","gotosocial"]
-# Default: "postgres"
-db-user: "postgres"
+# Default: ""
+db-user: ""
 
-# REQUIRED
 # String. Password to use for the database connection
 # Examples: ["password123","verysafepassword","postgres"]
-# Default: "postgres"
-db-password: "postgres"
+# Default: ""
+db-password: ""
 
 # String. Name of the database to use within the provided database type.
 # Examples: ["mydb","postgres","gotosocial"]
-# Default: "postgres"
-db-database: "postgres"
+# Default: "gotosocial"
+db-database: "gotosocial"
 
 # String. Disable, enable, or require SSL/TLS connection to the database.
 # If "disable" then no TLS connection will be attempted.
