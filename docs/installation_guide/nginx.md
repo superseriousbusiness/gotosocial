@@ -32,7 +32,7 @@ First open the file in your text editor.
 sudoedit /gotosocial/config.yaml
 ```
 
-Then set `letsencrypt-enabled: true`.
+Then set `letsencrypt-enabled: false`.
 
 If GoToSocial is already running, restart it.
 
