@@ -1,21 +1,3 @@
-/*
-   GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 package media
 
 import (
@@ -28,112 +10,26 @@ import (
 	"image/png"
 
 	"github.com/buckket/go-blurhash"
-	"github.com/h2non/filetype"
 	"github.com/nfnt/resize"
 	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
 )
 
-const (
-	// MIMEImage is the mime type for image
-	MIMEImage = "image"
-	// MIMEJpeg is the jpeg image mime type
-	MIMEJpeg = "image/jpeg"
-	// MIMEGif is the gif image mime type
-	MIMEGif = "image/gif"
-	// MIMEPng is the png image mime type
-	MIMEPng = "image/png"
-
-	// MIMEVideo is the mime type for video
-	MIMEVideo = "video"
-	// MIMEMp4 is the mp4 video mime type
-	MIMEMp4 = "video/mp4"
-	// MIMEMpeg is the mpeg video mime type
-	MIMEMpeg = "video/mpeg"
-	// MIMEWebm is the webm video mime type
-	MIMEWebm = "video/webm"
-)
-
-// parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
-// Returns an error if the content type is not something we can process.
-func parseContentType(content []byte) (string, error) {
-	head := make([]byte, 261)
-	_, err := bytes.NewReader(content).Read(head)
-	if err != nil {
-		return "", fmt.Errorf("could not read first magic bytes of file: %s", err)
-	}
-
-	kind, err := filetype.Match(head)
-	if err != nil {
-		return "", err
-	}
-
-	if kind == filetype.Unknown {
-		return "", errors.New("filetype unknown")
-	}
-
-	return kind.MIME.Value, nil
-}
-
-// SupportedImageType checks mime type of an image against a slice of accepted types,
-// and returns True if the mime type is accepted.
-func SupportedImageType(mimeType string) bool {
-	acceptedImageTypes := []string{
-		MIMEJpeg,
-		MIMEGif,
-		MIMEPng,
-	}
-	for _, accepted := range acceptedImageTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// SupportedVideoType checks mime type of a video against a slice of accepted types,
-// and returns True if the mime type is accepted.
-func SupportedVideoType(mimeType string) bool {
-	acceptedVideoTypes := []string{
-		MIMEMp4,
-		MIMEMpeg,
-		MIMEWebm,
-	}
-	for _, accepted := range acceptedVideoTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// supportedEmojiType checks that the content type is image/png -- the only type supported for emoji.
-func supportedEmojiType(mimeType string) bool {
-	acceptedEmojiTypes := []string{
-		MIMEGif,
-		MIMEPng,
-	}
-	for _, accepted := range acceptedEmojiTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
 // purgeExif is a little wrapper for the action of removing exif data from an image.
 // Only pass pngs or jpegs to this function.
-func purgeExif(b []byte) ([]byte, error) {
-	if len(b) == 0 {
+func purgeExif(data []byte) ([]byte, error) {
+	if len(data) == 0 {
 		return nil, errors.New("passed image was not valid")
 	}
 
-	clean, err := exifremove.Remove(b)
+	clean, err := exifremove.Remove(data)
 	if err != nil {
 		return nil, fmt.Errorf("could not purge exif from image: %s", err)
 	}
+
 	if len(clean) == 0 {
 		return nil, errors.New("purged image was not valid")
 	}
+	
 	return clean, nil
 }
 
@@ -141,7 +37,7 @@ func deriveGif(b []byte, extension string) (*imageAndMeta, error) {
 	var g *gif.GIF
 	var err error
 	switch extension {
-	case MIMEGif:
+	case mimeGif:
 		g, err = gif.DecodeAll(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -170,12 +66,12 @@ func deriveImage(b []byte, contentType string) (*imageAndMeta, error) {
 	var err error
 
 	switch contentType {
-	case MIMEJpeg:
+	case mimeImageJpeg:
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case MIMEPng:
+	case mimeImagePng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -208,17 +104,17 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	var err error
 
 	switch contentType {
-	case MIMEJpeg:
+	case mimeImageJpeg:
 		i, err = jpeg.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case MIMEPng:
+	case mimeImagePng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case MIMEGif:
+	case mimeImageGif:
 		i, err = gif.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -261,12 +157,12 @@ func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
 	var err error
 
 	switch contentType {
-	case MIMEPng:
+	case mimeImagePng:
 		i, err = png.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
 		}
-	case MIMEGif:
+	case mimeImageGif:
 		i, err = gif.Decode(bytes.NewReader(b))
 		if err != nil {
 			return nil, err
@@ -291,32 +187,4 @@ type imageAndMeta struct {
 	size     int
 	aspect   float64
 	blurhash string
-}
-
-// ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
-func ParseMediaType(s string) (Type, error) {
-	switch s {
-	case string(TypeAttachment):
-		return TypeAttachment, nil
-	case string(TypeHeader):
-		return TypeHeader, nil
-	case string(TypeAvatar):
-		return TypeAvatar, nil
-	case string(TypeEmoji):
-		return TypeEmoji, nil
-	}
-	return "", fmt.Errorf("%s not a recognized MediaType", s)
-}
-
-// ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
-func ParseMediaSize(s string) (Size, error) {
-	switch s {
-	case string(SizeSmall):
-		return SizeSmall, nil
-	case string(SizeOriginal):
-		return SizeOriginal, nil
-	case string(SizeStatic):
-		return SizeStatic, nil
-	}
-	return "", fmt.Errorf("%s not a recognized MediaSize", s)
 }

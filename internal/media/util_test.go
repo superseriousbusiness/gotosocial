@@ -138,10 +138,10 @@ func (suite *MediaUtilTestSuite) TestDeriveThumbnailFromJPEG() {
 }
 
 func (suite *MediaUtilTestSuite) TestSupportedImageTypes() {
-	ok := SupportedImageType("image/jpeg")
+	ok := supportedImage("image/jpeg")
 	suite.True(ok)
 
-	ok = SupportedImageType("image/bmp")
+	ok = supportedImage("image/bmp")
 	suite.False(ok)
 }
 

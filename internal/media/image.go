@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
+func (mh *mediaHandler) processImage(data []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -38,7 +38,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 	contentType := minAttachment.File.ContentType
 
 	switch contentType {
-	case MIMEJpeg, MIMEPng:
+	case mimeJpeg, mimePng:
 		if clean, err = purgeExif(data); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
@@ -46,7 +46,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		if err != nil {
 			return nil, fmt.Errorf("error parsing image: %s", err)
 		}
-	case MIMEGif:
+	case mimeGif:
 		clean = data
 		original, err = deriveGif(clean, contentType)
 		if err != nil {
@@ -119,7 +119,7 @@ func (mh *mediaHandler) processImageAttachment(data []byte, minAttachment *gtsmo
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        smallPath,
-			ContentType: MIMEJpeg, // all thumbnails/smalls are encoded as jpeg
+			ContentType: mimeJpeg, // all thumbnails/smalls are encoded as jpeg
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,

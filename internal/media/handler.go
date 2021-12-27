@@ -35,45 +35,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
-const EmojiMaxBytes = 51200
 
-type Size string
 
-const (
-	SizeSmall    Size = "small"    // SizeSmall is the key for small/thumbnail versions of media
-	SizeOriginal Size = "original" // SizeOriginal is the key for original/fullsize versions of media and emoji
-	SizeStatic   Size = "static"   // SizeStatic is the key for static (non-animated) versions of emoji
-)
-
-type Type string
-
-const (
-	TypeAttachment Type = "attachment" // TypeAttachment is the key for media attachments
-	TypeHeader     Type = "header"     // TypeHeader is the key for profile header requests
-	TypeAvatar     Type = "avatar"     // TypeAvatar is the key for profile avatar requests
-	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
-)
+type ProcessedCallback func(*gtsmodel.MediaAttachment) error
 
 // Handler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Handler interface {
-	// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
-	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
-	// and then returns information to the caller about the new header.
-	ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error)
-
-	// ProcessLocalAttachment takes a new attachment and the requesting account, checks it out, removes exif data from it,
-	// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
-	// and then returns information to the caller about the attachment. It's the caller's responsibility to put the returned struct
-	// in the database.
-	ProcessAttachment(ctx context.Context, attachmentBytes []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
-
-	// ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
-	// *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
-	// in the database.
-	ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error)
-
-	ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error)
+	ProcessHeader(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
+	ProcessAvatar(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
+	ProcessAttachment(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
+	ProcessEmoji(ctx context.Context, data []byte, shortcode string) (*gtsmodel.Emoji, error)
 }
 
 type mediaHandler struct {
@@ -108,7 +79,7 @@ func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []
 	if err != nil {
 		return nil, err
 	}
-	if !SupportedImageType(contentType) {
+	if !supportedImage(contentType) {
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
@@ -152,8 +123,8 @@ func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes [
 	// 		return nil, errors.New("video was of size 0")
 	// 	}
 	// 	return mh.processVideoAttachment(attachment, accountID, contentType, remoteURL)
-	case MIMEImage:
-		if !SupportedImageType(contentType) {
+	case mimeImage:
+		if !supportedImage(contentType) {
 			return nil, fmt.Errorf("image type %s not supported", contentType)
 		}
 		if len(attachmentBytes) == 0 {
@@ -180,7 +151,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	if err != nil {
 		return nil, err
 	}
-	if !supportedEmojiType(contentType) {
+	if !supportedEmoji(contentType) {
 		return nil, fmt.Errorf("content type %s not supported for emojis", contentType)
 	}
 
@@ -193,11 +164,11 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 
 	// clean any exif data from png but leave gifs alone
 	switch contentType {
-	case MIMEPng:
+	case mimePng:
 		if clean, err = purgeExif(emojiBytes); err != nil {
 			return nil, fmt.Errorf("error cleaning exif data: %s", err)
 		}
-	case MIMEGif:
+	case mimeGif:
 		clean = emojiBytes
 	default:
 		return nil, errors.New("media type unrecognized")
@@ -266,7 +237,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 		ImagePath:              emojiPath,
 		ImageStaticPath:        emojiStaticPath,
 		ImageContentType:       contentType,
-		ImageStaticContentType: MIMEPng, // static version will always be a png
+		ImageStaticContentType: mimePng, // static version will always be a png
 		ImageFileSize:          len(original.image),
 		ImageStaticFileSize:    len(static.image),
 		ImageUpdatedAt:         time.Now(),
