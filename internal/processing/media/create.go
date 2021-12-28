@@ -65,8 +65,8 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		},
 	}
 
-	// allow the mediaHandler to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
-	attachment, err := p.mediaHandler.ProcessAttachment(ctx, buf.Bytes(), minAttachment)
+	// allow the mediaManager to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
+	attachment, err := p.mediaManager.ProcessAttachment(ctx, buf.Bytes(), minAttachment)
 	if err != nil {
 		return nil, fmt.Errorf("error reading attachment: %s", err)
 	}

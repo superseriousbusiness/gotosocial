@@ -235,7 +235,7 @@ type processor struct {
 	stop            chan interface{}
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
-	mediaHandler    media.Handler
+	mediaManager    media.Manager
 	storage         *kv.KVStore
 	timelineManager timeline.Manager
 	db              db.DB
@@ -259,7 +259,7 @@ func NewProcessor(
 	tc typeutils.TypeConverter,
 	federator federation.Federator,
 	oauthServer oauth.Server,
-	mediaHandler media.Handler,
+	mediaManager media.Manager,
 	storage *kv.KVStore,
 	timelineManager timeline.Manager,
 	db db.DB,
@@ -269,9 +269,9 @@ func NewProcessor(
 
 	statusProcessor := status.New(db, tc, fromClientAPI)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator)
-	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage)
+	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator)
+	adminProcessor := admin.New(db, tc, mediaManager, fromClientAPI)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
 
@@ -282,7 +282,7 @@ func NewProcessor(
 		stop:            make(chan interface{}),
 		tc:              tc,
 		oauthServer:     oauthServer,
-		mediaHandler:    mediaHandler,
+		mediaManager:    mediaManager,
 		storage:         storage,
 		timelineManager: timelineManager,
 		db:              db,

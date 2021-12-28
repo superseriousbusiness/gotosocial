@@ -93,7 +93,7 @@ func (d *deref) RefreshAttachment(ctx context.Context, requestingUsername string
 		return nil, fmt.Errorf("RefreshAttachment: error dereferencing media: %s", err)
 	}
 
-	a, err := d.mediaHandler.ProcessAttachment(ctx, attachmentBytes, minAttachment)
+	a, err := d.mediaManager.ProcessAttachment(ctx, attachmentBytes, minAttachment)
 	if err != nil {
 		return nil, fmt.Errorf("RefreshAttachment: error processing attachment: %s", err)
 	}

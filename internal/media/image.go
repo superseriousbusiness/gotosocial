@@ -19,67 +19,88 @@
 package media
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"strings"
 	"time"
 
+	"github.com/buckket/go-blurhash"
+	"github.com/nfnt/resize"
+	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (mh *mediaHandler) processImage(data []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
+const (
+	thumbnailMaxWidth  = 512
+	thumbnailMaxHeight = 512
+)
+
+type imageAndMeta struct {
+	image    []byte
+	width    int
+	height   int
+	size     int
+	aspect   float64
+	blurhash string
+}
+
+func (m *manager) processImage(data []byte, contentType string) (*gtsmodel.MediaAttachment, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta
 	var small *imageAndMeta
 
-	contentType := minAttachment.File.ContentType
-
 	switch contentType {
-	case mimeJpeg, mimePng:
-		if clean, err = purgeExif(data); err != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", err)
+	case mimeImageJpeg, mimeImagePng:
+		// first 'clean' image by purging exif data from it
+		var exifErr error
+		if clean, exifErr = purgeExif(data); exifErr != nil {
+			return nil, fmt.Errorf("error cleaning exif data: %s", exifErr)
 		}
-		original, err = deriveImage(clean, contentType)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing image: %s", err)
-		}
-	case mimeGif:
+		original, err = decodeImage(clean, contentType)
+	case mimeImageGif:
+		// gifs are already clean - no exif data to remove
 		clean = data
-		original, err = deriveGif(clean, contentType)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing gif: %s", err)
-		}
+		original, err = decodeGif(clean, contentType)
 	default:
-		return nil, errors.New("media type unrecognized")
+		err = fmt.Errorf("content type %s not a recognized image type", contentType)
 	}
 
-	small, err = deriveThumbnail(clean, contentType, 512, 512)
+	if err != nil {
+		return nil, err
+	}
+
+	small, err = deriveThumbnail(clean, contentType, thumbnailMaxWidth, thumbnailMaxHeight)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
 
 	// now put it in storage, take a new id for the name of the file so we don't store any unnecessary info about it
 	extension := strings.Split(contentType, "/")[1]
-	newMediaID, err := id.NewRandomULID()
+	attachmentID, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
 	}
 
-	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeOriginal), newMediaID, extension)
-	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeSmall), newMediaID, "jpeg") // all thumbnails/smalls are encoded as jpeg
+	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeOriginal), attachmentID, extension)
+	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeSmall), attachmentID, "jpeg") // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, TypeAttachment, SizeOriginal, newMediaID, extension)
-	if err := mh.storage.Put(originalPath, original.image); err != nil {
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, TypeAttachment, SizeOriginal, attachmentID, extension)
+	if err := m.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, TypeAttachment, SizeSmall, newMediaID) // all thumbnails/smalls are encoded as jpeg
-	if err := mh.storage.Put(smallPath, small.image); err != nil {
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, TypeAttachment, SizeSmall, attachmentID) // all thumbnails/smalls are encoded as jpeg
+	if err := m.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
@@ -98,7 +119,7 @@ func (mh *mediaHandler) processImage(data []byte, minAttachment *gtsmodel.MediaA
 	}
 
 	attachment := &gtsmodel.MediaAttachment{
-		ID:                newMediaID,
+		ID:                attachmentID,
 		StatusID:          minAttachment.StatusID,
 		URL:               originalURL,
 		RemoteURL:         minAttachment.RemoteURL,
@@ -130,4 +151,174 @@ func (mh *mediaHandler) processImage(data []byte, minAttachment *gtsmodel.MediaA
 	}
 
 	return attachment, nil
+}
+
+func decodeGif(b []byte, extension string) (*imageAndMeta, error) {
+	var g *gif.GIF
+	var err error
+
+	switch extension {
+	case mimeGif:
+		g, err = gif.DecodeAll(bytes.NewReader(b))
+	default:
+		err = fmt.Errorf("extension %s not recognised", extension)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// use the first frame to get the static characteristics
+	width := g.Config.Width
+	height := g.Config.Height
+	size := width * height
+	aspect := float64(width) / float64(height)
+
+	return &imageAndMeta{
+		image:  b,
+		width:  width,
+		height: height,
+		size:   size,
+		aspect: aspect,
+	}, nil
+}
+
+func decodeImage(b []byte, contentType string) (*imageAndMeta, error) {
+	var i image.Image
+	var err error
+
+	switch contentType {
+	case mimeImageJpeg:
+		i, err = jpeg.Decode(bytes.NewReader(b))
+	case mimeImagePng:
+		i, err = png.Decode(bytes.NewReader(b))
+	default:
+		err = fmt.Errorf("content type %s not recognised", contentType)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if i == nil {
+		return nil, errors.New("processed image was nil")
+	}
+
+	width := i.Bounds().Size().X
+	height := i.Bounds().Size().Y
+	size := width * height
+	aspect := float64(width) / float64(height)
+
+	return &imageAndMeta{
+		image:  b,
+		width:  width,
+		height: height,
+		size:   size,
+		aspect: aspect,
+	}, nil
+}
+
+// deriveThumbnail returns a byte slice and metadata for a thumbnail of width x and height y,
+// of a given jpeg, png, or gif, or an error if something goes wrong.
+//
+// Note that the aspect ratio of the image will be retained,
+// so it will not necessarily be a square, even if x and y are set as the same value.
+func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMeta, error) {
+	var i image.Image
+	var err error
+
+	switch contentType {
+	case mimeImageJpeg:
+		i, err = jpeg.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	case mimeImagePng:
+		i, err = png.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	case mimeImageGif:
+		i, err = gif.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("content type %s not recognised", contentType)
+	}
+
+	thumb := resize.Thumbnail(x, y, i, resize.NearestNeighbor)
+	width := thumb.Bounds().Size().X
+	height := thumb.Bounds().Size().Y
+	size := width * height
+	aspect := float64(width) / float64(height)
+
+	tiny := resize.Thumbnail(32, 32, thumb, resize.NearestNeighbor)
+	bh, err := blurhash.Encode(4, 3, tiny)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &bytes.Buffer{}
+	if err := jpeg.Encode(out, thumb, &jpeg.Options{
+		Quality: 75,
+	}); err != nil {
+		return nil, err
+	}
+	return &imageAndMeta{
+		image:    out.Bytes(),
+		width:    width,
+		height:   height,
+		size:     size,
+		aspect:   aspect,
+		blurhash: bh,
+	}, nil
+}
+
+// deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
+func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
+	var i image.Image
+	var err error
+
+	switch contentType {
+	case mimeImagePng:
+		i, err = png.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	case mimeImageGif:
+		i, err = gif.Decode(bytes.NewReader(b))
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("content type %s not allowed for emoji", contentType)
+	}
+
+	out := &bytes.Buffer{}
+	if err := png.Encode(out, i); err != nil {
+		return nil, err
+	}
+	return &imageAndMeta{
+		image: out.Bytes(),
+	}, nil
+}
+
+// purgeExif is a little wrapper for the action of removing exif data from an image.
+// Only pass pngs or jpegs to this function.
+func purgeExif(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return nil, errors.New("passed image was not valid")
+	}
+
+	clean, err := exifremove.Remove(data)
+	if err != nil {
+		return nil, fmt.Errorf("could not purge exif from image: %s", err)
+	}
+
+	if len(clean) == 0 {
+		return nil, errors.New("purged image was not valid")
+	}
+
+	return clean, nil
 }

@@ -41,7 +41,7 @@ type AccountStandardTestSuite struct {
 	db                  db.DB
 	tc                  typeutils.TypeConverter
 	storage             *kv.KVStore
-	mediaHandler        media.Handler
+	mediaManager        media.Manager
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
 	httpClient          pub.HttpClient
@@ -80,7 +80,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
 	suite.httpClient = testrig.NewMockHTTPClient(nil)
@@ -88,7 +88,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
-	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaHandler, suite.oauthServer, suite.fromClientAPIChan, suite.federator)
+	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaManager, suite.oauthServer, suite.fromClientAPIChan, suite.federator)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

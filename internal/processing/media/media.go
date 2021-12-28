@@ -43,16 +43,16 @@ type Processor interface {
 
 type processor struct {
 	tc           typeutils.TypeConverter
-	mediaHandler media.Handler
+	mediaManager media.Manager
 	storage      *kv.KVStore
 	db           db.DB
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, storage *kv.KVStore) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storage *kv.KVStore) Processor {
 	return &processor{
 		tc:           tc,
-		mediaHandler: mediaHandler,
+		mediaManager: mediaManager,
 		storage:      storage,
 		db:           db,
 	}

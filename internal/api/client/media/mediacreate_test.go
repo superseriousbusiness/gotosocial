@@ -53,7 +53,7 @@ type MediaCreateTestSuite struct {
 	storage      *kv.KVStore
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
-	mediaHandler media.Handler
+	mediaManager media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 	processor    processing.Processor
@@ -81,7 +81,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)

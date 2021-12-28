@@ -40,7 +40,6 @@ const (
 	mimeImagePng = mimeImage + "/" + mimePng
 )
 
-
 // EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
 // const EmojiMaxBytes = 51200
 

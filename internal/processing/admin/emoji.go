@@ -49,8 +49,8 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, errors.New("could not read provided emoji: size 0 bytes")
 	}
 
-	// allow the mediaHandler to work its magic of processing the emoji bytes, and putting them in whatever storage backend we're using
-	emoji, err := p.mediaHandler.ProcessLocalEmoji(ctx, buf.Bytes(), form.Shortcode)
+	// allow the mediaManager to work its magic of processing the emoji bytes, and putting them in whatever storage backend we're using
+	emoji, err := p.mediaManager.ProcessLocalEmoji(ctx, buf.Bytes(), form.Shortcode)
 	if err != nil {
 		return nil, fmt.Errorf("error reading emoji: %s", err)
 	}

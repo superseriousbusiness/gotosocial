@@ -24,7 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-// NewTestMediaHandler returns a media handler with the default test config, and the given db and storage.
-func NewTestMediaHandler(db db.DB, storage *kv.KVStore) media.Handler {
+// NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
+func NewTestMediaManager(db db.DB, storage *kv.KVStore) media.Manager {
 	return media.New(db, storage)
 }

@@ -43,16 +43,16 @@ type Processor interface {
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	mediaHandler  media.Handler
+	mediaManager  media.Manager
 	fromClientAPI chan messages.FromClientAPI
 	db            db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, fromClientAPI chan messages.FromClientAPI) Processor {
 	return &processor{
 		tc:            tc,
-		mediaHandler:  mediaHandler,
+		mediaManager:  mediaManager,
 		fromClientAPI: fromClientAPI,
 		db:            db,
 	}

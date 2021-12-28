@@ -105,10 +105,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// build backend handlers
-	mediaHandler := media.New(dbService, storage)
+	mediaManager := media.New(dbService, storage)
 	oauthServer := oauth.New(ctx, dbService)
 	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
-	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaHandler)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
 	var emailSender email.Sender
@@ -128,7 +128,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, timelineManager, dbService, emailSender)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, timelineManager, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

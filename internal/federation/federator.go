@@ -78,13 +78,13 @@ type federator struct {
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
 	dereferencer        dereferencing.Dereferencer
-	mediaHandler        media.Handler
+	mediaManager        media.Manager
 	actor               pub.FederatingActor
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
-	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaHandler)
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaManager media.Manager) Federator {
+	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaManager)
 
 	clock := &Clock{}
 	f := &federator{
@@ -94,7 +94,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		dereferencer:        dereferencer,
-		mediaHandler:        mediaHandler,
+		mediaManager:        mediaManager,
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

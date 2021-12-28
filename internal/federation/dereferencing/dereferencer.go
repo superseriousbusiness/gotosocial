@@ -80,18 +80,18 @@ type deref struct {
 	db                  db.DB
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
-	mediaHandler        media.Handler
+	mediaManager        media.Manager
 	handshakes          map[string][]*url.URL
 	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler) Dereferencer {
+func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
 		db:                  db,
 		typeConverter:       typeConverter,
 		transportController: transportController,
-		mediaHandler:        mediaHandler,
+		mediaManager:        mediaManager,
 		handshakeSync:       &sync.Mutex{},
 	}
 }

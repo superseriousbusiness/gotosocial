@@ -103,7 +103,7 @@ func (suite *MediaUtilTestSuite) TestDeriveImageFromJPEG() {
 	suite.NoError(err)
 
 	// clean it up and validate the clean version
-	imageAndMeta, err := deriveImage(b, "image/jpeg")
+	imageAndMeta, err := decodeImage(b, "image/jpeg")
 	suite.NoError(err)
 
 	suite.Equal(1920, imageAndMeta.width)

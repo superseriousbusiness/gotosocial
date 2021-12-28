@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -35,26 +34,31 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+// ProcessCallback is triggered by the media manager when an attachment has finished undergoing
+// image processing (generation of a blurhash, thumbnail etc) but hasn't yet been inserted into
+// the database. It is provided to allow callers to a) access the processed media attachment and b)
+// make any last-minute changes to the media attachment before it enters the database.
+type ProcessCallback func(*gtsmodel.MediaAttachment) *gtsmodel.MediaAttachment
 
-
-type ProcessedCallback func(*gtsmodel.MediaAttachment) error
-
-// Handler provides an interface for parsing, storing, and retrieving media objects like photos, videos, and gifs.
-type Handler interface {
-	ProcessHeader(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
-	ProcessAvatar(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
-	ProcessAttachment(ctx context.Context, data []byte, accountID string, cb ProcessedCallback) (*gtsmodel.MediaAttachment, error)
-	ProcessEmoji(ctx context.Context, data []byte, shortcode string) (*gtsmodel.Emoji, error)
+// defaultCB will be used when a nil ProcessCallback is passed to one of the manager's interface functions.
+// It just returns the processed media attachment with no additional changes.
+var defaultCB ProcessCallback = func(a *gtsmodel.MediaAttachment) *gtsmodel.MediaAttachment {
+	return a
 }
 
-type mediaHandler struct {
+// Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
+type Manager interface {
+	ProcessAttachment(ctx context.Context, data []byte, accountID string, cb ProcessCallback) (*gtsmodel.MediaAttachment, error)
+}
+
+type manager struct {
 	db      db.DB
 	storage *kv.KVStore
 }
 
-// New returns a new handler with the given db and storage
-func New(database db.DB, storage *kv.KVStore) Handler {
-	return &mediaHandler{
+// New returns a media manager with the given db and underlying storage.
+func New(database db.DB, storage *kv.KVStore) Manager {
+	return &manager{
 		db:      database,
 		storage: storage,
 	}
@@ -64,83 +68,64 @@ func New(database db.DB, storage *kv.KVStore) Handler {
 	INTERFACE FUNCTIONS
 */
 
-// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
-// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
-// and then returns information to the caller about the new header.
-func (mh *mediaHandler) ProcessHeaderOrAvatar(ctx context.Context, attachment []byte, accountID string, mediaType Type, remoteURL string) (*gtsmodel.MediaAttachment, error) {
-	l := logrus.WithField("func", "SetHeaderForAccountID")
-
-	if mediaType != TypeHeader && mediaType != TypeAvatar {
-		return nil, errors.New("header or avatar not selected")
-	}
-
-	// make sure we have a type we can handle
-	contentType, err := parseContentType(attachment)
+func (m *manager) ProcessAttachment(ctx context.Context, data []byte, accountID string, cb ProcessCallback) (*gtsmodel.MediaAttachment, error) {
+	contentType, err := parseContentType(data)
 	if err != nil {
 		return nil, err
 	}
+
+	mainType := strings.Split(contentType, "/")[0]
+	switch mainType {
+	case mimeImage:
+		if !supportedImage(contentType) {
+			return nil, fmt.Errorf("image type %s not supported", contentType)
+		}
+		if len(data) == 0 {
+			return nil, errors.New("image was of size 0")
+		}
+		return m.processImage(attachmentBytes, minAttachment)
+	default:
+		return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
+	}
+}
+
+// ProcessHeaderOrAvatar takes a new header image for an account, checks it out, removes exif data from it,
+// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new image,
+// and then returns information to the caller about the new header.
+func (m *manager) ProcessHeader(ctx context.Context, data []byte, accountID string, cb ProcessCallback) (*gtsmodel.MediaAttachment, error) {
+
+	// make sure we have a type we can handle
+	contentType, err := parseContentType(data)
+	if err != nil {
+		return nil, err
+	}
+
 	if !supportedImage(contentType) {
 		return nil, fmt.Errorf("%s is not an accepted image type", contentType)
 	}
 
-	if len(attachment) == 0 {
+	if len(data) == 0 {
 		return nil, fmt.Errorf("passed reader was of size 0")
 	}
-	l.Tracef("read %d bytes of file", len(attachment))
 
 	// process it
-	ma, err := mh.processHeaderOrAvi(attachment, contentType, mediaType, accountID, remoteURL)
+	ma, err := m.processHeaderOrAvi(attachment, contentType, mediaType, accountID, remoteURL)
 	if err != nil {
 		return nil, fmt.Errorf("error processing %s: %s", mediaType, err)
 	}
 
 	// set it in the database
-	if err := mh.db.SetAccountHeaderOrAvatar(ctx, ma, accountID); err != nil {
+	if err := m.db.SetAccountHeaderOrAvatar(ctx, ma, accountID); err != nil {
 		return nil, fmt.Errorf("error putting %s in database: %s", mediaType, err)
 	}
 
 	return ma, nil
 }
 
-// ProcessAttachment takes a new attachment and the owning account, checks it out, removes exif data from it,
-// puts it in whatever storage backend we're using, sets the relevant fields in the database for the new media,
-// and then returns information to the caller about the attachment.
-func (mh *mediaHandler) ProcessAttachment(ctx context.Context, attachmentBytes []byte, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error) {
-	contentType, err := parseContentType(attachmentBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	minAttachment.File.ContentType = contentType
-
-	mainType := strings.Split(contentType, "/")[0]
-	switch mainType {
-	// case MIMEVideo:
-	// 	if !SupportedVideoType(contentType) {
-	// 		return nil, fmt.Errorf("video type %s not supported", contentType)
-	// 	}
-	// 	if len(attachment) == 0 {
-	// 		return nil, errors.New("video was of size 0")
-	// 	}
-	// 	return mh.processVideoAttachment(attachment, accountID, contentType, remoteURL)
-	case mimeImage:
-		if !supportedImage(contentType) {
-			return nil, fmt.Errorf("image type %s not supported", contentType)
-		}
-		if len(attachmentBytes) == 0 {
-			return nil, errors.New("image was of size 0")
-		}
-		return mh.processImageAttachment(attachmentBytes, minAttachment)
-	default:
-		break
-	}
-	return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
-}
-
 // ProcessLocalEmoji takes a new emoji and a shortcode, cleans it up, puts it in storage, and creates a new
 // *gts.Emoji for it, then returns it to the caller. It's the caller's responsibility to put the returned struct
 // in the database.
-func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
+func (m *manager) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte, shortcode string) (*gtsmodel.Emoji, error) {
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -187,7 +172,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	// since emoji aren't 'owned' by an account, but we still want to use the same pattern for serving them through the filserver,
 	// (ie., fileserver/ACCOUNT_ID/etc etc) we need to fetch the INSTANCE ACCOUNT from the database. That is, the account that's created
 	// with the same username as the instance hostname, which doesn't belong to any particular user.
-	instanceAccount, err := mh.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("error fetching instance account: %s", err)
 	}
@@ -214,12 +199,12 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	emojiStaticPath := fmt.Sprintf("%s/%s/%s/%s.png", instanceAccount.ID, TypeEmoji, SizeStatic, newEmojiID)
 
 	// Store the original emoji
-	if err := mh.storage.Put(emojiPath, original.image); err != nil {
+	if err := m.storage.Put(emojiPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// Store the static emoji
-	if err := mh.storage.Put(emojiStaticPath, static.image); err != nil {
+	if err := m.storage.Put(emojiStaticPath, static.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
@@ -249,7 +234,7 @@ func (mh *mediaHandler) ProcessLocalEmoji(ctx context.Context, emojiBytes []byte
 	return e, nil
 }
 
-func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
+func (m *manager) ProcessRemoteHeaderOrAvatar(ctx context.Context, t transport.Transport, currentAttachment *gtsmodel.MediaAttachment, accountID string) (*gtsmodel.MediaAttachment, error) {
 	if !currentAttachment.Header && !currentAttachment.Avatar {
 		return nil, errors.New("provided attachment was set to neither header nor avatar")
 	}
@@ -285,5 +270,5 @@ func (mh *mediaHandler) ProcessRemoteHeaderOrAvatar(ctx context.Context, t trans
 		return nil, fmt.Errorf("dereferencing remote media with url %s: %s", remoteIRI.String(), err)
 	}
 
-	return mh.ProcessHeaderOrAvatar(ctx, attachmentBytes, accountID, headerOrAvi, currentAttachment.RemoteURL)
+	return m.ProcessHeaderOrAvatar(ctx, attachmentBytes, accountID, headerOrAvi, currentAttachment.RemoteURL)
 }

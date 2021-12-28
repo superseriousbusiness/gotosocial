@@ -77,7 +77,7 @@ type Processor interface {
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	mediaHandler  media.Handler
+	mediaManager  media.Manager
 	fromClientAPI chan messages.FromClientAPI
 	oauthServer   oauth.Server
 	filter        visibility.Filter
@@ -87,10 +87,10 @@ type processor struct {
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator) Processor {
 	return &processor{
 		tc:            tc,
-		mediaHandler:  mediaHandler,
+		mediaManager:  mediaManager,
 		fromClientAPI: fromClientAPI,
 		oauthServer:   oauthServer,
 		filter:        visibility.NewFilter(db),

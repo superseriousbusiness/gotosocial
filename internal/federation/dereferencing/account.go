@@ -246,7 +246,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 	}
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaManager.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.AvatarRemoteURL,
 			Avatar:    true,
 		}, targetAccount.ID)
@@ -257,7 +257,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaHandler.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
+		a, err := d.mediaManager.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
 			RemoteURL: targetAccount.HeaderRemoteURL,
 			Header:    true,
 		}, targetAccount.ID)

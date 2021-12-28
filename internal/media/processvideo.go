@@ -18,6 +18,6 @@
 
 package media
 
-// func (mh *mediaHandler) processVideoAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
+// func (mh *mediaManager) processVideoAttachment(data []byte, accountID string, contentType string, remoteURL string) (*gtsmodel.MediaAttachment, error) {
 // 	return nil, nil
 // }

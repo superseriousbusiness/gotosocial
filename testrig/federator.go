@@ -27,5 +27,5 @@ import (
 
 // NewTestFederator returns a federator with the given database and (mock!!) transport controller.
 func NewTestFederator(db db.DB, tc transport.Controller, storage *kv.KVStore) federation.Federator {
-	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestTypeConverter(db), NewTestMediaHandler(db, storage))
+	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestTypeConverter(db), NewTestMediaManager(db, storage))
 }

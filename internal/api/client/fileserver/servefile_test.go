@@ -51,7 +51,7 @@ type ServeFileTestSuite struct {
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
 	processor    processing.Processor
-	mediaHandler media.Handler
+	mediaManager media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 
@@ -82,7 +82,7 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	// setup module being tested
