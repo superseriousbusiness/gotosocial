@@ -20,6 +20,7 @@ package media
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"image"
@@ -51,7 +52,8 @@ type imageAndMeta struct {
 	blurhash string
 }
 
-func (m *manager) processImage(data []byte, contentType string) (*gtsmodel.MediaAttachment, error) {
+func (m *manager) processImage(ctx context.Context, data []byte, contentType string, accountID string) {
+
 	var clean []byte
 	var err error
 	var original *imageAndMeta
@@ -68,9 +70,9 @@ func (m *manager) processImage(data []byte, contentType string) (*gtsmodel.Media
 	case mimeImageGif:
 		// gifs are already clean - no exif data to remove
 		clean = data
-		original, err = decodeGif(clean, contentType)
+		original, err = decodeGif(clean)
 	default:
-		err = fmt.Errorf("content type %s not a recognized image type", contentType)
+		err = fmt.Errorf("content type %s not a processible image type", contentType)
 	}
 
 	if err != nil {
@@ -89,47 +91,46 @@ func (m *manager) processImage(data []byte, contentType string) (*gtsmodel.Media
 		return nil, err
 	}
 
-	originalURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeOriginal), attachmentID, extension)
-	smallURL := uris.GenerateURIForAttachment(minAttachment.AccountID, string(TypeAttachment), string(SizeSmall), attachmentID, "jpeg") // all thumbnails/smalls are encoded as jpeg
+	originalURL := uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), attachmentID, extension)
+	smallURL := uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), attachmentID, "jpeg") // all thumbnails/smalls are encoded as jpeg
 
 	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", minAttachment.AccountID, TypeAttachment, SizeOriginal, attachmentID, extension)
+	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, attachmentID, extension)
 	if err := m.storage.Put(originalPath, original.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
 	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", minAttachment.AccountID, TypeAttachment, SizeSmall, attachmentID) // all thumbnails/smalls are encoded as jpeg
+	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", accountID, TypeAttachment, SizeSmall, attachmentID) // all thumbnails/smalls are encoded as jpeg
 	if err := m.storage.Put(smallPath, small.image); err != nil {
 		return nil, fmt.Errorf("storage error: %s", err)
 	}
 
-	minAttachment.FileMeta.Original = gtsmodel.Original{
-		Width:  original.width,
-		Height: original.height,
-		Size:   original.size,
-		Aspect: original.aspect,
-	}
-
-	minAttachment.FileMeta.Small = gtsmodel.Small{
-		Width:  small.width,
-		Height: small.height,
-		Size:   small.size,
-		Aspect: small.aspect,
-	}
-
 	attachment := &gtsmodel.MediaAttachment{
-		ID:                attachmentID,
-		StatusID:          minAttachment.StatusID,
-		URL:               originalURL,
-		RemoteURL:         minAttachment.RemoteURL,
-		CreatedAt:         minAttachment.CreatedAt,
-		UpdatedAt:         minAttachment.UpdatedAt,
-		Type:              gtsmodel.FileTypeImage,
-		FileMeta:          minAttachment.FileMeta,
-		AccountID:         minAttachment.AccountID,
-		Description:       minAttachment.Description,
-		ScheduledStatusID: minAttachment.ScheduledStatusID,
+		ID:        attachmentID,
+		StatusID:  "",
+		URL:       originalURL,
+		RemoteURL: "",
+		CreatedAt: time.Time{},
+		UpdatedAt: time.Time{},
+		Type:      gtsmodel.FileTypeImage,
+		FileMeta: gtsmodel.FileMeta{
+			Original: gtsmodel.Original{
+				Width:  original.width,
+				Height: original.height,
+				Size:   original.size,
+				Aspect: original.aspect,
+			},
+			Small: gtsmodel.Small{
+				Width:  small.width,
+				Height: small.height,
+				Size:   small.size,
+				Aspect: small.aspect,
+			},
+		},
+		AccountID:         accountID,
+		Description:       "",
+		ScheduledStatusID: "",
 		Blurhash:          small.blurhash,
 		Processing:        2,
 		File: gtsmodel.File{
@@ -144,33 +145,24 @@ func (m *manager) processImage(data []byte, contentType string) (*gtsmodel.Media
 			FileSize:    len(small.image),
 			UpdatedAt:   time.Now(),
 			URL:         smallURL,
-			RemoteURL:   minAttachment.Thumbnail.RemoteURL,
+			RemoteURL:   "",
 		},
-		Avatar: minAttachment.Avatar,
-		Header: minAttachment.Header,
+		Avatar: false,
+		Header: false,
 	}
 
 	return attachment, nil
 }
 
-func decodeGif(b []byte, extension string) (*imageAndMeta, error) {
-	var g *gif.GIF
-	var err error
-
-	switch extension {
-	case mimeGif:
-		g, err = gif.DecodeAll(bytes.NewReader(b))
-	default:
-		err = fmt.Errorf("extension %s not recognised", extension)
-	}
-
+func decodeGif(b []byte) (*imageAndMeta, error) {
+	gif, err := gif.DecodeAll(bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
 
 	// use the first frame to get the static characteristics
-	width := g.Config.Width
-	height := g.Config.Height
+	width := gif.Config.Width
+	height := gif.Config.Height
 	size := width * height
 	aspect := float64(width) / float64(height)
 
