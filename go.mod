@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
+	codeberg.org/gruf/go-runners v1.2.0
 	codeberg.org/gruf/go-store v1.1.5
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0

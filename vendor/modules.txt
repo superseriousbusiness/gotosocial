@@ -22,6 +22,9 @@ codeberg.org/gruf/go-nowish
 # codeberg.org/gruf/go-pools v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
+# codeberg.org/gruf/go-runners v1.2.0
+## explicit; go 1.14
+codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-store v1.1.5
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
