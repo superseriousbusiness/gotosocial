@@ -25,7 +25,9 @@ import (
 	"runtime"
 	"strings"
 
+	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -37,18 +39,27 @@ type Manager interface {
 type manager struct {
 	db      db.DB
 	storage *kv.KVStore
-	pool    *workerPool
+	pool    runners.WorkerPool
 }
 
 // New returns a media manager with the given db and underlying storage.
-func New(database db.DB, storage *kv.KVStore) Manager {
+func New(database db.DB, storage *kv.KVStore) (Manager, error) {
 	workers := runtime.NumCPU() / 2
+	queue := workers * 10
+	pool := runners.NewWorkerPool(workers, queue)
 
-	return &manager{
+	if start := pool.Start(); !start {
+		return nil, errors.New("could not start worker pool")
+	}
+	logrus.Debugf("started media manager worker pool with %d workers and queue capacity of %d", workers, queue)
+
+	m := &manager{
 		db:      database,
 		storage: storage,
-		pool:    newWorkerPool(workers),
+		pool:    pool,
 	}
+
+	return m, nil
 }
 
 /*
@@ -77,9 +88,16 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 			return nil, errors.New("image was of size 0")
 		}
 
-		return m.pool.run(func(ctx context.Context, data []byte, contentType string, accountID string) {
-			m.processImage(ctx, data, contentType, accountID)
+		media, err := m.preProcessImage(ctx, data, contentType, accountID)
+		if err != nil {
+			return nil, err
+		}
+
+		m.pool.Enqueue(func(innerCtx context.Context) {
+			
 		})
+
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
 	}

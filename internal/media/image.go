@@ -43,21 +43,55 @@ const (
 	thumbnailMaxHeight = 512
 )
 
-type imageAndMeta struct {
-	image    []byte
-	width    int
-	height   int
-	size     int
-	aspect   float64
-	blurhash string
+type ImageMeta struct {
+	image       []byte
+	contentType string
+	width       int
+	height      int
+	size        int
+	aspect      float64
+	blurhash    string
 }
 
-func (m *manager) processImage(ctx context.Context, data []byte, contentType string, accountID string) {
+func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string) (*Media, error) {
+	id, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
+	extension := strings.Split(contentType, "/")[1]
+
+	attachment := &gtsmodel.MediaAttachment{
+		ID:         id,
+		UpdatedAt:  time.Now(),
+		URL:        uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
+		Type:       gtsmodel.FileTypeImage,
+		AccountID:  accountID,
+		Processing: 0,
+		File: gtsmodel.File{
+			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
+			ContentType: contentType,
+			UpdatedAt:   time.Now(),
+		},
+		Thumbnail: gtsmodel.Thumbnail{
+			URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
+			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
+			ContentType: mimeJpeg,
+			UpdatedAt:   time.Now(),
+		},
+		Avatar: false,
+		Header: false,
+	}
+
+	media := &Media{
+		attachment: attachment,
+	}
+
+	return media, nil
 
 	var clean []byte
-	var err error
-	var original *imageAndMeta
-	var small *imageAndMeta
+	var original *ImageMeta
+	var small *ImageMeta
 
 	switch contentType {
 	case mimeImageJpeg, mimeImagePng:
@@ -79,82 +113,17 @@ func (m *manager) processImage(ctx context.Context, data []byte, contentType str
 		return nil, err
 	}
 
-	small, err = deriveThumbnail(clean, contentType, thumbnailMaxWidth, thumbnailMaxHeight)
+	small, err = deriveThumbnail(clean, contentType)
 	if err != nil {
 		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
 	}
 
 	// now put it in storage, take a new id for the name of the file so we don't store any unnecessary info about it
-	extension := strings.Split(contentType, "/")[1]
-	attachmentID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	originalURL := uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), attachmentID, extension)
-	smallURL := uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), attachmentID, "jpeg") // all thumbnails/smalls are encoded as jpeg
-
-	// we store the original...
-	originalPath := fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, attachmentID, extension)
-	if err := m.storage.Put(originalPath, original.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
-	}
-
-	// and a thumbnail...
-	smallPath := fmt.Sprintf("%s/%s/%s/%s.jpeg", accountID, TypeAttachment, SizeSmall, attachmentID) // all thumbnails/smalls are encoded as jpeg
-	if err := m.storage.Put(smallPath, small.image); err != nil {
-		return nil, fmt.Errorf("storage error: %s", err)
-	}
-
-	attachment := &gtsmodel.MediaAttachment{
-		ID:        attachmentID,
-		StatusID:  "",
-		URL:       originalURL,
-		RemoteURL: "",
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Original: gtsmodel.Original{
-				Width:  original.width,
-				Height: original.height,
-				Size:   original.size,
-				Aspect: original.aspect,
-			},
-			Small: gtsmodel.Small{
-				Width:  small.width,
-				Height: small.height,
-				Size:   small.size,
-				Aspect: small.aspect,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          small.blurhash,
-		Processing:        2,
-		File: gtsmodel.File{
-			Path:        originalPath,
-			ContentType: contentType,
-			FileSize:    len(original.image),
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			Path:        smallPath,
-			ContentType: mimeJpeg, // all thumbnails/smalls are encoded as jpeg
-			FileSize:    len(small.image),
-			UpdatedAt:   time.Now(),
-			URL:         smallURL,
-			RemoteURL:   "",
-		},
-		Avatar: false,
-		Header: false,
-	}
 
 	return attachment, nil
 }
 
-func decodeGif(b []byte) (*imageAndMeta, error) {
+func decodeGif(b []byte) (*ImageMeta, error) {
 	gif, err := gif.DecodeAll(bytes.NewReader(b))
 	if err != nil {
 		return nil, err
@@ -166,7 +135,7 @@ func decodeGif(b []byte) (*imageAndMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &imageAndMeta{
+	return &ImageMeta{
 		image:  b,
 		width:  width,
 		height: height,
@@ -175,7 +144,7 @@ func decodeGif(b []byte) (*imageAndMeta, error) {
 	}, nil
 }
 
-func decodeImage(b []byte, contentType string) (*imageAndMeta, error) {
+func decodeImage(b []byte, contentType string) (*ImageMeta, error) {
 	var i image.Image
 	var err error
 
@@ -201,7 +170,7 @@ func decodeImage(b []byte, contentType string) (*imageAndMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &imageAndMeta{
+	return &ImageMeta{
 		image:  b,
 		width:  width,
 		height: height,
@@ -210,12 +179,12 @@ func decodeImage(b []byte, contentType string) (*imageAndMeta, error) {
 	}, nil
 }
 
-// deriveThumbnail returns a byte slice and metadata for a thumbnail of width x and height y,
+// deriveThumbnail returns a byte slice and metadata for a thumbnail
 // of a given jpeg, png, or gif, or an error if something goes wrong.
 //
 // Note that the aspect ratio of the image will be retained,
 // so it will not necessarily be a square, even if x and y are set as the same value.
-func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMeta, error) {
+func deriveThumbnail(b []byte, contentType string) (*ImageMeta, error) {
 	var i image.Image
 	var err error
 
@@ -239,7 +208,7 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 		return nil, fmt.Errorf("content type %s not recognised", contentType)
 	}
 
-	thumb := resize.Thumbnail(x, y, i, resize.NearestNeighbor)
+	thumb := resize.Thumbnail(thumbnailMaxWidth, thumbnailMaxHeight, i, resize.NearestNeighbor)
 	width := thumb.Bounds().Size().X
 	height := thumb.Bounds().Size().Y
 	size := width * height
@@ -257,7 +226,7 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 	}); err != nil {
 		return nil, err
 	}
-	return &imageAndMeta{
+	return &ImageMeta{
 		image:    out.Bytes(),
 		width:    width,
 		height:   height,
@@ -268,7 +237,7 @@ func deriveThumbnail(b []byte, contentType string, x uint, y uint) (*imageAndMet
 }
 
 // deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
-func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
+func deriveStaticEmoji(b []byte, contentType string) (*ImageMeta, error) {
 	var i image.Image
 	var err error
 
@@ -291,7 +260,7 @@ func deriveStaticEmoji(b []byte, contentType string) (*imageAndMeta, error) {
 	if err := png.Encode(out, i); err != nil {
 		return nil, err
 	}
-	return &imageAndMeta{
+	return &ImageMeta{
 		image: out.Bytes(),
 	}, nil
 }
