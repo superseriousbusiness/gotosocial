@@ -81,23 +81,22 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 
 	switch mainType {
 	case mimeImage:
-		if !supportedImage(contentType) {
-			return nil, fmt.Errorf("image type %s not supported", contentType)
-		}
-		if len(data) == 0 {
-			return nil, errors.New("image was of size 0")
-		}
-
 		media, err := m.preProcessImage(ctx, data, contentType, accountID)
 		if err != nil {
 			return nil, err
 		}
 
 		m.pool.Enqueue(func(innerCtx context.Context) {
-			
+			select {
+			case <-innerCtx.Done():
+				// if the inner context is done that means the worker pool is closing, so we should just return
+				return
+			default:
+				media.PreLoad(innerCtx)
+			}
 		})
 
-		return nil, nil
+		return media, nil
 	default:
 		return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
 	}

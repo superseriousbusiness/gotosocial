@@ -54,6 +54,14 @@ type ImageMeta struct {
 }
 
 func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string) (*Media, error) {
+	if !supportedImage(contentType) {
+		return nil, fmt.Errorf("image type %s not supported", contentType)
+	}
+	
+	if len(data) == 0 {
+		return nil, errors.New("image was of size 0")
+	}
+	
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
@@ -93,21 +101,7 @@ func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType 
 	var original *ImageMeta
 	var small *ImageMeta
 
-	switch contentType {
-	case mimeImageJpeg, mimeImagePng:
-		// first 'clean' image by purging exif data from it
-		var exifErr error
-		if clean, exifErr = purgeExif(data); exifErr != nil {
-			return nil, fmt.Errorf("error cleaning exif data: %s", exifErr)
-		}
-		original, err = decodeImage(clean, contentType)
-	case mimeImageGif:
-		// gifs are already clean - no exif data to remove
-		clean = data
-		original, err = decodeGif(clean)
-	default:
-		err = fmt.Errorf("content type %s not a processible image type", contentType)
-	}
+	
 
 	if err != nil {
 		return nil, err
