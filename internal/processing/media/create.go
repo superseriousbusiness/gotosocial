@@ -24,11 +24,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
@@ -46,29 +44,15 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, errors.New("could not read provided attachment: size 0 bytes")
 	}
 
-	// now parse the focus parameter
-	focusx, focusy, err := parseFocus(form.Focus)
+	// process the media and load it immediately
+	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't parse attachment focus: %s", err)
+		return nil, err
 	}
 
-	minAttachment := &gtsmodel.MediaAttachment{
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		AccountID:   account.ID,
-		Description: text.SanitizeCaption(form.Description),
-		FileMeta: gtsmodel.FileMeta{
-			Focus: gtsmodel.Focus{
-				X: focusx,
-				Y: focusy,
-			},
-		},
-	}
-
-	// allow the mediaManager to work its magic of processing the attachment bytes, and putting them in whatever storage backend we're using
-	attachment, err := p.mediaManager.ProcessAttachment(ctx, buf.Bytes(), minAttachment)
+	attachment, err := media.Load(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error reading attachment: %s", err)
+		return nil, err
 	}
 
 	// prepare the frontend representation now -- if there are any errors here at least we can bail without

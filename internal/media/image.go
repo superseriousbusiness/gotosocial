@@ -20,22 +20,16 @@ package media
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"strings"
-	"time"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/nfnt/resize"
 	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
@@ -51,70 +45,6 @@ type ImageMeta struct {
 	size        int
 	aspect      float64
 	blurhash    string
-}
-
-func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string) (*Media, error) {
-	if !supportedImage(contentType) {
-		return nil, fmt.Errorf("image type %s not supported", contentType)
-	}
-	
-	if len(data) == 0 {
-		return nil, errors.New("image was of size 0")
-	}
-	
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	extension := strings.Split(contentType, "/")[1]
-
-	attachment := &gtsmodel.MediaAttachment{
-		ID:         id,
-		UpdatedAt:  time.Now(),
-		URL:        uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
-		Type:       gtsmodel.FileTypeImage,
-		AccountID:  accountID,
-		Processing: 0,
-		File: gtsmodel.File{
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
-			ContentType: contentType,
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-			ContentType: mimeJpeg,
-			UpdatedAt:   time.Now(),
-		},
-		Avatar: false,
-		Header: false,
-	}
-
-	media := &Media{
-		attachment: attachment,
-	}
-
-	return media, nil
-
-	var clean []byte
-	var original *ImageMeta
-	var small *ImageMeta
-
-	
-
-	if err != nil {
-		return nil, err
-	}
-
-	small, err = deriveThumbnail(clean, contentType)
-	if err != nil {
-		return nil, fmt.Errorf("error deriving thumbnail: %s", err)
-	}
-
-	// now put it in storage, take a new id for the name of the file so we don't store any unnecessary info about it
-
-	return attachment, nil
 }
 
 func decodeGif(b []byte) (*ImageMeta, error) {

@@ -24,11 +24,15 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
@@ -92,6 +96,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 				// if the inner context is done that means the worker pool is closing, so we should just return
 				return
 			default:
+				// start preloading the media for the caller's convenience
 				media.PreLoad(innerCtx)
 			}
 		})
@@ -100,4 +105,55 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 	default:
 		return nil, fmt.Errorf("content type %s not (yet) supported", contentType)
 	}
+}
+
+// preProcessImage initializes processing
+func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string) (*Media, error) {
+	if !supportedImage(contentType) {
+		return nil, fmt.Errorf("image type %s not supported", contentType)
+	}
+
+	if len(data) == 0 {
+		return nil, errors.New("image was of size 0")
+	}
+
+	id, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
+	extension := strings.Split(contentType, "/")[1]
+
+	attachment := &gtsmodel.MediaAttachment{
+		ID:         id,
+		UpdatedAt:  time.Now(),
+		URL:        uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
+		Type:       gtsmodel.FileTypeImage,
+		AccountID:  accountID,
+		Processing: 0,
+		File: gtsmodel.File{
+			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
+			ContentType: contentType,
+			UpdatedAt:   time.Now(),
+		},
+		Thumbnail: gtsmodel.Thumbnail{
+			URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
+			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
+			ContentType: mimeJpeg,
+			UpdatedAt:   time.Now(),
+		},
+		Avatar: false,
+		Header: false,
+	}
+
+	media := &Media{
+		attachment:    attachment,
+		rawData:       data,
+		thumbstate:    received,
+		fullSizeState: received,
+		database:      m.db,
+		storage:       m.storage,
+	}
+
+	return media, nil
 }
