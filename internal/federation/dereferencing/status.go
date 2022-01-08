@@ -393,9 +393,15 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 		a.AccountID = status.AccountID
 		a.StatusID = status.ID
 
-		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, a)
+		media, err := d.GetRemoteMedia(ctx, requestingUsername, a.AccountID, a.RemoteURL)
 		if err != nil {
-			logrus.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
+			logrus.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
+			continue
+		}
+
+		attachment, err := media.LoadAttachment(ctx)
+		if err != nil {
+			logrus.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
 			continue
 		}
 

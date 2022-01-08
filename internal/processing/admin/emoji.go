@@ -27,7 +27,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
@@ -49,25 +48,19 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, errors.New("could not read provided emoji: size 0 bytes")
 	}
 
-	// allow the mediaManager to work its magic of processing the emoji bytes, and putting them in whatever storage backend we're using
-	emoji, err := p.mediaManager.ProcessLocalEmoji(ctx, buf.Bytes(), form.Shortcode)
-	if err != nil {
-		return nil, fmt.Errorf("error reading emoji: %s", err)
-	}
-
-	emojiID, err := id.NewULID()
+	media, err := p.mediaManager.ProcessEmoji(ctx, buf.Bytes(), account.ID, "")
 	if err != nil {
 		return nil, err
 	}
-	emoji.ID = emojiID
+
+	emoji, err := media.LoadEmoji(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, emoji)
 	if err != nil {
 		return nil, fmt.Errorf("error converting emoji to apitype: %s", err)
-	}
-
-	if err := p.db.Put(ctx, emoji); err != nil {
-		return nil, fmt.Errorf("database error while processing emoji: %s", err)
 	}
 
 	return &apiEmoji, nil

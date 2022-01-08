@@ -1,9 +1,28 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package media
 
 import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -26,7 +45,8 @@ type Media struct {
 		attachment will be updated incrementally as media goes through processing
 	*/
 
-	attachment *gtsmodel.MediaAttachment
+	attachment *gtsmodel.MediaAttachment // will only be set if the media is an attachment
+	emoji      *gtsmodel.Emoji           // will only be set if the media is an emoji
 	rawData    []byte
 
 	/*
@@ -86,17 +106,10 @@ func (m *Media) Thumb(ctx context.Context) (*ImageMeta, error) {
 		m.attachment.Thumbnail.FileSize = thumb.size
 
 		// put or update the attachment in the database
-		if err := m.database.Put(ctx, m.attachment); err != nil {
-			if err != db.ErrAlreadyExists {
-				m.err = fmt.Errorf("error putting attachment: %s", err)
-				m.thumbstate = errored
-				return nil, m.err
-			}
-			if err := m.database.UpdateByPrimaryKey(ctx, m.attachment); err != nil {
-				m.err = fmt.Errorf("error updating attachment: %s", err)
-				m.thumbstate = errored
-				return nil, m.err
-			}
+		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
+			m.err = err
+			m.thumbstate = errored
+			return nil, err
 		}
 
 		// set the thumbnail of this media
@@ -148,6 +161,30 @@ func (m *Media) FullSize(ctx context.Context) (*ImageMeta, error) {
 			return nil, err
 		}
 
+		// put the full size in storage
+		if err := m.storage.Put(m.attachment.File.Path, decoded.image); err != nil {
+			m.err = fmt.Errorf("error storing full size image: %s", err)
+			m.fullSizeState = errored
+			return nil, m.err
+		}
+
+		// set appropriate fields on the attachment based on the image we derived
+		m.attachment.FileMeta.Original = gtsmodel.Original{
+			Width:  decoded.width,
+			Height: decoded.height,
+			Size:   decoded.size,
+			Aspect: decoded.aspect,
+		}
+		m.attachment.File.FileSize = decoded.size
+		m.attachment.File.UpdatedAt = time.Now()
+
+		// put or update the attachment in the database
+		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
+			m.err = err
+			m.fullSizeState = errored
+			return nil, err
+		}
+
 		// set the fullsize of this media
 		m.fullSize = decoded
 
@@ -163,17 +200,46 @@ func (m *Media) FullSize(ctx context.Context) (*ImageMeta, error) {
 	return nil, fmt.Errorf("full size processing status %d unknown", m.fullSizeState)
 }
 
-// PreLoad begins the process of deriving the thumbnail and encoding the full-size image.
+func (m *Media) SetAsAvatar(ctx context.Context) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.attachment.Avatar = true
+	return putOrUpdateAttachment(ctx, m.database, m.attachment)
+}
+
+func (m *Media) SetAsHeader(ctx context.Context) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.attachment.Header = true
+	return putOrUpdateAttachment(ctx, m.database, m.attachment)
+}
+
+func (m *Media) SetStatusID(ctx context.Context, statusID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.attachment.StatusID = statusID
+	return putOrUpdateAttachment(ctx, m.database, m.attachment)
+}
+
+// AttachmentID returns the ID of the underlying media attachment without blocking processing.
+func (m *Media) AttachmentID() string {
+	return m.attachment.ID
+}
+
+// preLoad begins the process of deriving the thumbnail and encoding the full-size image.
 // It does this in a non-blocking way, so you can call it and then come back later and check
 // if it's finished.
-func (m *Media) PreLoad(ctx context.Context) {
+func (m *Media) preLoad(ctx context.Context) {
 	go m.Thumb(ctx)
 	go m.FullSize(ctx)
 }
 
 // Load is the blocking equivalent of pre-load. It makes sure the thumbnail and full-size image
 // have been processed, then it returns the full-size image.
-func (m *Media) Load(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
+func (m *Media) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
 	if _, err := m.Thumb(ctx); err != nil {
 		return nil, err
 	}
@@ -183,4 +249,21 @@ func (m *Media) Load(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
 	}
 
 	return m.attachment, nil
+}
+
+func (m *Media) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
+	return nil, nil
+}
+
+func putOrUpdateAttachment(ctx context.Context, database db.DB, attachment *gtsmodel.MediaAttachment) error {
+	if err := database.Put(ctx, attachment); err != nil {
+		if err != db.ErrAlreadyExists {
+			return fmt.Errorf("putOrUpdateAttachment: proper error while putting attachment: %s", err)
+		}
+		if err := database.UpdateByPrimaryKey(ctx, attachment); err != nil {
+			return fmt.Errorf("putOrUpdateAttachment: error while updating attachment: %s", err)
+		}
+	}
+
+	return nil
 }

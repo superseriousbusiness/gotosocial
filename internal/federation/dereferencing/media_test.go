@@ -31,6 +31,8 @@ type AttachmentTestSuite struct {
 }
 
 func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
+	ctx := context.Background()
+	
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	attachmentOwner := "01FENS9F666SEQ6TYQWEEY78GM"
@@ -39,18 +41,12 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	attachmentURL := "https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"
 	attachmentDescription := "It's a cute plushie."
 
-	minAttachment := &gtsmodel.MediaAttachment{
-		RemoteURL: attachmentURL,
-		AccountID: attachmentOwner,
-		StatusID:  attachmentStatus,
-		File: gtsmodel.File{
-			ContentType: attachmentContentType,
-		},
-		Description: attachmentDescription,
-	}
-
-	attachment, err := suite.dereferencer.GetRemoteAttachment(context.Background(), fetchingAccount.Username, minAttachment)
+	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL)
 	suite.NoError(err)
+
+	attachment, err := media.LoadAttachment(ctx)
+	suite.NoError(err)
+
 	suite.NotNil(attachment)
 
 	suite.Equal(attachmentOwner, attachment.AccountID)

@@ -246,25 +246,49 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 	}
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaManager.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
-			RemoteURL: targetAccount.AvatarRemoteURL,
-			Avatar:    true,
-		}, targetAccount.ID)
+		avatarIRI, err := url.Parse(targetAccount.AvatarRemoteURL)
 		if err != nil {
-			return fmt.Errorf("error processing avatar for user: %s", err)
+			return err
 		}
-		targetAccount.AvatarMediaAttachmentID = a.ID
+
+		data, err := t.DereferenceMedia(ctx, avatarIRI)
+		if err != nil {
+			return err
+		}
+
+		media, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, targetAccount.AvatarRemoteURL)
+		if err != nil {
+			return err
+		}
+
+		if err := media.SetAsAvatar(ctx); err != nil {
+			return err
+		}
+
+		targetAccount.AvatarMediaAttachmentID = media.AttachmentID()
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
-		a, err := d.mediaManager.ProcessRemoteHeaderOrAvatar(ctx, t, &gtsmodel.MediaAttachment{
-			RemoteURL: targetAccount.HeaderRemoteURL,
-			Header:    true,
-		}, targetAccount.ID)
+		headerIRI, err := url.Parse(targetAccount.HeaderRemoteURL)
 		if err != nil {
-			return fmt.Errorf("error processing header for user: %s", err)
+			return err
 		}
-		targetAccount.HeaderMediaAttachmentID = a.ID
+
+		data, err := t.DereferenceMedia(ctx, headerIRI)
+		if err != nil {
+			return err
+		}
+
+		media, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, targetAccount.HeaderRemoteURL)
+		if err != nil {
+			return err
+		}
+
+		if err := media.SetAsHeader(ctx); err != nil {
+			return err
+		}
+
+		targetAccount.HeaderMediaAttachmentID = media.AttachmentID()
 	}
 	return nil
 }

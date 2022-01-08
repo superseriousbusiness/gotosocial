@@ -44,13 +44,13 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, errors.New("could not read provided attachment: size 0 bytes")
 	}
 
-	// process the media and load it immediately
-	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID)
+	// process the media attachment and load it immediately
+	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID, "")
 	if err != nil {
 		return nil, err
 	}
 
-	attachment, err := media.Load(ctx)
+	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -60,11 +60,6 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	apiAttachment, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing media attachment to frontend type: %s", err)
-	}
-
-	// now we can confidently put the attachment in the database
-	if err := p.db.Put(ctx, attachment); err != nil {
-		return nil, fmt.Errorf("error storing media attachment in db: %s", err)
 	}
 
 	return &apiAttachment, nil

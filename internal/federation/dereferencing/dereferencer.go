@@ -41,34 +41,7 @@ type Dereferencer interface {
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
-	// GetRemoteAttachment takes a minimal attachment struct and converts it into a fully fleshed out attachment, stored in the database and instance storage.
-	//
-	// The parameter minAttachment must have at least the following fields defined:
-	//   * minAttachment.RemoteURL
-	//   * minAttachment.AccountID
-	//   * minAttachment.File.ContentType
-	//
-	// The returned attachment will have an ID generated for it, so no need to generate one beforehand.
-	// A blurhash will also be generated for the attachment.
-	//
-	// Most other fields will be preserved on the passed attachment, including:
-	//   * minAttachment.StatusID
-	//   * minAttachment.CreatedAt
-	//   * minAttachment.UpdatedAt
-	//   * minAttachment.FileMeta
-	//   * minAttachment.AccountID
-	//   * minAttachment.Description
-	//   * minAttachment.ScheduledStatusID
-	//   * minAttachment.Thumbnail.RemoteURL
-	//   * minAttachment.Avatar
-	//   * minAttachment.Header
-	//
-	// GetRemoteAttachment will return early if an attachment with the same value as minAttachment.RemoteURL
-	// is found in the database -- then that attachment will be returned and nothing else will be changed or stored.
-	GetRemoteAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
-	// RefreshAttachment is like GetRemoteAttachment, but the attachment will always be dereferenced again,
-	// whether or not it was already stored in the database.
-	RefreshAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
+	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string) (*media.Media, error)
 
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error

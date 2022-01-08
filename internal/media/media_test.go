@@ -16,19 +16,50 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package media_test
 
 import (
+	"testing"
+
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
-func NewTestMediaManager(db db.DB, storage *kv.KVStore) media.Manager {
-	m, err := media.New(db, storage)
+type MediaStandardTestSuite struct {
+	suite.Suite
+
+	db      db.DB
+	storage *kv.KVStore
+	manager media.Manager
+}
+
+func (suite *MediaStandardTestSuite) SetupSuite() {
+	testrig.InitTestLog()
+	testrig.InitTestConfig()
+
+	suite.db = testrig.NewTestDB()
+	suite.storage = testrig.NewTestStorage()
+}
+
+func (suite *MediaStandardTestSuite) SetupTest() {
+	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
+	testrig.StandardDBSetup(suite.db, nil)
+
+	m, err := media.New(suite.db, suite.storage)
 	if err != nil {
 		panic(err)
 	}
-	return m
+	suite.manager = m
+}
+
+func (suite *MediaStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
+}
+
+func TestMediaStandardTestSuite(t *testing.T) {
+	suite.Run(t, &MediaStandardTestSuite{})
 }

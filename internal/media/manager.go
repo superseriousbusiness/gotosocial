@@ -37,7 +37,17 @@ import (
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
-	ProcessMedia(ctx context.Context, data []byte, accountID string) (*Media, error)
+	// ProcessMedia begins the process of decoding and storing the given data as a piece of media (aka an attachment).
+	// It will return a pointer to a Media struct upon which further actions can be performed, such as getting
+	// the finished media, thumbnail, decoded bytes, attachment, and setting additional fields.
+	//
+	// accountID should be the account that the media belongs to.
+	//
+	// RemoteURL is optional, and can be an empty string. Setting this to a non-empty string indicates that
+	// the piece of media originated on a remote instance and has been dereferenced to be cached locally.
+	ProcessMedia(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)
+
+	ProcessEmoji(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)
 }
 
 type manager struct {
@@ -70,7 +80,7 @@ func New(database db.DB, storage *kv.KVStore) (Manager, error) {
 	INTERFACE FUNCTIONS
 */
 
-func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string) (*Media, error) {
+func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error) {
 	contentType, err := parseContentType(data)
 	if err != nil {
 		return nil, err
@@ -85,7 +95,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 
 	switch mainType {
 	case mimeImage:
-		media, err := m.preProcessImage(ctx, data, contentType, accountID)
+		media, err := m.preProcessImage(ctx, data, contentType, accountID, remoteURL)
 		if err != nil {
 			return nil, err
 		}
@@ -97,7 +107,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 				return
 			default:
 				// start preloading the media for the caller's convenience
-				media.PreLoad(innerCtx)
+				media.preLoad(innerCtx)
 			}
 		})
 
@@ -107,8 +117,12 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 	}
 }
 
+func (m *manager) ProcessEmoji(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)  {
+	return nil, nil
+}
+
 // preProcessImage initializes processing
-func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string) (*Media, error) {
+func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string, remoteURL string) (*Media, error) {
 	if !supportedImage(contentType) {
 		return nil, fmt.Errorf("image type %s not supported", contentType)
 	}
@@ -128,6 +142,7 @@ func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType 
 		ID:         id,
 		UpdatedAt:  time.Now(),
 		URL:        uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
+		RemoteURL:  remoteURL,
 		Type:       gtsmodel.FileTypeImage,
 		AccountID:  accountID,
 		Processing: 0,

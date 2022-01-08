@@ -28,18 +28,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL, expectedContentType string) ([]byte, error) {
+func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) ([]byte, error) {
 	l := logrus.WithField("func", "DereferenceMedia")
 	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-	if expectedContentType == "" {
-		req.Header.Add("Accept", "*/*")
-	} else {
-		req.Header.Add("Accept", expectedContentType)
-	}
+
+	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
 	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
 	req.Header.Set("Host", iri.Host)
