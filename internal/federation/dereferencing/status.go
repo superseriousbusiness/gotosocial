@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 // EnrichRemoteStatus takes a status that's already been inserted into the database in a minimal form,
@@ -393,7 +394,13 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 		a.AccountID = status.AccountID
 		a.StatusID = status.ID
 
-		media, err := d.GetRemoteMedia(ctx, requestingUsername, a.AccountID, a.RemoteURL)
+		media, err := d.GetRemoteMedia(ctx, requestingUsername, a.AccountID, a.RemoteURL, &media.AdditionalInfo{
+			CreatedAt:   &a.CreatedAt,
+			StatusID:    &a.StatusID,
+			RemoteURL:   &a.RemoteURL,
+			Description: &a.Description,
+			Blurhash:    &a.Blurhash,
+		})
 		if err != nil {
 			logrus.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
 			continue

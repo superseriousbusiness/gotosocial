@@ -108,7 +108,7 @@ func decodeImage(b []byte, contentType string) (*ImageMeta, error) {
 //
 // Note that the aspect ratio of the image will be retained,
 // so it will not necessarily be a square, even if x and y are set as the same value.
-func deriveThumbnail(b []byte, contentType string) (*ImageMeta, error) {
+func deriveThumbnail(b []byte, contentType string, createBlurhash bool) (*ImageMeta, error) {
 	var i image.Image
 	var err error
 
@@ -138,10 +138,20 @@ func deriveThumbnail(b []byte, contentType string) (*ImageMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	tiny := resize.Thumbnail(32, 32, thumb, resize.NearestNeighbor)
-	bh, err := blurhash.Encode(4, 3, tiny)
-	if err != nil {
-		return nil, err
+	im := &ImageMeta{
+		width:  width,
+		height: height,
+		size:   size,
+		aspect: aspect,
+	}
+
+	if createBlurhash {
+		tiny := resize.Thumbnail(32, 32, thumb, resize.NearestNeighbor)
+		bh, err := blurhash.Encode(4, 3, tiny)
+		if err != nil {
+			return nil, err
+		}
+		im.blurhash = bh
 	}
 
 	out := &bytes.Buffer{}
@@ -150,14 +160,10 @@ func deriveThumbnail(b []byte, contentType string) (*ImageMeta, error) {
 	}); err != nil {
 		return nil, err
 	}
-	return &ImageMeta{
-		image:    out.Bytes(),
-		width:    width,
-		height:   height,
-		size:     size,
-		aspect:   aspect,
-		blurhash: bh,
-	}, nil
+
+	im.image = out.Bytes()
+
+	return im, nil
 }
 
 // deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.

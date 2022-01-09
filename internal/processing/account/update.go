@@ -33,6 +33,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -163,16 +164,15 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 	}
 
 	// do the setting
-	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, "")
+	isAvatar := true
+	processingMedia, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, &media.AdditionalInfo{
+		Avatar: &isAvatar,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
 	}
 
-	if err := media.SetAsAvatar(ctx); err != nil {
-		return nil, fmt.Errorf("UpdateAvatar: error setting media as avatar: %s", err)
-	}
-
-	return media.LoadAttachment(ctx)
+	return processingMedia.LoadAttachment(ctx)
 }
 
 // UpdateHeader does the dirty work of checking the header part of an account update form,
@@ -206,16 +206,15 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 	}
 
 	// do the setting
-	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, "")
+	isHeader := true
+	processingMedia, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, &media.AdditionalInfo{
+		Header: &isHeader,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
 	}
 
-	if err := media.SetAsHeader(ctx); err != nil {
-		return nil, fmt.Errorf("UpdateHeader: error setting media as header: %s", err)
-	}
-
-	return media.LoadAttachment(ctx)
+	return processingMedia.LoadAttachment(ctx)
 }
 
 func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {

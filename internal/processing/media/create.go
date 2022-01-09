@@ -27,6 +27,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
@@ -44,8 +45,17 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, errors.New("could not read provided attachment: size 0 bytes")
 	}
 
+	focusX, focusY, err := parseFocus(form.Focus)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse focus value %s: %s", form.Focus, err)
+	}
+
 	// process the media attachment and load it immediately
-	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID, "")
+	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID, &media.AdditionalInfo{
+		Description: &form.Description,
+		FocusX:      &focusX,
+		FocusY:      &focusY,
+	})
 	if err != nil {
 		return nil, err
 	}

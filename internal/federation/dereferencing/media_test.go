@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 type AttachmentTestSuite struct {
@@ -32,7 +33,7 @@ type AttachmentTestSuite struct {
 
 func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	ctx := context.Background()
-	
+
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	attachmentOwner := "01FENS9F666SEQ6TYQWEEY78GM"
@@ -40,8 +41,14 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	attachmentContentType := "image/jpeg"
 	attachmentURL := "https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"
 	attachmentDescription := "It's a cute plushie."
+	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
 
-	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL)
+	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalInfo{
+		StatusID:    &attachmentStatus,
+		RemoteURL:   &attachmentURL,
+		Description: &attachmentDescription,
+		Blurhash:    &attachmentBlurhash,
+	})
 	suite.NoError(err)
 
 	attachment, err := media.LoadAttachment(ctx)
@@ -61,7 +68,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	suite.Equal(2071680, attachment.FileMeta.Original.Size)
 	suite.Equal(1245, attachment.FileMeta.Original.Height)
 	suite.Equal(1664, attachment.FileMeta.Original.Width)
-	suite.Equal("LwP?p=aK_4%N%MRjWXt7%hozM_a}", attachment.Blurhash)
+	suite.Equal(attachmentBlurhash, attachment.Blurhash)
 	suite.Equal(gtsmodel.ProcessingStatusProcessed, attachment.Processing)
 	suite.NotEmpty(attachment.File.Path)
 	suite.Equal(attachmentContentType, attachment.File.ContentType)
@@ -87,7 +94,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	suite.Equal(2071680, dbAttachment.FileMeta.Original.Size)
 	suite.Equal(1245, dbAttachment.FileMeta.Original.Height)
 	suite.Equal(1664, dbAttachment.FileMeta.Original.Width)
-	suite.Equal("LwP?p=aK_4%N%MRjWXt7%hozM_a}", dbAttachment.Blurhash)
+	suite.Equal(attachmentBlurhash, dbAttachment.Blurhash)
 	suite.Equal(gtsmodel.ProcessingStatusProcessed, dbAttachment.Processing)
 	suite.NotEmpty(dbAttachment.File.Path)
 	suite.Equal(attachmentContentType, dbAttachment.File.ContentType)

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
@@ -256,16 +257,16 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		media, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, targetAccount.AvatarRemoteURL)
+		avatar := true
+		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
+			RemoteURL: &targetAccount.AvatarRemoteURL,
+			Avatar: &avatar,
+		})
 		if err != nil {
 			return err
 		}
 
-		if err := media.SetAsAvatar(ctx); err != nil {
-			return err
-		}
-
-		targetAccount.AvatarMediaAttachmentID = media.AttachmentID()
+		targetAccount.AvatarMediaAttachmentID = processingMedia.AttachmentID()
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
@@ -279,16 +280,16 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		media, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, targetAccount.HeaderRemoteURL)
+		header := true
+		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
+			RemoteURL: &targetAccount.HeaderRemoteURL,
+			Header: &header,
+		})
 		if err != nil {
 			return err
 		}
 
-		if err := media.SetAsHeader(ctx); err != nil {
-			return err
-		}
-
-		targetAccount.HeaderMediaAttachmentID = media.AttachmentID()
+		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
 	}
 	return nil
 }

@@ -47,7 +47,8 @@ type Media struct {
 
 	attachment *gtsmodel.MediaAttachment // will only be set if the media is an attachment
 	emoji      *gtsmodel.Emoji           // will only be set if the media is an emoji
-	rawData    []byte
+
+	rawData []byte
 
 	/*
 		below fields represent the processing state of the media thumbnail
@@ -81,7 +82,15 @@ func (m *Media) Thumb(ctx context.Context) (*ImageMeta, error) {
 	switch m.thumbstate {
 	case received:
 		// we haven't processed a thumbnail for this media yet so do it now
-		thumb, err := deriveThumbnail(m.rawData, m.attachment.File.ContentType)
+
+		// check if we need to create a blurhash or if there's already one set
+		var createBlurhash bool
+		if m.attachment.Blurhash == "" {
+			// no blurhash created yet
+			createBlurhash = true
+		}
+
+		thumb, err := deriveThumbnail(m.rawData, m.attachment.File.ContentType, createBlurhash)
 		if err != nil {
 			m.err = fmt.Errorf("error deriving thumbnail: %s", err)
 			m.thumbstate = errored
@@ -96,7 +105,10 @@ func (m *Media) Thumb(ctx context.Context) (*ImageMeta, error) {
 		}
 
 		// set appropriate fields on the attachment based on the thumbnail we derived
-		m.attachment.Blurhash = thumb.blurhash
+		if createBlurhash {
+			m.attachment.Blurhash = thumb.blurhash
+		}
+
 		m.attachment.FileMeta.Small = gtsmodel.Small{
 			Width:  thumb.width,
 			Height: thumb.height,
@@ -105,7 +117,6 @@ func (m *Media) Thumb(ctx context.Context) (*ImageMeta, error) {
 		}
 		m.attachment.Thumbnail.FileSize = thumb.size
 
-		// put or update the attachment in the database
 		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
 			m.err = err
 			m.thumbstate = errored
@@ -177,8 +188,8 @@ func (m *Media) FullSize(ctx context.Context) (*ImageMeta, error) {
 		}
 		m.attachment.File.FileSize = decoded.size
 		m.attachment.File.UpdatedAt = time.Now()
+		m.attachment.Processing = gtsmodel.ProcessingStatusProcessed
 
-		// put or update the attachment in the database
 		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
 			m.err = err
 			m.fullSizeState = errored
@@ -200,30 +211,6 @@ func (m *Media) FullSize(ctx context.Context) (*ImageMeta, error) {
 	return nil, fmt.Errorf("full size processing status %d unknown", m.fullSizeState)
 }
 
-func (m *Media) SetAsAvatar(ctx context.Context) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.attachment.Avatar = true
-	return putOrUpdateAttachment(ctx, m.database, m.attachment)
-}
-
-func (m *Media) SetAsHeader(ctx context.Context) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.attachment.Header = true
-	return putOrUpdateAttachment(ctx, m.database, m.attachment)
-}
-
-func (m *Media) SetStatusID(ctx context.Context, statusID string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.attachment.StatusID = statusID
-	return putOrUpdateAttachment(ctx, m.database, m.attachment)
-}
-
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
 func (m *Media) AttachmentID() string {
 	return m.attachment.ID
@@ -237,8 +224,8 @@ func (m *Media) preLoad(ctx context.Context) {
 	go m.FullSize(ctx)
 }
 
-// Load is the blocking equivalent of pre-load. It makes sure the thumbnail and full-size image
-// have been processed, then it returns the full-size image.
+// Load is the blocking equivalent of pre-load. It makes sure the thumbnail and full-size
+// image have been processed, then it returns the completed attachment.
 func (m *Media) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
 	if _, err := m.Thumb(ctx); err != nil {
 		return nil, err
@@ -255,6 +242,8 @@ func (m *Media) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
 	return nil, nil
 }
 
+// putOrUpdateAttachment is just a convenience function for first trying to PUT the attachment in the database,
+// and then if that doesn't work because the attachment already exists, updating it instead.
 func putOrUpdateAttachment(ctx context.Context, database db.DB, attachment *gtsmodel.MediaAttachment) error {
 	if err := database.Put(ctx, attachment); err != nil {
 		if err != db.ErrAlreadyExists {

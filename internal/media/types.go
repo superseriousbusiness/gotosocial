@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/h2non/filetype"
 )
@@ -66,6 +67,31 @@ const (
 	TypeAvatar     Type = "avatar"     // TypeAvatar is the key for profile avatar requests
 	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
 )
+
+// AdditionalInfo represents additional information that should be added to an attachment
+// when processing a piece of media.
+type AdditionalInfo struct {
+	// Time that this media was created; defaults to time.Now().
+	CreatedAt *time.Time
+	// ID of the status to which this media is attached; defaults to "".
+	StatusID *string
+	// URL of the media on a remote instance; defaults to "".
+	RemoteURL *string
+	// Image description of this media; defaults to "".
+	Description *string
+	// Blurhash of this media; defaults to "".
+	Blurhash *string
+	// ID of the scheduled status to which this media is attached; defaults to "".
+	ScheduledStatusID *string
+	// Mark this media as in-use as an avatar; defaults to false.
+	Avatar *bool
+	// Mark this media as in-use as a header; defaults to false.
+	Header *bool
+	// X focus coordinate for this media; defaults to 0.
+	FocusX *float32
+	// Y focus coordinate for this media; defaults to 0.
+	FocusY *float32
+}
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.

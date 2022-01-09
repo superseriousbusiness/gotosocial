@@ -48,7 +48,7 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, errors.New("could not read provided emoji: size 0 bytes")
 	}
 
-	media, err := p.mediaManager.ProcessEmoji(ctx, buf.Bytes(), account.ID, "")
+	media, err := p.mediaManager.ProcessEmoji(ctx, buf.Bytes(), account.ID)
 	if err != nil {
 		return nil, err
 	}

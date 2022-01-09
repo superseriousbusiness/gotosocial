@@ -45,9 +45,9 @@ type Manager interface {
 	//
 	// RemoteURL is optional, and can be an empty string. Setting this to a non-empty string indicates that
 	// the piece of media originated on a remote instance and has been dereferenced to be cached locally.
-	ProcessMedia(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)
+	ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Media, error)
 
-	ProcessEmoji(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)
+	ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Media, error)
 }
 
 type manager struct {
@@ -80,7 +80,7 @@ func New(database db.DB, storage *kv.KVStore) (Manager, error) {
 	INTERFACE FUNCTIONS
 */
 
-func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error) {
+func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Media, error) {
 	contentType, err := parseContentType(data)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 
 	switch mainType {
 	case mimeImage:
-		media, err := m.preProcessImage(ctx, data, contentType, accountID, remoteURL)
+		media, err := m.preProcessImage(ctx, data, contentType, accountID, ai)
 		if err != nil {
 			return nil, err
 		}
@@ -117,12 +117,12 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 	}
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data []byte, accountID string, remoteURL string) (*Media, error)  {
+func (m *manager) ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Media, error) {
 	return nil, nil
 }
 
 // preProcessImage initializes processing
-func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string, remoteURL string) (*Media, error) {
+func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string, ai *AdditionalInfo) (*Media, error) {
 	if !supportedImage(contentType) {
 		return nil, fmt.Errorf("image type %s not supported", contentType)
 	}
@@ -139,13 +139,24 @@ func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType 
 	extension := strings.Split(contentType, "/")[1]
 
 	attachment := &gtsmodel.MediaAttachment{
-		ID:         id,
-		UpdatedAt:  time.Now(),
-		URL:        uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
-		RemoteURL:  remoteURL,
-		Type:       gtsmodel.FileTypeImage,
-		AccountID:  accountID,
-		Processing: 0,
+		ID:        id,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		StatusID:  "",
+		URL:       uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
+		RemoteURL: "",
+		Type:      gtsmodel.FileTypeImage,
+		FileMeta: gtsmodel.FileMeta{
+			Focus: gtsmodel.Focus{
+				X: 0,
+				Y: 0,
+			},
+		},
+		AccountID:         accountID,
+		Description:       "",
+		ScheduledStatusID: "",
+		Blurhash:          "",
+		Processing:        0,
 		File: gtsmodel.File{
 			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
 			ContentType: contentType,
@@ -159,6 +170,49 @@ func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType 
 		},
 		Avatar: false,
 		Header: false,
+	}
+
+	// check if we have additional info to add to the attachment
+	if ai != nil {
+		if ai.CreatedAt != nil {
+			attachment.CreatedAt = *ai.CreatedAt
+		}
+
+		if ai.StatusID != nil {
+			attachment.StatusID = *ai.StatusID
+		}
+
+		if ai.RemoteURL != nil {
+			attachment.RemoteURL = *ai.RemoteURL
+		}
+
+		if ai.Description != nil {
+			attachment.Description = *ai.Description
+		}
+
+		if ai.ScheduledStatusID != nil {
+			attachment.ScheduledStatusID = *ai.ScheduledStatusID
+		}
+
+		if ai.Blurhash != nil {
+			attachment.Blurhash = *ai.Blurhash
+		}
+
+		if ai.Avatar != nil {
+			attachment.Avatar = *ai.Avatar
+		}
+
+		if ai.Header != nil {
+			attachment.Header = *ai.Header
+		}
+
+		if ai.FocusX != nil {
+			attachment.FileMeta.Focus.X = *ai.FocusX
+		}
+
+		if ai.FocusY != nil {
+			attachment.FileMeta.Focus.Y = *ai.FocusY
+		}
 	}
 
 	media := &Media{

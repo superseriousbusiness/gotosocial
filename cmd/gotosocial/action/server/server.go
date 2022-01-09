@@ -105,7 +105,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// build backend handlers
-	mediaManager := media.New(dbService, storage)
+	mediaManager, err := media.New(dbService, storage)
+	if err != nil {
+		return fmt.Errorf("error creating media manager: %s", err)
+	}
 	oauthServer := oauth.New(ctx, dbService)
 	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
