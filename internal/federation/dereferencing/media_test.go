@@ -21,6 +21,7 @@ package dereferencing_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -31,7 +32,7 @@ type AttachmentTestSuite struct {
 	DereferencerStandardTestSuite
 }
 
-func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
+func (suite *AttachmentTestSuite) TestDereferenceAttachmentBlocking() {
 	ctx := context.Background()
 
 	fetchingAccount := suite.testAccounts["local_account_1"]
@@ -51,6 +52,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 	})
 	suite.NoError(err)
 
+	// make a blocking call to load the attachment from the in-process media 
 	attachment, err := media.LoadAttachment(ctx)
 	suite.NoError(err)
 
@@ -102,6 +104,59 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentOK() {
 
 	suite.NotEmpty(dbAttachment.Thumbnail.Path)
 	suite.NotEmpty(dbAttachment.Type)
+}
+
+func (suite *AttachmentTestSuite) TestDereferenceAttachmentAsync() {
+	ctx := context.Background()
+
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	attachmentOwner := "01FENS9F666SEQ6TYQWEEY78GM"
+	attachmentStatus := "01FENS9NTTVNEX1YZV7GB63MT8"
+	attachmentContentType := "image/jpeg"
+	attachmentURL := "https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg"
+	attachmentDescription := "It's a cute plushie."
+	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
+
+	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalInfo{
+		StatusID:    &attachmentStatus,
+		RemoteURL:   &attachmentURL,
+		Description: &attachmentDescription,
+		Blurhash:    &attachmentBlurhash,
+	})
+	suite.NoError(err)
+	attachmentID := media.AttachmentID()
+
+	// wait 5 seconds to let the image process in the background
+	// it probably won't really take this long but hey let's be sure
+	time.Sleep(5 * time.Second)
+
+	// now get the attachment from the database
+	attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	suite.NoError(err)
+
+	suite.NotNil(attachment)
+
+	suite.Equal(attachmentOwner, attachment.AccountID)
+	suite.Equal(attachmentStatus, attachment.StatusID)
+	suite.Equal(attachmentURL, attachment.RemoteURL)
+	suite.NotEmpty(attachment.URL)
+	suite.NotEmpty(attachment.Blurhash)
+	suite.NotEmpty(attachment.ID)
+	suite.NotEmpty(attachment.CreatedAt)
+	suite.NotEmpty(attachment.UpdatedAt)
+	suite.Equal(1.336546184738956, attachment.FileMeta.Original.Aspect)
+	suite.Equal(2071680, attachment.FileMeta.Original.Size)
+	suite.Equal(1245, attachment.FileMeta.Original.Height)
+	suite.Equal(1664, attachment.FileMeta.Original.Width)
+	suite.Equal(attachmentBlurhash, attachment.Blurhash)
+	suite.Equal(gtsmodel.ProcessingStatusProcessed, attachment.Processing)
+	suite.NotEmpty(attachment.File.Path)
+	suite.Equal(attachmentContentType, attachment.File.ContentType)
+	suite.Equal(attachmentDescription, attachment.Description)
+
+	suite.NotEmpty(attachment.Thumbnail.Path)
+	suite.NotEmpty(attachment.Type)
 }
 
 func TestAttachmentTestSuite(t *testing.T) {
