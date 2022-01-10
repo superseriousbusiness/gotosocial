@@ -23,10 +23,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender) processing.Processor {
-	return processing.NewProcessor(NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaManager(db, storage), storage, NewTestTimelineManager(db), db, emailSender)
+func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender, mediaManager media.Manager) processing.Processor {
+	return processing.NewProcessor(NewTestTypeConverter(db), federator, NewTestOauthServer(db), mediaManager, storage, NewTestTimelineManager(db), db, emailSender)
 }

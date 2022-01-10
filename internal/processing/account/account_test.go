@@ -85,7 +85,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
 	suite.httpClient = testrig.NewMockHTTPClient(nil)
 	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaManager, suite.oauthServer, suite.fromClientAPIChan, suite.federator)

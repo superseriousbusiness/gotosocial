@@ -26,7 +26,7 @@ import (
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.
 func NewTestMediaManager(db db.DB, storage *kv.KVStore) media.Manager {
-	m, err := media.New(db, storage)
+	m, err := media.NewManager(db, storage)
 	if err != nil {
 		panic(err)
 	}

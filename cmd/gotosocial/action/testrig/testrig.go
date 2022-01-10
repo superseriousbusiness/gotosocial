@@ -80,11 +80,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 			Body:       r,
 		}, nil
 	}), dbService)
-	federator := testrig.NewTestFederator(dbService, transportController, storageBackend)
+	mediaManager := testrig.NewTestMediaManager(dbService, storageBackend)
+	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
-	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender)
+	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
@@ -156,7 +157,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	gts, err := gotosocial.NewServer(dbService, router, federator)
+	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

@@ -20,7 +20,6 @@ package bundb
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -47,14 +46,6 @@ func (q *debugQueryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 		"duration":  dur,
 		"operation": event.Operation(),
 	})
-
-	if event.Err != nil && event.Err != sql.ErrNoRows {
-		// if there's an error the it'll be handled in the application logic,
-		// but we can still debug log it here alongside the query
-		l = l.WithField("query", event.Query)
-		l.Debug(event.Err)
-		return
-	}
 
 	l.Tracef("[%s] %s", dur, event.Operation())
 }

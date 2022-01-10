@@ -24,63 +24,84 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-	"time"
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
 	// ProcessMedia begins the process of decoding and storing the given data as a piece of media (aka an attachment).
 	// It will return a pointer to a Media struct upon which further actions can be performed, such as getting
-	// the finished media, thumbnail, decoded bytes, attachment, and setting additional fields.
+	// the finished media, thumbnail, attachment, etc.
 	//
 	// accountID should be the account that the media belongs to.
 	//
-	// RemoteURL is optional, and can be an empty string. Setting this to a non-empty string indicates that
-	// the piece of media originated on a remote instance and has been dereferenced to be cached locally.
-	ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Media, error)
-
-	ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Media, error)
+	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
+	ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Processing, error)
+	ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Processing, error)
+	// NumWorkers returns the total number of workers available to this manager.
+	NumWorkers() int
+	// QueueSize returns the total capacity of the queue.
+	QueueSize() int
+	// JobsQueued returns the number of jobs currently in the task queue.
+	JobsQueued() int
+	// ActiveWorkers returns the number of workers currently performing jobs.
+	ActiveWorkers() int
+	// Stop stops the underlying worker pool of the manager. It should be called
+	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
+	// It will block until workers are finished processing.
+	Stop() error
 }
 
 type manager struct {
-	db      db.DB
-	storage *kv.KVStore
-	pool    runners.WorkerPool
+	db         db.DB
+	storage    *kv.KVStore
+	pool       runners.WorkerPool
+	numWorkers int
+	queueSize  int
 }
 
-// New returns a media manager with the given db and underlying storage.
-func New(database db.DB, storage *kv.KVStore) (Manager, error) {
-	workers := runtime.NumCPU() / 2
-	queue := workers * 10
-	pool := runners.NewWorkerPool(workers, queue)
-
-	if start := pool.Start(); !start {
-		return nil, errors.New("could not start worker pool")
+// NewManager returns a media manager with the given db and underlying storage.
+//
+// A worker pool will also be initialized for the manager, to ensure that only
+// a limited number of media will be processed in parallel.
+//
+// The number of workers will be the number of CPUs available to the Go runtime,
+// divided by 2 (rounding down, but always at least 1).
+//
+// The length of the queue will be the number of workers multiplied by 10.
+//
+// So for an 8 core machine, the media manager will get 4 workers, and a queue of length 40.
+// For a 4 core machine, this will be 2 workers, and a queue length of 20.
+// For a single or 2-core machine, the media manager will get 1 worker, and a queue of length 10.
+func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
+	numWorkers := runtime.NumCPU() / 2
+	// make sure we always have at least 1 worker even on single-core machines
+	if numWorkers == 0 {
+		numWorkers = 1
 	}
-	logrus.Debugf("started media manager worker pool with %d workers and queue capacity of %d", workers, queue)
+	queueSize := numWorkers * 10
 
 	m := &manager{
-		db:      database,
-		storage: storage,
-		pool:    pool,
+		db:         database,
+		storage:    storage,
+		pool:       runners.NewWorkerPool(numWorkers, queueSize),
+		numWorkers: numWorkers,
+		queueSize:  queueSize,
 	}
+
+	if start := m.pool.Start(); !start {
+		return nil, errors.New("could not start worker pool")
+	}
+	logrus.Debugf("started media manager worker pool with %d workers and queue capacity of %d", numWorkers, queueSize)
 
 	return m, nil
 }
 
-/*
-	INTERFACE FUNCTIONS
-*/
-
-func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Media, error) {
+func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID string, ai *AdditionalInfo) (*Processing, error) {
 	contentType, err := parseContentType(data)
 	if err != nil {
 		return nil, err
@@ -100,16 +121,20 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 			return nil, err
 		}
 
+		logrus.Tracef("ProcessMedia: about to enqueue media with attachmentID %s, queue length is %d", media.AttachmentID(), m.pool.Queue())
 		m.pool.Enqueue(func(innerCtx context.Context) {
 			select {
 			case <-innerCtx.Done():
 				// if the inner context is done that means the worker pool is closing, so we should just return
 				return
 			default:
-				// start preloading the media for the caller's convenience
-				media.preLoad(innerCtx)
+				// start loading the media already for the caller's convenience
+				if _, err := media.Load(innerCtx); err != nil {
+					logrus.Errorf("ProcessMedia: error processing media with attachmentID %s: %s", media.AttachmentID(), err)
+				}
 			}
 		})
+		logrus.Tracef("ProcessMedia: succesfully queued media with attachmentID %s, queue length is %d", media.AttachmentID(), m.pool.Queue())
 
 		return media, nil
 	default:
@@ -117,112 +142,32 @@ func (m *manager) ProcessMedia(ctx context.Context, data []byte, accountID strin
 	}
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Media, error) {
+func (m *manager) ProcessEmoji(ctx context.Context, data []byte, accountID string) (*Processing, error) {
 	return nil, nil
 }
 
-// preProcessImage initializes processing
-func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string, ai *AdditionalInfo) (*Media, error) {
-	if !supportedImage(contentType) {
-		return nil, fmt.Errorf("image type %s not supported", contentType)
+func (m *manager) NumWorkers() int {
+	return m.numWorkers
+}
+
+func (m *manager) QueueSize() int {
+	return m.queueSize
+}
+
+func (m *manager) JobsQueued() int {
+	return m.pool.Queue()
+}
+
+func (m *manager) ActiveWorkers() int {
+	return m.pool.Workers()
+}
+
+func (m *manager) Stop() error {
+	logrus.Info("stopping media manager worker pool")
+
+	stopped := m.pool.Stop()
+	if !stopped {
+		return errors.New("could not stop media manager worker pool")
 	}
-
-	if len(data) == 0 {
-		return nil, errors.New("image was of size 0")
-	}
-
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	extension := strings.Split(contentType, "/")[1]
-
-	attachment := &gtsmodel.MediaAttachment{
-		ID:        id,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		StatusID:  "",
-		URL:       uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
-		RemoteURL: "",
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Focus: gtsmodel.Focus{
-				X: 0,
-				Y: 0,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          "",
-		Processing:        0,
-		File: gtsmodel.File{
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
-			ContentType: contentType,
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-			ContentType: mimeJpeg,
-			UpdatedAt:   time.Now(),
-		},
-		Avatar: false,
-		Header: false,
-	}
-
-	// check if we have additional info to add to the attachment
-	if ai != nil {
-		if ai.CreatedAt != nil {
-			attachment.CreatedAt = *ai.CreatedAt
-		}
-
-		if ai.StatusID != nil {
-			attachment.StatusID = *ai.StatusID
-		}
-
-		if ai.RemoteURL != nil {
-			attachment.RemoteURL = *ai.RemoteURL
-		}
-
-		if ai.Description != nil {
-			attachment.Description = *ai.Description
-		}
-
-		if ai.ScheduledStatusID != nil {
-			attachment.ScheduledStatusID = *ai.ScheduledStatusID
-		}
-
-		if ai.Blurhash != nil {
-			attachment.Blurhash = *ai.Blurhash
-		}
-
-		if ai.Avatar != nil {
-			attachment.Avatar = *ai.Avatar
-		}
-
-		if ai.Header != nil {
-			attachment.Header = *ai.Header
-		}
-
-		if ai.FocusX != nil {
-			attachment.FileMeta.Focus.X = *ai.FocusX
-		}
-
-		if ai.FocusY != nil {
-			attachment.FileMeta.Focus.Y = *ai.FocusY
-		}
-	}
-
-	media := &Media{
-		attachment:    attachment,
-		rawData:       data,
-		thumbstate:    received,
-		fullSizeState: received,
-		database:      m.db,
-		storage:       m.storage,
-	}
-
-	return media, nil
+	return nil
 }

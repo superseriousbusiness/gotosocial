@@ -105,7 +105,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// build backend handlers
-	mediaManager, err := media.New(dbService, storage)
+	mediaManager, err := media.NewManager(dbService, storage)
 	if err != nil {
 		return fmt.Errorf("error creating media manager: %s", err)
 	}
@@ -203,7 +203,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	gts, err := gotosocial.NewServer(dbService, router, federator)
+	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

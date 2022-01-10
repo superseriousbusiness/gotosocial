@@ -77,10 +77,10 @@ func (suite *ServeFileTestSuite) SetupSuite() {
 	testrig.InitTestLog()
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage, testrig.NewTestMediaManager(suite.db, suite.storage))
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, testrig.NewTestMediaManager(suite.db, suite.storage))
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)

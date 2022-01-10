@@ -52,8 +52,8 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentBlocking() {
 	})
 	suite.NoError(err)
 
-	// make a blocking call to load the attachment from the in-process media 
-	attachment, err := media.LoadAttachment(ctx)
+	// make a blocking call to load the attachment from the in-process media
+	attachment, err := media.Load(ctx)
 	suite.NoError(err)
 
 	suite.NotNil(attachment)

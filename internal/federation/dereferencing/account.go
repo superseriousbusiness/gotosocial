@@ -119,7 +119,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 	} else {
 		// take the id we already have and do an update
 		gtsAccount.ID = maybeAccount.ID
-
+aaaaaaaaaaaaaaaaaa
 		if err := d.PopulateAccountFields(ctx, gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
@@ -260,7 +260,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 		avatar := true
 		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
 			RemoteURL: &targetAccount.AvatarRemoteURL,
-			Avatar: &avatar,
+			Avatar:    &avatar,
 		})
 		if err != nil {
 			return err
@@ -283,7 +283,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 		header := true
 		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
 			RemoteURL: &targetAccount.HeaderRemoteURL,
-			Header: &header,
+			Header:    &header,
 		})
 		if err != nil {
 			return err

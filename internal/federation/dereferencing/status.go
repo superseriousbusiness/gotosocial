@@ -406,7 +406,7 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 			continue
 		}
 
-		attachment, err := media.LoadAttachment(ctx)
+		attachment, err := media.Load(ctx)
 		if err != nil {
 			logrus.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
 			continue

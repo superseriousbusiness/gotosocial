@@ -37,7 +37,9 @@ const (
 	errored                      // processing order has been completed with an error
 )
 
-type Media struct {
+// Processing represents a piece of media that is currently being processed. It exposes
+// various functions for retrieving data from the process.
+type Processing struct {
 	mu sync.Mutex
 
 	/*
@@ -75,171 +77,167 @@ type Media struct {
 	err error // error created during processing, if any
 }
 
-func (m *Media) Thumb(ctx context.Context) (*ImageMeta, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (p *Processing) Thumb(ctx context.Context) (*ImageMeta, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	switch m.thumbstate {
+	switch p.thumbstate {
 	case received:
 		// we haven't processed a thumbnail for this media yet so do it now
 
 		// check if we need to create a blurhash or if there's already one set
 		var createBlurhash bool
-		if m.attachment.Blurhash == "" {
+		if p.attachment.Blurhash == "" {
 			// no blurhash created yet
 			createBlurhash = true
 		}
 
-		thumb, err := deriveThumbnail(m.rawData, m.attachment.File.ContentType, createBlurhash)
+		thumb, err := deriveThumbnail(p.rawData, p.attachment.File.ContentType, createBlurhash)
 		if err != nil {
-			m.err = fmt.Errorf("error deriving thumbnail: %s", err)
-			m.thumbstate = errored
-			return nil, m.err
+			p.err = fmt.Errorf("error deriving thumbnail: %s", err)
+			p.thumbstate = errored
+			return nil, p.err
 		}
 
 		// put the thumbnail in storage
-		if err := m.storage.Put(m.attachment.Thumbnail.Path, thumb.image); err != nil {
-			m.err = fmt.Errorf("error storing thumbnail: %s", err)
-			m.thumbstate = errored
-			return nil, m.err
+		if err := p.storage.Put(p.attachment.Thumbnail.Path, thumb.image); err != nil {
+			p.err = fmt.Errorf("error storing thumbnail: %s", err)
+			p.thumbstate = errored
+			return nil, p.err
 		}
 
 		// set appropriate fields on the attachment based on the thumbnail we derived
 		if createBlurhash {
-			m.attachment.Blurhash = thumb.blurhash
+			p.attachment.Blurhash = thumb.blurhash
 		}
 
-		m.attachment.FileMeta.Small = gtsmodel.Small{
+		p.attachment.FileMeta.Small = gtsmodel.Small{
 			Width:  thumb.width,
 			Height: thumb.height,
 			Size:   thumb.size,
 			Aspect: thumb.aspect,
 		}
-		m.attachment.Thumbnail.FileSize = thumb.size
+		p.attachment.Thumbnail.FileSize = thumb.size
 
-		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
-			m.err = err
-			m.thumbstate = errored
+		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
+			p.err = err
+			p.thumbstate = errored
 			return nil, err
 		}
 
 		// set the thumbnail of this media
-		m.thumb = thumb
+		p.thumb = thumb
 
 		// we're done processing the thumbnail!
-		m.thumbstate = complete
+		p.thumbstate = complete
 		fallthrough
 	case complete:
-		return m.thumb, nil
+		return p.thumb, nil
 	case errored:
-		return nil, m.err
+		return nil, p.err
 	}
 
-	return nil, fmt.Errorf("thumbnail processing status %d unknown", m.thumbstate)
+	return nil, fmt.Errorf("thumbnail processing status %d unknown", p.thumbstate)
 }
 
-func (m *Media) FullSize(ctx context.Context) (*ImageMeta, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (p *Processing) FullSize(ctx context.Context) (*ImageMeta, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	switch m.fullSizeState {
+	switch p.fullSizeState {
 	case received:
 		var clean []byte
 		var err error
 		var decoded *ImageMeta
 
-		ct := m.attachment.File.ContentType
+		ct := p.attachment.File.ContentType
 		switch ct {
 		case mimeImageJpeg, mimeImagePng:
 			// first 'clean' image by purging exif data from it
 			var exifErr error
-			if clean, exifErr = purgeExif(m.rawData); exifErr != nil {
+			if clean, exifErr = purgeExif(p.rawData); exifErr != nil {
 				err = exifErr
 				break
 			}
 			decoded, err = decodeImage(clean, ct)
 		case mimeImageGif:
 			// gifs are already clean - no exif data to remove
-			clean = m.rawData
+			clean = p.rawData
 			decoded, err = decodeGif(clean)
 		default:
 			err = fmt.Errorf("content type %s not a processible image type", ct)
 		}
 
 		if err != nil {
-			m.err = err
-			m.fullSizeState = errored
+			p.err = err
+			p.fullSizeState = errored
 			return nil, err
 		}
 
 		// put the full size in storage
-		if err := m.storage.Put(m.attachment.File.Path, decoded.image); err != nil {
-			m.err = fmt.Errorf("error storing full size image: %s", err)
-			m.fullSizeState = errored
-			return nil, m.err
+		if err := p.storage.Put(p.attachment.File.Path, decoded.image); err != nil {
+			p.err = fmt.Errorf("error storing full size image: %s", err)
+			p.fullSizeState = errored
+			return nil, p.err
 		}
 
 		// set appropriate fields on the attachment based on the image we derived
-		m.attachment.FileMeta.Original = gtsmodel.Original{
+		p.attachment.FileMeta.Original = gtsmodel.Original{
 			Width:  decoded.width,
 			Height: decoded.height,
 			Size:   decoded.size,
 			Aspect: decoded.aspect,
 		}
-		m.attachment.File.FileSize = decoded.size
-		m.attachment.File.UpdatedAt = time.Now()
-		m.attachment.Processing = gtsmodel.ProcessingStatusProcessed
+		p.attachment.File.FileSize = decoded.size
+		p.attachment.File.UpdatedAt = time.Now()
+		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
 
-		if err := putOrUpdateAttachment(ctx, m.database, m.attachment); err != nil {
-			m.err = err
-			m.fullSizeState = errored
+		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
+			p.err = err
+			p.fullSizeState = errored
 			return nil, err
 		}
 
 		// set the fullsize of this media
-		m.fullSize = decoded
+		p.fullSize = decoded
 
 		// we're done processing the full-size image
-		m.fullSizeState = complete
+		p.fullSizeState = complete
 		fallthrough
 	case complete:
-		return m.fullSize, nil
+		return p.fullSize, nil
 	case errored:
-		return nil, m.err
+		return nil, p.err
 	}
 
-	return nil, fmt.Errorf("full size processing status %d unknown", m.fullSizeState)
+	return nil, fmt.Errorf("full size processing status %d unknown", p.fullSizeState)
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
-func (m *Media) AttachmentID() string {
-	return m.attachment.ID
+func (p *Processing) AttachmentID() string {
+	return p.attachment.ID
 }
 
-// preLoad begins the process of deriving the thumbnail and encoding the full-size image.
-// It does this in a non-blocking way, so you can call it and then come back later and check
-// if it's finished.
-func (m *Media) preLoad(ctx context.Context) {
-	go m.Thumb(ctx)
-	go m.FullSize(ctx)
-}
-
-// Load is the blocking equivalent of pre-load. It makes sure the thumbnail and full-size
-// image have been processed, then it returns the completed attachment.
-func (m *Media) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	if _, err := m.Thumb(ctx); err != nil {
+// Load blocks until the thumbnail and fullsize content has been processed, and then
+// returns the completed attachment.
+func (p *Processing) Load(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
+	if _, err := p.Thumb(ctx); err != nil {
 		return nil, err
 	}
 
-	if _, err := m.FullSize(ctx); err != nil {
+	if _, err := p.FullSize(ctx); err != nil {
 		return nil, err
 	}
 
-	return m.attachment, nil
+	return p.attachment, nil
 }
 
-func (m *Media) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
+func (p *Processing) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
 	return nil, nil
+}
+
+func (p *Processing) Finished() bool {
+	return p.thumbstate == complete && p.fullSizeState == complete
 }
 
 // putOrUpdateAttachment is just a convenience function for first trying to PUT the attachment in the database,

@@ -172,7 +172,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
 	}
 
-	return processingMedia.LoadAttachment(ctx)
+	return processingMedia.Load(ctx)
 }
 
 // UpdateHeader does the dirty work of checking the header part of an account update form,
@@ -214,7 +214,7 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
 	}
 
-	return processingMedia.LoadAttachment(ctx)
+	return processingMedia.Load(ctx)
 }
 
 func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {

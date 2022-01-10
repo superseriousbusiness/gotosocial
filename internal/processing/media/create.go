@@ -60,7 +60,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, err
 	}
 
-	attachment, err := media.LoadAttachment(ctx)
+	attachment, err := media.Load(ctx)
 	if err != nil {
 		return nil, err
 	}

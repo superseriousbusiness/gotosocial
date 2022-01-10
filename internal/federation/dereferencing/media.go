@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalInfo) (*media.Media, error) {
+func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalInfo) (*media.Processing, error) {
 	if accountID == "" {
 		return nil, fmt.Errorf("RefreshAttachment: minAttachment account ID was empty")
 	}
@@ -46,10 +46,10 @@ func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, a
 		return nil, fmt.Errorf("RefreshAttachment: error dereferencing media: %s", err)
 	}
 
-	m, err := d.mediaManager.ProcessMedia(ctx, data, accountID, ai)
+	processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("RefreshAttachment: error processing attachment: %s", err)
 	}
 
-	return m, nil
+	return processingMedia, nil
 }

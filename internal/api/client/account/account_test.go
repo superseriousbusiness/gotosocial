@@ -16,6 +16,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -25,13 +26,14 @@ import (
 type AccountStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db          db.DB
-	tc          typeutils.TypeConverter
-	storage     *kv.KVStore
-	federator   federation.Federator
-	processor   processing.Processor
-	emailSender email.Sender
-	sentEmails  map[string]string
+	db           db.DB
+	tc           typeutils.TypeConverter
+	storage      *kv.KVStore
+	mediaManager media.Manager
+	federator    federation.Federator
+	processor    processing.Processor
+	emailSender  email.Sender
+	sentEmails   map[string]string
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -61,10 +63,11 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	testrig.InitTestLog()
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage, suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.accountModule = account.New(suite.processor).(*account.Module)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

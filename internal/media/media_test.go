@@ -16,17 +16,39 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package media_test
 
 import (
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// NewTestFederator returns a federator with the given database and (mock!!) transport controller.
-func NewTestFederator(db db.DB, tc transport.Controller, storage *kv.KVStore, mediaManager media.Manager) federation.Federator {
-	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestTypeConverter(db), mediaManager)
+type MediaStandardTestSuite struct {
+	suite.Suite
+
+	db      db.DB
+	storage *kv.KVStore
+	manager media.Manager
+}
+
+func (suite *MediaStandardTestSuite) SetupSuite() {
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
+	suite.db = testrig.NewTestDB()
+	suite.storage = testrig.NewTestStorage()
+}
+
+func (suite *MediaStandardTestSuite) SetupTest() {
+	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
+	testrig.StandardDBSetup(suite.db, nil)
+	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
+}
+
+func (suite *MediaStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }
