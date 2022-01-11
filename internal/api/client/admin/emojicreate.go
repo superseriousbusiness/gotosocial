@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// emojiCreateRequest swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
+// EmojiCreatePOSTHandler swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
 //
 // Upload and create a new instance emoji.
 //
@@ -73,7 +73,7 @@ import (
 //      description: forbidden
 //   '400':
 //      description: bad request
-func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
+func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":        "emojiCreatePOSTHandler",
 		"request_uri": c.Request.RequestURI,

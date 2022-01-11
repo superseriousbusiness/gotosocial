@@ -21,12 +21,15 @@ package media
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 type processState int
@@ -37,9 +40,9 @@ const (
 	errored                      // processing order has been completed with an error
 )
 
-// Processing represents a piece of media that is currently being processed. It exposes
+// ProcessingMedia represents a piece of media that is currently being processed. It exposes
 // various functions for retrieving data from the process.
-type Processing struct {
+type ProcessingMedia struct {
 	mu sync.Mutex
 
 	/*
@@ -47,10 +50,10 @@ type Processing struct {
 		attachment will be updated incrementally as media goes through processing
 	*/
 
-	attachment *gtsmodel.MediaAttachment // will only be set if the media is an attachment
-	emoji      *gtsmodel.Emoji           // will only be set if the media is an emoji
+	attachment *gtsmodel.MediaAttachment
+	data       DataFunc
 
-	rawData []byte
+	rawData []byte // will be set once the fetchRawData function has been called
 
 	/*
 		below fields represent the processing state of the media thumbnail
@@ -77,7 +80,40 @@ type Processing struct {
 	err error // error created during processing, if any
 }
 
-func (p *Processing) Thumb(ctx context.Context) (*ImageMeta, error) {
+// AttachmentID returns the ID of the underlying media attachment without blocking processing.
+func (p *ProcessingMedia) AttachmentID() string {
+	return p.attachment.ID
+}
+
+// LoadAttachment blocks until the thumbnail and fullsize content
+// has been processed, and then returns the completed attachment.
+func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
+	if err := p.fetchRawData(ctx); err != nil {
+		return nil, err
+	}
+
+	if _, err := p.loadThumb(ctx); err != nil {
+		return nil, err
+	}
+
+	if _, err := p.loadFullSize(ctx); err != nil {
+		return nil, err
+	}
+
+	return p.attachment, nil
+}
+
+func (p *ProcessingMedia) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
+	return nil, nil
+}
+
+// Finished returns true if processing has finished for both the thumbnail
+// and full fized version of this piece of media.
+func (p *ProcessingMedia) Finished() bool {
+	return p.thumbstate == complete && p.fullSizeState == complete
+}
+
+func (p *ProcessingMedia) loadThumb(ctx context.Context) (*ImageMeta, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -140,7 +176,7 @@ func (p *Processing) Thumb(ctx context.Context) (*ImageMeta, error) {
 	return nil, fmt.Errorf("thumbnail processing status %d unknown", p.thumbstate)
 }
 
-func (p *Processing) FullSize(ctx context.Context) (*ImageMeta, error) {
+func (p *ProcessingMedia) loadFullSize(ctx context.Context) (*ImageMeta, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -213,31 +249,54 @@ func (p *Processing) FullSize(ctx context.Context) (*ImageMeta, error) {
 	return nil, fmt.Errorf("full size processing status %d unknown", p.fullSizeState)
 }
 
-// AttachmentID returns the ID of the underlying media attachment without blocking processing.
-func (p *Processing) AttachmentID() string {
-	return p.attachment.ID
-}
-
-// Load blocks until the thumbnail and fullsize content has been processed, and then
-// returns the completed attachment.
-func (p *Processing) Load(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	if _, err := p.Thumb(ctx); err != nil {
-		return nil, err
+// fetchRawData calls the data function attached to p if it hasn't been called yet,
+// and updates the underlying attachment fields as necessary.
+// It should only be called from within a function that already has a lock on p!
+func (p *ProcessingMedia) fetchRawData(ctx context.Context) error {
+	// check if we've already done this and bail early if we have
+	if p.rawData != nil {
+		return nil
 	}
 
-	if _, err := p.FullSize(ctx); err != nil {
-		return nil, err
+	// execute the data function and pin the raw bytes for further processing
+	b, err := p.data(ctx)
+	if err != nil {
+		return fmt.Errorf("fetchRawData: error executing data function: %s", err)
+	}
+	p.rawData = b
+
+	// now we have the data we can work out the content type
+	contentType, err := parseContentType(p.rawData)
+	if err != nil {
+		return fmt.Errorf("fetchRawData: error parsing content type: %s", err)
 	}
 
-	return p.attachment, nil
-}
+	split := strings.Split(contentType, "/")
+	if len(split) != 2 {
+		return fmt.Errorf("fetchRawData: content type %s was not valid", contentType)
+	}
 
-func (p *Processing) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
-	return nil, nil
-}
+	mainType := split[0]  // something like 'image'
+	extension := split[1] // something like 'jpeg'
 
-func (p *Processing) Finished() bool {
-	return p.thumbstate == complete && p.fullSizeState == complete
+	// set some additional fields on the attachment now that
+	// we know more about what the underlying media actually is
+	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
+	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
+	p.attachment.File.ContentType = contentType
+
+	switch mainType {
+	case mimeImage:
+		if extension == mimeGif {
+			p.attachment.Type = gtsmodel.FileTypeGif
+		} else {
+			p.attachment.Type = gtsmodel.FileTypeImage
+		}
+	default:
+		return fmt.Errorf("fetchRawData: cannot process mime type %s (yet)", mainType)
+	}
+
+	return nil
 }
 
 // putOrUpdateAttachment is just a convenience function for first trying to PUT the attachment in the database,
@@ -253,4 +312,100 @@ func putOrUpdateAttachment(ctx context.Context, database db.DB, attachment *gtsm
 	}
 
 	return nil
+}
+
+func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+	id, err := id.NewRandomULID()
+	if err != nil {
+		return nil, err
+	}
+
+	file := gtsmodel.File{
+		Path:        "", // we don't know yet because it depends on the uncalled DataFunc
+		ContentType: "", // we don't know yet because it depends on the uncalled DataFunc
+		UpdatedAt:   time.Now(),
+	}
+
+	thumbnail := gtsmodel.Thumbnail{
+		URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
+		Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
+		ContentType: mimeJpeg,
+		UpdatedAt:   time.Now(),
+	}
+
+	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
+	attachment := &gtsmodel.MediaAttachment{
+		ID:                id,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		StatusID:          "",
+		URL:               "", // we don't know yet because it depends on the uncalled DataFunc
+		RemoteURL:         "",
+		Type:              gtsmodel.FileTypeUnknown, // we don't know yet because it depends on the uncalled DataFunc
+		FileMeta:          gtsmodel.FileMeta{},
+		AccountID:         accountID,
+		Description:       "",
+		ScheduledStatusID: "",
+		Blurhash:          "",
+		Processing:        gtsmodel.ProcessingStatusReceived,
+		File:              file,
+		Thumbnail:         thumbnail,
+		Avatar:            false,
+		Header:            false,
+	}
+
+	// check if we have additional info to add to the attachment,
+	// and overwrite some of the attachment fields if so
+	if ai != nil {
+		if ai.CreatedAt != nil {
+			attachment.CreatedAt = *ai.CreatedAt
+		}
+
+		if ai.StatusID != nil {
+			attachment.StatusID = *ai.StatusID
+		}
+
+		if ai.RemoteURL != nil {
+			attachment.RemoteURL = *ai.RemoteURL
+		}
+
+		if ai.Description != nil {
+			attachment.Description = *ai.Description
+		}
+
+		if ai.ScheduledStatusID != nil {
+			attachment.ScheduledStatusID = *ai.ScheduledStatusID
+		}
+
+		if ai.Blurhash != nil {
+			attachment.Blurhash = *ai.Blurhash
+		}
+
+		if ai.Avatar != nil {
+			attachment.Avatar = *ai.Avatar
+		}
+
+		if ai.Header != nil {
+			attachment.Header = *ai.Header
+		}
+
+		if ai.FocusX != nil {
+			attachment.FileMeta.Focus.X = *ai.FocusX
+		}
+
+		if ai.FocusY != nil {
+			attachment.FileMeta.Focus.Y = *ai.FocusY
+		}
+	}
+
+	processingMedia := &ProcessingMedia{
+		attachment:    attachment,
+		data:          data,
+		thumbstate:    received,
+		fullSizeState: received,
+		database:      m.db,
+		storage:       m.storage,
+	}
+
+	return processingMedia, nil
 }

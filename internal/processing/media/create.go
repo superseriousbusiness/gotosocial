@@ -31,18 +31,21 @@ import (
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
-	// open the attachment and extract the bytes from it
-	f, err := form.File.Open()
-	if err != nil {
-		return nil, fmt.Errorf("error opening attachment: %s", err)
-	}
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading attachment: %s", err)
-	}
-	if size == 0 {
-		return nil, errors.New("could not read provided attachment: size 0 bytes")
+	data := func(innerCtx context.Context) ([]byte, error) {
+		// open the attachment and extract the bytes from it
+		f, err := form.File.Open()
+		if err != nil {
+			return nil, fmt.Errorf("error opening attachment: %s", err)
+		}
+		buf := new(bytes.Buffer)
+		size, err := io.Copy(buf, f)
+		if err != nil {
+			return nil, fmt.Errorf("error reading attachment: %s", err)
+		}
+		if size == 0 {
+			return nil, errors.New("could not read provided attachment: size 0 bytes")
+		}
+		return buf.Bytes(), f.Close()
 	}
 
 	focusX, focusY, err := parseFocus(form.Focus)
@@ -51,7 +54,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// process the media attachment and load it immediately
-	media, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), account.ID, &media.AdditionalInfo{
+	media, err := p.mediaManager.ProcessMedia(ctx, data, account.ID, &media.AdditionalMediaInfo{
 		Description: &form.Description,
 		FocusX:      &focusX,
 		FocusY:      &focusY,
@@ -60,7 +63,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, err
 	}
 
-	attachment, err := media.Load(ctx)
+	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
 		return nil, err
 	}

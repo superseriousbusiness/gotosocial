@@ -20,6 +20,7 @@ package dereferencing_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -44,7 +45,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentBlocking() {
 	attachmentDescription := "It's a cute plushie."
 	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
 
-	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalInfo{
+	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalMediaInfo{
 		StatusID:    &attachmentStatus,
 		RemoteURL:   &attachmentURL,
 		Description: &attachmentDescription,
@@ -53,7 +54,7 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentBlocking() {
 	suite.NoError(err)
 
 	// make a blocking call to load the attachment from the in-process media
-	attachment, err := media.Load(ctx)
+	attachment, err := media.LoadAttachment(ctx)
 	suite.NoError(err)
 
 	suite.NotNil(attachment)
@@ -118,18 +119,21 @@ func (suite *AttachmentTestSuite) TestDereferenceAttachmentAsync() {
 	attachmentDescription := "It's a cute plushie."
 	attachmentBlurhash := "LwP?p=aK_4%N%MRjWXt7%hozM_a}"
 
-	media, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalInfo{
+	processingMedia, err := suite.dereferencer.GetRemoteMedia(ctx, fetchingAccount.Username, attachmentOwner, attachmentURL, &media.AdditionalMediaInfo{
 		StatusID:    &attachmentStatus,
 		RemoteURL:   &attachmentURL,
 		Description: &attachmentDescription,
 		Blurhash:    &attachmentBlurhash,
 	})
 	suite.NoError(err)
-	attachmentID := media.AttachmentID()
+	attachmentID := processingMedia.AttachmentID()
 
-	// wait 5 seconds to let the image process in the background
-	// it probably won't really take this long but hey let's be sure
-	time.Sleep(5 * time.Second)
+	// wait for the media to finish processing
+	for finished := processingMedia.Finished(); !finished; finished = processingMedia.Finished() {
+		time.Sleep(10 * time.Millisecond)
+		fmt.Printf("\n\nnot finished yet...\n\n")
+	}
+	fmt.Printf("\n\nfinished!\n\n")
 
 	// now get the attachment from the database
 	attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)

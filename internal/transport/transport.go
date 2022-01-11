@@ -33,7 +33,7 @@ import (
 // functionality for fetching remote media.
 type Transport interface {
 	pub.Transport
-	// DereferenceMedia fetches the bytes of the given media attachment IRI, with the expectedContentType.
+	// DereferenceMedia fetches the bytes of the given media attachment IRI.
 	DereferenceMedia(ctx context.Context, iri *url.URL) ([]byte, error)
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)

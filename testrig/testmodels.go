@@ -66,6 +66,16 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 			AccessCreateAt:  time.Now(),
 			AccessExpiresAt: time.Now().Add(72 * time.Hour),
 		},
+		"admin_account": {
+			ID:              "01FS4TP8ANA5VE92EAPA9E0M7Q",
+			ClientID:        "01F8MGWSJCND9BWBD4WGJXBM93",
+			UserID:          "01F8MGWYWKVKS3VS8DV1AMYPGE",
+			RedirectURI:     "http://localhost:8080",
+			Scope:           "read write follow push admin",
+			Access:          "AININALKNENFNF98717NAMG4LWE4NJITMWUXM2M4MTRHZDEX",
+			AccessCreateAt:  time.Now(),
+			AccessExpiresAt: time.Now().Add(72 * time.Hour),
+		},
 	}
 	return tokens
 }

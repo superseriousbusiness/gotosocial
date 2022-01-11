@@ -20,6 +20,7 @@ package media
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -68,9 +69,9 @@ const (
 	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
 )
 
-// AdditionalInfo represents additional information that should be added to an attachment
+// AdditionalMediaInfo represents additional information that should be added to an attachment
 // when processing a piece of media.
-type AdditionalInfo struct {
+type AdditionalMediaInfo struct {
 	// Time that this media was created; defaults to time.Now().
 	CreatedAt *time.Time
 	// ID of the status to which this media is attached; defaults to "".
@@ -92,6 +93,13 @@ type AdditionalInfo struct {
 	// Y focus coordinate for this media; defaults to 0.
 	FocusY *float32
 }
+
+type AdditionalEmojiInfo struct {
+	
+}
+
+// DataFunc represents a function used to retrieve the raw bytes of a piece of media.
+type DataFunc func(ctx context.Context) ([]byte, error)
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.

@@ -37,21 +37,21 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
-	// load bytes from a test image
-	testBytes, err := os.ReadFile("./test/test-jpeg.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(testBytes)
+	data := func(_ context.Context) ([]byte, error) {
+		// load bytes from a test image
+		return os.ReadFile("./test/test-jpeg.jpg")
+	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, testBytes, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.Load(ctx)
+	attachment, err := processingMedia.LoadAttachment(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
@@ -103,15 +103,15 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	ctx := context.Background()
 
-	// load bytes from a test image
-	testBytes, err := os.ReadFile("./test/test-jpeg.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(testBytes)
+	data := func(_ context.Context) ([]byte, error) {
+		// load bytes from a test image
+		return os.ReadFile("./test/test-jpeg.jpg")
+	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia, err := suite.manager.ProcessMedia(ctx, testBytes, accountID, nil)
+	processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 	suite.NoError(err)
 	// fetch the attachment id from the processing media
 	attachmentID := processingMedia.AttachmentID()
@@ -183,13 +183,17 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 	suite.NoError(err)
 	suite.NotEmpty(testBytes)
 
+	data := func(_ context.Context) ([]byte, error) {
+		return testBytes, nil
+	}
+
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	spam := 50
-	inProcess := []*media.Processing{}
+	inProcess := []*media.ProcessingMedia{}
 	for i := 0; i < spam; i++ {
 		// process the media with no additional info provided
-		processingMedia, err := suite.manager.ProcessMedia(ctx, testBytes, accountID, nil)
+		processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
 		suite.NoError(err)
 		inProcess = append(inProcess, processingMedia)
 	}
@@ -201,7 +205,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		attachmentID := processingMedia.AttachmentID()
 
 		// do a blocking call to fetch the attachment
-		attachment, err := processingMedia.Load(ctx)
+		attachment, err := processingMedia.LoadAttachment(ctx)
 		suite.NoError(err)
 		suite.NotNil(attachment)
 

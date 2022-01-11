@@ -137,84 +137,87 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
 func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
-	var err error
 	maxImageSize := viper.GetInt(config.Keys.MediaImageMaxSize)
 	if int(avatar.Size) > maxImageSize {
-		err = fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
-		return nil, err
-	}
-	f, err := avatar.Open()
-	if err != nil {
-		return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
+		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	// extract the bytes
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, f)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
-	}
-	if size == 0 {
-		return nil, errors.New("UpdateAvatar: could not read provided avatar: size 0 bytes")
+	dataFunc := func(ctx context.Context) ([]byte, error) {
+		// pop open the fileheader
+		f, err := avatar.Open()
+		if err != nil {
+			return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
+		}
+
+		// extract the bytes
+		buf := new(bytes.Buffer)
+		size, err := io.Copy(buf, f)
+		if err != nil {
+			return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
+		}
+		if size == 0 {
+			return nil, errors.New("UpdateAvatar: could not read provided avatar: size 0 bytes")
+		}
+
+		return buf.Bytes(), f.Close()
 	}
 
-	// we're done with the FileHeader now
-	if err := f.Close(); err != nil {
-		return nil, fmt.Errorf("UpdateAvatar: error closing multipart fileheader: %s", err)
-	}
-
-	// do the setting
 	isAvatar := true
-	processingMedia, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, &media.AdditionalInfo{
+	ai := &media.AdditionalMediaInfo{
 		Avatar: &isAvatar,
-	})
+	}
+
+	processingMedia, err := p.mediaManager.ProcessMedia(ctx, dataFunc, accountID, ai)
 	if err != nil {
 		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
 	}
 
-	return processingMedia.Load(ctx)
+	return processingMedia.LoadAttachment(ctx)
 }
 
 // UpdateHeader does the dirty work of checking the header part of an account update form,
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
 func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
-	var err error
 	maxImageSize := viper.GetInt(config.Keys.MediaImageMaxSize)
 	if int(header.Size) > maxImageSize {
-		err = fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
-		return nil, err
-	}
-	f, err := header.Open()
-	if err != nil {
-		return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
+		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}
 
-	// extract the bytes
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, f)
-	if err != nil {
-		return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
-	}
-	if size == 0 {
-		return nil, errors.New("UpdateHeader: could not read provided header: size 0 bytes")
+	dataFunc := func(ctx context.Context) ([]byte, error) {
+		// pop open the fileheader
+		f, err := header.Open()
+		if err != nil {
+			return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
+		}
+
+		// extract the bytes
+		buf := new(bytes.Buffer)
+		size, err := io.Copy(buf, f)
+		if err != nil {
+			return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
+		}
+		if size == 0 {
+			return nil, errors.New("UpdateHeader: could not read provided header: size 0 bytes")
+		}
+
+		return buf.Bytes(), f.Close()
 	}
 
-	// we're done with the FileHeader now
-	if err := f.Close(); err != nil {
-		return nil, fmt.Errorf("UpdateHeader: error closing multipart fileheader: %s", err)
-	}
-
-	// do the setting
 	isHeader := true
-	processingMedia, err := p.mediaManager.ProcessMedia(ctx, buf.Bytes(), accountID, &media.AdditionalInfo{
+	ai := &media.AdditionalMediaInfo{
 		Header: &isHeader,
-	})
+	}
+
+	processingMedia, err := p.mediaManager.ProcessMedia(ctx, dataFunc, accountID, ai)
+	if err != nil {
+		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
 	}
 
-	return processingMedia.Load(ctx)
+	return processingMedia.LoadAttachment(ctx)
 }
 
 func (p *processor) processNote(ctx context.Context, note string, accountID string) (string, error) {

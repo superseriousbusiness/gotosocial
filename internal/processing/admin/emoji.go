@@ -30,30 +30,34 @@ import (
 )
 
 func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
-	if user.Admin {
+	if !user.Admin {
 		return nil, fmt.Errorf("user %s not an admin", user.ID)
 	}
 
-	// open the emoji and extract the bytes from it
-	f, err := form.Image.Open()
-	if err != nil {
-		return nil, fmt.Errorf("error opening emoji: %s", err)
-	}
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading emoji: %s", err)
-	}
-	if size == 0 {
-		return nil, errors.New("could not read provided emoji: size 0 bytes")
+	data := func(innerCtx context.Context) ([]byte, error) {
+		// open the emoji and extract the bytes from it
+		f, err := form.Image.Open()
+		if err != nil {
+			return nil, fmt.Errorf("error opening emoji: %s", err)
+		}
+		buf := new(bytes.Buffer)
+		size, err := io.Copy(buf, f)
+		if err != nil {
+			return nil, fmt.Errorf("error reading emoji: %s", err)
+		}
+		if size == 0 {
+			return nil, errors.New("could not read provided emoji: size 0 bytes")
+		}
+
+		return buf.Bytes(), f.Close()
 	}
 
-	media, err := p.mediaManager.ProcessEmoji(ctx, buf.Bytes(), account.ID)
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	emoji, err := media.LoadEmoji(ctx)
+	emoji, err := processingEmoji.LoadEmoji(ctx)
 	if err != nil {
 		return nil, err
 	}

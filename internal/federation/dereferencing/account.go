@@ -119,7 +119,6 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 	} else {
 		// take the id we already have and do an update
 		gtsAccount.ID = maybeAccount.ID
-aaaaaaaaaaaaaaaaaa
 		if err := d.PopulateAccountFields(ctx, gtsAccount, username, refresh); err != nil {
 			return nil, new, fmt.Errorf("FullyDereferenceAccount: error populating further account fields: %s", err)
 		}
@@ -252,13 +251,12 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data, err := t.DereferenceMedia(ctx, avatarIRI)
-		if err != nil {
-			return err
+		data := func(innerCtx context.Context) ([]byte, error) {
+			return t.DereferenceMedia(innerCtx, avatarIRI)
 		}
 
 		avatar := true
-		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
+		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalMediaInfo{
 			RemoteURL: &targetAccount.AvatarRemoteURL,
 			Avatar:    &avatar,
 		})
@@ -275,13 +273,12 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data, err := t.DereferenceMedia(ctx, headerIRI)
-		if err != nil {
-			return err
+		data := func(innerCtx context.Context) ([]byte, error) {
+			return t.DereferenceMedia(innerCtx, headerIRI)
 		}
 
 		header := true
-		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalInfo{
+		processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalMediaInfo{
 			RemoteURL: &targetAccount.HeaderRemoteURL,
 			Header:    &header,
 		})

@@ -27,7 +27,6 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"strings"
 	"time"
 
 	"github.com/buckket/go-blurhash"
@@ -50,113 +49,6 @@ type ImageMeta struct {
 	size     int
 	aspect   float64
 	blurhash string
-}
-
-func (m *manager) preProcessImage(ctx context.Context, data []byte, contentType string, accountID string, ai *AdditionalInfo) (*Processing, error) {
-	if !supportedImage(contentType) {
-		return nil, fmt.Errorf("image type %s not supported", contentType)
-	}
-
-	if len(data) == 0 {
-		return nil, errors.New("image was of size 0")
-	}
-
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	extension := strings.Split(contentType, "/")[1]
-
-	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
-	attachment := &gtsmodel.MediaAttachment{
-		ID:        id,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		StatusID:  "",
-		URL:       uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeOriginal), id, extension),
-		RemoteURL: "",
-		Type:      gtsmodel.FileTypeImage,
-		FileMeta: gtsmodel.FileMeta{
-			Focus: gtsmodel.Focus{
-				X: 0,
-				Y: 0,
-			},
-		},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          "",
-		Processing:        gtsmodel.ProcessingStatusReceived,
-		File: gtsmodel.File{
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeOriginal, id, extension),
-			ContentType: contentType,
-			UpdatedAt:   time.Now(),
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
-			Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-			ContentType: mimeJpeg,
-			UpdatedAt:   time.Now(),
-		},
-		Avatar: false,
-		Header: false,
-	}
-
-	// check if we have additional info to add to the attachment,
-	// and overwrite some of the attachment fields if so
-	if ai != nil {
-		if ai.CreatedAt != nil {
-			attachment.CreatedAt = *ai.CreatedAt
-		}
-
-		if ai.StatusID != nil {
-			attachment.StatusID = *ai.StatusID
-		}
-
-		if ai.RemoteURL != nil {
-			attachment.RemoteURL = *ai.RemoteURL
-		}
-
-		if ai.Description != nil {
-			attachment.Description = *ai.Description
-		}
-
-		if ai.ScheduledStatusID != nil {
-			attachment.ScheduledStatusID = *ai.ScheduledStatusID
-		}
-
-		if ai.Blurhash != nil {
-			attachment.Blurhash = *ai.Blurhash
-		}
-
-		if ai.Avatar != nil {
-			attachment.Avatar = *ai.Avatar
-		}
-
-		if ai.Header != nil {
-			attachment.Header = *ai.Header
-		}
-
-		if ai.FocusX != nil {
-			attachment.FileMeta.Focus.X = *ai.FocusX
-		}
-
-		if ai.FocusY != nil {
-			attachment.FileMeta.Focus.Y = *ai.FocusY
-		}
-	}
-
-	media := &Processing{
-		attachment:    attachment,
-		rawData:       data,
-		thumbstate:    received,
-		fullSizeState: received,
-		database:      m.db,
-		storage:       m.storage,
-	}
-
-	return media, nil
 }
 
 func decodeGif(b []byte) (*ImageMeta, error) {

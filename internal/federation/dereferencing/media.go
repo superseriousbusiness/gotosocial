@@ -26,29 +26,28 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalInfo) (*media.Processing, error) {
+func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error) {
 	if accountID == "" {
-		return nil, fmt.Errorf("RefreshAttachment: minAttachment account ID was empty")
+		return nil, fmt.Errorf("GetRemoteMedia: account ID was empty")
 	}
 
 	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
-		return nil, fmt.Errorf("RefreshAttachment: error creating transport: %s", err)
+		return nil, fmt.Errorf("GetRemoteMedia: error creating transport: %s", err)
 	}
 
 	derefURI, err := url.Parse(remoteURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRemoteMedia: error parsing url: %s", err)
 	}
 
-	data, err := t.DereferenceMedia(ctx, derefURI)
-	if err != nil {
-		return nil, fmt.Errorf("RefreshAttachment: error dereferencing media: %s", err)
+	dataFunc := func(innerCtx context.Context) ([]byte, error) {
+		return t.DereferenceMedia(innerCtx, derefURI)
 	}
 
-	processingMedia, err := d.mediaManager.ProcessMedia(ctx, data, accountID, ai)
+	processingMedia, err := d.mediaManager.ProcessMedia(ctx, dataFunc, accountID, ai)
 	if err != nil {
-		return nil, fmt.Errorf("RefreshAttachment: error processing attachment: %s", err)
+		return nil, fmt.Errorf("GetRemoteMedia: error processing attachment: %s", err)
 	}
 
 	return processingMedia, nil

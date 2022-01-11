@@ -58,7 +58,7 @@ func New(processor processing.Processor) api.ClientModule {
 
 // Route attaches all routes from this module to the given router
 func (m *Module) Route(r router.Router) error {
-	r.AttachHandler(http.MethodPost, EmojiPath, m.emojiCreatePOSTHandler)
+	r.AttachHandler(http.MethodPost, EmojiPath, m.EmojiCreatePOSTHandler)
 	r.AttachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
