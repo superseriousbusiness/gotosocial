@@ -37,6 +37,9 @@ import (
 type ProcessingEmoji struct {
 	mu sync.Mutex
 
+	// id of this instance's account -- pinned for convenience here so we only need to fetch it once
+	instanceAccountID string
+
 	/*
 		below fields should be set on newly created media;
 		emoji will be updated incrementally as media goes through processing
@@ -370,12 +373,13 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 	}
 
 	processingEmoji := &ProcessingEmoji{
-		emoji:         emoji,
-		data:          data,
-		staticState:   received,
-		fullSizeState: received,
-		database:      m.db,
-		storage:       m.storage,
+		instanceAccountID: instanceAccount.ID,
+		emoji:             emoji,
+		data:              data,
+		staticState:       received,
+		fullSizeState:     received,
+		database:          m.db,
+		storage:           m.storage,
 	}
 
 	return processingEmoji, nil
