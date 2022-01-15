@@ -26,14 +26,16 @@ import (
 	"io"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
+func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode) {
 	if !user.Admin {
-		return nil, fmt.Errorf("user %s not an admin", user.ID)
+		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
 	data := func(innerCtx context.Context) ([]byte, error) {
@@ -56,24 +58,27 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emojiID, err := id.NewRandomULID()
 	if err != nil {
-		return nil, fmt.Errorf("error creating id for new emoji: %s", err)
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new emoji: %s", err), "error creating emoji ID")
 	}
 
 	emojiURI := uris.GenerateURIForEmoji(emojiID)
 
 	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, emojiID, emojiURI, nil)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}
 
 	emoji, err := processingEmoji.LoadEmoji(ctx)
 	if err != nil {
-		return nil, err
+		if err == db.ErrAlreadyExists {
+			return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
+		}
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error loading emoji: %s", err), "error loading emoji")
 	}
 
 	apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, emoji)
 	if err != nil {
-		return nil, fmt.Errorf("error converting emoji to apitype: %s", err)
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting emoji: %s", err), "error converting emoji to api representation")
 	}
 
 	return &apiEmoji, nil

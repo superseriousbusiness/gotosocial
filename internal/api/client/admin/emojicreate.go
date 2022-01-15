@@ -73,6 +73,8 @@ import (
 //      description: forbidden
 //   '400':
 //      description: bad request
+//   '409':
+//      description: conflict -- domain/shortcode combo for emoji already exists
 func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":        "emojiCreatePOSTHandler",
@@ -116,10 +118,10 @@ func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiEmoji, err := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
-	if err != nil {
-		l.Debugf("error creating emoji: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		l.Debugf("error creating emoji: %s", errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

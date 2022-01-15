@@ -72,6 +72,9 @@ type ProcessingEmoji struct {
 	storage  *kv.KVStore
 
 	err error // error created during processing, if any
+
+	// track whether this emoji has already been put in the databse
+	insertedInDB bool
 }
 
 // EmojiID returns the ID of the underlying emoji without blocking processing.
@@ -92,6 +95,16 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 
 	if _, err := p.loadFullSize(ctx); err != nil {
 		return nil, err
+	}
+
+	// store the result in the database before returning it
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.insertedInDB {
+		if err := p.database.Put(ctx, p.emoji); err != nil {
+			return nil, err
+		}
+		p.insertedInDB = true
 	}
 
 	return p.emoji, nil
@@ -126,13 +139,6 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) (*ImageMeta, error) {
 
 		// set appropriate fields on the emoji based on the static version we derived
 		p.emoji.ImageStaticFileSize = len(static.image)
-
-		// update the emoji in the db
-		if err := putOrUpdate(ctx, p.database, p.emoji); err != nil {
-			p.err = err
-			p.staticState = errored
-			return nil, err
-		}
 
 		// set the static on the processing emoji
 		p.static = static
@@ -197,7 +203,7 @@ func (p *ProcessingEmoji) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 }
 
 // fetchRawData calls the data function attached to p if it hasn't been called yet,
-// and updates the underlying attachment fields as necessary.
+// and updates the underlying emoji fields as necessary.
 // It should only be called from within a function that already has a lock on p!
 func (p *ProcessingEmoji) fetchRawData(ctx context.Context) error {
 	// check if we've already done this and bail early if we have

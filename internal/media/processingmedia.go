@@ -70,6 +70,9 @@ type ProcessingMedia struct {
 	storage  *kv.KVStore
 
 	err error // error created during processing, if any
+
+	// track whether this media has already been put in the databse
+	insertedInDB bool
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
@@ -90,6 +93,16 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 
 	if _, err := p.loadFullSize(ctx); err != nil {
 		return nil, err
+	}
+
+	// store the result in the database before returning it
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.insertedInDB {
+		if err := p.database.Put(ctx, p.attachment); err != nil {
+			return nil, err
+		}
+		p.insertedInDB = true
 	}
 
 	return p.attachment, nil
@@ -142,12 +155,6 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) (*ImageMeta, error) {
 			Aspect: thumb.aspect,
 		}
 		p.attachment.Thumbnail.FileSize = len(thumb.image)
-
-		if err := putOrUpdate(ctx, p.database, p.attachment); err != nil {
-			p.err = err
-			p.thumbstate = errored
-			return nil, err
-		}
 
 		// set the thumbnail of this media
 		p.thumb = thumb
@@ -215,12 +222,6 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 		p.attachment.File.FileSize = len(decoded.image)
 		p.attachment.File.UpdatedAt = time.Now()
 		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
-
-		if err := putOrUpdate(ctx, p.database, p.attachment); err != nil {
-			p.err = err
-			p.fullSizeState = errored
-			return nil, err
-		}
 
 		// set the fullsize of this media
 		p.fullSize = decoded
