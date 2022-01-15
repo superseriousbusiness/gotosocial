@@ -19,14 +19,16 @@
 package media
 
 import (
-	"bytes"
 	"context"
-	"errors"
-	"fmt"
 	"time"
-
-	"github.com/h2non/filetype"
 )
+
+// maxFileHeaderBytes represents the maximum amount of bytes we want
+// to examine from the beginning of a file to determine its type.
+//
+// See: https://en.wikipedia.org/wiki/File_format#File_header
+// and https://github.com/h2non/filetype
+const maxFileHeaderBytes = 262
 
 // mime consts
 const (
@@ -42,15 +44,16 @@ const (
 	mimeImagePng = mimeImage + "/" + mimePng
 )
 
+type processState int
+
+const (
+	received processState = iota // processing order has been received but not done yet
+	complete                     // processing order has been completed successfully
+	errored                      // processing order has been completed with an error
+)
+
 // EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
 // const EmojiMaxBytes = 51200
-
-// maxFileHeaderBytes represents the maximum amount of bytes we want
-// to examine from the beginning of a file to determine its type.
-//
-// See: https://en.wikipedia.org/wiki/File_format#File_header
-// and https://github.com/h2non/filetype
-const maxFileHeaderBytes = 262
 
 type Size string
 
@@ -94,89 +97,24 @@ type AdditionalMediaInfo struct {
 	FocusY *float32
 }
 
+// AdditionalMediaInfo represents additional information
+// that should be added to an emoji when processing it.
 type AdditionalEmojiInfo struct {
-	
+	// Time that this emoji was created; defaults to time.Now().
+	CreatedAt *time.Time
+	// Domain the emoji originated from. Blank for this instance's domain. Defaults to "".
+	Domain *string
+	// URL of this emoji on a remote instance; defaults to "".
+	ImageRemoteURL *string
+	// URL of the static version of this emoji on a remote instance; defaults to "".
+	ImageStaticRemoteURL *string
+	// Whether this emoji should be disabled (not shown) on this instance; defaults to false.
+	Disabled *bool
+	// Whether this emoji should be visible in the instance's emoji picker; defaults to true.
+	VisibleInPicker *bool
+	// ID of the category this emoji should be placed in; defaults to "".
+	CategoryID *string
 }
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.
 type DataFunc func(ctx context.Context) ([]byte, error)
-
-// parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
-// Returns an error if the content type is not something we can process.
-func parseContentType(content []byte) (string, error) {
-
-	// read in the first bytes of the file
-	fileHeader := make([]byte, maxFileHeaderBytes)
-	if _, err := bytes.NewReader(content).Read(fileHeader); err != nil {
-		return "", fmt.Errorf("could not read first magic bytes of file: %s", err)
-	}
-
-	kind, err := filetype.Match(fileHeader)
-	if err != nil {
-		return "", err
-	}
-
-	if kind == filetype.Unknown {
-		return "", errors.New("filetype unknown")
-	}
-
-	return kind.MIME.Value, nil
-}
-
-// supportedImage checks mime type of an image against a slice of accepted types,
-// and returns True if the mime type is accepted.
-func supportedImage(mimeType string) bool {
-	acceptedImageTypes := []string{
-		mimeImageJpeg,
-		mimeImageGif,
-		mimeImagePng,
-	}
-	for _, accepted := range acceptedImageTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// supportedEmoji checks that the content type is image/png -- the only type supported for emoji.
-func supportedEmoji(mimeType string) bool {
-	acceptedEmojiTypes := []string{
-		mimeImageGif,
-		mimeImagePng,
-	}
-	for _, accepted := range acceptedEmojiTypes {
-		if mimeType == accepted {
-			return true
-		}
-	}
-	return false
-}
-
-// ParseMediaType converts s to a recognized MediaType, or returns an error if unrecognized
-func ParseMediaType(s string) (Type, error) {
-	switch s {
-	case string(TypeAttachment):
-		return TypeAttachment, nil
-	case string(TypeHeader):
-		return TypeHeader, nil
-	case string(TypeAvatar):
-		return TypeAvatar, nil
-	case string(TypeEmoji):
-		return TypeEmoji, nil
-	}
-	return "", fmt.Errorf("%s not a recognized MediaType", s)
-}
-
-// ParseMediaSize converts s to a recognized MediaSize, or returns an error if unrecognized
-func ParseMediaSize(s string) (Size, error) {
-	switch s {
-	case string(SizeSmall):
-		return SizeSmall, nil
-	case string(SizeOriginal):
-		return SizeOriginal, nil
-	case string(SizeStatic):
-		return SizeStatic, nil
-	}
-	return "", fmt.Errorf("%s not a recognized MediaSize", s)
-}

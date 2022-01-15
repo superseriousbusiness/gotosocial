@@ -28,7 +28,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -126,33 +125,28 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) (*ImageMeta, error) {
 		}
 
 		// set appropriate fields on the emoji based on the static version we derived
-		p.attachment.FileMeta.Small = gtsmodel.Small{
-			Width:  static.width,
-			Height: static.height,
-			Size:   static.size,
-			Aspect: static.aspect,
-		}
-		p.attachment.Thumbnail.FileSize = static.size
+		p.emoji.ImageStaticFileSize = len(static.image)
 
-		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
+		// update the emoji in the db
+		if err := putOrUpdate(ctx, p.database, p.emoji); err != nil {
 			p.err = err
-			p.thumbstate = errored
+			p.staticState = errored
 			return nil, err
 		}
 
-		// set the thumbnail of this media
-		p.thumb = static
+		// set the static on the processing emoji
+		p.static = static
 
-		// we're done processing the thumbnail!
-		p.thumbstate = complete
+		// we're done processing the static version of the emoji!
+		p.staticState = complete
 		fallthrough
 	case complete:
-		return p.thumb, nil
+		return p.static, nil
 	case errored:
 		return nil, p.err
 	}
 
-	return nil, fmt.Errorf("thumbnail processing status %d unknown", p.thumbstate)
+	return nil, fmt.Errorf("static processing status %d unknown", p.staticState)
 }
 
 func (p *ProcessingEmoji) loadFullSize(ctx context.Context) (*ImageMeta, error) {
@@ -161,26 +155,17 @@ func (p *ProcessingEmoji) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 
 	switch p.fullSizeState {
 	case received:
-		var clean []byte
 		var err error
 		var decoded *ImageMeta
 
-		ct := p.attachment.File.ContentType
+		ct := p.emoji.ImageContentType
 		switch ct {
-		case mimeImageJpeg, mimeImagePng:
-			// first 'clean' image by purging exif data from it
-			var exifErr error
-			if clean, exifErr = purgeExif(p.rawData); exifErr != nil {
-				err = exifErr
-				break
-			}
-			decoded, err = decodeImage(clean, ct)
+		case mimeImagePng:
+			decoded, err = decodeImage(p.rawData, ct)
 		case mimeImageGif:
-			// gifs are already clean - no exif data to remove
-			clean = p.rawData
-			decoded, err = decodeGif(clean)
+			decoded, err = decodeGif(p.rawData)
 		default:
-			err = fmt.Errorf("content type %s not a processible image type", ct)
+			err = fmt.Errorf("content type %s not a processible emoji type", ct)
 		}
 
 		if err != nil {
@@ -189,34 +174,17 @@ func (p *ProcessingEmoji) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 			return nil, err
 		}
 
-		// put the full size in storage
-		if err := p.storage.Put(p.attachment.File.Path, decoded.image); err != nil {
-			p.err = fmt.Errorf("error storing full size image: %s", err)
+		// put the full size emoji in storage
+		if err := p.storage.Put(p.emoji.ImagePath, decoded.image); err != nil {
+			p.err = fmt.Errorf("error storing full size emoji: %s", err)
 			p.fullSizeState = errored
 			return nil, p.err
-		}
-
-		// set appropriate fields on the attachment based on the image we derived
-		p.attachment.FileMeta.Original = gtsmodel.Original{
-			Width:  decoded.width,
-			Height: decoded.height,
-			Size:   decoded.size,
-			Aspect: decoded.aspect,
-		}
-		p.attachment.File.FileSize = decoded.size
-		p.attachment.File.UpdatedAt = time.Now()
-		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
-
-		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
-			p.err = err
-			p.fullSizeState = errored
-			return nil, err
 		}
 
 		// set the fullsize of this media
 		p.fullSize = decoded
 
-		// we're done processing the full-size image
+		// we're done processing the full-size emoji
 		p.fullSizeState = complete
 		fallthrough
 	case complete:
@@ -255,53 +223,22 @@ func (p *ProcessingEmoji) fetchRawData(ctx context.Context) error {
 	}
 
 	split := strings.Split(contentType, "/")
-	mainType := split[0]  // something like 'image'
 	extension := split[1] // something like 'gif'
 
 	// set some additional fields on the emoji now that
 	// we know more about what the underlying image actually is
-	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
-	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
-	p.attachment.File.ContentType = contentType
-
-	switch mainType {
-	case mimeImage:
-		if extension == mimeGif {
-			p.attachment.Type = gtsmodel.FileTypeGif
-		} else {
-			p.attachment.Type = gtsmodel.FileTypeImage
-		}
-	default:
-		return fmt.Errorf("fetchRawData: cannot process mime type %s (yet)", mainType)
-	}
+	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
+	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
+	p.emoji.ImageContentType = contentType
+	p.emoji.ImageFileSize = len(p.rawData)
 
 	return nil
 }
 
-// putOrUpdateEmoji is just a convenience function for first trying to PUT the emoji in the database,
-// and then if that doesn't work because the emoji already exists, updating it instead.
-func putOrUpdateEmoji(ctx context.Context, database db.DB, emoji *gtsmodel.Emoji) error {
-	if err := database.Put(ctx, emoji); err != nil {
-		if err != db.ErrAlreadyExists {
-			return fmt.Errorf("putOrUpdateEmoji: proper error while putting emoji: %s", err)
-		}
-		if err := database.UpdateByPrimaryKey(ctx, emoji); err != nil {
-			return fmt.Errorf("putOrUpdateEmoji: error while updating emoji: %s", err)
-		}
-	}
-
-	return nil
-}
-
-func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
+func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
-	}
-
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
 	}
 
 	// populate initial fields on the emoji -- some of these will be overwritten as we proceed
@@ -323,7 +260,7 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		ImageStaticFileSize:    0,
 		ImageUpdatedAt:         time.Now(),
 		Disabled:               false,
-		URI:                    "", // we don't know yet
+		URI:                    uri,
 		VisibleInPicker:        true,
 		CategoryID:             "",
 	}
@@ -332,43 +269,31 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 	// and overwrite some of the emoji fields if so
 	if ai != nil {
 		if ai.CreatedAt != nil {
-			attachment.CreatedAt = *ai.CreatedAt
+			emoji.CreatedAt = *ai.CreatedAt
 		}
 
-		if ai.StatusID != nil {
-			attachment.StatusID = *ai.StatusID
+		if ai.Domain != nil {
+			emoji.Domain = *ai.Domain
 		}
 
-		if ai.RemoteURL != nil {
-			attachment.RemoteURL = *ai.RemoteURL
+		if ai.ImageRemoteURL != nil {
+			emoji.ImageRemoteURL = *ai.ImageRemoteURL
 		}
 
-		if ai.Description != nil {
-			attachment.Description = *ai.Description
+		if ai.ImageStaticRemoteURL != nil {
+			emoji.ImageStaticRemoteURL = *ai.ImageStaticRemoteURL
 		}
 
-		if ai.ScheduledStatusID != nil {
-			attachment.ScheduledStatusID = *ai.ScheduledStatusID
+		if ai.Disabled != nil {
+			emoji.Disabled = *ai.Disabled
 		}
 
-		if ai.Blurhash != nil {
-			attachment.Blurhash = *ai.Blurhash
+		if ai.VisibleInPicker != nil {
+			emoji.VisibleInPicker = *ai.VisibleInPicker
 		}
 
-		if ai.Avatar != nil {
-			attachment.Avatar = *ai.Avatar
-		}
-
-		if ai.Header != nil {
-			attachment.Header = *ai.Header
-		}
-
-		if ai.FocusX != nil {
-			attachment.FileMeta.Focus.X = *ai.FocusX
-		}
-
-		if ai.FocusY != nil {
-			attachment.FileMeta.Focus.Y = *ai.FocusY
+		if ai.CategoryID != nil {
+			emoji.CategoryID = *ai.CategoryID
 		}
 	}
 

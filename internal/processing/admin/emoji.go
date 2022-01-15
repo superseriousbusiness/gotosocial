@@ -27,6 +27,8 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
@@ -52,7 +54,14 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return buf.Bytes(), f.Close()
 	}
 
-	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, nil)
+	emojiID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, fmt.Errorf("error creating id for new emoji: %s", err)
+	}
+
+	emojiURI := uris.GenerateURIForEmoji(emojiID)
+
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, emojiID, emojiURI, nil)
 	if err != nil {
 		return nil, err
 	}

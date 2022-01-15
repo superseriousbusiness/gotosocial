@@ -32,14 +32,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-type processState int
-
-const (
-	received processState = iota // processing order has been received but not done yet
-	complete                     // processing order has been completed successfully
-	errored                      // processing order has been completed with an error
-)
-
 // ProcessingMedia represents a piece of media that is currently being processed. It exposes
 // various functions for retrieving data from the process.
 type ProcessingMedia struct {
@@ -103,10 +95,6 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 	return p.attachment, nil
 }
 
-func (p *ProcessingMedia) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
-	return nil, nil
-}
-
 // Finished returns true if processing has finished for both the thumbnail
 // and full fized version of this piece of media.
 func (p *ProcessingMedia) Finished() bool {
@@ -153,9 +141,9 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) (*ImageMeta, error) {
 			Size:   thumb.size,
 			Aspect: thumb.aspect,
 		}
-		p.attachment.Thumbnail.FileSize = thumb.size
+		p.attachment.Thumbnail.FileSize = len(thumb.image)
 
-		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
+		if err := putOrUpdate(ctx, p.database, p.attachment); err != nil {
 			p.err = err
 			p.thumbstate = errored
 			return nil, err
@@ -224,11 +212,11 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 			Size:   decoded.size,
 			Aspect: decoded.aspect,
 		}
-		p.attachment.File.FileSize = decoded.size
+		p.attachment.File.FileSize = len(decoded.image)
 		p.attachment.File.UpdatedAt = time.Now()
 		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
 
-		if err := putOrUpdateAttachment(ctx, p.database, p.attachment); err != nil {
+		if err := putOrUpdate(ctx, p.database, p.attachment); err != nil {
 			p.err = err
 			p.fullSizeState = errored
 			return nil, err
@@ -294,21 +282,6 @@ func (p *ProcessingMedia) fetchRawData(ctx context.Context) error {
 		}
 	default:
 		return fmt.Errorf("fetchRawData: cannot process mime type %s (yet)", mainType)
-	}
-
-	return nil
-}
-
-// putOrUpdateAttachment is just a convenience function for first trying to PUT the attachment in the database,
-// and then if that doesn't work because the attachment already exists, updating it instead.
-func putOrUpdateAttachment(ctx context.Context, database db.DB, attachment *gtsmodel.MediaAttachment) error {
-	if err := database.Put(ctx, attachment); err != nil {
-		if err != db.ErrAlreadyExists {
-			return fmt.Errorf("putOrUpdateAttachment: proper error while putting attachment: %s", err)
-		}
-		if err := database.UpdateByPrimaryKey(ctx, attachment); err != nil {
-			return fmt.Errorf("putOrUpdateAttachment: error while updating attachment: %s", err)
-		}
 	}
 
 	return nil

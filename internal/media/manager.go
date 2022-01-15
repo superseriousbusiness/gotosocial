@@ -41,7 +41,7 @@ type Manager interface {
 	//
 	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
 	ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
-	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
+	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// NumWorkers returns the total number of workers available to this manager.
 	NumWorkers() int
 	// QueueSize returns the total capacity of the queue.
@@ -125,8 +125,8 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, accountID str
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
-	processingEmoji, err := m.preProcessEmoji(ctx, data, shortcode, ai)
+func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
+	processingEmoji, err := m.preProcessEmoji(ctx, data, shortcode, id, uri, ai)
 	if err != nil {
 		return nil, err
 	}

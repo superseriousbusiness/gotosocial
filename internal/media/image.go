@@ -20,21 +20,16 @@ package media
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"time"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/nfnt/resize"
 	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 const (
