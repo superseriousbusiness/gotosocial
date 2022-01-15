@@ -20,12 +20,10 @@ package media
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 
 	"github.com/h2non/filetype"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
@@ -65,7 +63,7 @@ func supportedImage(mimeType string) bool {
 	return false
 }
 
-// supportedEmoji checks that the content type is image/png -- the only type supported for emoji.
+// supportedEmoji checks that the content type is image/png or image/gif -- the only types supported for emoji.
 func supportedEmoji(mimeType string) bool {
 	acceptedEmojiTypes := []string{
 		mimeImageGif,
@@ -105,19 +103,4 @@ func ParseMediaSize(s string) (Size, error) {
 		return SizeStatic, nil
 	}
 	return "", fmt.Errorf("%s not a recognized MediaSize", s)
-}
-
-// putOrUpdate is just a convenience function for first trying to PUT the attachment or emoji in the database,
-// and then if that doesn't work because the attachment/emoji already exists, updating it instead.
-func putOrUpdate(ctx context.Context, database db.DB, i interface{}) error {
-	if err := database.Put(ctx, i); err != nil {
-		if err != db.ErrAlreadyExists {
-			return fmt.Errorf("putOrUpdate: proper error while putting: %s", err)
-		}
-		if err := database.UpdateByPrimaryKey(ctx, i); err != nil {
-			return fmt.Errorf("putOrUpdate: error while updating: %s", err)
-		}
-	}
-
-	return nil
 }

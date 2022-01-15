@@ -260,30 +260,27 @@ func (p *ProcessingMedia) fetchRawData(ctx context.Context) error {
 		return fmt.Errorf("fetchRawData: error parsing content type: %s", err)
 	}
 
+	if !supportedImage(contentType) {
+		return fmt.Errorf("fetchRawData: media type %s not (yet) supported", contentType)
+	}
+
 	split := strings.Split(contentType, "/")
 	if len(split) != 2 {
 		return fmt.Errorf("fetchRawData: content type %s was not valid", contentType)
 	}
 
-	mainType := split[0]  // something like 'image'
 	extension := split[1] // something like 'jpeg'
 
 	// set some additional fields on the attachment now that
 	// we know more about what the underlying media actually is
+	if extension == mimeGif {
+		p.attachment.Type = gtsmodel.FileTypeGif
+	} else {
+		p.attachment.Type = gtsmodel.FileTypeImage
+	}
 	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
 	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 	p.attachment.File.ContentType = contentType
-
-	switch mainType {
-	case mimeImage:
-		if extension == mimeGif {
-			p.attachment.Type = gtsmodel.FileTypeGif
-		} else {
-			p.attachment.Type = gtsmodel.FileTypeImage
-		}
-	default:
-		return fmt.Errorf("fetchRawData: cannot process mime type %s (yet)", mainType)
-	}
 
 	return nil
 }
