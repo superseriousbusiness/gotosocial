@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"crypto/sha256"
 	"io"
 	"io/fs"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"codeberg.org/gruf/go-hashenc"
 	"codeberg.org/gruf/go-pools"
 	"codeberg.org/gruf/go-store/util"
+	"github.com/zeebo/blake3"
 )
 
 var (
@@ -77,7 +77,7 @@ func getBlockConfig(cfg *BlockConfig) BlockConfig {
 
 // BlockStorage is a Storage implementation that stores input data as chunks on
 // a filesystem. Each value is chunked into blocks of configured size and these
-// blocks are stored with name equal to their base64-encoded SHA256 hash-sum. A
+// blocks are stored with name equal to their base64-encoded BLAKE3 hash-sum. A
 // "node" file is finally created containing an array of hashes contained within
 // this value
 type BlockStorage struct {
@@ -87,6 +87,7 @@ type BlockStorage struct {
 	config    BlockConfig      // cfg is the supplied configuration for this store
 	hashPool  sync.Pool        // hashPool is this store's hashEncoder pool
 	bufpool   pools.BufferPool // bufpool is this store's bytes.Buffer pool
+	lock      *LockableFile    // lock is the opened lockfile for this storage instance
 
 	// NOTE:
 	// BlockStorage does not need to lock each of the underlying block files
@@ -138,6 +139,14 @@ func OpenBlock(path string, cfg *BlockConfig) (*BlockStorage, error) {
 		return nil, errPathIsFile
 	}
 
+	// Open and acquire storage lock for path
+	lock, err := OpenLock(pb.Join(path, LockFile))
+	if err != nil {
+		return nil, err
+	} else if err := lock.Lock(); err != nil {
+		return nil, err
+	}
+
 	// Figure out the largest size for bufpool slices
 	bufSz := encodedHashLen
 	if bufSz < config.BlockSize {
@@ -159,6 +168,7 @@ func OpenBlock(path string, cfg *BlockConfig) (*BlockStorage, error) {
 			},
 		},
 		bufpool: pools.NewBufferPool(bufSz),
+		lock:    lock,
 	}, nil
 }
 
@@ -443,11 +453,16 @@ loop:
 			continue loop
 		}
 
-		// Write in separate goroutine
+		// Check if reached EOF
+		atEOF := (n < buf.Len())
+
 		wg.Add(1)
 		go func() {
-			// Defer buffer release + signal done
+			// Perform writes in goroutine
+
 			defer func() {
+				// Defer release +
+				// signal we're done
 				st.bufpool.Put(buf)
 				wg.Done()
 			}()
@@ -460,8 +475,8 @@ loop:
 			}
 		}()
 
-		// We reached EOF
-		if n < buf.Len() {
+		// Break at end
+		if atEOF {
 			break loop
 		}
 	}
@@ -568,6 +583,12 @@ func (st *BlockStorage) Remove(key string) error {
 	return os.Remove(kpath)
 }
 
+// Close implements Storage.Close()
+func (st *BlockStorage) Close() error {
+	defer st.lock.Close()
+	return st.lock.Unlock()
+}
+
 // WalkKeys implements Storage.WalkKeys()
 func (st *BlockStorage) WalkKeys(opts WalkKeysOptions) error {
 	// Acquire path builder
@@ -610,7 +631,7 @@ func (st *BlockStorage) blockPathForKey(hash string) string {
 }
 
 // hashSeparator is the separating byte between block hashes
-const hashSeparator = byte(':')
+const hashSeparator = byte('\n')
 
 // node represents the contents of a node file in storage
 type node struct {
@@ -773,24 +794,28 @@ func (r *blockReader) Read(b []byte) (int, error) {
 	}
 }
 
+var (
+	// base64Encoding is our base64 encoding object.
+	base64Encoding = hashenc.Base64()
+
+	// encodedHashLen is the once-calculated encoded hash-sum length
+	encodedHashLen = base64Encoding.EncodedLen(
+		blake3.New().Size(),
+	)
+)
+
 // hashEncoder is a HashEncoder with built-in encode buffer
 type hashEncoder struct {
 	henc hashenc.HashEncoder
 	ebuf []byte
 }
 
-// encodedHashLen is the once-calculated encoded hash-sum length
-var encodedHashLen = hashenc.Base64().EncodedLen(
-	sha256.New().Size(),
-)
-
 // newHashEncoder returns a new hashEncoder instance
 func newHashEncoder() *hashEncoder {
-	hash := sha256.New()
-	enc := hashenc.Base64()
+	hash := blake3.New()
 	return &hashEncoder{
-		henc: hashenc.New(hash, enc),
-		ebuf: make([]byte, enc.EncodedLen(hash.Size())),
+		henc: hashenc.New(hash, base64Encoding),
+		ebuf: make([]byte, encodedHashLen),
 	}
 }
 

@@ -60,5 +60,5 @@ func (i *KVIterator) Value() ([]byte, error) {
 	}
 
 	// Attempt to fetch from store
-	return i.store.get(i.key)
+	return i.store.get(i.store.mutexMap.RLock, i.key)
 }

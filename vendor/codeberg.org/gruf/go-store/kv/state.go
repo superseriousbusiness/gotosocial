@@ -30,7 +30,7 @@ func (st *StateRO) Get(key string) ([]byte, error) {
 	}
 
 	// Pass request to store
-	return st.store.get(key)
+	return st.store.get(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRO) GetStream(key string) (io.ReadCloser, error) {
@@ -44,7 +44,7 @@ func (st *StateRO) GetStream(key string) (io.ReadCloser, error) {
 	}
 
 	// Pass request to store
-	return st.store.getStream(key)
+	return st.store.getStream(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRO) Has(key string) (bool, error) {
@@ -58,7 +58,7 @@ func (st *StateRO) Has(key string) (bool, error) {
 	}
 
 	// Pass request to store
-	return st.store.has(key)
+	return st.store.has(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRO) Release() {
@@ -94,7 +94,7 @@ func (st *StateRW) Get(key string) ([]byte, error) {
 	}
 
 	// Pass request to store
-	return st.store.get(key)
+	return st.store.get(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRW) GetStream(key string) (io.ReadCloser, error) {
@@ -108,7 +108,7 @@ func (st *StateRW) GetStream(key string) (io.ReadCloser, error) {
 	}
 
 	// Pass request to store
-	return st.store.getStream(key)
+	return st.store.getStream(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRW) Put(key string, value []byte) error {
@@ -122,7 +122,7 @@ func (st *StateRW) Put(key string, value []byte) error {
 	}
 
 	// Pass request to store
-	return st.store.put(key, value)
+	return st.store.put(st.store.mutexMap.Lock, key, value)
 }
 
 func (st *StateRW) PutStream(key string, r io.Reader) error {
@@ -136,7 +136,7 @@ func (st *StateRW) PutStream(key string, r io.Reader) error {
 	}
 
 	// Pass request to store
-	return st.store.putStream(key, r)
+	return st.store.putStream(st.store.mutexMap.Lock, key, r)
 }
 
 func (st *StateRW) Has(key string) (bool, error) {
@@ -150,7 +150,7 @@ func (st *StateRW) Has(key string) (bool, error) {
 	}
 
 	// Pass request to store
-	return st.store.has(key)
+	return st.store.has(st.store.mutexMap.RLock, key)
 }
 
 func (st *StateRW) Delete(key string) error {
@@ -164,7 +164,7 @@ func (st *StateRW) Delete(key string) error {
 	}
 
 	// Pass request to store
-	return st.store.delete(key)
+	return st.store.delete(st.store.mutexMap.Lock, key)
 }
 
 func (st *StateRW) Release() {

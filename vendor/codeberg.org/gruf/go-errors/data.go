@@ -4,16 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"codeberg.org/gruf/go-bytes"
-	"codeberg.org/gruf/go-logger"
+	"codeberg.org/gruf/go-format"
 )
-
-// global logfmt data formatter.
-var logfmt = logger.TextFormat{
-	Strict:   false,
-	Verbose:  true,
-	MaxDepth: 5,
-}
 
 // KV is a structure for setting key-value pairs in ErrorData.
 type KV struct {
@@ -31,7 +23,7 @@ type ErrorData interface {
 	Append(...KV)
 
 	// Implement byte slice representation formatter.
-	logger.Formattable
+	format.Formattable
 
 	// Implement string representation formatter.
 	fmt.Stringer
@@ -89,13 +81,22 @@ func (d *errorData) Append(kvs ...KV) {
 }
 
 func (d *errorData) AppendFormat(b []byte) []byte {
-	buf := bytes.Buffer{B: b}
+	buf := format.Buffer{B: b}
 	d.mu.Lock()
 	buf.B = append(buf.B, '{')
+
+	// Append data as kv pairs
 	for i := range d.data {
-		logfmt.AppendKey(&buf, d.data[i].Key)
-		logfmt.AppendValue(&buf, d.data[i].Value)
+		key := d.data[i].Key
+		val := d.data[i].Value
+		format.Appendf(&buf, "{:k}={:v} ", key, val)
 	}
+
+	// Drop trailing space
+	if len(d.data) > 0 {
+		buf.Truncate(1)
+	}
+
 	buf.B = append(buf.B, '}')
 	d.mu.Unlock()
 	return buf.B

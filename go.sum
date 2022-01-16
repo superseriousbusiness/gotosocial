@@ -53,9 +53,13 @@ codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9
 codeberg.org/gruf/go-cache v1.1.2/go.mod h1:/Dbc+xU72Op3hMn6x2PXF3NE9uIDFeS+sXPF00hN/7o=
 codeberg.org/gruf/go-errors v1.0.4 h1:jOJCn/GMb6ELLRVlnmpimGRC2CbTreH5/CBZNWh9GZA=
 codeberg.org/gruf/go-errors v1.0.4/go.mod h1:rJ08LdIE79Jg8vZ2TGylz/I+tZ1UuMJkGK5mNambIfQ=
+codeberg.org/gruf/go-errors v1.0.5 h1:rxV70oQkfasUdggLHxOX2QAoJOMFM7XWxHQR45Zx/Fg=
+codeberg.org/gruf/go-errors v1.0.5/go.mod h1:n03EpmvcmfzU3/xJKC0XXtleXXJUNFpT2fgISODvZ1Y=
 codeberg.org/gruf/go-fastpath v1.0.1/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
 codeberg.org/gruf/go-fastpath v1.0.2 h1:O3nuYPMXnN89dsgAwVFU5iCGINtPJdITWmbRe2an/iQ=
 codeberg.org/gruf/go-fastpath v1.0.2/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
+codeberg.org/gruf/go-format v1.0.3 h1:WoUGzTwZe6SIhILNvtr0qNIA7BOOCgdBlk5bUrfeiio=
+codeberg.org/gruf/go-format v1.0.3/go.mod h1:k3TLXp1dqAXdDqxlon0yEM+3FFHdNn0D6BVJTwTy5As=
 codeberg.org/gruf/go-hashenc v1.0.1 h1:EBvNe2wW8IPMUqT1XihB6/IM6KMJDLMFBxIUvmsy1f8=
 codeberg.org/gruf/go-hashenc v1.0.1/go.mod h1:IfHhPCVScOiYmJLqdCQT9bYVS1nxNTV4ewMUvFWDPtc=
 codeberg.org/gruf/go-logger v1.3.1/go.mod h1:tBduUc+Yb9vqGRxY9/FB0ZlYznSteLy/KmIANo7zFjA=
@@ -74,6 +78,8 @@ codeberg.org/gruf/go-runners v1.2.0 h1:tkoPrwYMkVg1o/C4PGTR1YbC11XX4r06uLPOYajBs
 codeberg.org/gruf/go-runners v1.2.0/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
 codeberg.org/gruf/go-store v1.1.5 h1:fp28vzGD15OsAF51CCwi7woH+Y3vb0aMl4OFh9JSjA0=
 codeberg.org/gruf/go-store v1.1.5/go.mod h1:Q6ev500ddKghDQ8KS4IstL/W9fptDKa2T9oeHP+tXsI=
+codeberg.org/gruf/go-store v1.2.2 h1:YJPzJpZv/D3t9hQC00/u76eQDScQw4++OWjfobnjHAA=
+codeberg.org/gruf/go-store v1.2.2/go.mod h1:Xjw1U098th0yXF2CCx6jThQ+9FIPWAX9OGjYslO+UtE=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
@@ -734,6 +740,10 @@ github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yuin/goldmark v1.4.1/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
+github.com/zeebo/assert v1.1.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN/wJ0=
+github.com/zeebo/blake3 v0.2.1 h1:O+N0Y8Re2XAYjp0adlZDA2juyRguhMfPCgh8YIf7vyE=
+github.com/zeebo/blake3 v0.2.1/go.mod h1:TSQ0KjMH+pht+bRyvVooJ1rBpvvngSGaPISafq9MxJk=
+github.com/zeebo/pcg v1.0.1/go.mod h1:09F0S9iiKrwn9rlI5yjLkmrug154/YRW6KnnXVDM/l4=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.etcd.io/etcd/api/v3 v3.5.0/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
 go.etcd.io/etcd/api/v3 v3.5.1/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
@@ -949,6 +959,7 @@ golang.org/x/sys v0.0.0-20200523222454-059865788121/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200803210538-64077c9b5642/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20201014080544-cc95f250f6bc/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201126233918-771906719818/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201201145000-ef89a241ccb3/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

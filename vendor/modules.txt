@@ -1,18 +1,20 @@
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-errors v1.0.4
+# codeberg.org/gruf/go-errors v1.0.5
 ## explicit; go 1.15
 codeberg.org/gruf/go-errors
 # codeberg.org/gruf/go-fastpath v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath
+# codeberg.org/gruf/go-format v1.0.3
+## explicit; go 1.17
+codeberg.org/gruf/go-format
 # codeberg.org/gruf/go-hashenc v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
 # codeberg.org/gruf/go-logger v1.3.2
 ## explicit; go 1.14
-codeberg.org/gruf/go-logger
 # codeberg.org/gruf/go-mutexes v1.0.1
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
@@ -25,7 +27,7 @@ codeberg.org/gruf/go-pools
 # codeberg.org/gruf/go-runners v1.2.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-store v1.1.5
+# codeberg.org/gruf/go-store v1.2.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
@@ -524,6 +526,18 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/wagslane/go-password-validator v0.3.0
 ## explicit; go 1.16
 github.com/wagslane/go-password-validator
+# github.com/zeebo/blake3 v0.2.1
+## explicit; go 1.13
+github.com/zeebo/blake3
+github.com/zeebo/blake3/internal/alg
+github.com/zeebo/blake3/internal/alg/compress
+github.com/zeebo/blake3/internal/alg/compress/compress_pure
+github.com/zeebo/blake3/internal/alg/compress/compress_sse41
+github.com/zeebo/blake3/internal/alg/hash
+github.com/zeebo/blake3/internal/alg/hash/hash_avx2
+github.com/zeebo/blake3/internal/alg/hash/hash_pure
+github.com/zeebo/blake3/internal/consts
+github.com/zeebo/blake3/internal/utils
 # golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 ## explicit; go 1.17
 golang.org/x/crypto/acme

@@ -19,9 +19,6 @@ func (e entry) Key() string {
 
 // Storage defines a means of storing and accessing key value pairs
 type Storage interface {
-	// Clean removes unused values and unclutters the storage (e.g. removing empty folders)
-	Clean() error
-
 	// ReadBytes returns the byte value for key in storage
 	ReadBytes(key string) ([]byte, error)
 
@@ -39,6 +36,12 @@ type Storage interface {
 
 	// Remove attempts to remove the supplied key-value pair from storage
 	Remove(key string) error
+
+	// Close will close the storage, releasing any file locks
+	Close() error
+
+	// Clean removes unused values and unclutters the storage (e.g. removing empty folders)
+	Clean() error
 
 	// WalkKeys walks the keys in the storage
 	WalkKeys(opts WalkKeysOptions) error

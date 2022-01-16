@@ -71,6 +71,7 @@ type DiskStorage struct {
 	path   string           // path is the root path of this store
 	bufp   pools.BufferPool // bufp is the buffer pool for this DiskStorage
 	config DiskConfig       // cfg is the supplied configuration for this store
+	lock   *LockableFile    // lock is the opened lockfile for this storage instance
 }
 
 // OpenFile opens a DiskStorage instance for given folder path and configuration
@@ -81,13 +82,13 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 
 	// Clean provided path, ensure ends in '/' (should
 	// be dir, this helps with file path trimming later)
-	path = pb.Clean(path) + "/"
+	storePath := pb.Join(path, "store") + "/"
 
 	// Get checked config
 	config := getDiskConfig(cfg)
 
 	// Attempt to open dir path
-	file, err := os.OpenFile(path, defaultFileROFlags, defaultDirPerms)
+	file, err := os.OpenFile(storePath, defaultFileROFlags, defaultDirPerms)
 	if err != nil {
 		// If not a not-exist error, return
 		if !os.IsNotExist(err) {
@@ -95,13 +96,13 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 		}
 
 		// Attempt to make store path dirs
-		err = os.MkdirAll(path, defaultDirPerms)
+		err = os.MkdirAll(storePath, defaultDirPerms)
 		if err != nil {
 			return nil, err
 		}
 
 		// Reopen dir now it's been created
-		file, err = os.OpenFile(path, defaultFileROFlags, defaultDirPerms)
+		file, err = os.OpenFile(storePath, defaultFileROFlags, defaultDirPerms)
 		if err != nil {
 			return nil, err
 		}
@@ -116,11 +117,20 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 		return nil, errPathIsFile
 	}
 
+	// Open and acquire storage lock for path
+	lock, err := OpenLock(pb.Join(path, LockFile))
+	if err != nil {
+		return nil, err
+	} else if err := lock.Lock(); err != nil {
+		return nil, err
+	}
+
 	// Return new DiskStorage
 	return &DiskStorage{
-		path:   path,
+		path:   storePath,
 		bufp:   pools.NewBufferPool(config.WriteBufSize),
 		config: config,
+		lock:   lock,
 	}, nil
 }
 
@@ -248,6 +258,12 @@ func (st *DiskStorage) Remove(key string) error {
 	return os.Remove(kpath)
 }
 
+// Close implements Storage.Close()
+func (st *DiskStorage) Close() error {
+	defer st.lock.Close()
+	return st.lock.Unlock()
+}
+
 // WalkKeys implements Storage.WalkKeys()
 func (st *DiskStorage) WalkKeys(opts WalkKeysOptions) error {
 	// Acquire path builder
@@ -256,8 +272,9 @@ func (st *DiskStorage) WalkKeys(opts WalkKeysOptions) error {
 
 	// Walk dir for entries
 	return util.WalkDir(pb, st.path, func(kpath string, fsentry fs.DirEntry) {
-		// Only deal with regular files
 		if fsentry.Type().IsRegular() {
+			// Only deal with regular files
+
 			// Get full item path (without root)
 			kpath = pb.Join(kpath, fsentry.Name())[len(st.path):]
 

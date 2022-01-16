@@ -7,27 +7,31 @@ import (
 	"codeberg.org/gruf/go-store/util"
 )
 
-type lockableFile struct {
+// LockFile is our standard lockfile name.
+const LockFile = "store.lock"
+
+type LockableFile struct {
 	*os.File
 }
 
-func openLock(path string) (*lockableFile, error) {
+// OpenLock opens a lockfile at path.
+func OpenLock(path string) (*LockableFile, error) {
 	file, err := open(path, defaultFileLockFlags)
 	if err != nil {
 		return nil, err
 	}
-	return &lockableFile{file}, nil
+	return &LockableFile{file}, nil
 }
 
-func (f *lockableFile) lock() error {
+func (f *LockableFile) Lock() error {
 	return f.flock(syscall.LOCK_EX | syscall.LOCK_NB)
 }
 
-func (f *lockableFile) unlock() error {
+func (f *LockableFile) Unlock() error {
 	return f.flock(syscall.LOCK_UN | syscall.LOCK_NB)
 }
 
-func (f *lockableFile) flock(how int) error {
+func (f *LockableFile) flock(how int) error {
 	return util.RetryOnEINTR(func() error {
 		return syscall.Flock(int(f.Fd()), how)
 	})

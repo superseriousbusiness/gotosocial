@@ -39,7 +39,7 @@ func stat(path string) (bool, error) {
 		return syscall.Stat(path, &stat)
 	})
 	if err != nil {
-		if err == syscall.ENOENT {
+		if err == syscall.ENOENT { //nolint
 			err = nil
 		}
 		return false, err

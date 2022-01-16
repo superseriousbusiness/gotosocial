@@ -53,19 +53,30 @@ func OpenStorage(storage storage.Storage) (*KVStore, error) {
 	}, nil
 }
 
-// Get fetches the bytes for supplied key in the store
-func (st *KVStore) Get(key string) ([]byte, error) {
-	// Acquire store read lock
+// RLock acquires a read-lock on supplied key, returning unlock function.
+func (st *KVStore) RLock(key string) (runlock func()) {
 	st.mutex.RLock()
-	defer st.mutex.RUnlock()
-
-	// Pass to unprotected fn
-	return st.get(key)
+	runlock = st.mutexMap.RLock(key)
+	st.mutex.RUnlock()
+	return runlock
 }
 
-func (st *KVStore) get(key string) ([]byte, error) {
+// Lock acquires a write-lock on supplied key, returning unlock function.
+func (st *KVStore) Lock(key string) (unlock func()) {
+	st.mutex.Lock()
+	unlock = st.mutexMap.Lock(key)
+	st.mutex.Unlock()
+	return unlock
+}
+
+// Get fetches the bytes for supplied key in the store
+func (st *KVStore) Get(key string) ([]byte, error) {
+	return st.get(st.RLock, key)
+}
+
+func (st *KVStore) get(rlock func(string) func(), key string) ([]byte, error) {
 	// Acquire read lock for key
-	runlock := st.mutexMap.RLock(key)
+	runlock := rlock(key)
 	defer runlock()
 
 	// Read file bytes
@@ -74,17 +85,12 @@ func (st *KVStore) get(key string) ([]byte, error) {
 
 // GetStream fetches a ReadCloser for the bytes at the supplied key location in the store
 func (st *KVStore) GetStream(key string) (io.ReadCloser, error) {
-	// Acquire store read lock
-	st.mutex.RLock()
-	defer st.mutex.RUnlock()
-
-	// Pass to unprotected fn
-	return st.getStream(key)
+	return st.getStream(st.RLock, key)
 }
 
-func (st *KVStore) getStream(key string) (io.ReadCloser, error) {
+func (st *KVStore) getStream(rlock func(string) func(), key string) (io.ReadCloser, error) {
 	// Acquire read lock for key
-	runlock := st.mutexMap.RLock(key)
+	runlock := rlock(key)
 
 	// Attempt to open stream for read
 	rd, err := st.storage.ReadStream(key)
@@ -99,17 +105,12 @@ func (st *KVStore) getStream(key string) (io.ReadCloser, error) {
 
 // Put places the bytes at the supplied key location in the store
 func (st *KVStore) Put(key string, value []byte) error {
-	// Acquire store write lock
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-
-	// Pass to unprotected fn
-	return st.put(key, value)
+	return st.put(st.Lock, key, value)
 }
 
-func (st *KVStore) put(key string, value []byte) error {
+func (st *KVStore) put(lock func(string) func(), key string, value []byte) error {
 	// Acquire write lock for key
-	unlock := st.mutexMap.Lock(key)
+	unlock := lock(key)
 	defer unlock()
 
 	// Write file bytes
@@ -118,17 +119,12 @@ func (st *KVStore) put(key string, value []byte) error {
 
 // PutStream writes the bytes from the supplied Reader at the supplied key location in the store
 func (st *KVStore) PutStream(key string, r io.Reader) error {
-	// Acquire store write lock
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-
-	// Pass to unprotected fn
-	return st.putStream(key, r)
+	return st.putStream(st.Lock, key, r)
 }
 
-func (st *KVStore) putStream(key string, r io.Reader) error {
+func (st *KVStore) putStream(lock func(string) func(), key string, r io.Reader) error {
 	// Acquire write lock for key
-	unlock := st.mutexMap.Lock(key)
+	unlock := lock(key)
 	defer unlock()
 
 	// Write file stream
@@ -137,17 +133,12 @@ func (st *KVStore) putStream(key string, r io.Reader) error {
 
 // Has checks whether the supplied key exists in the store
 func (st *KVStore) Has(key string) (bool, error) {
-	// Acquire store read lock
-	st.mutex.RLock()
-	defer st.mutex.RUnlock()
-
-	// Pass to unprotected fn
-	return st.has(key)
+	return st.has(st.RLock, key)
 }
 
-func (st *KVStore) has(key string) (bool, error) {
+func (st *KVStore) has(rlock func(string) func(), key string) (bool, error) {
 	// Acquire read lock for key
-	runlock := st.mutexMap.RLock(key)
+	runlock := rlock(key)
 	defer runlock()
 
 	// Stat file on disk
@@ -156,17 +147,12 @@ func (st *KVStore) has(key string) (bool, error) {
 
 // Delete removes the supplied key-value pair from the store
 func (st *KVStore) Delete(key string) error {
-	// Acquire store write lock
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-
-	// Pass to unprotected fn
-	return st.delete(key)
+	return st.delete(st.Lock, key)
 }
 
-func (st *KVStore) delete(key string) error {
+func (st *KVStore) delete(lock func(string) func(), key string) error {
 	// Acquire write lock for key
-	unlock := st.mutexMap.Lock(key)
+	unlock := lock(key)
 	defer unlock()
 
 	// Remove file from disk
