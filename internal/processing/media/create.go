@@ -19,9 +19,7 @@
 package media
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -31,21 +29,8 @@ import (
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
-	data := func(innerCtx context.Context) ([]byte, error) {
-		// open the attachment and extract the bytes from it
-		f, err := form.File.Open()
-		if err != nil {
-			return nil, fmt.Errorf("error opening attachment: %s", err)
-		}
-		buf := new(bytes.Buffer)
-		size, err := io.Copy(buf, f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading attachment: %s", err)
-		}
-		if size == 0 {
-			return nil, errors.New("could not read provided attachment: size 0 bytes")
-		}
-		return buf.Bytes(), f.Close()
+	data := func(innerCtx context.Context) (io.Reader, error) {
+		return form.File.Open()
 	}
 
 	focusX, focusY, err := parseFocus(form.Focus)

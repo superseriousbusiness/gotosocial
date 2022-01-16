@@ -19,8 +19,10 @@
 package media_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -37,9 +39,13 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) ([]byte, error) {
+	data := func(_ context.Context) (io.Reader, error) {
 		// load bytes from a test image
-		return os.ReadFile("./test/test-jpeg.jpg")
+		b, err := os.ReadFile("./test/test-jpeg.jpg")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -103,9 +109,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) ([]byte, error) {
+	data := func(_ context.Context) (io.Reader, error) {
 		// load bytes from a test image
-		return os.ReadFile("./test/test-jpeg.jpg")
+		b, err := os.ReadFile("./test/test-jpeg.jpg")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -175,16 +185,16 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 
 func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 	// in this test, we spam the manager queue with 50 new media requests, just to see how it holds up
-
 	ctx := context.Background()
 
-	// load bytes from a test image
-	testBytes, err := os.ReadFile("./test/test-jpeg.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(testBytes)
+	b, err := os.ReadFile("./test/test-jpeg.jpg")
+	if err != nil {
+		panic(err)
+	}
 
-	data := func(_ context.Context) ([]byte, error) {
-		return testBytes, nil
+	data := func(_ context.Context) (io.Reader, error) {
+		// load bytes from a test image
+		return bytes.NewReader(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"

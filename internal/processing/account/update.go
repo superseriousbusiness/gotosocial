@@ -19,9 +19,7 @@
 package account
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -142,24 +140,8 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	dataFunc := func(ctx context.Context) ([]byte, error) {
-		// pop open the fileheader
-		f, err := avatar.Open()
-		if err != nil {
-			return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
-		}
-
-		// extract the bytes
-		buf := new(bytes.Buffer)
-		size, err := io.Copy(buf, f)
-		if err != nil {
-			return nil, fmt.Errorf("UpdateAvatar: could not read provided avatar: %s", err)
-		}
-		if size == 0 {
-			return nil, errors.New("UpdateAvatar: could not read provided avatar: size 0 bytes")
-		}
-
-		return buf.Bytes(), f.Close()
+	dataFunc := func(ctx context.Context) (io.Reader, error) {
+		return avatar.Open()
 	}
 
 	isAvatar := true
@@ -184,24 +166,8 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}
 
-	dataFunc := func(ctx context.Context) ([]byte, error) {
-		// pop open the fileheader
-		f, err := header.Open()
-		if err != nil {
-			return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
-		}
-
-		// extract the bytes
-		buf := new(bytes.Buffer)
-		size, err := io.Copy(buf, f)
-		if err != nil {
-			return nil, fmt.Errorf("UpdateHeader: could not read provided header: %s", err)
-		}
-		if size == 0 {
-			return nil, errors.New("UpdateHeader: could not read provided header: size 0 bytes")
-		}
-
-		return buf.Bytes(), f.Close()
+	dataFunc := func(ctx context.Context) (io.Reader, error) {
+		return header.Open()
 	}
 
 	isHeader := true

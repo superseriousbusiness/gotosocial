@@ -20,6 +20,7 @@ package media
 
 import (
 	"context"
+	"io"
 	"time"
 )
 
@@ -28,7 +29,7 @@ import (
 //
 // See: https://en.wikipedia.org/wiki/File_format#File_header
 // and https://github.com/h2non/filetype
-const maxFileHeaderBytes = 262
+const maxFileHeaderBytes = 261
 
 // mime consts
 const (
@@ -117,4 +118,4 @@ type AdditionalEmojiInfo struct {
 }
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.
-type DataFunc func(ctx context.Context) ([]byte, error)
+type DataFunc func(ctx context.Context) (io.Reader, error)

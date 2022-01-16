@@ -21,14 +21,14 @@ package transport
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/sirupsen/logrus"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) ([]byte, error) {
+func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, error) {
 	l := logrus.WithField("func", "DereferenceMedia")
 	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
@@ -50,9 +50,8 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) ([]byte,
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
 	}
-	return ioutil.ReadAll(resp.Body)
+	return resp.Body, nil
 }

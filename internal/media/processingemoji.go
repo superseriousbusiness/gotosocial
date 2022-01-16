@@ -19,8 +19,10 @@
 package media
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -46,22 +48,14 @@ type ProcessingEmoji struct {
 
 	emoji *gtsmodel.Emoji
 	data  DataFunc
-
-	rawData []byte // will be set once the fetchRawData function has been called
-
-	/*
-		below fields represent the processing state of the static version of the emoji
-	*/
-
-	staticState processState
-	static      *ImageMeta
+	read  bool // bool indicating that data function has been triggered already
 
 	/*
-		below fields represent the processing state of the emoji image
+		below fields represent the processing state of the static of the emoji
 	*/
 
+	staticState   processState
 	fullSizeState processState
-	fullSize      *ImageMeta
 
 	/*
 		below pointers to database and storage are maintained so that
@@ -85,21 +79,18 @@ func (p *ProcessingEmoji) EmojiID() string {
 // LoadEmoji blocks until the static and fullsize image
 // has been processed, and then returns the completed emoji.
 func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
-	if err := p.fetchRawData(ctx); err != nil {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if err := p.store(ctx); err != nil {
 		return nil, err
 	}
 
-	if _, err := p.loadStatic(ctx); err != nil {
-		return nil, err
-	}
-
-	if _, err := p.loadFullSize(ctx); err != nil {
+	if err := p.loadStatic(ctx); err != nil {
 		return nil, err
 	}
 
 	// store the result in the database before returning it
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	if !p.insertedInDB {
 		if err := p.database.Put(ctx, p.emoji); err != nil {
 			return nil, err
@@ -116,118 +107,85 @@ func (p *ProcessingEmoji) Finished() bool {
 	return p.staticState == complete && p.fullSizeState == complete
 }
 
-func (p *ProcessingEmoji) loadStatic(ctx context.Context) (*ImageMeta, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 	switch p.staticState {
 	case received:
-		// we haven't processed a static version of this emoji yet so do it now
-		static, err := deriveStaticEmoji(p.rawData, p.emoji.ImageContentType)
+		// stream the original file out of storage...
+		stored, err := p.storage.GetStream(p.emoji.ImagePath)
 		if err != nil {
-			p.err = fmt.Errorf("error deriving static: %s", err)
+			p.err = fmt.Errorf("loadStatic: error fetching file from storage: %s", err)
 			p.staticState = errored
-			return nil, p.err
+			return p.err
+		}
+
+		// we haven't processed a static version of this emoji yet so do it now
+		static, err := deriveStaticEmoji(stored, p.emoji.ImageContentType)
+		if err != nil {
+			p.err = fmt.Errorf("loadStatic: error deriving static: %s", err)
+			p.staticState = errored
+			return p.err
+		}
+
+		if err := stored.Close(); err != nil {
+			p.err = fmt.Errorf("loadStatic: error closing stored full size: %s", err)
+			p.staticState = errored
+			return p.err
 		}
 
 		// put the static in storage
-		if err := p.storage.Put(p.emoji.ImageStaticPath, static.image); err != nil {
-			p.err = fmt.Errorf("error storing static: %s", err)
+		if err := p.storage.Put(p.emoji.ImageStaticPath, static.small); err != nil {
+			p.err = fmt.Errorf("loadStatic: error storing static: %s", err)
 			p.staticState = errored
-			return nil, p.err
+			return p.err
 		}
 
-		// set appropriate fields on the emoji based on the static version we derived
-		p.emoji.ImageStaticFileSize = len(static.image)
-
-		// set the static on the processing emoji
-		p.static = static
+		p.emoji.ImageStaticFileSize = len(static.small)
 
 		// we're done processing the static version of the emoji!
 		p.staticState = complete
 		fallthrough
 	case complete:
-		return p.static, nil
+		return nil
 	case errored:
-		return nil, p.err
+		return p.err
 	}
 
-	return nil, fmt.Errorf("static processing status %d unknown", p.staticState)
+	return fmt.Errorf("static processing status %d unknown", p.staticState)
 }
 
-func (p *ProcessingEmoji) loadFullSize(ctx context.Context) (*ImageMeta, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	switch p.fullSizeState {
-	case received:
-		var err error
-		var decoded *ImageMeta
-
-		ct := p.emoji.ImageContentType
-		switch ct {
-		case mimeImagePng:
-			decoded, err = decodeImage(p.rawData, ct)
-		case mimeImageGif:
-			decoded, err = decodeGif(p.rawData)
-		default:
-			err = fmt.Errorf("content type %s not a processible emoji type", ct)
-		}
-
-		if err != nil {
-			p.err = err
-			p.fullSizeState = errored
-			return nil, err
-		}
-
-		// put the full size emoji in storage
-		if err := p.storage.Put(p.emoji.ImagePath, decoded.image); err != nil {
-			p.err = fmt.Errorf("error storing full size emoji: %s", err)
-			p.fullSizeState = errored
-			return nil, p.err
-		}
-
-		// set the fullsize of this media
-		p.fullSize = decoded
-
-		// we're done processing the full-size emoji
-		p.fullSizeState = complete
-		fallthrough
-	case complete:
-		return p.fullSize, nil
-	case errored:
-		return nil, p.err
-	}
-
-	return nil, fmt.Errorf("full size processing status %d unknown", p.fullSizeState)
-}
-
-// fetchRawData calls the data function attached to p if it hasn't been called yet,
-// and updates the underlying emoji fields as necessary.
-// It should only be called from within a function that already has a lock on p!
-func (p *ProcessingEmoji) fetchRawData(ctx context.Context) error {
+// store calls the data function attached to p if it hasn't been called yet,
+// and updates the underlying attachment fields as necessary. It will then stream
+// bytes from p's reader directly into storage so that it can be retrieved later.
+func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// check if we've already done this and bail early if we have
-	if p.rawData != nil {
+	if p.read {
 		return nil
 	}
 
-	// execute the data function and pin the raw bytes for further processing
-	b, err := p.data(ctx)
+	// execute the data function to get the reader out of it
+	reader, err := p.data(ctx)
 	if err != nil {
-		return fmt.Errorf("fetchRawData: error executing data function: %s", err)
-	}
-	p.rawData = b
-
-	// now we have the data we can work out the content type
-	contentType, err := parseContentType(p.rawData)
-	if err != nil {
-		return fmt.Errorf("fetchRawData: error parsing content type: %s", err)
+		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
+	// extract no more than 261 bytes from the beginning of the file -- this is the header
+	firstBytes := make([]byte, maxFileHeaderBytes)
+	if _, err := reader.Read(firstBytes); err != nil {
+		return fmt.Errorf("store: error reading initial %d bytes: %s", maxFileHeaderBytes, err)
+	}
+
+	// now we have the file header we can work out the content type from it
+	contentType, err := parseContentType(firstBytes)
+	if err != nil {
+		return fmt.Errorf("store: error parsing content type: %s", err)
+	}
+
+	// bail if this is a type we can't process
 	if !supportedEmoji(contentType) {
-		return fmt.Errorf("fetchRawData: content type %s was not valid for an emoji", contentType)
+		return fmt.Errorf("store: content type %s was not valid for an emoji", contentType)
 	}
 
+	// extract the file extension
 	split := strings.Split(contentType, "/")
 	extension := split[1] // something like 'gif'
 
@@ -236,8 +194,24 @@ func (p *ProcessingEmoji) fetchRawData(ctx context.Context) error {
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
 	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
 	p.emoji.ImageContentType = contentType
-	p.emoji.ImageFileSize = len(p.rawData)
 
+	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
+	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+
+	// store this for now -- other processes can pull it out of storage as they please
+	if err := p.storage.PutStream(p.emoji.ImagePath, multiReader); err != nil {
+		return fmt.Errorf("store: error storing stream: %s", err)
+	}
+	p.emoji.ImageFileSize = 36702 // TODO: set this based on the result of PutStream
+
+	// if the original reader is a readcloser, close it since we're done with it now
+	if rc, ok := reader.(io.ReadCloser); ok {
+		if err := rc.Close(); err != nil {
+			return fmt.Errorf("store: error closing readcloser: %s", err)
+		}
+	}
+
+	p.read = true
 	return nil
 }
 

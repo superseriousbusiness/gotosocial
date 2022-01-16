@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 
@@ -251,7 +252,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data := func(innerCtx context.Context) ([]byte, error) {
+		data := func(innerCtx context.Context) (io.Reader, error) {
 			return t.DereferenceMedia(innerCtx, avatarIRI)
 		}
 
@@ -273,7 +274,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data := func(innerCtx context.Context) ([]byte, error) {
+		data := func(innerCtx context.Context) (io.Reader, error) {
 			return t.DereferenceMedia(innerCtx, headerIRI)
 		}
 

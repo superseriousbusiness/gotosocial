@@ -26,6 +26,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 
 	"github.com/buckket/go-blurhash"
 	"github.com/nfnt/resize"
@@ -37,17 +38,17 @@ const (
 	thumbnailMaxHeight = 512
 )
 
-type ImageMeta struct {
-	image    []byte
+type imageMeta struct {
 	width    int
 	height   int
 	size     int
 	aspect   float64
-	blurhash string
+	blurhash string // defined only for calls to deriveThumbnail if createBlurhash is true
+	small    []byte // defined only for calls to deriveStaticEmoji or deriveThumbnail
 }
 
-func decodeGif(b []byte) (*ImageMeta, error) {
-	gif, err := gif.DecodeAll(bytes.NewReader(b))
+func decodeGif(r io.Reader) (*imageMeta, error) {
+	gif, err := gif.DecodeAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -58,8 +59,7 @@ func decodeGif(b []byte) (*ImageMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &ImageMeta{
-		image:  b,
+	return &imageMeta{
 		width:  width,
 		height: height,
 		size:   size,
@@ -67,15 +67,15 @@ func decodeGif(b []byte) (*ImageMeta, error) {
 	}, nil
 }
 
-func decodeImage(b []byte, contentType string) (*ImageMeta, error) {
+func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	var i image.Image
 	var err error
 
 	switch contentType {
 	case mimeImageJpeg:
-		i, err = jpeg.Decode(bytes.NewReader(b))
+		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		i, err = png.Decode(bytes.NewReader(b))
+		i, err = png.Decode(r)
 	default:
 		err = fmt.Errorf("content type %s not recognised", contentType)
 	}
@@ -93,8 +93,7 @@ func decodeImage(b []byte, contentType string) (*ImageMeta, error) {
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	return &ImageMeta{
-		image:  b,
+	return &imageMeta{
 		width:  width,
 		height: height,
 		size:   size,
@@ -111,17 +110,17 @@ func decodeImage(b []byte, contentType string) (*ImageMeta, error) {
 //
 // If createBlurhash is false, then the blurhash field on the returned ImageAndMeta
 // will be an empty string.
-func deriveThumbnail(b []byte, contentType string, createBlurhash bool) (*ImageMeta, error) {
+func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*imageMeta, error) {
 	var i image.Image
 	var err error
 
 	switch contentType {
 	case mimeImageJpeg:
-		i, err = jpeg.Decode(bytes.NewReader(b))
+		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		i, err = png.Decode(bytes.NewReader(b))
+		i, err = png.Decode(r)
 	case mimeImageGif:
-		i, err = gif.Decode(bytes.NewReader(b))
+		i, err = gif.Decode(r)
 	default:
 		err = fmt.Errorf("content type %s can't be thumbnailed", contentType)
 	}
@@ -140,7 +139,7 @@ func deriveThumbnail(b []byte, contentType string, createBlurhash bool) (*ImageM
 	size := width * height
 	aspect := float64(width) / float64(height)
 
-	im := &ImageMeta{
+	im := &imageMeta{
 		width:  width,
 		height: height,
 		size:   size,
@@ -165,25 +164,24 @@ func deriveThumbnail(b []byte, contentType string, createBlurhash bool) (*ImageM
 	}); err != nil {
 		return nil, err
 	}
-
-	im.image = out.Bytes()
+	im.small = out.Bytes()
 
 	return im, nil
 }
 
 // deriveStaticEmojji takes a given gif or png of an emoji, decodes it, and re-encodes it as a static png.
-func deriveStaticEmoji(b []byte, contentType string) (*ImageMeta, error) {
+func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 	var i image.Image
 	var err error
 
 	switch contentType {
 	case mimeImagePng:
-		i, err = png.Decode(bytes.NewReader(b))
+		i, err = png.Decode(r)
 		if err != nil {
 			return nil, err
 		}
 	case mimeImageGif:
-		i, err = gif.Decode(bytes.NewReader(b))
+		i, err = gif.Decode(r)
 		if err != nil {
 			return nil, err
 		}
@@ -195,8 +193,8 @@ func deriveStaticEmoji(b []byte, contentType string) (*ImageMeta, error) {
 	if err := png.Encode(out, i); err != nil {
 		return nil, err
 	}
-	return &ImageMeta{
-		image: out.Bytes(),
+	return &imageMeta{
+		small: out.Bytes(),
 	}, nil
 }
 

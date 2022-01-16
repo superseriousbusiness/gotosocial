@@ -19,8 +19,10 @@
 package media
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -44,22 +46,10 @@ type ProcessingMedia struct {
 
 	attachment *gtsmodel.MediaAttachment
 	data       DataFunc
+	read       bool // bool indicating that data function has been triggered already
 
-	rawData []byte // will be set once the fetchRawData function has been called
-
-	/*
-		below fields represent the processing state of the media thumbnail
-	*/
-
-	thumbstate processState
-	thumb      *ImageMeta
-
-	/*
-		below fields represent the processing state of the full-sized media
-	*/
-
-	fullSizeState processState
-	fullSize      *ImageMeta
+	thumbstate    processState // the processing state of the media thumbnail
+	fullSizeState processState // the processing state of the full-sized media
 
 	/*
 		below pointers to database and storage are maintained so that
@@ -83,21 +73,22 @@ func (p *ProcessingMedia) AttachmentID() string {
 // LoadAttachment blocks until the thumbnail and fullsize content
 // has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
-	if err := p.fetchRawData(ctx); err != nil {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if err := p.store(ctx); err != nil {
 		return nil, err
 	}
 
-	if _, err := p.loadThumb(ctx); err != nil {
+	if err := p.loadThumb(ctx); err != nil {
 		return nil, err
 	}
 
-	if _, err := p.loadFullSize(ctx); err != nil {
+	if err := p.loadFullSize(ctx); err != nil {
 		return nil, err
 	}
 
 	// store the result in the database before returning it
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	if !p.insertedInDB {
 		if err := p.database.Put(ctx, p.attachment); err != nil {
 			return nil, err
@@ -114,10 +105,7 @@ func (p *ProcessingMedia) Finished() bool {
 	return p.thumbstate == complete && p.fullSizeState == complete
 }
 
-func (p *ProcessingMedia) loadThumb(ctx context.Context) (*ImageMeta, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 	switch p.thumbstate {
 	case received:
 		// we haven't processed a thumbnail for this media yet so do it now
@@ -129,87 +117,94 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) (*ImageMeta, error) {
 			createBlurhash = true
 		}
 
-		thumb, err := deriveThumbnail(p.rawData, p.attachment.File.ContentType, createBlurhash)
+		// stream the original file out of storage...
+		stored, err := p.storage.GetStream(p.attachment.File.Path)
 		if err != nil {
-			p.err = fmt.Errorf("error deriving thumbnail: %s", err)
+			p.err = fmt.Errorf("loadThumb: error fetching file from storage: %s", err)
 			p.thumbstate = errored
-			return nil, p.err
+			return p.err
+		}
+
+		// ... and into the derive thumbnail function
+		thumb, err := deriveThumbnail(stored, p.attachment.File.ContentType, createBlurhash)
+		if err != nil {
+			p.err = fmt.Errorf("loadThumb: error deriving thumbnail: %s", err)
+			p.thumbstate = errored
+			return p.err
+		}
+
+		if err := stored.Close(); err != nil {
+			p.err = fmt.Errorf("loadThumb: error closing stored full size: %s", err)
+			p.thumbstate = errored
+			return p.err
 		}
 
 		// put the thumbnail in storage
-		if err := p.storage.Put(p.attachment.Thumbnail.Path, thumb.image); err != nil {
-			p.err = fmt.Errorf("error storing thumbnail: %s", err)
+		if err := p.storage.Put(p.attachment.Thumbnail.Path, thumb.small); err != nil {
+			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			p.thumbstate = errored
-			return nil, p.err
+			return p.err
 		}
 
 		// set appropriate fields on the attachment based on the thumbnail we derived
 		if createBlurhash {
 			p.attachment.Blurhash = thumb.blurhash
 		}
-
 		p.attachment.FileMeta.Small = gtsmodel.Small{
 			Width:  thumb.width,
 			Height: thumb.height,
 			Size:   thumb.size,
 			Aspect: thumb.aspect,
 		}
-		p.attachment.Thumbnail.FileSize = len(thumb.image)
-
-		// set the thumbnail of this media
-		p.thumb = thumb
+		p.attachment.Thumbnail.FileSize = len(thumb.small)
 
 		// we're done processing the thumbnail!
 		p.thumbstate = complete
 		fallthrough
 	case complete:
-		return p.thumb, nil
+		return nil
 	case errored:
-		return nil, p.err
+		return p.err
 	}
 
-	return nil, fmt.Errorf("thumbnail processing status %d unknown", p.thumbstate)
+	return fmt.Errorf("loadThumb: thumbnail processing status %d unknown", p.thumbstate)
 }
 
-func (p *ProcessingMedia) loadFullSize(ctx context.Context) (*ImageMeta, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
+func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 	switch p.fullSizeState {
 	case received:
-		var clean []byte
 		var err error
-		var decoded *ImageMeta
+		var decoded *imageMeta
 
+		// stream the original file out of storage...
+		stored, err := p.storage.GetStream(p.attachment.File.Path)
+		if err != nil {
+			p.err = fmt.Errorf("loadFullSize: error fetching file from storage: %s", err)
+			p.fullSizeState = errored
+			return p.err
+		}
+
+		// decode the image
 		ct := p.attachment.File.ContentType
 		switch ct {
 		case mimeImageJpeg, mimeImagePng:
-			// first 'clean' image by purging exif data from it
-			var exifErr error
-			if clean, exifErr = purgeExif(p.rawData); exifErr != nil {
-				err = exifErr
-				break
-			}
-			decoded, err = decodeImage(clean, ct)
+			decoded, err = decodeImage(stored, ct)
 		case mimeImageGif:
-			// gifs are already clean - no exif data to remove
-			clean = p.rawData
-			decoded, err = decodeGif(clean)
+			decoded, err = decodeGif(stored)
 		default:
-			err = fmt.Errorf("content type %s not a processible image type", ct)
+			err = fmt.Errorf("loadFullSize: content type %s not a processible image type", ct)
 		}
 
 		if err != nil {
 			p.err = err
 			p.fullSizeState = errored
-			return nil, err
+			return p.err
 		}
 
-		// put the full size in storage
-		if err := p.storage.Put(p.attachment.File.Path, decoded.image); err != nil {
-			p.err = fmt.Errorf("error storing full size image: %s", err)
-			p.fullSizeState = errored
-			return nil, p.err
+		if err := stored.Close(); err != nil {
+			p.err = fmt.Errorf("loadFullSize: error closing stored full size: %s", err)
+			p.thumbstate = errored
+			return p.err
 		}
 
 		// set appropriate fields on the attachment based on the image we derived
@@ -219,56 +214,58 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) (*ImageMeta, error) 
 			Size:   decoded.size,
 			Aspect: decoded.aspect,
 		}
-		p.attachment.File.FileSize = len(decoded.image)
 		p.attachment.File.UpdatedAt = time.Now()
 		p.attachment.Processing = gtsmodel.ProcessingStatusProcessed
-
-		// set the fullsize of this media
-		p.fullSize = decoded
 
 		// we're done processing the full-size image
 		p.fullSizeState = complete
 		fallthrough
 	case complete:
-		return p.fullSize, nil
+		return nil
 	case errored:
-		return nil, p.err
+		return p.err
 	}
 
-	return nil, fmt.Errorf("full size processing status %d unknown", p.fullSizeState)
+	return fmt.Errorf("loadFullSize: full size processing status %d unknown", p.fullSizeState)
 }
 
-// fetchRawData calls the data function attached to p if it hasn't been called yet,
-// and updates the underlying attachment fields as necessary.
-// It should only be called from within a function that already has a lock on p!
-func (p *ProcessingMedia) fetchRawData(ctx context.Context) error {
+// store calls the data function attached to p if it hasn't been called yet,
+// and updates the underlying attachment fields as necessary. It will then stream
+// bytes from p's reader directly into storage so that it can be retrieved later.
+func (p *ProcessingMedia) store(ctx context.Context) error {
 	// check if we've already done this and bail early if we have
-	if p.rawData != nil {
+	if p.read {
 		return nil
 	}
 
-	// execute the data function and pin the raw bytes for further processing
-	b, err := p.data(ctx)
+	// execute the data function to get the reader out of it
+	reader, err := p.data(ctx)
 	if err != nil {
-		return fmt.Errorf("fetchRawData: error executing data function: %s", err)
-	}
-	p.rawData = b
-
-	// now we have the data we can work out the content type
-	contentType, err := parseContentType(p.rawData)
-	if err != nil {
-		return fmt.Errorf("fetchRawData: error parsing content type: %s", err)
+		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
+	// extract no more than 261 bytes from the beginning of the file -- this is the header
+	firstBytes := make([]byte, maxFileHeaderBytes)
+	if _, err := reader.Read(firstBytes); err != nil {
+		return fmt.Errorf("store: error reading initial %d bytes: %s", maxFileHeaderBytes, err)
+	}
+
+	// now we have the file header we can work out the content type from it
+	contentType, err := parseContentType(firstBytes)
+	if err != nil {
+		return fmt.Errorf("store: error parsing content type: %s", err)
+	}
+
+	// bail if this is a type we can't process
 	if !supportedImage(contentType) {
-		return fmt.Errorf("fetchRawData: media type %s not (yet) supported", contentType)
+		return fmt.Errorf("store: media type %s not (yet) supported", contentType)
 	}
 
+	// extract the file extension
 	split := strings.Split(contentType, "/")
 	if len(split) != 2 {
-		return fmt.Errorf("fetchRawData: content type %s was not valid", contentType)
+		return fmt.Errorf("store: content type %s was not valid", contentType)
 	}
-
 	extension := split[1] // something like 'jpeg'
 
 	// set some additional fields on the attachment now that
@@ -282,6 +279,22 @@ func (p *ProcessingMedia) fetchRawData(ctx context.Context) error {
 	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 	p.attachment.File.ContentType = contentType
 
+	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
+	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+
+	// store this for now -- other processes can pull it out of storage as they please
+	if err := p.storage.PutStream(p.attachment.File.Path, multiReader); err != nil {
+		return fmt.Errorf("store: error storing stream: %s", err)
+	}
+
+	// if the original reader is a readcloser, close it since we're done with it now
+	if rc, ok := reader.(io.ReadCloser); ok {
+		if err := rc.Close(); err != nil {
+			return fmt.Errorf("store: error closing readcloser: %s", err)
+		}
+	}
+
+	p.read = true
 	return nil
 }
 

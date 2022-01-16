@@ -19,7 +19,6 @@
 package media
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 
@@ -28,11 +27,11 @@ import (
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
 // Returns an error if the content type is not something we can process.
-func parseContentType(content []byte) (string, error) {
-	// read in the first bytes of the file
-	fileHeader := make([]byte, maxFileHeaderBytes)
-	if _, err := bytes.NewReader(content).Read(fileHeader); err != nil {
-		return "", fmt.Errorf("could not read first magic bytes of file: %s", err)
+//
+// Fileheader should be no longer than 262 bytes; anything more than this is inefficient.
+func parseContentType(fileHeader []byte) (string, error) {
+	if fhLength := len(fileHeader); fhLength > maxFileHeaderBytes {
+		return "", fmt.Errorf("parseContentType requires %d bytes max, we got %d", maxFileHeaderBytes, fhLength)
 	}
 
 	kind, err := filetype.Match(fileHeader)

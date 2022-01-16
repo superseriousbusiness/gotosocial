@@ -19,9 +19,7 @@
 package admin
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -38,22 +36,8 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	data := func(innerCtx context.Context) ([]byte, error) {
-		// open the emoji and extract the bytes from it
-		f, err := form.Image.Open()
-		if err != nil {
-			return nil, fmt.Errorf("error opening emoji: %s", err)
-		}
-		buf := new(bytes.Buffer)
-		size, err := io.Copy(buf, f)
-		if err != nil {
-			return nil, fmt.Errorf("error reading emoji: %s", err)
-		}
-		if size == 0 {
-			return nil, errors.New("could not read provided emoji: size 0 bytes")
-		}
-
-		return buf.Bytes(), f.Close()
+	data := func(innerCtx context.Context) (io.Reader, error) {
+		return form.Image.Open()
 	}
 
 	emojiID, err := id.NewRandomULID()
