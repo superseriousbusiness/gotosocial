@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
+	terminator "github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -239,7 +240,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	// execute the data function to get the reader out of it
-	reader, err := p.data(ctx)
+	reader, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
@@ -268,22 +269,36 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 	extension := split[1] // something like 'jpeg'
 
-	// set some additional fields on the attachment now that
-	// we know more about what the underlying media actually is
-	if extension == mimeGif {
+	// concatenate the cleaned up first bytes with the existing bytes still in the reader (thanks Mara)
+	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+
+	// we'll need to clean exif data from the first bytes; while we're
+	// here, we can also use the extension to derive the attachment type
+	var clean io.Reader
+	switch extension {
+	case mimeGif:
 		p.attachment.Type = gtsmodel.FileTypeGif
-	} else {
+		clean = multiReader // nothing to clean from a gif
+	case mimeJpeg, mimePng:
 		p.attachment.Type = gtsmodel.FileTypeImage
+		purged, err := terminator.Terminate(multiReader, fileSize, extension)
+		if err != nil {
+			return fmt.Errorf("store: exif error: %s", err)
+		}
+		clean = purged
+	default:
+		return fmt.Errorf("store: couldn't process %s", extension)
 	}
+
+	// now set some additional fields on the attachment since
+	// we know more about what the underlying media actually is
 	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
 	p.attachment.File.Path = fmt.Sprintf("%s/%s/%s/%s.%s", p.attachment.AccountID, TypeAttachment, SizeOriginal, p.attachment.ID, extension)
 	p.attachment.File.ContentType = contentType
-
-	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
-	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
+	p.attachment.File.FileSize = fileSize
 
 	// store this for now -- other processes can pull it out of storage as they please
-	if err := p.storage.PutStream(p.attachment.File.Path, multiReader); err != nil {
+	if err := p.storage.PutStream(p.attachment.File.Path, clean); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 

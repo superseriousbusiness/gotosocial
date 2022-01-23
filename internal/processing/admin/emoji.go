@@ -36,8 +36,9 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	data := func(innerCtx context.Context) (io.Reader, error) {
-		return form.Image.Open()
+	data := func(innerCtx context.Context) (io.Reader, int, error) {
+		f, err := form.Image.Open()
+		return f, int(form.Image.Size), err
 	}
 
 	emojiID, err := id.NewRandomULID()

@@ -39,13 +39,13 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, error) {
+	data := func(_ context.Context) (io.Reader, int, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), nil
+		return bytes.NewBuffer(b), len(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -109,13 +109,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.Reader, error) {
+	data := func(_ context.Context) (io.Reader, int, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return bytes.NewBuffer(b), nil
+		return bytes.NewBuffer(b), len(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -192,9 +192,9 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 		panic(err)
 	}
 
-	data := func(_ context.Context) (io.Reader, error) {
+	data := func(_ context.Context) (io.Reader, int, error) {
 		// load bytes from a test image
-		return bytes.NewReader(b), nil
+		return bytes.NewReader(b), len(b), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"

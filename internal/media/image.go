@@ -30,7 +30,6 @@ import (
 
 	"github.com/buckket/go-blurhash"
 	"github.com/nfnt/resize"
-	"github.com/superseriousbusiness/exifremove/pkg/exifremove"
 )
 
 const (
@@ -196,23 +195,4 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 	return &imageMeta{
 		small: out.Bytes(),
 	}, nil
-}
-
-// purgeExif is a little wrapper for the action of removing exif data from an image.
-// Only pass pngs or jpegs to this function.
-func purgeExif(data []byte) ([]byte, error) {
-	if len(data) == 0 {
-		return nil, errors.New("passed image was not valid")
-	}
-
-	clean, err := exifremove.Remove(data)
-	if err != nil {
-		return nil, fmt.Errorf("could not purge exif from image: %s", err)
-	}
-
-	if len(clean) == 0 {
-		return nil, errors.New("purged image was not valid")
-	}
-
-	return clean, nil
 }

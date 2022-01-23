@@ -252,7 +252,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data := func(innerCtx context.Context) (io.Reader, error) {
+		data := func(innerCtx context.Context) (io.Reader, int, error) {
 			return t.DereferenceMedia(innerCtx, avatarIRI)
 		}
 
@@ -274,7 +274,7 @@ func (d *deref) fetchHeaderAndAviForAccount(ctx context.Context, targetAccount *
 			return err
 		}
 
-		data := func(innerCtx context.Context) (io.Reader, error) {
+		data := func(innerCtx context.Context) (io.Reader, int, error) {
 			return t.DereferenceMedia(innerCtx, headerIRI)
 		}
 

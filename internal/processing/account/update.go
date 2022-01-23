@@ -140,8 +140,9 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	dataFunc := func(ctx context.Context) (io.Reader, error) {
-		return avatar.Open()
+	dataFunc := func(ctx context.Context) (io.Reader, int, error) {
+		f, err := avatar.Open()
+		return f, int(avatar.Size), err
 	}
 
 	isAvatar := true
@@ -166,8 +167,9 @@ func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHead
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}
 
-	dataFunc := func(ctx context.Context) (io.Reader, error) {
-		return header.Open()
+	dataFunc := func(ctx context.Context) (io.Reader, int, error) {
+		f, err := header.Open()
+		return f, int(header.Size), err
 	}
 
 	isHeader := true

@@ -42,7 +42,7 @@ func (d *deref) GetRemoteMedia(ctx context.Context, requestingUsername string, a
 		return nil, fmt.Errorf("GetRemoteMedia: error parsing url: %s", err)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.Reader, error) {
+	dataFunc := func(innerCtx context.Context) (io.Reader, int, error) {
 		return t.DereferenceMedia(innerCtx, derefURI)
 	}
 

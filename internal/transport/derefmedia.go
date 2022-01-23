@@ -28,12 +28,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, error) {
+func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int, error) {
 	l := logrus.WithField("func", "DereferenceMedia")
 	l.Debugf("performing GET to %s", iri.String())
 	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
@@ -44,14 +44,14 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
 	t.getSignerMu.Unlock()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
+		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
 	}
-	return resp.Body, nil
+	return resp.Body, int(resp.ContentLength), nil
 }

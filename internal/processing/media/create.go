@@ -29,8 +29,9 @@ import (
 )
 
 func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
-	data := func(innerCtx context.Context) (io.Reader, error) {
-		return form.File.Open()
+	data := func(innerCtx context.Context) (io.Reader, int, error) {
+		f, err := form.File.Open()
+		return f, int(form.File.Size), err
 	}
 
 	focusX, focusY, err := parseFocus(form.Focus)

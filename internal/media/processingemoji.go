@@ -163,7 +163,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// execute the data function to get the reader out of it
-	reader, err := p.data(ctx)
+	reader, fileSize, err := p.data(ctx)
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
@@ -194,6 +194,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(p.instanceAccountID, string(TypeEmoji), string(SizeOriginal), p.emoji.ID, extension)
 	p.emoji.ImagePath = fmt.Sprintf("%s/%s/%s/%s.%s", p.instanceAccountID, TypeEmoji, SizeOriginal, p.emoji.ID, extension)
 	p.emoji.ImageContentType = contentType
+	p.emoji.ImageFileSize = fileSize
 
 	// concatenate the first bytes with the existing bytes still in the reader (thanks Mara)
 	multiReader := io.MultiReader(bytes.NewBuffer(firstBytes), reader)
@@ -202,7 +203,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	if err := p.storage.PutStream(p.emoji.ImagePath, multiReader); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
-	p.emoji.ImageFileSize = 36702 // TODO: set this based on the result of PutStream
 
 	// if the original reader is a readcloser, close it since we're done with it now
 	if rc, ok := reader.(io.ReadCloser); ok {
