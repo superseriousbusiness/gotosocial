@@ -74,6 +74,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -151,6 +152,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -232,6 +234,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 			Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 		}, attachment.FileMeta.Small)
 		suite.Equal("image/jpeg", attachment.File.ContentType)
+		suite.Equal(269739, attachment.File.FileSize)
 		suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
 		// now make sure the attachment is in the database
