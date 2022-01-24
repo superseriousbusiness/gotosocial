@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/streams"
@@ -54,7 +55,7 @@ func instanceAccount(account *gtsmodel.Account) bool {
 // the remote instance again.
 //
 // SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
-func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool, blocking bool) (*gtsmodel.Account, error) {
+func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error) {
 	new := true
 
 	// check if we already have the account in our db, and just return it unless we'd doing a refresh
@@ -65,8 +66,16 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 			// make sure the account fields are populated before returning:
 			// even if we're not doing a refresh, the caller might want to block
 			// until everything is loaded
-			err = d.populateAccountFields(ctx, remoteAccount, username, refresh, blocking)
-			return remoteAccount, err
+			if err := d.populateAccountFields(ctx, remoteAccount, username, refresh, blocking); err != nil {
+				return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
+			}
+
+			updatedAccount, err := d.db.UpdateAccount(ctx, remoteAccount)
+			if err != nil {
+				return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+			}
+
+			return updatedAccount, err
 		}
 	}
 
@@ -193,7 +202,7 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 
 // populateAccountFields populates any fields on the given account that weren't populated by the initial
 // dereferencing. This includes things like header and avatar etc.
-func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, refresh bool, blocking bool) error {
+func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, blocking bool, refresh bool) error {
 	// if we're dealing with an instance account, just bail, we don't need to do anything
 	if instanceAccount(account) {
 		return nil
@@ -230,7 +239,7 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 //
 // If blocking is true, then the calls to the media manager made by this function will be blocking:
 // in other words, the function won't return until the header and the avatar have been fully processed.
-func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, refresh bool, blocking bool) error {
+func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, blocking bool, refresh bool) error {
 	accountURI, err := url.Parse(targetAccount.URI)
 	if err != nil {
 		return fmt.Errorf("fetchRemoteAccountMedia: couldn't parse account URI %s: %s", targetAccount.URI, err)
@@ -270,7 +279,6 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			if err != nil {
 				return err
 			}
-			targetAccount.AvatarMediaAttachmentID = newProcessing.AttachmentID()
 
 			// store it in our map to indicate it's in process
 			d.dereferencingAvatarsLock.Lock()
@@ -288,11 +296,15 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		} else {
 			// ...otherwise do it async
 			go func() {
-				if err := lockAndLoad(ctx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
+				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
+				if err := lockAndLoad(dlCtx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
 					logrus.Errorf("fetchRemoteAccountMedia: error during async lock and load of avatar: %s", err)
 				}
+				done()
 			}()
 		}
+
+		targetAccount.AvatarMediaAttachmentID = processingMedia.AttachmentID()
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
@@ -325,7 +337,6 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			if err != nil {
 				return err
 			}
-			targetAccount.HeaderMediaAttachmentID = newProcessing.AttachmentID()
 
 			// store it in our map to indicate it's in process
 			d.dereferencingHeadersLock.Lock()
@@ -343,11 +354,15 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		} else {
 			// ...otherwise do it async
 			go func() {
-				if err := lockAndLoad(ctx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
+				dlCtx, done := context.WithDeadline(context.Background(), time.Now().Add(1*time.Minute))
+				if err := lockAndLoad(dlCtx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
 					logrus.Errorf("fetchRemoteAccountMedia: error during async lock and load of header: %s", err)
 				}
+				done()
 			}()
 		}
+
+		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
 	}
 
 	return nil
