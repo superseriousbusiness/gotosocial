@@ -54,7 +54,7 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
 		if !p.federator.Handshaking(ctx, requestedUsername, requestingAccountURI) {
-			requestingAccount, _, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false)
+			requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}

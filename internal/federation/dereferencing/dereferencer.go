@@ -33,8 +33,7 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool, blocking bool) (*gtsmodel.Account, error)
 
 	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
@@ -50,21 +49,29 @@ type Dereferencer interface {
 }
 
 type deref struct {
-	db                  db.DB
-	typeConverter       typeutils.TypeConverter
-	transportController transport.Controller
-	mediaManager        media.Manager
-	handshakes          map[string][]*url.URL
-	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+	db                       db.DB
+	typeConverter            typeutils.TypeConverter
+	transportController      transport.Controller
+	mediaManager             media.Manager
+	dereferencingAvatars     map[string]*media.ProcessingMedia
+	dereferencingAvatarsLock *sync.Mutex
+	dereferencingHeaders     map[string]*media.ProcessingMedia
+	dereferencingHeadersLock *sync.Mutex
+	handshakes               map[string][]*url.URL
+	handshakeSync            *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
 func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
-		db:                  db,
-		typeConverter:       typeConverter,
-		transportController: transportController,
-		mediaManager:        mediaManager,
-		handshakeSync:       &sync.Mutex{},
+		db:                       db,
+		typeConverter:            typeConverter,
+		transportController:      transportController,
+		mediaManager:             mediaManager,
+		dereferencingAvatars:     make(map[string]*media.ProcessingMedia),
+		dereferencingAvatarsLock: &sync.Mutex{},
+		dereferencingHeaders:     make(map[string]*media.ProcessingMedia),
+		dereferencingHeadersLock: &sync.Mutex{},
+		handshakeSync:            &sync.Mutex{},
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -232,7 +233,12 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return errors.New("profile was not parseable as *gtsmodel.Account")
 	}
 
-	if _, err := p.federator.EnrichRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccount); err != nil {
+	incomingAccountURL, err := url.Parse(incomingAccount.URI)
+	if err != nil {
+		return err
+	}
+
+	if _, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccountURL, false, true); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 
