@@ -2,7 +2,6 @@ package kv
 
 import (
 	"io"
-	"sync"
 
 	"codeberg.org/gruf/go-mutexes"
 	"codeberg.org/gruf/go-store/storage"
@@ -11,9 +10,8 @@ import (
 
 // KVStore is a very simple, yet performant key-value store
 type KVStore struct {
-	mutexMap mutexes.MutexMap // mutexMap is a map of keys to mutexes to protect file access
-	mutex    sync.RWMutex     // mutex is the total store mutex
-	storage  storage.Storage  // storage is the underlying storage
+	mutex   mutexes.MutexMap // mutex is a map of keys to mutexes to protect file access
+	storage storage.Storage  // storage is the underlying storage
 }
 
 func OpenFile(path string, cfg *storage.DiskConfig) (*KVStore, error) {
@@ -47,26 +45,19 @@ func OpenStorage(storage storage.Storage) (*KVStore, error) {
 
 	// Return new KVStore
 	return &KVStore{
-		mutexMap: mutexes.NewMap(mutexes.NewRW),
-		mutex:    sync.RWMutex{},
-		storage:  storage,
+		mutex:   mutexes.NewMap(-1),
+		storage: storage,
 	}, nil
 }
 
 // RLock acquires a read-lock on supplied key, returning unlock function.
 func (st *KVStore) RLock(key string) (runlock func()) {
-	st.mutex.RLock()
-	runlock = st.mutexMap.RLock(key)
-	st.mutex.RUnlock()
-	return runlock
+	return st.mutex.RLock(key)
 }
 
 // Lock acquires a write-lock on supplied key, returning unlock function.
 func (st *KVStore) Lock(key string) (unlock func()) {
-	st.mutex.Lock()
-	unlock = st.mutexMap.Lock(key)
-	st.mutex.Unlock()
-	return unlock
+	return st.mutex.Lock(key)
 }
 
 // Get fetches the bytes for supplied key in the store
@@ -167,7 +158,7 @@ func (st *KVStore) Iterator(matchFn func(string) bool) (*KVIterator, error) {
 	}
 
 	// Get store read lock
-	st.mutex.RLock()
+	state := st.mutex.RLockMap()
 
 	// Setup the walk keys function
 	entries := []storage.StorageEntry{}
@@ -184,24 +175,24 @@ func (st *KVStore) Iterator(matchFn func(string) bool) (*KVIterator, error) {
 	// Walk keys in the storage
 	err := st.storage.WalkKeys(storage.WalkKeysOptions{WalkFn: walkFn})
 	if err != nil {
-		st.mutex.RUnlock()
+		state.UnlockMap()
 		return nil, err
 	}
 
 	// Return new iterator
 	return &KVIterator{
 		store:   st,
+		state:   state,
 		entries: entries,
 		index:   -1,
 		key:     "",
-		onClose: st.mutex.RUnlock,
 	}, nil
 }
 
 // Read provides a read-only window to the store, holding it in a read-locked state until release
 func (st *KVStore) Read() *StateRO {
-	st.mutex.RLock()
-	return &StateRO{store: st}
+	state := st.mutex.RLockMap()
+	return &StateRO{store: st, state: state}
 }
 
 // ReadFn provides a read-only window to the store, holding it in a read-locked state until fn return.
@@ -216,8 +207,8 @@ func (st *KVStore) ReadFn(fn func(*StateRO)) {
 
 // Update provides a read-write window to the store, holding it in a write-locked state until release
 func (st *KVStore) Update() *StateRW {
-	st.mutex.Lock()
-	return &StateRW{store: st}
+	state := st.mutex.LockMap()
+	return &StateRW{store: st, state: state}
 }
 
 // UpdateFn provides a read-write window to the store, holding it in a write-locked state until fn return.
@@ -228,4 +219,9 @@ func (st *KVStore) UpdateFn(fn func(*StateRW)) {
 
 	// Pass to fn
 	fn(state)
+}
+
+// Close will close the underlying storage, the mutex map locking (e.g. RLock(), Lock() will still work).
+func (st *KVStore) Close() error {
+	return st.storage.Close()
 }

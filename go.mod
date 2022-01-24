@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	codeberg.org/gruf/go-runners v1.2.0
-	codeberg.org/gruf/go-store v1.2.2
+	codeberg.org/gruf/go-store v1.3.2
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.1.0
@@ -50,7 +50,7 @@ require (
 	codeberg.org/gruf/go-fastpath v1.0.2 // indirect
 	codeberg.org/gruf/go-format v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.1 // indirect
-	codeberg.org/gruf/go-mutexes v1.0.1 // indirect
+	codeberg.org/gruf/go-mutexes v1.1.0 // indirect
 	codeberg.org/gruf/go-nowish v1.1.0 // indirect
 	codeberg.org/gruf/go-pools v1.0.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect

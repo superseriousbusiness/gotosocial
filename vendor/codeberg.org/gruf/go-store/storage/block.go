@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"crypto/sha256"
 	"io"
 	"io/fs"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"codeberg.org/gruf/go-hashenc"
 	"codeberg.org/gruf/go-pools"
 	"codeberg.org/gruf/go-store/util"
-	"github.com/zeebo/blake3"
 )
 
 var (
@@ -77,7 +77,7 @@ func getBlockConfig(cfg *BlockConfig) BlockConfig {
 
 // BlockStorage is a Storage implementation that stores input data as chunks on
 // a filesystem. Each value is chunked into blocks of configured size and these
-// blocks are stored with name equal to their base64-encoded BLAKE3 hash-sum. A
+// blocks are stored with name equal to their base64-encoded SHA256 hash-sum. A
 // "node" file is finally created containing an array of hashes contained within
 // this value
 type BlockStorage struct {
@@ -87,7 +87,7 @@ type BlockStorage struct {
 	config    BlockConfig      // cfg is the supplied configuration for this store
 	hashPool  sync.Pool        // hashPool is this store's hashEncoder pool
 	bufpool   pools.BufferPool // bufpool is this store's bytes.Buffer pool
-	lock      *LockableFile    // lock is the opened lockfile for this storage instance
+	lock      *Lock            // lock is the opened lockfile for this storage instance
 
 	// NOTE:
 	// BlockStorage does not need to lock each of the underlying block files
@@ -140,10 +140,8 @@ func OpenBlock(path string, cfg *BlockConfig) (*BlockStorage, error) {
 	}
 
 	// Open and acquire storage lock for path
-	lock, err := OpenLock(pb.Join(path, LockFile))
+	lock, err := OpenLock(pb.Join(path, lockFile))
 	if err != nil {
-		return nil, err
-	} else if err := lock.Lock(); err != nil {
 		return nil, err
 	}
 
@@ -174,14 +172,23 @@ func OpenBlock(path string, cfg *BlockConfig) (*BlockStorage, error) {
 
 // Clean implements storage.Clean()
 func (st *BlockStorage) Clean() error {
-	nodes := map[string]*node{}
+	// Track open
+	st.lock.Add()
+	defer st.lock.Done()
+
+	// Check if open
+	if st.lock.Closed() {
+		return ErrClosed
+	}
 
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
 
-	// Walk nodes dir for entries
+	nodes := map[string]*node{}
 	onceErr := errors.OnceError{}
+
+	// Walk nodes dir for entries
 	err := util.WalkDir(pb, st.nodePath, func(npath string, fsentry fs.DirEntry) {
 		// Only deal with regular files
 		if !fsentry.Type().IsRegular() {
@@ -303,6 +310,7 @@ func (st *BlockStorage) ReadBytes(key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rc.Close()
 
 	// Read all bytes and return
 	return io.ReadAll(rc)
@@ -316,9 +324,19 @@ func (st *BlockStorage) ReadStream(key string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Track open
+	st.lock.Add()
+
+	// Check if open
+	if st.lock.Closed() {
+		st.lock.Done()
+		return nil, ErrClosed
+	}
+
 	// Attempt to open RO file
 	file, err := open(npath, defaultFileROFlags)
 	if err != nil {
+		st.lock.Done()
 		return nil, err
 	}
 	defer file.Close()
@@ -338,14 +356,16 @@ func (st *BlockStorage) ReadStream(key string) (io.ReadCloser, error) {
 		nil,
 	)
 	if err != nil {
+		st.lock.Done()
 		return nil, err
 	}
 
-	// Return new block reader
-	return util.NopReadCloser(&blockReader{
+	// Prepare block reader and return
+	rc := util.NopReadCloser(&blockReader{
 		storage: st,
 		node:    &node,
-	}), nil
+	}) // we wrap the blockreader to decr lockfile waitgroup
+	return util.ReadCloserWithCallback(rc, st.lock.Done), nil
 }
 
 func (st *BlockStorage) readBlock(key string) ([]byte, error) {
@@ -381,6 +401,15 @@ func (st *BlockStorage) WriteStream(key string, r io.Reader) error {
 	npath, err := st.nodePathForKey(key)
 	if err != nil {
 		return err
+	}
+
+	// Track open
+	st.lock.Add()
+	defer st.lock.Done()
+
+	// Check if open
+	if st.lock.Closed() {
+		return ErrClosed
 	}
 
 	// Check if this exists
@@ -567,6 +596,15 @@ func (st *BlockStorage) Stat(key string) (bool, error) {
 		return false, err
 	}
 
+	// Track open
+	st.lock.Add()
+	defer st.lock.Done()
+
+	// Check if open
+	if st.lock.Closed() {
+		return false, ErrClosed
+	}
+
 	// Check for file on disk
 	return stat(kpath)
 }
@@ -579,18 +617,35 @@ func (st *BlockStorage) Remove(key string) error {
 		return err
 	}
 
+	// Track open
+	st.lock.Add()
+	defer st.lock.Done()
+
+	// Check if open
+	if st.lock.Closed() {
+		return ErrClosed
+	}
+
 	// Attempt to remove file
 	return os.Remove(kpath)
 }
 
 // Close implements Storage.Close()
 func (st *BlockStorage) Close() error {
-	defer st.lock.Close()
-	return st.lock.Unlock()
+	return st.lock.Close()
 }
 
 // WalkKeys implements Storage.WalkKeys()
 func (st *BlockStorage) WalkKeys(opts WalkKeysOptions) error {
+	// Track open
+	st.lock.Add()
+	defer st.lock.Done()
+
+	// Check if open
+	if st.lock.Closed() {
+		return ErrClosed
+	}
+
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
@@ -800,7 +855,7 @@ var (
 
 	// encodedHashLen is the once-calculated encoded hash-sum length
 	encodedHashLen = base64Encoding.EncodedLen(
-		blake3.New().Size(),
+		sha256.New().Size(),
 	)
 )
 
@@ -812,9 +867,8 @@ type hashEncoder struct {
 
 // newHashEncoder returns a new hashEncoder instance
 func newHashEncoder() *hashEncoder {
-	hash := blake3.New()
 	return &hashEncoder{
-		henc: hashenc.New(hash, base64Encoding),
+		henc: hashenc.New(sha256.New(), base64Encoding),
 		ebuf: make([]byte, encodedHashLen),
 	}
 }

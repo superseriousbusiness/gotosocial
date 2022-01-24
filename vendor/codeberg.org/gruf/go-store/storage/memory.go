@@ -14,6 +14,7 @@ type MemoryStorage struct {
 	ow bool // overwrites
 	fs map[string][]byte
 	mu sync.Mutex
+	st uint32
 }
 
 // OpenMemory opens a new MemoryStorage instance with internal map of 'size'.
@@ -27,13 +28,26 @@ func OpenMemory(size int, overwrites bool) *MemoryStorage {
 
 // Clean implements Storage.Clean().
 func (st *MemoryStorage) Clean() error {
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	if st.st == 1 {
+		return ErrClosed
+	}
 	return nil
 }
 
 // ReadBytes implements Storage.ReadBytes().
 func (st *MemoryStorage) ReadBytes(key string) ([]byte, error) {
-	// Safely check store
+	// Lock storage
 	st.mu.Lock()
+
+	// Check store open
+	if st.st == 1 {
+		st.mu.Unlock()
+		return nil, ErrClosed
+	}
+
+	// Check for key
 	b, ok := st.fs[key]
 	st.mu.Unlock()
 
@@ -48,8 +62,16 @@ func (st *MemoryStorage) ReadBytes(key string) ([]byte, error) {
 
 // ReadStream implements Storage.ReadStream().
 func (st *MemoryStorage) ReadStream(key string) (io.ReadCloser, error) {
-	// Safely check store
+	// Lock storage
 	st.mu.Lock()
+
+	// Check store open
+	if st.st == 1 {
+		st.mu.Unlock()
+		return nil, ErrClosed
+	}
+
+	// Check for key
 	b, ok := st.fs[key]
 	st.mu.Unlock()
 
@@ -66,19 +88,24 @@ func (st *MemoryStorage) ReadStream(key string) (io.ReadCloser, error) {
 
 // WriteBytes implements Storage.WriteBytes().
 func (st *MemoryStorage) WriteBytes(key string, b []byte) error {
-	// Safely check store
+	// Lock storage
 	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	// Check store open
+	if st.st == 1 {
+		return ErrClosed
+	}
+
 	_, ok := st.fs[key]
 
 	// Check for already exist
 	if ok && !st.ow {
-		st.mu.Unlock()
 		return ErrAlreadyExists
 	}
 
 	// Write + unlock
 	st.fs[key] = bytes.Copy(b)
-	st.mu.Unlock()
 	return nil
 }
 
@@ -96,43 +123,66 @@ func (st *MemoryStorage) WriteStream(key string, r io.Reader) error {
 
 // Stat implements Storage.Stat().
 func (st *MemoryStorage) Stat(key string) (bool, error) {
+	// Lock storage
 	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	// Check store open
+	if st.st == 1 {
+		return false, ErrClosed
+	}
+
+	// Check for key
 	_, ok := st.fs[key]
-	st.mu.Unlock()
 	return ok, nil
 }
 
 // Remove implements Storage.Remove().
 func (st *MemoryStorage) Remove(key string) error {
-	// Safely check store
+	// Lock storage
 	st.mu.Lock()
-	_, ok := st.fs[key]
+	defer st.mu.Unlock()
 
-	// Check in store
+	// Check store open
+	if st.st == 1 {
+		return ErrClosed
+	}
+
+	// Check for key
+	_, ok := st.fs[key]
 	if !ok {
-		st.mu.Unlock()
 		return ErrNotFound
 	}
 
-	// Delete + unlock
+	// Remove from store
 	delete(st.fs, key)
-	st.mu.Unlock()
+
 	return nil
 }
 
 // Close implements Storage.Close().
 func (st *MemoryStorage) Close() error {
+	st.mu.Lock()
+	st.st = 1
+	st.mu.Unlock()
 	return nil
 }
 
 // WalkKeys implements Storage.WalkKeys().
 func (st *MemoryStorage) WalkKeys(opts WalkKeysOptions) error {
-	// Safely walk storage keys
+	// Lock storage
 	st.mu.Lock()
+	defer st.mu.Unlock()
+
+	// Check store open
+	if st.st == 1 {
+		return ErrClosed
+	}
+
+	// Walk store keys
 	for key := range st.fs {
 		opts.WalkFn(entry(key))
 	}
-	st.mu.Unlock()
 
 	return nil
 }
