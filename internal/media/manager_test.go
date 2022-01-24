@@ -27,6 +27,8 @@ import (
 	"testing"
 	"time"
 
+	"codeberg.org/gruf/go-store/kv"
+	"codeberg.org/gruf/go-store/storage"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -266,6 +268,91 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 
 		suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 	}
+}
+
+func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.Reader, int, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/test-jpeg.jpg")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), len(b), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	temp := fmt.Sprintf("%s/store", os.TempDir())
+	defer os.RemoveAll(temp)
+
+	diskStorage, err := kv.OpenFile(temp, &storage.DiskConfig{})
+	if err != nil {
+		panic(err)
+	}
+
+	diskManager, err := media.NewManager(suite.db, diskStorage)
+	if err != nil {
+		panic(err)
+	}
+	suite.manager = diskManager
+
+	// process the media with no additional info provided
+	processingMedia, err := diskManager.ProcessMedia(ctx, data, accountID, nil)
+	suite.NoError(err)
+	// fetch the attachment id from the processing media
+	attachmentID := processingMedia.AttachmentID()
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processingMedia.LoadAttachment(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Width: 1920, Height: 1080, Size: 2073600, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Original)
+	suite.EqualValues(gtsmodel.Small{
+		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
+	}, attachment.FileMeta.Small)
+	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// make sure the processed file is in storage
+	processedFullBytes, err := diskStorage.Get(attachment.File.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedThumbnailBytes, err := diskStorage.Get(attachment.Thumbnail.Path)
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytes)
+
+	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
+	suite.NoError(err)
+	suite.NotEmpty(processedThumbnailBytesExpected)
+
+	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
 func TestManagerTestSuite(t *testing.T) {
