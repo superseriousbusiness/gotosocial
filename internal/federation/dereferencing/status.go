@@ -89,7 +89,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 	}
 
 	// do this so we know we have the remote account of the status in the db
-	_, err = d.GetRemoteAccount(ctx, username, accountURI, false, false)
+	_, err = d.GetRemoteAccount(ctx, username, accountURI, true, false)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
 	}
