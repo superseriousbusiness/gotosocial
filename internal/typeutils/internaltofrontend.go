@@ -104,9 +104,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err == nil {
 				a.AvatarMediaAttachment = avi
-				aviURL = a.AvatarMediaAttachment.URL
-				aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
 			}
+		}
+		if a.AvatarMediaAttachment != nil {
+			aviURL = a.AvatarMediaAttachment.URL
+			aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
 		}
 	}
 
@@ -118,9 +120,11 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err == nil {
 				a.HeaderMediaAttachment = avi
-				headerURL = a.HeaderMediaAttachment.URL
-				headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
 			}
+		}
+		if a.HeaderMediaAttachment != nil {
+			headerURL = a.HeaderMediaAttachment.URL
+			headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
 		}
 	}
 

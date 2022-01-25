@@ -215,62 +215,64 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// Used as profile avatar.
 	if a.AvatarMediaAttachmentID != "" {
 		if a.AvatarMediaAttachment == nil {
-			avatar := &gtsmodel.MediaAttachment{}
-			if err := c.db.GetByID(ctx, a.AvatarMediaAttachmentID, avatar); err != nil {
+			avatar, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
+			if err == nil {
+				a.AvatarMediaAttachment = avatar
+			}
+		}
+
+		if a.AvatarMediaAttachment != nil {
+			iconProperty := streams.NewActivityStreamsIconProperty()
+
+			iconImage := streams.NewActivityStreamsImage()
+
+			mediaType := streams.NewActivityStreamsMediaTypeProperty()
+			mediaType.Set(a.AvatarMediaAttachment.File.ContentType)
+			iconImage.SetActivityStreamsMediaType(mediaType)
+
+			avatarURLProperty := streams.NewActivityStreamsUrlProperty()
+			avatarURL, err := url.Parse(a.AvatarMediaAttachment.URL)
+			if err != nil {
 				return nil, err
 			}
-			a.AvatarMediaAttachment = avatar
+			avatarURLProperty.AppendIRI(avatarURL)
+			iconImage.SetActivityStreamsUrl(avatarURLProperty)
+
+			iconProperty.AppendActivityStreamsImage(iconImage)
+			person.SetActivityStreamsIcon(iconProperty)
 		}
-
-		iconProperty := streams.NewActivityStreamsIconProperty()
-
-		iconImage := streams.NewActivityStreamsImage()
-
-		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(a.AvatarMediaAttachment.File.ContentType)
-		iconImage.SetActivityStreamsMediaType(mediaType)
-
-		avatarURLProperty := streams.NewActivityStreamsUrlProperty()
-		avatarURL, err := url.Parse(a.AvatarMediaAttachment.URL)
-		if err != nil {
-			return nil, err
-		}
-		avatarURLProperty.AppendIRI(avatarURL)
-		iconImage.SetActivityStreamsUrl(avatarURLProperty)
-
-		iconProperty.AppendActivityStreamsImage(iconImage)
-		person.SetActivityStreamsIcon(iconProperty)
 	}
 
 	// image
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
 		if a.HeaderMediaAttachment == nil {
-			header := &gtsmodel.MediaAttachment{}
-			if err := c.db.GetByID(ctx, a.HeaderMediaAttachmentID, header); err != nil {
+			header, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
+			if err == nil {
+				a.HeaderMediaAttachment = header
+			}
+		}
+
+		if a.HeaderMediaAttachment != nil {
+			headerProperty := streams.NewActivityStreamsImageProperty()
+
+			headerImage := streams.NewActivityStreamsImage()
+
+			mediaType := streams.NewActivityStreamsMediaTypeProperty()
+			mediaType.Set(a.HeaderMediaAttachment.File.ContentType)
+			headerImage.SetActivityStreamsMediaType(mediaType)
+
+			headerURLProperty := streams.NewActivityStreamsUrlProperty()
+			headerURL, err := url.Parse(a.HeaderMediaAttachment.URL)
+			if err != nil {
 				return nil, err
 			}
-			a.HeaderMediaAttachment = header
+			headerURLProperty.AppendIRI(headerURL)
+			headerImage.SetActivityStreamsUrl(headerURLProperty)
+
+			headerProperty.AppendActivityStreamsImage(headerImage)
+			person.SetActivityStreamsImage(headerProperty)
 		}
-
-		headerProperty := streams.NewActivityStreamsImageProperty()
-
-		headerImage := streams.NewActivityStreamsImage()
-
-		mediaType := streams.NewActivityStreamsMediaTypeProperty()
-		mediaType.Set(a.HeaderMediaAttachment.File.ContentType)
-		headerImage.SetActivityStreamsMediaType(mediaType)
-
-		headerURLProperty := streams.NewActivityStreamsUrlProperty()
-		headerURL, err := url.Parse(a.HeaderMediaAttachment.URL)
-		if err != nil {
-			return nil, err
-		}
-		headerURLProperty.AppendIRI(headerURL)
-		headerImage.SetActivityStreamsUrl(headerURLProperty)
-
-		headerProperty.AppendActivityStreamsImage(headerImage)
-		person.SetActivityStreamsImage(headerProperty)
 	}
 
 	return person, nil

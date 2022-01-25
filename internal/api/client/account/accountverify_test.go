@@ -67,7 +67,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.NoError(err)
 	lastStatusAt, err := time.Parse(time.RFC3339, apimodelAccount.LastStatusAt)
 	suite.NoError(err)
-aaaaaaaaaaaaaaaaaaa
+
 	suite.Equal(testAccount.ID, apimodelAccount.ID)
 	suite.Equal(testAccount.Username, apimodelAccount.Username)
 	suite.Equal(testAccount.Username, apimodelAccount.Acct)
