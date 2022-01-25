@@ -66,16 +66,20 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 			// make sure the account fields are populated before returning:
 			// even if we're not doing a refresh, the caller might want to block
 			// until everything is loaded
-			if err := d.populateAccountFields(ctx, remoteAccount, username, refresh, blocking); err != nil {
+			changed, err := d.populateAccountFields(ctx, remoteAccount, username, refresh, blocking)
+			if err != nil {
 				return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
 			}
 
-			updatedAccount, err := d.db.UpdateAccount(ctx, remoteAccount)
-			if err != nil {
-				return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+			if changed {
+				updatedAccount, err := d.db.UpdateAccount(ctx, remoteAccount)
+				if err != nil {
+					return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+				}
+				return updatedAccount, err
 			}
 
-			return updatedAccount, err
+			return remoteAccount, nil
 		}
 	}
 
@@ -97,7 +101,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 		}
 		newAccount.ID = ulid
 
-		if err := d.populateAccountFields(ctx, newAccount, username, refresh, blocking); err != nil {
+		if _, err := d.populateAccountFields(ctx, newAccount, username, refresh, blocking); err != nil {
 			return nil, fmt.Errorf("GetRemoteAccount: error populating further account fields: %s", err)
 		}
 
@@ -120,16 +124,20 @@ func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAcc
 	}
 	refreshedAccount.ID = remoteAccount.ID
 
-	if err := d.populateAccountFields(ctx, refreshedAccount, username, refresh, blocking); err != nil {
+	changed, err := d.populateAccountFields(ctx, refreshedAccount, username, refresh, blocking)
+	if err != nil {
 		return nil, fmt.Errorf("GetRemoteAccount: error populating further refreshedAccount fields: %s", err)
 	}
 
-	updatedAccount, err := d.db.UpdateAccount(ctx, refreshedAccount)
-	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAccount: error updating refreshedAccount: %s", err)
+	if changed {
+		updatedAccount, err := d.db.UpdateAccount(ctx, refreshedAccount)
+		if err != nil {
+			return nil, fmt.Errorf("GetRemoteAccount: error updating refreshedAccount: %s", err)
+		}
+		return updatedAccount, nil
 	}
 
-	return updatedAccount, nil
+	return refreshedAccount, nil
 }
 
 // dereferenceAccountable calls remoteAccountID with a GET request, and tries to parse whatever
@@ -202,36 +210,40 @@ func (d *deref) dereferenceAccountable(ctx context.Context, username string, rem
 
 // populateAccountFields populates any fields on the given account that weren't populated by the initial
 // dereferencing. This includes things like header and avatar etc.
-func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, blocking bool, refresh bool) error {
+func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Account, requestingUsername string, blocking bool, refresh bool) (bool, error) {
 	// if we're dealing with an instance account, just bail, we don't need to do anything
 	if instanceAccount(account) {
-		return nil
+		return false, nil
 	}
 
 	accountURI, err := url.Parse(account.URI)
 	if err != nil {
-		return fmt.Errorf("populateAccountFields: couldn't parse account URI %s: %s", account.URI, err)
+		return false, fmt.Errorf("populateAccountFields: couldn't parse account URI %s: %s", account.URI, err)
 	}
 
 	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
-		return fmt.Errorf("populateAccountFields: domain %s is blocked", accountURI.Host)
+		return false, fmt.Errorf("populateAccountFields: domain %s is blocked", accountURI.Host)
 	}
 
 	t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 	if err != nil {
-		return fmt.Errorf("populateAccountFields: error getting transport for user: %s", err)
+		return false, fmt.Errorf("populateAccountFields: error getting transport for user: %s", err)
 	}
 
 	// fetch the header and avatar
-	if err := d.fetchRemoteAccountMedia(ctx, account, t, refresh, blocking); err != nil {
-		return fmt.Errorf("populateAccountFields: error fetching header/avi for account: %s", err)
+	changed, err := d.fetchRemoteAccountMedia(ctx, account, t, refresh, blocking)
+	if err != nil {
+		return false, fmt.Errorf("populateAccountFields: error fetching header/avi for account: %s", err)
 	}
 
-	return nil
+	return changed, nil
 }
 
 // fetchRemoteAccountMedia fetches and stores the header and avatar for a remote account,
 // using a transport on behalf of requestingUsername.
+//
+// The returned boolean indicates whether anything changed -- in other words, whether the
+// account should be updated in the database.
 //
 // targetAccount's AvatarMediaAttachmentID and HeaderMediaAttachmentID will be updated as necessary.
 //
@@ -239,14 +251,16 @@ func (d *deref) populateAccountFields(ctx context.Context, account *gtsmodel.Acc
 //
 // If blocking is true, then the calls to the media manager made by this function will be blocking:
 // in other words, the function won't return until the header and the avatar have been fully processed.
-func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, blocking bool, refresh bool) error {
+func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsmodel.Account, t transport.Transport, blocking bool, refresh bool) (bool, error) {
+	changed := false
+
 	accountURI, err := url.Parse(targetAccount.URI)
 	if err != nil {
-		return fmt.Errorf("fetchRemoteAccountMedia: couldn't parse account URI %s: %s", targetAccount.URI, err)
+		return changed, fmt.Errorf("fetchRemoteAccountMedia: couldn't parse account URI %s: %s", targetAccount.URI, err)
 	}
 
 	if blocked, err := d.db.IsDomainBlocked(ctx, accountURI.Host); blocked || err != nil {
-		return fmt.Errorf("fetchRemoteAccountMedia: domain %s is blocked", accountURI.Host)
+		return changed, fmt.Errorf("fetchRemoteAccountMedia: domain %s is blocked", accountURI.Host)
 	}
 
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
@@ -264,7 +278,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			// we're not already processing it so start now
 			avatarIRI, err := url.Parse(targetAccount.AvatarRemoteURL)
 			if err != nil {
-				return err
+				return changed, err
 			}
 
 			data := func(innerCtx context.Context) (io.Reader, int, error) {
@@ -277,7 +291,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				Avatar:    &avatar,
 			})
 			if err != nil {
-				return err
+				return changed, err
 			}
 
 			// store it in our map to indicate it's in process
@@ -291,7 +305,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		// block until loaded if required...
 		if blocking {
 			if err := lockAndLoad(ctx, d.dereferencingAvatarsLock, processingMedia, d.dereferencingAvatars, targetAccount.ID); err != nil {
-				return err
+				return changed, err
 			}
 		} else {
 			// ...otherwise do it async
@@ -305,6 +319,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		}
 
 		targetAccount.AvatarMediaAttachmentID = processingMedia.AttachmentID()
+		changed = true
 	}
 
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
@@ -322,7 +337,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			// we're not already processing it so start now
 			headerIRI, err := url.Parse(targetAccount.HeaderRemoteURL)
 			if err != nil {
-				return err
+				return changed, err
 			}
 
 			data := func(innerCtx context.Context) (io.Reader, int, error) {
@@ -335,7 +350,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				Header:    &header,
 			})
 			if err != nil {
-				return err
+				return changed, err
 			}
 
 			// store it in our map to indicate it's in process
@@ -349,7 +364,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		// block until loaded if required...
 		if blocking {
 			if err := lockAndLoad(ctx, d.dereferencingHeadersLock, processingMedia, d.dereferencingHeaders, targetAccount.ID); err != nil {
-				return err
+				return changed, err
 			}
 		} else {
 			// ...otherwise do it async
@@ -363,9 +378,10 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 		}
 
 		targetAccount.HeaderMediaAttachmentID = processingMedia.AttachmentID()
+		changed = true
 	}
 
-	return nil
+	return changed, nil
 }
 
 func lockAndLoad(ctx context.Context, lock *sync.Mutex, processing *media.ProcessingMedia, processingMap map[string]*media.ProcessingMedia, accountID string) error {
