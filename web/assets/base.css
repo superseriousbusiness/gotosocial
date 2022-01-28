@@ -164,16 +164,25 @@ section.login form button {
 			place-self: center;
 			grid-column: 2;
 		}
-    
+
 section.error {
   display: flex;
   flex-direction: row;
-  align: center;
+  align-items: center;
 }
 section.error span {
-   font-weight: bold;
-   color: #dd2211;
+  font-size: 2em;
 }
+section.error pre {
+  border: 1px solid #ff000080;
+  margin-left: 1em;
+  padding: 0 0.7em;
+  border-radius: 0.5em;
+  background-color: #ff000010;
+  font-size: 1.3em;
+  white-space: pre-wrap;
+}
+
 
 input, select, textarea {
 	border: 1px solid #fafaff;

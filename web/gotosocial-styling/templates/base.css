@@ -166,12 +166,20 @@ section.login {
 }
 
 section.error {
-  display: flex;
-  flex-direction: row;
-  align: center;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
   span {
-     font-weight: bold;
-     color: #dd2211;
+    font-size: 2em;
+  }
+  pre {
+    border: 1px solid #ff000080;
+    margin-left: 1em;
+    padding: 0 0.7em;
+    border-radius: 0.5em;
+    background-color: #ff000010;
+    font-size: 1.3em;
+    white-space: pre-wrap;
   }
 }
 
