@@ -165,6 +165,16 @@ section.login {
 	}
 }
 
+section.error {
+  display: flex;
+  flex-direction: row;
+  align: center;
+  span {
+     font-weight: bold;
+     color: #dd2211;
+  }
+}
+
 input, select, textarea {
 	border: 1px solid $fg;
 	color: $fg;

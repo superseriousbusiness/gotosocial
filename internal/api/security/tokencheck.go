@@ -62,6 +62,9 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			l.Warnf("no user found for userID %s", userID)
 			return
 		}
+
+		//TODO
+
 		c.Set(oauth.SessionAuthorizedUser, user)
 
 		// fetch account for this token
