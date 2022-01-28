@@ -136,11 +136,7 @@ func (m *Module) ValidatePassword(ctx context.Context, email string, password st
 	}
 
 	// If we've made it this far the email/password is correct, so we can just return the id of the user.
-	username := "unknown_username"
-	if gtsUser.Account != nil {
-		username = gtsUser.Account.Username
-	}
-	l.Tracef("returning (%s [%s], %s)", gtsUser.ID, username, err)
+	l.Tracef("returning (%s, %s)", gtsUser.ID, err)
 	return
 }
 

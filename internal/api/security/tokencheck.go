@@ -63,7 +63,20 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			return
 		}
 
-		//TODO
+		if user.ConfirmedAt.IsZero() {
+			l.Warnf("authenticated user %s has never confirmed thier email address", userID)
+			return
+		}
+
+		if !user.Approved {
+			l.Warnf("authenticated user %s's account was never approved by an admin", userID)
+			return
+		}
+
+		if user.Disabled {
+			l.Warnf("authenticated user %s's account was disabled'", userID)
+			return
+		}
 
 		c.Set(oauth.SessionAuthorizedUser, user)
 
