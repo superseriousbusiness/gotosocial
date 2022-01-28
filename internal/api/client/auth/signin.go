@@ -1,6 +1,6 @@
 /*
    GoToSocial
-   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+   Copyright (C) 2021 GoToSocial Authors admin@gotosocial.org
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published by
@@ -84,14 +84,14 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	}
 	l.Tracef("parsed form: %+v", form)
 
-	gtsUser, err := m.ValidatePassword(c.Request.Context(), form.Email, form.Password)
+	userid, err := m.ValidatePassword(c.Request.Context(), form.Email, form.Password)
 	if err != nil {
 		c.String(http.StatusForbidden, err.Error())
 		m.clearSession(s)
 		return
 	}
 
-	s.Set(sessionUserID, gtsUser.ID)
+	s.Set(sessionUserID, userid)
 	if err := s.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		m.clearSession(s)
@@ -106,7 +106,7 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 // The goal is to authenticate the password against the one for that email
 // address stored in the database. If OK, we return the userid (a ulid) for that user,
 // so that it can be used in further Oauth flows to generate a token/retreieve an oauth client from the db.
-func (m *Module) ValidatePassword(ctx context.Context, email string, password string) (gtsUser *gtsmodel.User, err error) {
+func (m *Module) ValidatePassword(ctx context.Context, email string, password string) (userid string, err error) {
 	l := logrus.WithField("func", "ValidatePassword")
 
 	// make sure an email/password was provided and bail if not
@@ -116,7 +116,7 @@ func (m *Module) ValidatePassword(ctx context.Context, email string, password st
 	}
 
 	// first we select the user from the database based on email address, bail if no user found for that email
-	gtsUser = &gtsmodel.User{}
+	gtsUser := &gtsmodel.User{}
 
 	if err := m.db.GetWhere(ctx, []db.Where{{Key: "email", Value: email}}, gtsUser); err != nil {
 		l.Debugf("user %s was not retrievable from db during oauth authorization attempt: %s", email, err)
@@ -136,11 +136,12 @@ func (m *Module) ValidatePassword(ctx context.Context, email string, password st
 	}
 
 	// If we've made it this far the email/password is correct, so we can just return the id of the user.
-	l.Tracef("returning (%s, %s)", gtsUser.ID, err)
+	userid = gtsUser.ID
+	l.Tracef("returning (%s, %s)", userid, err)
 	return
 }
 
 // incorrectPassword is just a little helper function to use in the ValidatePassword function
-func incorrectPassword() (*gtsmodel.User, error) {
-	return &gtsmodel.User{}, errors.New("password/email combination was incorrect")
+func incorrectPassword() (string, error) {
+	return "", errors.New("password/email combination was incorrect")
 }
