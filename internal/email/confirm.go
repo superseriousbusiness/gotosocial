@@ -21,6 +21,10 @@ package email
 import (
 	"bytes"
 	"net/smtp"
+
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 const (
@@ -35,7 +39,11 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 	}
 	confirmBody := buf.String()
 
-	msg := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
+	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, s.from)
+	if err != nil {
+		return err
+	}
+	logrus.WithField("func", "SendConfirmEmail").Trace(s.hostAddress + "\n" + viper.GetString(config.Keys.SMTPUsername) + ":password" + "\n" + s.from + "\n" + toAddress + "\n\n" + string(msg) + "\n")
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

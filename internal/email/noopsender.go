@@ -57,7 +57,10 @@ func (s *noopSender) SendConfirmEmail(toAddress string, data ConfirmData) error 
 	}
 	confirmBody := buf.String()
 
-	msg := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
+	msg, err := assembleMessage(confirmSubject, confirmBody, toAddress, "test@example.org")
+	if err != nil {
+		return err
+	}
 
 	logrus.Tracef("NOT SENDING confirmation email to %s with contents: %s", toAddress, msg)
 
@@ -74,7 +77,10 @@ func (s *noopSender) SendResetEmail(toAddress string, data ResetData) error {
 	}
 	resetBody := buf.String()
 
-	msg := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
+	msg, err := assembleMessage(resetSubject, resetBody, toAddress, "test@example.org")
+	if err != nil {
+		return err
+	}
 
 	logrus.Tracef("NOT SENDING reset email to %s with contents: %s", toAddress, msg)
 

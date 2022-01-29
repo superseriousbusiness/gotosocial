@@ -19,6 +19,7 @@
 package email
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -38,11 +39,25 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 	return template.ParseGlob(tmPath)
 }
 
-// See https://pkg.go.dev/net/smtp#SendMail
-// for a format example.
-func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) []byte {
+// https://datatracker.ietf.org/doc/html/rfc2822
+// I did not read the RFC, I just copy and pasted from
+// https://pkg.go.dev/net/smtp#SendMail
+// and it did seem to work.
+func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) ([]byte, error) {
 
-	//normalize the mail body to use CRLF line endings
+	if strings.Contains(mailSubject, "\r") || strings.Contains(mailSubject, "\n") {
+		return nil, errors.New("email subject must not contain newline characters")
+	}
+
+	if strings.Contains(mailFrom, "\r") || strings.Contains(mailFrom, "\n") {
+		return nil, errors.New("email from address must not contain newline characters")
+	}
+
+	if strings.Contains(mailTo, "\r") || strings.Contains(mailTo, "\n") {
+		return nil, errors.New("email to address must not contain newline characters")
+	}
+
+	//normalize the message body to use CRLF line endings
 	crlf, _ := regexp.Compile("\\r\\n")
 	mailBody = crlf.ReplaceAllString(mailBody, "\n")
 	mailBody = strings.ReplaceAll(mailBody, "\n", "\r\n")
@@ -54,5 +69,5 @@ func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFro
 			mailBody + "\r\n",
 	)
 
-	return msg
+	return msg, nil
 }
