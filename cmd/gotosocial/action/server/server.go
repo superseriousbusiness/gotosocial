@@ -24,9 +24,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"codeberg.org/gruf/go-store/kv"
+	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
@@ -99,7 +101,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Open the storage backend
 	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
-	storage, err := kv.OpenFile(storageBasePath, nil)
+	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
+		LockFile: path.Join(storageBasePath, "store.lock"), // put the store lockfile in the storage dir itself
+	})
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}

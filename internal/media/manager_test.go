@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -284,10 +285,12 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
-	temp := fmt.Sprintf("%s/store", os.TempDir())
+	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
-	diskStorage, err := kv.OpenFile(temp, &storage.DiskConfig{})
+	diskStorage, err := kv.OpenFile(temp, &storage.DiskConfig{
+		LockFile: path.Join(temp, "store.lock"),
+	})
 	if err != nil {
 		panic(err)
 	}
