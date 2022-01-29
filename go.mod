@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	codeberg.org/gruf/go-runners v1.2.0
-	codeberg.org/gruf/go-store v1.3.2
+	codeberg.org/gruf/go-store v1.3.3
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.1.0

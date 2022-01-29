@@ -16,15 +16,13 @@ codeberg.org/gruf/go-hashenc
 # codeberg.org/gruf/go-mutexes v1.1.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
-# codeberg.org/gruf/go-nowish v1.1.0
-## explicit; go 1.14
 # codeberg.org/gruf/go-pools v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
 # codeberg.org/gruf/go-runners v1.2.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-store v1.3.2
+# codeberg.org/gruf/go-store v1.3.3
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
@@ -521,8 +519,6 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/wagslane/go-password-validator v0.3.0
 ## explicit; go 1.16
 github.com/wagslane/go-password-validator
-# github.com/zeebo/blake3 v0.2.1
-## explicit; go 1.13
 # golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 ## explicit; go 1.17
 golang.org/x/crypto/acme

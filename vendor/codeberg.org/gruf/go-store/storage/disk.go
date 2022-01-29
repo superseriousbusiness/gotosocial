@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"os"
 	"path"
+	_path "path"
+	"strings"
 	"syscall"
 
 	"codeberg.org/gruf/go-bytes"
@@ -30,6 +32,11 @@ type DiskConfig struct {
 
 	// Overwrite allows overwriting values of stored keys in the storage
 	Overwrite bool
+
+	// LockFile allows specifying the filesystem path to use for the lockfile,
+	// providing only a filename it will store the lockfile within provided store
+	// path and nest the store under `path/store` to prevent access to lockfile
+	LockFile string
 
 	// Compression is the Compressor to use when reading / writing files, default is no compression
 	Compression Compressor
@@ -57,11 +64,17 @@ func getDiskConfig(cfg *DiskConfig) DiskConfig {
 		cfg.WriteBufSize = DefaultDiskConfig.WriteBufSize
 	}
 
+	// Assume empty lockfile path == use default
+	if len(cfg.LockFile) < 1 {
+		cfg.LockFile = LockFile
+	}
+
 	// Return owned config copy
 	return DiskConfig{
 		Transform:    cfg.Transform,
 		WriteBufSize: cfg.WriteBufSize,
 		Overwrite:    cfg.Overwrite,
+		LockFile:     cfg.LockFile,
 		Compression:  cfg.Compression,
 	}
 }
@@ -76,16 +89,27 @@ type DiskStorage struct {
 
 // OpenFile opens a DiskStorage instance for given folder path and configuration
 func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
+	// Get checked config
+	config := getDiskConfig(cfg)
+
 	// Acquire path builder
 	pb := util.GetPathBuilder()
 	defer util.PutPathBuilder(pb)
 
-	// Clean provided path, ensure ends in '/' (should
-	// be dir, this helps with file path trimming later)
-	storePath := pb.Join(path, "store") + "/"
+	// Clean provided store path, ensure
+	// ends in '/' to help later path trimming
+	storePath := pb.Clean(path) + "/"
 
-	// Get checked config
-	config := getDiskConfig(cfg)
+	// Clean provided lockfile path
+	lockfile := pb.Clean(config.LockFile)
+
+	// Check if lockfile is an *actual* path or just filename
+	if lockDir, _ := _path.Split(lockfile); len(lockDir) < 1 {
+		// Lockfile is a filename, store must be nested under
+		// $storePath/store to prevent access to the lockfile
+		storePath += "store/"
+		lockfile = pb.Join(path, lockfile)
+	}
 
 	// Attempt to open dir path
 	file, err := os.OpenFile(storePath, defaultFileROFlags, defaultDirPerms)
@@ -118,7 +142,7 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 	}
 
 	// Open and acquire storage lock for path
-	lock, err := OpenLock(pb.Join(path, lockFile))
+	lock, err := OpenLock(lockfile)
 	if err != nil {
 		return nil, err
 	}
@@ -347,9 +371,27 @@ func (st *DiskStorage) filepath(key string) (string, error) {
 	pb.AppendString(key)
 
 	// Check for dir traversal outside of root
-	if util.IsDirTraversal(st.path, pb.StringPtr()) {
+	if isDirTraversal(st.path, pb.StringPtr()) {
 		return "", ErrInvalidKey
 	}
 
 	return pb.String(), nil
+}
+
+// isDirTraversal will check if rootPlusPath is a dir traversal outside of root,
+// assuming that both are cleaned and that rootPlusPath is path.Join(root, somePath)
+func isDirTraversal(root, rootPlusPath string) bool {
+	switch {
+	// Root is $PWD, check for traversal out of
+	case root == ".":
+		return strings.HasPrefix(rootPlusPath, "../")
+
+	// The path MUST be prefixed by root
+	case !strings.HasPrefix(rootPlusPath, root):
+		return true
+
+	// In all other cases, check not equal
+	default:
+		return len(root) == len(rootPlusPath)
+	}
 }

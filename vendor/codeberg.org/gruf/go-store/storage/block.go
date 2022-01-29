@@ -140,7 +140,7 @@ func OpenBlock(path string, cfg *BlockConfig) (*BlockStorage, error) {
 	}
 
 	// Open and acquire storage lock for path
-	lock, err := OpenLock(pb.Join(path, lockFile))
+	lock, err := OpenLock(pb.Join(path, LockFile))
 	if err != nil {
 		return nil, err
 	}

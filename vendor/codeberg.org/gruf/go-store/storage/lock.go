@@ -8,13 +8,8 @@ import (
 	"codeberg.org/gruf/go-store/util"
 )
 
-// lockFile is our standard lockfile name.
-var lockFile = "store.lock"
-
-// IsLockKey returns whether storage key is our lockfile.
-func IsLockKey(key string) bool {
-	return key == lockFile
-}
+// LockFile is our standard lockfile name.
+const LockFile = "store.lock"
 
 // Lock represents a filesystem lock to ensure only one storage instance open per path.
 type Lock struct {
