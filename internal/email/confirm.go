@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	confirmTemplate = "email_confirm.tmpl"
+	confirmTemplate = "email_confirm_text.tmpl"
 	confirmSubject  = "Subject: GoToSocial Email Confirmation"
 )
 

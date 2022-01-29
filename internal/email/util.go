@@ -23,11 +23,8 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-)
-
-const (
-	mime = `MIME-version: 1.0;
-Content-Type: text/html;`
+	"regexp"
+	"strings"
 )
 
 func loadTemplates(templateBaseDir string) (*template.Template, error) {
@@ -41,16 +38,21 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 	return template.ParseGlob(tmPath)
 }
 
+// See https://pkg.go.dev/net/smtp#SendMail
+// for a format example.
 func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFrom string) []byte {
-	from := fmt.Sprintf("From: GoToSocial <%s>", mailFrom)
-	to := fmt.Sprintf("To: %s", mailTo)
+
+	//normalize the mail body to use CRLF line endings
+	crlf, _ := regexp.Compile("\\r\\n")
+	mailBody = crlf.ReplaceAllString(mailBody, "\n")
+	mailBody = strings.ReplaceAll(mailBody, "\n", "\r\n")
 
 	msg := []byte(
-		mailSubject + "\r\n" +
-			from + "\r\n" +
-			to + "\r\n" +
-			mime + "\r\n" +
-			mailBody + "\r\n")
+		"To: " + mailTo + "\r\n" +
+			"Subject: " + mailSubject + "\r\n" +
+			"\r\n" +
+			mailBody + "\r\n",
+	)
 
 	return msg
 }

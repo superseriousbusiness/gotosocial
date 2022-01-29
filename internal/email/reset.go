@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	resetTemplate = "email_reset.tmpl"
+	resetTemplate = "email_reset_text.tmpl"
 	resetSubject  = "Subject: GoToSocial Password Reset"
 )
 
