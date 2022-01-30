@@ -56,7 +56,7 @@ func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFro
 		return nil, errors.New("email to address must not contain newline characters")
 	}
 
-	//normalize the message body to use CRLF line endings
+	// normalize the message body to use CRLF line endings
 	mailBody = strings.ReplaceAll(mailBody, "\r\n", "\n")
 	mailBody = strings.ReplaceAll(mailBody, "\n", "\r\n")
 
