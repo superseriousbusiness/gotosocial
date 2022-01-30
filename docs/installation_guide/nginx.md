@@ -59,6 +59,7 @@ The file you're about to create should look a bit like this:
 ```nginx.conf
 server {
   listen 80;
+  listen [::]:80;
   server_name example.com;
   location / {
     proxy_pass http://localhost:8080;
@@ -66,6 +67,8 @@ server {
   }
 }
 ```
+
+Note: You can remove the line `listen [::]:80;` if your server is not ipv6 capable or you'd rather not use ipv6.
 
 Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on and change `server_name` to your own domain name.
 If your domain name is `gotosocial.example.com` then `server_name gotosocial.example.com;` would be the correct value.
@@ -86,7 +89,7 @@ sudo nginx -t
 
 If everything is fine you should get this as output:
 
-```
+```text
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
 ```
