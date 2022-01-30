@@ -51,6 +51,7 @@ Now open the file in your text editor of choice so that you can set some importa
 - Set `db-type` to `sqlite`.
 - Set `db-address` to `sqlite.db`.
 - Set `storage-local-base-path` to the storage directory you created above (eg., `/gotosocial/storage`).
+- Set `letsencrypt-enabled` to `true`.
 - Set `letsencrypt-cert-dir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).
 
 The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../configuration/database.md) for the config options.
