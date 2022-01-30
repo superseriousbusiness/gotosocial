@@ -29,7 +29,7 @@ import (
 
 const (
 	confirmTemplate = "email_confirm_text.tmpl"
-	confirmSubject  = "Subject: GoToSocial Email Confirmation"
+	confirmSubject  = "GoToSocial Email Confirmation"
 )
 
 func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
