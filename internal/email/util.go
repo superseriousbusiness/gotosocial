@@ -24,7 +24,6 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -58,8 +57,7 @@ func assembleMessage(mailSubject string, mailBody string, mailTo string, mailFro
 	}
 
 	//normalize the message body to use CRLF line endings
-	crlf, _ := regexp.Compile("\\r\\n")
-	mailBody = crlf.ReplaceAllString(mailBody, "\n")
+	mailBody = strings.ReplaceAll(mailBody, "\r\n", "\n")
 	mailBody = strings.ReplaceAll(mailBody, "\n", "\r\n")
 
 	msg := []byte(
