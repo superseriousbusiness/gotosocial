@@ -93,7 +93,17 @@ trusted-proxies:
 db-type: "postgres"
 
 # String. Database address or parameters.
-# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
+#
+# For Postgres, this should be the address or socket at which the database can be reached.
+#
+# For Sqlite, this should be the path to your sqlite database file. Eg., /opt/gotosocial/sqlite.db.
+# If the file doesn't exist at the specified path, it will be created.
+# If just a filename is provided (no directory) then the database will be created in the same directory
+# as the GoToSocial binary.
+# If address is set to :memory: then an in-memory database will be used (no file).
+# WARNING: :memory: should NOT BE USED except for testing purposes.
+#
+# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
 # Default: ""
 db-address: ""
 
