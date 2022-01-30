@@ -63,7 +63,7 @@ var Defaults = Values{
 	StatusesPollOptionMaxChars: 50,
 	StatusesMediaMaxFiles:      6,
 
-	LetsEncryptEnabled:      true,
+	LetsEncryptEnabled:      false,
 	LetsEncryptPort:         80,
 	LetsEncryptCertDir:      "/gotosocial/storage/certs",
 	LetsEncryptEmailAddress: "",

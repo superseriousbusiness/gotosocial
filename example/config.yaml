@@ -258,11 +258,11 @@ statuses-media-max-files: 6
 
 # Bool. Whether or not letsencrypt should be enabled for the server.
 # If false, the rest of the settings here will be ignored.
-# You should only change this if you want to serve GoToSocial behind a reverse proxy
-# like Traefik, HAProxy, or Nginx.
+# If you serve GoToSocial behind a reverse proxy like nginx or traefik, leave this turned off.
+# If you don't, then turn it on so that you can use https.
 # Options: [true, false]
-# Default: true
-letsencrypt-enabled: true
+# Default: false
+letsencrypt-enabled: false
 
 # Int. Port to listen for letsencrypt certificate challenges on.
 # If letsencrypt is enabled, this port must be reachable or you won't be able to obtain certs.
