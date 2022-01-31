@@ -21,10 +21,10 @@ package email
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 func loadTemplates(templateBaseDir string) (*template.Template, error) {

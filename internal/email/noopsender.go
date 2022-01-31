@@ -20,7 +20,7 @@ package email
 
 import (
 	"bytes"
-	"html/template"
+	"text/template"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
