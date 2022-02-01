@@ -24,7 +24,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -43,18 +45,26 @@ func (suite *GetTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.filter = visibility.NewFilter(suite.db)
 
 	testrig.StandardDBSetup(suite.db, nil)
 
 	// let's take local_account_1 as the timeline owner
-	tl, err := timeline.NewTimeline(context.Background(), suite.testAccounts["local_account_1"].ID, suite.db, suite.tc)
+	tl, err := timeline.NewTimeline(
+		context.Background(),
+		suite.testAccounts["local_account_1"].ID,
+		processing.StatusGrabFunction(suite.db),
+		processing.StatusFilterFunction(suite.db, suite.filter),
+		processing.StatusPrepareFunction(suite.db, suite.tc),
+		processing.StatusSkipInsertFunction(),
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
 	for _, s := range suite.testStatuses {
-		_, err := tl.IndexAndPrepareOne(context.Background(), s.CreatedAt, s.ID, s.BoostOfID, s.AccountID, s.BoostOfAccountID)
+		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -81,10 +91,10 @@ func (suite *GetTestSuite) TestGetDefault() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -102,10 +112,10 @@ func (suite *GetTestSuite) TestGetDefaultPrepareNext() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 
@@ -127,10 +137,10 @@ func (suite *GetTestSuite) TestGetMaxID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -149,10 +159,10 @@ func (suite *GetTestSuite) TestGetMaxIDPrepareNext() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 
@@ -174,10 +184,10 @@ func (suite *GetTestSuite) TestGetMinID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -196,10 +206,10 @@ func (suite *GetTestSuite) TestGetSinceID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -218,10 +228,10 @@ func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 
@@ -243,10 +253,10 @@ func (suite *GetTestSuite) TestGetBetweenID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -265,10 +275,10 @@ func (suite *GetTestSuite) TestGetBetweenIDPrepareNext() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 
@@ -289,10 +299,10 @@ func (suite *GetTestSuite) TestGetXFromTop() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
 	}
 }
@@ -314,12 +324,12 @@ func (suite *GetTestSuite) TestGetXBehindID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
-		suite.Less(s.ID, "01F8MHBQCBTDKN6X5VHGMMN4MA")
+		suite.Less(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
 	}
 }
 
@@ -353,12 +363,12 @@ func (suite *GetTestSuite) TestGetXBehindNonexistentReasonableID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
-		suite.Less(s.ID, "01F8MHBCN8120SYH7D5S050MGK")
+		suite.Less(s.GetID(), "01F8MHBCN8120SYH7D5S050MGK")
 	}
 }
 
@@ -380,12 +390,12 @@ func (suite *GetTestSuite) TestGetXBehindVeryHighID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
-		suite.Less(s.ID, "9998MHBQCBTDKN6X5VHGMMN4MA")
+		suite.Less(s.GetID(), "9998MHBQCBTDKN6X5VHGMMN4MA")
 	}
 }
 
@@ -403,12 +413,12 @@ func (suite *GetTestSuite) TestGetXBeforeID() {
 	var highest string
 	for i, s := range statuses {
 		if i == 0 {
-			highest = s.ID
+			highest = s.GetID()
 		} else {
-			suite.Less(s.ID, highest)
-			highest = s.ID
+			suite.Less(s.GetID(), highest)
+			highest = s.GetID()
 		}
-		suite.Greater(s.ID, "01F8MHBQCBTDKN6X5VHGMMN4MA")
+		suite.Greater(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
 	}
 }
 
@@ -426,12 +436,12 @@ func (suite *GetTestSuite) TestGetXBeforeIDNoStartFromTop() {
 	var lowest string
 	for i, s := range statuses {
 		if i == 0 {
-			lowest = s.ID
+			lowest = s.GetID()
 		} else {
-			suite.Greater(s.ID, lowest)
-			lowest = s.ID
+			suite.Greater(s.GetID(), lowest)
+			lowest = s.GetID()
 		}
-		suite.Greater(s.ID, "01F8MHBQCBTDKN6X5VHGMMN4MA")
+		suite.Greater(s.GetID(), "01F8MHBQCBTDKN6X5VHGMMN4MA")
 	}
 }
 

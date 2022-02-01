@@ -21,104 +21,135 @@ package timeline
 import (
 	"context"
 	"sync"
-	"time"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-const boostReinsertionDepth = 50
+// GrabFunction is used by a Timeline to grab more items to index.
+//
+// It should be provided to NewTimeline when the caller is creating a timeline
+// (of statuses, notifications, etc).
+//
+//  timelineAccountID: the owner of the timeline
+//  maxID: the maximum item ID desired.
+//  sinceID: the minimum item ID desired.
+//  minID: see sinceID
+//  limit: the maximum amount of items to be returned
+//
+// If an error is returned, the timeline will stop processing whatever request called GrabFunction,
+// and return the error. If no error is returned, but stop = true, this indicates to the caller of GrabFunction
+// that there are no more items to return, and processing should continue with the items already grabbed.
+type GrabFunction func(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int) (items []Timelineable, stop bool, err error)
 
-// Timeline represents a timeline for one account, and contains indexed and prepared posts.
+// FilterFunction is used by a Timeline to filter whether or not a grabbed item should be indexed.
+type FilterFunction func(ctx context.Context, timelineAccountID string, item Timelineable) (shouldIndex bool, err error)
+
+// PrepareFunction converts a Timelineable into a Preparable.
+//
+// For example, this might result in the converstion of a *gtsmodel.Status with the given itemID into a serializable *apimodel.Status.
+type PrepareFunction func(ctx context.Context, timelineAccountID string, itemID string) (Preparable, error)
+
+// SkipInsertFunction indicates whether a new item about to be inserted in the prepared list should be skipped,
+// based on the item itself, the next item in the timeline, and the depth at which nextItem has been found in the list.
+//
+// This will be called for every item found while iterating through a timeline, so callers should be very careful
+// not to do anything expensive here.
+type SkipInsertFunction func(ctx context.Context,
+	newItemID string,
+	newItemAccountID string,
+	newItemBoostOfID string,
+	newItemBoostOfAccountID string,
+	nextItemID string,
+	nextItemAccountID string,
+	nextItemBoostOfID string,
+	nextItemBoostOfAccountID string,
+	depth int) (bool, error)
+
+// Timeline represents a timeline for one account, and contains indexed and prepared items.
 type Timeline interface {
 	/*
 		RETRIEVAL FUNCTIONS
 	*/
 
-	// Get returns an amount of statuses with the given parameters.
+	// Get returns an amount of prepared items with the given parameters.
 	// If prepareNext is true, then the next predicted query will be prepared already in a goroutine,
 	// to make the next call to Get faster.
-	Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error)
-	// GetXFromTop returns x amount of posts from the top of the timeline, from newest to oldest.
-	GetXFromTop(ctx context.Context, amount int) ([]*apimodel.Status, error)
-	// GetXBehindID returns x amount of posts from the given id onwards, from newest to oldest.
-	// This will NOT include the status with the given ID.
+	Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error)
+	// GetXFromTop returns x amount of items from the top of the timeline, from newest to oldest.
+	GetXFromTop(ctx context.Context, amount int) ([]Preparable, error)
+	// GetXBehindID returns x amount of items from the given id onwards, from newest to oldest.
+	// This will NOT include the item with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?max_id=WHATEVER
-	GetXBehindID(ctx context.Context, amount int, fromID string, attempts *int) ([]*apimodel.Status, error)
-	// GetXBeforeID returns x amount of posts up to the given id, from newest to oldest.
-	// This will NOT include the status with the given ID.
+	GetXBehindID(ctx context.Context, amount int, fromID string, attempts *int) ([]Preparable, error)
+	// GetXBeforeID returns x amount of items up to the given id, from newest to oldest.
+	// This will NOT include the item with the given ID.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER
-	GetXBeforeID(ctx context.Context, amount int, sinceID string, startFromTop bool) ([]*apimodel.Status, error)
-	// GetXBetweenID returns x amount of posts from the given maxID, up to the given id, from newest to oldest.
-	// This will NOT include the status with the given IDs.
+	GetXBeforeID(ctx context.Context, amount int, sinceID string, startFromTop bool) ([]Preparable, error)
+	// GetXBetweenID returns x amount of items from the given maxID, up to the given id, from newest to oldest.
+	// This will NOT include the item with the given IDs.
 	//
 	// This corresponds to an api call to /timelines/home?since_id=WHATEVER&max_id=WHATEVER_ELSE
-	GetXBetweenID(ctx context.Context, amount int, maxID string, sinceID string) ([]*apimodel.Status, error)
+	GetXBetweenID(ctx context.Context, amount int, maxID string, sinceID string) ([]Preparable, error)
 
 	/*
 		INDEXING FUNCTIONS
 	*/
 
-	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property.
+	// IndexOne puts a item into the timeline at the appropriate place according to its 'createdAt' property.
 	//
-	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
-	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexOne(ctx context.Context, statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
+	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
+	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
+	IndexOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
 
-	// OldestIndexedPostID returns the id of the rearmost (ie., the oldest) indexed post, or an error if something goes wrong.
-	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
-	OldestIndexedPostID(ctx context.Context) (string, error)
-	// NewestIndexedPostID returns the id of the frontmost (ie., the newest) indexed post, or an error if something goes wrong.
-	// If nothing goes wrong but there's no newest post, an empty string will be returned so make sure to check for this.
-	NewestIndexedPostID(ctx context.Context) (string, error)
+	// OldestIndexedItemID returns the id of the rearmost (ie., the oldest) indexed item, or an error if something goes wrong.
+	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
+	OldestIndexedItemID(ctx context.Context) (string, error)
+	// NewestIndexedItemID returns the id of the frontmost (ie., the newest) indexed item, or an error if something goes wrong.
+	// If nothing goes wrong but there's no newest item, an empty string will be returned so make sure to check for this.
+	NewestIndexedItemID(ctx context.Context) (string, error)
 
-	IndexBefore(ctx context.Context, statusID string, include bool, amount int) error
-	IndexBehind(ctx context.Context, statusID string, include bool, amount int) error
+	IndexBefore(ctx context.Context, itemID string, amount int) error
+	IndexBehind(ctx context.Context, itemID string, amount int) error
 
 	/*
 		PREPARATION FUNCTIONS
 	*/
 
-	// PrepareXFromTop instructs the timeline to prepare x amount of posts from the top of the timeline.
+	// PrepareXFromTop instructs the timeline to prepare x amount of items from the top of the timeline.
 	PrepareFromTop(ctx context.Context, amount int) error
 	// PrepareBehind instructs the timeline to prepare the next amount of entries for serialization, from position onwards.
-	// If include is true, then the given status ID will also be prepared, otherwise only entries behind it will be prepared.
-	PrepareBehind(ctx context.Context, statusID string, amount int) error
-	// IndexOne puts a status into the timeline at the appropriate place according to its 'createdAt' property,
+	// If include is true, then the given item ID will also be prepared, otherwise only entries behind it will be prepared.
+	PrepareBehind(ctx context.Context, itemID string, amount int) error
+	// IndexOne puts a item into the timeline at the appropriate place according to its 'createdAt' property,
 	// and then immediately prepares it.
 	//
-	// The returned bool indicates whether or not the status was actually inserted into the timeline. This will be false
-	// if the status is a boost and the original post or another boost of it already exists < boostReinsertionDepth back in the timeline.
-	IndexAndPrepareOne(ctx context.Context, statusCreatedAt time.Time, statusID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
-	// OldestPreparedPostID returns the id of the rearmost (ie., the oldest) prepared post, or an error if something goes wrong.
-	// If nothing goes wrong but there's no oldest post, an empty string will be returned so make sure to check for this.
-	OldestPreparedPostID(ctx context.Context) (string, error)
+	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
+	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
+	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
+	// OldestPreparedItemID returns the id of the rearmost (ie., the oldest) prepared item, or an error if something goes wrong.
+	// If nothing goes wrong but there's no oldest item, an empty string will be returned so make sure to check for this.
+	OldestPreparedItemID(ctx context.Context) (string, error)
 
 	/*
 		INFO FUNCTIONS
 	*/
 
-	// ActualPostIndexLength returns the actual length of the post index at this point in time.
-	PostIndexLength(ctx context.Context) int
+	// ActualPostIndexLength returns the actual length of the item index at this point in time.
+	ItemIndexLength(ctx context.Context) int
 
 	/*
 		UTILITY FUNCTIONS
 	*/
 
-	// Reset instructs the timeline to reset to its base state -- cache only the minimum amount of posts.
+	// Reset instructs the timeline to reset to its base state -- cache only the minimum amount of items.
 	Reset() error
-	// Remove removes a status from both the index and prepared posts.
+	// Remove removes a item from both the index and prepared items.
 	//
-	// If a status has multiple entries in a timeline, they will all be removed.
+	// If a item has multiple entries in a timeline, they will all be removed.
 	//
 	// The returned int indicates the amount of entries that were removed.
-	Remove(ctx context.Context, statusID string) (int, error)
-	// RemoveAllBy removes all statuses by the given accountID, from both the index and prepared posts.
+	Remove(ctx context.Context, itemID string) (int, error)
+	// RemoveAllBy removes all items by the given accountID, from both the index and prepared items.
 	//
 	// The returned int indicates the amount of entries that were removed.
 	RemoveAllBy(ctx context.Context, accountID string) (int, error)
@@ -126,31 +157,34 @@ type Timeline interface {
 
 // timeline fulfils the Timeline interface
 type timeline struct {
-	postIndex     *postIndex
-	preparedPosts *preparedPosts
-	accountID     string
-	account       *gtsmodel.Account
-	db            db.DB
-	filter        visibility.Filter
-	tc            typeutils.TypeConverter
+	itemIndex       *itemIndex
+	preparedItems   *preparedItems
+	grabFunction    GrabFunction
+	filterFunction  FilterFunction
+	prepareFunction PrepareFunction
+	accountID       string
 	sync.Mutex
 }
 
 // NewTimeline returns a new Timeline for the given account ID
-func NewTimeline(ctx context.Context, accountID string, db db.DB, typeConverter typeutils.TypeConverter) (Timeline, error) {
-	timelineOwnerAccount := &gtsmodel.Account{}
-	if err := db.GetByID(ctx, accountID, timelineOwnerAccount); err != nil {
-		return nil, err
-	}
-
+func NewTimeline(
+	ctx context.Context,
+	timelineAccountID string,
+	grabFunction GrabFunction,
+	filterFunction FilterFunction,
+	prepareFunction PrepareFunction,
+	skipInsertFunction SkipInsertFunction) (Timeline, error) {
 	return &timeline{
-		postIndex:     &postIndex{},
-		preparedPosts: &preparedPosts{},
-		accountID:     accountID,
-		account:       timelineOwnerAccount,
-		db:            db,
-		filter:        visibility.NewFilter(db),
-		tc:            typeConverter,
+		itemIndex: &itemIndex{
+			skipInsert: skipInsertFunction,
+		},
+		preparedItems: &preparedItems{
+			skipInsert: skipInsertFunction,
+		},
+		grabFunction:    grabFunction,
+		filterFunction:  filterFunction,
+		prepareFunction: prepareFunction,
+		accountID:       timelineAccountID,
 	}, nil
 }
 
@@ -158,10 +192,10 @@ func (t *timeline) Reset() error {
 	return nil
 }
 
-func (t *timeline) PostIndexLength(ctx context.Context) int {
-	if t.postIndex == nil || t.postIndex.data == nil {
+func (t *timeline) ItemIndexLength(ctx context.Context) int {
+	if t.itemIndex == nil || t.itemIndex.data == nil {
 		return 0
 	}
 
-	return t.postIndex.data.Len()
+	return t.itemIndex.data.Len()
 }

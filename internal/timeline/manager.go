@@ -25,10 +25,6 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 const (
@@ -37,71 +33,75 @@ const (
 
 // Manager abstracts functions for creating timelines for multiple accounts, and adding, removing, and fetching entries from those timelines.
 //
-// By the time a status hits the manager interface, it should already have been filtered and it should be established that the status indeed
-// belongs in the home timeline of the given account ID.
+// By the time a timelineable hits the manager interface, it should already have been filtered and it should be established that the item indeed
+// belongs in the timeline of the given account ID.
 //
-// The manager makes a distinction between *indexed* posts and *prepared* posts.
+// The manager makes a distinction between *indexed* items and *prepared* items.
 //
-// Indexed posts consist of just that post's ID (in the database) and the time it was created. An indexed post takes up very little memory, so
-// it's not a huge priority to keep trimming the indexed posts list.
+// Indexed items consist of just that item's ID (in the database) and the time it was created. An indexed item takes up very little memory, so
+// it's not a huge priority to keep trimming the indexed items list.
 //
-// Prepared posts consist of the post's database ID, the time it was created, AND the apimodel representation of that post, for quick serialization.
-// Prepared posts of course take up more memory than indexed posts, so they should be regularly pruned if they're not being actively served.
+// Prepared items consist of the item's database ID, the time it was created, AND the apimodel representation of that item, for quick serialization.
+// Prepared items of course take up more memory than indexed items, so they should be regularly pruned if they're not being actively served.
 type Manager interface {
-	// Ingest takes one status and indexes it into the timeline for the given account ID.
+	// Ingest takes one item and indexes it into the timeline for the given account ID.
 	//
-	// It should already be established before calling this function that the status/post actually belongs in the timeline!
+	// It should already be established before calling this function that the item actually belongs in the timeline!
 	//
-	// The returned bool indicates whether the status was actually put in the timeline. This could be false in cases where
-	// the status is a boost, but a boost of the original post or the post itself already exists recently in the timeline.
-	Ingest(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error)
-	// IngestAndPrepare takes one status and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
-	// This is useful in cases where we know the status will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
+	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
+	// the item is a boosted status, but a boost of the original status or the status itself already exists recently in the timeline.
+	Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
+	// IngestAndPrepare takes one timelineable and indexes it into the timeline for the given account ID, and then immediately prepares it for serving.
+	// This is useful in cases where we know the item will need to be shown at the top of a user's timeline immediately (eg., a new status is created).
 	//
-	// It should already be established before calling this function that the status/post actually belongs in the timeline!
+	// It should already be established before calling this function that the item actually belongs in the timeline!
 	//
-	// The returned bool indicates whether the status was actually put in the timeline. This could be false in cases where
-	// the status is a boost, but a boost of the original post or the post itself already exists recently in the timeline.
-	IngestAndPrepare(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error)
-	// HomeTimeline returns limit n amount of entries from the home timeline of the given account ID, in descending chronological order.
-	// If maxID is provided, it will return entries from that maxID onwards, inclusive.
-	HomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error)
-	// GetIndexedLength returns the amount of posts/statuses that have been *indexed* for the given account ID.
+	// The returned bool indicates whether the item was actually put in the timeline. This could be false in cases where
+	// a status is a boost, but a boost of the original status or the status itself already exists recently in the timeline.
+	IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error)
+	// GetTimeline returns limit n amount of prepared entries from the timeline of the given account ID, in descending chronological order.
+	// If maxID is provided, it will return prepared entries from that maxID onwards, inclusive.
+	GetTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error)
+	// GetIndexedLength returns the amount of items that have been *indexed* for the given account ID.
 	GetIndexedLength(ctx context.Context, timelineAccountID string) int
-	// GetDesiredIndexLength returns the amount of posts that we, ideally, index for each user.
+	// GetDesiredIndexLength returns the amount of items that we, ideally, index for each user.
 	GetDesiredIndexLength(ctx context.Context) int
-	// GetOldestIndexedID returns the status ID for the oldest post that we have indexed for the given account.
+	// GetOldestIndexedID returns the id ID for the oldest item that we have indexed for the given account.
 	GetOldestIndexedID(ctx context.Context, timelineAccountID string) (string, error)
-	// PrepareXFromTop prepares limit n amount of posts, based on their indexed representations, from the top of the index.
+	// PrepareXFromTop prepares limit n amount of items, based on their indexed representations, from the top of the index.
 	PrepareXFromTop(ctx context.Context, timelineAccountID string, limit int) error
-	// Remove removes one status from the timeline of the given timelineAccountID
-	Remove(ctx context.Context, timelineAccountID string, statusID string) (int, error)
-	// WipeStatusFromAllTimelines removes one status from the index and prepared posts of all timelines
-	WipeStatusFromAllTimelines(ctx context.Context, statusID string) error
-	// WipeStatusesFromAccountID removes all statuses by the given accountID from the timelineAccountID's timelines.
-	WipeStatusesFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
+	// Remove removes one item from the timeline of the given timelineAccountID
+	Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error)
+	// WipeItemFromAllTimelines removes one item from the index and prepared items of all timelines
+	WipeItemFromAllTimelines(ctx context.Context, itemID string) error
+	// WipeStatusesFromAccountID removes all items by the given accountID from the timelineAccountID's timelines.
+	WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error
 }
 
-// NewManager returns a new timeline manager with the given database, typeconverter, config, and log.
-func NewManager(db db.DB, tc typeutils.TypeConverter) Manager {
+// NewManager returns a new timeline manager.
+func NewManager(grabFunction GrabFunction, filterFunction FilterFunction, prepareFunction PrepareFunction, skipInsertFunction SkipInsertFunction) Manager {
 	return &manager{
-		accountTimelines: sync.Map{},
-		db:               db,
-		tc:               tc,
+		accountTimelines:   sync.Map{},
+		grabFunction:       grabFunction,
+		filterFunction:     filterFunction,
+		prepareFunction:    prepareFunction,
+		skipInsertFunction: skipInsertFunction,
 	}
 }
 
 type manager struct {
-	accountTimelines sync.Map
-	db               db.DB
-	tc               typeutils.TypeConverter
+	accountTimelines   sync.Map
+	grabFunction       GrabFunction
+	filterFunction     FilterFunction
+	prepareFunction    PrepareFunction
+	skipInsertFunction SkipInsertFunction
 }
 
-func (m *manager) Ingest(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error) {
+func (m *manager) Ingest(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":              "Ingest",
 		"timelineAccountID": timelineAccountID,
-		"statusID":          status.ID,
+		"itemID":            item.GetID(),
 	})
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -109,15 +109,15 @@ func (m *manager) Ingest(ctx context.Context, status *gtsmodel.Status, timelineA
 		return false, err
 	}
 
-	l.Trace("ingesting status")
-	return t.IndexOne(ctx, status.CreatedAt, status.ID, status.BoostOfID, status.AccountID, status.BoostOfAccountID)
+	l.Trace("ingesting item")
+	return t.IndexOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
 }
 
-func (m *manager) IngestAndPrepare(ctx context.Context, status *gtsmodel.Status, timelineAccountID string) (bool, error) {
+func (m *manager) IngestAndPrepare(ctx context.Context, item Timelineable, timelineAccountID string) (bool, error) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":              "IngestAndPrepare",
 		"timelineAccountID": timelineAccountID,
-		"statusID":          status.ID,
+		"itemID":            item.GetID(),
 	})
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -125,15 +125,15 @@ func (m *manager) IngestAndPrepare(ctx context.Context, status *gtsmodel.Status,
 		return false, err
 	}
 
-	l.Trace("ingesting status")
-	return t.IndexAndPrepareOne(ctx, status.CreatedAt, status.ID, status.BoostOfID, status.AccountID, status.BoostOfAccountID)
+	l.Trace("ingesting item")
+	return t.IndexAndPrepareOne(ctx, item.GetID(), item.GetBoostOfID(), item.GetAccountID(), item.GetBoostOfAccountID())
 }
 
-func (m *manager) Remove(ctx context.Context, timelineAccountID string, statusID string) (int, error) {
+func (m *manager) Remove(ctx context.Context, timelineAccountID string, itemID string) (int, error) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":              "Remove",
 		"timelineAccountID": timelineAccountID,
-		"statusID":          statusID,
+		"itemID":            itemID,
 	})
 
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
@@ -141,13 +141,13 @@ func (m *manager) Remove(ctx context.Context, timelineAccountID string, statusID
 		return 0, err
 	}
 
-	l.Trace("removing status")
-	return t.Remove(ctx, statusID)
+	l.Trace("removing item")
+	return t.Remove(ctx, itemID)
 }
 
-func (m *manager) HomeTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*apimodel.Status, error) {
+func (m *manager) GetTimeline(ctx context.Context, timelineAccountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]Preparable, error) {
 	l := logrus.WithFields(logrus.Fields{
-		"func":              "HomeTimelineGet",
+		"func":              "GetTimeline",
 		"timelineAccountID": timelineAccountID,
 	})
 
@@ -156,11 +156,11 @@ func (m *manager) HomeTimeline(ctx context.Context, timelineAccountID string, ma
 		return nil, err
 	}
 
-	statuses, err := t.Get(ctx, limit, maxID, sinceID, minID, true)
+	items, err := t.Get(ctx, limit, maxID, sinceID, minID, true)
 	if err != nil {
 		l.Errorf("error getting statuses: %s", err)
 	}
-	return statuses, nil
+	return items, nil
 }
 
 func (m *manager) GetIndexedLength(ctx context.Context, timelineAccountID string) int {
@@ -169,7 +169,7 @@ func (m *manager) GetIndexedLength(ctx context.Context, timelineAccountID string
 		return 0
 	}
 
-	return t.PostIndexLength(ctx)
+	return t.ItemIndexLength(ctx)
 }
 
 func (m *manager) GetDesiredIndexLength(ctx context.Context) int {
@@ -182,7 +182,7 @@ func (m *manager) GetOldestIndexedID(ctx context.Context, timelineAccountID stri
 		return "", err
 	}
 
-	return t.OldestIndexedPostID(ctx)
+	return t.OldestIndexedItemID(ctx)
 }
 
 func (m *manager) PrepareXFromTop(ctx context.Context, timelineAccountID string, limit int) error {
@@ -194,7 +194,7 @@ func (m *manager) PrepareXFromTop(ctx context.Context, timelineAccountID string,
 	return t.PrepareFromTop(ctx, limit)
 }
 
-func (m *manager) WipeStatusFromAllTimelines(ctx context.Context, statusID string) error {
+func (m *manager) WipeItemFromAllTimelines(ctx context.Context, statusID string) error {
 	errors := []string{}
 	m.accountTimelines.Range(func(k interface{}, i interface{}) bool {
 		t, ok := i.(Timeline)
@@ -217,7 +217,7 @@ func (m *manager) WipeStatusFromAllTimelines(ctx context.Context, statusID strin
 	return err
 }
 
-func (m *manager) WipeStatusesFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {
+func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineAccountID string, accountID string) error {
 	t, err := m.getOrCreateTimeline(ctx, timelineAccountID)
 	if err != nil {
 		return err
@@ -232,7 +232,7 @@ func (m *manager) getOrCreateTimeline(ctx context.Context, timelineAccountID str
 	i, ok := m.accountTimelines.Load(timelineAccountID)
 	if !ok {
 		var err error
-		t, err = NewTimeline(ctx, timelineAccountID, m.db, m.tc)
+		t, err = NewTimeline(ctx, timelineAccountID, m.grabFunction, m.filterFunction, m.prepareFunction, m.skipInsertFunction)
 		if err != nil {
 			return nil, err
 		}

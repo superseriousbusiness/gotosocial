@@ -24,12 +24,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 type TimelineStandardTestSuite struct {
 	suite.Suite
-	db db.DB
-	tc typeutils.TypeConverter
+	db     db.DB
+	tc     typeutils.TypeConverter
+	filter visibility.Filter
 
 	testAccounts map[string]*gtsmodel.Account
 	testStatuses map[string]*gtsmodel.Status
