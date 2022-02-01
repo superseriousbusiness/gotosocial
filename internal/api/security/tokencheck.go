@@ -78,6 +78,8 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			return
 		}
 
+		c.Set(oauth.SessionAuthorizedUser, user)
+
 		// fetch account for this token
 		acct, err := m.db.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
@@ -94,7 +96,6 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			return
 		}
 
-		c.Set(oauth.SessionAuthorizedUser, user)
 		c.Set(oauth.SessionAuthorizedAccount, acct)
 	}
 
