@@ -63,7 +63,7 @@ You can now run the binary.
 Start the GoToSocial server with the following command:
 
 ```bash
-./gotosocial server start --config-path ./config.yaml
+./gotosocial --config-path ./config.yaml server start
 ```
 
 The server should now start up and you should be able to access the splash page by navigating to your domain in the browser. Note that it might take up to a minute or so for your LetsEncrypt certificates to be created for the first time, so refresh a few times if necessary.
