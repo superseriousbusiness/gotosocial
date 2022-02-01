@@ -95,14 +95,13 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
 		return
 	}
-	if !ensureUserIsAuthorizedOrRedirect(c, user) {
-		return
-	}
-
 	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
 	if err != nil {
 		m.clearSession(s)
 		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
+		return
+	}
+	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
 		return
 	}
 
@@ -184,7 +183,13 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
 		return
 	}
-	if !ensureUserIsAuthorizedOrRedirect(c, user) {
+	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
+	if err != nil {
+		m.clearSession(s)
+		c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"error": err.Error()})
+		return
+	}
+	if !ensureUserIsAuthorizedOrRedirect(c, user, acct) {
 		return
 	}
 
@@ -235,7 +240,7 @@ func extractAuthForm(s sessions.Session, form *model.OAuthAuthorize) error {
 	return s.Save()
 }
 
-func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User) bool {
+func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) bool {
 	if user.ConfirmedAt.IsZero() {
 		ctx.Redirect(http.StatusSeeOther, CheckYourEmailPath)
 		return false
@@ -247,6 +252,11 @@ func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User) boo
 	}
 
 	if user.Disabled {
+		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
+		return false
+	}
+
+	if !account.SuspendedAt.IsZero() {
 		ctx.Redirect(http.StatusSeeOther, AccountDisabledPath)
 		return false
 	}

@@ -78,8 +78,6 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			return
 		}
 
-		c.Set(oauth.SessionAuthorizedUser, user)
-
 		// fetch account for this token
 		acct, err := m.db.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
@@ -90,6 +88,13 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			l.Warnf("no account found for userID %s", userID)
 			return
 		}
+
+		if !acct.SuspendedAt.IsZero() {
+			l.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
+			return
+		}
+
+		c.Set(oauth.SessionAuthorizedUser, user)
 		c.Set(oauth.SessionAuthorizedAccount, acct)
 	}
 
