@@ -219,10 +219,9 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
-	suite.timelineManager = testrig.NewTestTimelineManager(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.timelineManager, suite.db, suite.emailSender)
+	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.db, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
