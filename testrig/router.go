@@ -19,6 +19,7 @@
 package testrig
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -30,8 +31,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
+
+// NewTestRouter returns a Router suitable for testing
+func NewTestRouter(db db.DB) router.Router {
+	r, err := router.New(context.Background(), db)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
 
 // CreateTestContextWithTemplatesAndSessions calls gin.CreateTestContext and then configures the sessions and templates similarly to how the router does
 func CreateTestContextWithTemplatesAndSessions(request *http.Request, responseWriter http.ResponseWriter) (*gin.Context, *gin.Engine, sessions.Session) {
