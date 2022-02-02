@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
@@ -55,6 +56,11 @@ type AuthStandardTestSuite struct {
 	authModule *auth.Module
 }
 
+const (
+	sessionUserID   = "userid"
+	sessionClientID = "client_id"
+)
+
 func (suite *AuthStandardTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
@@ -85,7 +91,8 @@ func (suite *AuthStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *AuthStandardTestSuite) newContext(recorder *httptest.ResponseRecorder, requestMethod string, requestPath string) *gin.Context {
+func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string) (*gin.Context, *gin.Engine, sessions.Session) {
+	recorder := httptest.NewRecorder()
 
 	protocol := viper.GetString(config.Keys.Protocol)
 	host := viper.GetString(config.Keys.Host)
@@ -96,12 +103,5 @@ func (suite *AuthStandardTestSuite) newContext(recorder *httptest.ResponseRecord
 	request := httptest.NewRequest(http.MethodPatch, requestURI, nil) // the endpoint we're hitting
 	request.Header.Set("accept", "text/html")
 
-	ctx, _ := testrig.CreateTestContextWithTemplatesAndSessions(recorder)
-	ctx.Request = request
-	//suite.testSessionsMiddleware(ctx)
-
-	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-
-	return ctx
+	return testrig.CreateTestContextWithTemplatesAndSessions(request, recorder)
 }

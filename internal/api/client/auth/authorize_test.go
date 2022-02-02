@@ -1,49 +1,113 @@
 package auth_test
 
 import (
-	"encoding/json"
-	"io/ioutil"
+	"context"
+	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/assert"
+	"codeberg.org/gruf/go-errors"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type AuthAuthorizeTestSuite struct {
 	AuthStandardTestSuite
 }
 
-func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeGETHandler() {
+type authorizeHandlerTestCase struct {
+	description            string
+	mutateUserAccount      func(*gtsmodel.User, *gtsmodel.Account)
+	expectedStatusCode     int
+	expectedLocationHeader string
+}
 
-	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodGet, auth.OauthAuthorizePath)
+func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 
-	// call the handler
-	suite.authModule.AuthorizeGETHandler(ctx)
+	var tests = []authorizeHandlerTestCase{
+		{
+			description: "user has their email unconfirmed",
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
+				// nothing to do, weed_lord420 already has their email unconfirmed
+			},
+			expectedStatusCode:     http.StatusSeeOther,
+			expectedLocationHeader: auth.CheckYourEmailPath,
+		},
+		{
+			description: "user has their email confirmed but is not approved",
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
+				user.ConfirmedAt = time.Now()
+				user.Email = user.UnconfirmedEmail
+			},
+			expectedStatusCode:     http.StatusSeeOther,
+			expectedLocationHeader: auth.WaitForApprovalPath,
+		},
+		{
+			description: "user has their email confirmed and is approved, but User entity has been disabled",
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
+				user.ConfirmedAt = time.Now()
+				user.Email = user.UnconfirmedEmail
+				user.Approved = true
+				user.Disabled = true
+			},
+			expectedStatusCode:     http.StatusSeeOther,
+			expectedLocationHeader: auth.AccountDisabledPath,
+		},
+		{
+			description: "user has their email confirmed and is approved, but Account entity has been suspended",
+			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
+				user.ConfirmedAt = time.Now()
+				user.Email = user.UnconfirmedEmail
+				user.Approved = true
+				user.Disabled = false
+				account.SuspendedAt = time.Now()
+			},
+			expectedStatusCode:     http.StatusSeeOther,
+			expectedLocationHeader: auth.AccountDisabledPath,
+		},
+	}
 
-	// 1. we should have OK because our request was valid
-	suite.Equal(http.StatusOK, recorder.Code)
+	doTest := func(testCase authorizeHandlerTestCase) {
+		ctx, _, testSession := suite.newContext(http.MethodGet, auth.OauthAuthorizePath)
 
-	// 2. we should have no error message in the result body
-	result := recorder.Result()
-	defer result.Body.Close()
+		user := suite.testUsers["unconfirmed_account"]
+		account := suite.testAccounts["unconfirmed_account"]
 
-	// check the response
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+		testSession.Set(sessionUserID, user.ID)
+		testSession.Set(sessionClientID, suite.testApplications["application_1"].ClientID)
+		if err := testSession.Save(); err != nil {
+			panic(errors.WrapMsgf(err, "failed on case: %s", testCase.description))
+		}
 
-	// unmarshal the returned account
-	apimodelAccount := &apimodel.Account{}
-	err = json.Unmarshal(b, apimodelAccount)
-	suite.NoError(err)
+		testCase.mutateUserAccount(user, account)
 
-	// check the returned api model account
-	// fields should be updated
-	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, user.Disabled, account.SuspendedAt)
+
+		user.UpdatedAt = time.Now()
+		err := suite.db.UpdateByPrimaryKey(context.Background(), user)
+		suite.NoError(err)
+		_, err = suite.db.UpdateAccount(context.Background(), account)
+		suite.NoError(err)
+
+		// I decided not to go this route
+		//engine.Handle("GET", "/", suite.authModule.AuthorizeGETHandler)
+
+		// call the handler
+		suite.authModule.AuthorizeGETHandler(ctx)
+
+		// 1. we should have a redirect
+		// suite.Equal(http.StatusSeeOther, recorder.Code)
+		suite.Equal(testCase.expectedStatusCode, ctx.Writer.Status(), fmt.Sprintf("failed on case: %s", testCase.description))
+
+		// 2. we should have a redirect to the check your email path, as this user has not confirmed their email yet.
+		suite.Equal(testCase.expectedLocationHeader, ctx.Writer.Header().Get("Location"), fmt.Sprintf("failed on case: %s", testCase.description))
+	}
+
+	for _, testCase := range tests {
+		doTest(testCase)
+	}
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

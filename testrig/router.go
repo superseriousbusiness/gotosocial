@@ -19,7 +19,6 @@
 package testrig
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -35,20 +34,10 @@ import (
 )
 
 // CreateTestContextWithTemplatesAndSessions calls gin.CreateTestContext and then configures the sessions and templates similarly to how the router does
-func CreateTestContextWithTemplatesAndSessions(w http.ResponseWriter) (engine *gin.Engine) {
+func CreateTestContextWithTemplatesAndSessions(request *http.Request, responseWriter http.ResponseWriter) (*gin.Context, *gin.Engine, sessions.Session) {
 
-	engine = gin.New()
-
-	auth, _ := base64.StdEncoding.DecodeString("b6vrpSW3V5HkDBZaNU08DaCG15WeCWNvWf21l6AczDo=")
-	crypt, _ := base64.StdEncoding.DecodeString("72k9LuzqnPgDjHultGJS+xkcRCw+Ekl6ZugIVh99jGs=")
-
-	store := memstore.NewStore(auth, crypt)
-	store.Options(router.SessionOptions())
-
-	//sessionName, err := router.SessionName()
-	sessionName := "gotosocial-localhost"
-
-	engine.Use(sessions.Sessions(sessionName, store))
+	ctx, engine := gin.CreateTestContext(responseWriter)
+	ctx.Request = request
 
 	router.LoadTemplateFunctions(engine)
 
@@ -69,11 +58,21 @@ func CreateTestContextWithTemplatesAndSessions(w http.ResponseWriter) (engine *g
 
 	_, err = os.Stat(filepath.Join(projectRoot, templateBaseDir, "index.tmpl"))
 	if err != nil {
-		panic(fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", err))
+		panic(fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", filepath.Join(projectRoot, templateBaseDir), err))
 	}
 
 	tmPath := filepath.Join(projectRoot, fmt.Sprintf("%s*", templateBaseDir))
 	engine.LoadHTMLGlob(tmPath)
 
-	return engine
+	store := memstore.NewStore(make([]byte, 32), make([]byte, 32))
+	store.Options(router.SessionOptions())
+
+	sessionMiddleware := sessions.Sessions("gotosocial-localhost", store)
+
+	// I decided not to go this route for now
+	//engine.Use(sessionMiddleware)
+
+	sessionMiddleware(ctx)
+
+	return ctx, engine, sessions.Default(ctx)
 }
