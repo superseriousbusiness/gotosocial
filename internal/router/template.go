@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// loadTemplates loads html templates for use by the given engine
+// LoadTemplates loads html templates for use by the given engine
 func loadTemplates(engine *gin.Engine) error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -39,8 +39,13 @@ func loadTemplates(engine *gin.Engine) error {
 	}
 
 	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
 
+	_, err = os.Stat(filepath.Join(cwd, templateBaseDir, "index.tmpl"))
+	if err != nil {
+		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", err)
+	}
+
+	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
 	engine.LoadHTMLGlob(tmPath)
 	return nil
 }
@@ -87,7 +92,7 @@ func visibilityIcon(visibility model.Visibility) template.HTML {
 	return template.HTML(fmt.Sprintf(`<i aria-label="Visibility: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
 }
 
-func loadTemplateFunctions(engine *gin.Engine) {
+func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"noescape":       noescape,
 		"oddOrEven":      oddOrEven,

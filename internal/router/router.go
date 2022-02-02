@@ -138,7 +138,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	}
 
 	// set template functions
-	loadTemplateFunctions(engine)
+	LoadTemplateFunctions(engine)
 
 	// load templates onto the engine
 	if err := loadTemplates(engine); err != nil {
