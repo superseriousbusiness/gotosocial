@@ -20,6 +20,7 @@ package dereferencing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -60,7 +61,8 @@ func (d *deref) GetRemoteAttachment(ctx context.Context, requestingUsername stri
 	}
 
 	if err := d.db.Put(ctx, a); err != nil {
-		if err != db.ErrAlreadyExists {
+		var alreadyExistsError *db.ErrAlreadyExists
+		if !errors.As(err, &alreadyExistsError) {
 			return nil, fmt.Errorf("GetRemoteAttachment: error inserting attachment: %s", err)
 		}
 	}

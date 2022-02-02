@@ -19,7 +19,7 @@ func processPostgresError(err error) db.Error {
 	// (https://www.postgresql.org/docs/10/errcodes-appendix.html)
 	switch pgErr.Code {
 	case "23505" /* unique_violation */ :
-		return db.ErrAlreadyExists
+		return db.NewErrAlreadyExists(pgErr.Message)
 	default:
 		return err
 	}
@@ -36,7 +36,7 @@ func processSQLiteError(err error) db.Error {
 	// Handle supplied error code:
 	switch sqliteErr.Code() {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
-		return db.ErrAlreadyExists
+		return db.NewErrAlreadyExists(err.Error())
 	default:
 		return err
 	}
