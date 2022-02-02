@@ -42,7 +42,7 @@ func loadTemplates(engine *gin.Engine) error {
 
 	_, err = os.Stat(filepath.Join(cwd, templateBaseDir, "index.tmpl"))
 	if err != nil {
-		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", err)
+		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", filepath.Join(cwd, templateBaseDir), err)
 	}
 
 	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))

@@ -91,9 +91,6 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		_, err = suite.db.UpdateAccount(context.Background(), account)
 		suite.NoError(err)
 
-		// I decided not to go this route
-		//engine.Handle("GET", "/", suite.authModule.AuthorizeGETHandler)
-
 		// call the handler
 		suite.authModule.AuthorizeGETHandler(ctx)
 

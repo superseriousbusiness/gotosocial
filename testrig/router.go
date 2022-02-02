@@ -69,9 +69,6 @@ func CreateTestContextWithTemplatesAndSessions(request *http.Request, responseWr
 
 	sessionMiddleware := sessions.Sessions("gotosocial-localhost", store)
 
-	// I decided not to go this route for now
-	//engine.Use(sessionMiddleware)
-
 	sessionMiddleware(ctx)
 
 	return ctx, engine, sessions.Default(ctx)
