@@ -13,7 +13,7 @@ There are three different methods for configuring a GoToSocial instance, which c
 The easiest way to configure GoToSocial is to pass a configuration file to to the `gotosocial server start` command, for example:
 
 ```bash
-gotosocial server start --config-path ./config.yaml
+gotosocial --config-path ./config.yaml server start
 ```
 
 The command expects a file in [YAML](https://en.wikipedia.org/wiki/YAML) or [JSON](https://en.wikipedia.org/wiki/JSON) format.

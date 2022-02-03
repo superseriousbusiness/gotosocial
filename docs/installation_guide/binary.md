@@ -77,7 +77,7 @@ You can use the GoToSocial binary to also create, confirm, and promote your user
 Run the following command to create a new account:
 
 ```bash
-./gotosocial admin account create --config-path ./config.yaml --username some_username --email some_email@whatever.org --password SOME_PASSWORD
+./gotosocial --config-path ./config.yaml admin account create --username some_username --email some_email@whatever.org --password SOME_PASSWORD
 ```
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
@@ -85,7 +85,7 @@ In the above command, replace `some_username` with your desired username, `some_
 Run the following command to confirm the account you just created:
 
 ```bash
-./gotosocial admin account confirm --config-path ./config.yaml --username some_username
+./gotosocial --config-path ./config.yaml admin account confirm --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.
@@ -93,7 +93,7 @@ Replace `some_username` with the username of the account you just created.
 If you want your user to have admin rights, you can promote them using a similar command:
 
 ```bash
-./gotosocial admin account promote --config-path ./config.yaml --username some_username
+./gotosocial --config-path ./config.yaml admin account promote --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.
