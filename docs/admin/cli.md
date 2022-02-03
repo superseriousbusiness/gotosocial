@@ -31,7 +31,7 @@ Under `Available Commands`, you can see the standard `server` command. But there
 
 **Please note -- for all of these commands, you will still need to set the global options correctly so that the CLI tool knows how eg., how to connect to your database, which database to use, which host and account domain to use etc.**
 
-You can set these options using environment variables, passing them as CLI flags (eg., `gotosocial [commands] --host example.org`), or by just pointing the CLI tool towards your config file (eg., `gotosocial  [commands] --config-path ./config.yaml`).
+You can set these options using environment variables, passing them as CLI flags (eg., `gotosocial [commands] --host example.org`), or by just pointing the CLI tool towards your config file (eg., `gotosocial --config-path ./config.yaml [commands]`).
 
 ## gotosocial admin
 
