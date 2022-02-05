@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-errors"
+	"github.com/gin-contrib/sessions"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -70,11 +71,12 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 	}
 
 	doTest := func(testCase authorizeHandlerTestCase) {
-		ctx, _, testSession := suite.newContext(http.MethodGet, auth.OauthAuthorizePath)
+		ctx, recorder := suite.newContext(http.MethodGet, auth.OauthAuthorizePath)
 
 		user := suite.testUsers["unconfirmed_account"]
 		account := suite.testAccounts["unconfirmed_account"]
 
+		testSession := sessions.Default(ctx)
 		testSession.Set(sessionUserID, user.ID)
 		testSession.Set(sessionClientID, suite.testApplications["application_1"].ClientID)
 		if err := testSession.Save(); err != nil {
@@ -95,11 +97,10 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		suite.authModule.AuthorizeGETHandler(ctx)
 
 		// 1. we should have a redirect
-		// suite.Equal(http.StatusSeeOther, recorder.Code)
-		suite.Equal(testCase.expectedStatusCode, ctx.Writer.Status(), fmt.Sprintf("failed on case: %s", testCase.description))
+		suite.Equal(testCase.expectedStatusCode, recorder.Code, fmt.Sprintf("failed on case: %s", testCase.description))
 
 		// 2. we should have a redirect to the check your email path, as this user has not confirmed their email yet.
-		suite.Equal(testCase.expectedLocationHeader, ctx.Writer.Header().Get("Location"), fmt.Sprintf("failed on case: %s", testCase.description))
+		suite.Equal(testCase.expectedLocationHeader, recorder.Header().Get("Location"), fmt.Sprintf("failed on case: %s", testCase.description))
 	}
 
 	for _, testCase := range tests {

@@ -21,10 +21,10 @@ package auth_test
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 
 	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
@@ -34,14 +34,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AuthStandardTestSuite struct {
 	suite.Suite
 	db          db.DB
-	tc          typeutils.TypeConverter
 	idp         oidc.IDP
 	oauthServer oauth.Server
 
@@ -73,8 +72,6 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	suite.db = testrig.NewTestDB()
 	testrig.InitTestLog()
-	// suite.sentEmails = make(map[string]string)
-	// suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	var err error
@@ -84,24 +81,34 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	}
 	suite.authModule = auth.New(suite.db, suite.oauthServer, suite.idp).(*auth.Module)
 	testrig.StandardDBSetup(suite.db, nil)
-	//testrig.New
 }
 
 func (suite *AuthStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string) (*gin.Context, *gin.Engine, sessions.Session) {
+func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string) (*gin.Context, *httptest.ResponseRecorder) {
+	// create the recorder and gin test context
 	recorder := httptest.NewRecorder()
+	ctx, engine := gin.CreateTestContext(recorder)
 
+	// load templates into the engine
+	router.LoadTemplateFunctions(engine)
+	engine.LoadHTMLGlob("../../../../web/template/*")
+
+	// create the request
 	protocol := viper.GetString(config.Keys.Protocol)
 	host := viper.GetString(config.Keys.Host)
-
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
+	ctx.Request = httptest.NewRequest(requestMethod, requestURI, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "text/html")
 
-	request := httptest.NewRequest(http.MethodPatch, requestURI, nil) // the endpoint we're hitting
-	request.Header.Set("accept", "text/html")
+	// trigger the session middleware on the context
+	store := memstore.NewStore(make([]byte, 32), make([]byte, 32))
+	store.Options(router.SessionOptions())
+	sessionMiddleware := sessions.Sessions("gotosocial-localhost", store)
+	sessionMiddleware(ctx)
 
-	return testrig.CreateTestContextWithTemplatesAndSessions(request, recorder)
+	return ctx, recorder
 }
