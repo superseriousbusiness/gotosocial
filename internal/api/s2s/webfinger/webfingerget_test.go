@@ -69,7 +69,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
 	viper.Set(config.Keys.Host, "gts.example.org")
 	viper.Set(config.Keys.AccountDomain, "example.org")
-	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
+	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 
 	targetAccount := accountDomainAccount()
@@ -103,7 +103,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
 	viper.Set(config.Keys.Host, "gts.example.org")
 	viper.Set(config.Keys.AccountDomain, "example.org")
-	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, testrig.NewTestTimelineManager(suite.db), suite.db, suite.emailSender)
+	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaHandler(suite.db, suite.storage), suite.storage, suite.db, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor).(*webfinger.Module)
 
 	targetAccount := accountDomainAccount()

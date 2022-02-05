@@ -25,12 +25,11 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 const retries = 5
 
-func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]*apimodel.Status, error) {
+func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID string, minID string, prepareNext bool) ([]Preparable, error) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":      "Get",
 		"accountID": t.accountID,
@@ -41,16 +40,16 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	})
 	l.Debug("entering get")
 
-	var statuses []*apimodel.Status
+	var items []Preparable
 	var err error
 
 	// no params are defined to just fetch from the top
-	// this is equivalent to a user asking for the top x posts from their timeline
+	// this is equivalent to a user asking for the top x items from their timeline
 	if maxID == "" && sinceID == "" && minID == "" {
-		statuses, err = t.GetXFromTop(ctx, amount)
+		items, err = t.GetXFromTop(ctx, amount)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
-		if len(statuses) != 0 {
-			nextMaxID := statuses[len(statuses)-1].ID
+		if len(items) != 0 {
+			nextMaxID := items[len(items)-1].GetID()
 			if prepareNext {
 				// already cache the next query to speed up scrolling
 				go func() {
@@ -64,13 +63,13 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	}
 
 	// maxID is defined but sinceID isn't so take from behind
-	// this is equivalent to a user asking for the next x posts from their timeline, starting from maxID
+	// this is equivalent to a user asking for the next x items from their timeline, starting from maxID
 	if maxID != "" && sinceID == "" {
 		attempts := 0
-		statuses, err = t.GetXBehindID(ctx, amount, maxID, &attempts)
+		items, err = t.GetXBehindID(ctx, amount, maxID, &attempts)
 		// aysnchronously prepare the next predicted query so it's ready when the user asks for it
-		if len(statuses) != 0 {
-			nextMaxID := statuses[len(statuses)-1].ID
+		if len(items) != 0 {
+			nextMaxID := items[len(items)-1].GetID()
 			if prepareNext {
 				// already cache the next query to speed up scrolling
 				go func() {
@@ -84,59 +83,59 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 	}
 
 	// maxID is defined and sinceID || minID are as well, so take a slice between them
-	// this is equivalent to a user asking for posts older than x but newer than y
+	// this is equivalent to a user asking for items older than x but newer than y
 	if maxID != "" && sinceID != "" {
-		statuses, err = t.GetXBetweenID(ctx, amount, maxID, minID)
+		items, err = t.GetXBetweenID(ctx, amount, maxID, minID)
 	}
 	if maxID != "" && minID != "" {
-		statuses, err = t.GetXBetweenID(ctx, amount, maxID, minID)
+		items, err = t.GetXBetweenID(ctx, amount, maxID, minID)
 	}
 
 	// maxID isn't defined, but sinceID || minID are, so take x before
-	// this is equivalent to a user asking for posts newer than x (eg., refreshing the top of their timeline)
+	// this is equivalent to a user asking for items newer than x (eg., refreshing the top of their timeline)
 	if maxID == "" && sinceID != "" {
-		statuses, err = t.GetXBeforeID(ctx, amount, sinceID, true)
+		items, err = t.GetXBeforeID(ctx, amount, sinceID, true)
 	}
 	if maxID == "" && minID != "" {
-		statuses, err = t.GetXBeforeID(ctx, amount, minID, true)
+		items, err = t.GetXBeforeID(ctx, amount, minID, true)
 	}
 
-	return statuses, err
+	return items, err
 }
 
-func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
+func (t *timeline) GetXFromTop(ctx context.Context, amount int) ([]Preparable, error) {
+	// make a slice of preparedItems with the length we need to return
+	preparedItems := make([]Preparable, 0, amount)
 
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
+	if t.preparedItems.data == nil {
+		t.preparedItems.data = &list.List{}
 	}
 
-	// make sure we have enough posts prepared to return
-	if t.preparedPosts.data.Len() < amount {
+	// make sure we have enough items prepared to return
+	if t.preparedItems.data.Len() < amount {
 		if err := t.PrepareFromTop(ctx, amount); err != nil {
 			return nil, err
 		}
 	}
 
-	// work through the prepared posts from the top and return
+	// work through the prepared items from the top and return
 	var served int
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
+	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
-			return nil, errors.New("GetXFromTop: could not parse e as a preparedPostsEntry")
+			return nil, errors.New("GetXFromTop: could not parse e as a preparedItemsEntry")
 		}
-		statuses = append(statuses, entry.prepared)
+		preparedItems = append(preparedItems, entry.prepared)
 		served++
 		if served >= amount {
 			break
 		}
 	}
 
-	return statuses, nil
+	return preparedItems, nil
 }
 
-func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]*apimodel.Status, error) {
+func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string, attempts *int) ([]Preparable, error) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":     "GetXBehindID",
 		"amount":   amount,
@@ -148,11 +147,11 @@ func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string
 	newAttempts++
 	attempts = &newAttempts
 
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
+	// make a slice of items with the length we need to return
+	items := make([]Preparable, 0, amount)
 
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
+	if t.preparedItems.data == nil {
+		t.preparedItems.data = &list.List{}
 	}
 
 	// iterate through the modified list until we hit the mark we're looking for
@@ -160,14 +159,14 @@ func (t *timeline) GetXBehindID(ctx context.Context, amount int, behindID string
 	var behindIDMark *list.Element
 
 findMarkLoop:
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
+	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		position++
-		entry, ok := e.Value.(*preparedPostsEntry)
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID <= behindID {
+		if entry.itemID <= behindID {
 			l.Trace("found behindID mark")
 			behindIDMark = e
 			break findMarkLoop
@@ -175,33 +174,33 @@ findMarkLoop:
 	}
 
 	// we didn't find it, so we need to make sure it's indexed and prepared and then try again
-	// this can happen when a user asks for really old posts
+	// this can happen when a user asks for really old items
 	if behindIDMark == nil {
 		if err := t.PrepareBehind(ctx, behindID, amount); err != nil {
 			return nil, fmt.Errorf("GetXBehindID: error preparing behind and including ID %s", behindID)
 		}
-		oldestID, err := t.OldestPreparedPostID(ctx)
+		oldestID, err := t.OldestPreparedItemID(ctx)
 		if err != nil {
 			return nil, err
 		}
 		if oldestID == "" {
 			l.Tracef("oldestID is empty so we can't return behindID %s", behindID)
-			return statuses, nil
+			return items, nil
 		}
 		if oldestID == behindID {
 			l.Tracef("given behindID %s is the same as oldestID %s so there's nothing to return behind it", behindID, oldestID)
-			return statuses, nil
+			return items, nil
 		}
 		if *attempts > retries {
 			l.Tracef("exceeded retries looking for behindID %s", behindID)
-			return statuses, nil
+			return items, nil
 		}
 		l.Trace("trying GetXBehindID again")
 		return t.GetXBehindID(ctx, amount, behindID, attempts)
 	}
 
-	// make sure we have enough posts prepared behind it to return what we're being asked for
-	if t.preparedPosts.data.Len() < amount+position {
+	// make sure we have enough items prepared behind it to return what we're being asked for
+	if t.preparedItems.data.Len() < amount+position {
 		if err := t.PrepareBehind(ctx, behindID, amount); err != nil {
 			return nil, err
 		}
@@ -211,40 +210,40 @@ findMarkLoop:
 	var served int
 serveloop:
 	for e := behindIDMark.Next(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return nil, errors.New("GetXBehindID: could not parse e as a preparedPostsEntry")
 		}
 
 		// serve up to the amount requested
-		statuses = append(statuses, entry.prepared)
+		items = append(items, entry.prepared)
 		served++
 		if served >= amount {
 			break serveloop
 		}
 	}
 
-	return statuses, nil
+	return items, nil
 }
 
-func (t *timeline) GetXBeforeID(ctx context.Context, amount int, beforeID string, startFromTop bool) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
+func (t *timeline) GetXBeforeID(ctx context.Context, amount int, beforeID string, startFromTop bool) ([]Preparable, error) {
+	// make a slice of items with the length we need to return
+	items := make([]Preparable, 0, amount)
 
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
+	if t.preparedItems.data == nil {
+		t.preparedItems.data = &list.List{}
 	}
 
 	// iterate through the modified list until we hit the mark we're looking for, or as close as possible to it
 	var beforeIDMark *list.Element
 findMarkLoop:
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
+	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID >= beforeID {
+		if entry.itemID >= beforeID {
 			beforeIDMark = e
 		} else {
 			break findMarkLoop
@@ -252,26 +251,26 @@ findMarkLoop:
 	}
 
 	if beforeIDMark == nil {
-		return statuses, nil
+		return items, nil
 	}
 
 	var served int
 
 	if startFromTop {
-		// start serving from the front/top and keep going until we hit mark or get x amount statuses
+		// start serving from the front/top and keep going until we hit mark or get x amount items
 	serveloopFromTop:
-		for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*preparedPostsEntry)
+		for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
+			entry, ok := e.Value.(*preparedItemsEntry)
 			if !ok {
 				return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
 			}
 
-			if entry.statusID == beforeID {
+			if entry.itemID == beforeID {
 				break serveloopFromTop
 			}
 
 			// serve up to the amount requested
-			statuses = append(statuses, entry.prepared)
+			items = append(items, entry.prepared)
 			served++
 			if served >= amount {
 				break serveloopFromTop
@@ -281,13 +280,13 @@ findMarkLoop:
 		// start serving from the entry right before the mark
 	serveloopFromBottom:
 		for e := beforeIDMark.Prev(); e != nil; e = e.Prev() {
-			entry, ok := e.Value.(*preparedPostsEntry)
+			entry, ok := e.Value.(*preparedItemsEntry)
 			if !ok {
 				return nil, errors.New("GetXBeforeID: could not parse e as a preparedPostsEntry")
 			}
 
 			// serve up to the amount requested
-			statuses = append(statuses, entry.prepared)
+			items = append(items, entry.prepared)
 			served++
 			if served >= amount {
 				break serveloopFromBottom
@@ -295,29 +294,29 @@ findMarkLoop:
 		}
 	}
 
-	return statuses, nil
+	return items, nil
 }
 
-func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID string, beforeID string) ([]*apimodel.Status, error) {
-	// make a slice of statuses with the length we need to return
-	statuses := make([]*apimodel.Status, 0, amount)
+func (t *timeline) GetXBetweenID(ctx context.Context, amount int, behindID string, beforeID string) ([]Preparable, error) {
+	// make a slice of items with the length we need to return
+	items := make([]Preparable, 0, amount)
 
-	if t.preparedPosts.data == nil {
-		t.preparedPosts.data = &list.List{}
+	if t.preparedItems.data == nil {
+		t.preparedItems.data = &list.List{}
 	}
 
 	// iterate through the modified list until we hit the mark we're looking for
 	var position int
 	var behindIDMark *list.Element
 findMarkLoop:
-	for e := t.preparedPosts.data.Front(); e != nil; e = e.Next() {
+	for e := t.preparedItems.data.Front(); e != nil; e = e.Next() {
 		position++
-		entry, ok := e.Value.(*preparedPostsEntry)
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return nil, errors.New("GetXBetweenID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == behindID {
+		if entry.itemID == behindID {
 			behindIDMark = e
 			break findMarkLoop
 		}
@@ -325,11 +324,11 @@ findMarkLoop:
 
 	// we didn't find it
 	if behindIDMark == nil {
-		return nil, fmt.Errorf("GetXBetweenID: couldn't find status with ID %s", behindID)
+		return nil, fmt.Errorf("GetXBetweenID: couldn't find item with ID %s", behindID)
 	}
 
-	// make sure we have enough posts prepared behind it to return what we're being asked for
-	if t.preparedPosts.data.Len() < amount+position {
+	// make sure we have enough items prepared behind it to return what we're being asked for
+	if t.preparedItems.data.Len() < amount+position {
 		if err := t.PrepareBehind(ctx, behindID, amount); err != nil {
 			return nil, err
 		}
@@ -339,22 +338,22 @@ findMarkLoop:
 	var served int
 serveloop:
 	for e := behindIDMark.Next(); e != nil; e = e.Next() {
-		entry, ok := e.Value.(*preparedPostsEntry)
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return nil, errors.New("GetXBetweenID: could not parse e as a preparedPostsEntry")
 		}
 
-		if entry.statusID == beforeID {
+		if entry.itemID == beforeID {
 			break serveloop
 		}
 
 		// serve up to the amount requested
-		statuses = append(statuses, entry.prepared)
+		items = append(items, entry.prepared)
 		served++
 		if served >= amount {
 			break serveloop
 		}
 	}
 
-	return statuses, nil
+	return items, nil
 }

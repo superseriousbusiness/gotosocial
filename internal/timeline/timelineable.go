@@ -16,17 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package timeline
 
-import (
-	"codeberg.org/gruf/go-store/kv"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-)
-
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender) processing.Processor {
-	return processing.NewProcessor(NewTestTypeConverter(db), federator, NewTestOauthServer(db), NewTestMediaHandler(db, storage), storage, db, emailSender)
+// Timelineable represents any item that can be put in a timeline.
+type Timelineable interface {
+	GetID() string
+	GetAccountID() string
+	GetBoostOfID() string
+	GetBoostOfAccountID() string
 }
