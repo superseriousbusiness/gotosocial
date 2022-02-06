@@ -93,8 +93,7 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 	ctx, engine := gin.CreateTestContext(recorder)
 
 	// load templates into the engine
-	router.LoadTemplateFunctions(engine)
-	engine.LoadHTMLGlob("../../../../web/template/*")
+	testrig.ConfigureTemplatesWithGin(engine)
 
 	// create the request
 	protocol := viper.GetString(config.Keys.Protocol)
