@@ -107,15 +107,15 @@ volumes:
 
 trigger:
   repo:
-    exclude:
-      - "*/*"
     include:
       - superseriousbusiness/gotosocial
       - NyaaaWhatsUpDoc/gotosocial
       - f0x52/gotosocial
+    exclude:
+      - "*/*"
 
 ---
 kind: signature
-hmac: b8e294ed59c87b81683127aaaf2b2e5ed5aefc753c024324f8e2cb15d3aa40d2
+hmac: c5f725a4f5e53ffb557b1bd11e6c9eefda97344bc2300101a739824c030c983c
 
 ...
