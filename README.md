@@ -1,4 +1,4 @@
-# GoToSocial <!-- omit in toc -->
+# GoToSocial <!-- omit in toc --> 
 
 ![patrons](https://img.shields.io/liberapay/patrons/GoToSocial.svg?logo=liberapay) ![receives](https://img.shields.io/liberapay/receives/GoToSocial.svg?logo=liberapay) [![Build Status](https://drone.superseriousbusiness.org/api/badges/superseriousbusiness/gotosocial/status.svg?ref=refs/heads/main)](https://drone.superseriousbusiness.org/superseriousbusiness/gotosocial)
 
