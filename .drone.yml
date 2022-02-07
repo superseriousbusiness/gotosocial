@@ -10,112 +10,109 @@ type: docker
 name: default
 
 steps:
-# We use golangci-lint for linting.
-# See: https://golangci-lint.run/
-- name: lint
-  image: golangci/golangci-lint:v1.43.0
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  - name: golangci-lint-cache
-    path: /root/.cache/golangci-lint
-  - name: go-src
-    path: /go
-  commands:
-  - golangci-lint run
-  when:
-    event:
-      include:
-      - pull_request
+  # We use golangci-lint for linting.
+  # See: https://golangci-lint.run/
+  - name: lint
+    image: golangci/golangci-lint:v1.43.0
+    volumes:
+      - name: go-build-cache
+        path: /root/.cache/go-build
+      - name: golangci-lint-cache
+        path: /root/.cache/golangci-lint
+      - name: go-src
+        path: /go
+    commands:
+      - golangci-lint run
+    when:
+      event:
+        include:
+          - pull_request
 
-- name: test
-  image: golang:1.17.5-alpine3.14
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  - name: go-src
-    path: /go
-  commands:
-  - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
-  - CGO_ENABLED=0 ./test/cliparsing.sh
-  when:
-    event:
-      include:
-      - pull_request
+  - name: test
+    image: golang:1.17.5-alpine3.14
+    volumes:
+      - name: go-build-cache
+        path: /root/.cache/go-build
+      - name: go-src
+        path: /go
+    commands:
+      - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
+      - CGO_ENABLED=0 ./test/cliparsing.sh
+    when:
+      event:
+        include:
+          - pull_request
 
-- name: snapshot
-  image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  - name: docker
-    path: /var/run/docker.sock
-  environment:
-    DOCKER_USERNAME: gotosocial
-    DOCKER_PASSWORD:
-      from_secret: gts_docker_password
-  commands:
-  - git fetch --tags
-  - /go/dockerlogin.sh
-  - goreleaser release --rm-dist --snapshot
-  - docker push superseriousbusiness/gotosocial:latest
-  when:
-    event:
-      include:
-      - push
-    branch:
-      include:
-      - main
+  - name: snapshot
+    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    volumes:
+      - name: go-build-cache
+        path: /root/.cache/go-build
+      - name: docker
+        path: /var/run/docker.sock
+    environment:
+      DOCKER_USERNAME: gotosocial
+      DOCKER_PASSWORD:
+        from_secret: gts_docker_password
+    commands:
+      - git fetch --tags
+      - /go/dockerlogin.sh
+      - goreleaser release --rm-dist --snapshot
+      - docker push superseriousbusiness/gotosocial:latest
+    when:
+      event:
+        include:
+          - push
+      branch:
+        include:
+          - main
 
-- name: release
-  image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
-  volumes:
-  - name: go-build-cache
-    path: /root/.cache/go-build
-  - name: docker
-    path: /var/run/docker.sock
-  environment:
-    DOCKER_USERNAME: gotosocial
-    DOCKER_PASSWORD:
-      from_secret: gts_docker_password
-    GITHUB_TOKEN:
-      from_secret: github_token
-  commands:
-  - git fetch --tags
-  - /go/dockerlogin.sh
-  - goreleaser release --rm-dist
-  when:
-    event:
-      include:
-      - tag
+  - name: release
+    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    volumes:
+      - name: go-build-cache
+        path: /root/.cache/go-build
+      - name: docker
+        path: /var/run/docker.sock
+    environment:
+      DOCKER_USERNAME: gotosocial
+      DOCKER_PASSWORD:
+        from_secret: gts_docker_password
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - git fetch --tags
+      - /go/dockerlogin.sh
+      - goreleaser release --rm-dist
+    when:
+      event:
+        include:
+          - tag
 
 # We can speed up builds significantly by caching build artifacts between runs.
 # See: https://docs.drone.io/pipeline/docker/syntax/volumes/host/
 volumes:
-- name: go-build-cache
-  host:
-    path: /drone/gotosocial/go-build
-- name: golangci-lint-cache
-  host:
-    path: /drone/gotosocial/golangci-lint
-- name: go-src
-  host:
-    path: /drone/gotosocial/go
-- name: docker
-  host:
-    path: /var/run/docker.sock
+  - name: go-build-cache
+    host:
+      path: /drone/gotosocial/go-build
+  - name: golangci-lint-cache
+    host:
+      path: /drone/gotosocial/golangci-lint
+  - name: go-src
+    host:
+      path: /drone/gotosocial/go
+  - name: docker
+    host:
+      path: /var/run/docker.sock
 
 trigger:
   repo:
-    exclude:
-    - "*"
-    include:
     - superseriousbusiness/gotosocial
     - NyaaaWhatsUpDoc/gotosocial
     - f0x52/gotosocial
 
 ---
 kind: signature
-hmac: 6229aa9f503d87f4f6043a97eab2a73cb7ae466eb89eeb6479692aabc1c0f6c1
+hmac: f6372893445074c19e33057cf2cb94ddc9b5c54108094f9bfd40aae7c501f87c
 
 ...
