@@ -2,7 +2,13 @@
     <main>
         <form action="/oauth/authorize" method="POST">
             <h1>Hi {{.user}}!</h1>
-            <p>Application <b>{{.appname}}</b> {{if len .appwebsite | eq 0 | not}}({{.appwebsite}}) {{end}}would like to perform actions on your behalf, with scope <em>{{.scope}}</em>.</p>
+            <p>
+              Application <b>{{.appname}}</b> 
+              {{if len .appwebsite | eq 0 | not}}
+                ({{.appwebsite}}) 
+              {{end}}
+              would like to perform actions on your behalf, with scope <em>{{.scope}}</em>.
+            </p>
             <p>The application will redirect to {{.redirect}} to continue.</p>
             <p>
                 <button

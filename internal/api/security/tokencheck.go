@@ -62,6 +62,22 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			l.Warnf("no user found for userID %s", userID)
 			return
 		}
+
+		if user.ConfirmedAt.IsZero() {
+			l.Warnf("authenticated user %s has never confirmed thier email address", userID)
+			return
+		}
+
+		if !user.Approved {
+			l.Warnf("authenticated user %s's account was never approved by an admin", userID)
+			return
+		}
+
+		if user.Disabled {
+			l.Warnf("authenticated user %s's account was disabled'", userID)
+			return
+		}
+
 		c.Set(oauth.SessionAuthorizedUser, user)
 
 		// fetch account for this token
@@ -74,6 +90,12 @@ func (m *Module) TokenCheck(c *gin.Context) {
 			l.Warnf("no account found for userID %s", userID)
 			return
 		}
+
+		if !acct.SuspendedAt.IsZero() {
+			l.Warnf("authenticated user %s's account (accountId=%s) has been suspended", userID, user.AccountID)
+			return
+		}
+
 		c.Set(oauth.SessionAuthorizedAccount, acct)
 	}
 

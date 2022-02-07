@@ -231,7 +231,8 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 	status.ID = statusID
 
 	if err := f.db.PutStatus(ctx, status); err != nil {
-		if err == db.ErrAlreadyExists {
+		var alreadyExistsError *db.ErrAlreadyExists
+		if errors.As(err, &alreadyExistsError) {
 			// the status already exists in the database, which means we've already handled everything else,
 			// so we can just return nil here and be done with it.
 			return nil
