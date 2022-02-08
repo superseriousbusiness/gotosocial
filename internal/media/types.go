@@ -45,7 +45,7 @@ const (
 	mimeImagePng = mimeImage + "/" + mimePng
 )
 
-type processState int
+type processState int32
 
 const (
 	received processState = iota // processing order has been received but not done yet

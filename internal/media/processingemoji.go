@@ -25,6 +25,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
@@ -53,9 +54,7 @@ type ProcessingEmoji struct {
 	/*
 		below fields represent the processing state of the static of the emoji
 	*/
-
-	staticState   processState
-	fullSizeState processState
+	staticState int32
 
 	/*
 		below pointers to database and storage are maintained so that
@@ -104,17 +103,18 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 // Finished returns true if processing has finished for both the thumbnail
 // and full fized version of this piece of media.
 func (p *ProcessingEmoji) Finished() bool {
-	return p.staticState == complete && p.fullSizeState == complete
+	return atomic.LoadInt32(&p.staticState) == int32(complete)
 }
 
 func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
-	switch p.staticState {
+	staticState := atomic.LoadInt32(&p.staticState)
+	switch processState(staticState) {
 	case received:
 		// stream the original file out of storage...
 		stored, err := p.storage.GetStream(p.emoji.ImagePath)
 		if err != nil {
 			p.err = fmt.Errorf("loadStatic: error fetching file from storage: %s", err)
-			p.staticState = errored
+			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
 		}
 
@@ -122,27 +122,27 @@ func (p *ProcessingEmoji) loadStatic(ctx context.Context) error {
 		static, err := deriveStaticEmoji(stored, p.emoji.ImageContentType)
 		if err != nil {
 			p.err = fmt.Errorf("loadStatic: error deriving static: %s", err)
-			p.staticState = errored
+			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
 		}
 
 		if err := stored.Close(); err != nil {
 			p.err = fmt.Errorf("loadStatic: error closing stored full size: %s", err)
-			p.staticState = errored
+			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
 		}
 
 		// put the static in storage
 		if err := p.storage.Put(p.emoji.ImageStaticPath, static.small); err != nil {
 			p.err = fmt.Errorf("loadStatic: error storing static: %s", err)
-			p.staticState = errored
+			atomic.StoreInt32(&p.staticState, int32(errored))
 			return p.err
 		}
 
 		p.emoji.ImageStaticFileSize = len(static.small)
 
 		// we're done processing the static version of the emoji!
-		p.staticState = complete
+		atomic.StoreInt32(&p.staticState, int32(complete))
 		fallthrough
 	case complete:
 		return nil
@@ -281,8 +281,7 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		instanceAccountID: instanceAccount.ID,
 		emoji:             emoji,
 		data:              data,
-		staticState:       received,
-		fullSizeState:     received,
+		staticState:       int32(received),
 		database:          m.db,
 		storage:           m.storage,
 	}
