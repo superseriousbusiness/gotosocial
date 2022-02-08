@@ -102,7 +102,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Open the storage backend
 	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
 	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
-		LockFile: path.Join(storageBasePath, "store.lock"), // put the store lockfile in the storage dir itself
+		// Put the store lockfile in the storage dir itself.
+		// Normally this would not be safe, since we could end up
+		// overwriting the lockfile if we store a file called 'store.lock'.
+		// However, in this case it's OK because the keys are set by
+		// GtS and not the user, so we know we're never going to overwrite it.
+		LockFile: path.Join(storageBasePath, "store.lock"), 
 	})
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
