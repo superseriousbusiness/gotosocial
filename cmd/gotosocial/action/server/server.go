@@ -105,7 +105,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// overwriting the lockfile if we store a file called 'store.lock'.
 		// However, in this case it's OK because the keys are set by
 		// GtS and not the user, so we know we're never going to overwrite it.
-		LockFile: path.Join(storageBasePath, "store.lock"), 
+		LockFile: path.Join(storageBasePath, "store.lock"),
 	})
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
