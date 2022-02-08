@@ -265,18 +265,18 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 	if targetAccount.AvatarRemoteURL != "" && (targetAccount.AvatarMediaAttachmentID == "" || refresh) {
 		var processingMedia *media.ProcessingMedia
 
+		d.dereferencingAvatarsLock.Lock() // LOCK HERE
 		// first check if we're already processing this media
-		d.dereferencingAvatarsLock.Lock()
 		if alreadyProcessing, ok := d.dereferencingAvatars[targetAccount.ID]; ok {
 			// we're already on it, no worries
 			processingMedia = alreadyProcessing
 		}
-		d.dereferencingAvatarsLock.Unlock()
 
 		if processingMedia == nil {
 			// we're not already processing it so start now
 			avatarIRI, err := url.Parse(targetAccount.AvatarRemoteURL)
 			if err != nil {
+				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
 			}
 
@@ -290,16 +290,15 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				Avatar:    &avatar,
 			})
 			if err != nil {
+				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
 			}
 
 			// store it in our map to indicate it's in process
-			d.dereferencingAvatarsLock.Lock()
 			d.dereferencingAvatars[targetAccount.ID] = newProcessing
-			d.dereferencingAvatarsLock.Unlock()
-
 			processingMedia = newProcessing
 		}
+		d.dereferencingAvatarsLock.Unlock() // UNLOCK HERE
 
 		// block until loaded if required...
 		if blocking {
@@ -324,18 +323,18 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 	if targetAccount.HeaderRemoteURL != "" && (targetAccount.HeaderMediaAttachmentID == "" || refresh) {
 		var processingMedia *media.ProcessingMedia
 
+		d.dereferencingHeadersLock.Lock() // LOCK HERE
 		// first check if we're already processing this media
-		d.dereferencingHeadersLock.Lock()
 		if alreadyProcessing, ok := d.dereferencingHeaders[targetAccount.ID]; ok {
 			// we're already on it, no worries
 			processingMedia = alreadyProcessing
 		}
-		d.dereferencingHeadersLock.Unlock()
 
 		if processingMedia == nil {
 			// we're not already processing it so start now
 			headerIRI, err := url.Parse(targetAccount.HeaderRemoteURL)
 			if err != nil {
+				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
 			}
 
@@ -349,16 +348,15 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 				Header:    &header,
 			})
 			if err != nil {
+				d.dereferencingAvatarsLock.Unlock()
 				return changed, err
 			}
 
 			// store it in our map to indicate it's in process
-			d.dereferencingHeadersLock.Lock()
 			d.dereferencingHeaders[targetAccount.ID] = newProcessing
-			d.dereferencingHeadersLock.Unlock()
-
 			processingMedia = newProcessing
 		}
+		d.dereferencingHeadersLock.Unlock() // UNLOCK HERE
 
 		// block until loaded if required...
 		if blocking {
