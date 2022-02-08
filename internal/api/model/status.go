@@ -96,6 +96,36 @@ type Status struct {
 	Text string `json:"text"`
 }
 
+/*
+** The below functions are added onto the API model status so that it satisfies
+** the Preparable interface in internal/timeline.
+ */
+
+func (s *Status) GetID() string {
+	return s.ID
+}
+
+func (s *Status) GetAccountID() string {
+	if s.Account != nil {
+		return s.Account.ID
+	}
+	return ""
+}
+
+func (s *Status) GetBoostOfID() string {
+	if s.Reblog != nil {
+		return s.Reblog.ID
+	}
+	return ""
+}
+
+func (s *Status) GetBoostOfAccountID() string {
+	if s.Reblog != nil && s.Reblog.Account != nil {
+		return s.Reblog.Account.ID
+	}
+	return ""
+}
+
 // StatusReblogged represents a reblogged status.
 //
 // swagger:model statusReblogged

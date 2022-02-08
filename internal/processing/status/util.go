@@ -223,8 +223,11 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 		return fmt.Errorf("error generating hashtags from status: %s", err)
 	}
 	for _, tag := range gtsTags {
-		if err := p.db.Put(ctx, tag); err != nil && err != db.ErrAlreadyExists {
-			return fmt.Errorf("error putting tags in db: %s", err)
+		if err := p.db.Put(ctx, tag); err != nil {
+			var alreadyExistsError *db.ErrAlreadyExists
+			if !errors.As(err, &alreadyExistsError) {
+				return fmt.Errorf("error putting tags in db: %s", err)
+			}
 		}
 		tags = append(tags, tag.ID)
 	}

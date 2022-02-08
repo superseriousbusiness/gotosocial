@@ -94,13 +94,13 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 
 	// if something went wrong while creating a user, we might already have an account, so check here first...
 	acct := &gtsmodel.Account{}
-	err = a.conn.NewSelect().
+	q := a.conn.NewSelect().
 		Model(acct).
 		Where("username = ?", username).
-		WhereGroup(" AND ", whereEmptyOrNull("domain")).
-		Scan(ctx)
-	if err != nil {
-		// we just don't have an account yet so create one
+		WhereGroup(" AND ", whereEmptyOrNull("domain"))
+
+	if err := q.Scan(ctx); err != nil {
+		// we just don't have an account yet so create one before we proceed
 		accountURIs := uris.GenerateURIsForAccount(username)
 		accountID, err := id.NewRandomULID()
 		if err != nil {
@@ -125,6 +125,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 			FollowingURI:          accountURIs.FollowingURI,
 			FeaturedCollectionURI: accountURIs.CollectionURI,
 		}
+
 		if _, err = a.conn.
 			NewInsert().
 			Model(acct).
@@ -158,6 +159,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 	if emailVerified {
 		u.ConfirmedAt = time.Now()
 		u.Email = email
+		u.UnconfirmedEmail = ""
 	}
 
 	if admin {

@@ -66,6 +66,27 @@ type Status struct {
 	Likeable                 bool               `validate:"-" bun:",notnull"`                                                                          // This status can be liked/faved
 }
 
+/*
+	The below functions are added onto the gtsmodel status so that it satisfies
+	the Timelineable interface in internal/timeline.
+*/
+
+func (s *Status) GetID() string {
+	return s.ID
+}
+
+func (s *Status) GetAccountID() string {
+	return s.AccountID
+}
+
+func (s *Status) GetBoostOfID() string {
+	return s.BoostOfID
+}
+
+func (s *Status) GetBoostOfAccountID() string {
+	return s.BoostOfAccountID
+}
+
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
 	StatusID string  `validate:"ulid,required" bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`

@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
+	codeberg.org/gruf/go-errors v1.0.5
 	codeberg.org/gruf/go-runners v1.2.0
 	codeberg.org/gruf/go-store v1.3.3
 	github.com/ReneKroon/ttlcache v1.7.0
@@ -46,7 +47,6 @@ require (
 
 require (
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
-	codeberg.org/gruf/go-errors v1.0.5 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.2 // indirect
 	codeberg.org/gruf/go-format v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.1 // indirect

@@ -30,8 +30,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
@@ -206,19 +204,27 @@ func (m *Module) parseUserFromClaims(ctx context.Context, claims *oidc.Claims, i
 		}
 	}
 
-	// we still need to set *a* password even if it's not a password the user will end up using, so set something random
-	// in this case, we'll just set two uuids on top of each other, which should be long + random enough to baffle any attempts to crack.
+	// We still need to set *a* password even if it's not a password the user will end up using, so set something random.
+	// We'll just set two uuids on top of each other, which should be long + random enough to baffle any attempts to crack.
 	//
-	// if the user ever wants to log in using gts password rather than oidc flow, they'll have to request a password reset, which is fine
+	// If the user ever wants to log in using gts password rather than oidc flow, they'll have to request a password reset, which is fine
 	password := uuid.NewString() + uuid.NewString()
 
+	// Since this user is created via oidc, which has been set up by the admin, we can assume that the account is already
+	// implicitly approved, and that the email address has already been verified: otherwise, we end up in situations where
+	// the admin first approves the user in OIDC, and then has to approve them again in GoToSocial, which doesn't make sense.
+	//
+	// In other words, if a user logs in via OIDC, they should be able to use their account straight away.
+	//
+	// See: https://github.com/superseriousbusiness/gotosocial/issues/357
+	requireApproval := false
+	emailVerified := true
+
 	// create the user! this will also create an account and store it in the database so we don't need to do that here
-	requireApproval := viper.GetBool(config.Keys.AccountsApprovalRequired)
-	user, err = m.db.NewSignup(ctx, username, "", requireApproval, claims.Email, password, ip, "", appID, claims.EmailVerified, admin)
+	user, err = m.db.NewSignup(ctx, username, "", requireApproval, claims.Email, password, ip, "", appID, emailVerified, admin)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %s", err)
 	}
 
 	return user, nil
-
 }

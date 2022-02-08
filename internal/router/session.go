@@ -33,8 +33,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
-// sessionOptions returns the standard set of options to use for each session.
-func sessionOptions() sessions.Options {
+// SessionOptions returns the standard set of options to use for each session.
+func SessionOptions() sessions.Options {
 	return sessions.Options{
 		Path:     "/",
 		Domain:   viper.GetString(config.Keys.Host),
@@ -75,7 +75,7 @@ func useSession(ctx context.Context, sessionDB db.Session, engine *gin.Engine) e
 	}
 
 	store := memstore.NewStore(rs.Auth, rs.Crypt)
-	store.Options(sessionOptions())
+	store.Options(SessionOptions())
 
 	sessionName, err := SessionName()
 	if err != nil {

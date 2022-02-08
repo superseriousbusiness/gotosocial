@@ -28,7 +28,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -65,11 +64,6 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 	if !set || resourceQuery == "" {
 		l.Debug("aborting request because no resource was set in query")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no 'resource' in request query"})
-		return
-	}
-
-	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 

@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	resetTemplate = "email_reset.tmpl"
-	resetSubject  = "Subject: GoToSocial Password Reset"
+	resetTemplate = "email_reset_text.tmpl"
+	resetSubject  = "GoToSocial Password Reset"
 )
 
 func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
@@ -35,7 +35,10 @@ func (s *sender) SendResetEmail(toAddress string, data ResetData) error {
 	}
 	resetBody := buf.String()
 
-	msg := assembleMessage(resetSubject, resetBody, toAddress, s.from)
+	msg, err := assembleMessage(resetSubject, resetBody, toAddress, s.from)
+	if err != nil {
+		return err
+	}
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

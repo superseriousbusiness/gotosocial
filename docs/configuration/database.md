@@ -8,7 +8,7 @@ By default, GoToSocial will use Postgres, but this is easy to change.
 
 SQLite, as the name implies, is the lightest database type that GoToSocial can use. It stores entries in a simple file format, usually in the same directory as the GoToSocial binary itself. SQLite is great for small instances and lower-powered machines like Raspberry Pi, where a dedicated database would be overkill.
 
-To configure GoToSocial to use SQLite, change `db-type` to `sqlite`. The `address` setting will then be a filename instead of an address, so you might want to change it to `sqlite.db` or something similar.
+To configure GoToSocial to use SQLite, change `db-type` to `sqlite`. The `address` setting will then be a filename instead of an address, so you will want to change it to `sqlite.db` or something similar.
 
 Note that the `:memory:` setting will use an *in-memory database* which will be wiped when your GoToSocial instance stops running. This is for testing only and is absolutely not suitable for running a proper instance, so *don't do this*.
 
@@ -57,7 +57,17 @@ grant all privileges on database gotosocial to gotosocial;
 db-type: "postgres"
 
 # String. Database address or parameters.
-# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:"]
+#
+# For Postgres, this should be the address or socket at which the database can be reached.
+#
+# For Sqlite, this should be the path to your sqlite database file. Eg., /opt/gotosocial/sqlite.db.
+# If the file doesn't exist at the specified path, it will be created.
+# If just a filename is provided (no directory) then the database will be created in the same directory
+# as the GoToSocial binary.
+# If address is set to :memory: then an in-memory database will be used (no file).
+# WARNING: :memory: should NOT BE USED except for testing purposes.
+#
+# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
 # Default: ""
 db-address: ""
 

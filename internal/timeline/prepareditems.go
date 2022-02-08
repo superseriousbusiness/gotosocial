@@ -20,24 +20,24 @@ package timeline
 
 import (
 	"container/list"
+	"context"
 	"errors"
-
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-type preparedPosts struct {
-	data *list.List
+type preparedItems struct {
+	data       *list.List
+	skipInsert SkipInsertFunction
 }
 
-type preparedPostsEntry struct {
-	statusID         string
+type preparedItemsEntry struct {
+	itemID           string
 	boostOfID        string
 	accountID        string
 	boostOfAccountID string
-	prepared         *apimodel.Status
+	prepared         Preparable
 }
 
-func (p *preparedPosts) insertPrepared(i *preparedPostsEntry) error {
+func (p *preparedItems) insertPrepared(ctx context.Context, i *preparedItemsEntry) error {
 	if p.data == nil {
 		p.data = &list.List{}
 	}
@@ -55,35 +55,28 @@ func (p *preparedPosts) insertPrepared(i *preparedPostsEntry) error {
 	for e := p.data.Front(); e != nil; e = e.Next() {
 		position++
 
-		entry, ok := e.Value.(*preparedPostsEntry)
+		entry, ok := e.Value.(*preparedItemsEntry)
 		if !ok {
 			return errors.New("index: could not parse e as a preparedPostsEntry")
 		}
 
-		// don't insert this if it's a boost of a status we've seen recently
-		if i.prepared.Reblog != nil {
-			if entry.prepared.Reblog != nil && i.prepared.Reblog.ID == entry.prepared.Reblog.ID {
-				if position < boostReinsertionDepth {
-					return nil
-				}
-			}
-
-			if i.prepared.Reblog.ID == entry.statusID {
-				if position < boostReinsertionDepth {
-					return nil
-				}
-			}
+		skip, err := p.skipInsert(ctx, i.itemID, i.accountID, i.boostOfID, i.boostOfAccountID, entry.itemID, entry.accountID, entry.boostOfID, entry.boostOfAccountID, position)
+		if err != nil {
+			return err
+		}
+		if skip {
+			return nil
 		}
 
 		// if the post to index is newer than e, insert it before e in the list
 		if insertMark == nil {
-			if i.statusID > entry.statusID {
+			if i.itemID > entry.itemID {
 				insertMark = e
 			}
 		}
 
 		// make sure we don't insert a duplicate
-		if entry.statusID == i.statusID {
+		if entry.itemID == i.itemID {
 			return nil
 		}
 	}

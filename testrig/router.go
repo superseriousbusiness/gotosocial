@@ -20,7 +20,14 @@ package testrig
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
@@ -32,4 +39,27 @@ func NewTestRouter(db db.DB) router.Router {
 		panic(err)
 	}
 	return r
+}
+
+// ConfigureTemplatesWithGin will panic on any errors related to template loading during tests
+func ConfigureTemplatesWithGin(engine *gin.Engine) {
+
+	router.LoadTemplateFunctions(engine)
+
+	// https://stackoverflow.com/questions/31873396/is-it-possible-to-get-the-current-root-of-package-structure-as-a-string-in-golan
+	_, runtimeCallerLocation, _, _ := runtime.Caller(0)
+	projectRoot, err := filepath.Abs(filepath.Join(filepath.Dir(runtimeCallerLocation), "../"))
+	if err != nil {
+		panic(err)
+	}
+
+	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
+
+	_, err = os.Stat(filepath.Join(projectRoot, templateBaseDir, "index.tmpl"))
+	if err != nil {
+		panic(fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", filepath.Join(projectRoot, templateBaseDir), err))
+	}
+
+	tmPath := filepath.Join(projectRoot, fmt.Sprintf("%s*", templateBaseDir))
+	engine.LoadHTMLGlob(tmPath)
 }

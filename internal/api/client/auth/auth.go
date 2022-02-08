@@ -32,10 +32,23 @@ import (
 const (
 	// AuthSignInPath is the API path for users to sign in through
 	AuthSignInPath = "/auth/sign_in"
+
+	// CheckYourEmailPath users land here after registering a new account, instructs them to confirm thier email
+	CheckYourEmailPath = "/check_your_email"
+
+	// WaitForApprovalPath users land here after confirming thier email but before an admin approves thier account
+	// (if such is required)
+	WaitForApprovalPath = "/wait_for_approval"
+
+	// AccountDisabledPath users land here when thier account is suspended by an admin
+	AccountDisabledPath = "/account_disabled"
+
 	// OauthTokenPath is the API path to use for granting token requests to users with valid credentials
 	OauthTokenPath = "/oauth/token"
+
 	// OauthAuthorizePath is the API path for authorization requests (eg., authorize this app to act on my behalf as a user)
 	OauthAuthorizePath = "/oauth/authorize"
+
 	// CallbackPath is the API path for receiving callback tokens from external OIDC providers
 	CallbackPath = oidc.CallbackPath
 

@@ -67,7 +67,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
-	timelineprocessing "github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
@@ -97,7 +96,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// build converters and util
 	typeConverter := typeutils.NewConverter(dbService)
-	timelineManager := timelineprocessing.NewManager(dbService, typeConverter)
 
 	// Open the storage backend
 	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
@@ -140,7 +138,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, timelineManager, dbService, emailSender)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

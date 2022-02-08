@@ -192,10 +192,10 @@ func (p *processor) processCreateBlockFromClientAPI(ctx context.Context, clientM
 	}
 
 	// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
-	if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
+	if err := p.statusTimelines.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
 		return err
 	}
-	if err := p.timelineManager.WipeStatusesFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
+	if err := p.statusTimelines.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
 		return err
 	}
 

@@ -20,8 +20,8 @@ package email
 
 import (
 	"fmt"
-	"html/template"
 	"net/smtp"
+	"text/template"
 
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"

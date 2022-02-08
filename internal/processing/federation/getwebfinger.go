@@ -44,6 +44,9 @@ func (p *processor) GetWebfingerAccount(ctx context.Context, requestedUsername s
 	}
 
 	accountDomain := viper.GetString(config.Keys.AccountDomain)
+	if accountDomain == "" {
+		accountDomain = viper.GetString(config.Keys.Host)
+	}
 
 	// return the webfinger representation
 	return &apimodel.WellKnownResponse{

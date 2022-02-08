@@ -16,18 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package testrig
+package timeline
 
-import (
-	"codeberg.org/gruf/go-store/kv"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-)
-
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(db db.DB, storage *kv.KVStore, federator federation.Federator, emailSender email.Sender, mediaManager media.Manager) processing.Processor {
-	return processing.NewProcessor(NewTestTypeConverter(db), federator, NewTestOauthServer(db), mediaManager, storage, db, emailSender)
+type Preparable interface {
+	GetID() string
+	GetAccountID() string
+	GetBoostOfID() string
+	GetBoostOfAccountID() string
 }

@@ -413,7 +413,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 	}
 
 	// stick the status in the timeline for the account and then immediately prepare it so they can see it right away
-	inserted, err := p.timelineManager.IngestAndPrepare(ctx, status, timelineAccount.ID)
+	inserted, err := p.statusTimelines.IngestAndPrepare(ctx, status, timelineAccount.ID)
 	if err != nil {
 		errors <- fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %s", status.ID, err)
 		return
@@ -436,7 +436,7 @@ func (p *processor) timelineStatusForAccount(ctx context.Context, status *gtsmod
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
-	if err := p.timelineManager.WipeStatusFromAllTimelines(ctx, status.ID); err != nil {
+	if err := p.statusTimelines.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
 		return err
 	}
 

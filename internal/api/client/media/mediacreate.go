@@ -149,11 +149,9 @@ func validateCreateMedia(form *model.AttachmentRequest) error {
 		return fmt.Errorf("file size limit exceeded: limit is %d bytes but attachment was %d bytes", maxSize, form.File.Size)
 	}
 
-	if len(form.Description) < minDescriptionChars || len(form.Description) > maxDescriptionChars {
+	if len(form.Description) > maxDescriptionChars {
 		return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", minDescriptionChars, maxDescriptionChars, len(form.Description))
 	}
-
-	// TODO: validate focus here
 
 	return nil
 }

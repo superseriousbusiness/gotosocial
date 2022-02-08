@@ -237,7 +237,7 @@ type processor struct {
 	oauthServer     oauth.Server
 	mediaManager    media.Manager
 	storage         *kv.KVStore
-	timelineManager timeline.Manager
+	statusTimelines timeline.Manager
 	db              db.DB
 	filter          visibility.Filter
 
@@ -261,7 +261,6 @@ func NewProcessor(
 	oauthServer oauth.Server,
 	mediaManager media.Manager,
 	storage *kv.KVStore,
-	timelineManager timeline.Manager,
 	db db.DB,
 	emailSender email.Sender) Processor {
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
@@ -274,6 +273,7 @@ func NewProcessor(
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
+	filter := visibility.NewFilter(db)
 
 	return &processor{
 		fromClientAPI:   fromClientAPI,
@@ -284,7 +284,7 @@ func NewProcessor(
 		oauthServer:     oauthServer,
 		mediaManager:    mediaManager,
 		storage:         storage,
-		timelineManager: timelineManager,
+		statusTimelines: timeline.NewManager(StatusGrabFunction(db), StatusFilterFunction(db, filter), StatusPrepareFunction(db, tc), StatusSkipInsertFunction()),
 		db:              db,
 		filter:          visibility.NewFilter(db),
 

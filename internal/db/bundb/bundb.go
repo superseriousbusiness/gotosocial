@@ -204,7 +204,11 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 }
 
 func sqliteConn(ctx context.Context) (*DBConn, error) {
+	// validate db address has actually been set
 	dbAddress := viper.GetString(config.Keys.DbAddress)
+	if dbAddress == "" {
+		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.Keys.DbAddress)
+	}
 
 	// Drop anything fancy from DB address
 	dbAddress = strings.Split(dbAddress, "?")[0]
