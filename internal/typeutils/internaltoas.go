@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -218,6 +219,8 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			avatar, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
+			} else {
+				logrus.Errorf("AccountToAS: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 
@@ -250,6 +253,8 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			header, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err == nil {
 				a.HeaderMediaAttachment = header
+			} else {
+				logrus.Errorf("AccountToAS: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 

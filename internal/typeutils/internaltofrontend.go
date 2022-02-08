@@ -104,6 +104,8 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err == nil {
 				a.AvatarMediaAttachment = avi
+			} else {
+				logrus.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
 		}
 		if a.AvatarMediaAttachment != nil {
@@ -120,6 +122,8 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err == nil {
 				a.HeaderMediaAttachment = avi
+			} else {
+				logrus.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
 		}
 		if a.HeaderMediaAttachment != nil {
