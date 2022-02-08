@@ -138,7 +138,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, dbService, emailSender)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}

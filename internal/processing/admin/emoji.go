@@ -20,6 +20,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -55,7 +56,8 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emoji, err := processingEmoji.LoadEmoji(ctx)
 	if err != nil {
-		if err == db.ErrAlreadyExists {
+		var alreadyExistsError *db.ErrAlreadyExists
+		if errors.As(err, &alreadyExistsError) {
 			return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
 		}
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error loading emoji: %s", err), "error loading emoji")
