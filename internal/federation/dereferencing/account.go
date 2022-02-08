@@ -47,12 +47,11 @@ func instanceAccount(account *gtsmodel.Account) bool {
 }
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
-// puts it in the database, and returns it to a caller. The boolean indicates whether the account is new
-// to us or not. If we haven't seen the account before, bool will be true. If we have seen the account before,
-// it will be false.
+// puts it in the database, and returns it to a caller.
 //
 // Refresh indicates whether--if the account exists in our db already--it should be refreshed by calling
-// the remote instance again.
+// the remote instance again. Blocking indicates whether the function should block until processing of
+// the fetched account is complete.
 //
 // SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
 func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error) {
