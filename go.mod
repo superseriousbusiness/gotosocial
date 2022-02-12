@@ -3,8 +3,9 @@ module github.com/superseriousbusiness/gotosocial
 go 1.17
 
 require (
-	codeberg.org/gruf/go-errors v1.0.4
-	codeberg.org/gruf/go-store v1.1.5
+	codeberg.org/gruf/go-errors v1.0.5
+	codeberg.org/gruf/go-runners v1.2.0
+	codeberg.org/gruf/go-store v1.3.3
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.1.0
@@ -29,7 +30,7 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/superseriousbusiness/activity v1.0.1-0.20211113133524-56560b73ace8
-	github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
+	github.com/superseriousbusiness/exif-terminator v0.1.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
 	github.com/uptrace/bun v1.0.19
@@ -47,21 +48,19 @@ require (
 require (
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.2 // indirect
+	codeberg.org/gruf/go-format v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.1 // indirect
-	codeberg.org/gruf/go-logger v1.3.2 // indirect
-	codeberg.org/gruf/go-mutexes v1.0.1 // indirect
-	codeberg.org/gruf/go-nowish v1.1.0 // indirect
+	codeberg.org/gruf/go-mutexes v1.1.0 // indirect
 	codeberg.org/gruf/go-pools v1.0.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dsoprea/go-exif v0.0.0-20210625224831-a6301f85c82b // indirect
-	github.com/dsoprea/go-exif/v2 v2.0.0-20210625224831-a6301f85c82b // indirect
+	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect
-	github.com/dsoprea/go-jpeg-image-structure v0.0.0-20210512043942-b434301c6836 // indirect
+	github.com/dsoprea/go-jpeg-image-structure/v2 v2.0.0-20210512043942-b434301c6836 // indirect
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
 	github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d // indirect
-	github.com/dsoprea/go-png-image-structure v0.0.0-20210512210324-29b889a6093d // indirect
-	github.com/dsoprea/go-utility v0.0.0-20200717064901-2fccff4aa15e // indirect
+	github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d // indirect
+	github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect

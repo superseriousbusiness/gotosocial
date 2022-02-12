@@ -24,9 +24,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 
 	"codeberg.org/gruf/go-store/kv"
+	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
@@ -97,16 +99,26 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Open the storage backend
 	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
-	storage, err := kv.OpenFile(storageBasePath, nil)
+	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
+		// Put the store lockfile in the storage dir itself.
+		// Normally this would not be safe, since we could end up
+		// overwriting the lockfile if we store a file called 'store.lock'.
+		// However, in this case it's OK because the keys are set by
+		// GtS and not the user, so we know we're never going to overwrite it.
+		LockFile: path.Join(storageBasePath, "store.lock"),
+	})
 	if err != nil {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
 
 	// build backend handlers
-	mediaHandler := media.New(dbService, storage)
+	mediaManager, err := media.NewManager(dbService, storage)
+	if err != nil {
+		return fmt.Errorf("error creating media manager: %s", err)
+	}
 	oauthServer := oauth.New(ctx, dbService)
 	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
-	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaHandler)
+	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
 	var emailSender email.Sender
@@ -126,7 +138,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaHandler, storage, dbService, emailSender)
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender)
 	if err := processor.Start(ctx); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
@@ -198,7 +210,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	gts, err := gotosocial.NewServer(dbService, router, federator)
+	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
 	if err != nil {
 		return fmt.Errorf("error creating gotosocial service: %s", err)
 	}

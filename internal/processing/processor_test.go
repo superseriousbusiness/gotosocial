@@ -47,11 +47,11 @@ type ProcessingStandardTestSuite struct {
 	suite.Suite
 	db                  db.DB
 	storage             *kv.KVStore
+	mediaManager        media.Manager
 	typeconverter       typeutils.TypeConverter
 	transportController transport.Controller
 	federator           federation.Federator
 	oauthServer         oauth.Server
-	mediaHandler        media.Handler
 	timelineManager     timeline.Manager
 	emailSender         email.Sender
 
@@ -216,12 +216,12 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	})
 
 	suite.transportController = testrig.NewTestTransportController(httpClient, suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaHandler, suite.storage, suite.db, suite.emailSender)
+	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, suite.storage, suite.db, suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")

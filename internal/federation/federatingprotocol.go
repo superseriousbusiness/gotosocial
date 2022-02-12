@@ -153,7 +153,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount, _, err := f.GetRemoteAccount(ctx, username, publicKeyOwnerURI, false)
+	requestingAccount, err := f.GetRemoteAccount(ctx, username, publicKeyOwnerURI, false, false)
 	if err != nil {
 		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}

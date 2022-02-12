@@ -19,20 +19,16 @@
 package testrig
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
-	"codeberg.org/gruf/go-store/util"
 )
 
 // NewTestStorage returns a new in memory storage with the default test config
 func NewTestStorage() *kv.KVStore {
-	storage, err := kv.OpenStorage(&inMemStorage{storage: map[string][]byte{}, overwrite: false})
+	storage, err := kv.OpenStorage(storage.OpenMemory(200, false))
 	if err != nil {
 		panic(err)
 	}
@@ -112,80 +108,4 @@ func StandardStorageTeardown(s *kv.KVStore) {
 			panic(err)
 		}
 	}
-}
-
-type inMemStorage struct {
-	storage   map[string][]byte
-	overwrite bool
-}
-
-func (s *inMemStorage) Clean() error {
-	return nil
-}
-
-func (s *inMemStorage) ReadBytes(key string) ([]byte, error) {
-	b, ok := s.storage[key]
-	if !ok {
-		return nil, errors.New("key not found")
-	}
-	return b, nil
-}
-
-func (s *inMemStorage) ReadStream(key string) (io.ReadCloser, error) {
-	b, err := s.ReadBytes(key)
-	if err != nil {
-		return nil, err
-	}
-	return util.NopReadCloser(bytes.NewReader(b)), nil
-}
-
-func (s *inMemStorage) WriteBytes(key string, value []byte) error {
-	if _, ok := s.storage[key]; ok && !s.overwrite {
-		return errors.New("key already in storage")
-	}
-	s.storage[key] = copyBytes(value)
-	return nil
-}
-
-func (s *inMemStorage) WriteStream(key string, r io.Reader) error {
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return err
-	}
-	return s.WriteBytes(key, b)
-}
-
-func (s *inMemStorage) Stat(key string) (bool, error) {
-	_, ok := s.storage[key]
-	return ok, nil
-}
-
-func (s *inMemStorage) Remove(key string) error {
-	if _, ok := s.storage[key]; !ok {
-		return errors.New("key not found")
-	}
-	delete(s.storage, key)
-	return nil
-}
-
-func (s *inMemStorage) WalkKeys(opts storage.WalkKeysOptions) error {
-	if opts.WalkFn == nil {
-		return errors.New("invalid walkfn")
-	}
-	for key := range s.storage {
-		opts.WalkFn(entry(key))
-	}
-	return nil
-}
-
-type entry string
-
-func (e entry) Key() string {
-	return string(e)
-}
-
-func copyBytes(b []byte) []byte {
-	p := make([]byte, len(b))
-	copy(p, b)
-	return p
 }

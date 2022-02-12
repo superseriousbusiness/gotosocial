@@ -38,21 +38,21 @@ type Processor interface {
 	DomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode)
 	DomainBlockGet(ctx context.Context, account *gtsmodel.Account, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
 	DomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode)
-	EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+	EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
 }
 
 type processor struct {
 	tc            typeutils.TypeConverter
-	mediaHandler  media.Handler
+	mediaManager  media.Manager
 	fromClientAPI chan messages.FromClientAPI
 	db            db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaHandler media.Handler, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, fromClientAPI chan messages.FromClientAPI) Processor {
 	return &processor{
 		tc:            tc,
-		mediaHandler:  mediaHandler,
+		mediaManager:  mediaManager,
 		fromClientAPI: fromClientAPI,
 		db:            db,
 	}

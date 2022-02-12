@@ -96,35 +96,40 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		lastStatusAt = lastPosted.Format(time.RFC3339)
 	}
 
-	// build the avatar and header URLs
+	// set account avatar fields if available
 	var aviURL string
 	var aviURLStatic string
 	if a.AvatarMediaAttachmentID != "" {
-		// make sure avi is pinned to this account
 		if a.AvatarMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving avatar: %s", err)
+			if err == nil {
+				a.AvatarMediaAttachment = avi
+			} else {
+				logrus.Errorf("AccountToAPIAccountPublic: error getting Avatar with id %s: %s", a.AvatarMediaAttachmentID, err)
 			}
-			a.AvatarMediaAttachment = avi
 		}
-		aviURL = a.AvatarMediaAttachment.URL
-		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
+		if a.AvatarMediaAttachment != nil {
+			aviURL = a.AvatarMediaAttachment.URL
+			aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
+		}
 	}
 
+	// set account header fields if available
 	var headerURL string
 	var headerURLStatic string
 	if a.HeaderMediaAttachmentID != "" {
-		// make sure header is pinned to this account
 		if a.HeaderMediaAttachment == nil {
 			avi, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
-			if err != nil {
-				return nil, fmt.Errorf("error retrieving avatar: %s", err)
+			if err == nil {
+				a.HeaderMediaAttachment = avi
+			} else {
+				logrus.Errorf("AccountToAPIAccountPublic: error getting Header with id %s: %s", a.HeaderMediaAttachmentID, err)
 			}
-			a.HeaderMediaAttachment = avi
 		}
-		headerURL = a.HeaderMediaAttachment.URL
-		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
+		if a.HeaderMediaAttachment != nil {
+			headerURL = a.HeaderMediaAttachment.URL
+			headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
+		}
 	}
 
 	// get the fields set on this account

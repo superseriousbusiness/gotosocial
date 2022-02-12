@@ -57,8 +57,7 @@ type Federator interface {
 	DereferenceRemoteThread(ctx context.Context, username string, statusURI *url.URL) error
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 
-	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error)
 
 	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
@@ -78,13 +77,13 @@ type federator struct {
 	typeConverter       typeutils.TypeConverter
 	transportController transport.Controller
 	dereferencer        dereferencing.Dereferencer
-	mediaHandler        media.Handler
+	mediaManager        media.Manager
 	actor               pub.FederatingActor
 }
 
 // NewFederator returns a new federator
-func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaHandler media.Handler) Federator {
-	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaHandler)
+func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaManager media.Manager) Federator {
+	dereferencer := dereferencing.NewDereferencer(db, typeConverter, transportController, mediaManager)
 
 	clock := &Clock{}
 	f := &federator{
@@ -94,7 +93,7 @@ func NewFederator(db db.DB, federatingDB federatingdb.DB, transportController tr
 		typeConverter:       typeConverter,
 		transportController: transportController,
 		dereferencer:        dereferencer,
-		mediaHandler:        mediaHandler,
+		mediaManager:        mediaManager,
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

@@ -22,10 +22,11 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // NewTestFederator returns a federator with the given database and (mock!!) transport controller.
-func NewTestFederator(db db.DB, tc transport.Controller, storage *kv.KVStore) federation.Federator {
-	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestTypeConverter(db), NewTestMediaHandler(db, storage))
+func NewTestFederator(db db.DB, tc transport.Controller, storage *kv.KVStore, mediaManager media.Manager) federation.Federator {
+	return federation.NewFederator(db, NewTestFederatingDB(db), tc, NewTestTypeConverter(db), mediaManager)
 }

@@ -27,12 +27,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// emojiCreateRequest swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
+// EmojiCreatePOSTHandler swagger:operation POST /api/v1/admin/custom_emojis emojiCreate
 //
 // Upload and create a new instance emoji.
 //
@@ -74,7 +73,9 @@ import (
 //      description: forbidden
 //   '400':
 //      description: bad request
-func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
+//   '409':
+//      description: conflict -- domain/shortcode combo for emoji already exists
+func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":        "emojiCreatePOSTHandler",
 		"request_uri": c.Request.RequestURI,
@@ -117,10 +118,10 @@ func (m *Module) emojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiEmoji, err := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
-	if err != nil {
-		l.Debugf("error creating emoji: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		l.Debugf("error creating emoji: %s", errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
@@ -131,11 +132,6 @@ func validateCreateEmoji(form *model.EmojiCreateRequest) error {
 	// check there actually is an image attached and it's not size 0
 	if form.Image == nil || form.Image.Size == 0 {
 		return errors.New("no emoji given")
-	}
-
-	// a very superficial check to see if the media size limit is exceeded
-	if form.Image.Size > media.EmojiMaxBytes {
-		return fmt.Errorf("file size limit exceeded: limit is %d bytes but emoji was %d bytes", media.EmojiMaxBytes, form.Image.Size)
 	}
 
 	return validate.EmojiShortcode(form.Shortcode)

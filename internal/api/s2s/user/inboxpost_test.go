@@ -84,9 +84,9 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -184,9 +184,9 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -274,9 +274,9 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -393,9 +393,9 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	body := bytes.NewReader(bodyJson)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	err = processor.Start(context.Background())
 	suite.NoError(err)
 	userModule := user.New(processor).(*user.Module)

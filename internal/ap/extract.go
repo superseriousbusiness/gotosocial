@@ -395,20 +395,20 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 		attachment.Description = name
 	}
 
+	attachment.Blurhash = ExtractBlurhash(i)
+
 	attachment.Processing = gtsmodel.ProcessingStatusReceived
 
 	return attachment, nil
 }
 
-// func extractBlurhash(i withBlurhash) (string, error) {
-// 	if i.GetTootBlurhashProperty() == nil {
-// 		return "", errors.New("blurhash property was nil")
-// 	}
-// 	if i.GetTootBlurhashProperty().Get() == "" {
-// 		return "", errors.New("empty blurhash string")
-// 	}
-// 	return i.GetTootBlurhashProperty().Get(), nil
-// }
+// ExtractBlurhash extracts the blurhash value (if present) from a WithBlurhash interface.
+func ExtractBlurhash(i WithBlurhash) string {
+	if i.GetTootBlurhash() == nil {
+		return ""
+	}
+	return i.GetTootBlurhash().Get()
+}
 
 // ExtractHashtags returns a slice of tags on the interface.
 func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {

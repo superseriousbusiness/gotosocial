@@ -45,9 +45,9 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -100,9 +100,9 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -155,9 +155,9 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request

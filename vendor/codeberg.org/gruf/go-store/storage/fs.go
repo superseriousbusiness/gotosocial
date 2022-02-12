@@ -8,11 +8,14 @@ import (
 )
 
 const (
-	defaultDirPerms      = 0755
-	defaultFilePerms     = 0644
+	// default file permission bits
+	defaultDirPerms  = 0755
+	defaultFilePerms = 0644
+
+	// default file open flags
 	defaultFileROFlags   = syscall.O_RDONLY
 	defaultFileRWFlags   = syscall.O_CREAT | syscall.O_RDWR
-	defaultFileLockFlags = syscall.O_RDONLY | syscall.O_EXCL | syscall.O_CREAT
+	defaultFileLockFlags = syscall.O_RDONLY | syscall.O_CREAT
 )
 
 // NOTE:
@@ -39,7 +42,7 @@ func stat(path string) (bool, error) {
 		return syscall.Stat(path, &stat)
 	})
 	if err != nil {
-		if err == syscall.ENOENT {
+		if err == syscall.ENOENT { //nolint
 			err = nil
 		}
 		return false, err

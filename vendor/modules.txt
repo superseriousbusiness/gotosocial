@@ -1,28 +1,28 @@
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-errors v1.0.4
+# codeberg.org/gruf/go-errors v1.0.5
 ## explicit; go 1.15
 codeberg.org/gruf/go-errors
 # codeberg.org/gruf/go-fastpath v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath
+# codeberg.org/gruf/go-format v1.0.3
+## explicit; go 1.17
+codeberg.org/gruf/go-format
 # codeberg.org/gruf/go-hashenc v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-logger v1.3.2
-## explicit; go 1.14
-codeberg.org/gruf/go-logger
-# codeberg.org/gruf/go-mutexes v1.0.1
+# codeberg.org/gruf/go-mutexes v1.1.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
-# codeberg.org/gruf/go-nowish v1.1.0
-## explicit; go 1.14
-codeberg.org/gruf/go-nowish
 # codeberg.org/gruf/go-pools v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-pools
-# codeberg.org/gruf/go-store v1.1.5
+# codeberg.org/gruf/go-runners v1.2.0
+## explicit; go 1.14
+codeberg.org/gruf/go-runners
+# codeberg.org/gruf/go-store v1.3.3
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage
@@ -44,32 +44,30 @@ github.com/coreos/go-oidc/v3/oidc
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/dsoprea/go-exif v0.0.0-20210625224831-a6301f85c82b
-## explicit; go 1.13
-github.com/dsoprea/go-exif
-# github.com/dsoprea/go-exif/v2 v2.0.0-20210625224831-a6301f85c82b
-## explicit; go 1.13
-github.com/dsoprea/go-exif/v2
-github.com/dsoprea/go-exif/v2/common
-github.com/dsoprea/go-exif/v2/undefined
+# github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b
+## explicit; go 1.12
+github.com/dsoprea/go-exif/v3
+github.com/dsoprea/go-exif/v3/common
+github.com/dsoprea/go-exif/v3/undefined
 # github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413
 ## explicit; go 1.13
 github.com/dsoprea/go-iptc
-# github.com/dsoprea/go-jpeg-image-structure v0.0.0-20210512043942-b434301c6836
-## explicit; go 1.13
-github.com/dsoprea/go-jpeg-image-structure
+# github.com/dsoprea/go-jpeg-image-structure/v2 v2.0.0-20210512043942-b434301c6836
+## explicit; go 1.12
+github.com/dsoprea/go-jpeg-image-structure/v2
 # github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 ## explicit; go 1.13
 github.com/dsoprea/go-logging
 # github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d
 ## explicit; go 1.13
 github.com/dsoprea/go-photoshop-info-format
-# github.com/dsoprea/go-png-image-structure v0.0.0-20210512210324-29b889a6093d
-## explicit; go 1.13
-github.com/dsoprea/go-png-image-structure
-# github.com/dsoprea/go-utility v0.0.0-20200717064901-2fccff4aa15e
+# github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d
 ## explicit; go 1.12
-github.com/dsoprea/go-utility/image
+github.com/dsoprea/go-png-image-structure/v2
+# github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e
+## explicit; go 1.12
+github.com/dsoprea/go-utility/v2/filesystem
+github.com/dsoprea/go-utility/v2/image
 # github.com/fsnotify/fsnotify v1.5.1
 ## explicit; go 1.13
 github.com/fsnotify/fsnotify
@@ -464,9 +462,9 @@ github.com/superseriousbusiness/activity/streams/values/rfc2045
 github.com/superseriousbusiness/activity/streams/values/rfc5988
 github.com/superseriousbusiness/activity/streams/values/string
 github.com/superseriousbusiness/activity/streams/vocab
-# github.com/superseriousbusiness/exifremove v0.0.0-20210330092427-6acd27eac203
-## explicit; go 1.16
-github.com/superseriousbusiness/exifremove/pkg/exifremove
+# github.com/superseriousbusiness/exif-terminator v0.1.0
+## explicit; go 1.17
+github.com/superseriousbusiness/exif-terminator
 # github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 ## explicit; go 1.13
 github.com/superseriousbusiness/oauth2/v4

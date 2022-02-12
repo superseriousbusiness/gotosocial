@@ -42,7 +42,7 @@ func (suite *ExtractAttachmentsTestSuite) TestExtractAttachments() {
 	suite.Equal("image/jpeg", attachment1.File.ContentType)
 	suite.Equal("https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg", attachment1.RemoteURL)
 	suite.Equal("It's a cute plushie.", attachment1.Description)
-	suite.Empty(attachment1.Blurhash) // atm we discard blurhashes and generate them ourselves during processing
+	suite.Equal("UxQ0EkRP_4tRxtRjWBt7%hozM_ayV@oLf6WB", attachment1.Blurhash)
 }
 
 func (suite *ExtractAttachmentsTestSuite) TestExtractNoAttachments() {

@@ -3,8 +3,6 @@ package mutexes
 import (
 	"sync"
 	"time"
-
-	"codeberg.org/gruf/go-nowish"
 )
 
 // TimeoutMutex defines a Mutex with timeouts on locks
@@ -73,14 +71,6 @@ func (mu *timeoutRWMutex) RLockFunc(fn func()) func() {
 	return mutexTimeout(mu.rd, mu.mu.RLock(), fn)
 }
 
-// timeoutPool provides nowish.Timeout objects for timeout mutexes
-var timeoutPool = sync.Pool{
-	New: func() interface{} {
-		t := nowish.NewTimeout()
-		return &t
-	},
-}
-
 // mutexTimeout performs a timed unlock, calling supplied fn if timeout is reached
 func mutexTimeout(d time.Duration, unlock func(), fn func()) func() {
 	if d < 1 {
@@ -88,18 +78,65 @@ func mutexTimeout(d time.Duration, unlock func(), fn func()) func() {
 		return unlock
 	}
 
-	// Acquire timeout obj
-	t := timeoutPool.Get().(*nowish.Timeout)
+	// Acquire timer from pool
+	t := timerPool.Get().(*timer)
 
-	// Start the timeout with hook
-	t.Start(d, fn)
+	// Start the timer
+	go t.Start(d, fn)
 
 	// Return func cancelling timeout,
 	// replacing Timeout in pool and
 	// finally unlocking mutex
 	return func() {
+		defer timerPool.Put(t)
 		t.Cancel()
-		timeoutPool.Put(t)
 		unlock()
+	}
+}
+
+// timerPool is the global &timer{} pool.
+var timerPool = sync.Pool{
+	New: func() interface{} {
+		return newtimer()
+	},
+}
+
+// timer represents a reusable cancellable timer.
+type timer struct {
+	t *time.Timer
+	c chan struct{}
+}
+
+// newtimer returns a new timer instance.
+func newtimer() *timer {
+	t := time.NewTimer(time.Minute)
+	t.Stop()
+	return &timer{t: t, c: make(chan struct{})}
+}
+
+// Start will start the timer with duration 'd', performing 'fn' on timeout.
+func (t *timer) Start(d time.Duration, fn func()) {
+	t.t.Reset(d)
+	select {
+	// Timed out
+	case <-t.t.C:
+		fn()
+
+	// Cancelled
+	case <-t.c:
+	}
+}
+
+// Cancel will attempt to cancel the running timer.
+func (t *timer) Cancel() {
+	select {
+	// cancel successful
+	case t.c <- struct{}{}:
+		if !t.t.Stop() {
+			<-t.t.C
+		} // stop timer
+
+	// already stopped
+	default:
 	}
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 // EnrichRemoteStatus takes a status that's already been inserted into the database in a minimal form,
@@ -88,7 +89,7 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 	}
 
 	// do this so we know we have the remote account of the status in the db
-	_, _, err = d.GetRemoteAccount(ctx, username, accountURI, false)
+	_, err = d.GetRemoteAccount(ctx, username, accountURI, true, false)
 	if err != nil {
 		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
 	}
@@ -331,7 +332,7 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if targetAccount == nil {
 			// we didn't find the account in our database already
 			// check if we can get the account remotely (dereference it)
-			if a, _, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false); err != nil {
+			if a, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false, false); err != nil {
 				errs = append(errs, err.Error())
 			} else {
 				logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)
@@ -393,9 +394,21 @@ func (d *deref) populateStatusAttachments(ctx context.Context, status *gtsmodel.
 		a.AccountID = status.AccountID
 		a.StatusID = status.ID
 
-		attachment, err := d.GetRemoteAttachment(ctx, requestingUsername, a)
+		processingMedia, err := d.GetRemoteMedia(ctx, requestingUsername, a.AccountID, a.RemoteURL, &media.AdditionalMediaInfo{
+			CreatedAt:   &a.CreatedAt,
+			StatusID:    &a.StatusID,
+			RemoteURL:   &a.RemoteURL,
+			Description: &a.Description,
+			Blurhash:    &a.Blurhash,
+		})
 		if err != nil {
-			logrus.Errorf("populateStatusAttachments: couldn't get remote attachment %s: %s", a.RemoteURL, err)
+			logrus.Errorf("populateStatusAttachments: couldn't get remote media %s: %s", a.RemoteURL, err)
+			continue
+		}
+
+		attachment, err := processingMedia.LoadAttachment(ctx)
+		if err != nil {
+			logrus.Errorf("populateStatusAttachments: couldn't load remote attachment %s: %s", a.RemoteURL, err)
 			continue
 		}
 

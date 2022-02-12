@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -114,6 +115,30 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 	}
 
+	// make sure the account is pinned
+	if status.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, status.AccountID)
+		if err != nil {
+			return err
+		}
+		status.Account = a
+	}
+
+	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	if status.Account.Domain != "" {
+		remoteAccountID, err := url.Parse(status.Account.URI)
+		if err != nil {
+			return err
+		}
+
+		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		if err != nil {
+			return err
+		}
+
+		status.Account = a
+	}
+
 	if err := p.timelineStatus(ctx, status); err != nil {
 		return err
 	}
@@ -132,6 +157,30 @@ func (p *processor) processCreateFaveFromFederator(ctx context.Context, federato
 		return errors.New("like was not parseable as *gtsmodel.StatusFave")
 	}
 
+	// make sure the account is pinned
+	if incomingFave.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, incomingFave.AccountID)
+		if err != nil {
+			return err
+		}
+		incomingFave.Account = a
+	}
+
+	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	if incomingFave.Account.Domain != "" {
+		remoteAccountID, err := url.Parse(incomingFave.Account.URI)
+		if err != nil {
+			return err
+		}
+
+		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		if err != nil {
+			return err
+		}
+
+		incomingFave.Account = a
+	}
+
 	if err := p.notifyFave(ctx, incomingFave); err != nil {
 		return err
 	}
@@ -146,6 +195,30 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		return errors.New("incomingFollowRequest was not parseable as *gtsmodel.FollowRequest")
 	}
 
+	// make sure the account is pinned
+	if followRequest.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, followRequest.AccountID)
+		if err != nil {
+			return err
+		}
+		followRequest.Account = a
+	}
+
+	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	if followRequest.Account.Domain != "" {
+		remoteAccountID, err := url.Parse(followRequest.Account.URI)
+		if err != nil {
+			return err
+		}
+
+		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		if err != nil {
+			return err
+		}
+
+		followRequest.Account = a
+	}
+
 	if followRequest.TargetAccount == nil {
 		a, err := p.db.GetAccountByID(ctx, followRequest.TargetAccountID)
 		if err != nil {
@@ -153,9 +226,8 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		}
 		followRequest.TargetAccount = a
 	}
-	targetAccount := followRequest.TargetAccount
 
-	if targetAccount.Locked {
+	if followRequest.TargetAccount.Locked {
 		// if the account is locked just notify the follow request and nothing else
 		return p.notifyFollowRequest(ctx, followRequest)
 	}
@@ -170,7 +242,7 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 		return err
 	}
 
-	return p.notifyFollow(ctx, follow, targetAccount)
+	return p.notifyFollow(ctx, follow, followRequest.TargetAccount)
 }
 
 // processCreateAnnounceFromFederator handles Activity Create and Object Announce
@@ -178,6 +250,30 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 	incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("announce was not parseable as *gtsmodel.Status")
+	}
+
+	// make sure the account is pinned
+	if incomingAnnounce.Account == nil {
+		a, err := p.db.GetAccountByID(ctx, incomingAnnounce.AccountID)
+		if err != nil {
+			return err
+		}
+		incomingAnnounce.Account = a
+	}
+
+	// do a BLOCKING get of the remote account to make sure the avi and header are cached
+	if incomingAnnounce.Account.Domain != "" {
+		remoteAccountID, err := url.Parse(incomingAnnounce.Account.URI)
+		if err != nil {
+			return err
+		}
+
+		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		if err != nil {
+			return err
+		}
+
+		incomingAnnounce.Account = a
 	}
 
 	if err := p.federator.DereferenceAnnounce(ctx, incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
@@ -232,7 +328,12 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return errors.New("profile was not parseable as *gtsmodel.Account")
 	}
 
-	if _, err := p.federator.EnrichRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccount); err != nil {
+	incomingAccountURL, err := url.Parse(incomingAccount.URI)
+	if err != nil {
+		return err
+	}
+
+	if _, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccountURL, false, true); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 

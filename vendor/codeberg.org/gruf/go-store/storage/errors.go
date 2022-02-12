@@ -19,6 +19,9 @@ func (e errorString) Extend(s string, a ...interface{}) errorString {
 }
 
 var (
+	// ErrClosed is returned on operations on a closed storage
+	ErrClosed = errorString("store/storage: closed")
+
 	// ErrNotFound is the error returned when a key cannot be found in storage
 	ErrNotFound = errorString("store/storage: key not found")
 
@@ -39,6 +42,9 @@ var (
 
 	// errCorruptNodes is returned when nodes with missing blocks are found during a BlockStorage clean
 	errCorruptNodes = errorString("store/storage: corrupted nodes")
+
+	// ErrAlreadyLocked is returned on fail opening a storage lockfile
+	ErrAlreadyLocked = errorString("store/storage: storage lock already open")
 )
 
 // errSwapNoop performs no error swaps
@@ -58,6 +64,14 @@ func errSwapNotFound(err error) error {
 func errSwapExist(err error) error {
 	if err == syscall.EEXIST {
 		return ErrAlreadyExists
+	}
+	return err
+}
+
+// errSwapUnavailable swaps syscall.EAGAIN for ErrAlreadyLocked
+func errSwapUnavailable(err error) error {
+	if err == syscall.EAGAIN {
+		return ErrAlreadyLocked
 	}
 	return err
 }

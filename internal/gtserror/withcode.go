@@ -122,3 +122,16 @@ func NewErrorInternalError(original error, helpText ...string) WithCode {
 		code:     http.StatusInternalServerError,
 	}
 }
+
+// NewErrorConflict returns an ErrorWithCode 409 with the given original error and optional help text.
+func NewErrorConflict(original error, helpText ...string) WithCode {
+	safe := "conflict"
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusConflict,
+	}
+}

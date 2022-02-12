@@ -96,7 +96,7 @@ type Processor interface {
 	AccountBlockRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
-	AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error)
+	AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
 	AdminDomainBlockCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.DomainBlockCreateRequest) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlocksImport handles the import of multiple domain blocks by an admin, using the given form.
@@ -235,7 +235,7 @@ type processor struct {
 	stop            chan interface{}
 	tc              typeutils.TypeConverter
 	oauthServer     oauth.Server
-	mediaHandler    media.Handler
+	mediaManager    media.Manager
 	storage         *kv.KVStore
 	statusTimelines timeline.Manager
 	db              db.DB
@@ -259,7 +259,7 @@ func NewProcessor(
 	tc typeutils.TypeConverter,
 	federator federation.Federator,
 	oauthServer oauth.Server,
-	mediaHandler media.Handler,
+	mediaManager media.Manager,
 	storage *kv.KVStore,
 	db db.DB,
 	emailSender email.Sender) Processor {
@@ -268,9 +268,9 @@ func NewProcessor(
 
 	statusProcessor := status.New(db, tc, fromClientAPI)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaHandler, oauthServer, fromClientAPI, federator)
-	adminProcessor := admin.New(db, tc, mediaHandler, fromClientAPI)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaHandler, storage)
+	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator)
+	adminProcessor := admin.New(db, tc, mediaManager, fromClientAPI)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
 	filter := visibility.NewFilter(db)
@@ -282,7 +282,7 @@ func NewProcessor(
 		stop:            make(chan interface{}),
 		tc:              tc,
 		oauthServer:     oauthServer,
-		mediaHandler:    mediaHandler,
+		mediaManager:    mediaManager,
 		storage:         storage,
 		statusTimelines: timeline.NewManager(StatusGrabFunction(db), StatusFilterFunction(db, filter), StatusPrepareFunction(db, tc), StatusSkipInsertFunction()),
 		db:              db,

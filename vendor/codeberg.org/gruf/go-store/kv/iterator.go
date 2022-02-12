@@ -2,6 +2,7 @@ package kv
 
 import (
 	"codeberg.org/gruf/go-errors"
+	"codeberg.org/gruf/go-mutexes"
 	"codeberg.org/gruf/go-store/storage"
 )
 
@@ -17,10 +18,10 @@ var ErrIteratorClosed = errors.New("store/kv: iterator closed")
 // have multiple iterators running concurrently
 type KVIterator struct {
 	store   *KVStore // store is the linked KVStore
+	state   *mutexes.LockState
 	entries []storage.StorageEntry
 	index   int
 	key     string
-	onClose func()
 }
 
 // Next attempts to set the next key-value pair, the
@@ -43,13 +44,10 @@ func (i *KVIterator) Key() string {
 
 // Release releases the KVIterator and KVStore's read lock
 func (i *KVIterator) Release() {
-	// Reset key, path, entries
+	i.state.UnlockMap()
 	i.store = nil
 	i.key = ""
 	i.entries = nil
-
-	// Perform requested callback
-	i.onClose()
 }
 
 // Value returns the next value from the KVStore
@@ -60,5 +58,5 @@ func (i *KVIterator) Value() ([]byte, error) {
 	}
 
 	// Attempt to fetch from store
-	return i.store.get(i.key)
+	return i.store.get(i.state.RLock, i.key)
 }

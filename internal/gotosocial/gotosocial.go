@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -41,19 +42,21 @@ type Server interface {
 // NewServer returns a new gotosocial server, initialized with the given configuration.
 // An error will be returned the caller if something goes wrong during initialization
 // eg., no db or storage connection, port for router already in use, etc.
-func NewServer(db db.DB, apiRouter router.Router, federator federation.Federator) (Server, error) {
+func NewServer(db db.DB, apiRouter router.Router, federator federation.Federator, mediaManager media.Manager) (Server, error) {
 	return &gotosocial{
-		db:        db,
-		apiRouter: apiRouter,
-		federator: federator,
+		db:           db,
+		apiRouter:    apiRouter,
+		federator:    federator,
+		mediaManager: mediaManager,
 	}, nil
 }
 
 // gotosocial fulfils the gotosocial interface.
 type gotosocial struct {
-	db        db.DB
-	apiRouter router.Router
-	federator federation.Federator
+	db           db.DB
+	apiRouter    router.Router
+	federator    federation.Federator
+	mediaManager media.Manager
 }
 
 // Start starts up the gotosocial server. If something goes wrong
@@ -63,11 +66,14 @@ func (gts *gotosocial) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop closes down the gotosocial server, first closing the router
-// then the database. If something goes wrong while stopping, an
-// error will be returned.
+// Stop closes down the gotosocial server, first closing the router,
+// then the media manager, then the database.
+// If something goes wrong while stopping, an error will be returned.
 func (gts *gotosocial) Stop(ctx context.Context) error {
 	if err := gts.apiRouter.Stop(ctx); err != nil {
+		return err
+	}
+	if err := gts.mediaManager.Stop(); err != nil {
 		return err
 	}
 	if err := gts.db.Stop(ctx); err != nil {

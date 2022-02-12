@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -56,7 +57,12 @@ func (p *processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 
 	// last-minute check to make sure we have remote account header/avi cached
 	if targetAccount.Domain != "" {
-		a, err := p.federator.EnrichRemoteAccount(ctx, requestingAccount.Username, targetAccount)
+		targetAccountURI, err := url.Parse(targetAccount.URI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing url %s: %s", targetAccount.URI, err)
+		}
+
+		a, err := p.federator.GetRemoteAccount(ctx, requestingAccount.Username, targetAccountURI, true, false)
 		if err == nil {
 			targetAccount = a
 		}

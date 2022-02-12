@@ -42,7 +42,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 
 	// set up the request
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, nil, account.UpdateCredentialsPath, "")
+	ctx := suite.newContext(recorder, http.MethodGet, nil, account.VerifyPath, "")
 
 	// call the handler
 	suite.accountModule.AccountVerifyGETHandler(ctx)

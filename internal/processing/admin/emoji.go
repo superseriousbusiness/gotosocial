@@ -19,55 +19,53 @@
 package admin
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, error) {
-	if user.Admin {
-		return nil, fmt.Errorf("user %s not an admin", user.ID)
+func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode) {
+	if !user.Admin {
+		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	// open the emoji and extract the bytes from it
-	f, err := form.Image.Open()
-	if err != nil {
-		return nil, fmt.Errorf("error opening emoji: %s", err)
-	}
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading emoji: %s", err)
-	}
-	if size == 0 {
-		return nil, errors.New("could not read provided emoji: size 0 bytes")
+	data := func(innerCtx context.Context) (io.Reader, int, error) {
+		f, err := form.Image.Open()
+		return f, int(form.Image.Size), err
 	}
 
-	// allow the mediaHandler to work its magic of processing the emoji bytes, and putting them in whatever storage backend we're using
-	emoji, err := p.mediaHandler.ProcessLocalEmoji(ctx, buf.Bytes(), form.Shortcode)
+	emojiID, err := id.NewRandomULID()
 	if err != nil {
-		return nil, fmt.Errorf("error reading emoji: %s", err)
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new emoji: %s", err), "error creating emoji ID")
 	}
 
-	emojiID, err := id.NewULID()
+	emojiURI := uris.GenerateURIForEmoji(emojiID)
+
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, emojiID, emojiURI, nil)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}
-	emoji.ID = emojiID
+
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	if err != nil {
+		var alreadyExistsError *db.ErrAlreadyExists
+		if errors.As(err, &alreadyExistsError) {
+			return nil, gtserror.NewErrorConflict(fmt.Errorf("emoji with shortcode %s already exists", form.Shortcode), fmt.Sprintf("emoji with shortcode %s already exists", form.Shortcode))
+		}
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error loading emoji: %s", err), "error loading emoji")
+	}
 
 	apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, emoji)
 	if err != nil {
-		return nil, fmt.Errorf("error converting emoji to apitype: %s", err)
-	}
-
-	if err := p.db.Put(ctx, emoji); err != nil {
-		return nil, fmt.Errorf("database error while processing emoji: %s", err)
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting emoji: %s", err), "error converting emoji to api representation")
 	}
 
 	return &apiEmoji, nil

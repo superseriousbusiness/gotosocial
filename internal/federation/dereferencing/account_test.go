@@ -35,11 +35,10 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	groupURL := testrig.URLMustParse("https://unknown-instance.com/groups/some_group")
-	group, new, err := suite.dereferencer.GetRemoteAccount(context.Background(), fetchingAccount.Username, groupURL, false)
+	group, err := suite.dereferencer.GetRemoteAccount(context.Background(), fetchingAccount.Username, groupURL, false, false)
 	suite.NoError(err)
 	suite.NotNil(group)
 	suite.NotNil(group)
-	suite.True(new)
 
 	// group values should be set
 	suite.Equal("https://unknown-instance.com/groups/some_group", group.URI)

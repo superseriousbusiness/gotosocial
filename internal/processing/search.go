@@ -148,7 +148,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 	if resolve {
 		// we don't have it locally so try and dereference it
-		account, _, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, uri, true)
+		account, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, uri, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
 		}
@@ -203,7 +203,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 		}
 
 		// we don't have it locally so try and dereference it
-		account, _, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true)
+		account, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error dereferencing account with uri %s: %s", acctURI.String(), err)
 		}

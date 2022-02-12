@@ -33,42 +33,14 @@ import (
 
 // Dereferencer wraps logic and functionality for doing dereferencing of remote accounts, statuses, etc, from federated instances.
 type Dereferencer interface {
-	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, refresh bool) (*gtsmodel.Account, bool, error)
-	EnrichRemoteAccount(ctx context.Context, username string, account *gtsmodel.Account) (*gtsmodel.Account, error)
+	GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error)
 
 	GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error)
 	EnrichRemoteStatus(ctx context.Context, username string, status *gtsmodel.Status, includeParent bool) (*gtsmodel.Status, error)
 
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
-	// GetRemoteAttachment takes a minimal attachment struct and converts it into a fully fleshed out attachment, stored in the database and instance storage.
-	//
-	// The parameter minAttachment must have at least the following fields defined:
-	//   * minAttachment.RemoteURL
-	//   * minAttachment.AccountID
-	//   * minAttachment.File.ContentType
-	//
-	// The returned attachment will have an ID generated for it, so no need to generate one beforehand.
-	// A blurhash will also be generated for the attachment.
-	//
-	// Most other fields will be preserved on the passed attachment, including:
-	//   * minAttachment.StatusID
-	//   * minAttachment.CreatedAt
-	//   * minAttachment.UpdatedAt
-	//   * minAttachment.FileMeta
-	//   * minAttachment.AccountID
-	//   * minAttachment.Description
-	//   * minAttachment.ScheduledStatusID
-	//   * minAttachment.Thumbnail.RemoteURL
-	//   * minAttachment.Avatar
-	//   * minAttachment.Header
-	//
-	// GetRemoteAttachment will return early if an attachment with the same value as minAttachment.RemoteURL
-	// is found in the database -- then that attachment will be returned and nothing else will be changed or stored.
-	GetRemoteAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
-	// RefreshAttachment is like GetRemoteAttachment, but the attachment will always be dereferenced again,
-	// whether or not it was already stored in the database.
-	RefreshAttachment(ctx context.Context, requestingUsername string, minAttachment *gtsmodel.MediaAttachment) (*gtsmodel.MediaAttachment, error)
+	GetRemoteMedia(ctx context.Context, requestingUsername string, accountID string, remoteURL string, ai *media.AdditionalMediaInfo) (*media.ProcessingMedia, error)
 
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
 	DereferenceThread(ctx context.Context, username string, statusIRI *url.URL) error
@@ -77,21 +49,29 @@ type Dereferencer interface {
 }
 
 type deref struct {
-	db                  db.DB
-	typeConverter       typeutils.TypeConverter
-	transportController transport.Controller
-	mediaHandler        media.Handler
-	handshakes          map[string][]*url.URL
-	handshakeSync       *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+	db                       db.DB
+	typeConverter            typeutils.TypeConverter
+	transportController      transport.Controller
+	mediaManager             media.Manager
+	dereferencingAvatars     map[string]*media.ProcessingMedia
+	dereferencingAvatarsLock *sync.Mutex
+	dereferencingHeaders     map[string]*media.ProcessingMedia
+	dereferencingHeadersLock *sync.Mutex
+	handshakes               map[string][]*url.URL
+	handshakeSync            *sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaHandler media.Handler) Dereferencer {
+func NewDereferencer(db db.DB, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager media.Manager) Dereferencer {
 	return &deref{
-		db:                  db,
-		typeConverter:       typeConverter,
-		transportController: transportController,
-		mediaHandler:        mediaHandler,
-		handshakeSync:       &sync.Mutex{},
+		db:                       db,
+		typeConverter:            typeConverter,
+		transportController:      transportController,
+		mediaManager:             mediaManager,
+		dereferencingAvatars:     make(map[string]*media.ProcessingMedia),
+		dereferencingAvatarsLock: &sync.Mutex{},
+		dereferencingHeaders:     make(map[string]*media.ProcessingMedia),
+		dereferencingHeadersLock: &sync.Mutex{},
+		handshakeSync:            &sync.Mutex{},
 	}
 }

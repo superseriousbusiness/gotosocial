@@ -54,9 +54,9 @@ type MediaCreateTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *kv.KVStore
+	mediaManager media.Manager
 	federator    federation.Federator
 	tc           typeutils.TypeConverter
-	mediaHandler media.Handler
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 	processor    processing.Processor
@@ -84,11 +84,11 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.mediaHandler = testrig.NewTestMediaHandler(suite.db, suite.storage)
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage, suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender)
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager)
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.processor).(*mediamodule.Module)
