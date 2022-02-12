@@ -4,8 +4,6 @@
 ###
 ### For documentation on drone, see: https://docs.drone.io/
 ### For documentation on drone docker pipelines in particular: https://docs.drone.io/pipeline/docker/overview/
-
----
 kind: pipeline
 type: docker
 name: default
@@ -143,6 +141,6 @@ steps:
 
 ---
 kind: signature
-hmac: b7b0dac5d3819ec1f9cf24f01de7e7a1f5858d891ff8943b468666f1109f60e5
+hmac: 56eb9e0f41199d44f2fc76b6d8265b9c4841ec2f5724852e7c116170d823d5a4
 
 ...
