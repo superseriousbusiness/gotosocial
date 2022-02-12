@@ -140,13 +140,9 @@ steps:
       # mirror and push
       - git clone --mirror https://github.com/superseriousbusiness/gotosocial .
       - git push --mirror https://codeberg.org/superseriousbusiness/gotosocial
-    when:
-      event:
-        include:
-          - push
 
 ---
 kind: signature
-hmac: e88e9790d11ff97ecaf87f69002f3a1fd7cf1bdc37b57180ffa4e0fce8ae41a6
+hmac: b7b0dac5d3819ec1f9cf24f01de7e7a1f5858d891ff8943b468666f1109f60e5
 
 ...
