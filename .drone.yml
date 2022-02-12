@@ -5,6 +5,7 @@
 ### For documentation on drone, see: https://docs.drone.io/
 ### For documentation on drone docker pipelines in particular: https://docs.drone.io/pipeline/docker/overview/
 
+---
 kind: pipeline
 type: docker
 name: default
@@ -112,7 +113,40 @@ trigger:
     - f0x52/gotosocial
 
 ---
+kind: pipeline
+type: docker
+name: cron
+
+trigger:
+  event:
+    - cron
+  cron:
+    - nightly
+
+clone:
+  disable: true
+
+steps:
+  - name: mirror
+    image: alpine/git
+    environment:
+      CODEBERG_TOKEN:
+        from_secret: gts_codeberg_token
+    commands:
+      # configure git credentials
+      - git config --global user.email "admin@gotosocial.org"
+      - git config credential.helper store
+      - printf "https://gotosocialbot:${CODEBERG_TOKEN}@codeberg.org\n" >> ~/.git-credentials
+      # mirror and push
+      - git clone --mirror https://github.com/superseriousbusiness/gotosocial .
+      - git push --mirror https://codeberg.org/superseriousbusiness/gotosocial
+    when:
+      event:
+        include:
+          - push
+
+---
 kind: signature
-hmac: f6372893445074c19e33057cf2cb94ddc9b5c54108094f9bfd40aae7c501f87c
+hmac: e88e9790d11ff97ecaf87f69002f3a1fd7cf1bdc37b57180ffa4e0fce8ae41a6
 
 ...
