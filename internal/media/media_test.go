@@ -22,6 +22,7 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -29,9 +30,10 @@ import (
 type MediaStandardTestSuite struct {
 	suite.Suite
 
-	db      db.DB
-	storage *kv.KVStore
-	manager media.Manager
+	db              db.DB
+	storage         *kv.KVStore
+	manager         media.Manager
+	testAttachments map[string]*gtsmodel.MediaAttachment
 }
 
 func (suite *MediaStandardTestSuite) SetupSuite() {
@@ -45,6 +47,7 @@ func (suite *MediaStandardTestSuite) SetupSuite() {
 func (suite *MediaStandardTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 	testrig.StandardDBSetup(suite.db, nil)
+	suite.testAttachments = testrig.NewTestAttachments()
 	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
 }
 
