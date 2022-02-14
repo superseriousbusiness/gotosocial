@@ -131,16 +131,19 @@ steps:
       CODEBERG_TOKEN:
         from_secret: gts_codeberg_token
     commands:
+      # clone mirror
+      - git clone --mirror https://github.com/superseriousbusiness/gotosocial .
       # configure git credentials
       - git config --global user.email "admin@gotosocial.org"
       - git config credential.helper store
       - printf "https://gotosocialbot:${CODEBERG_TOKEN}@codeberg.org\n" >> ~/.git-credentials
-      # mirror and push
-      - git clone --mirror https://github.com/superseriousbusiness/gotosocial .
+      # push mirror
       - git push --mirror https://codeberg.org/superseriousbusiness/gotosocial
+      # clean up
+      - rm ~/.git-credentials
 
 ---
 kind: signature
-hmac: 56eb9e0f41199d44f2fc76b6d8265b9c4841ec2f5724852e7c116170d823d5a4
+hmac: 0487be0a2c9224c20cf067f94b3a458227e8b5465198b2245266d17156355b98
 
 ...
