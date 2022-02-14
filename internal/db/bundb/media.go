@@ -56,9 +56,9 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 	q := m.conn.
 		NewSelect().
 		Model(&attachments).
-		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
-		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.url")).
-		// todo: don't include avatars or headers
+		Where("media_attachment.cached = true").
+		Where("media_attachment.avatar = false").
+		Where("media_attachment.header = false").
 		Where("media_attachment.created_at < ?", olderThan).
 		Order("media_attachment.created_at DESC")
 
