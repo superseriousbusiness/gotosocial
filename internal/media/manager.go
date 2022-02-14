@@ -41,7 +41,17 @@ type Manager interface {
 	//
 	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
 	ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
+	// ProcessEmoji begins the process of decoding and storing the given data as an emoji.
+	// It will return a pointer to a processing emoji struct upon which further actions can be performed, such as getting
+	// the finished emoji, static version, attachment, etc.
+	//
+	// data should be a function that the media manager can call to return raw bytes of an emoji.
+	//
+	// shortcode should be the shortcode of the emoji.
+	//
+	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
 	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
+	PruneRemote(ctx context.Context, olderThanDays int) error
 	// NumWorkers returns the total number of workers available to this manager.
 	NumWorkers() int
 	// QueueSize returns the total capacity of the queue.
