@@ -20,6 +20,7 @@ package bundb
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -47,4 +48,23 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 		return nil, m.conn.ProcessError(err)
 	}
 	return attachment, nil
+}
+
+func (m *mediaDB) GetRemoteOlderThanDays(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	q := m.conn.
+		NewSelect().
+		Model(attachments).
+		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
+		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.url")).
+		// todo: don't include avatars or headers
+		Where("media_attachment.created_at > ?", olderThan).
+		Order("media_attachment.created_at ASC").
+		Limit(limit)
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, m.conn.ProcessError(err)
+	}
+	return attachments, nil
 }
