@@ -42,7 +42,7 @@ func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) error {
 	olderThan := time.Now().Add(-olderThanHours)
 
 selectLoop:
-	for attachments, err := m.db.GetRemoteOlderThanDays(ctx, olderThan, selectPruneLimit); ; {
+	for attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); ; {
 		if len(attachments) == 0 || err == db.ErrNoEntries {
 			// we're done
 			break selectLoop

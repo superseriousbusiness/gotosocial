@@ -50,18 +50,21 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 	return attachment, nil
 }
 
-func (m *mediaDB) GetRemoteOlderThanDays(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
 	attachments := []*gtsmodel.MediaAttachment{}
 
 	q := m.conn.
 		NewSelect().
-		Model(attachments).
+		Model(&attachments).
 		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
 		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.url")).
 		// todo: don't include avatars or headers
-		Where("media_attachment.created_at > ?", olderThan).
-		Order("media_attachment.created_at ASC").
-		Limit(limit)
+		Where("media_attachment.created_at < ?", olderThan).
+		Order("media_attachment.created_at DESC")
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, m.conn.ProcessError(err)

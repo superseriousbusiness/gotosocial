@@ -46,8 +46,8 @@ func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 func whereNotEmptyAndNotNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.
-			WhereOr("? IS NOT NULL", bun.Ident(column)).
-			WhereOr("? != ''", bun.Ident(column))
+			Where("? IS NOT NULL", bun.Ident(column)).
+			Where("? != ''", bun.Ident(column))
 	}
 }
 
