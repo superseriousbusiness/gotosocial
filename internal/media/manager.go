@@ -51,7 +51,7 @@ type Manager interface {
 	//
 	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
 	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
-	PruneRemote(ctx context.Context, olderThanDays int) error
+	PruneRemote(ctx context.Context, olderThanDays int) (int, error)
 	// NumWorkers returns the total number of workers available to this manager.
 	NumWorkers() int
 	// QueueSize returns the total capacity of the queue.
