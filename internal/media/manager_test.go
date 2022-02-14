@@ -31,7 +31,7 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
 	"github.com/stretchr/testify/suite"
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
