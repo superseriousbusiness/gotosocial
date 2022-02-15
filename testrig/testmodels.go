@@ -582,6 +582,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_status_4_attachment_1": {
 			ID:        "01F8MH7TDVANYKWVE8VVKFPJTJ",
@@ -630,6 +631,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_unattached_1": {
 			ID:        "01F8MH8RMYQ6MSNY3JM2XT1CQ5",
@@ -678,6 +680,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_avatar": {
 			ID:        "01F8MH58A357CV5K7R7TJMSH6S",
@@ -726,6 +729,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: true,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_header": {
 			ID:        "01PFPMWK2FF0D9WMHEJHR07C3Q",
@@ -774,6 +778,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: true,
+			Cached: true,
 		},
 		"remote_account_1_status_1_attachment_1": {
 			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY0",
@@ -822,6 +827,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 	}
 }

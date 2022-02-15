@@ -43,7 +43,7 @@ type MediaAttachment struct {
 	Thumbnail         Thumbnail        `validate:"required" bun:",embed:thumbnail_,notnull,nullzero"`                                  // small image thumbnail derived from a larger image, video, or audio file.
 	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as an avatar?
 	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as a header?
-	Cached            bool             `validate:"-" bun:",nullzero,notnull,default:true"`                                             // Is this attachment currently cached by our instance?
+	Cached            bool             `validate:"-" bun:",notnull"`                                                                   // Is this attachment currently cached by our instance?
 }
 
 // File refers to the metadata for the whole file
