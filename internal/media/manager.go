@@ -41,6 +41,8 @@ type Manager interface {
 	//
 	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
 	ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
+	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
+	RecacheMedia(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error)
 	// ProcessEmoji begins the process of decoding and storing the given data as an emoji.
 	// It will return a pointer to a processing emoji struct upon which further actions can be performed, such as getting
 	// the finished emoji, static version, attachment, etc.
@@ -157,6 +159,30 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode str
 	logrus.Tracef("ProcessEmoji: succesfully queued emoji with id %s, queue length is %d", processingEmoji.EmojiID(), m.pool.Queue())
 
 	return processingEmoji, nil
+}
+
+func (m *manager) RecacheMedia(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
+	processingRecache, err := m.preProcessRecache(ctx, data, attachmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	logrus.Tracef("RecacheMedia: about to enqueue recache with attachmentID %s, queue length is %d", processingRecache.AttachmentID(), m.pool.Queue())
+	m.pool.Enqueue(func(innerCtx context.Context) {
+		select {
+		case <-innerCtx.Done():
+			// if the inner context is done that means the worker pool is closing, so we should just return
+			return
+		default:
+			// start loading the media already for the caller's convenience
+			if _, err := processingRecache.LoadAttachment(innerCtx); err != nil {
+				logrus.Errorf("RecacheMedia: error processing recache with attachmentID %s: %s", processingRecache.AttachmentID(), err)
+			}
+		}
+	})
+	logrus.Tracef("RecacheMedia: succesfully queued recache with attachmentID %s, queue length is %d", processingRecache.AttachmentID(), m.pool.Queue())
+
+	return processingRecache, nil
 }
 
 func (m *manager) NumWorkers() int {
