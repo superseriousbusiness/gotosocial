@@ -31,8 +31,7 @@ type PruneRemoteTestSuite struct {
 
 func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	suite.NotEmpty(testAttachment.File.Path)
-	suite.NotEmpty(testAttachment.Thumbnail.Path)
+	suite.True(testAttachment.Cached)
 
 	totalPruned, err := suite.manager.PruneRemote(context.Background(), 1)
 	suite.NoError(err)
@@ -41,9 +40,8 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
 	suite.NoError(err)
 
-	// the url and thumbnail paths should be cleared
-	suite.Empty(prunedAttachment.File.Path)
-	suite.Empty(prunedAttachment.Thumbnail.Path)
+	// the media should no longer be cached
+	suite.False(prunedAttachment.Cached)
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {

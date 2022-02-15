@@ -79,7 +79,7 @@ func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttach
 		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.URL = ""
+		attachment.Cached = false
 	}
 
 	if attachment.Thumbnail.Path != "" {
@@ -88,7 +88,7 @@ func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttach
 		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Thumbnail.URL = ""
+		attachment.Cached = false
 	}
 
 	// update the attachment to reflect that we no longer have it cached
