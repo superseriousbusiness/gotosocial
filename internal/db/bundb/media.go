@@ -60,6 +60,7 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 		Where("media_attachment.avatar = false").
 		Where("media_attachment.header = false").
 		Where("media_attachment.created_at < ?", olderThan).
+		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
 		Order("media_attachment.created_at DESC")
 
 	if limit != 0 {
