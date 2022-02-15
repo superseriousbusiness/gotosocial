@@ -32,15 +32,15 @@ type MediaAttachment struct {
 	URL               string           `validate:"required_without=RemoteURL,omitempty,url" bun:",nullzero"`                           // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `validate:"required_without=URL,omitempty,url" bun:",nullzero"`                                 // Where can the attachment be retrieved on a remote server (empty for local media)
 	Type              FileType         `validate:"oneof=Image Gif Audio Video Unknown" bun:",nullzero,notnull"`                        // Type of file (image/gif/audio/video)
-	FileMeta          FileMeta         `validate:"required" bun:",nullzero,notnull"`                                                   // Metadata about the file
+	FileMeta          FileMeta         `validate:"required" bun:",embed:filemeta_,nullzero,notnull"`                                   // Metadata about the file
 	AccountID         string           `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                 // To which account does this attachment belong
 	Account           *Account         `validate:"-" bun:"rel:has-one"`                                                                // Account corresponding to accountID
 	Description       string           `validate:"-" bun:""`                                                                           // Description of the attachment (for screenreaders)
 	ScheduledStatusID string           `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                        // To which scheduled status does this attachment belong
 	Blurhash          string           `validate:"required_if=Type Image,required_if=Type Gif,required_if=Type Video" bun:",nullzero"` // What is the generated blurhash of this attachment
 	Processing        ProcessingStatus `validate:"oneof=0 1 2 666" bun:",notnull,default:2"`                                           // What is the processing status of this attachment
-	File              File             `validate:"required" bun:",notnull,nullzero"`                                                   // metadata for the whole file
-	Thumbnail         Thumbnail        `validate:"required" bun:",notnull,nullzero"`                                                   // small image thumbnail derived from a larger image, video, or audio file.
+	File              File             `validate:"required" bun:",embed:file_,notnull,nullzero"`                                       // metadata for the whole file
+	Thumbnail         Thumbnail        `validate:"required" bun:",embed:thumbnail_,notnull,nullzero"`                                  // small image thumbnail derived from a larger image, video, or audio file.
 	Avatar            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as an avatar?
 	Header            bool             `validate:"-" bun:",notnull,default:false"`                                                     // Is this attachment being used as a header?
 	Cached            bool             `validate:"-" bun:",nullzero,notnull,default:true"`                                             // Is this attachment currently cached by our instance?
@@ -89,9 +89,9 @@ const (
 
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {
-	Original Original `validate:"required"`
-	Small    Small
-	Focus    Focus
+	Original Original `validate:"required" bun:"embed:original_"`
+	Small    Small    `bun:"embed:small_"`
+	Focus    Focus    `bun:"embed:focus_"`
 }
 
 // Small can be used for a thumbnail of any media type
