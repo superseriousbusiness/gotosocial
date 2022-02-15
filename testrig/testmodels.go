@@ -793,13 +793,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 					Width:  472,
 					Height: 291,
 					Size:   137352,
-					Aspect: 1.6219932,
+					Aspect: 1.6219931271477663,
 				},
 				Small: gtsmodel.Small{
 					Width:  472,
 					Height: 291,
 					Size:   137352,
-					Aspect: 1.6219932,
+					Aspect: 1.6219931271477663,
 				},
 				Focus: gtsmodel.Focus{
 					X: 0,
