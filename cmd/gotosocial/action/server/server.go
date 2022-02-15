@@ -74,6 +74,12 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
+
+	err := config.Validate()
+	if err != nil {
+		return fmt.Errorf("invalid configuration: %s!", err)
+	}
+
 	dbService, err := bundb.NewBunDBService(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)

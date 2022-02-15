@@ -21,12 +21,16 @@ package flag
 import "github.com/superseriousbusiness/gotosocial/internal/config"
 
 var usage = config.KeyNames{
-	LogLevel:                   "Log level to run at: [trace, debug, info, warn, fatal]",
-	ApplicationName:            "Name of the application, used in various places internally",
-	ConfigPath:                 "Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
-	Host:                       "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",
-	AccountDomain:              "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!",
-	Protocol:                   "Protocol to use for the REST api of the server (only use http for debugging and tests!)",
+	LogLevel:        "Log level to run at: [trace, debug, info, warn, fatal]",
+	ApplicationName: "Name of the application, used in various places internally",
+
+	EnableDevelopmentSettings: "Allow configuration settings which should only be set in development because they degrade GotoSocial's security.",
+	Protocol:                  "Protocol that clients use when talking to the GotoSocial. Note this doesn't specify the protocol that GotoSocial itself listens on. Development only.",
+
+	ConfigPath:    "Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
+	Host:          "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",
+	AccountDomain: "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!",
+
 	BindAddress:                "Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces.",
 	Port:                       "Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine.",
 	TrustedProxies:             "Proxies to trust when parsing x-forwarded headers into real IPs.",

@@ -24,11 +24,14 @@ type KeyNames struct {
 	LogLevel   string
 	ConfigPath string
 
+	// development
+	EnableDevelopmentSettings string
+	Protocol                  string
+
 	// general
 	ApplicationName string
 	Host            string
 	AccountDomain   string
-	Protocol        string
 	BindAddress     string
 	Port            string
 	TrustedProxies  string
@@ -107,12 +110,15 @@ type KeyNames struct {
 // Keys contains the names of the various keys used for initializing and storing flag variables,
 // and retrieving values from the viper config store.
 var Keys = KeyNames{
-	LogLevel:        "log-level",
+	LogLevel:   "log-level",
+	ConfigPath: "config-path",
+
+	EnableDevelopmentSettings: "enable-development-settings",
+	Protocol:                  "protocol",
+
 	ApplicationName: "application-name",
-	ConfigPath:      "config-path",
 	Host:            "host",
 	AccountDomain:   "account-domain",
-	Protocol:        "protocol",
 	BindAddress:     "bind-address",
 	Port:            "port",
 	TrustedProxies:  "trusted-proxies",
