@@ -33,7 +33,7 @@ require (
 	github.com/superseriousbusiness/exif-terminator v0.1.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
-	github.com/uptrace/bun v1.0.19
+	github.com/uptrace/bun v1.0.22
 	github.com/uptrace/bun/dialect/pgdialect v1.0.19
 	github.com/uptrace/bun/dialect/sqlitedialect v1.0.19
 	github.com/wagslane/go-password-validator v0.3.0
@@ -107,7 +107,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/mod v0.5.1 // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

@@ -20,6 +20,8 @@ type UpdateQuery struct {
 	omitZero bool
 }
 
+var _ Query = (*UpdateQuery)(nil)
+
 func NewUpdateQuery(db *DB) *UpdateQuery {
 	q := &UpdateQuery{
 		whereBaseQuery: whereBaseQuery{
@@ -67,7 +69,7 @@ func (q *UpdateQuery) TableExpr(query string, args ...interface{}) *UpdateQuery 
 }
 
 func (q *UpdateQuery) ModelTableExpr(query string, args ...interface{}) *UpdateQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 
@@ -170,6 +172,10 @@ func (q *UpdateQuery) Operation() string {
 }
 
 func (q *UpdateQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
 	fmter = formatterWithModel(fmter, q)
 
 	b, err = q.appendWith(fmter, b)

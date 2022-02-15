@@ -24,6 +24,8 @@ type InsertQuery struct {
 	replace bool
 }
 
+var _ Query = (*InsertQuery)(nil)
+
 func NewInsertQuery(db *DB) *InsertQuery {
 	q := &InsertQuery{
 		whereBaseQuery: whereBaseQuery{
@@ -71,7 +73,7 @@ func (q *InsertQuery) TableExpr(query string, args ...interface{}) *InsertQuery 
 }
 
 func (q *InsertQuery) ModelTableExpr(query string, args ...interface{}) *InsertQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 
@@ -125,7 +127,7 @@ func (q *InsertQuery) Returning(query string, args ...interface{}) *InsertQuery 
 }
 
 func (q *InsertQuery) hasReturning() bool {
-	if !q.db.features.Has(feature.Returning) {
+	if !q.db.features.Has(feature.InsertReturning) {
 		return false
 	}
 	return q.returningQuery.hasReturning()
@@ -146,7 +148,7 @@ func (q *InsertQuery) Ignore() *InsertQuery {
 	return q
 }
 
-// Replaces generates a `REPLACE INTO` query (MySQL).
+// Replaces generates a `REPLACE INTO` query (MySQL and MariaDB).
 func (q *InsertQuery) Replace() *InsertQuery {
 	q.replace = true
 	return q
@@ -159,6 +161,10 @@ func (q *InsertQuery) Operation() string {
 }
 
 func (q *InsertQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
 	fmter = formatterWithModel(fmter, q)
 
 	b, err = q.appendWith(fmter, b)
@@ -582,7 +588,7 @@ func (q *InsertQuery) afterInsertHook(ctx context.Context) error {
 }
 
 func (q *InsertQuery) tryLastInsertID(res sql.Result, dest []interface{}) error {
-	if q.db.features.Has(feature.Returning) || q.table == nil || len(q.table.PKs) != 1 {
+	if q.db.features.Has(feature.Returning) || q.table == nil || len(q.table.PKs) != 1 || !q.table.PKs[0].AutoIncrement {
 		return nil
 	}
 

@@ -15,6 +15,8 @@ type DeleteQuery struct {
 	returningQuery
 }
 
+var _ Query = (*DeleteQuery)(nil)
+
 func NewDeleteQuery(db *DB) *DeleteQuery {
 	q := &DeleteQuery{
 		whereBaseQuery: whereBaseQuery{
@@ -60,7 +62,7 @@ func (q *DeleteQuery) TableExpr(query string, args ...interface{}) *DeleteQuery 
 }
 
 func (q *DeleteQuery) ModelTableExpr(query string, args ...interface{}) *DeleteQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 
@@ -134,6 +136,10 @@ func (q *DeleteQuery) Operation() string {
 }
 
 func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
 	fmter = formatterWithModel(fmter, q)
 
 	if q.isSoftDelete() {

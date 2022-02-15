@@ -18,6 +18,8 @@ type DropIndexQuery struct {
 	index schema.QueryWithArgs
 }
 
+var _ Query = (*DropIndexQuery)(nil)
+
 func NewDropIndexQuery(db *DB) *DropIndexQuery {
 	q := &DropIndexQuery{
 		baseQuery: baseQuery{
@@ -47,6 +49,11 @@ func (q *DropIndexQuery) Concurrently() *DropIndexQuery {
 
 func (q *DropIndexQuery) IfExists() *DropIndexQuery {
 	q.ifExists = true
+	return q
+}
+
+func (q *DropIndexQuery) Cascade() *DropIndexQuery {
+	q.cascade = true
 	return q
 }
 

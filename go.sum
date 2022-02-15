@@ -687,8 +687,9 @@ github.com/ugorji/go v1.2.6/go.mod h1:anCg0y61KIhDlPZmnH+so+RQbysYVyDko0IMgJv0Nn
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ=
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
-github.com/uptrace/bun v1.0.19 h1:Jl5GbcnLqeo4mHLVbF+LvzVXiXTrwQOdIVvuMO+5zXI=
 github.com/uptrace/bun v1.0.19/go.mod h1:Uv7z0z+7dXnUS9P5hMF0hdiM/4M+xOUHQCrZpyDrpRc=
+github.com/uptrace/bun v1.0.22 h1:0asZNOcM4eLq5Pgzu+LpZyJRxlt3ops+HahVkWPqxww=
+github.com/uptrace/bun v1.0.22/go.mod h1:SkbOr4hdcYqqFPw4rbc1QAnLLvDLgq+X0w8OSllj1MU=
 github.com/uptrace/bun/dialect/pgdialect v1.0.19 h1:8vdHpXRq3rbNDRn13llLxJ52wa+aBBn7QI0Q7IyW/d8=
 github.com/uptrace/bun/dialect/pgdialect v1.0.19/go.mod h1:VMmro4cCcjC7xAIeWYvRHv8V2nF+q2Tm36WK+poCeuo=
 github.com/uptrace/bun/dialect/sqlitedialect v1.0.19 h1:Oy0scO7sXbVBk9k6xc2yFF/X1maW5UU6uqO6coX/5/8=
@@ -968,8 +969,8 @@ golang.org/x/sys v0.0.0-20211019181941-9d821ace8654/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20211123173158-ef496fb156ab/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20211124211545-fe61309f8881/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20211205182925-97ca703d548d/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
-golang.org/x/sys v0.0.0-20211210111614-af8b64212486 h1:5hpz5aRr+W1erYCL5JRhSUBJRph7l9XkNveoExlrKYk=
-golang.org/x/sys v0.0.0-20211210111614-af8b64212486/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 h1:XfKQ4OlFl8okEOr5UvAqFRVj8pY/4yfcXrddB8qAbU0=
+golang.org/x/sys v0.0.0-20220114195835-da31bd327af9/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 h1:v+OssWQX+hTHEmOBgwxdZxK4zHq3yOs8F9J7mk0PY8E=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
