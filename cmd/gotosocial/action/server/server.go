@@ -77,7 +77,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	err := config.Validate()
 	if err != nil {
-		return fmt.Errorf("invalid configuration: %s!", err)
+		return fmt.Errorf("invalid configuration: %s", err)
 	}
 
 	dbService, err := bundb.NewBunDBService(ctx)
