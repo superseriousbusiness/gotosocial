@@ -19,9 +19,13 @@
 package media_test
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"os"
 	"testing"
 
+	"codeberg.org/gruf/go-store/storage"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -53,6 +57,53 @@ func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
 	totalPrunedAgain, err := suite.manager.PruneRemote(context.Background(), 1)
 	suite.NoError(err)
 	suite.Equal(0, totalPrunedAgain)
+}
+
+func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
+	ctx := context.Background()
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	totalPruned, err := suite.manager.PruneRemote(ctx, 1)
+	suite.NoError(err)
+	suite.Equal(1, totalPruned)
+
+	// media should no longer be stored
+	_, err = suite.storage.Get(testAttachment.File.Path)
+	suite.Error(err)
+	suite.ErrorIs(err, storage.ErrNotFound)
+	_, err = suite.storage.Get(testAttachment.Thumbnail.Path)
+	suite.Error(err)
+	suite.ErrorIs(err, storage.ErrNotFound)
+
+	// now recache the image....
+	data := func(_ context.Context) (io.Reader, int, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("../../testrig/media/thoughtsofdog-original.jpeg")
+		if err != nil {
+			panic(err)
+		}
+		return bytes.NewBuffer(b), len(b), nil
+	}
+	processingRecache, err := suite.manager.RecacheMedia(ctx, data, testAttachment.ID)
+	suite.NoError(err)
+
+	// synchronously load the recached attachment
+	recachedAttachment, err := processingRecache.LoadAttachment(ctx)
+	suite.NoError(err)
+	suite.NotNil(recachedAttachment)
+
+	// recachedAttachment should be basically the same as the old attachment
+	suite.True(recachedAttachment.Cached)
+	suite.Equal(testAttachment.ID, recachedAttachment.ID)
+	suite.Equal(testAttachment.File.Path, recachedAttachment.File.Path)           // file should be stored in the same place
+	suite.Equal(testAttachment.Thumbnail.Path, recachedAttachment.Thumbnail.Path) // as should the thumbnail
+	suite.EqualValues(testAttachment.FileMeta, recachedAttachment.FileMeta)       // and the filemeta should be the same
+
+	// recached files should be back in storage
+	_, err = suite.storage.Get(recachedAttachment.File.Path)
+	suite.NoError(err)
+	_, err = suite.storage.Get(recachedAttachment.Thumbnail.Path)
+	suite.NoError(err)
 }
 
 func TestPruneRemoteTestSuite(t *testing.T) {
