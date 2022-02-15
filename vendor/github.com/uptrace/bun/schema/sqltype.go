@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -134,6 +135,6 @@ func (tm *NullTime) Scan(src interface{}) error {
 		tm.Time = newtm
 		return nil
 	default:
-		return scanError(bunNullTimeType, src)
+		return fmt.Errorf("bun: can't scan %#v into NullTime", src)
 	}
 }

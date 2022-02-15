@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/uptrace/uptrace">
+  <a href="https://uptrace.dev/?utm_source=gh-redis&utm_campaign=gh-redis-banner1">
     <img src="https://raw.githubusercontent.com/uptrace/roadmap/master/banner1.png" alt="All-in-one tool to optimize performance and monitor errors & logs">
   </a>
 </p>
@@ -32,6 +32,7 @@ Resources:
 - [**Get started**](https://bun.uptrace.dev/guide/getting-started.html)
 - [Examples](https://github.com/uptrace/bun/tree/master/example)
 - [Discussions](https://github.com/uptrace/bun/discussions)
+- [Newsletter](https://blog.uptrace.dev/pages/newsletter.html) to get latest updates.
 - [Reference](https://pkg.go.dev/github.com/uptrace/bun)
 - [Starter kit](https://github.com/go-bun/bun-starter-kit)
 
@@ -43,9 +44,7 @@ Projects using Bun:
 - [RealWorld app](https://github.com/go-bun/bun-realworld-app)
 
 ## Benchmark
-
 [https://github.com/davars/dbeval](https://github.com/davars/dbeval)
-
 <details>
 <summary>results</summary>
 
@@ -183,7 +182,6 @@ BenchmarkRecentArticles/*dbeval.PGX-4            	     356	   3345500 ns/op	 329
 </details>
 
 [https://github.com/frederikhors/orm-benchmark](https://github.com/frederikhors/orm-benchmark)
-
 <details>
 <summary>results</summary>
 

@@ -33,7 +33,7 @@ require (
 	github.com/superseriousbusiness/exif-terminator v0.1.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
-	github.com/uptrace/bun v1.0.22
+	github.com/uptrace/bun v1.0.20
 	github.com/uptrace/bun/dialect/pgdialect v1.0.19
 	github.com/uptrace/bun/dialect/sqlitedialect v1.0.19
 	github.com/wagslane/go-password-validator v0.3.0

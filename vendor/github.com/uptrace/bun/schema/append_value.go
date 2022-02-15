@@ -58,24 +58,12 @@ func FieldAppender(dialect Dialect, field *Field) AppenderFunc {
 		return appendMsgpack
 	}
 
-	fieldType := field.StructField.Type
-
 	switch strings.ToUpper(field.UserSQLType) {
 	case sqltype.JSON, sqltype.JSONB:
-		if fieldType.Implements(driverValuerType) {
-			return appendDriverValue
-		}
-
-		if fieldType.Kind() != reflect.Ptr {
-			if reflect.PtrTo(fieldType).Implements(driverValuerType) {
-				return addrAppender(appendDriverValue)
-			}
-		}
-
 		return AppendJSONValue
 	}
 
-	return Appender(dialect, fieldType)
+	return Appender(dialect, field.StructField.Type)
 }
 
 func Appender(dialect Dialect, typ reflect.Type) AppenderFunc {
@@ -128,9 +116,6 @@ func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 	case reflect.Interface:
 		return ifaceAppenderFunc
 	case reflect.Ptr:
-		if typ.Implements(jsonMarshalerType) {
-			return AppendJSONValue
-		}
 		if fn := Appender(dialect, typ.Elem()); fn != nil {
 			return PtrAppender(fn)
 		}

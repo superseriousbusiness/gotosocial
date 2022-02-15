@@ -87,10 +87,6 @@ func (q *baseQuery) DB() *DB {
 	return q.db
 }
 
-func (q *baseQuery) GetConn() IConn {
-	return q.conn
-}
-
 func (q *baseQuery) GetModel() Model {
 	return q.model
 }
@@ -109,16 +105,12 @@ func (q *baseQuery) GetTableName() string {
 	}
 
 	if q.modelTableName.Query != "" {
-		return q.modelTableName.Query
+		b, _ := q.modelTableName.AppendQuery(q.db.fmter, nil)
+		return string(b)
 	}
-
 	if len(q.tables) > 0 {
-		b, _ := q.tables[0].AppendQuery(q.db.fmter, nil)
-		if len(b) < 64 {
-			return string(b)
-		}
+		return q.tables[0].Query
 	}
-
 	return ""
 }
 
@@ -548,62 +540,6 @@ func (q *baseQuery) AppendNamedArg(fmter schema.Formatter, b []byte, name string
 
 	return b, false
 }
-
-//------------------------------------------------------------------------------
-
-func (q *baseQuery) Dialect() schema.Dialect {
-	return q.db.Dialect()
-}
-
-func (q *baseQuery) NewValues(model interface{}) *ValuesQuery {
-	return NewValuesQuery(q.db, model).Conn(q.conn)
-}
-
-func (q *baseQuery) NewSelect() *SelectQuery {
-	return NewSelectQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewInsert() *InsertQuery {
-	return NewInsertQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewUpdate() *UpdateQuery {
-	return NewUpdateQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewDelete() *DeleteQuery {
-	return NewDeleteQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewCreateTable() *CreateTableQuery {
-	return NewCreateTableQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewDropTable() *DropTableQuery {
-	return NewDropTableQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewCreateIndex() *CreateIndexQuery {
-	return NewCreateIndexQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewDropIndex() *DropIndexQuery {
-	return NewDropIndexQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewTruncateTable() *TruncateTableQuery {
-	return NewTruncateTableQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewAddColumn() *AddColumnQuery {
-	return NewAddColumnQuery(q.db).Conn(q.conn)
-}
-
-func (q *baseQuery) NewDropColumn() *DropColumnQuery {
-	return NewDropColumnQuery(q.db).Conn(q.conn)
-}
-
-//------------------------------------------------------------------------------
 
 func appendColumns(b []byte, table schema.Safe, fields []*schema.Field) []byte {
 	for i, f := range fields {

@@ -127,7 +127,7 @@ func (q *InsertQuery) Returning(query string, args ...interface{}) *InsertQuery 
 }
 
 func (q *InsertQuery) hasReturning() bool {
-	if !q.db.features.Has(feature.InsertReturning) {
+	if !q.db.features.Has(feature.Returning) {
 		return false
 	}
 	return q.returningQuery.hasReturning()
@@ -148,7 +148,7 @@ func (q *InsertQuery) Ignore() *InsertQuery {
 	return q
 }
 
-// Replaces generates a `REPLACE INTO` query (MySQL and MariaDB).
+// Replaces generates a `REPLACE INTO` query (MySQL).
 func (q *InsertQuery) Replace() *InsertQuery {
 	q.replace = true
 	return q
@@ -588,7 +588,7 @@ func (q *InsertQuery) afterInsertHook(ctx context.Context) error {
 }
 
 func (q *InsertQuery) tryLastInsertID(res sql.Result, dest []interface{}) error {
-	if q.db.features.Has(feature.Returning) || q.table == nil || len(q.table.PKs) != 1 || !q.table.PKs[0].AutoIncrement {
+	if q.db.features.Has(feature.Returning) || q.table == nil || len(q.table.PKs) != 1 {
 		return nil
 	}
 

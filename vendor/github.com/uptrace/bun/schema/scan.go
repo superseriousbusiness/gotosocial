@@ -94,8 +94,6 @@ func scanner(typ reflect.Type) ScannerFunc {
 	}
 
 	switch typ {
-	case bytesType:
-		return scanBytes
 	case timeType:
 		return scanTime
 	case ipType:
@@ -136,22 +134,12 @@ func scanBool(dest reflect.Value, src interface{}) error {
 		dest.SetBool(src != 0)
 		return nil
 	case []byte:
-		f, err := strconv.ParseBool(internal.String(src))
-		if err != nil {
-			return err
+		if len(src) == 1 {
+			dest.SetBool(src[0] != '0')
+			return nil
 		}
-		dest.SetBool(f)
-		return nil
-	case string:
-		f, err := strconv.ParseBool(src)
-		if err != nil {
-			return err
-		}
-		dest.SetBool(f)
-		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanInt64(dest reflect.Value, src interface{}) error {
@@ -179,9 +167,8 @@ func scanInt64(dest reflect.Value, src interface{}) error {
 		}
 		dest.SetInt(n)
 		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanUint64(dest reflect.Value, src interface{}) error {
@@ -202,16 +189,8 @@ func scanUint64(dest reflect.Value, src interface{}) error {
 		}
 		dest.SetUint(n)
 		return nil
-	case string:
-		n, err := strconv.ParseUint(src, 10, 64)
-		if err != nil {
-			return err
-		}
-		dest.SetUint(n)
-		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanFloat64(dest reflect.Value, src interface{}) error {
@@ -229,16 +208,8 @@ func scanFloat64(dest reflect.Value, src interface{}) error {
 		}
 		dest.SetFloat(f)
 		return nil
-	case string:
-		f, err := strconv.ParseFloat(src, 64)
-		if err != nil {
-			return err
-		}
-		dest.SetFloat(f)
-		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanString(dest reflect.Value, src interface{}) error {
@@ -255,18 +226,8 @@ func scanString(dest reflect.Value, src interface{}) error {
 	case time.Time:
 		dest.SetString(src.Format(time.RFC3339Nano))
 		return nil
-	case int64:
-		dest.SetString(strconv.FormatInt(src, 10))
-		return nil
-	case uint64:
-		dest.SetString(strconv.FormatUint(src, 10))
-		return nil
-	case float64:
-		dest.SetString(strconv.FormatFloat(src, 'G', -1, 64))
-		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanBytes(dest reflect.Value, src interface{}) error {
@@ -283,9 +244,8 @@ func scanBytes(dest reflect.Value, src interface{}) error {
 
 		dest.SetBytes(clone)
 		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanTime(dest reflect.Value, src interface{}) error {
@@ -314,9 +274,8 @@ func scanTime(dest reflect.Value, src interface{}) error {
 		destTime := dest.Addr().Interface().(*time.Time)
 		*destTime = srcTime
 		return nil
-	default:
-		return scanError(dest.Type(), src)
 	}
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanScanner(dest reflect.Value, src interface{}) error {
@@ -479,7 +438,7 @@ func scanJSONIntoInterface(dest reflect.Value, src interface{}) error {
 	if fn := Scanner(dest.Type()); fn != nil {
 		return fn(dest, src)
 	}
-	return scanError(dest.Type(), src)
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func scanInterface(dest reflect.Value, src interface{}) error {
@@ -495,7 +454,7 @@ func scanInterface(dest reflect.Value, src interface{}) error {
 	if fn := Scanner(dest.Type()); fn != nil {
 		return fn(dest, src)
 	}
-	return scanError(dest.Type(), src)
+	return fmt.Errorf("bun: can't scan %#v into %s", src, dest.Type())
 }
 
 func nilable(kind reflect.Kind) bool {
@@ -504,8 +463,4 @@ func nilable(kind reflect.Kind) bool {
 		return true
 	}
 	return false
-}
-
-func scanError(dest reflect.Type, src interface{}) error {
-	return fmt.Errorf("bun: can't scan %#v (%T) into %s", src, src, dest.String())
 }

@@ -697,6 +697,10 @@ github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLY
 github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ=
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
 github.com/uptrace/bun v1.0.19/go.mod h1:Uv7z0z+7dXnUS9P5hMF0hdiM/4M+xOUHQCrZpyDrpRc=
+github.com/uptrace/bun v1.0.20 h1:/T4p9C9tEN75U3cFMBr5njlP+rBfs4An8BmlQQPbcfE=
+github.com/uptrace/bun v1.0.20/go.mod h1:Uv7z0z+7dXnUS9P5hMF0hdiM/4M+xOUHQCrZpyDrpRc=
+github.com/uptrace/bun v1.0.21 h1:5ek4bnrEmZo6wvY/RHt1dJNXzOPOnrfJeZMoZfZt9Io=
+github.com/uptrace/bun v1.0.21/go.mod h1:u+QsgCgjGFwshy3euGAN1CLEO9RMf42lga5jQ/ezYsc=
 github.com/uptrace/bun v1.0.22 h1:0asZNOcM4eLq5Pgzu+LpZyJRxlt3ops+HahVkWPqxww=
 github.com/uptrace/bun v1.0.22/go.mod h1:SkbOr4hdcYqqFPw4rbc1QAnLLvDLgq+X0w8OSllj1MU=
 github.com/uptrace/bun/dialect/pgdialect v1.0.19 h1:8vdHpXRq3rbNDRn13llLxJ52wa+aBBn7QI0Q7IyW/d8=

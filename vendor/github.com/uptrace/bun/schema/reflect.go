@@ -17,7 +17,6 @@ var (
 
 	driverValuerType  = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 	queryAppenderType = reflect.TypeOf((*QueryAppender)(nil)).Elem()
-	jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 )
 
 func indirectType(t reflect.Type) reflect.Type {
