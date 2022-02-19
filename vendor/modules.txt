@@ -74,6 +74,9 @@ github.com/fsnotify/fsnotify
 # github.com/gin-contrib/cors v1.3.1
 ## explicit; go 1.13
 github.com/gin-contrib/cors
+# github.com/gin-contrib/gzip v0.0.5
+## explicit; go 1.13
+github.com/gin-contrib/gzip
 # github.com/gin-contrib/sessions v0.0.4
 ## explicit; go 1.13
 github.com/gin-contrib/sessions
