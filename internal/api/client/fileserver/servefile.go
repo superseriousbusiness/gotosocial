@@ -19,6 +19,7 @@
 package fileserver
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -89,9 +90,13 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
+
 	defer func() {
-		if err := content.Content.Close(); err != nil {
-			l.Errorf("error closing readcloser: %s", err)
+		// if the content is a ReadCloser, close it when we're done
+		if closer, ok := content.Content.(io.ReadCloser); ok {
+			if err := closer.Close(); err != nil {
+				l.Errorf("error closing readcloser: %s", err)
+			}
 		}
 	}()
 
