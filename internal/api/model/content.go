@@ -18,14 +18,16 @@
 
 package model
 
+import "io"
+
 // Content wraps everything needed to serve a blob of content (some kind of media) through the API.
 type Content struct {
 	// MIME content type
 	ContentType string
 	// ContentLength in bytes
 	ContentLength int64
-	// Actual content blob
-	Content []byte
+	// Actual content
+	Content io.Reader
 }
 
 // GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.

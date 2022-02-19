@@ -19,7 +19,6 @@
 package fileserver
 
 import (
-	"bytes"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -100,5 +99,5 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.DataFromReader(http.StatusOK, content.ContentLength, format, bytes.NewReader(content.Content), nil)
+	c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, nil)
 }
