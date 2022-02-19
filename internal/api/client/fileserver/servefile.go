@@ -89,6 +89,11 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		c.String(http.StatusNotFound, "404 page not found")
 		return
 	}
+	defer func() {
+		if err := content.Content.Close(); err != nil {
+			l.Errorf("error closing readcloser: %s", err)
+		}
+	}()
 
 	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will

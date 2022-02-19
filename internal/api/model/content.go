@@ -27,7 +27,7 @@ type Content struct {
 	// ContentLength in bytes
 	ContentLength int64
 	// Actual content
-	Content io.Reader
+	Content io.ReadCloser
 }
 
 // GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.
