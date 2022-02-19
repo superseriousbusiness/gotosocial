@@ -83,9 +83,11 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		switch mediaSize {
 		case media.SizeOriginal:
 			content.ContentType = e.ImageContentType
+			content.ContentLength = int64(e.ImageFileSize)
 			storagePath = e.ImagePath
 		case media.SizeStatic:
 			content.ContentType = e.ImageStaticContentType
+			content.ContentLength = int64(e.ImageStaticFileSize)
 			storagePath = e.ImageStaticPath
 		default:
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
@@ -101,21 +103,22 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		switch mediaSize {
 		case media.SizeOriginal:
 			content.ContentType = a.File.ContentType
+			content.ContentLength = int64(a.File.FileSize)
 			storagePath = a.File.Path
 		case media.SizeSmall:
 			content.ContentType = a.Thumbnail.ContentType
+			content.ContentLength = int64(a.Thumbnail.FileSize)
 			storagePath = a.Thumbnail.Path
 		default:
 			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
 		}
 	}
 
-	bytes, err := p.storage.Get(storagePath)
+	reader, err := p.storage.GetStream(storagePath)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}
 
-	content.ContentLength = int64(len(bytes))
-	content.Content = bytes
+	content.Content = reader
 	return content, nil
 }
