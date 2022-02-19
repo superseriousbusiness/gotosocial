@@ -16,28 +16,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package model
+package router
 
-import "io"
+import (
+	ginGzip "github.com/gin-contrib/gzip"
+	"github.com/gin-gonic/gin"
+)
 
-// Content wraps everything needed to serve a blob of content (some kind of media) through the API.
-type Content struct {
-	// MIME content type
-	ContentType string
-	// ContentLength in bytes
-	ContentLength int64
-	// Actual content
-	Content io.Reader
-}
-
-// GetContentRequestForm describes a piece of content desired by the caller of the fileserver API.
-type GetContentRequestForm struct {
-	// AccountID of the content owner
-	AccountID string
-	// MediaType of the content (should be convertible to a media.MediaType)
-	MediaType string
-	// MediaSize of the content (should be convertible to a media.MediaSize)
-	MediaSize string
-	// Filename of the content
-	FileName string
+func useGzip(engine *gin.Engine) error {
+	gzipMiddleware := ginGzip.Gzip(ginGzip.DefaultCompression)
+	engine.Use(gzipMiddleware)
+	return nil
 }

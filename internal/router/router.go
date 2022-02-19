@@ -137,16 +137,21 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		return nil, err
 	}
 
-	// set template functions
-	LoadTemplateFunctions(engine)
-
-	// load templates onto the engine
-	if err := loadTemplates(engine); err != nil {
+	// enable gzip compression on the engine
+	if err := useGzip(engine); err != nil {
 		return nil, err
 	}
 
 	// enable session store middleware on the engine
 	if err := useSession(ctx, db, engine); err != nil {
+		return nil, err
+	}
+
+	// set template functions
+	LoadTemplateFunctions(engine)
+
+	// load templates onto the engine
+	if err := loadTemplates(engine); err != nil {
 		return nil, err
 	}
 

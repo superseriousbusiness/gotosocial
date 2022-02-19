@@ -38,10 +38,10 @@ func SessionOptions() sessions.Options {
 	return sessions.Options{
 		Path:     "/",
 		Domain:   viper.GetString(config.Keys.Host),
-		MaxAge:   120,                      // 2 minutes
-		Secure:   true,                     // only use cookie over https
-		HttpOnly: true,                     // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteDefaultMode, // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		MaxAge:   120,                                              // 2 minutes
+		Secure:   viper.GetString(config.Keys.Protocol) == "https", // only use cookie over https
+		HttpOnly: true,                                             // exclude javascript from inspecting cookie
+		SameSite: http.SameSiteDefaultMode,                         // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
 	}
 }
 
