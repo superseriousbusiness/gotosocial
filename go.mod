@@ -43,6 +43,7 @@ require (
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	modernc.org/sqlite v1.14.2
 	mvdan.cc/xurls/v2 v2.3.0
+	github.com/gin-contrib/gzip v0.0.5
 )
 
 require (
