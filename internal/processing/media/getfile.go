@@ -46,72 +46,64 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
 	}
 	wantedMediaID := spl[0]
+	expectedAccountID := form.AccountID
 
 	// get the account that owns the media and make sure it's not suspended
-	acct, err := p.db.GetAccountByID(ctx, form.AccountID)
+	acct, err := p.db.GetAccountByID(ctx, expectedAccountID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", form.AccountID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", expectedAccountID, err))
 	}
 	if !acct.SuspendedAt.IsZero() {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", form.AccountID))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", expectedAccountID))
 	}
 
 	// make sure the requesting account and the media account don't block each other
 	if account != nil {
-		blocked, err := p.db.IsBlocked(ctx, account.ID, form.AccountID, true)
+		blocked, err := p.db.IsBlocked(ctx, account.ID, expectedAccountID, true)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", form.AccountID, account.ID, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", expectedAccountID, account.ID, err))
 		}
 		if blocked {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", form.AccountID, account.ID))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", expectedAccountID, account.ID))
 		}
 	}
 
 	// the way we store emojis is a little different from the way we store other attachments,
 	// so we need to take different steps depending on the media type being requested
-	content := &apimodel.Content{}
-	var storagePath string
 	switch mediaType {
 	case media.TypeEmoji:
-		e := &gtsmodel.Emoji{}
-		if err := p.db.GetByID(ctx, wantedMediaID, e); err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedMediaID, err))
-		}
-		if e.Disabled {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedMediaID))
-		}
-		switch mediaSize {
-		case media.SizeOriginal:
-			content.ContentType = e.ImageContentType
-			content.ContentLength = int64(e.ImageFileSize)
-			storagePath = e.ImagePath
-		case media.SizeStatic:
-			content.ContentType = e.ImageStaticContentType
-			content.ContentLength = int64(e.ImageStaticFileSize)
-			storagePath = e.ImageStaticPath
-		default:
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", mediaSize))
-		}
+		return p.getEmojiContent(ctx, wantedMediaID, mediaSize)
 	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
-		a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
-		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
-		}
-		if a.AccountID != form.AccountID {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, form.AccountID))
-		}
-		switch mediaSize {
-		case media.SizeOriginal:
-			content.ContentType = a.File.ContentType
-			content.ContentLength = int64(a.File.FileSize)
-			storagePath = a.File.Path
-		case media.SizeSmall:
-			content.ContentType = a.Thumbnail.ContentType
-			content.ContentLength = int64(a.Thumbnail.FileSize)
-			storagePath = a.Thumbnail.Path
-		default:
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
-		}
+		return p.getAttachmentContent(ctx, wantedMediaID, expectedAccountID, mediaSize)
+	default:
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not recognized", mediaType))
+	}
+}
+
+func (p *processor) getAttachmentContent(ctx context.Context, wantedMediaID string, expectedAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+	attachmentContent := &apimodel.Content{}
+	var storagePath string
+
+	a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
+	}
+
+	if a.AccountID != expectedAccountID {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, expectedAccountID))
+	}
+
+	switch mediaSize {
+	case media.SizeOriginal:
+		attachmentContent.ContentType = a.File.ContentType
+		attachmentContent.ContentLength = int64(a.File.FileSize)
+		storagePath = a.File.Path
+	case media.SizeSmall:
+		attachmentContent.ContentType = a.Thumbnail.ContentType
+		attachmentContent.ContentLength = int64(a.Thumbnail.FileSize)
+		storagePath = a.Thumbnail.Path
+	default:
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
 	}
 
 	reader, err := p.storage.GetStream(storagePath)
@@ -119,6 +111,41 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}
 
-	content.Content = reader
-	return content, nil
+	attachmentContent.Content = reader
+	return attachmentContent, nil
+}
+
+func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, emojiSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+	emojiContent := &apimodel.Content{}
+	var storagePath string
+
+	e := &gtsmodel.Emoji{}
+	if err := p.db.GetByID(ctx, wantedEmojiID, e); err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", wantedEmojiID, err))
+	}
+
+	if e.Disabled {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", wantedEmojiID))
+	}
+
+	switch emojiSize {
+	case media.SizeOriginal:
+		emojiContent.ContentType = e.ImageContentType
+		emojiContent.ContentLength = int64(e.ImageFileSize)
+		storagePath = e.ImagePath
+	case media.SizeStatic:
+		emojiContent.ContentType = e.ImageStaticContentType
+		emojiContent.ContentLength = int64(e.ImageStaticFileSize)
+		storagePath = e.ImageStaticPath
+	default:
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", emojiSize))
+	}
+
+	reader, err := p.storage.GetStream(storagePath)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
+	}
+
+	emojiContent.Content = reader
+	return emojiContent, nil
 }
