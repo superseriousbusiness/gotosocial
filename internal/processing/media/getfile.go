@@ -21,6 +21,8 @@ package media
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/url"
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -74,16 +76,17 @@ func (p *processor) GetFile(ctx context.Context, account *gtsmodel.Account, form
 	case media.TypeEmoji:
 		return p.getEmojiContent(ctx, wantedMediaID, mediaSize)
 	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
-		return p.getAttachmentContent(ctx, wantedMediaID, expectedAccountID, mediaSize)
+		return p.getAttachmentContent(ctx, account, wantedMediaID, expectedAccountID, mediaSize)
 	default:
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not recognized", mediaType))
 	}
 }
 
-func (p *processor) getAttachmentContent(ctx context.Context, wantedMediaID string, expectedAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
+func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount *gtsmodel.Account, wantedMediaID string, expectedAccountID string, mediaSize media.Size) (*apimodel.Content, gtserror.WithCode) {
 	attachmentContent := &apimodel.Content{}
 	var storagePath string
 
+	// retrieve attachment from the database and do basic checks on it
 	a, err := p.db.GetAttachmentByID(ctx, wantedMediaID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
@@ -93,6 +96,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, wantedMediaID stri
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, expectedAccountID))
 	}
 
+	// get file information from the attachment depending on the requested media size
 	switch mediaSize {
 	case media.SizeOriginal:
 		attachmentContent.ContentType = a.File.ContentType
@@ -106,12 +110,81 @@ func (p *processor) getAttachmentContent(ctx context.Context, wantedMediaID stri
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for attachment", mediaSize))
 	}
 
-	reader, err := p.storage.GetStream(storagePath)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
+	// if we have the media cached on our server already, we can now simply return it from storage
+	if a.Cached {
+		return p.streamFromStorage(storagePath, attachmentContent)
 	}
 
-	attachmentContent.Content = reader
+	// if we don't have it cached, then we can assume two things:
+	// 1. this is remote media, since local media should never be uncached
+	// 2. we need to fetch it again using a transport and the media manager
+	remoteMediaIRI, err := url.Parse(a.RemoteURL)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error parsing remote media iri %s: %s", a.RemoteURL, err))
+	}
+
+	// use an empty string as requestingUsername to use the instance account, unless the request for this
+	// media has been http signed, then use the requesting account to make the request to remote server
+	var requestingUsername string
+	if requestingAccount != nil {
+		requestingUsername = requestingAccount.Username
+	}
+
+	var data media.DataFunc
+	var pipeReader *io.PipeReader
+	var pipeWriter *io.PipeWriter
+
+	if mediaSize == media.SizeSmall {
+		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
+		// large version and derive a thumbnail from it, so use the normal recaching procedure: fetch the media,
+		// process it, then return the thumbnail data
+		data = func(innerCtx context.Context) (io.Reader, int, error) {
+			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+			if err != nil {
+				return nil, 0, err
+			}
+			return transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+		}
+	} else {
+		// if it's the full-sized version being requested, we can cheat a bit by streaming data to the user as
+		// it's retrieved from the remote server, using tee; this saves the user from having to wait while
+		// we process the media on our side
+		pipeReader, pipeWriter = io.Pipe()
+		data = func(innerCtx context.Context) (io.Reader, int, error) {
+			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			readCloser, fileSize, err := transport.DereferenceMedia(innerCtx, remoteMediaIRI)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			// everything read from the readCloser by the media manager will be written into the pipeWriter
+			teeReader := io.TeeReader(readCloser, pipeWriter)
+			return teeReader, fileSize, nil
+		}
+	}
+
+	// put the media recached in the queue
+	processingMedia, err := p.mediaManager.RecacheMedia(ctx, data, wantedMediaID)
+	if err != nil {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
+	}
+
+	// if it's the thumbnail, stream the processed thumbnail from storage, after waiting for processing to finish
+	if mediaSize == media.SizeSmall {
+		// below function call blocks until all processing on the attachment has finished...
+		if _, err := processingMedia.LoadAttachment(ctx); err != nil {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %s", err))
+		}
+		// ... so now we can safely return it
+		return p.streamFromStorage(storagePath, attachmentContent)
+	}
+
+	// otherwise, return the pipeReader, which will have streamed data from the remote server put in it
+	attachmentContent.Content = pipeReader
 	return attachmentContent, nil
 }
 
@@ -141,11 +214,15 @@ func (p *processor) getEmojiContent(ctx context.Context, wantedEmojiID string, e
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not recognized for emoji", emojiSize))
 	}
 
+	return p.streamFromStorage(storagePath, emojiContent)
+}
+
+func (p *processor) streamFromStorage(storagePath string, content *apimodel.Content) (*apimodel.Content, gtserror.WithCode) {
 	reader, err := p.storage.GetStream(storagePath)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error retrieving from storage: %s", err))
 	}
 
-	emojiContent.Content = reader
-	return emojiContent, nil
+	content.Content = reader
+	return content, nil
 }
