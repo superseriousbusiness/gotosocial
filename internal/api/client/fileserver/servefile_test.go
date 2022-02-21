@@ -29,7 +29,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -117,8 +116,8 @@ func (suite *ServeFileTestSuite) TearDownTest() {
 
 func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	targetAttachment, ok := suite.testAttachments["admin_account_status_1_attachment_1"]
-	assert.True(suite.T(), ok)
-	assert.NotNil(suite.T(), targetAttachment)
+	suite.True(ok)
+	suite.NotNil(targetAttachment)
 
 	recorder := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(recorder)
@@ -149,15 +148,62 @@ func (suite *ServeFileTestSuite) TestServeOriginalFileSuccessful() {
 	// call the function we're testing and check status code
 	suite.fileServer.ServeFile(ctx)
 	suite.EqualValues(http.StatusOK, recorder.Code)
+	suite.EqualValues("image/jpeg", recorder.Header().Get("content-type"))
 
 	b, err := ioutil.ReadAll(recorder.Body)
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), b)
+	suite.NoError(err)
+	suite.NotNil(b)
 
 	fileInStorage, err := suite.storage.Get(targetAttachment.File.Path)
-	assert.NoError(suite.T(), err)
-	assert.NotNil(suite.T(), fileInStorage)
-	assert.Equal(suite.T(), b, fileInStorage)
+	suite.NoError(err)
+	suite.NotNil(fileInStorage)
+	suite.Equal(b, fileInStorage)
+}
+
+func (suite *ServeFileTestSuite) TestServeSmallFileSuccessful() {
+	targetAttachment, ok := suite.testAttachments["admin_account_status_1_attachment_1"]
+	suite.True(ok)
+	suite.NotNil(targetAttachment)
+
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAttachment.Thumbnail.URL, nil)
+	ctx.Request.Header.Set("accept", "*/*")
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the ServeFile function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   fileserver.AccountIDKey,
+			Value: targetAttachment.AccountID,
+		},
+		gin.Param{
+			Key:   fileserver.MediaTypeKey,
+			Value: string(media.TypeAttachment),
+		},
+		gin.Param{
+			Key:   fileserver.MediaSizeKey,
+			Value: string(media.SizeSmall),
+		},
+		gin.Param{
+			Key:   fileserver.FileNameKey,
+			Value: fmt.Sprintf("%s.jpeg", targetAttachment.ID),
+		},
+	}
+
+	// call the function we're testing and check status code
+	suite.fileServer.ServeFile(ctx)
+	suite.EqualValues(http.StatusOK, recorder.Code)
+	suite.EqualValues("image/jpeg", recorder.Header().Get("content-type"))
+
+	b, err := ioutil.ReadAll(recorder.Body)
+	suite.NoError(err)
+	suite.NotNil(b)
+
+	fileInStorage, err := suite.storage.Get(targetAttachment.Thumbnail.Path)
+	suite.NoError(err)
+	suite.NotNil(fileInStorage)
+	suite.Equal(b, fileInStorage)
 }
 
 func TestServeFileTestSuite(t *testing.T) {

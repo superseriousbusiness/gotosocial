@@ -77,6 +77,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
@@ -155,6 +156,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessAsync() {
 		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
@@ -237,6 +239,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 			Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 		}, attachment.FileMeta.Small)
 		suite.Equal("image/jpeg", attachment.File.ContentType)
+		suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 		suite.Equal(269739, attachment.File.FileSize)
 		suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
@@ -325,6 +328,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
+	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal("LjBzUo#6RQR._NvzRjWF?urqV@a$", attachment.Blurhash)
 
