@@ -343,7 +343,7 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, accountID 
 	thumbnail := gtsmodel.Thumbnail{
 		URL:         uris.GenerateURIForAttachment(accountID, string(TypeAttachment), string(SizeSmall), id, mimeJpeg), // all thumbnails are encoded as jpeg,
 		Path:        fmt.Sprintf("%s/%s/%s/%s.%s", accountID, TypeAttachment, SizeSmall, id, mimeJpeg),                 // all thumbnails are encoded as jpeg,
-		ContentType: mimeJpeg,
+		ContentType: mimeImageJpeg,
 		UpdatedAt:   time.Now(),
 	}
 
