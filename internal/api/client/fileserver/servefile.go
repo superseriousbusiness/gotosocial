@@ -79,15 +79,15 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		return
 	}
 
-	content, err := m.processor.FileGet(c.Request.Context(), authed, &model.GetContentRequestForm{
+	content, errWithCode := m.processor.FileGet(c.Request.Context(), authed, &model.GetContentRequestForm{
 		AccountID: accountID,
 		MediaType: mediaType,
 		MediaSize: mediaSize,
 		FileName:  fileName,
 	})
-	if err != nil {
-		l.Debug(err)
-		c.String(http.StatusNotFound, "404 page not found")
+	if errWithCode != nil {
+		l.Errorf(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
@@ -104,7 +104,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
 	format, err := api.NegotiateAccept(c, api.Offer(content.ContentType))
-	if err != nil {
+	if errWithCode != nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
