@@ -270,7 +270,7 @@ func NewProcessor(
 	streamingProcessor := streaming.New(db, oauthServer)
 	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator)
 	adminProcessor := admin.New(db, tc, mediaManager, fromClientAPI)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, storage)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
 	filter := visibility.NewFilter(db)

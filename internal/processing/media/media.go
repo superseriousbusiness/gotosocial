@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -43,18 +44,20 @@ type Processor interface {
 }
 
 type processor struct {
-	tc           typeutils.TypeConverter
-	mediaManager media.Manager
-	storage      *kv.KVStore
-	db           db.DB
+	tc                  typeutils.TypeConverter
+	mediaManager        media.Manager
+	transportController transport.Controller
+	storage             *kv.KVStore
+	db                  db.DB
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storage *kv.KVStore) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *kv.KVStore) Processor {
 	return &processor{
-		tc:           tc,
-		mediaManager: mediaManager,
-		storage:      storage,
-		db:           db,
+		tc:                  tc,
+		mediaManager:        mediaManager,
+		transportController: transportController,
+		storage:             storage,
+		db:                  db,
 	}
 }
