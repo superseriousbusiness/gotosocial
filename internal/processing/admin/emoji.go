@@ -49,7 +49,7 @@ func (p *processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 
 	emojiURI := uris.GenerateURIForEmoji(emojiID)
 
-	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, form.Shortcode, emojiID, emojiURI, nil)
+	processingEmoji, err := p.mediaManager.ProcessEmoji(ctx, data, nil, form.Shortcode, emojiID, emojiURI, nil)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error processing emoji: %s", err), "error processing emoji")
 	}
