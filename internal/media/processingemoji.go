@@ -47,9 +47,10 @@ type ProcessingEmoji struct {
 		emoji will be updated incrementally as media goes through processing
 	*/
 
-	emoji *gtsmodel.Emoji
-	data  DataFunc
-	read  bool // bool indicating that data function has been triggered already
+	emoji    *gtsmodel.Emoji
+	data     DataFunc
+	postData PostDataCallbackFunc
+	read     bool // bool indicating that data function has been triggered already
 
 	/*
 		below fields represent the processing state of the static of the emoji
@@ -212,10 +213,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	p.read = true
+
+	if p.postData != nil {
+		return p.postData(ctx)
+	}
+
 	return nil
 }
 
-func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
+func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
@@ -281,6 +287,7 @@ func (m *manager) preProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		instanceAccountID: instanceAccount.ID,
 		emoji:             emoji,
 		data:              data,
+		postData:          postData,
 		staticState:       int32(received),
 		database:          m.db,
 		storage:           m.storage,

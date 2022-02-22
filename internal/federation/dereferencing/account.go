@@ -285,7 +285,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			}
 
 			avatar := true
-			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalMediaInfo{
+			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, nil, targetAccount.ID, &media.AdditionalMediaInfo{
 				RemoteURL: &targetAccount.AvatarRemoteURL,
 				Avatar:    &avatar,
 			})
@@ -343,7 +343,7 @@ func (d *deref) fetchRemoteAccountMedia(ctx context.Context, targetAccount *gtsm
 			}
 
 			header := true
-			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, targetAccount.ID, &media.AdditionalMediaInfo{
+			newProcessing, err := d.mediaManager.ProcessMedia(ctx, data, nil, targetAccount.ID, &media.AdditionalMediaInfo{
 				RemoteURL: &targetAccount.HeaderRemoteURL,
 				Header:    &header,
 			})
