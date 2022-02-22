@@ -1586,9 +1586,19 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 	if err != nil {
 		panic(err)
 	}
+
+	thoughtsOfDogBytes, err := os.ReadFile(fmt.Sprintf("%s/thoughtsofdog-original.jpeg", relativePath))
+	if err != nil {
+		panic(err)
+	}
+
 	return map[string]RemoteAttachmentFile{
 		"https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg": {
 			Data:        beeBytes,
+			ContentType: "image/jpeg",
+		},
+		"http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg": {
+			Data:        thoughtsOfDogBytes,
 			ContentType: "image/jpeg",
 		},
 	}
