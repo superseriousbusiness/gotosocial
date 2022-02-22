@@ -150,6 +150,16 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// if it's the full-sized version being requested, we can cheat a bit by streaming data to the user as
 		// it's retrieved from the remote server, using tee; this saves the user from having to wait while
 		// we process the media on our side
+		//
+		// this looks a bit like this:
+		//
+		//                http fetch                     pipe
+		// remote server ------------> data function ----------> api caller
+		//                                   |
+		//                                   | tee
+		//                                   |
+		//                                   ▼
+		//                            instance storage
 		pipeReader, pipeWriter = io.Pipe()
 		data = func(innerCtx context.Context) (io.Reader, int, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
@@ -167,7 +177,8 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			return teeReader, fileSize, nil
 		}
 
-		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block
+		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;
+		// we don't need to close the reader here because that's the caller's responsibility
 		postDataCallback = func(innerCtx context.Context) error {
 			return pipeWriter.Close()
 		}
