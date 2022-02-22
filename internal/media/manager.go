@@ -63,6 +63,9 @@ type Manager interface {
 	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error)
+	// PruneRemote prunes all remote media cached on this instance that's older than the given amount of days.
+	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
+	// and setting 'cached' to false on the associated attachment.
 	PruneRemote(ctx context.Context, olderThanDays int) (int, error)
 	// NumWorkers returns the total number of workers available to this manager.
 	NumWorkers() int
