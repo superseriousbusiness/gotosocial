@@ -62,7 +62,7 @@ type Manager interface {
 	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
 	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
-	RecacheMedia(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error)
+	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
 	// PruneRemote prunes all remote media cached on this instance that's older than the given amount of days.
 	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
 	// and setting 'cached' to false on the associated attachment.
@@ -174,8 +174,8 @@ func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData Post
 	return processingEmoji, nil
 }
 
-func (m *manager) RecacheMedia(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
-	processingRecache, err := m.preProcessRecache(ctx, data, attachmentID)
+func (m *manager) RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
+	processingRecache, err := m.preProcessRecache(ctx, data, postData, attachmentID)
 	if err != nil {
 		return nil, err
 	}

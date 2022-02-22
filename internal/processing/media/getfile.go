@@ -131,6 +131,7 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	}
 
 	var data media.DataFunc
+	var postDataCallback media.PostDataCallbackFunc
 	var pipeReader *io.PipeReader
 	var pipeWriter *io.PipeWriter
 
@@ -165,10 +166,15 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 			teeReader := io.TeeReader(readCloser, pipeWriter)
 			return teeReader, fileSize, nil
 		}
+
+		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block
+		postDataCallback = func(innerCtx context.Context) error {
+			return pipeWriter.Close()
+		}
 	}
 
 	// put the media recached in the queue
-	processingMedia, err := p.mediaManager.RecacheMedia(ctx, data, wantedMediaID)
+	processingMedia, err := p.mediaManager.RecacheMedia(ctx, data, postDataCallback, wantedMediaID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
 	}

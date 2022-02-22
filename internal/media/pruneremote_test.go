@@ -84,7 +84,7 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 		}
 		return bytes.NewBuffer(b), len(b), nil
 	}
-	processingRecache, err := suite.manager.RecacheMedia(ctx, data, testAttachment.ID)
+	processingRecache, err := suite.manager.RecacheMedia(ctx, data, nil, testAttachment.ID)
 	suite.NoError(err)
 
 	// synchronously load the recached attachment

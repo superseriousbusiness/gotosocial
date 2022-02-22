@@ -432,7 +432,7 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 	return processingMedia, nil
 }
 
-func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
+func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
 	// get the existing attachment
 	attachment, err := m.db.GetAttachmentByID(ctx, attachmentID)
 	if err != nil {
@@ -442,6 +442,7 @@ func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, attachme
 	processingMedia := &ProcessingMedia{
 		attachment:    attachment,
 		data:          data,
+		postData:      postData,
 		thumbState:    int32(received),
 		fullSizeState: int32(received),
 		database:      m.db,
