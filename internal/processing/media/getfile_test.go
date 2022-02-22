@@ -23,6 +23,7 @@ import (
 	"io"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -97,6 +98,59 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, b)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].ContentType, content.ContentType)
 	suite.EqualValues(len(suite.testRemoteAttachments[testAttachment.RemoteURL].Data), content.ContentLength)
+	time.Sleep(2 * time.Second) // wait a few seconds for the media manager to finish doing stuff
+
+	// the attachment should be updated in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+	suite.NoError(err)
+	suite.True(dbAttachment.Cached)
+
+	// the file should be back in storage at the same path as before
+	refreshedBytes, err := suite.storage.Get(testAttachment.File.Path)
+	suite.NoError(err)
+	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
+}
+
+func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
+	ctx := context.Background()
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	// fetch the existing thumbnail bytes from storage first
+	thumbnailBytes, err := suite.storage.Get(testAttachment.Thumbnail.Path)
+	suite.NoError(err)
+
+	// uncache the file from local
+	testAttachment.Cached = false
+	err = suite.db.UpdateByPrimaryKey(ctx, testAttachment)
+	suite.NoError(err)
+	err = suite.storage.Delete(testAttachment.File.Path)
+	suite.NoError(err)
+	err = suite.storage.Delete(testAttachment.Thumbnail.Path)
+	suite.NoError(err)
+
+	// now fetch the thumbnail
+	fileName := path.Base(testAttachment.File.Path)
+	requestingAccount := suite.testAccounts["local_account_1"]
+
+	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+		AccountID: testAttachment.AccountID,
+		MediaType: string(media.TypeAttachment),
+		MediaSize: string(media.SizeSmall),
+		FileName:  fileName,
+	})
+
+	suite.NoError(errWithCode)
+	suite.NotNil(content)
+	b, err := io.ReadAll(content.Content)
+	suite.NoError(err)
+
+	if closer, ok := content.Content.(io.Closer); ok {
+		suite.NoError(closer.Close())
+	}
+
+	suite.Equal(thumbnailBytes, b)
+	suite.Equal("image/jpeg", content.ContentType)
+	suite.EqualValues(testAttachment.Thumbnail.FileSize, content.ContentLength)
 }
 
 func TestGetFileTestSuite(t *testing.T) {
