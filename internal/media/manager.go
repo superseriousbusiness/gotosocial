@@ -32,16 +32,35 @@ import (
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
 	// ProcessMedia begins the process of decoding and storing the given data as an attachment.
-	// It will return a pointer to a Media struct upon which further actions can be performed, such as getting
+	// It will return a pointer to a ProcessingMedia struct upon which further actions can be performed, such as getting
 	// the finished media, thumbnail, attachment, etc.
 	//
-	// data should be a function that the media manager can call to return raw bytes of a piece of media.
+	// data should be a function that the media manager can call to return a reader containing the media data.
+	//
+	// postData will be called after data has been called; it can be used to clean up any remaining resources.
+	// The provided function can be nil, in which case it will not be executed.
 	//
 	// accountID should be the account that the media belongs to.
 	//
 	// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
-	ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
-	ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
+	ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error)
+	// ProcessEmoji begins the process of decoding and storing the given data as an emoji.
+	// It will return a pointer to a ProcessingEmoji struct upon which further actions can be performed, such as getting
+	// the finished media, thumbnail, attachment, etc.
+	//
+	// data should be a function that the media manager can call to return a reader containing the emoji data.
+	//
+	// postData will be called after data has been called; it can be used to clean up any remaining resources.
+	// The provided function can be nil, in which case it will not be executed.
+	//
+	// shortcode should be the emoji shortcode without the ':'s around it.
+	//
+	// id is the database ID that should be used to store the emoji.
+	//
+	// uri is the ActivityPub URI/ID of the emoji.
+	//
+	// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
+	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// NumWorkers returns the total number of workers available to this manager.
 	NumWorkers() int
 	// QueueSize returns the total capacity of the queue.
@@ -101,8 +120,8 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	return m, nil
 }
 
-func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
-	processingMedia, err := m.preProcessMedia(ctx, data, accountID, ai)
+func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+	processingMedia, err := m.preProcessMedia(ctx, data, postData, accountID, ai)
 	if err != nil {
 		return nil, err
 	}
@@ -125,8 +144,8 @@ func (m *manager) ProcessMedia(ctx context.Context, data DataFunc, accountID str
 	return processingMedia, nil
 }
 
-func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
-	processingEmoji, err := m.preProcessEmoji(ctx, data, shortcode, id, uri, ai)
+func (m *manager) ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error) {
+	processingEmoji, err := m.preProcessEmoji(ctx, data, postData, shortcode, id, uri, ai)
 	if err != nil {
 		return nil, err
 	}

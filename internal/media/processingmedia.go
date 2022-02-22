@@ -48,6 +48,7 @@ type ProcessingMedia struct {
 
 	attachment *gtsmodel.MediaAttachment
 	data       DataFunc
+	postData   PostDataCallbackFunc
 	read       bool // bool indicating that data function has been triggered already
 
 	thumbState    int32 // the processing state of the media thumbnail
@@ -313,10 +314,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	p.read = true
+
+	if p.postData != nil {
+		return p.postData(ctx)
+	}
+
 	return nil
 }
 
-func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
+func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
 	id, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err
@@ -403,6 +409,7 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, accountID 
 	processingMedia := &ProcessingMedia{
 		attachment:    attachment,
 		data:          data,
+		postData:      postData,
 		thumbState:    int32(received),
 		fullSizeState: int32(received),
 		database:      m.db,
