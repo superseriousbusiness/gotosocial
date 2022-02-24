@@ -1,0 +1,33 @@
+version: "3.3"
+
+services:
+  gotosocial:
+    image: superseriousbusiness/gotosocial:0.2.0
+    networks:
+      - gotosocial
+    ports:
+     - "127.0.0.1:8080:8080" # If you don't want to use the live feature, you can comment this line
+    volumes:
+      - ${PWD}/docker-volumes/data:/gotosocial/storage
+      - ${PWD}/config.yaml:/config/config.yaml
+    command: ["--config-path", "/config/config.yaml"]
+    depends_on:
+      - gotosocial_postgres
+    restart: "always"
+
+  gotosocial_postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: gotosocial
+      POSTGRES_USER: gotosocial
+      POSTGRES_PASSWORD: # $(openssl rand -hex 16)
+    volumes:
+      - ./docker-volumes/db:/var/lib/postgresql/data
+    restart: "always"
+    networks:
+      - gotosocial
+
+networks:
+  gotosocial:
+    ipam:
+      driver: default
