@@ -18,3 +18,6 @@ dist/
 
 # exclude the copy of swagger.yaml moved into assets during packaging
 web/assets/swagger.yaml
+
+# exludes docker-volume from exemple/docker-compose
+example/docker-compose/docker-volume
