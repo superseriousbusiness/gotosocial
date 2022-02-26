@@ -54,15 +54,55 @@ dockers:
     goos: linux
     goarch: amd64
     image_templates:
-    - "superseriousbusiness/gotosocial:latest"
-    - "superseriousbusiness/gotosocial:{{ .Version }}"
+    # - "superseriousbusiness/{{ .ProjectName }}:latest"
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
     build_flag_templates:
+    - --platform=linux/amd64
     - "--label=org.opencontainers.image.created={{.Date}}"
     - "--label=org.opencontainers.image.title={{.ProjectName}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
     - web
+  -
+    goos: linux
+    goarch: arm64
+    image_templates:
+    # - "superseriousbusiness/{{ .ProjectName }}:latest"
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
+    build_flag_templates:
+    - --platform=linux/arm64/v8
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+  -
+    goos: linux
+    goarch: arm
+    image_templates:
+    # - "superseriousbusiness/{{ .ProjectName }}:latest"
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7"
+    build_flag_templates:
+    - --platform=linux/arm/v7
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+docker_manifests:
+  - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7
+  - name_template: superseriousbusiness/{{ .ProjectName }}:latest
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7
 archives:
   # https://goreleaser.com/customization/archive/
   -
