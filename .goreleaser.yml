@@ -7,16 +7,15 @@ before:
   - go mod tidy
   - go fmt ./...
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
-  - swagger generate spec -o docs/api/swagger.yaml --scan-models
-  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
+  #- swagger generate spec -o docs/api/swagger.yaml --scan-models
+  #- sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
   # install and bundle the web assets and styling
   - yarn install --cwd web/gotosocial-styling
   - node web/gotosocial-styling/index.js --build-dir="web/assets"
 builds:
   # https://goreleaser.com/customization/build/
-  -
-    main: ./cmd/gotosocial
+  - main: ./cmd/gotosocial
     binary: gotosocial
     ldflags:
       - -s
@@ -39,6 +38,9 @@ builds:
       - amd64
       - arm
       - arm64
+    goarm:
+      - 6
+      - 7
     ignore:
       # build freebsd only for amd64
       - goos: freebsd
@@ -50,59 +52,77 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
 dockers:
   # https://goreleaser.com/customization/docker/
-  -
+  - image_templates:
+      - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
+    dockerfile: Dockerfile
+    use: buildx
     goos: linux
     goarch: amd64
-    image_templates:
-    # - "superseriousbusiness/{{ .ProjectName }}:latest"
-    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
     build_flag_templates:
-    - --platform=linux/amd64
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
-  -
+      - web
+  - image_templates:
+      - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
+    dockerfile: Dockerfile
+    use: buildx
     goos: linux
     goarch: arm64
-    image_templates:
-    # - "superseriousbusiness/{{ .ProjectName }}:latest"
-    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
     build_flag_templates:
-    - --platform=linux/arm64/v8
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm64/v8"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
-  -
+      - web
+  - image_templates:
+      - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7"
+    dockerfile: Dockerfile
+    use: buildx
     goos: linux
     goarch: arm
-    image_templates:
-    # - "superseriousbusiness/{{ .ProjectName }}:latest"
-    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7"
+    goarm: "7"
     build_flag_templates:
-    - --platform=linux/arm/v7
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-    - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/arm/v7"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
     extra_files:
-    - web
+      - web
+  - image_templates:
+      - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: "6"
+    build_flag_templates:
+      - "--platform=linux/arm/v6"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+      - web
 docker_manifests:
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6
   - name_template: superseriousbusiness/{{ .ProjectName }}:latest
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6
 archives:
   # https://goreleaser.com/customization/archive/
   -
