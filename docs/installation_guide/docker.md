@@ -7,7 +7,7 @@ Currently the docker images only support the amd64 architechture. In the future 
 GoToSocial can be configured using [Environment Variables](../configuration/index.md#environment-variables) if you wish, allowing your GoToSocial configuration to be embedded inside your docker container configuration.
 
 ## Run with Docker Compose (recommended)
-Assuming you will be using something like [docker compose](https://docs.docker.com/compose/ "Docker Compose Docs") to configure your GoToSocial docker container, you might want to follow the next Steps.
+This guide will lead you through the installation with [docker compose](https://docs.docker.com/compose/ "Docker Compose Docs"), so you might want to follow the next Steps.
 
 ### Create a Working Dir
 You need a Working Directory in which the data of the PostgreSQL and the GoToSocial container will be located, so create this directory for example with the following command. 
@@ -18,7 +18,7 @@ mkdir -p /docker/gotosocial
 cd /docker/gotosocial
 ```
 ### Get the latest docker-compose.yaml and config.yaml
-You can get an example [docker-compose.yaml](../../example/docker-compose/docker-compose.yaml "Example docker-compose.yaml") and [config.yaml](../../example/config.yaml "Example config.yaml") here, which you can download with wget.
+You can get an example [docker-compose.yaml](../../example/docker-compose/docker-compose.yaml "Example docker-compose.yaml") and [config.yaml](../../example/config.yaml "Example config.yaml") here, which you can download with wget for example.
 
 ```shell
 wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml
@@ -26,7 +26,7 @@ wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/exam
 ```
 
 ### Edit the docker-compose.yaml
-You can modify the docker-compose.yaml to our needs, but in any case you should generate a Postgres password and bind it as environment variable into the postgreSQL container. For this we can write the password directly into the docker-compose.yaml like in the example or we create an [.env file](https://docs.docker.com/compose/environment-variables/#the-env-file "Docker Docs") with which we load the environment variables into the container.
+You can modify the docker-compose.yaml to your needs, but in any case you should generate a Postgres password and bind it as environment variable into the postgreSQL container. For this we can write the password directly into the docker-compose.yaml like in the example or we create an [.env file](https://docs.docker.com/compose/environment-variables/#the-env-file "Docker Docs") that will load the environment variables into the container. You may also want to check the current [GoToSocial version](https://github.com/superseriousbusiness/gotosocial/releases) and adjust the image in docker-compose.yaml.
 
 ```shell
 $EDITOR docker-compose.yaml
@@ -56,12 +56,12 @@ First of all, we have to find the right Container ID so we will check the Contai
 If we execute the command like this, we will get an output similar to the following:
 
 ```shell
-CONTAINER ID   IMAGE                                   COMMAND                  CREATED          STATUS          PORTS                      NAMES
-e190f1e6335f   superseriousbusiness/gotosocial:0.2.0   "/gotosocial/gotosoc…"   12 minutes ago   Up 12 minutes   127.0.0.1:8080->8080/tcp   docker-compose-gotosocial-1
-5a2c56181ada   postgres:14-alpine                      "docker-entrypoint.s…"   22 minutes ago   Up 19 minutes   5432/tcp                   docker-compose-gotosocial_postgres-1
+CONTAINER ID   IMAGE                                      COMMAND                  CREATED          STATUS          PORTS                      NAMES
+e190f1e6335f   superseriousbusiness/gotosocial:$VERSION   "/gotosocial/gotosoc…"   12 minutes ago   Up 12 minutes   127.0.0.1:8080->8080/tcp   docker-compose-gotosocial-1
+5a2c56181ada   postgres:14-alpine                         "docker-entrypoint.s…"   22 minutes ago   Up 19 minutes   5432/tcp                   docker-compose-gotosocial_postgres-1
 ```
 
-Now we take the container ID of the container with the image superseriousbusiness/gotosocial:0.2.0 and build ourselves the following commands.
+Now we take the container ID of the container with the image superseriousbusiness/gotosocial:$VERSION and build ourselves the following commands.
 
 ```shell
 # Creates a User

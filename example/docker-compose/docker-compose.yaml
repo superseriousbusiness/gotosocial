@@ -8,8 +8,8 @@ services:
     ports:
      - "127.0.0.1:8080:8080" # If you don't want to use the live feature, you can comment this line
     volumes:
-      - ${PWD}/docker-volumes/data:/gotosocial/storage
-      - ${PWD}/config.yaml:/config/config.yaml
+      - ./docker-volumes/data:/gotosocial/storage
+      - ./config.yaml:/config/config.yaml
     command: ["--config-path", "/config/config.yaml"]
     depends_on:
       - gotosocial_postgres
