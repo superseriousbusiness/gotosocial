@@ -1,5 +1,5 @@
 # bundle the admin webapp
-FROM node:16.9.0-alpine3.14 AS admin_builder
+FROM node:17.6.0-alpine3.15 AS admin_builder
 RUN apk update && apk upgrade --no-cache
 RUN apk add git
 
@@ -9,7 +9,7 @@ WORKDIR /gotosocial-admin
 RUN npm install
 RUN node index.js
 
-FROM alpine:3.14.2 AS executor
+FROM alpine:3.15.0 AS executor
 RUN apk update && apk upgrade --no-cache
 
 # copy over the binary from the first stage
