@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.17.5-alpine3.14
+    image: golang:1.17.7-alpine3.14
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -43,7 +43,7 @@ steps:
           - pull_request
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.2 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -72,7 +72,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.2 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -149,6 +149,6 @@ steps:
 
 ---
 kind: signature
-hmac: ea1a9c8fc0a872f43146651caeae4f724ca6a45c780456af5a1cbd093d9c51c5
+hmac: d268be4e8b19f58c51ad7385141913e45322f32e75fff20f9230dfd390c6e30b
 
 ...
