@@ -20,7 +20,7 @@ services:
     environment:
       POSTGRES_DB: gotosocial
       POSTGRES_USER: gotosocial
-      POSTGRES_PASSWORD: # $(openssl rand -hex 16)
+      POSTGRES_PASSWORD: # Create a Password for example with "openssl rand -hex 16"
     volumes:
       - ./docker-volumes/db:/var/lib/postgresql/data
     restart: "always"
