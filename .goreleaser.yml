@@ -7,8 +7,8 @@ before:
   - go mod tidy
   - go fmt ./...
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
-  #- swagger generate spec -o docs/api/swagger.yaml --scan-models
-  #- sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
+  - swagger generate spec -o docs/api/swagger.yaml --scan-models
+  - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
   # install and bundle the web assets and styling
   - yarn install --cwd web/gotosocial-styling
