@@ -57,7 +57,12 @@ steps:
       - git fetch --tags
       - /go/dockerlogin.sh
       - goreleaser release --rm-dist --snapshot
-      - docker push superseriousbusiness/gotosocial:latest
+      - docker push superseriousbusiness/gotosocial:latest-armv6 && 
+      - docker push superseriousbusiness/gotosocial:latest-armv7
+      - docker push superseriousbusiness/gotosocial:latest-arm64v8
+      - docker push superseriousbusiness/gotosocial:latest-amd64
+      - docker manifest create superseriousbusiness/gotosocial:latest superseriousbusiness/gotosocial:latest-armv6 superseriousbusiness/gotosocial:latest-armv7 superseriousbusiness/gotosocial:latest-amd64 superseriousbusiness/gotosocial:latest-arm64v8
+      - docker manifest push superseriousbusiness/gotosocial:latest
     when:
       event:
         include:
@@ -144,6 +149,6 @@ steps:
 
 ---
 kind: signature
-hmac: 0487be0a2c9224c20cf067f94b3a458227e8b5465198b2245266d17156355b98
+hmac: ea1a9c8fc0a872f43146651caeae4f724ca6a45c780456af5a1cbd093d9c51c5
 
 ...
