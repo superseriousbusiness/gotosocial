@@ -57,7 +57,13 @@ steps:
       - git fetch --tags
       - /go/dockerlogin.sh
       - goreleaser release --rm-dist --snapshot
+      - docker push superseriousbusiness/gotosocial:latest-amd64
+      - docker push superseriousbusiness/gotosocial:latest-arm64v8
+      - docker push superseriousbusiness/gotosocial:latest-armv7
+      - docker push superseriousbusiness/gotosocial:latest-armv6
       - docker push superseriousbusiness/gotosocial:latest
+      - docker manifest create superseriousbusiness/gotosocial:latest superseriousbusiness/gotosocial:latest-armv6 superseriousbusiness/gotosocial:latest-armv7 superseriousbusiness/gotosocial:latest-amd64 superseriousbusiness/gotosocial:latest-arm64v8
+      - docker manifest push superseriousbusiness/gotosocial:latest
     when:
       event:
         include:
