@@ -3,7 +3,7 @@ version: "3.3"
 services:
   gotosocial:
     image: superseriousbusiness/gotosocial:0.2.0
-    user: "gotosocial"
+    user: "1000:1000"
     networks:
       - gotosocial
     ports:
