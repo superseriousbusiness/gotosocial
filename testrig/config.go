@@ -86,6 +86,7 @@ var TestDefaults = config.Values{
 	MediaVideoMaxSize:        5242880, // 5mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
+	MediaRemoteCacheDays:     30,
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",
