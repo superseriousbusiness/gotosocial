@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.17.5-alpine3.14
+    image: golang:1.17.7-alpine3.14
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -43,7 +43,7 @@ steps:
           - pull_request
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.3 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -57,7 +57,12 @@ steps:
       - git fetch --tags
       - /go/dockerlogin.sh
       - goreleaser release --rm-dist --snapshot
-      - docker push superseriousbusiness/gotosocial:latest
+      - docker push superseriousbusiness/gotosocial:latest-armv6 && 
+      - docker push superseriousbusiness/gotosocial:latest-armv7
+      - docker push superseriousbusiness/gotosocial:latest-arm64v8
+      - docker push superseriousbusiness/gotosocial:latest-amd64
+      - docker manifest create superseriousbusiness/gotosocial:latest superseriousbusiness/gotosocial:latest-armv6 superseriousbusiness/gotosocial:latest-armv7 superseriousbusiness/gotosocial:latest-amd64 superseriousbusiness/gotosocial:latest-arm64v8
+      - docker manifest push superseriousbusiness/gotosocial:latest
     when:
       event:
         include:
@@ -67,7 +72,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.0.1 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.3 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -144,6 +149,6 @@ steps:
 
 ---
 kind: signature
-hmac: 0487be0a2c9224c20cf067f94b3a458227e8b5465198b2245266d17156355b98
+hmac: 40ac973022e4bf7354a30b66ab660c4528be2667d98ff6e859386bfa24fa5dae
 
 ...
