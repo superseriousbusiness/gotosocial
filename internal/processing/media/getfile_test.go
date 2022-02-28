@@ -111,6 +111,56 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
 }
 
+func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
+	ctx := context.Background()
+
+	// uncache the file from local
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+	testAttachment.Cached = false
+	err := suite.db.UpdateByPrimaryKey(ctx, testAttachment)
+	suite.NoError(err)
+	err = suite.storage.Delete(testAttachment.File.Path)
+	suite.NoError(err)
+	err = suite.storage.Delete(testAttachment.Thumbnail.Path)
+	suite.NoError(err)
+
+	// now fetch it
+	fileName := path.Base(testAttachment.File.Path)
+	requestingAccount := suite.testAccounts["local_account_1"]
+
+	content, errWithCode := suite.mediaProcessor.GetFile(ctx, requestingAccount, &apimodel.GetContentRequestForm{
+		AccountID: testAttachment.AccountID,
+		MediaType: string(media.TypeAttachment),
+		MediaSize: string(media.SizeOriginal),
+		FileName:  fileName,
+	})
+
+	suite.NoError(errWithCode)
+	suite.NotNil(content)
+
+	// only read the first kilobyte and then stop
+	b := make([]byte, 1024)
+	_, err = content.Content.Read(b)
+	suite.NoError(err)
+
+	// close the reader
+	if closer, ok := content.Content.(io.Closer); ok {
+		suite.NoError(closer.Close())
+	}
+
+	time.Sleep(2 * time.Second) // wait a few seconds for the media manager to finish doing stuff
+
+	// the attachment should still be updated in the database even though the caller hung up
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+	suite.NoError(err)
+	suite.True(dbAttachment.Cached)
+
+	// the file should be back in storage at the same path as before
+	refreshedBytes, err := suite.storage.Get(testAttachment.File.Path)
+	suite.NoError(err)
+	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
+}
+
 func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	ctx := context.Background()
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
