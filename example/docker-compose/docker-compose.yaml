@@ -3,10 +3,11 @@ version: "3.3"
 services:
   gotosocial:
     image: superseriousbusiness/gotosocial:0.2.0
+    user: "gotosocial"
     networks:
       - gotosocial
     ports:
-     - "127.0.0.1:8080:8080" # If you don't want to use the live feature, you can comment this line
+     - "127.0.0.1:8080:8080"
     volumes:
       - ./docker-volumes/data:/gotosocial/storage
       - ./config.yaml:/config/config.yaml

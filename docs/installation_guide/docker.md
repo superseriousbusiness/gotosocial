@@ -2,8 +2,6 @@
 
 The Official GoToSocial docker images are provided through [docker hub](https://hub.docker.com/r/superseriousbusiness/gotosocial "docker hub gotosocial").
 
-Currently the docker images only support the amd64 architechture. In the future we will add support for more architechtures. For now if you wish to run GoToSocial on, for example, a Raspberry Pi, you may [build the docker image yourself](https://github.com/ForestJohnson/gotosocial/compare/main...forest-jank-multi-arch-docker-build)
-
 GoToSocial can be configured using [Environment Variables](../configuration/index.md#environment-variables) if you wish, allowing your GoToSocial configuration to be embedded inside your docker container configuration.
 
 ## Run with Docker Compose (recommended)
@@ -37,7 +35,7 @@ When we want to use the config.yaml, we should make the following changes to con
 | --------------- | ------ |
 | host            | Hostname of your Inctanse e.g. gts.example.com |
 | account-domain  | Domain to use when federating profiles e.g. gts.example.com |
-| trusted-proxies | We need to trust our hostmashine and the Docker Network e.g.<br>- "127.0.0.1/32"<br>- "10.0.0.0/8"<br>- "172.16.0.0/12"<br>- "192.168.0.0/16" |
+| trusted-proxies | We need to trust our host machine and the Docker Network e.g.<br>- "127.0.0.1/32"<br>- "10.0.0.0/8"<br>- "172.16.0.0/12"<br>- "192.168.0.0/16" |
 | db-address      | gotosocial_postgres |
 | db-user         | gotosocial |
 | db-password     | same password as postgres environment $POSTGRES_PASSWORD |
@@ -104,13 +102,11 @@ $EDITOR .env
 ```
 GTS_PORT=8080
 GTS_PROTOCOL=https
-GTS_TRUSTED_PROXIES=0.0.0.0/0
+GTS_TRUSTED_PROXIES=127.0.0.1 # should be the host machine and the Docker Network e.g. "127.0.0.1/32", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"
 GTS_HOST=gotosocial.example.com
 GTS_ACCOUNT_DOMAIN=gotosocial.example.com
 GTS_DB_TYPE=sqlite
 GTS_DB_ADDRESS=/gotosocial/database/sqlite.db
-GTS_STORAGE_SERVE_PROTOCOL=https
-GTS_STORAGE_SERVE_HOST=gotosocial.example.com
 GTS_STORAGE_SERVE_BASE_PATH=/gotosocial/storage
 GTS_LETSENCRYPT_ENABLED=false
 ```
