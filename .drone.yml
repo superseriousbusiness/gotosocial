@@ -43,7 +43,7 @@ steps:
           - pull_request
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.0.2 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.3 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -72,7 +72,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.0.2 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.0.3 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -149,6 +149,6 @@ steps:
 
 ---
 kind: signature
-hmac: d268be4e8b19f58c51ad7385141913e45322f32e75fff20f9230dfd390c6e30b
+hmac: 40ac973022e4bf7354a30b66ab660c4528be2667d98ff6e859386bfa24fa5dae
 
 ...
