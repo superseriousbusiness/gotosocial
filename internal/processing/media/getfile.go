@@ -19,6 +19,7 @@
 package media
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -132,8 +133,6 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 
 	var data media.DataFunc
 	var postDataCallback media.PostDataCallbackFunc
-	var pipeReader *io.PipeReader
-	var pipeWriter *io.PipeWriter
 
 	if mediaSize == media.SizeSmall {
 		// if it's the thumbnail that's requested then the user will have to wait a bit while we process the
@@ -153,14 +152,23 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		//
 		// this looks a bit like this:
 		//
-		//                http fetch                     pipe
-		// remote server ------------> data function ----------> api caller
+		//                http fetch                   buffered pipe
+		// remote server ------------> data function ----------------> api caller
 		//                                   |
 		//                                   | tee
 		//                                   |
 		//                                   ▼
 		//                            instance storage
-		pipeReader, pipeWriter = io.Pipe()
+
+		// Buffer each end of the pipe, so that if the caller drops the connection during the flow, the tee
+		// reader can continue without having to worry about tee-ing into a closed or blocked pipe.
+		pipeReader, pipeWriter := io.Pipe()
+		bufferedWriter := bufio.NewWriterSize(pipeWriter, int(attachmentContent.ContentLength))
+		bufferedReader := bufio.NewReaderSize(pipeReader, int(attachmentContent.ContentLength))
+
+		// the caller will read from the buffered reader, so it doesn't matter if they drop out without reading everything
+		attachmentContent.Content = bufferedReader
+
 		data = func(innerCtx context.Context) (io.Reader, int, error) {
 			transport, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
 			if err != nil {
@@ -172,15 +180,25 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 				return nil, 0, err
 			}
 
-			// everything read from the readCloser by the media manager will be written into the pipeWriter
-			teeReader := io.TeeReader(readCloser, pipeWriter)
+			// everything read from the readCloser by the media manager will be written into the bufferedWriter
+			teeReader := io.TeeReader(readCloser, bufferedWriter)
 			return teeReader, fileSize, nil
 		}
 
 		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;
 		// we don't need to close the reader here because that's the caller's responsibility
 		postDataCallback = func(innerCtx context.Context) error {
-			return pipeWriter.Close()
+			// flush the buffered writer into the buffer of the reader...
+			if err := bufferedWriter.Flush(); err != nil {
+				return err
+			}
+
+			// and close the underlying pipe writer
+			if err := pipeWriter.Close(); err != nil {
+				return err
+			}
+
+			return nil
 		}
 	}
 
@@ -200,8 +218,6 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		return p.streamFromStorage(storagePath, attachmentContent)
 	}
 
-	// otherwise, return the pipeReader, which will have streamed data from the remote server put in it
-	attachmentContent.Content = pipeReader
 	return attachmentContent, nil
 }
 
