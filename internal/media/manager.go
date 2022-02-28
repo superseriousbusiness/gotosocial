@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
@@ -122,6 +123,12 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 		return nil, errors.New("could not start worker pool")
 	}
 	logrus.Debugf("started media manager worker pool with %d workers and queue capacity of %d", numWorkers, queueSize)
+
+	c := cron.New()
+	c.AddFunc("@every 1d", func() {
+		aaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	})
+	c.Start()
 
 	return m, nil
 }
