@@ -49,26 +49,39 @@ $EDITOR config.yaml
 docker-compose up -d
 ```
 
+After running this command, you should get an output like:
+```shell
+❯ docker-compose up -d
+[+] Running 2/2
+ ⠿ Container docker1-gotosocial_postgres-1  Started
+ ⠿ Container docker1-gotosocial-1           Started
+```
+
+this names can be used to create your first user described below.
+
 ### Create your first User
-First of all, we have to find the right Container ID so we will check the Container ID with `docker ps` or if we got tons of containers running `docker ps -f NAME=gotosocial`.
-If we execute the command like this, we will get an output similar to the following:
+
+Take the names from above command `docker-compose up -d` and replace $CONTAINER_NAME with the name e.g. `docker1-gotosocial-1`
+
+```shell
+# Creates a User
+docker exec -ti $CONTAINER_NAME /gotosocial/gotosocial --config-path /config/config.yaml admin account create --username $USERNAME --email $USEREMAIL --password $SuperSecurePassword
+# Confirms the User, so that the User can LogIn
+docker exec -ti $CONTAINER_NAME /gotosocial/gotosocial --config-path /config/config.yaml admin account confirm --username $USERNAME
+# Makes the User to an Admin
+docker exec -ti $CONTAINER_NAME/gotosocial/gotosocial --config-path /config/config.yaml admin account promote --username $USERNAME
+```
+
+#### Lost the Name of the Container
+If you forgot what the container name of your GoToSocial container was, you can figure it out with the command `docker ps -f NAME=gotosocial`.
+If you execute the command, you will get an output similar to the following:
 
 ```shell
 CONTAINER ID   IMAGE                                      COMMAND                  CREATED          STATUS          PORTS                      NAMES
 e190f1e6335f   superseriousbusiness/gotosocial:$VERSION   "/gotosocial/gotosoc…"   12 minutes ago   Up 12 minutes   127.0.0.1:8080->8080/tcp   docker-compose-gotosocial-1
 5a2c56181ada   postgres:14-alpine                         "docker-entrypoint.s…"   22 minutes ago   Up 19 minutes   5432/tcp                   docker-compose-gotosocial_postgres-1
 ```
-
-Now we take the container ID of the container with the image superseriousbusiness/gotosocial:$VERSION and build ourselves the following commands.
-
-```shell
-# Creates a User
-docker exec -ti $CONTAINER_ID /gotosocial/gotosocial --config-path /config/config.yaml admin account create --username $USERNAME --email $USEREMAIL --password $SuperSecurePassword
-# Confirms the User, so that the User can LogIn
-docker exec -ti $CONTAINER_ID /gotosocial/gotosocial --config-path /config/config.yaml admin account confirm --username $USERNAME
-# Makes the User to an Admin
-docker exec -ti $CONTAINER_ID /gotosocial/gotosocial --config-path /config/config.yaml admin account promote --username $USERNAME
-```
+Now you take the container name from the container with image superseriousbusiness/gotosocial:$VERSION and build ourselves the following commands.
 
 ## Run with Docker Run
 
