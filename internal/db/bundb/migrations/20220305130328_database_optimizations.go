@@ -255,16 +255,6 @@ func init() {
 				return err
 			}
 
-			// for media cleanup jobs, attachments will be selected on a bunch of fields so make an index of this...
-			if _, err := tx.
-				NewCreateIndex().
-				Model(&gtsmodel.MediaAttachment{}).
-				Index("media_attachments_cleanup_idx").
-				Column("cached", "avatar", "header", "created_at", "remote_url").
-				Exec(ctx); err != nil {
-				return err
-			}
-
 			// TOKENS are usually selected via Access field for user-level tokens
 			if _, err := tx.
 				NewCreateIndex().
