@@ -47,5 +47,9 @@ func (q *debugQueryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 		"operation": event.Operation(),
 	})
 
-	l.Tracef("[%s] %s", dur, event.Operation())
+	if logrus.GetLevel() == logrus.TraceLevel {
+		l.Tracef("[%s] %s", dur, event.Query)
+	} else {
+		l.Debugf("[%s] %s", dur, event.Operation())
+	}
 }
