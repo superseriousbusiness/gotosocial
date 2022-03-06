@@ -66,9 +66,7 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 	q := n.conn.
 		NewSelect().
 		Model(&notifications).
-		Column("id").
-		Where("target_account_id = ?", accountID).
-		Order("id DESC")
+		Column("id")
 
 	if maxID != "" {
 		q = q.Where("id < ?", maxID)
@@ -77,6 +75,10 @@ func (n *notificationDB) GetNotifications(ctx context.Context, accountID string,
 	if sinceID != "" {
 		q = q.Where("id > ?", sinceID)
 	}
+
+	q = q.
+		Where("target_account_id = ?", accountID).
+		Order("id DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)
@@ -120,8 +122,7 @@ func (n *notificationDB) putNotificationCache(notif *gtsmodel.Notification) {
 }
 
 func (n *notificationDB) getNotificationDB(ctx context.Context, id string, dst *gtsmodel.Notification) error {
-	q := n.newNotificationQ(dst).
-		Where("notification.id = ?", id)
+	q := n.newNotificationQ(dst).WherePK()
 
 	if err := q.Scan(ctx); err != nil {
 		return n.conn.ProcessError(err)
