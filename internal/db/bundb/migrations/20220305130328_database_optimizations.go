@@ -56,6 +56,15 @@ func init() {
 				return err
 			}
 
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Account{}).
+				Index("accounts_username_domain_idx"). // for selecting local accounts by username
+				Column("username", "domain").
+				Exec(ctx); err != nil {
+				return err
+			}
+
 			// NOTIFICATIONS are commonly selected by their target_account_id
 			if _, err := tx.
 				NewCreateIndex().
@@ -66,7 +75,7 @@ func init() {
 				return err
 			}
 
-			// STATUSES are selected in a few different ways, so we need a few indexes
+			// STATUSES are selected in many different ways, so we need quite few indexes
 			// to avoid queries becoming painfully slow as more statuses get stored
 			if _, err := tx.
 				NewCreateIndex().
@@ -82,6 +91,24 @@ func init() {
 				Model(&gtsmodel.Status{}).
 				Index("statuses_account_id_idx").
 				Column("account_id").
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Status{}).
+				Index("statuses_in_reply_to_account_id_idx").
+				Column("in_reply_to_account_id").
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Status{}).
+				Index("statuses_boost_of_account_id_idx").
+				Column("boost_of_account_id").
 				Exec(ctx); err != nil {
 				return err
 			}
@@ -109,6 +136,15 @@ func init() {
 				Model(&gtsmodel.Status{}).
 				Index("statuses_visibility_idx").
 				Column("visibility").
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Status{}).
+				Index("statuses_local_idx").
+				Column("local").
 				Exec(ctx); err != nil {
 				return err
 			}
@@ -225,6 +261,16 @@ func init() {
 				Model(&gtsmodel.MediaAttachment{}).
 				Index("media_attachments_cleanup_idx").
 				Column("cached", "avatar", "header", "created_at", "remote_url").
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// TOKENS are usually selected via Access field for user-level tokens
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Token{}).
+				Index("tokens_access_idx").
+				Column("access").
 				Exec(ctx); err != nil {
 				return err
 			}
