@@ -58,6 +58,7 @@ type KeyNames struct {
 	MediaVideoMaxSize        string
 	MediaDescriptionMinChars string
 	MediaDescriptionMaxChars string
+	MediaRemoteCacheDays     string
 
 	// storage
 	StorageBackend       string
@@ -138,6 +139,7 @@ var Keys = KeyNames{
 	MediaVideoMaxSize:        "media-video-max-size",
 	MediaDescriptionMinChars: "media-description-min-chars",
 	MediaDescriptionMaxChars: "media-description-max-chars",
+	MediaRemoteCacheDays:     "media-remote-cache-days",
 
 	StorageBackend:       "storage-backend",
 	StorageLocalBasePath: "storage-local-base-path",

@@ -57,7 +57,6 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 func (suite *BunDBStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
-
 	suite.db = testrig.NewTestDB()
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }

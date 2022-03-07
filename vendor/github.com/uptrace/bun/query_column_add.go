@@ -15,6 +15,8 @@ type AddColumnQuery struct {
 	ifNotExists bool
 }
 
+var _ Query = (*AddColumnQuery)(nil)
+
 func NewAddColumnQuery(db *DB) *AddColumnQuery {
 	q := &AddColumnQuery{
 		baseQuery: baseQuery{
@@ -50,7 +52,7 @@ func (q *AddColumnQuery) TableExpr(query string, args ...interface{}) *AddColumn
 }
 
 func (q *AddColumnQuery) ModelTableExpr(query string, args ...interface{}) *AddColumnQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 

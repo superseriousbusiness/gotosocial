@@ -63,6 +63,7 @@ func Media(cmd *cobra.Command, values config.Values) {
 	cmd.Flags().Int(config.Keys.MediaVideoMaxSize, values.MediaVideoMaxSize, usage.MediaVideoMaxSize)
 	cmd.Flags().Int(config.Keys.MediaDescriptionMinChars, values.MediaDescriptionMinChars, usage.MediaDescriptionMinChars)
 	cmd.Flags().Int(config.Keys.MediaDescriptionMaxChars, values.MediaDescriptionMaxChars, usage.MediaDescriptionMaxChars)
+	cmd.Flags().Int(config.Keys.MediaRemoteCacheDays, values.MediaRemoteCacheDays, usage.MediaRemoteCacheDays)
 }
 
 // Storage attaches flags pertaining to storage config.

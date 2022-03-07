@@ -115,7 +115,7 @@ type Processor interface {
 	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
 
 	// FileGet handles the fetching of a media attachment file via the fileserver.
-	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
 
 	// FollowRequestsGet handles the getting of the authed account's incoming follow requests
 	FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode)
@@ -270,7 +270,7 @@ func NewProcessor(
 	streamingProcessor := streaming.New(db, oauthServer)
 	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator)
 	adminProcessor := admin.New(db, tc, mediaManager, fromClientAPI)
-	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, storage)
+	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)
 	federationProcessor := federationProcessor.New(db, tc, federator, fromFederator)
 	filter := visibility.NewFilter(db)

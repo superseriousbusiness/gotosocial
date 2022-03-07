@@ -170,7 +170,7 @@ github.com/inconshreveable/mousetrap
 # github.com/jackc/chunkreader/v2 v2.0.1
 ## explicit; go 1.12
 github.com/jackc/chunkreader/v2
-# github.com/jackc/pgconn v1.10.1
+# github.com/jackc/pgconn v1.11.0
 ## explicit; go 1.12
 github.com/jackc/pgconn
 github.com/jackc/pgconn/internal/ctxwatch
@@ -187,10 +187,10 @@ github.com/jackc/pgproto3/v2
 # github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgtype v1.9.1
+# github.com/jackc/pgtype v1.10.0
 ## explicit; go 1.13
 github.com/jackc/pgtype
-# github.com/jackc/pgx/v4 v4.14.1
+# github.com/jackc/pgx/v4 v4.15.0
 ## explicit; go 1.13
 github.com/jackc/pgx/v4
 github.com/jackc/pgx/v4/internal/sanitize
@@ -244,6 +244,9 @@ github.com/quasoft/memstore
 # github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0
 ## explicit; go 1.12
 github.com/remyoudompheng/bigfft
+# github.com/robfig/cron/v3 v3.0.1
+## explicit; go 1.12
+github.com/robfig/cron/v3
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
@@ -492,7 +495,7 @@ github.com/tmthrgd/go-hex
 # github.com/ugorji/go/codec v1.2.6
 ## explicit; go 1.11
 github.com/ugorji/go/codec
-# github.com/uptrace/bun v1.0.19
+# github.com/uptrace/bun v1.0.20
 ## explicit; go 1.16
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
@@ -556,7 +559,7 @@ golang.org/x/net/idna
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20211210111614-af8b64212486
+# golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -658,13 +661,13 @@ gopkg.in/yaml.v3
 # lukechampine.com/uint128 v1.1.1
 ## explicit; go 1.12
 lukechampine.com/uint128
-# modernc.org/cc/v3 v3.35.18
+# modernc.org/cc/v3 v3.35.22
 ## explicit; go 1.15
 modernc.org/cc/v3
-# modernc.org/ccgo/v3 v3.12.92
+# modernc.org/ccgo/v3 v3.15.13
 ## explicit; go 1.16
 modernc.org/ccgo/v3/lib
-# modernc.org/libc v1.11.101
+# modernc.org/libc v1.14.5
 ## explicit; go 1.16
 modernc.org/libc
 modernc.org/libc/errno
@@ -689,6 +692,7 @@ modernc.org/libc/termios
 modernc.org/libc/time
 modernc.org/libc/unistd
 modernc.org/libc/utime
+modernc.org/libc/uuid
 modernc.org/libc/uuid/uuid
 modernc.org/libc/wctype
 # modernc.org/mathutil v1.4.1
@@ -700,7 +704,7 @@ modernc.org/memory
 # modernc.org/opt v0.1.1
 ## explicit; go 1.13
 modernc.org/opt
-# modernc.org/sqlite v1.14.2
+# modernc.org/sqlite v1.14.6
 ## explicit; go 1.16
 modernc.org/sqlite
 modernc.org/sqlite/lib

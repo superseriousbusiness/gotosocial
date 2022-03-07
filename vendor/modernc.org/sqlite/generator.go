@@ -157,6 +157,7 @@ var (
 		"-DSQLITE_ENABLE_FTS5",
 		"-DSQLITE_ENABLE_GEOPOLY",
 		"-DSQLITE_ENABLE_JSON1",
+		"-DSQLITE_ENABLE_MATH_FUNCTIONS",
 		"-DSQLITE_ENABLE_MEMORY_MANAGEMENT",
 		"-DSQLITE_ENABLE_OFFSET_SQL_FUNC",
 		"-DSQLITE_ENABLE_PREUPDATE_HOOK",
@@ -209,6 +210,7 @@ var (
 		"-DSQLITE_ENABLE_FTS5",
 		"-DSQLITE_ENABLE_GEOPOLY",
 		"-DSQLITE_ENABLE_JSON1",
+		"-DSQLITE_ENABLE_MATH_FUNCTIONS",
 		"-DSQLITE_ENABLE_MEMORY_MANAGEMENT",
 		"-DSQLITE_ENABLE_OFFSET_SQL_FUNC",
 		"-DSQLITE_ENABLE_PREUPDATE_HOOK",
@@ -254,12 +256,12 @@ var (
 		sz       int
 		dev      bool
 	}{
-		{sqliteDir, "https://www.sqlite.org/2021/sqlite-amalgamation-3370000.zip", 2457, false},
-		{sqliteSrcDir, "https://www.sqlite.org/2021/sqlite-src-3370000.zip", 12814, false},
+		{sqliteDir, "https://www.sqlite.org/2022/sqlite-amalgamation-3370200.zip", 2457, false},
+		{sqliteSrcDir, "https://www.sqlite.org/2022/sqlite-src-3370200.zip", 12814, false},
 	}
 
-	sqliteDir    = filepath.FromSlash("testdata/sqlite-amalgamation-3370000")
-	sqliteSrcDir = filepath.FromSlash("testdata/sqlite-src-3370000")
+	sqliteDir    = filepath.FromSlash("testdata/sqlite-amalgamation-3370200")
+	sqliteSrcDir = filepath.FromSlash("testdata/sqlite-src-3370200")
 )
 
 func download() {
@@ -397,7 +399,7 @@ func main() {
 	more = append(more, ndebug...)
 	download()
 	switch goos {
-	case "linux", "freebsd":
+	case "linux", "freebsd", "openbsd":
 		configProduction = append(configProduction, "-DSQLITE_OS_UNIX=1")
 	case "netbsd":
 		configProduction = append(configProduction, []string{
@@ -463,7 +465,7 @@ func configure(goos, goarch string) {
 	cmd.Run()
 	var args []string
 	switch goos {
-	case "linux", "freebsd", "netbsd":
+	case "linux", "freebsd", "netbsd", "openbsd":
 		// nop
 	case "darwin":
 		args = append(args, "--with-tcl=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Tcl.framework")
@@ -595,7 +597,7 @@ func makeTestfixture(goos, goarch string, more []string) {
 
 	var defines, includes []string
 	switch goos {
-	case "freebsd":
+	case "freebsd", "openbsd":
 		includes = []string{"-I/usr/local/include/tcl8.6"}
 	case "linux":
 		includes = []string{"-I/usr/include/tcl8.6"}

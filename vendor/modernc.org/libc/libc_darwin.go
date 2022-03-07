@@ -19,6 +19,7 @@ import (
 	"unicode"
 	"unsafe"
 
+	guuid "github.com/google/uuid"
 	"golang.org/x/sys/unix"
 	"modernc.org/libc/errno"
 	"modernc.org/libc/fcntl"
@@ -36,6 +37,7 @@ import (
 	"modernc.org/libc/termios"
 	"modernc.org/libc/time"
 	"modernc.org/libc/unistd"
+	"modernc.org/libc/uuid/uuid"
 	"modernc.org/libc/wctype"
 )
 
@@ -908,42 +910,6 @@ func Xfileno(t *TLS, stream uintptr) int32 {
 	return -1
 }
 
-// int mkstemps(char *template, int suffixlen);
-func Xmkstemps(t *TLS, template uintptr, suffixlen int32) int32 {
-	panic(todo(""))
-}
-
-// int mkstemps(char *template, int suffixlen);
-func Xmkstemps64(t *TLS, template uintptr, suffixlen int32) int32 {
-	len := uintptr(Xstrlen(t, template))
-	x := template + uintptr(len-6) - uintptr(suffixlen)
-	for i := uintptr(0); i < 6; i++ {
-		if *(*byte)(unsafe.Pointer(x + i)) != 'X' {
-			if dmesgs {
-				dmesg("%v: FAIL", origin(1))
-			}
-			t.setErrno(errno.EINVAL)
-			return -1
-		}
-	}
-
-	fd, err := tempFile(template, x)
-	if err != nil {
-		if dmesgs {
-			dmesg("%v: %v FAIL", origin(1), err)
-		}
-		t.setErrno(err)
-		return -1
-	}
-
-	return int32(fd)
-}
-
-// int mkstemp(char *template);
-func Xmkstemp(t *TLS, template uintptr) int32 {
-	return Xmkstemps64(t, template, 0)
-}
-
 func newFtsent(t *TLS, info int, path string, stat *unix.Stat_t, err syscall.Errno) (r *fts.FTSENT) {
 	var statp uintptr
 	if stat != nil {
@@ -1214,14 +1180,16 @@ func Xfork(t *TLS) int32 {
 	return -1
 }
 
+var emptyStr = [1]byte{}
+
 // char *setlocale(int category, const char *locale);
 func Xsetlocale(t *TLS, category int32, locale uintptr) uintptr {
-	return 0 //TODO
+	return uintptr(unsafe.Pointer(&emptyStr)) //TODO
 }
 
 // char *nl_langinfo(nl_item item);
 func Xnl_langinfo(t *TLS, item langinfo.Nl_item) uintptr {
-	panic(todo(""))
+	return uintptr(unsafe.Pointer(&emptyStr)) //TODO
 }
 
 // FILE *popen(const char *command, const char *type);
@@ -2000,5 +1968,63 @@ func Xungetc(t *TLS, c int32, stream uintptr) int32 {
 
 // int issetugid(void);
 func Xissetugid(t *TLS) int32 {
+	panic(todo(""))
+}
+
+var progname uintptr
+
+// const char *getprogname(void);
+func Xgetprogname(t *TLS) uintptr {
+	if progname != 0 {
+		return progname
+	}
+
+	var err error
+	progname, err = CString(filepath.Base(os.Args[0]))
+	if err != nil {
+		t.setErrno(err)
+		return 0
+	}
+
+	return progname
+}
+
+// void uuid_copy(uuid_t dst, uuid_t src);
+func Xuuid_copy(t *TLS, dst, src uintptr) {
+	*(*uuid.Uuid_t)(unsafe.Pointer(dst)) = *(*uuid.Uuid_t)(unsafe.Pointer(src))
+}
+
+// int uuid_parse( char *in, uuid_t uu);
+func Xuuid_parse(t *TLS, in uintptr, uu uintptr) int32 {
+	r, err := guuid.Parse(GoString(in))
+	if err != nil {
+		return -1
+	}
+
+	copy((*RawMem)(unsafe.Pointer(uu))[:unsafe.Sizeof(uuid.Uuid_t{})], r[:])
+	return 0
+}
+
+// struct __float2 { float __sinval; float __cosval; };
+
+// struct __float2 __sincosf_stret(float);
+func X__sincosf_stret(t *TLS, f float32) struct{ F__sinval, F__cosval float32 } {
+	panic(todo(""))
+}
+
+// struct __double2 { double __sinval; double __cosval; };
+
+// struct __double2 __sincos_stret(double);
+func X__sincos_stret(t *TLS, f float64) struct{ F__sinval, F__cosval float64 } {
+	panic(todo(""))
+}
+
+// struct __float2 __sincospif_stret(float);
+func X__sincospif_stret(t *TLS, f float32) struct{ F__sinval, F__cosval float32 } {
+	panic(todo(""))
+}
+
+// struct _double2 __sincospi_stret(double);
+func X__sincospi_stret(t *TLS, f float64) struct{ F__sinval, F__cosval float64 } {
 	panic(todo(""))
 }

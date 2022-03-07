@@ -53,6 +53,7 @@ var Defaults = Values{
 	MediaVideoMaxSize:        10485760, // 10mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
+	MediaRemoteCacheDays:     30,
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",

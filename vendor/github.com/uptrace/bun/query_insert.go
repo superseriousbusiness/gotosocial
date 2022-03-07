@@ -24,6 +24,8 @@ type InsertQuery struct {
 	replace bool
 }
 
+var _ Query = (*InsertQuery)(nil)
+
 func NewInsertQuery(db *DB) *InsertQuery {
 	q := &InsertQuery{
 		whereBaseQuery: whereBaseQuery{
@@ -71,7 +73,7 @@ func (q *InsertQuery) TableExpr(query string, args ...interface{}) *InsertQuery 
 }
 
 func (q *InsertQuery) ModelTableExpr(query string, args ...interface{}) *InsertQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 
@@ -159,6 +161,10 @@ func (q *InsertQuery) Operation() string {
 }
 
 func (q *InsertQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
 	fmter = formatterWithModel(fmter, q)
 
 	b, err = q.appendWith(fmter, b)

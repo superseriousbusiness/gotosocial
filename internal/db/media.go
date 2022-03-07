@@ -20,6 +20,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -28,4 +29,10 @@ import (
 type Media interface {
 	// GetAttachmentByID gets a single attachment by its ID
 	GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, Error)
+	// GetRemoteOlderThan gets limit n remote media attachments older than the given olderThan time.
+	// These will be returned in order of attachment.created_at descending (newest to oldest in other words).
+	//
+	// The selected media attachments will be those with both a URL and a RemoteURL filled in.
+	// In other words, media attachments that originated remotely, and that we currently have cached locally.
+	GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
 }

@@ -567,13 +567,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Blurhash:          "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "/gotosocial/storage/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg",
+				Path:        "01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    62529,
 				UpdatedAt:   time.Now().Add(-71 * time.Hour),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "/gotosocial/storage/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg",
+				Path:        "01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    6872,
 				UpdatedAt:   time.Now().Add(-71 * time.Hour),
@@ -582,6 +582,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_status_4_attachment_1": {
 			ID:        "01F8MH7TDVANYKWVE8VVKFPJTJ",
@@ -615,13 +616,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Blurhash:          "LEDara58O=t5EMSOENEN9]}?aK%0",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH7TDVANYKWVE8VVKFPJTJ.gif",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH7TDVANYKWVE8VVKFPJTJ.gif",
 				ContentType: "image/gif",
 				FileSize:    1109138,
 				UpdatedAt:   time.Now().Add(-1 * time.Hour),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH7TDVANYKWVE8VVKFPJTJ.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH7TDVANYKWVE8VVKFPJTJ.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    8803,
 				UpdatedAt:   time.Now().Add(-1 * time.Hour),
@@ -630,6 +631,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_unattached_1": {
 			ID:        "01F8MH8RMYQ6MSNY3JM2XT1CQ5",
@@ -663,13 +665,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Blurhash:          "LSAd]9ogDge-R:M|j=xWIto0xXWX",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    27759,
 				UpdatedAt:   time.Now().Add(30 * time.Second),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    6177,
 				UpdatedAt:   time.Now().Add(30 * time.Second),
@@ -678,6 +680,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_avatar": {
 			ID:        "01F8MH58A357CV5K7R7TJMSH6S",
@@ -711,13 +714,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Blurhash:          "LKK9MT,p|YSNDkJ-5rsmvnwcOoe:",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    457680,
 				UpdatedAt:   time.Now().Add(-47 * time.Hour),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    15374,
 				UpdatedAt:   time.Now().Add(-47 * time.Hour),
@@ -726,6 +729,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: true,
 			Header: false,
+			Cached: true,
 		},
 		"local_account_1_header": {
 			ID:        "01PFPMWK2FF0D9WMHEJHR07C3Q",
@@ -759,13 +763,13 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Blurhash:          "L26j{^WCs+R-N}jsxWj@4;WWxDoK",
 			Processing:        2,
 			File: gtsmodel.File{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    517226,
 				UpdatedAt:   time.Now().Add(-47 * time.Hour),
 			},
 			Thumbnail: gtsmodel.Thumbnail{
-				Path:        "/gotosocial/storage/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg",
 				ContentType: "image/jpeg",
 				FileSize:    42308,
 				UpdatedAt:   time.Now().Add(-47 * time.Hour),
@@ -774,6 +778,56 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			},
 			Avatar: false,
 			Header: true,
+			Cached: true,
+		},
+		"remote_account_1_status_1_attachment_1": {
+			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY0",
+			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
+			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg",
+			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
+			UpdatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
+			Type:      gtsmodel.FileTypeImage,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Small: gtsmodel.Small{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
+			ScheduledStatusID: "",
+			Blurhash:          "LARysgM_IU_3~pD%M_Rj_39FIAt6",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    19310,
+				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    20395,
+				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
+			},
+			Avatar: false,
+			Header: false,
+			Cached: true,
 		},
 	}
 }
@@ -847,6 +901,10 @@ func newTestStoredAttachments() map[string]filenames {
 		"local_account_1_header": {
 			Original: "team-fortress-original.jpeg",
 			Small:    "team-fortress-small.jpeg",
+		},
+		"remote_account_1_status_1_attachment_1": {
+			Original: "thoughtsofdog-original.jpeg",
+			Small:    "thoughtsofdog-small.jpeg",
 		},
 	}
 }
@@ -1202,6 +1260,33 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Likeable:                 true,
 			ActivityStreamsType:      ap.ObjectNote,
 		},
+		"remote_account_1_status_1": {
+			ID:                       "01FVW7JHQFSFK166WWKR8CBA6M",
+			URI:                      "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
+			URL:                      "http://fossbros-anonymous.io/@foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
+			Content:                  "dark souls status bot: \"thoughts of dog\"",
+			AttachmentIDs:            []string{"01FVW7RXPQ8YJHTEXYPE7Q8ZY0"},
+			CreatedAt:                TimeMustParse("2021-09-20T12:40:37+02:00"),
+			UpdatedAt:                TimeMustParse("2021-09-20T12:40:37+02:00"),
+			Local:                    false,
+			AccountURI:               "http://fossbros-anonymous.io/users/foss_satan",
+			MentionIDs:               []string{},
+			AccountID:                "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			InReplyToID:              "",
+			InReplyToAccountID:       "",
+			InReplyToURI:             "",
+			BoostOfID:                "",
+			ContentWarning:           "",
+			Visibility:               gtsmodel.VisibilityUnlocked,
+			Sensitive:                false,
+			Language:                 "en",
+			CreatedWithApplicationID: "",
+			Federated:                true,
+			Boostable:                true,
+			Replyable:                true,
+			Likeable:                 true,
+			ActivityStreamsType:      ap.ObjectNote,
+		},
 	}
 }
 
@@ -1501,9 +1586,19 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 	if err != nil {
 		panic(err)
 	}
+
+	thoughtsOfDogBytes, err := os.ReadFile(fmt.Sprintf("%s/thoughtsofdog-original.jpeg", relativePath))
+	if err != nil {
+		panic(err)
+	}
+
 	return map[string]RemoteAttachmentFile{
 		"https://s3-us-west-2.amazonaws.com/plushcity/media_attachments/files/106/867/380/219/163/828/original/88e8758c5f011439.jpg": {
 			Data:        beeBytes,
+			ContentType: "image/jpeg",
+		},
+		"http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg": {
+			Data:        thoughtsOfDogBytes,
 			ContentType: "image/jpeg",
 		},
 	}
