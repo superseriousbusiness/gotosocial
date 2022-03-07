@@ -137,8 +137,8 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 	}
 
 	// add a hook to just log queries and the time they take
-	// only do this for trace logging where performance isn't 1st concern
-	if logrus.GetLevel() >= logrus.TraceLevel {
+	// only do this for logging where performance isn't 1st concern
+	if logrus.GetLevel() >= logrus.DebugLevel {
 		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 
