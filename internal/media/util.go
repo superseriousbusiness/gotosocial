@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"github.com/h2non/filetype"
+	"github.com/sirupsen/logrus"
 )
 
 // parseContentType parses the MIME content type from a file, returning it as a string in the form (eg., "image/jpeg").
@@ -102,4 +103,18 @@ func ParseMediaSize(s string) (Size, error) {
 		return SizeStatic, nil
 	}
 	return "", fmt.Errorf("%s not a recognized MediaSize", s)
+}
+
+// logrusWrapper is just a util for passing the logrus logger into the cron logging system.
+type logrusWrapper struct {
+}
+
+// Info logs routine messages about cron's operation.
+func (l *logrusWrapper) Info(msg string, keysAndValues ...interface{}) {
+	logrus.Info("media manager cron logger: ", msg, keysAndValues)
+}
+
+// Error logs an error condition.
+func (l *logrusWrapper) Error(err error, msg string, keysAndValues ...interface{}) {
+	logrus.Error("media manager cron logger: ", err, msg, keysAndValues)
 }

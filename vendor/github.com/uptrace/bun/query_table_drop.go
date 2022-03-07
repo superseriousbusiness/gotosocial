@@ -15,6 +15,8 @@ type DropTableQuery struct {
 	ifExists bool
 }
 
+var _ Query = (*DropTableQuery)(nil)
+
 func NewDropTableQuery(db *DB) *DropTableQuery {
 	q := &DropTableQuery{
 		baseQuery: baseQuery{
@@ -50,7 +52,7 @@ func (q *DropTableQuery) TableExpr(query string, args ...interface{}) *DropTable
 }
 
 func (q *DropTableQuery) ModelTableExpr(query string, args ...interface{}) *DropTableQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 
@@ -58,6 +60,11 @@ func (q *DropTableQuery) ModelTableExpr(query string, args ...interface{}) *Drop
 
 func (q *DropTableQuery) IfExists() *DropTableQuery {
 	q.ifExists = true
+	return q
+}
+
+func (q *DropTableQuery) Cascade() *DropTableQuery {
+	q.cascade = true
 	return q
 }
 

@@ -20,6 +20,7 @@ package bundb
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -47,4 +48,27 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 		return nil, m.conn.ProcessError(err)
 	}
 	return attachment, nil
+}
+
+func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	q := m.conn.
+		NewSelect().
+		Model(&attachments).
+		Where("media_attachment.cached = true").
+		Where("media_attachment.avatar = false").
+		Where("media_attachment.header = false").
+		Where("media_attachment.created_at < ?", olderThan).
+		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
+		Order("media_attachment.created_at DESC")
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, m.conn.ProcessError(err)
+	}
+	return attachments, nil
 }

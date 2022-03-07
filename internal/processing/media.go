@@ -38,6 +38,6 @@ func (p *processor) MediaUpdate(ctx context.Context, authed *oauth.Auth, mediaAt
 	return p.mediaProcessor.Update(ctx, authed.Account, mediaAttachmentID, form)
 }
 
-func (p *processor) FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, error) {
+func (p *processor) FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
 	return p.mediaProcessor.GetFile(ctx, authed.Account, form)
 }

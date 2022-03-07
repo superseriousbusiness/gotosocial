@@ -51,6 +51,7 @@ type Values struct {
 	MediaVideoMaxSize        int
 	MediaDescriptionMinChars int
 	MediaDescriptionMaxChars int
+	MediaRemoteCacheDays     int
 
 	StorageBackend       string
 	StorageLocalBasePath string

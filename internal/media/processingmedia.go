@@ -66,6 +66,9 @@ type ProcessingMedia struct {
 
 	// track whether this media has already been put in the databse
 	insertedInDB bool
+
+	// true if this is a recache, false if it's brand new media
+	recache bool
 }
 
 // AttachmentID returns the ID of the underlying media attachment without blocking processing.
@@ -93,8 +96,16 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 
 	// store the result in the database before returning it
 	if !p.insertedInDB {
-		if err := p.database.Put(ctx, p.attachment); err != nil {
-			return nil, err
+		if p.recache {
+			// if it's a recache we should only need to update
+			if err := p.database.UpdateByPrimaryKey(ctx, p.attachment); err != nil {
+				return nil, err
+			}
+		} else {
+			// otherwise we need to really PUT it
+			if err := p.database.Put(ctx, p.attachment); err != nil {
+				return nil, err
+			}
 		}
 		p.insertedInDB = true
 	}
@@ -305,6 +316,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err := p.storage.PutStream(p.attachment.File.Path, clean); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
+	p.attachment.Cached = true
 
 	// if the original reader is a readcloser, close it since we're done with it now
 	if rc, ok := reader.(io.ReadCloser); ok {
@@ -360,6 +372,7 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		Thumbnail:         thumbnail,
 		Avatar:            false,
 		Header:            false,
+		Cached:            false,
 	}
 
 	// check if we have additional info to add to the attachment,
@@ -414,6 +427,27 @@ func (m *manager) preProcessMedia(ctx context.Context, data DataFunc, postData P
 		fullSizeState: int32(received),
 		database:      m.db,
 		storage:       m.storage,
+	}
+
+	return processingMedia, nil
+}
+
+func (m *manager) preProcessRecache(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error) {
+	// get the existing attachment
+	attachment, err := m.db.GetAttachmentByID(ctx, attachmentID)
+	if err != nil {
+		return nil, err
+	}
+
+	processingMedia := &ProcessingMedia{
+		attachment:    attachment,
+		data:          data,
+		postData:      postData,
+		thumbState:    int32(received),
+		fullSizeState: int32(received),
+		database:      m.db,
+		storage:       m.storage,
+		recache:       true, // indicate it's a recache
 	}
 
 	return processingMedia, nil

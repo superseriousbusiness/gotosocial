@@ -16,6 +16,8 @@ type TruncateTableQuery struct {
 	continueIdentity bool
 }
 
+var _ Query = (*TruncateTableQuery)(nil)
+
 func NewTruncateTableQuery(db *DB) *TruncateTableQuery {
 	q := &TruncateTableQuery{
 		baseQuery: baseQuery{
@@ -54,6 +56,11 @@ func (q *TruncateTableQuery) TableExpr(query string, args ...interface{}) *Trunc
 
 func (q *TruncateTableQuery) ContinueIdentity() *TruncateTableQuery {
 	q.continueIdentity = true
+	return q
+}
+
+func (q *TruncateTableQuery) Cascade() *TruncateTableQuery {
+	q.cascade = true
 	return q
 }
 

@@ -39,6 +39,8 @@ type Federator interface {
 	FederatingActor() pub.FederatingActor
 	// FederatingDB returns the underlying FederatingDB interface.
 	FederatingDB() federatingdb.DB
+	// TransportController returns the underlying transport controller.
+	TransportController() transport.Controller
 
 	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
 	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
@@ -106,4 +108,8 @@ func (f *federator) FederatingActor() pub.FederatingActor {
 
 func (f *federator) FederatingDB() federatingdb.DB {
 	return f.federatingDB
+}
+
+func (f *federator) TransportController() transport.Controller {
+	return f.transportController
 }

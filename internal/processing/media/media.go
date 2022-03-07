@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -36,24 +37,27 @@ type Processor interface {
 	Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error)
 	// Delete deletes the media attachment with the given ID, including all files pertaining to that attachment.
 	Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode
-	GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, error)
+	// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
+	GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
 	GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
 	Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 }
 
 type processor struct {
-	tc           typeutils.TypeConverter
-	mediaManager media.Manager
-	storage      *kv.KVStore
-	db           db.DB
+	tc                  typeutils.TypeConverter
+	mediaManager        media.Manager
+	transportController transport.Controller
+	storage             *kv.KVStore
+	db                  db.DB
 }
 
 // New returns a new media processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, storage *kv.KVStore) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, transportController transport.Controller, storage *kv.KVStore) Processor {
 	return &processor{
-		tc:           tc,
-		mediaManager: mediaManager,
-		storage:      storage,
-		db:           db,
+		tc:                  tc,
+		mediaManager:        mediaManager,
+		transportController: transportController,
+		storage:             storage,
+		db:                  db,
 	}
 }

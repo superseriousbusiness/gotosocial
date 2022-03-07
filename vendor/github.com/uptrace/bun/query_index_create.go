@@ -22,6 +22,8 @@ type CreateIndexQuery struct {
 	include []schema.QueryWithArgs
 }
 
+var _ Query = (*CreateIndexQuery)(nil)
+
 func NewCreateIndexQuery(db *DB) *CreateIndexQuery {
 	q := &CreateIndexQuery{
 		whereBaseQuery: whereBaseQuery{
@@ -86,7 +88,7 @@ func (q *CreateIndexQuery) TableExpr(query string, args ...interface{}) *CreateI
 }
 
 func (q *CreateIndexQuery) ModelTableExpr(query string, args ...interface{}) *CreateIndexQuery {
-	q.modelTable = schema.SafeQuery(query, args)
+	q.modelTableName = schema.SafeQuery(query, args)
 	return q
 }
 

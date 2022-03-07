@@ -37,6 +37,20 @@ func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
 	}
 }
 
+// whereNotEmptyAndNotNull is a convenience function to return a bun WhereGroup that specifies
+// that the given column should be NEITHER an empty string NOR null.
+//
+// Use it as follows:
+//
+//   q = q.WhereGroup(" AND ", whereNotEmptyAndNotNull("whatever_column"))
+func whereNotEmptyAndNotNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			Where("? IS NOT NULL", bun.Ident(column)).
+			Where("? != ''", bun.Ident(column))
+	}
+}
+
 // updateWhere parses []db.Where and adds it to the given update query.
 func updateWhere(q *bun.UpdateQuery, where []db.Where) {
 	for _, w := range where {

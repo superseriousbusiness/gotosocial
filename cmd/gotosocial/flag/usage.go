@@ -47,6 +47,7 @@ var usage = config.KeyNames{
 	MediaVideoMaxSize:          "Max size of accepted videos in bytes",
 	MediaDescriptionMinChars:   "Min required chars for an image description",
 	MediaDescriptionMaxChars:   "Max permitted chars for an image description",
+	MediaRemoteCacheDays:       "Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely.",
 	StorageBackend:             "Storage backend to use for media attachments",
 	StorageLocalBasePath:       "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.",
 	StatusesMaxChars:           "Max permitted characters for posted statuses",

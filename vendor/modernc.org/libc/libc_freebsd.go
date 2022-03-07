@@ -16,6 +16,7 @@ import (
 	gotime "time"
 	"unsafe"
 
+	guuid "github.com/google/uuid"
 	"golang.org/x/sys/unix"
 	"modernc.org/libc/errno"
 	"modernc.org/libc/fcntl"
@@ -34,15 +35,11 @@ import (
 	"modernc.org/libc/termios"
 	"modernc.org/libc/time"
 	"modernc.org/libc/unistd"
+	"modernc.org/libc/uuid"
 )
 
 var (
 	in6_addr_any in.In6_addr
-)
-
-type (
-	long  = int64
-	ulong = uint64
 )
 
 // // Keep these outside of the var block otherwise go generate will miss them.
@@ -715,71 +712,6 @@ func Xfileno(t *TLS, stream uintptr) int32 {
 	panic(todo(""))
 }
 
-// int mkstemps(char *template, int suffixlen);
-func Xmkstemps(t *TLS, template uintptr, suffixlen int32) int32 {
-	return Xmkstemps64(t, template, suffixlen)
-}
-
-// int mkstemps(char *template, int suffixlen);
-func Xmkstemps64(t *TLS, template uintptr, suffixlen int32) int32 {
-	len := uintptr(Xstrlen(t, template))
-	x := template + uintptr(len-6) - uintptr(suffixlen)
-	for i := uintptr(0); i < 6; i++ {
-		if *(*byte)(unsafe.Pointer(x + i)) != 'X' {
-			if dmesgs {
-				dmesg("%v: FAIL", origin(1))
-			}
-			t.setErrno(errno.EINVAL)
-			return -1
-		}
-	}
-
-	fd, err := tempFile(template, x)
-	if err != nil {
-		if dmesgs {
-			dmesg("%v: %v FAIL", origin(1), err)
-		}
-		t.setErrno(err)
-		return -1
-	}
-
-	return int32(fd)
-}
-
-// int mkstemp(char *template);
-func Xmkstemp(t *TLS, template uintptr) int32 {
-	return Xmkstemp64(t, template)
-}
-
-// int mkstemp(char *template);
-func Xmkstemp64(t *TLS, template uintptr) int32 {
-	return Xmkstemps64(t, template, 0)
-}
-
-func newFtsent(t *TLS, info int, path string, stat *unix.Stat_t, err syscall.Errno) (r *fts.FTSENT) {
-	var statp uintptr
-	if stat != nil {
-		statp = Xmalloc(t, types.Size_t(unsafe.Sizeof(unix.Stat_t{})))
-		if statp == 0 {
-			panic("OOM")
-		}
-
-		*(*unix.Stat_t)(unsafe.Pointer(statp)) = *stat
-	}
-	csp, errx := CString(path)
-	if errx != nil {
-		panic("OOM")
-	}
-
-	return &fts.FTSENT{
-		Ffts_info:    int32(info),
-		Ffts_path:    csp,
-		Ffts_pathlen: uint64(len(path)),
-		Ffts_statp:   statp,
-		Ffts_errno:   int32(err),
-	}
-}
-
 func newCFtsent(t *TLS, info int, path string, stat *unix.Stat_t, err syscall.Errno) uintptr {
 	p := Xcalloc(t, 1, types.Size_t(unsafe.Sizeof(fts.FTSENT{})))
 	if p == 0 {
@@ -1354,11 +1286,6 @@ func Xwritev(t *TLS, fd int32, iov uintptr, iovcnt int32) types.Ssize_t {
 	panic(todo(""))
 }
 
-// void endpwent(void);
-func Xendpwent(t *TLS) {
-	// nop
-}
-
 // int __isoc99_sscanf(const char *str, const char *format, ...);
 func X__isoc99_sscanf(t *TLS, str, format, va uintptr) int32 {
 	r := Xsscanf(t, str, format, va)
@@ -1366,18 +1293,6 @@ func X__isoc99_sscanf(t *TLS, str, format, va uintptr) int32 {
 	// 	dmesg("%v: %q %q: %d", origin(1), GoString(str), GoString(format), r)
 	// }
 	return r
-}
-
-var ctimeStaticBuf [32]byte
-
-// char *ctime(const time_t *timep);
-func Xctime(t *TLS, timep uintptr) uintptr {
-	return Xctime_r(t, timep, uintptr(unsafe.Pointer(&ctimeStaticBuf[0])))
-}
-
-// char *ctime_r(const time_t *timep, char *buf);
-func Xctime_r(t *TLS, timep, buf uintptr) uintptr {
-	panic(todo(""))
 }
 
 // void __assert(const char * func, const char * file, int line, const char *expr) __dead2;
@@ -1464,51 +1379,9 @@ func Xclosedir(t *TLS, dir uintptr) int32 {
 	return r
 }
 
-// DIR *opendir(const char *name);
-func Xopendir(t *TLS, name uintptr) uintptr {
-	p := Xmalloc(t, uint64(unsafe.Sizeof(darwinDir{})))
-	if p == 0 {
-		panic("OOM")
-	}
-
-	fd := int(Xopen(t, name, fcntl.O_RDONLY|fcntl.O_DIRECTORY|fcntl.O_CLOEXEC, 0))
-	if fd < 0 {
-		if dmesgs {
-			dmesg("%v: FAIL %v", origin(1), (*darwinDir)(unsafe.Pointer(p)).fd)
-		}
-		Xfree(t, p)
-		return 0
-	}
-
-	if dmesgs {
-		dmesg("%v: ok", origin(1))
-	}
-	(*darwinDir)(unsafe.Pointer(p)).fd = fd
-	(*darwinDir)(unsafe.Pointer(p)).h = 0
-	(*darwinDir)(unsafe.Pointer(p)).l = 0
-	(*darwinDir)(unsafe.Pointer(p)).eof = false
-	return p
-}
-
 // int __xuname(int namesize, void *namebuf)
 func X__xuname(t *TLS, namesize int32, namebuf uintptr) int32 {
 	return Xuname(t, namebuf)
-}
-
-// int chflags(const char *path, u_int flags);
-func Xchflags(t *TLS, path uintptr, flags uint64) int32 {
-	if err := unix.Chflags(GoString(path), int(flags)); err != nil {
-		if dmesgs {
-			dmesg("%v: %v FAIL", origin(1), err)
-		}
-		t.setErrno(err)
-		return -1
-	}
-
-	if dmesgs {
-		dmesg("%v: ok", origin(1))
-	}
-	return 0
 }
 
 // int pipe(int pipefd[2]);
@@ -1621,5 +1494,16 @@ func Xpthread_mutexattr_settype(tls *TLS, a uintptr, type1 int32) int32 { /* pth
 		return 22
 	}
 	(*pthread_mutexattr_t)(unsafe.Pointer(a)).__attr = (((*pthread_mutexattr_t)(unsafe.Pointer(a)).__attr & Uint32FromInt32(CplInt32(3))) | uint32(type1))
+	return 0
+}
+
+// int uuid_parse( char *in, uuid_t uu);
+func Xuuid_parse(t *TLS, in uintptr, uu uintptr) int32 {
+	r, err := guuid.Parse(GoString(in))
+	if err != nil {
+		return -1
+	}
+
+	copy((*RawMem)(unsafe.Pointer(uu))[:unsafe.Sizeof(uuid.Uuid_t{})], r[:])
 	return 0
 }
