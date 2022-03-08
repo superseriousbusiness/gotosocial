@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"codeberg.org/gruf/go-bytes"
-	"codeberg.org/gruf/go-pools"
+	"codeberg.org/gruf/go-fastcopy"
 	"codeberg.org/gruf/go-store/util"
 )
 
@@ -81,10 +81,10 @@ func getDiskConfig(cfg *DiskConfig) DiskConfig {
 
 // DiskStorage is a Storage implementation that stores directly to a filesystem
 type DiskStorage struct {
-	path   string           // path is the root path of this store
-	bufp   pools.BufferPool // bufp is the buffer pool for this DiskStorage
-	config DiskConfig       // cfg is the supplied configuration for this store
-	lock   *Lock            // lock is the opened lockfile for this storage instance
+	path   string            // path is the root path of this store
+	cppool fastcopy.CopyPool // cppool is the prepared io copier with buffer pool
+	config DiskConfig        // cfg is the supplied configuration for this store
+	lock   *Lock             // lock is the opened lockfile for this storage instance
 }
 
 // OpenFile opens a DiskStorage instance for given folder path and configuration
@@ -147,13 +147,17 @@ func OpenFile(path string, cfg *DiskConfig) (*DiskStorage, error) {
 		return nil, err
 	}
 
-	// Return new DiskStorage
-	return &DiskStorage{
+	// Prepare DiskStorage
+	st := &DiskStorage{
 		path:   storePath,
-		bufp:   pools.NewBufferPool(config.WriteBufSize),
 		config: config,
 		lock:   lock,
-	}, nil
+	}
+
+	// Set copypool buffer size
+	st.cppool.Buffer(config.WriteBufSize)
+
+	return st, nil
 }
 
 // Clean implements Storage.Clean()
@@ -271,13 +275,8 @@ func (st *DiskStorage) WriteStream(key string, r io.Reader) error {
 	}
 	defer cFile.Close()
 
-	// Acquire write buffer
-	buf := st.bufp.Get()
-	defer st.bufp.Put(buf)
-	buf.Grow(st.config.WriteBufSize)
-
-	// Copy reader to file
-	_, err = io.CopyBuffer(cFile, r, buf.B)
+	// Copy provided reader to file
+	_, err = st.cppool.Copy(cFile, r)
 	return err
 }
 

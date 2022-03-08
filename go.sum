@@ -53,6 +53,8 @@ codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9
 codeberg.org/gruf/go-cache v1.1.2/go.mod h1:/Dbc+xU72Op3hMn6x2PXF3NE9uIDFeS+sXPF00hN/7o=
 codeberg.org/gruf/go-errors v1.0.5 h1:rxV70oQkfasUdggLHxOX2QAoJOMFM7XWxHQR45Zx/Fg=
 codeberg.org/gruf/go-errors v1.0.5/go.mod h1:n03EpmvcmfzU3/xJKC0XXtleXXJUNFpT2fgISODvZ1Y=
+codeberg.org/gruf/go-fastcopy v1.1.1 h1:HhPCeFdVR5pwiSVDnQEGJ+J2ny9b5QgfiESc0zrWQAY=
+codeberg.org/gruf/go-fastcopy v1.1.1/go.mod h1:GDDYR0Cnb3U/AIfGM3983V/L+GN+vuwVMvrmVABo21s=
 codeberg.org/gruf/go-fastpath v1.0.1/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
 codeberg.org/gruf/go-fastpath v1.0.2 h1:O3nuYPMXnN89dsgAwVFU5iCGINtPJdITWmbRe2an/iQ=
 codeberg.org/gruf/go-fastpath v1.0.2/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
@@ -60,8 +62,8 @@ codeberg.org/gruf/go-format v1.0.3 h1:WoUGzTwZe6SIhILNvtr0qNIA7BOOCgdBlk5bUrfeii
 codeberg.org/gruf/go-format v1.0.3/go.mod h1:k3TLXp1dqAXdDqxlon0yEM+3FFHdNn0D6BVJTwTy5As=
 codeberg.org/gruf/go-hashenc v1.0.1 h1:EBvNe2wW8IPMUqT1XihB6/IM6KMJDLMFBxIUvmsy1f8=
 codeberg.org/gruf/go-hashenc v1.0.1/go.mod h1:IfHhPCVScOiYmJLqdCQT9bYVS1nxNTV4ewMUvFWDPtc=
-codeberg.org/gruf/go-mutexes v1.1.0 h1:kMVWHLxdfGEZTetNVRncdBMeqS4M8dSJxSGbRYXyvKk=
-codeberg.org/gruf/go-mutexes v1.1.0/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
+codeberg.org/gruf/go-mutexes v1.1.2 h1:AMC1CFV6kMi+iBjR3yQv8yIagG3lWm68U6sQHYFHEf4=
+codeberg.org/gruf/go-mutexes v1.1.2/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
 codeberg.org/gruf/go-nowish v1.0.0/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K1ZVCec2s=
 codeberg.org/gruf/go-nowish v1.1.0/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K1ZVCec2s=
 codeberg.org/gruf/go-pools v1.0.2 h1:B0X6yoCL9FVmnvyoizb1SYRwMYPWwEJBjPnBMM5ILos=
@@ -69,8 +71,8 @@ codeberg.org/gruf/go-pools v1.0.2/go.mod h1:MjUV3H6IASyBeBPCyCr7wjPpSNu8E2N87LG4
 codeberg.org/gruf/go-runners v1.1.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
 codeberg.org/gruf/go-runners v1.2.0 h1:tkoPrwYMkVg1o/C4PGTR1YbC11XX4r06uLPOYajBsH4=
 codeberg.org/gruf/go-runners v1.2.0/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
-codeberg.org/gruf/go-store v1.3.3 h1:fAP9FXy6HiLPxdD7cmpSzyfKXmVvZLjqn0m7HhxVT5M=
-codeberg.org/gruf/go-store v1.3.3/go.mod h1:g4+9h3wbwZ6IW0uhpw57xywcqiy4CIj0zQLqqtjEU1M=
+codeberg.org/gruf/go-store v1.3.6 h1:OKzdvfUC+nvsWV5FiSKdk+85yvxF2Tb7K5ZtRqlDBDU=
+codeberg.org/gruf/go-store v1.3.6/go.mod h1:a4vJtZf61UyrsejskX8q+s0lZeNGy7cJLUZt+fH00wo=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=

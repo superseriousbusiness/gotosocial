@@ -4,6 +4,9 @@ codeberg.org/gruf/go-bytes
 # codeberg.org/gruf/go-errors v1.0.5
 ## explicit; go 1.15
 codeberg.org/gruf/go-errors
+# codeberg.org/gruf/go-fastcopy v1.1.1
+## explicit; go 1.17
+codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath
@@ -13,7 +16,7 @@ codeberg.org/gruf/go-format
 # codeberg.org/gruf/go-hashenc v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-mutexes v1.1.0
+# codeberg.org/gruf/go-mutexes v1.1.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.0.2
@@ -22,7 +25,7 @@ codeberg.org/gruf/go-pools
 # codeberg.org/gruf/go-runners v1.2.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-runners
-# codeberg.org/gruf/go-store v1.3.3
+# codeberg.org/gruf/go-store v1.3.6
 ## explicit; go 1.14
 codeberg.org/gruf/go-store/kv
 codeberg.org/gruf/go-store/storage

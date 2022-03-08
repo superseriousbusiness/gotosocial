@@ -97,7 +97,9 @@ func mutexTimeout(d time.Duration, unlock func(), fn func()) func() {
 // timerPool is the global &timer{} pool.
 var timerPool = sync.Pool{
 	New: func() interface{} {
-		return newtimer()
+		t := time.NewTimer(time.Minute)
+		t.Stop()
+		return &timer{t: t, c: make(chan struct{})}
 	},
 }
 
@@ -105,13 +107,6 @@ var timerPool = sync.Pool{
 type timer struct {
 	t *time.Timer
 	c chan struct{}
-}
-
-// newtimer returns a new timer instance.
-func newtimer() *timer {
-	t := time.NewTimer(time.Minute)
-	t.Stop()
-	return &timer{t: t, c: make(chan struct{})}
 }
 
 // Start will start the timer with duration 'd', performing 'fn' on timeout.
