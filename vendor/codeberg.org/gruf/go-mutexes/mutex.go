@@ -41,24 +41,24 @@ func WithFuncRW(mu RWMutex, onLock, onRLock, onUnlock, onRUnlock func()) RWMutex
 }
 
 // baseMutex simply wraps a sync.Mutex to implement our Mutex interface
-type baseMutex struct{ mu sync.Mutex }
+type baseMutex sync.Mutex
 
 func (mu *baseMutex) Lock() func() {
-	mu.mu.Lock()
-	return mu.mu.Unlock
+	(*sync.Mutex)(mu).Lock()
+	return (*sync.Mutex)(mu).Unlock
 }
 
 // baseRWMutex simply wraps a sync.RWMutex to implement our RWMutex interface
-type baseRWMutex struct{ mu sync.RWMutex }
+type baseRWMutex sync.RWMutex
 
 func (mu *baseRWMutex) Lock() func() {
-	mu.mu.Lock()
-	return mu.mu.Unlock
+	(*sync.RWMutex)(mu).Lock()
+	return (*sync.RWMutex)(mu).Unlock
 }
 
 func (mu *baseRWMutex) RLock() func() {
-	mu.mu.RLock()
-	return mu.mu.RUnlock
+	(*sync.RWMutex)(mu).RLock()
+	return (*sync.RWMutex)(mu).RUnlock
 }
 
 // fnMutex wraps a Mutex to add hooks for Lock and Unlock

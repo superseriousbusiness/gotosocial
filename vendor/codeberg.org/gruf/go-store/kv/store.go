@@ -45,7 +45,7 @@ func OpenStorage(storage storage.Storage) (*KVStore, error) {
 
 	// Return new KVStore
 	return &KVStore{
-		mutex:   mutexes.NewMap(-1),
+		mutex:   mutexes.NewMap(-1, -1),
 		storage: storage,
 	}, nil
 }
