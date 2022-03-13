@@ -51,7 +51,7 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		Local:                    true,
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
-		ContentWarning:           text.RemoveHTML(form.SpoilerText),
+		ContentWarning:           text.SanitizeCaption(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                form.Sensitive,
 		Language:                 form.Language,
