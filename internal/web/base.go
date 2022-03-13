@@ -21,7 +21,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
@@ -88,18 +87,24 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
-	// serve static files from /assets
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting current working directory: %s", err)
-	}
+	// serve static files from assets dir at /assets
 	assetBaseDir := viper.GetString(config.Keys.WebAssetBaseDir)
-	assetPath := filepath.Join(cwd, assetBaseDir)
+	if assetBaseDir == "" {
+		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebAssetBaseDir)
+	}
+	assetPath, err := filepath.Abs(assetBaseDir)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path of %s: %s", assetBaseDir, err)
+	}
 	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
 
-	// Admin panel route, if it exists
-	adminPath := filepath.Join(cwd, assetBaseDir, "/admin")
-	s.AttachStaticFS("/admin", fileSystem{http.Dir(adminPath)})
+	// serve admin panel from within assets dir at /admin/
+	// and redirect /admin to /admin/
+	adminPath := filepath.Join(assetPath, "admin")
+	s.AttachStaticFS("/admin/", fileSystem{http.Dir(adminPath)})
+	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/admin/")
+	})
 
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
