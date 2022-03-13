@@ -47,7 +47,7 @@ type Router interface {
 	AttachMiddleware(handler gin.HandlerFunc)
 	// Attach 404 NoRoute handler
 	AttachNoRouteHandler(handler gin.HandlerFunc)
-	// Add Gin StaticFile handler
+	// Add Gin StaticFS handler
 	AttachStaticFS(relativePath string, fs http.FileSystem)
 	// Start the router
 	Start()
@@ -62,7 +62,7 @@ type router struct {
 	certManager *autocert.Manager
 }
 
-// Add Gin StaticFile handler
+// Add Gin StaticFS handler
 func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 	r.engine.StaticFS(relativePath, fs)
 }
