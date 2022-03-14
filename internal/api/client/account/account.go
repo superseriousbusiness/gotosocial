@@ -71,6 +71,8 @@ const (
 	BlockPath = BasePathWithID + "/block"
 	// UnblockPath is for removing a block of an account
 	UnblockPath = BasePathWithID + "/unblock"
+	// DeleteAccountPath is for deleting one's account via the API
+	DeleteAccountPath = BasePath + "/delete"
 )
 
 // Module implements the ClientAPIModule interface for account-related actions
@@ -89,6 +91,9 @@ func New(processor processing.Processor) api.ClientModule {
 func (m *Module) Route(r router.Router) error {
 	// create account
 	r.AttachHandler(http.MethodPost, BasePath, m.AccountCreatePOSTHandler)
+
+	// delete account
+	r.AttachHandler(http.MethodPost, DeleteAccountPath, m.AccountDeletePOSTHandler)
 
 	// get account
 	r.AttachHandler(http.MethodGet, BasePathWithID, m.muxHandler)
