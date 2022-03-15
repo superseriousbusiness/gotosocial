@@ -79,3 +79,15 @@ type AdminReportInfo struct {
 	// Statuses attached to the report, for context.
 	Statuses []Status `json:"statuses"`
 }
+
+// AdminAccountActionRequest models the admin view of an account's details.
+//
+// swagger:ignore
+type AdminAccountActionRequest struct {
+	// Type of the account action. One of disable, silence, suspend.
+	Type string `form:"type" json:"type" xml:"type"`
+	// Text describing why an action was taken.
+	Text string `form:"text" json:"text" xml:"text"`
+	// ID of the account to be acted on.
+	TargetAccountID string `form:"-" json:"-" xml:"-"`
+}

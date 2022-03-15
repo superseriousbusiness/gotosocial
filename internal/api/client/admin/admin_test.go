@@ -37,7 +37,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,7 +44,6 @@ type AdminStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	tc           typeutils.TypeConverter
 	storage      *kv.KVStore
 	mediaManager media.Manager
 	federator    federation.Federator
