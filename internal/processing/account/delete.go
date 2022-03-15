@@ -314,7 +314,7 @@ func (p *processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 		}
 
 		// compare the provided password with the encrypted one from the db, bail if they don't match
-		if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(*form.Password)); err != nil {
+		if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(form.Password)); err != nil {
 			return gtserror.NewErrorForbidden(errors.New("invalid password"))
 		}
 

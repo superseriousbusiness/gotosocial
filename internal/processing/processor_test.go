@@ -95,8 +95,8 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 }
 
 func (suite *ProcessingStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)

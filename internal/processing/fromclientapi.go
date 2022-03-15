@@ -322,11 +322,11 @@ func (p *processor) processDeleteAccountFromClientAPI(ctx context.Context, clien
 		origin = clientMsg.OriginAccount.ID
 	}
 
-	if err := p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin); err != nil {
+	if err := p.federateAccountDelete(ctx, clientMsg.TargetAccount); err != nil {
 		return err
 	}
 
-	return p.federateAccountDelete(ctx, clientMsg.TargetAccount)
+	return p.accountProcessor.Delete(ctx, clientMsg.TargetAccount, origin)
 }
 
 // TODO: move all the below functions into federation.Federator

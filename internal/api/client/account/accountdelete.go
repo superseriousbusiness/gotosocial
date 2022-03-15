@@ -73,7 +73,7 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if form.Password == nil || *form.Password == "" {
+	if form.Password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no password provided in account delete request"})
 		return
 	}
