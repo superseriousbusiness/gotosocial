@@ -43,6 +43,8 @@ type Transport interface {
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
 	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
+	// SigTransport returns the underlying http signature transport wrapped by the GoToSocial transport.
+	SigTransport() pub.Transport
 }
 
 // transport implements the Transport interface
@@ -61,4 +63,8 @@ type transport struct {
 
 	dereferenceFollowersShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
 	dereferenceUserShortcut      func(ctx context.Context, iri *url.URL) ([]byte, error)
+}
+
+func (t *transport) SigTransport() pub.Transport {
+	return t.sigTransport
 }
