@@ -80,11 +80,11 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 
 	form.DeleteOriginID = authed.Account.ID
 
-	if err := m.processor.AccountDeleteLocal(c.Request.Context(), authed, form); err != nil {
-		l.Debugf("could not delete account: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if errWithCode := m.processor.AccountDeleteLocal(c.Request.Context(), authed, form); errWithCode != nil {
+		l.Debugf("could not delete account: %s", errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.Status(http.StatusAccepted)
+	c.JSON(http.StatusAccepted, gin.H{"message": "accepted"})
 }
