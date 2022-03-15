@@ -36,7 +36,7 @@ const (
 	// DomainBlocksPathWithID is used for interacting with a single domain block.
 	DomainBlocksPathWithID = DomainBlocksPath + "/:" + IDKey
 	// AccountsPath is used for listing + acting on accounts.
-	AccountsPath = BasePath + "accounts"
+	AccountsPath = BasePath + "/accounts"
 	// AccountsPathWithID is used for interacting with a single account.
 	AccountsPathWithID = AccountsPath + "/:" + IDKey
 	// AccountsActionPath is used for taking action on a single account.
