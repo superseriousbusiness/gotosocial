@@ -50,7 +50,8 @@ import (
 //   type: string
 // - name: type
 //   in: formData
-//   description: Type of action to be taken. One of: disable, silence, suspend.
+//   description: |-
+//     Type of action to be taken. One of: disable, silence, suspend.
 //   type: string
 //   required: true
 // - name: text

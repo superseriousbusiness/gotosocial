@@ -2336,6 +2336,43 @@ paths:
       summary: Verify a token by returning account details pertaining to it.
       tags:
       - accounts
+  /api/v1/admin/accounts/{id}/action:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: adminAccountAction
+      parameters:
+      - description: ID of the account.
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 'Type of action to be taken. One of: disable, silence, suspend.'
+        in: formData
+        name: type
+        required: true
+        type: string
+      - description: Optional text describing why this action was taken.
+        in: formData
+        name: text
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+        "403":
+          description: forbidden
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: Perform an admin action on an account.
+      tags:
+      - admin
   /api/v1/admin/custom_emojis:
     post:
       consumes:
