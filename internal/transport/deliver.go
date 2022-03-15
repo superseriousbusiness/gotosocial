@@ -23,6 +23,8 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error {
@@ -30,6 +32,11 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 }
 
 func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
+	// if the 'to' host is our own, just skip this delivery since we by definition already have the message!
+	if to.Host == viper.GetString(config.Keys.Host) {
+		return nil
+	}
+
 	l := logrus.WithField("func", "Deliver")
 	l.Debugf("performing POST to %s", to.String())
 	return t.sigTransport.Deliver(ctx, b, to)

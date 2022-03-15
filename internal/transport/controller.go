@@ -21,14 +21,18 @@ package transport
 import (
 	"context"
 	"crypto"
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"sync"
 
 	"github.com/go-fed/httpsig"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 )
 
 // Controller generates transports for use in making federation requests to other servers.
@@ -42,19 +46,65 @@ type controller struct {
 	clock    pub.Clock
 	client   pub.HttpClient
 	appAgent string
+
+	// dereferenceFollowersShortcut is a shortcut to dereference followers of an
+	// account on this instance, without making any external api/http calls.
+	//
+	// It is passed to new transports, and should only be invoked when the iri.Host == this host.
+	dereferenceFollowersShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
+
+	// dereferenceUserShortcut is a shortcut to dereference followers an account on
+	// this instance, without making any external api/http calls.
+	//
+	// It is passed to new transports, and should only be invoked when the iri.Host == this host.
+	dereferenceUserShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
+}
+
+func dereferenceFollowersShortcut(federatingDB federatingdb.DB) func(context.Context, *url.URL) ([]byte, error) {
+	return func(ctx context.Context, iri *url.URL) ([]byte, error) {
+		followers, err := federatingDB.Followers(ctx, iri)
+		if err != nil {
+			return nil, err
+		}
+
+		i, err := streams.Serialize(followers)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(i)
+	}
+}
+
+func dereferenceUserShortcut(federatingDB federatingdb.DB) func(context.Context, *url.URL) ([]byte, error) {
+	return func(ctx context.Context, iri *url.URL) ([]byte, error) {
+		user, err := federatingDB.Get(ctx, iri)
+		if err != nil {
+			return nil, err
+		}
+
+		i, err := streams.Serialize(user)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(i)
+	}
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(db db.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	applicationName := viper.GetString(config.Keys.ApplicationName)
 	host := viper.GetString(config.Keys.Host)
 	appAgent := fmt.Sprintf("%s %s", applicationName, host)
 
 	return &controller{
-		db:       db,
-		clock:    clock,
-		client:   client,
-		appAgent: appAgent,
+		db:                           db,
+		clock:                        clock,
+		client:                       client,
+		appAgent:                     appAgent,
+		dereferenceFollowersShortcut: dereferenceFollowersShortcut(federatingDB),
+		dereferenceUserShortcut:      dereferenceUserShortcut(federatingDB),
 	}
 }
 
@@ -78,15 +128,17 @@ func (c *controller) NewTransport(pubKeyID string, privkey crypto.PrivateKey) (T
 	sigTransport := pub.NewHttpSigTransport(c.client, c.appAgent, c.clock, getSigner, postSigner, pubKeyID, privkey)
 
 	return &transport{
-		client:       c.client,
-		appAgent:     c.appAgent,
-		gofedAgent:   "(go-fed/activity v1.0.0)",
-		clock:        c.clock,
-		pubKeyID:     pubKeyID,
-		privkey:      privkey,
-		sigTransport: sigTransport,
-		getSigner:    getSigner,
-		getSignerMu:  &sync.Mutex{},
+		client:                       c.client,
+		appAgent:                     c.appAgent,
+		gofedAgent:                   "(go-fed/activity v1.0.0)",
+		clock:                        c.clock,
+		pubKeyID:                     pubKeyID,
+		privkey:                      privkey,
+		sigTransport:                 sigTransport,
+		getSigner:                    getSigner,
+		getSignerMu:                  &sync.Mutex{},
+		dereferenceFollowersShortcut: c.dereferenceFollowersShortcut,
+		dereferenceUserShortcut:      c.dereferenceUserShortcut,
 	}, nil
 }
 

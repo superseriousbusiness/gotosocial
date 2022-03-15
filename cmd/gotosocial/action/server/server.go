@@ -117,7 +117,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating media manager: %s", err)
 	}
 	oauthServer := oauth.New(ctx, dbService)
-	transportController := transport.NewController(dbService, &federation.Clock{}, http.DefaultClient)
+	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, http.DefaultClient)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one

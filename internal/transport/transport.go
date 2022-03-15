@@ -30,8 +30,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// Transport wraps the pub.Transport interface with some additional
-// functionality for fetching remote media.
+// Transport wraps the pub.Transport interface with some additional functionality for fetching remote media.
+//
+// Since the transport has the concept of 'shortcuts' for fetching data locally rather than remotely, it is
+// not *always* the case that calling a Transport function does an http call, but it usually will for remote
+// hosts or resources for which a shortcut isn't provided by the transport controller (also in this package).
 type Transport interface {
 	pub.Transport
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
@@ -40,6 +43,8 @@ type Transport interface {
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
 	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
+	// SigTransport returns the underlying http signature transport wrapped by the GoToSocial transport.
+	SigTransport() pub.Transport
 }
 
 // transport implements the Transport interface
@@ -53,4 +58,13 @@ type transport struct {
 	sigTransport *pub.HttpSigTransport
 	getSigner    httpsig.Signer
 	getSignerMu  *sync.Mutex
+
+	// shortcuts for dereferencing things that exist on our instance without making an http call to ourself
+
+	dereferenceFollowersShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
+	dereferenceUserShortcut      func(ctx context.Context, iri *url.URL) ([]byte, error)
+}
+
+func (t *transport) SigTransport() pub.Transport {
+	return t.sigTransport
 }
