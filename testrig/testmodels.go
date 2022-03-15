@@ -1749,8 +1749,8 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 		panic(err)
 	}
 
-	// trigger the delivery function, which will trigger the 'do' function of the recorder above
-	if err := tp.Deliver(context.Background(), bytes, destination); err != nil {
+	// trigger the delivery function for the underlying signature transport, which will trigger the 'do' function of the recorder above
+	if err := tp.SigTransport().Deliver(context.Background(), bytes, destination); err != nil {
 		panic(err)
 	}
 
@@ -1781,8 +1781,8 @@ func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 		panic(err)
 	}
 
-	// trigger the delivery function, which will trigger the 'do' function of the recorder above
-	if _, err := tp.Dereference(context.Background(), destination); err != nil {
+	// trigger the dereference function for the underlying signature transport, which will trigger the 'do' function of the recorder above
+	if _, err := tp.SigTransport().Dereference(context.Background(), destination); err != nil {
 		panic(err)
 	}
 
