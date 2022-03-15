@@ -39,7 +39,7 @@ import (
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
 func NewTestTransportController(client pub.HttpClient, db db.DB) transport.Controller {
-	return transport.NewController(db, &federation.Clock{}, client)
+	return transport.NewController(db, NewTestFederatingDB(db), &federation.Clock{}, client)
 }
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,
