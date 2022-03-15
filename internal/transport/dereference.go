@@ -39,13 +39,13 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 			return t.dereferenceFollowersShortcut(ctx, iri)
 		}
 
-      if uris.IsUserPath(iri) {
-         // the request is for one of our accounts, which we can shortcut
-         return t.dereferenceUserShortcut(ctx, iri)
-      }
+		if uris.IsUserPath(iri) {
+			// the request is for one of our accounts, which we can shortcut
+			return t.dereferenceUserShortcut(ctx, iri)
+		}
 	}
 
-   // the request is either for a remote host or for us but we don't have a shortcut, so continue as normal
+	// the request is either for a remote host or for us but we don't have a shortcut, so continue as normal
 	l.Debugf("performing GET to %s", iri.String())
 	return t.sigTransport.Dereference(ctx, iri)
 }
