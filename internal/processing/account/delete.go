@@ -20,13 +20,17 @@ package account
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Delete handles the complete deletion of an account.
@@ -50,7 +54,7 @@ import (
 // 16. Delete account's user
 // 17. Delete account's timeline
 // 18. Delete account itself
-func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) error {
+func (p *processor) Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode {
 	fields := logrus.Fields{
 		"func":     "Delete",
 		"username": account.Username,
@@ -256,7 +260,7 @@ selectStatusesLoop:
 	// 16. Delete account's user
 	l.Debug("deleting account user")
 	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, &gtsmodel.User{}); err != nil {
-		return err
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	// 17. Delete account's timeline
@@ -282,9 +286,52 @@ selectStatusesLoop:
 
 	account, err := p.db.UpdateAccount(ctx, account)
 	if err != nil {
-		return err
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	l.Infof("deleted account with username %s from domain %s", account.Username, account.Domain)
+	return nil
+}
+
+func (p *processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode {
+	fromClientAPIMessage := messages.FromClientAPI{
+		APObjectType:   ap.ActorPerson,
+		APActivityType: ap.ActivityDelete,
+		TargetAccount:  account,
+	}
+
+	if form.DeleteOriginID == account.ID {
+		// the account owner themself has requested deletion via the API, get their user from the db
+		user := &gtsmodel.User{}
+		if err := p.db.GetWhere(ctx, []db.Where{{Key: "account_id", Value: account.ID}}, user); err != nil {
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		// now check that the password they supplied is correct
+		// make sure a password is actually set and bail if not
+		if user.EncryptedPassword == "" {
+			return gtserror.NewErrorForbidden(errors.New("user password was not set"))
+		}
+
+		// compare the provided password with the encrypted one from the db, bail if they don't match
+		if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(form.Password)); err != nil {
+			return gtserror.NewErrorForbidden(errors.New("invalid password"))
+		}
+
+		fromClientAPIMessage.OriginAccount = account
+	} else {
+		// the delete has been requested by some other account, grab it;
+		// if we've reached this point we know it has permission already
+		requestingAccount, err := p.db.GetAccountByID(ctx, form.DeleteOriginID)
+		if err != nil {
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		fromClientAPIMessage.OriginAccount = requestingAccount
+	}
+
+	// put the delete in the processor queue to handle the rest of it asynchronously
+	p.fromClientAPI <- fromClientAPIMessage
+
 	return nil
 }

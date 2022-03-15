@@ -42,7 +42,10 @@ type Processor interface {
 	Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
 	// Delete deletes an account, and all of that account's statuses, media, follows, notifications, etc etc etc.
 	// The origin passed here should be either the ID of the account doing the delete (can be itself), or the ID of a domain block.
-	Delete(ctx context.Context, account *gtsmodel.Account, origin string) error
+	Delete(ctx context.Context, account *gtsmodel.Account, origin string) gtserror.WithCode
+	// DeleteLocal is like delete, but specifically for deletion of local accounts rather than federated ones.
+	// Unlike Delete, it will propagate the deletion out across the federating API to other instances.
+	DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// Get processes the given request for account information.
 	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
 	// Update processes the update of an account with the given form

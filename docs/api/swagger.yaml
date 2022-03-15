@@ -1798,7 +1798,7 @@ info:
     name: AGPL3
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
   title: GoToSocial
-  version: 0.0.1
+  version: REPLACE_ME
 paths:
   /.well-known/nodeinfo:
     get:
@@ -2191,6 +2191,31 @@ paths:
       summary: Unfollow account with id.
       tags:
       - accounts
+  /api/v1/accounts/delete:
+    post:
+      consumes:
+      - multipart/form-data
+      operationId: accountDelete
+      parameters:
+      - description: Password of the account user, for confirmation.
+        in: formData
+        name: password
+        required: true
+        type: string
+      responses:
+        "202":
+          description: The account deletion has been accepted and the account will
+            be deleted.
+        "400":
+          description: bad request
+        "401":
+          description: unauthorized
+      security:
+      - OAuth2 Bearer:
+        - write:accounts
+      summary: Delete your account.
+      tags:
+      - accounts
   /api/v1/accounts/relationships:
     get:
       operationId: accountRelationships
@@ -2341,6 +2366,8 @@ paths:
           description: bad request
         "403":
           description: forbidden
+        "409":
+          description: conflict -- domain/shortcode combo for emoji already exists
       security:
       - OAuth2 Bearer:
         - admin

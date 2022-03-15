@@ -73,6 +73,8 @@ type Processor interface {
 
 	// AccountCreate processes the given form for creating a new account, returning an oauth token for that account if successful.
 	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	// AccountDeleteLocal processes the delete of a LOCAL account using the given form.
+	AccountDeleteLocal(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// AccountGet processes the given request for account information.
 	AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error)
 	// AccountUpdate processes the update of an account with the given form

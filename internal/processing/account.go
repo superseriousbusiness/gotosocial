@@ -30,6 +30,10 @@ func (p *processor) AccountCreate(ctx context.Context, authed *oauth.Auth, form 
 	return p.accountProcessor.Create(ctx, authed.Token, authed.Application, form)
 }
 
+func (p *processor) AccountDeleteLocal(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountDeleteRequest) gtserror.WithCode {
+	return p.accountProcessor.DeleteLocal(ctx, authed.Account, form)
+}
+
 func (p *processor) AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error) {
 	return p.accountProcessor.Get(ctx, authed.Account, targetAccountID)
 }

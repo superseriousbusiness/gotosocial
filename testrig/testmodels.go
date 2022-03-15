@@ -377,7 +377,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
-			PublicKeyURI:            "http://localhost:8080/users/the_mighty_zork#main-key",
+			PublicKeyURI:            "http://localhost:8080/users/the_mighty_zork/main-key",
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
@@ -1656,6 +1656,14 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
+	target = URLMustParse(accounts["local_account_1"].PublicKeyURI)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceZorkPublicKey := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
@@ -1706,6 +1714,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
+		"foss_satan_dereference_zork_public_key":                       fossSatanDereferenceZorkPublicKey,
 		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
 		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
 		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
