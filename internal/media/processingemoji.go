@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -169,6 +170,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
+	// defer closing the reader when we're done with it
+	defer func() {
+		if rc, ok := reader.(io.ReadCloser); ok {
+			if err := rc.Close(); err != nil {
+				logrus.Errorf("store: error closing readcloser: %s", err)
+			}
+		}
+	}()
+
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
 	if _, err := reader.Read(firstBytes); err != nil {
@@ -203,13 +213,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// store this for now -- other processes can pull it out of storage as they please
 	if err := p.storage.PutStream(p.emoji.ImagePath, multiReader); err != nil {
 		return fmt.Errorf("store: error storing stream: %s", err)
-	}
-
-	// if the original reader is a readcloser, close it since we're done with it now
-	if rc, ok := reader.(io.ReadCloser); ok {
-		if err := rc.Close(); err != nil {
-			return fmt.Errorf("store: error closing readcloser: %s", err)
-		}
 	}
 
 	p.read = true
