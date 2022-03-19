@@ -35,6 +35,12 @@ const (
 	DomainBlocksPath = BasePath + "/domain_blocks"
 	// DomainBlocksPathWithID is used for interacting with a single domain block.
 	DomainBlocksPathWithID = DomainBlocksPath + "/:" + IDKey
+	// AccountsPath is used for listing + acting on accounts.
+	AccountsPath = BasePath + "/accounts"
+	// AccountsPathWithID is used for interacting with a single account.
+	AccountsPathWithID = AccountsPath + "/:" + IDKey
+	// AccountsActionPath is used for taking action on a single account.
+	AccountsActionPath = AccountsPathWithID + "/action"
 
 	// ExportQueryKey is for requesting a public export of some data.
 	ExportQueryKey = "export"
@@ -63,5 +69,6 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
 	r.AttachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
+	r.AttachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
 	return nil
 }

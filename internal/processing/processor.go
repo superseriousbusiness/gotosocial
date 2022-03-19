@@ -97,6 +97,8 @@ type Processor interface {
 	// AccountBlockRemove handles the removal of a block from authed account to target account, either remote or local.
 	AccountBlockRemove(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Relationship, gtserror.WithCode)
 
+	// AdminAccountAction handles the creation/execution of an action on an account.
+	AdminAccountAction(ctx context.Context, authed *oauth.Auth, form *apimodel.AdminAccountActionRequest) gtserror.WithCode
 	// AdminEmojiCreate handles the creation of a new instance emoji by an admin, using the given form.
 	AdminEmojiCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
 	// AdminDomainBlockCreate handles the creation of a new domain block by an admin, using the given form.
