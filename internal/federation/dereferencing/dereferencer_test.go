@@ -50,17 +50,15 @@ type DereferencerStandardTestSuite struct {
 	dereferencer dereferencing.Dereferencer
 }
 
-func (suite *DereferencerStandardTestSuite) SetupSuite() {
+func (suite *DereferencerStandardTestSuite) SetupTest() {
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testRemoteStatuses = testrig.NewTestFediStatuses()
 	suite.testRemotePeople = testrig.NewTestFediPeople()
 	suite.testRemoteGroups = testrig.NewTestFediGroups()
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
-}
-
-func (suite *DereferencerStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
-	testrig.InitTestConfig()
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()

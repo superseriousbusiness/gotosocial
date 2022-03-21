@@ -232,8 +232,8 @@ func (js *JpegSplitter) readSegment(data []byte) (count int, err error) {
 		err = binary.Read(b, binary.BigEndian, &l)
 		log.PanicIf(err)
 
-		if l <= 2 {
-			log.Panicf("length of size read for non-special marker (%02x) is unexpectedly not more than two.", markerId)
+		if l < 2 {
+			log.Panicf("length of size read for non-special marker (%02x) is unexpectedly less than two.", markerId)
 		}
 
 		// (l includes the bytes of the length itself.)

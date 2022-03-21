@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"io"
 
-	jpegstructure "github.com/dsoprea/go-jpeg-image-structure/v2"
+	jpegstructure "github.com/superseriousbusiness/go-jpeg-image-structure/v2"
 	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 )
 
@@ -109,8 +109,11 @@ func scanAndClose(scanner *bufio.Scanner, writer io.WriteCloser) {
 	// until the pipeReader starts being read by the caller, which
 	// is why we do this asynchronously
 	go func() {
+		defer writer.Close()
 		for scanner.Scan() {
 		}
-		writer.Close()
+		if scanner.Err() != nil {
+			logger.Error(scanner.Err())
+		}
 	}()
 }
