@@ -336,7 +336,7 @@ func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKe
 func ExtractContent(i WithContent) (string, error) {
 	contentProperty := i.GetActivityStreamsContent()
 	if contentProperty == nil {
-		return "", errors.New("content property was nil")
+		return "", nil
 	}
 	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
 		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
