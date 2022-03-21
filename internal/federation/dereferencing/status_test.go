@@ -131,6 +131,53 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.False(m.Silent)
 }
 
+func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	statusURL := testrig.URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042")
+	status, statusable, new, err := suite.dereferencer.GetRemoteStatus(context.Background(), fetchingAccount.Username, statusURL, false, false)
+	suite.NoError(err)
+	suite.NotNil(status)
+	suite.NotNil(statusable)
+	suite.True(new)
+
+	// status values should be set
+	suite.Equal("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042", status.URI)
+	suite.Equal("https://turnip.farm/@turniplover6969/70c53e54-3146-42d5-a630-83c8b6c7c042", status.URL)
+	suite.Equal("", status.Content)
+	suite.Equal("https://turnip.farm/users/turniplover6969", status.AccountURI)
+	suite.False(status.Local)
+	suite.Empty(status.ContentWarning)
+	suite.Equal(gtsmodel.VisibilityPublic, status.Visibility)
+	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
+
+	// status should be in the database
+	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	suite.NoError(err)
+	suite.Equal(status.ID, dbStatus.ID)
+	suite.True(dbStatus.Federated)
+	suite.True(dbStatus.Boostable)
+	suite.True(dbStatus.Replyable)
+	suite.True(dbStatus.Likeable)
+
+	// account should be in the database now too
+	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	suite.NoError(err)
+	suite.NotNil(account)
+	suite.True(account.Discoverable)
+	suite.Equal("https://turnip.farm/users/turniplover6969", account.URI)
+	suite.Equal("I just think they're neat", account.Note)
+	suite.Equal("Turnip Lover 6969", account.DisplayName)
+	suite.Equal("turniplover6969", account.Username)
+	suite.NotNil(account.PublicKey)
+	suite.Nil(account.PrivateKey)
+
+	// we should have an attachment in the database
+	a := &gtsmodel.MediaAttachment{}
+	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "status_id", Value: status.ID}}, a)
+	suite.NoError(err)
+}
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
 }

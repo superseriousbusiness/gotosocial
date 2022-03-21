@@ -260,6 +260,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
+	logrus.Tracef("store: reading %d bytes from data function for media %s", fileSize, p.attachment.URL)
 
 	// defer closing the reader when we're done with it
 	defer func() {
@@ -342,6 +343,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return p.postData(ctx)
 	}
 
+	logrus.Tracef("store: finished storing initial data for attachment %s", p.attachment.URL)
 	return nil
 }
 
