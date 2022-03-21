@@ -57,7 +57,6 @@ github.com/dsoprea/go-exif/v3/undefined
 github.com/dsoprea/go-iptc
 # github.com/dsoprea/go-jpeg-image-structure/v2 v2.0.0-20210512043942-b434301c6836
 ## explicit; go 1.12
-github.com/dsoprea/go-jpeg-image-structure/v2
 # github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd
 ## explicit; go 1.13
 github.com/dsoprea/go-logging
@@ -471,9 +470,12 @@ github.com/superseriousbusiness/activity/streams/values/rfc2045
 github.com/superseriousbusiness/activity/streams/values/rfc5988
 github.com/superseriousbusiness/activity/streams/values/string
 github.com/superseriousbusiness/activity/streams/vocab
-# github.com/superseriousbusiness/exif-terminator v0.1.0
+# github.com/superseriousbusiness/exif-terminator v0.2.0
 ## explicit; go 1.17
 github.com/superseriousbusiness/exif-terminator
+# github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe
+## explicit; go 1.17
+github.com/superseriousbusiness/go-jpeg-image-structure/v2
 # github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 ## explicit; go 1.13
 github.com/superseriousbusiness/oauth2/v4
