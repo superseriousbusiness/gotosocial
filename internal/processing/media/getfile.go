@@ -180,9 +180,15 @@ func (p *processor) getAttachmentContent(ctx context.Context, requestingAccount 
 				return nil, 0, err
 			}
 
-			// everything read from the readCloser by the media manager will be written into the bufferedWriter
-			teeReader := io.TeeReader(readCloser, bufferedWriter)
-			return teeReader, fileSize, nil
+			// Make a TeeReader so that everything read from the readCloser by the media manager will be written into the bufferedWriter.
+			// We wrap this in a teeReadCloser which implements io.ReadCloser, so that whoever uses the teeReader can close the readCloser
+			// when they're done with it.
+			trc := teeReadCloser{
+				teeReader: io.TeeReader(readCloser, bufferedWriter),
+				close:     readCloser.Close,
+			}
+
+			return trc, fileSize, nil
 		}
 
 		// close the pipewriter after data has been piped into it, so the reader on the other side doesn't block;

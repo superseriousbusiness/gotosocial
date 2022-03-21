@@ -20,6 +20,7 @@ package media
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -60,4 +61,17 @@ func parseFocus(focus string) (focusx, focusy float32, err error) {
 	}
 	focusy = float32(fy)
 	return
+}
+
+type teeReadCloser struct {
+	teeReader io.Reader
+	close     func() error
+}
+
+func (t teeReadCloser) Read(p []byte) (n int, err error) {
+	return t.teeReader.Read(p)
+}
+
+func (t teeReadCloser) Close() error {
+	return t.close()
 }

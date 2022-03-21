@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-store/kv"
+	"github.com/sirupsen/logrus"
 	terminator "github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -260,6 +261,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return fmt.Errorf("store: error executing data function: %s", err)
 	}
 
+	// defer closing the reader when we're done with it
+	defer func() {
+		if rc, ok := reader.(io.ReadCloser); ok {
+			if err := rc.Close(); err != nil {
+				logrus.Errorf("store: error closing readcloser: %s", err)
+			}
+		}
+	}()
+
 	// extract no more than 261 bytes from the beginning of the file -- this is the header
 	firstBytes := make([]byte, maxFileHeaderBytes)
 	if _, err := reader.Read(firstBytes); err != nil {
@@ -305,6 +315,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return fmt.Errorf("store: couldn't process %s", extension)
 	}
 
+	// defer closing the clean reader when we're done with it
+	defer func() {
+		if rc, ok := clean.(io.ReadCloser); ok {
+			if err := rc.Close(); err != nil {
+				logrus.Errorf("store: error closing clean readcloser: %s", err)
+			}
+		}
+	}()
+
 	// now set some additional fields on the attachment since
 	// we know more about what the underlying media actually is
 	p.attachment.URL = uris.GenerateURIForAttachment(p.attachment.AccountID, string(TypeAttachment), string(SizeOriginal), p.attachment.ID, extension)
@@ -317,14 +336,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return fmt.Errorf("store: error storing stream: %s", err)
 	}
 	p.attachment.Cached = true
-
-	// if the original reader is a readcloser, close it since we're done with it now
-	if rc, ok := reader.(io.ReadCloser); ok {
-		if err := rc.Close(); err != nil {
-			return fmt.Errorf("store: error closing readcloser: %s", err)
-		}
-	}
-
 	p.read = true
 
 	if p.postData != nil {
