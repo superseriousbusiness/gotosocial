@@ -80,8 +80,10 @@ func (p *ProcessingMedia) AttachmentID() string {
 // LoadAttachment blocks until the thumbnail and fullsize content
 // has been processed, and then returns the completed attachment.
 func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
+	logrus.Tracef("LoadAttachment: getting lock for attachment %s", p.attachment.URL)
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	logrus.Tracef("LoadAttachment: got lock for attachment %s", p.attachment.URL)
 
 	if err := p.store(ctx); err != nil {
 		return nil, err
@@ -111,6 +113,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 		p.insertedInDB = true
 	}
 
+	logrus.Tracef("LoadAttachment: finished, returning attachment %s", p.attachment.URL)
 	return p.attachment, nil
 }
 
@@ -133,7 +136,8 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			createBlurhash = true
 		}
 
-		// stream the original file out of storage...
+		// stream the original file out of storage
+		logrus.Tracef("loadThumb: fetching attachment from storage %s", p.attachment.URL)
 		stored, err := p.storage.GetStream(p.attachment.File.Path)
 		if err != nil {
 			p.err = fmt.Errorf("loadThumb: error fetching file from storage: %s", err)
@@ -141,7 +145,16 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			return p.err
 		}
 
-		// ... and into the derive thumbnail function
+		// whatever happens, close the stream when we're done
+		defer func() {
+			logrus.Tracef("loadThumb: closing stored stream %s", p.attachment.URL)
+			if err := stored.Close(); err != nil {
+				logrus.Errorf("loadThumb: error closing stored full size: %s", err)
+			}
+		}()
+
+		// stream the file from storage straight into the derive thumbnail function
+		logrus.Tracef("loadThumb: calling deriveThumbnail %s", p.attachment.URL)
 		thumb, err := deriveThumbnail(stored, p.attachment.File.ContentType, createBlurhash)
 		if err != nil {
 			p.err = fmt.Errorf("loadThumb: error deriving thumbnail: %s", err)
@@ -149,13 +162,8 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 			return p.err
 		}
 
-		if err := stored.Close(); err != nil {
-			p.err = fmt.Errorf("loadThumb: error closing stored full size: %s", err)
-			atomic.StoreInt32(&p.thumbState, int32(errored))
-			return p.err
-		}
-
 		// put the thumbnail in storage
+		logrus.Tracef("loadThumb: storing new thumbnail %s", p.attachment.URL)
 		if err := p.storage.Put(p.attachment.Thumbnail.Path, thumb.small); err != nil {
 			p.err = fmt.Errorf("loadThumb: error storing thumbnail: %s", err)
 			atomic.StoreInt32(&p.thumbState, int32(errored))
@@ -176,6 +184,7 @@ func (p *ProcessingMedia) loadThumb(ctx context.Context) error {
 
 		// we're done processing the thumbnail!
 		atomic.StoreInt32(&p.thumbState, int32(complete))
+		logrus.Tracef("loadThumb: finished processing thumbnail for attachment %s", p.attachment.URL)
 		fallthrough
 	case complete:
 		return nil
@@ -236,6 +245,7 @@ func (p *ProcessingMedia) loadFullSize(ctx context.Context) error {
 
 		// we're done processing the full-size image
 		atomic.StoreInt32(&p.fullSizeState, int32(complete))
+		logrus.Tracef("loadFullSize: finished processing full size image for attachment %s", p.attachment.URL)
 		fallthrough
 	case complete:
 		return nil
