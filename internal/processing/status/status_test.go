@@ -19,11 +19,16 @@
 package status_test
 
 import (
+	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -32,6 +37,10 @@ type StatusStandardTestSuite struct {
 	suite.Suite
 	db                db.DB
 	typeConverter     typeutils.TypeConverter
+	tc                transport.Controller
+	storage           *kv.KVStore
+	mediaManager      media.Manager
+	federator         federation.Federator
 	fromClientAPIChan chan messages.FromClientAPI
 
 	// standard suite models
@@ -62,17 +71,23 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 }
 
 func (suite *StatusStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.status = status.New(suite.db, suite.typeConverter, suite.fromClientAPIChan)
+	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
+	suite.storage = testrig.NewTestStorage()
+	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.tc, suite.storage, suite.mediaManager)
+	suite.status = status.New(suite.db, suite.typeConverter, suite.fromClientAPIChan, processing.GetParseMentionFunc(suite.db, suite.federator))
 
-	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
 
 func (suite *StatusStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardStorageTeardown(suite.storage)
 }

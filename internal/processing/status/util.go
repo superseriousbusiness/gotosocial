@@ -23,10 +23,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -192,27 +192,30 @@ func (p *processor) ProcessLanguage(ctx context.Context, form *apimodel.Advanced
 }
 
 func (p *processor) ProcessMentions(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	menchies := []string{}
-	gtsMenchies, err := p.db.MentionStringsToMentions(ctx, util.DeriveMentionsFromText(form.Status), accountID, status.ID)
-	if err != nil {
-		return fmt.Errorf("error generating mentions from status: %s", err)
-	}
-	for _, menchie := range gtsMenchies {
-		menchieID, err := id.NewRandomULID()
-		if err != nil {
-			return err
-		}
-		menchie.ID = menchieID
+	mentionedAccountNames := util.DeriveMentionNamesFromText(form.Status)
+	mentions := []*gtsmodel.Mention{}
+	mentionIDs := []string{}
 
-		if err := p.db.Put(ctx, menchie); err != nil {
-			return fmt.Errorf("error putting mentions in db: %s", err)
+	for _, mentionedAccountName := range mentionedAccountNames {
+		gtsMention, err := p.parseMention(ctx, mentionedAccountName, accountID, status.ID)
+		if err != nil {
+			logrus.Errorf("ProcessMentions: error parsing mention %s from status: %s", mentionedAccountName, err)
+			continue
 		}
-		menchies = append(menchies, menchie.ID)
+
+		if err := p.db.Put(ctx, gtsMention); err != nil {
+			logrus.Errorf("ProcessMentions: error putting mention in db: %s", err)
+		}
+
+		mentions = append(mentions, gtsMention)
+		mentionIDs = append(mentionIDs, gtsMention.ID)
 	}
+
 	// add full populated gts menchies to the status for passing them around conveniently
-	status.Mentions = gtsMenchies
+	status.Mentions = mentions
 	// add just the ids of the mentioned accounts to the status for putting in the db
-	status.MentionIDs = menchies
+	status.MentionIDs = mentionIDs
+
 	return nil
 }
 
