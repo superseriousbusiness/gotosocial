@@ -37,7 +37,7 @@ https://localhost:8080/@the_mighty_zork/statuses/01FGVP55XMF2K6316MQRX6PFG1
 
 that link shouldn't come out formatted as a mention!`
 
-	menchies := util.DeriveMentionsFromText(statusText)
+	menchies := util.DeriveMentionNamesFromText(statusText)
 	suite.Empty(menchies)
 }
 
@@ -56,7 +56,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 	`
 
-	menchies := util.DeriveMentionsFromText(statusText)
+	menchies := util.DeriveMentionNamesFromText(statusText)
 	assert.Len(suite.T(), menchies, 6)
 	assert.Equal(suite.T(), "@dumpsterqueer@example.org", menchies[0])
 	assert.Equal(suite.T(), "@someone_else@testing.best-horse.com", menchies[1])
@@ -68,7 +68,7 @@ func (suite *StatusTestSuite) TestDeriveMentionsOK() {
 
 func (suite *StatusTestSuite) TestDeriveMentionsEmpty() {
 	statusText := ``
-	menchies := util.DeriveMentionsFromText(statusText)
+	menchies := util.DeriveMentionNamesFromText(statusText)
 	assert.Len(suite.T(), menchies, 0)
 }
 
@@ -126,7 +126,7 @@ func (suite *StatusTestSuite) TestDeriveMultiple() {
 
 	Text`
 
-	ms := util.DeriveMentionsFromText(statusText)
+	ms := util.DeriveMentionNamesFromText(statusText)
 	hs := util.DeriveHashtagsFromText(statusText)
 	es := util.DeriveEmojisFromText(statusText)
 
