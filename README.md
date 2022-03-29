@@ -28,6 +28,7 @@ Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can 
   - [Backend-first design](#backend-first-design)
 - [Wishlist](#wishlist)
 - [Getting Started](#getting-started)
+- [Third-Party Packaging](#third-party-packaging)
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [Credits](#credits)
@@ -155,6 +156,14 @@ These cool things will be implemented if time allows (because we really want the
 ## Getting Started
 
 All docs for installation and configuration are hosted at [docs.gotosocial.org](https://docs.gotosocial.org).
+
+## Third-Party Packaging
+
+Thank you so much to the cool people who have put time and energy into packaging GoToSocial! Known third-party packaging projects are listed below:
+
+- [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
+
+These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
 
 ## Contributing
 
