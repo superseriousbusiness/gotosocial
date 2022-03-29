@@ -25,13 +25,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
-// DeriveMentionsFromText takes a plaintext (ie., not html-formatted) text,
-// and applies a regex to it to return a deduplicated list of accounts
-// mentioned in that text.
-//
-// It will look for fully-qualified account names in the form "@user@example.org".
-// or the form "@username" for local users.
-func DeriveMentionsFromText(text string) []string {
+// DeriveMentionNamesFromText takes a plaintext (ie., not html-formatted) text,
+// and applies a regex to it to return a deduplicated list of account names
+// mentioned in that text, in the format "@user@example.org" or "@username" for
+// local users.
+func DeriveMentionNamesFromText(text string) []string {
 	mentionedAccounts := []string{}
 	for _, m := range regexes.MentionFinder.FindAllStringSubmatch(text, -1) {
 		mentionedAccounts = append(mentionedAccounts, m[1])

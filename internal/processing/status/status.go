@@ -74,15 +74,17 @@ type processor struct {
 	filter        visibility.Filter
 	formatter     text.Formatter
 	fromClientAPI chan messages.FromClientAPI
+	parseMention  gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, fromClientAPI chan messages.FromClientAPI, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
 		tc:            tc,
 		db:            db,
 		filter:        visibility.NewFilter(db),
 		formatter:     text.NewFormatter(db),
 		fromClientAPI: fromClientAPI,
+		parseMention:  parseMention,
 	}
 }

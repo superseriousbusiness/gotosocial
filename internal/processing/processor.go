@@ -267,12 +267,14 @@ func NewProcessor(
 	storage *kv.KVStore,
 	db db.DB,
 	emailSender email.Sender) Processor {
+
 	fromClientAPI := make(chan messages.FromClientAPI, 1000)
 	fromFederator := make(chan messages.FromFederator, 1000)
+	parseMentionFunc := GetParseMentionFunc(db, federator)
 
-	statusProcessor := status.New(db, tc, fromClientAPI)
+	statusProcessor := status.New(db, tc, fromClientAPI, parseMentionFunc)
 	streamingProcessor := streaming.New(db, oauthServer)
-	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator)
+	accountProcessor := account.New(db, tc, mediaManager, oauthServer, fromClientAPI, federator, parseMentionFunc)
 	adminProcessor := admin.New(db, tc, mediaManager, fromClientAPI)
 	mediaProcessor := mediaProcessor.New(db, tc, mediaManager, federator.TransportController(), storage)
 	userProcessor := user.New(db, emailSender)

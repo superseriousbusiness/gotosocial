@@ -199,10 +199,14 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 		return "", err
 	}
 
-	mentionStrings := util.DeriveMentionsFromText(note)
-	mentions, err := p.db.MentionStringsToMentions(ctx, mentionStrings, accountID, "")
-	if err != nil {
-		return "", err
+	mentionStrings := util.DeriveMentionNamesFromText(note)
+	mentions := []*gtsmodel.Mention{}
+	for _, mentionString := range mentionStrings {
+		mention, err := p.parseMention(ctx, mentionString, accountID, "")
+		if err != nil {
+			continue
+		}
+		mentions = append(mentions, mention)
 	}
 
 	// TODO: support emojis in account notes

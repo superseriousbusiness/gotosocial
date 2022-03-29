@@ -194,20 +194,15 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	// we got a db.ErrNoEntries, so we just don't have the account locally stored -- check if we can dereference it
 	if resolve {
 		// we're allowed to resolve it so let's try
-
 		// first we need to webfinger the remote account to convert the username and domain into the activitypub URI for the account
 		acctURI, err := p.federator.FingerRemoteAccount(ctx, authed.Account.Username, username, domain)
 		if err != nil {
 			// something went wrong doing the webfinger lookup so we can't process the request
-			return nil, fmt.Errorf("searchAccountByMention: error fingering remote account with username %s and domain %s: %s", username, domain, err)
+			return nil, fmt.Errorf("error fingering remote account with username %s and domain %s: %s", username, domain, err)
 		}
 
-		// we don't have it locally so try and dereference it
-		account, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
-		if err != nil {
-			return nil, fmt.Errorf("searchAccountByMention: error dereferencing account with uri %s: %s", acctURI.String(), err)
-		}
-		return account, nil
+		// return the attempt to get the remove account
+		return p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
 	}
 
 	return nil, nil

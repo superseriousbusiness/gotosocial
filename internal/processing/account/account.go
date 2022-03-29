@@ -87,10 +87,11 @@ type processor struct {
 	formatter     text.Formatter
 	db            db.DB
 	federator     federation.Federator
+	parseMention  gtsmodel.ParseMentionFunc
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
 		tc:            tc,
 		mediaManager:  mediaManager,
@@ -100,5 +101,6 @@ func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauth
 		formatter:     text.NewFormatter(db),
 		db:            db,
 		federator:     federator,
+		parseMention:  parseMention,
 	}
 }
