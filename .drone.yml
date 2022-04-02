@@ -34,6 +34,8 @@ steps:
         path: /root/.cache/go-build
       - name: go-src
         path: /go
+    environment:
+      VERSION: test
     commands:
       - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
       - CGO_ENABLED=0 ./test/cliparsing.sh
@@ -144,6 +146,6 @@ steps:
 
 ---
 kind: signature
-hmac: 58430b36346c83ef4ad0ed15e1a5ec5fd768dd170e5755f1b3bcfb40bf84a506
+hmac: 44587a59b1f02db3ecb67d0952554b762fdd51f8e1d0ff160ad084e606781c2e
 
 ...
