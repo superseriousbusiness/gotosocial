@@ -19,6 +19,9 @@
 package main
 
 import (
+	"fmt"
+	"runtime/debug"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,30 +31,40 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// Version is the software version of GtS being used.
+// Version is the version of GoToSocial being used.
+// It's injected into the binary by the build script.
 var Version string
-
-// Commit is the git commit of GtS being used.
-var Commit string
 
 //go:generate swagger generate spec
 func main() {
-	var v string
-	if len(Commit) < 7 {
-		v = Version
-	} else {
-		v = Version + " " + Commit[:7]
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		panic("could not read buildinfo")
 	}
 
+	goVersion := buildInfo.GoVersion
+	var commit string
+	var time string
+	for _, s := range buildInfo.Settings {
+		if s.Key == "vcs.revision" {
+			commit = s.Value[:7]
+		}
+		if s.Key == "vcs.time" {
+			time = s.Value
+		}
+	}
+
+	versionString := fmt.Sprintf("%s %s %s [%s]", Version, commit, time, goVersion)
+	
 	// override software version in viper store
-	viper.Set(config.Keys.SoftwareVersion, v)
+	viper.Set(config.Keys.SoftwareVersion, versionString)
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
 		Use:           "gotosocial",
 		Short:         "GoToSocial - a fediverse social media server",
 		Long:          "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
-		Version:       v,
+		Version:       versionString,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
