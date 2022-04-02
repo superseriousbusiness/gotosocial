@@ -91,7 +91,13 @@ func (c *AccountCache) getByID(id string) (*gtsmodel.Account, bool) {
 	if !ok {
 		return nil, false
 	}
-	return copyAccount(v.(*gtsmodel.Account)), true
+
+	a, ok := v.(*gtsmodel.Account)
+	if !ok {
+		panic("account cache entry was not an account")
+	}
+
+	return copyAccount(a), true
 }
 
 // Put places a account in the cache, ensuring that the object place is a copy for thread-safety

@@ -59,5 +59,10 @@ func processValidationError(err error) error {
 		panic(ive)
 	}
 
-	return err.(validator.ValidationErrors)
+	valErr, ok := err.(validator.ValidationErrors)
+	if !ok {
+		panic("*validator.InvalidValidationError could not be coerced to validator.ValidationErrors")
+	}
+
+	return valErr
 }

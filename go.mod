@@ -1,6 +1,6 @@
 module github.com/superseriousbusiness/gotosocial
 
-go 1.17
+go 1.18
 
 require (
 	codeberg.org/gruf/go-errors v1.0.5

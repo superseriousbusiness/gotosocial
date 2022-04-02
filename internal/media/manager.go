@@ -274,8 +274,7 @@ func (m *manager) ActiveWorkers() int {
 
 func (m *manager) Stop() error {
 	logrus.Info("stopping media manager worker pool")
-	stopped := m.pool.Stop()
-	if !stopped {
+	if !m.pool.Stop() {
 		return errors.New("could not stop media manager worker pool")
 	}
 

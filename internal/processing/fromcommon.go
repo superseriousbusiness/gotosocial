@@ -365,14 +365,13 @@ func (p *processor) timelineStatus(ctx context.Context, status *gtsmodel.Status)
 
 	// read any errors that come in from the async functions
 	errs := []string{}
-	go func() {
+	go func(errs []string) {
 		for range errors {
-			e := <-errors
-			if e != nil {
+			if e := <-errors; e != nil {
 				errs = append(errs, e.Error())
 			}
 		}
-	}()
+	}(errs)
 
 	// wait til all functions have returned and then close the error channel
 	wg.Wait()

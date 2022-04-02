@@ -23,7 +23,6 @@ builds:
       - -w
       - -extldflags
       - -static
-      - -X main.Commit={{.Commit}}
       - -X main.Version={{.Version}}
     tags:
       - netgo
