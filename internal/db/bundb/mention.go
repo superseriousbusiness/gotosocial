@@ -46,7 +46,13 @@ func (m *mentionDB) getMentionCached(id string) (*gtsmodel.Mention, bool) {
 	if !ok {
 		return nil, false
 	}
-	return v.(*gtsmodel.Mention), true
+
+	mention, ok := v.(*gtsmodel.Mention)
+	if !ok {
+		panic("mention cache entry was not a mention")
+	}
+
+	return mention, true
 }
 
 func (m *mentionDB) putMentionCache(mention *gtsmodel.Mention) {

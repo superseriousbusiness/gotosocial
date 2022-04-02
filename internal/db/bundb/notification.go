@@ -114,7 +114,13 @@ func (n *notificationDB) getNotificationCache(id string) (*gtsmodel.Notification
 	if !ok {
 		return nil, false
 	}
-	return v.(*gtsmodel.Notification), true
+
+	notif, ok := v.(*gtsmodel.Notification)
+	if !ok {
+		panic("notification cache entry was not a notification")
+	}
+
+	return notif, true
 }
 
 func (n *notificationDB) putNotificationCache(notif *gtsmodel.Notification) {

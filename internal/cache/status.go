@@ -91,7 +91,13 @@ func (c *StatusCache) getByID(id string) (*gtsmodel.Status, bool) {
 	if !ok {
 		return nil, false
 	}
-	return copyStatus(v.(*gtsmodel.Status)), true
+
+	s, ok := v.(*gtsmodel.Status)
+	if !ok {
+		panic("status cache entry was not a status")
+	}
+
+	return copyStatus(s), true
 }
 
 // Put places a status in the cache, ensuring that the object place is a copy for thread-safety
