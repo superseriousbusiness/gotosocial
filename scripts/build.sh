@@ -2,10 +2,7 @@
 
 set -eu
 
-COMMIT="${COMMIT:-1234567}"
-VERSION="${VERSION:-0.0.0}"
-
 CGO_ENABLED=0 go build -trimpath \
                        -tags 'netgo osusergo static_build' \
-                       -ldflags="-s -w -extldflags '-static' -X 'main.Commit=${COMMIT}' -X 'main.Version=${VERSION}'" \
+                       -ldflags="-s -w -extldflags '-static' -X 'main.Version=${VERSION:-$(git describe --tags --abbrev=0)}'" \
                        ./cmd/gotosocial
