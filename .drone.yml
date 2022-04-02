@@ -34,9 +34,8 @@ steps:
         path: /root/.cache/go-build
       - name: go-src
         path: /go
-    environment:
-      VERSION: test
     commands:
+      - apk update --no-cache && apk add git
       - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
       - CGO_ENABLED=0 ./test/cliparsing.sh
     when:
@@ -146,6 +145,6 @@ steps:
 
 ---
 kind: signature
-hmac: 44587a59b1f02db3ecb67d0952554b762fdd51f8e1d0ff160ad084e606781c2e
+hmac: f3cf4e422d9ce7dc0a881da429db628232e2f9e91383ee5a33cf4f13542c0a23
 
 ...
