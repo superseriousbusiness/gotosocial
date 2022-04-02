@@ -55,7 +55,7 @@ func main() {
 	}
 
 	versionString := fmt.Sprintf("%s %s %s [%s]", Version, commit, time, goVersion)
-	
+
 	// override software version in viper store
 	viper.Set(config.Keys.SoftwareVersion, versionString)
 
