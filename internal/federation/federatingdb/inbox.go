@@ -20,11 +20,15 @@ package federatingdb
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
+	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // InboxContains returns true if the OrderedCollection at 'inbox'
@@ -58,24 +62,76 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 	return nil
 }
 
-// InboxForActor fetches the inbox corresponding to the given actorIRI.
+// InboxesForIRI fetches inboxes corresponding to the given iri.
+// This allows your server to skip remote dereferencing of iris
+// in order to speed up message delivery, if desired.
 //
-// It is acceptable to just return nil for the inboxIRI. In this case, the library will
-// attempt to resolve the inbox of the actor by remote dereferencing instead.
+// It is acceptable to just return nil or an empty slice for the inboxIRIs,
+// if you don't know the inbox iri, or you don't wish to use this feature.
+// In this case, the library will attempt to resolve inboxes of the iri
+// by remote dereferencing instead.
+//
+// If the input iri is the iri of an Actor, then the inbox for the actor
+// should be returned as a single-entry slice.
+//
+// If the input iri is a Collection (such as a Collection of followers),
+// then each follower inbox IRI should be returned in the inboxIRIs slice.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) InboxForActor(c context.Context, actorIRI *url.URL) (inboxIRI *url.URL, err error) {
-	account, err := f.db.GetAccountByURI(c, actorIRI.String())
-	if err != nil {
-		// if there are just no entries for this account yet it's fine, return nil
-		// and go-fed will try to dereference it instead
-		if err == db.ErrNoEntries {
-			return nil, nil
+func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs []*url.URL, err error) {
+	// check if this is a followers collection iri for a local account...
+	if iri.Host == viper.GetString(config.Keys.Host) && uris.IsFollowersPath(iri) {
+		localAccountUsername, err := uris.ParseFollowersPath(iri)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't extract local account username from uri %s: %s", iri, err)
 		}
-		// there's been an actual error...
+
+		account, err := f.db.GetLocalAccountByUsername(c, localAccountUsername)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't find local account with username %s: %s", localAccountUsername, err)
+		}
+
+		follows, err := f.db.GetAccountFollowedBy(c, account.ID, false)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't get followers of local account %s: %s", localAccountUsername, err)
+		}
+
+		for _, follow := range follows {
+			// make sure we retrieved the following account from the db
+			if follow.Account == nil {
+				followingAccount, err := f.db.GetAccountByID(c, follow.AccountID)
+				if err != nil {
+					if err == db.ErrNoEntries {
+						continue
+					}
+					return nil, fmt.Errorf("error retrieving account with id %s: %s", follow.AccountID, err)
+				}
+				follow.Account = followingAccount
+			}
+
+			inboxIRI, err := url.Parse(follow.Account.InboxURI)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing inbox uri of following account %s: %s", follow.Account.InboxURI, err)
+			}
+			inboxIRIs = append(inboxIRIs, inboxIRI)
+		}
+		return inboxIRIs, nil
+	}
+
+	// check if this is just an account IRI...
+	if account, err := f.db.GetAccountByURI(c, iri.String()); err == nil {
+		inboxIRI, err := url.Parse(account.InboxURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing account inbox uri %s: %s", account.InboxURI, account.InboxURI)
+		}
+		// we've got it
+		inboxIRIs = append(inboxIRIs, inboxIRI)
+		return inboxIRIs, nil
+	} else if err != db.ErrNoEntries {
+		// there's been a real error
 		return nil, err
 	}
 
-	// we got it!
-	return url.Parse(account.InboxURI)
+	// no error, we just didn't find anything so let the library handle the rest
+	return nil, nil
 }
