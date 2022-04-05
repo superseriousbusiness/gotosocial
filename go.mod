@@ -31,7 +31,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
-	github.com/superseriousbusiness/activity v1.0.1-0.20211113133524-56560b73ace8
+	github.com/superseriousbusiness/activity v1.0.1-0.20220405135100-18e8f86a760a
 	github.com/superseriousbusiness/exif-terminator v0.2.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
@@ -71,7 +71,6 @@ require (
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gorilla/context v1.1.1 // indirect

@@ -681,7 +681,6 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 	// first check if the implemented database logic can return any inboxes
 	// from our list of actor IRIs.
 	foundInboxesFromDB := []*url.URL{}
-	foundActorsFromDB := []*url.URL{}
 	for _, actorIRI := range r {
 		// BEGIN LOCK
 		err = a.db.Lock(c, actorIRI)
@@ -689,16 +688,20 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 			return
 		}
 
-		inbox, err := a.db.InboxForActor(c, actorIRI)
+		inboxes, err := a.db.InboxesForIRI(c, actorIRI)
 		if err != nil {
 			// bail on error
 			a.db.Unlock(c, actorIRI)
 			return nil, err
 		}
-		if inbox != nil {
+
+		if len(inboxes) > 0 {
 			// we have a hit
-			foundInboxesFromDB = append(foundInboxesFromDB, inbox)
-			foundActorsFromDB = append(foundActorsFromDB, actorIRI)
+			foundInboxesFromDB = append(foundInboxesFromDB, inboxes...)
+
+			// if we found inboxes for this iri, we should remove it from 
+			// the list of actors/iris we still need to dereference
+			r = removeOne(r, actorIRI)
 		}
 
 		// END LOCK
@@ -706,12 +709,6 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	// for every actor we found an inbox for in the db, we should
-	// remove it from the list of actors we still need to dereference
-	for _, actorIRI := range foundActorsFromDB {
-		r = removeOne(r, actorIRI)
 	}
 
 	// look for any actors' inboxes that weren't already discovered above;
