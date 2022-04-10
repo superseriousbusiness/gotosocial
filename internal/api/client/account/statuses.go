@@ -194,14 +194,14 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 
 	publicOnly := false
 	publicOnlyString := c.Query(OnlyPublicKey)
-	if mediaOnlyString != "" {
+	if publicOnlyString != "" {
 		i, err := strconv.ParseBool(publicOnlyString)
 		if err != nil {
 			l.Debugf("error parsing public only string: %s", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse public only query param"})
 			return
 		}
-		mediaOnly = i
+		publicOnly = i
 	}
 
 	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, maxID, minID, pinnedOnly, mediaOnly, publicOnly)

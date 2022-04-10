@@ -58,9 +58,10 @@ func (suite *AccountStandardTestSuite) SetupSuite() {
 
 func (suite *AccountStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
-	testrig.InitTestLog()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage, suite.mediaManager)
 	suite.sentEmails = make(map[string]string)

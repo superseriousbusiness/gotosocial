@@ -263,10 +263,16 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	}
 
 	if mediaOnly {
+		// attachments are stored as a json object;
+		// this implementation differs between sqlite and postgres,
+		// so we have to be very thorough to cover all eventualities
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.
-				WhereOr("? IS NOT NULL", bun.Ident("attachments")).
-				WhereOr("attachments != '{}'")
+				Where("? IS NOT NULL", bun.Ident("attachments")).
+				Where("? != ''", bun.Ident("attachments")).
+				Where("? != 'null'", bun.Ident("attachments")).
+				Where("? != '{}'", bun.Ident("attachments")).
+				Where("? != '[]'", bun.Ident("attachments"))
 		})
 	}
 
