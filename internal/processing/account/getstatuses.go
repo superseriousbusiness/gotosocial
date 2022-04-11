@@ -29,10 +29,12 @@ import (
 )
 
 func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	} else if blocked {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+	if requestingAccount != nil {
+		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		} else if blocked {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		}
 	}
 
 	apiStatuses := []apimodel.Status{}
