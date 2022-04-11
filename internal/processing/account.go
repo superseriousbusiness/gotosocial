@@ -34,8 +34,12 @@ func (p *processor) AccountDeleteLocal(ctx context.Context, authed *oauth.Auth, 
 	return p.accountProcessor.DeleteLocal(ctx, authed.Account, form)
 }
 
-func (p *processor) AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, error) {
+func (p *processor) AccountGet(ctx context.Context, authed *oauth.Auth, targetAccountID string) (*apimodel.Account, gtserror.WithCode) {
 	return p.accountProcessor.Get(ctx, authed.Account, targetAccountID)
+}
+
+func (p *processor) AccountGetLocalByUsername(ctx context.Context, authed *oauth.Auth, username string) (*apimodel.Account, gtserror.WithCode) {
+	return p.accountProcessor.GetLocalByUsername(ctx, authed.Account, username)
 }
 
 func (p *processor) AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error) {

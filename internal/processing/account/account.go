@@ -47,7 +47,9 @@ type Processor interface {
 	// Unlike Delete, it will propagate the deletion out across the federating API to other instances.
 	DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// Get processes the given request for account information.
-	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
+	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode)
+	// GetLocalByUsername processes the given request for account information targeting a local account by username.
+	GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode)
 	// Update processes the update of an account with the given form
 	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
