@@ -19,6 +19,8 @@
 package web
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -26,6 +28,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -67,10 +70,10 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	// if we're getting an AP request on this endpoint we should redirect to the account's AP uri
+	// if we're getting an AP request on this endpoint we should render the account's AP representation instead
 	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
 	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/users/%s", username))
+		m.returnAPRepresentation(ctx, c, username, accept)
 		return
 	}
 
@@ -104,4 +107,32 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 			"/assets/profile.css",
 		},
 	})
+}
+
+func (m *Module) returnAPRepresentation(ctx context.Context, c *gin.Context, username string, accept string) {
+	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
+	if signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
+	}
+
+	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
+	if signed {
+		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
+	}
+
+	user, errWithCode := m.processor.GetFediUser(ctx, username, c.Request.URL) // GetFediUser handles auth as well
+	if errWithCode != nil {
+		logrus.Infof(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
+
+	b, mErr := json.Marshal(user)
+	if mErr != nil {
+		err := fmt.Errorf("could not marshal json: %s", mErr)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Data(http.StatusOK, accept, b)
 }
