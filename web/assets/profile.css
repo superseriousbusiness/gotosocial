@@ -4,7 +4,7 @@ main {
 
 .headerimage img {
     width: 100%;
-    height: 10em;
+    height: 15em;
     object-fit: cover;
     border-radius: 10px;
   }
@@ -23,7 +23,7 @@ main {
 .profile .basic {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex: 1 1 25em;
     gap: 0.5rem;
   }
 
@@ -50,8 +50,12 @@ main {
 .profile .detailed {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex: 1 1 25em;
   }
+
+.profile .detailed h2 {
+      margin-top: 0;
+    }
 
 .profile .detailed .bio {
       margin: 0;

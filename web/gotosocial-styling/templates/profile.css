@@ -5,7 +5,7 @@ main {
 .headerimage {
   img {
     width: 100%;
-    height: 10em;
+    height: 15em;
     object-fit: cover;
     border-radius: 10px;
   }
@@ -24,7 +24,7 @@ main {
   .basic {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex: 1 1 25em;
     gap: 0.5rem;
 
     a {
@@ -53,7 +53,11 @@ main {
   .detailed {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
+    flex: 1 1 25em;
+
+    h2 {
+      margin-top: 0;
+    }
 
     .bio {
       margin: 0;
