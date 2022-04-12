@@ -61,10 +61,10 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	// get latest 10 original public statuses;
-	// ie., exclude replies, public only, with
-	// or without media
-	statuses, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, "", "", false, false, true)
+	// get latest 10 top-level public statuses;
+	// ie., exclude replies and boosts, public only,
+	// with or without media
+	statuses, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, true, "", "", false, false, true)
 	if errWithCode != nil {
 		l.Debugf("error getting statuses from processor: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

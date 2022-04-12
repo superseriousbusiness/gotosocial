@@ -89,7 +89,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 
 	// scenario 2 -- get the requested page
 	// limit pages to 30 entries per page
-	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, maxID, minID, false, false, true)
+	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, true, maxID, minID, false, false, true)
 	if err != nil && err != db.ErrNoEntries {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
