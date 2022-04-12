@@ -19,12 +19,14 @@
 package web
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -57,7 +59,18 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	account, errWithCode := m.processor.AccountGetLocalByUsername(ctx, authed, username)
 	if errWithCode != nil {
 		l.Debugf("error getting account from processor: %s", errWithCode.Error())
+		if errWithCode.Code() == http.StatusNotFound {
+			m.NotFoundHandler(c)
+			return
+		}
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
+
+	// if we're getting an AP request on this endpoint we should redirect to the account's AP uri
+	accept := c.NegotiateFormat(string(api.TextHTML), string(api.AppActivityJSON), string(api.AppActivityLDJSON))
+	if accept == string(api.AppActivityJSON) || accept == string(api.AppActivityLDJSON) {
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("/users/%s", username))
 		return
 	}
 
@@ -82,9 +95,13 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	}
 
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance":    instance,
-		"account":     account,
-		"statuses":    statuses,
-		"stylesheets": []string{"/assets/Fork-Awesome/css/fork-awesome.min.css", "/assets/status.css", "/assets/profile.css"},
+		"instance": instance,
+		"account":  account,
+		"statuses": statuses,
+		"stylesheets": []string{
+			"/assets/Fork-Awesome/css/fork-awesome.min.css",
+			"/assets/status.css",
+			"/assets/profile.css",
+		},
 	})
 }
