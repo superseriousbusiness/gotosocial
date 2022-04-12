@@ -39,7 +39,9 @@ const (
 	confirmEmailPath = "/" + uris.ConfirmEmailPath
 	tokenParam       = "token"
 	usernameKey      = "username"
+	statusIDKey      = "status"
 	profilePath      = "/@:" + usernameKey
+	statusPath       = profilePath + "/statuses/:" + statusIDKey
 )
 
 // Module implements the api.ClientModule interface for web pages.
@@ -154,7 +156,7 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, profilePath, m.profileTemplateHandler)
 
 	// serve statuses
-	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
+	s.AttachHandler(http.MethodGet, statusPath, m.threadTemplateHandler)
 
 	// serve email confirmation page at /confirm_email?token=whatever
 	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
