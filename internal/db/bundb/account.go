@@ -199,7 +199,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
-		Where("username = ?", username).
+		Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username). // ignore casing
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
 	if err := q.Scan(ctx); err != nil {
