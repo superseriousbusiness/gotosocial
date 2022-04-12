@@ -89,6 +89,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 
 	// pick a random dummy avatar if this account avatar isn't set yet
 	if account.Avatar == "" && len(m.defaultAvatars) > 0 {
+		//nolint:gosec
 		randomIndex := rand.Intn(len(m.defaultAvatars))
 		dummyAvatar := m.defaultAvatars[randomIndex]
 		account.Avatar = dummyAvatar
