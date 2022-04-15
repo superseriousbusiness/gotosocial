@@ -95,6 +95,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating oidc idp: %s", err)
 	}
 
+	// build web module
+	webModule, err := web.New(processor)
+	if err != nil {
+		return fmt.Errorf("error creating web module: %s", err)
+	}
+
 	// build client api modules
 	authModule := auth.New(dbService, oauthServer, idp)
 	accountModule := account.New(processor)
@@ -103,7 +109,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	followRequestsModule := followrequest.New(processor)
 	webfingerModule := webfinger.New(processor)
 	nodeInfoModule := nodeinfo.New(processor)
-	webBaseModule := web.New(processor)
 	usersModule := user.New(processor)
 	timelineModule := timeline.New(processor)
 	notificationModule := notification.New(processor)
@@ -126,8 +131,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		securityModule,
 		authModule,
 
+		// now the web module
+		webModule,
+
 		// now everything else
-		webBaseModule,
 		accountModule,
 		instanceModule,
 		appsModule,

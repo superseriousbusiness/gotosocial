@@ -1,0 +1,47 @@
+{{ template "header.tmpl" .}}
+<main>
+    {{ if .account.Header }}<a href="{{.account.Header}}" class="headerimage"><img src="{{.account.Header}}"></a>{{ end }}
+    <div class="profile">
+        <div class="basic">
+            <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
+            <a href="{{.account.URL}}" class="username">@{{.account.Username}}</a>
+            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
+        </div>
+        <div class="detailed">
+            <h2>About @{{.account.Username}}</h2>
+            <div class="bio">
+                {{ if .account.Note }}{{ .account.Note | noescape }}{{else}}This GoToSocial user hasn't written a bio yet!{{end}}
+            </div>
+        </div>
+    </div>
+    <div class="accountstats">
+        <div class="entry">Joined {{.account.CreatedAt | timestampShort}}</div>
+        <div class="entry">Followed by {{.account.FollowersCount}}</div>
+        <div class="entry">Following {{.account.FollowingCount}}</div>
+        <div class="entry">Posted {{.account.StatusesCount}}</div>
+    </div>
+    <h2>Recent public posts by @{{.account.Username}}</h2>
+	<div class="thread">
+		{{range .statuses}}
+		<div class="toot expanded">
+			{{ template "status.tmpl" .}}
+		</div>
+		{{end}}
+	</div>
+</main>
+<script>
+	Array.from(document.getElementsByClassName("spoiler-label")).forEach((label) => {
+		let checkbox = document.getElementById(label.htmlFor);
+		function update() {
+			if(checkbox.checked) {
+				label.innerHTML = "Show more";
+			} else {
+				label.innerHTML = "Show less";
+			}
+		}
+		update();
+
+		label.addEventListener("click", () => {setTimeout(update, 1)});
+	});
+</script>
+{{ template "footer.tmpl" .}}

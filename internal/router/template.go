@@ -67,6 +67,11 @@ func timestamp(stamp string) string {
 	return t.Format("January 2, 2006, 15:04:05")
 }
 
+func timestampShort(stamp string) string {
+	t, _ := time.Parse(time.RFC3339, stamp)
+	return t.Format("January, 2006")
+}
+
 type iconWithLabel struct {
 	faIcon string
 	label  string
@@ -98,5 +103,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"oddOrEven":      oddOrEven,
 		"visibilityIcon": visibilityIcon,
 		"timestamp":      timestamp,
+		"timestampShort": timestampShort,
 	})
 }

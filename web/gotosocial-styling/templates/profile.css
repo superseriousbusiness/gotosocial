@@ -1,0 +1,94 @@
+main {
+  background: transparent;
+}
+
+.headerimage {
+  img {
+    width: 100%;
+    height: 15em;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+}
+
+.profile {
+  position: relative;
+  background: color($bg lightness(-3%));
+  padding: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+
+  .basic {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 25em;
+    gap: 0.5rem;
+
+    a {
+      position: relative;
+      z-index: 1;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .avatar {
+      img {
+        height: 25em;
+        width: 25em;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+    }
+
+    .displayname {
+      font-weight: bold;
+      font-size: 1.6rem;
+      align-self: start;
+    }
+  }
+
+  .detailed {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 25em;
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .bio {
+      margin: 0;
+
+      a {
+        color: $acc1;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.accountstats {
+  position: relative;
+  background: color($bg lightness(-3%));
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+
+  .entry {
+    background: color($bg lightness(+3%));
+    padding: 0.5rem;
+    flex-grow: 1;
+    text-align: center;
+  }
+}
+
+footer + div {
+  /* something weird from the devstack.. */
+  display: none;
+}

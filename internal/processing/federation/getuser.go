@@ -38,17 +38,20 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 	}
 
 	var requestedPerson vocab.ActivityStreamsPerson
-	switch {
-	case uris.IsPublicKeyPath(requestURL):
+	if uris.IsPublicKeyPath(requestURL) {
 		// if it's a public key path, we don't need to authenticate but we'll only serve the bare minimum user profile needed for the public key
 		requestedPerson, err = p.tc.AccountToASMinimal(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	case uris.IsUserPath(requestURL):
-		// if it's a user path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
+	} else {
+		// if it's any other path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
 		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
-		if err != nil || !authenticated {
+		if err != nil {
+			return nil, gtserror.NewErrorNotAuthorized(err, "not authorized")
+		}
+
+		if !authenticated {
 			return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
 		}
 
@@ -73,8 +76,6 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	default:
-		return nil, gtserror.NewErrorBadRequest(fmt.Errorf("path was not public key path or user path"))
 	}
 
 	data, err := streams.Serialize(requestedPerson)

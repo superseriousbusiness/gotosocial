@@ -20,8 +20,10 @@ package web
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -36,18 +38,68 @@ import (
 const (
 	confirmEmailPath = "/" + uris.ConfirmEmailPath
 	tokenParam       = "token"
+	usernameKey      = "username"
+	statusIDKey      = "status"
+	profilePath      = "/@:" + usernameKey
+	statusPath       = profilePath + "/statuses/:" + statusIDKey
 )
 
 // Module implements the api.ClientModule interface for web pages.
 type Module struct {
-	processor processing.Processor
+	processor      processing.Processor
+	assetsPath     string
+	adminPath      string
+	defaultAvatars []string
 }
 
 // New returns a new api.ClientModule for web pages.
-func New(processor processing.Processor) api.ClientModule {
-	return &Module{
-		processor: processor,
+func New(processor processing.Processor) (api.ClientModule, error) {
+	assetsBaseDir := viper.GetString(config.Keys.WebAssetBaseDir)
+	if assetsBaseDir == "" {
+		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebAssetBaseDir)
 	}
+
+	assetsPath, err := filepath.Abs(assetsBaseDir)
+	if err != nil {
+		return nil, fmt.Errorf("error getting absolute path of %s: %s", assetsBaseDir, err)
+	}
+
+	defaultAvatarsPath := filepath.Join(assetsPath, "default_avatars")
+	defaultAvatarFiles, err := ioutil.ReadDir(defaultAvatarsPath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading default avatars at %s: %s", defaultAvatarsPath, err)
+	}
+
+	defaultAvatars := []string{}
+	for _, f := range defaultAvatarFiles {
+		// ignore directories
+		if f.IsDir() {
+			continue
+		}
+
+		// ignore files bigger than 50kb
+		if f.Size() > 50000 {
+			continue
+		}
+
+		extension := strings.TrimPrefix(strings.ToLower(filepath.Ext(f.Name())), ".")
+
+		// take only files with simple extensions
+		switch extension {
+		case "svg", "jpeg", "jpg", "gif", "png":
+			defaultAvatarPath := fmt.Sprintf("/assets/default_avatars/%s", f.Name())
+			defaultAvatars = append(defaultAvatars, defaultAvatarPath)
+		default:
+			continue
+		}
+	}
+
+	return &Module{
+		processor:      processor,
+		assetsPath:     assetsPath,
+		adminPath:      filepath.Join(assetsPath, "admin"),
+		defaultAvatars: defaultAvatars,
+	}, nil
 }
 
 func (m *Module) baseHandler(c *gin.Context) {
@@ -88,20 +140,11 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
-	assetBaseDir := viper.GetString(config.Keys.WebAssetBaseDir)
-	if assetBaseDir == "" {
-		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebAssetBaseDir)
-	}
-	assetPath, err := filepath.Abs(assetBaseDir)
-	if err != nil {
-		return fmt.Errorf("error getting absolute path of %s: %s", assetBaseDir, err)
-	}
-	s.AttachStaticFS("/assets", fileSystem{http.Dir(assetPath)})
+	s.AttachStaticFS("/assets", fileSystem{http.Dir(m.assetsPath)})
 
 	// serve admin panel from within assets dir at /admin/
 	// and redirect /admin to /admin/
-	adminPath := filepath.Join(assetPath, "admin")
-	s.AttachStaticFS("/admin/", fileSystem{http.Dir(adminPath)})
+	s.AttachStaticFS("/admin/", fileSystem{http.Dir(m.adminPath)})
 	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/admin/")
 	})
@@ -109,8 +152,11 @@ func (m *Module) Route(s router.Router) error {
 	// serve front-page
 	s.AttachHandler(http.MethodGet, "/", m.baseHandler)
 
+	// serve profile pages at /@username
+	s.AttachHandler(http.MethodGet, profilePath, m.profileTemplateHandler)
+
 	// serve statuses
-	s.AttachHandler(http.MethodGet, "/:user/statuses/:id", m.threadTemplateHandler)
+	s.AttachHandler(http.MethodGet, statusPath, m.threadTemplateHandler)
 
 	// serve email confirmation page at /confirm_email?token=whatever
 	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)

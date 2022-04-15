@@ -199,7 +199,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
-		Where("username = ?", username).
+		Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username). // ignore casing
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
 	if err := q.Scan(ctx); err != nil {
@@ -230,7 +230,7 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
 	statuses := []*gtsmodel.Status{}
 
 	q := a.conn.
@@ -248,6 +248,10 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	if excludeReplies {
 		q = q.WhereGroup(" AND ", whereEmptyOrNull("in_reply_to_id"))
+	}
+
+	if excludeReblogs {
+		q = q.WhereGroup(" AND ", whereEmptyOrNull("boost_of_id"))
 	}
 
 	if maxID != "" {
