@@ -68,7 +68,9 @@ server {
 }
 ```
 
-Note: You can remove the line `listen [::]:80;` if your server is not ipv6 capable or you'd rather not use ipv6.
+**Note***: You can remove the line `listen [::]:80;` if your server is not ipv6 capable.
+
+**Note***: `proxy_set_header Host $host;` is essential: It guarantees that the proxy and the gotosocial speak of the same Server name. If not, gotosocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
 
 Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on and change `server_name` to your own domain name.
 If your domain name is `gotosocial.example.com` then `server_name gotosocial.example.com;` would be the correct value.
@@ -109,7 +111,7 @@ sudo certbot --nginx
 ```
 
 After you do, it should have automatically edited your configuration file to enable https.
-Just reload it one last time and after that you should be good to go!
+Reload it one last time and after that you should be good to go!
 
 ```bash
 sudo systemctl restart nginx
