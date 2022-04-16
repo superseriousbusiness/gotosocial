@@ -82,6 +82,15 @@ func (suite *SessionTestSuite) TestDeriveSessionOK() {
 	suite.Equal("gotosocial-example.org", sessionName)
 }
 
+func (suite *SessionTestSuite) TestDeriveSessionIDNOK() {
+	viper.Set(config.Keys.Protocol, "https")
+	viper.Set(config.Keys.Host, "fóid.org")
+
+	sessionName, err := router.SessionName()
+	suite.NoError(err)
+	suite.Equal("gotosocial-xn--fid-gna.org", sessionName)
+}
+
 func TestSessionTestSuite(t *testing.T) {
 	suite.Run(t, &SessionTestSuite{})
 }
