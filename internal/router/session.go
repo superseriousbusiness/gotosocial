@@ -31,6 +31,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"golang.org/x/net/idna"
 )
 
 // SessionOptions returns the standard set of options to use for each session.
@@ -61,7 +62,14 @@ func SessionName() (string, error) {
 		return "", fmt.Errorf("could not derive hostname without port from %s://%s", protocol, host)
 	}
 
-	return fmt.Sprintf("gotosocial-%s", strippedHostname), nil
+	// make sure IDNs are converted to punycode or the cookie library breaks:
+	// see https://en.wikipedia.org/wiki/Punycode
+	punyHostname, err := idna.New().ToASCII(strippedHostname)
+	if err != nil {
+		return "", fmt.Errorf("could not convert %s to punycode: %s", strippedHostname, err)
+	}
+
+	return fmt.Sprintf("gotosocial-%s", punyHostname), nil
 }
 
 func useSession(ctx context.Context, sessionDB db.Session, engine *gin.Engine) error {
