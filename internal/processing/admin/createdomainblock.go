@@ -68,9 +68,8 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
 			}
 		}
-
 		// process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(ctx, account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
+		go p.initiateDomainBlockSideEffects(context.Background(), account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
 	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
