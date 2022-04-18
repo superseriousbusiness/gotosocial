@@ -20,6 +20,7 @@ nav:
     - "installation_guide/nginx.md"
     - "installation_guide/apache-httpd.md"
     - "installation_guide/third_party.md"
+    - "installation_guide/websocket.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"
