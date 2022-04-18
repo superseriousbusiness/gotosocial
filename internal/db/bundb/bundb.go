@@ -136,9 +136,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", dbType)
 	}
 
-	// add a hook to just log queries and the time they take
+	// add a hook to log queries and the time they take
 	// only do this for logging where performance isn't 1st concern
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel && viper.GetBool(config.Keys.LogDbQueries) {
 		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 

@@ -24,6 +24,7 @@ import "github.com/coreos/go-oidc/v3/oidc"
 // Note that if you use this, you still need to set Host and, if desired, ConfigPath.
 var Defaults = Values{
 	LogLevel:        "info",
+	LogDbQueries:    false,
 	ApplicationName: "gotosocial",
 	ConfigPath:      "",
 	Host:            "",

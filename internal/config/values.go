@@ -21,6 +21,7 @@ package config
 // Values contains contains the type of each configuration value.
 type Values struct {
 	LogLevel        string
+	LogDbQueries    bool
 	ApplicationName string
 	ConfigPath      string
 	Host            string
