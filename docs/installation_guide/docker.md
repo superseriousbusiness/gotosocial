@@ -125,66 +125,6 @@ GTS_LETSENCRYPT_ENABLED=false
 ```
 </details>
 
-## (optional) NGINX Config
-The following NGINX config is just an example of what this might look like. In this case we assume that a valid SSL certificate is present. For this you can get a valid certificate from [Let's Encrypt](https://letsencrypt.org "Let's Encrypt Homepage") with the [cerbot](https://certbot.eff.org "Certbot's Homepage").
+## (optional) Reverse Proxy
 
-```shell
-server {
-  listen 80;
-  listen [::]:80;
-  server_name gts.example.com;
-
-  location /.well-known/acme-challenge/ {
-    default_type "text/plain";
-    root /var/www/certbot;
-  }
-  location / { return 301 https://$host$request_uri; }
-}
-
-server {
-  listen 443 ssl http2;
-  listen [::]:443 ssl http2;
-  server_name gts.example.com;
-
-  #############################################################################
-  # Certificates                                                              #
-  # you need a certificate to run in production. see https://letsencrypt.org/ #
-  #############################################################################
-  ssl_certificate     /etc/letsencrypt/live/gts.example.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/gts.example.com/privkey.pem;
-
-  location ^~ '/.well-known/acme-challenge' {
-    default_type "text/plain";
-    root /var/www/certbot;
-  }
-
-  ###########################################
-  # Security hardening (as of Nov 15, 2020) #
-  # based on Mozilla Guideline v5.6         #
-  ###########################################
-
-  ssl_protocols             TLSv1.2 TLSv1.3;
-  ssl_prefer_server_ciphers on;
-  ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305";
-  ssl_session_timeout       1d; # defaults to 5m
-  ssl_session_cache         shared:SSL:10m; # estimated to 40k sessions
-  ssl_session_tickets       off;
-  ssl_stapling              on;
-  ssl_stapling_verify       on;
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-  # HSTS (https://hstspreload.org), requires to be copied in 'location' sections that have add_header directives
-  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload";
-
-
-  location / {
-    proxy_pass         http://127.0.0.1:8080;
-
-    proxy_set_header   Host             $host;
-    proxy_set_header   Connection       $http_connection;
-    proxy_set_header   X-Real-IP        $remote_addr;
-    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
-    proxy_set_header   X-Scheme         $scheme;
-  }
-
-}
-```
+If you want to run other webservers on port 433 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy

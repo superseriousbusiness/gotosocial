@@ -138,6 +138,6 @@ sudo systemctl enable --now gotosocial.service
 
 At some point you'll likely want to do things like change instance information, and block domains you don't want to interact with. See the [admin panel](../admin/admin_panel.md) instructions for this.
 
-## 9. Reverse proxy with nginx (optional)
+## 9. Reverse proxy (optional)
 
-If you want to run other webservers on port 433 or simply want to add an additional layer of security you might want to [use nginx as a reverse proxy](./nginx.md).
+If you want to run other webservers on port 433 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
