@@ -123,5 +123,10 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 	if err := q.Scan(ctx); err != nil {
 		return nil, i.conn.ProcessError(err)
 	}
+
+	if len(accounts) == 0 {
+		return nil, db.ErrNoEntries
+	}
+
 	return accounts, nil
 }
