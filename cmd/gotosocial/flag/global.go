@@ -31,6 +31,7 @@ func Global(cmd *cobra.Command, values config.Values) {
 	cmd.PersistentFlags().String(config.Keys.AccountDomain, values.AccountDomain, usage.AccountDomain)
 	cmd.PersistentFlags().String(config.Keys.Protocol, values.Protocol, usage.Protocol)
 	cmd.PersistentFlags().String(config.Keys.LogLevel, values.LogLevel, usage.LogLevel)
+	cmd.PersistentFlags().Bool(config.Keys.LogDbQueries, values.LogDbQueries, usage.LogDbQueries)
 	cmd.PersistentFlags().String(config.Keys.ConfigPath, values.ConfigPath, usage.ConfigPath)
 
 	// database stuff

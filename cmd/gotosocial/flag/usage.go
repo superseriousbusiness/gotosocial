@@ -22,6 +22,7 @@ import "github.com/superseriousbusiness/gotosocial/internal/config"
 
 var usage = config.KeyNames{
 	LogLevel:                   "Log level to run at: [trace, debug, info, warn, fatal]",
+	LogDbQueries:               "Log database queries verbosely when log-level is trace or debug",
 	ApplicationName:            "Name of the application, used in various places internally",
 	ConfigPath:                 "Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments",
 	Host:                       "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!",

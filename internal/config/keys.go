@@ -21,8 +21,9 @@ package config
 // KeyNames is a struct that just contains the names of configuration keys.
 type KeyNames struct {
 	// root
-	LogLevel   string
-	ConfigPath string
+	LogLevel     string
+	LogDbQueries string
+	ConfigPath   string
 
 	// general
 	ApplicationName string
@@ -109,6 +110,7 @@ type KeyNames struct {
 // and retrieving values from the viper config store.
 var Keys = KeyNames{
 	LogLevel:        "log-level",
+	LogDbQueries:    "log-db-queries",
 	ApplicationName: "application-name",
 	ConfigPath:      "config-path",
 	Host:            "host",
