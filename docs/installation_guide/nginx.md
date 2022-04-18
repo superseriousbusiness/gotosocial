@@ -1,8 +1,9 @@
-# Reverse proxy with nginx
+# Reverse proxy with NGINX
 
 ## Requirements
 
-For this you will need certbot, the certbot nginx plugin and of course nginx.
+For this you will need [Certbot](https://certbot.eff.org/), the Certbot NGINX plugin and of course [NGINX](https://www.nginx.com/) itself.
+
 These are popular packages so your distro will probably have them.
 
 ### Ubuntu
@@ -25,14 +26,7 @@ sudo zypper install nginx python3-certbot python3-certbot-nginx
 
 ## Configure GoToSocial
 
-In your GoToSocial config turn off letsencrypt.
-First open the file in your text editor.
-
-```bash
-sudoedit /gotosocial/config.yaml
-```
-
-Then set `letsencrypt-enabled: false`.
+In your GoToSocial config turn off letsencrypt by setting `letsencrypt-enabled` to `false`.
 
 If GoToSocial is already running, restart it.
 
@@ -42,9 +36,10 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up nginx
+## Set up NGINX
 
-First we will set up nginx to serve GoToSocial as unsecured http and then later use certbot to automatically upgrade to https.
+First we will set up NGINX to serve GoToSocial as unsecured http and then later use Certbot to automatically upgrade it to serve https.
+
 Please do not try to use it until that's done or you'll be transmitting passwords over clear text.
 
 First we'll write a configuration for nginx and put it in `/etc/nginx/sites-available`.
@@ -54,13 +49,15 @@ sudo mkdir /etc/nginx/sites-available/
 sudoedit /etc/nginx/sites-available/yourgotosocial.url.conf
 ```
 
+In the above commands, replace `yourgotosocial.url` with your actual GoToSocial host value. So if your `host` is set to `example.org`, then the file should be called `/etc/nginx/sites-available/example.org.conf`
+
 The file you're about to create should look a bit like this:
 
 ```nginx.conf
 server {
   listen 80;
   listen [::]:80;
-  server_name example.com;
+  server_name example.org;
   location / {
     proxy_pass http://localhost:8080;
     proxy_set_header Host $host;
@@ -68,12 +65,14 @@ server {
 }
 ```
 
-**Note***: You can remove the line `listen [::]:80;` if your server is not ipv6 capable.
+**Note**: You can remove the line `listen [::]:80;` if your server is not ipv6 capable.
 
-**Note***: `proxy_set_header Host $host;` is essential: It guarantees that the proxy and the gotosocial speak of the same Server name. If not, gotosocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
+**Note**: `proxy_set_header Host $host;` is essential. It guarantees that the proxy and GoToSocial use the same server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
 
 Change `proxy_pass` to the ip and port that you're actually serving GoToSocial on and change `server_name` to your own domain name.
-If your domain name is `gotosocial.example.com` then `server_name gotosocial.example.com;` would be the correct value.
+
+If your domain name is `example.org` then `server_name example.org;` would be the correct value.
+
 If you're running GoToSocial on another machine with the local ip of 192.168.178.69 and on port 8080 then `proxy_pass http://192.168.178.69:8080;` would be the correct value.
 
 Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
@@ -82,6 +81,8 @@ Next we'll need to link the file we just created to the folder that nginx reads 
 sudo mkdir /etc/nginx/sites-enabled
 sudo ln -s /etc/nginx/sites-available/yourgotosocial.url.conf /etc/nginx/sites-enabled/
 ```
+
+Again, replace `yourgotosocial.url` with your actual GoToSocial host value.
 
 Now check for configuration errors.
 
@@ -111,7 +112,8 @@ sudo certbot --nginx
 ```
 
 After you do, it should have automatically edited your configuration file to enable https.
-Reload it one last time and after that you should be good to go!
+
+Reload NGINX one last time and after that you should be good to go!
 
 ```bash
 sudo systemctl restart nginx
@@ -125,7 +127,7 @@ The resulting NGINX config should look something like this:
 server {
   listen 80;
   listen [::]:80;
-  server_name gts.example.com;
+  server_name gts.example.org;
 
   location /.well-known/acme-challenge/ {
     default_type "text/plain";
@@ -137,14 +139,14 @@ server {
 server {
   listen 443 ssl http2;
   listen [::]:443 ssl http2;
-  server_name gts.example.com;
+  server_name gts.example.org;
 
   #############################################################################
   # Certificates                                                              #
   # you need a certificate to run in production. see https://letsencrypt.org/ #
   #############################################################################
-  ssl_certificate     /etc/letsencrypt/live/gts.example.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/gts.example.com/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/gts.example.org/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/gts.example.org/privkey.pem;
 
   location ^~ '/.well-known/acme-challenge' {
     default_type "text/plain";
