@@ -1,130 +1,141 @@
 # Docker
 
-The Official GoToSocial docker images are provided through [docker hub](https://hub.docker.com/r/superseriousbusiness/gotosocial "docker hub gotosocial").
+The official GoToSocial Docker images are provided through [Docker Hub](https://hub.docker.com/r/superseriousbusiness/gotosocial).
 
-GoToSocial can be configured using [Environment Variables](../configuration/index.md#environment-variables) if you wish, allowing your GoToSocial configuration to be embedded inside your docker container configuration.
+Docker images are currently available for the following OS + architecture combinations:
 
-## Run with Docker Compose (recommended)
-This guide will lead you through the installation with [docker compose](https://docs.docker.com/compose/ "Docker Compose Docs"), so you might want to follow the next Steps.
+Linux
+
+- 386
+- amd64
+- arm6
+- arm7
+- arm64v8
+
+FreeBSD
+
+- amd64
+
+Before following this guide, you should read the [system requirements](./index.md).
+
+This guide assumes that you're using Linux.
+
+## Run with Docker Compose
+
+You can run GoToSocial using any orchestration system that can manage Docker containers ([Kubernetes](https://kubernetes.io/), [Nomad](https://www.nomadproject.io/), etc).
+
+For simplicity's sake, this guide will lead you through the installation with [Docker Compose](https://docs.docker.com/compose), using SQLite as your database.
 
 ### Create a Working Dir
-You need a Working Directory in which the data of the PostgreSQL and the GoToSocial container will be located, so create this directory for example with the following command. 
-The directory can be located where you want it to be later.
 
-```shell
-mkdir -p /docker/gotosocial
-cd /docker/gotosocial
+You need a working directory in which your docker-compose file will be located, and a directory for GoToSocial to store data in, so create these directories with the following command:
+
+```bash
+mkdir -p ~/gotosocial/data
 ```
-### Get the latest docker-compose.yaml and config.yaml
-You can get an example [docker-compose.yaml](../../example/docker-compose/docker-compose.yaml "Example docker-compose.yaml") and [config.yaml](../../example/config.yaml "Example config.yaml") here, which you can download with wget for example.
 
-```shell
+Now change to the working directory you created:
+
+```bash
+cd ~/gotosocial
+```
+
+### Get the latest docker-compose.yaml
+
+Use `wget` to download the latest [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml) example, which we'll customize for our needs:
+
+```bash
 wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml
-wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/config.yaml
 ```
 
 ### Edit the docker-compose.yaml
-You can modify the docker-compose.yaml to your needs, but in any case you should generate a Postgres password and bind it as environment variable into the postgreSQL container. For this we can write the password directly into the docker-compose.yaml like in the example or we create an [.env file](https://docs.docker.com/compose/environment-variables/#the-env-file "Docker Docs") that will load the environment variables into the container. You may also want to check the current [GoToSocial version](https://github.com/superseriousbusiness/gotosocial/releases) and adjust the image in docker-compose.yaml.
 
-```shell
-$EDITOR docker-compose.yaml
-```
-### Edit the config.yaml
-When we want to use the config.yaml, we should make the following changes to config.yaml.
-| Config Option   | Value  |
-| --------------- | ------ |
-| host            | Hostname of your Inctanse e.g. gts.example.com |
-| account-domain  | Domain to use when federating profiles e.g. gts.example.com |
-| trusted-proxies | We need to trust our host machine and the Docker Network e.g.<br>- "127.0.0.1/32"<br>- "10.0.0.0/8"<br>- "172.16.0.0/12"<br>- "192.168.0.0/16" |
-| db-address      | gotosocial_postgres |
-| db-user         | gotosocial |
-| db-password     | same password as postgres environment $POSTGRES_PASSWORD |
+Because GoToSocial can be configured using [Environment Variables](../configuration/index.md#environment-variables), we can skip mounting a config.yaml file into the container, to make our configuration simpler. We just need to edit the docker-compose.yaml file to change a few things.
 
-```shell
-$EDITOR config.yaml
+First open the docker-compose.yaml file in your editor of choice. For example:
+
+```bash
+nano docker-compose.yaml
 ```
+
+Now, you should change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
+
+If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certificates (https), you should:
+
+1. Change the value of `GTS_LETSENCRYPT_ENABLED` to `"true"`.
+2. Remove the `#` before `- "80:80"` in the `ports` section.
+3. (Optional) Set `GTS_LETSENCRYPT_EMAIL_ADDRESS` to a valid email address to receive certificate expiry warnings etc.
+
 ### Start GoToSocial
+
+With those small changes out of the way, you can now start GoToSocial with the following command:
 
 ```shell
 docker-compose up -d
 ```
 
 After running this command, you should get an output like:
-```shell
-❯ docker-compose up -d
-[+] Running 2/2
- ⠿ Container docker1-gotosocial_postgres-1  Started
- ⠿ Container docker1-gotosocial-1           Started
+
+```text
+Creating network "gotosocial_gotosocial" with the default driver
+Creating gotosocial ... done
 ```
 
-this names can be used to create your first user described below.
+If you want to follow the logs of GoToSocial, you can use:
+
+```bash
+docker logs -f gotosocial
+```
+
+If everything is OK, you should see something similar to the following:
+
+```text
+time=2022-04-19T09:48:35Z level=info msg=connected to SQLITE database
+time=2022-04-19T09:48:35Z level=info msg=MIGRATED DATABASE TO group #1 (20211113114307, 20220214175650, 20220305130328, 20220315160814) func=doMigration
+time=2022-04-19T09:48:36Z level=info msg=instance account example.org CREATED with id 01EXX0TJ9PPPXF2C4N2MMMVK50
+time=2022-04-19T09:48:36Z level=info msg=created instance instance example.org with id 01PQT31C7BZJ1Q2Z4BMEV90ZCV
+time=2022-04-19T09:48:36Z level=info msg=media manager cron logger: start[]
+time=2022-04-19T09:48:36Z level=info msg=media manager cron logger: schedule[now 2022-04-19 09:48:36.096127852 +0000 UTC entry 1 next 2022-04-20 00:00:00 +0000 UTC]
+time=2022-04-19T09:48:36Z level=info msg=started media manager remote cache cleanup job: will run next at 2022-04-20 00:00:00 +0000 UTC
+time=2022-04-19T09:48:36Z level=info msg=listening on 0.0.0.0:8080
+```
 
 ### Create your first User
 
-Take the names from above command `docker-compose up -d` and replace $CONTAINER_NAME with the name e.g. `docker1-gotosocial-1`
+Now that GoToSocial is running, you can execute commands inside the running container to create, confirm, and promote your admin user.
 
-```shell
-# Creates a User
-docker exec -ti $CONTAINER_NAME /gotosocial/gotosocial --config-path /config/config.yaml admin account create --username $USERNAME --email $USEREMAIL --password $SuperSecurePassword
-# Confirms the User, so that the User can LogIn
-docker exec -ti $CONTAINER_NAME /gotosocial/gotosocial --config-path /config/config.yaml admin account confirm --username $USERNAME
-# Makes the User to an Admin
-docker exec -ti $CONTAINER_NAME/gotosocial/gotosocial --config-path /config/config.yaml admin account promote --username $USERNAME
+First create a user (replace the username, email, and password with appropriate values):
+
+```bash
+docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password some_very_good_password
 ```
 
-#### Lost the Name of the Container
-If you forgot what the container name of your GoToSocial container was, you can figure it out with the command `docker ps -f NAME=gotosocial`.
-If you execute the command, you will get an output similar to the following:
+Now confirm the user, replacing username with the value you used in the command above.
 
-```shell
-CONTAINER ID   IMAGE                                      COMMAND                  CREATED          STATUS          PORTS                      NAMES
-e190f1e6335f   superseriousbusiness/gotosocial:$VERSION   "/gotosocial/gotosoc…"   12 minutes ago   Up 12 minutes   127.0.0.1:8080->8080/tcp   docker-compose-gotosocial-1
-5a2c56181ada   postgres:14-alpine                         "docker-entrypoint.s…"   22 minutes ago   Up 19 minutes   5432/tcp                   docker-compose-gotosocial_postgres-1
-```
-Now you take the container name from the container with image superseriousbusiness/gotosocial:$VERSION and build ourselves the following commands.
-
-## Run with Docker Run
-
-You can run GoToSocial direct with `docker run` command.
-
-<details>
-  <summary>docker run with --env flag</summary>
-
-```shell
-docker run -e GTS_PORT='8080' -e GTS_PROTOCOL='https' -e GTS_TRUSTED_PROXIES='0.0.0.0/0' -e GTS_HOST='gotosocial.example.com' -e GTS_ACCOUNT_DOMAIN='gotosocial.example.com' -e GTS_DB_TYPE='sqlite' -e GTS_DB_ADDRESS='/gotosocial/database/sqlite.db' -e GTS_STORAGE_SERVE_PROTOCOL='https' -e GTS_STORAGE_SERVE_HOST='gotosocial.example.com' -e GTS_STORAGE_SERVE_BASE_PATH='/gotosocial/storage' -e GTS_LETSENCRYPT_ENABLED='false' -v $(pwd)/storage/:/gotosocial/storage/ -v $(pwd)/database/:/gotosocial/database/ -p 127.0.0.1:8080:8080 superseriousbusiness/gotosocial:0.2.0
+```bash
+docker exec -it gotosocial /gotosocial/gotosocial admin account confirm --username some_username
 ```
 
-</details>
+Now promote the user you just created to admin privileges:
 
-<details>
-  <summary>docker run with .env-file</summary>
-
-```
-docker run --env-file ./.env -v $(pwd)/storage/:/gotosocial/storage/ -v $(pwd)/database/:/gotosocial/database/ -p 127.0.0.1:8080:8080 superseriousbusiness/gotosocial:0.2.0
+```bash
+docker exec -it gotosocial /gotosocial/gotosocial admin account promote --username some_username
 ```
 
-</details>
+When running these commands, you'll get a bit of output like the following:
 
-<details>
-  <summary>Example .env File</summary>
-
-```shell
-$EDITOR .env
+```text
+time=2022-04-19T09:53:29Z level=info msg=connected to SQLITE database
+time=2022-04-19T09:53:29Z level=info msg=there are no new migrations to run func=doMigration
+time=2022-04-19T09:53:29Z level=info msg=closing db connection
 ```
 
-```
-GTS_PORT=8080
-GTS_PROTOCOL=https
-GTS_TRUSTED_PROXIES=127.0.0.1 # should be the host machine and the Docker Network e.g. "127.0.0.1/32", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"
-GTS_HOST=gotosocial.example.com
-GTS_ACCOUNT_DOMAIN=gotosocial.example.com
-GTS_DB_TYPE=sqlite
-GTS_DB_ADDRESS=/gotosocial/database/sqlite.db
-GTS_STORAGE_SERVE_BASE_PATH=/gotosocial/storage
-GTS_LETSENCRYPT_ENABLED=false
-```
-</details>
+This is normal and indicates that the commands ran as expected.
 
-## (optional) Reverse Proxy
+### Done
 
-If you want to run other webservers on port 433 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
+GoToSocial should now be running on your machine! To verify this, open your browser and go to `http://localhost:443`. You should see the GoToSocial landing page. Well done!
+
+## (Optional) Reverse Proxy
+
+If you want to run other webservers on port 443, or want to add an additional layer of security you might want to add [NGINX](https://nginx.org), [Traefik](https://doc.traefik.io/traefik/), or [Apache httpd](https://httpd.apache.org/) into your docker-compose to use as a reverse proxy.
