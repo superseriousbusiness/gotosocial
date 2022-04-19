@@ -4,14 +4,17 @@ The official GoToSocial Docker images are provided through [Docker Hub](https://
 
 Docker images are currently available for the following OS + architecture combinations:
 
-* linux
-  * 386
-  * amd64
-  * arm6
-  * arm7
-  * arm64v8
-* freebsd
-  * amd64
+Linux
+
+- 386
+- amd64
+- arm6
+- arm7
+- arm64v8
+
+FreeBSD
+
+- amd64
 
 Before following this guide, you should read the [system requirements](./index.md).
 
