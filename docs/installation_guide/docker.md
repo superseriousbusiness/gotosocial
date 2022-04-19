@@ -135,4 +135,4 @@ GoToSocial should now be running on your machine! To verify this, open your brow
 
 ## (Optional) Reverse Proxy
 
-If you want to run other webservers on port 433, or want to add an additional layer of security you might want to use [NGINX](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy.
+If you want to run other webservers on port 443, or want to add an additional layer of security you might want to add [NGINX](https://nginx.org), [Traefik](https://doc.traefik.io/traefik/), or [Apache httpd](https://httpd.apache.org/) into your docker-compose to use as a reverse proxy.
