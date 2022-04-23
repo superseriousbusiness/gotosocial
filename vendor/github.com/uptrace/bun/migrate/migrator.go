@@ -136,23 +136,24 @@ func (m *Migrator) Migrate(ctx context.Context, opts ...MigrationOption) (*Migra
 	if err != nil {
 		return nil, err
 	}
+	migrations = migrations.Unapplied()
 
-	group := &MigrationGroup{
-		Migrations: migrations.Unapplied(),
-	}
-	if len(group.Migrations) == 0 {
+	group := new(MigrationGroup)
+	if len(migrations) == 0 {
 		return group, nil
 	}
 	group.ID = lastGroupID + 1
 
-	for i := range group.Migrations {
-		migration := &group.Migrations[i]
+	for i := range migrations {
+		migration := &migrations[i]
 		migration.GroupID = group.ID
 
 		// Always mark migration as applied so the rollback has a chance to fix the database.
 		if err := m.MarkApplied(ctx, migration); err != nil {
-			return nil, err
+			return group, err
 		}
+
+		group.Migrations = migrations[:i+1]
 
 		if !cfg.nop && migration.Up != nil {
 			if err := migration.Up(ctx, m.db); err != nil {
@@ -186,14 +187,15 @@ func (m *Migrator) Rollback(ctx context.Context, opts ...MigrationOption) (*Migr
 	for i := len(lastGroup.Migrations) - 1; i >= 0; i-- {
 		migration := &lastGroup.Migrations[i]
 
+		// Always mark migration as unapplied to match migrate behavior.
+		if err := m.MarkUnapplied(ctx, migration); err != nil {
+			return nil, err
+		}
+
 		if !cfg.nop && migration.Down != nil {
 			if err := migration.Down(ctx, m.db); err != nil {
 				return nil, err
 			}
-		}
-
-		if err := m.MarkUnapplied(ctx, migration); err != nil {
-			return nil, err
 		}
 	}
 
@@ -340,7 +342,7 @@ func (m *Migrator) validate() error {
 //------------------------------------------------------------------------------
 
 type migrationLock struct {
-	ID        int64
+	ID        int64  `bun:",pk,autoincrement"`
 	TableName string `bun:",unique"`
 }
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/uptrace/bun/dialect/feature"
 	"github.com/uptrace/bun/internal"
 	"github.com/uptrace/bun/schema"
 )
@@ -479,14 +480,25 @@ func (q *SelectQuery) appendQuery(
 			return nil, err
 		}
 
-		if q.limit != 0 {
-			b = append(b, " LIMIT "...)
-			b = strconv.AppendInt(b, int64(q.limit), 10)
-		}
+		if fmter.Dialect().Features().Has(feature.OffsetFetch) {
+			if q.offset != 0 {
+				b = append(b, " OFFSET "...)
+				b = strconv.AppendInt(b, int64(q.offset), 10)
+				b = append(b, " ROWS"...)
 
-		if q.offset != 0 {
-			b = append(b, " OFFSET "...)
-			b = strconv.AppendInt(b, int64(q.offset), 10)
+				b = append(b, " FETCH NEXT "...)
+				b = strconv.AppendInt(b, int64(q.limit), 10)
+				b = append(b, " ROWS ONLY"...)
+			}
+		} else {
+			if q.limit != 0 {
+				b = append(b, " LIMIT "...)
+				b = strconv.AppendInt(b, int64(q.limit), 10)
+			}
+			if q.offset != 0 {
+				b = append(b, " OFFSET "...)
+				b = strconv.AppendInt(b, int64(q.offset), 10)
+			}
 		}
 
 		if !q.selFor.IsZero() {
@@ -664,7 +676,7 @@ func (q *SelectQuery) Rows(ctx context.Context) (*sql.Rows, error) {
 	return q.conn.QueryContext(ctx, query)
 }
 
-func (q *SelectQuery) Exec(ctx context.Context) (res sql.Result, err error) {
+func (q *SelectQuery) Exec(ctx context.Context, dest ...interface{}) (res sql.Result, err error) {
 	if q.err != nil {
 		return nil, q.err
 	}
@@ -679,9 +691,21 @@ func (q *SelectQuery) Exec(ctx context.Context) (res sql.Result, err error) {
 
 	query := internal.String(queryBytes)
 
-	res, err = q.exec(ctx, q, query)
-	if err != nil {
-		return nil, err
+	if len(dest) > 0 {
+		model, err := q.getModel(dest)
+		if err != nil {
+			return nil, err
+		}
+
+		res, err = q.scan(ctx, q, query, model, true)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		res, err = q.exec(ctx, q, query)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return res, nil
@@ -695,12 +719,6 @@ func (q *SelectQuery) Scan(ctx context.Context, dest ...interface{}) error {
 	model, err := q.getModel(dest)
 	if err != nil {
 		return err
-	}
-
-	if q.limit > 1 {
-		if model, ok := model.(interface{ SetCap(int) }); ok {
-			model.SetCap(int(q.limit))
-		}
 	}
 
 	if q.table != nil {
@@ -850,7 +868,14 @@ func (q *SelectQuery) Exists(ctx context.Context) (bool, error) {
 		return false, q.err
 	}
 
-	qq := existsQuery{q}
+	if q.hasFeature(feature.SelectExists) {
+		return q.selectExists(ctx)
+	}
+	return q.whereExists(ctx)
+}
+
+func (q *SelectQuery) selectExists(ctx context.Context) (bool, error) {
+	qq := selectExistsQuery{q}
 
 	queryBytes, err := qq.AppendQuery(q.db.fmter, nil)
 	if err != nil {
@@ -866,6 +891,85 @@ func (q *SelectQuery) Exists(ctx context.Context) (bool, error) {
 	q.db.afterQuery(ctx, event, nil, err)
 
 	return exists, err
+}
+
+func (q *SelectQuery) whereExists(ctx context.Context) (bool, error) {
+	qq := whereExistsQuery{q}
+
+	queryBytes, err := qq.AppendQuery(q.db.fmter, nil)
+	if err != nil {
+		return false, err
+	}
+
+	query := internal.String(queryBytes)
+	ctx, event := q.db.beforeQuery(ctx, qq, query, nil, query, q.model)
+
+	res, err := q.exec(ctx, q, query)
+
+	q.db.afterQuery(ctx, event, nil, err)
+
+	if err != nil {
+		return false, err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+
+	return n == 1, nil
+}
+
+//------------------------------------------------------------------------------
+
+func (q *SelectQuery) QueryBuilder() QueryBuilder {
+	return &selectQueryBuilder{q}
+}
+
+func (q *SelectQuery) ApplyQueryBuilder(fn func(QueryBuilder) QueryBuilder) *SelectQuery {
+	return fn(q.QueryBuilder()).Unwrap().(*SelectQuery)
+}
+
+type selectQueryBuilder struct {
+	*SelectQuery
+}
+
+func (q *selectQueryBuilder) WhereGroup(
+	sep string, fn func(QueryBuilder) QueryBuilder,
+) QueryBuilder {
+	q.SelectQuery = q.SelectQuery.WhereGroup(sep, func(qs *SelectQuery) *SelectQuery {
+		return fn(q).(*selectQueryBuilder).SelectQuery
+	})
+	return q
+}
+
+func (q *selectQueryBuilder) Where(query string, args ...interface{}) QueryBuilder {
+	q.SelectQuery.Where(query, args...)
+	return q
+}
+
+func (q *selectQueryBuilder) WhereOr(query string, args ...interface{}) QueryBuilder {
+	q.SelectQuery.WhereOr(query, args...)
+	return q
+}
+
+func (q *selectQueryBuilder) WhereDeleted() QueryBuilder {
+	q.SelectQuery.WhereDeleted()
+	return q
+}
+
+func (q *selectQueryBuilder) WhereAllWithDeleted() QueryBuilder {
+	q.SelectQuery.WhereAllWithDeleted()
+	return q
+}
+
+func (q *selectQueryBuilder) WherePK(cols ...string) QueryBuilder {
+	q.SelectQuery.WherePK(cols...)
+	return q
+}
+
+func (q *selectQueryBuilder) Unwrap() interface{} {
+	return q.SelectQuery
 }
 
 //------------------------------------------------------------------------------
@@ -912,27 +1016,44 @@ func (q countQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err
 	if q.err != nil {
 		return nil, q.err
 	}
-	// if err := q.beforeAppendModel(q); err != nil {
-	// 	return nil, err
-	// }
 	return q.appendQuery(fmter, b, true)
 }
 
 //------------------------------------------------------------------------------
 
-type existsQuery struct {
+type selectExistsQuery struct {
 	*SelectQuery
 }
 
-func (q existsQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+func (q selectExistsQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
 	if q.err != nil {
 		return nil, q.err
 	}
-	// if err := q.beforeAppendModel(q); err != nil {
-	// 	return nil, err
-	// }
 
 	b = append(b, "SELECT EXISTS ("...)
+
+	b, err = q.appendQuery(fmter, b, false)
+	if err != nil {
+		return nil, err
+	}
+
+	b = append(b, ")"...)
+
+	return b, nil
+}
+
+//------------------------------------------------------------------------------
+
+type whereExistsQuery struct {
+	*SelectQuery
+}
+
+func (q whereExistsQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if q.err != nil {
+		return nil, q.err
+	}
+
+	b = append(b, "SELECT 1 WHERE EXISTS ("...)
 
 	b, err = q.appendQuery(fmter, b, false)
 	if err != nil {

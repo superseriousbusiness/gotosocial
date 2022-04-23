@@ -65,6 +65,24 @@ var (
 	_ IDB = (*Tx)(nil)
 )
 
+// QueryBuilder is used for common query methods
+type QueryBuilder interface {
+	Query
+	Where(query string, args ...interface{}) QueryBuilder
+	WhereGroup(sep string, fn func(QueryBuilder) QueryBuilder) QueryBuilder
+	WhereOr(query string, args ...interface{}) QueryBuilder
+	WhereDeleted() QueryBuilder
+	WhereAllWithDeleted() QueryBuilder
+	WherePK(cols ...string) QueryBuilder
+	Unwrap() interface{}
+}
+
+var (
+	_ QueryBuilder = (*selectQueryBuilder)(nil)
+	_ QueryBuilder = (*updateQueryBuilder)(nil)
+	_ QueryBuilder = (*deleteQueryBuilder)(nil)
+)
+
 type baseQuery struct {
 	db   *DB
 	conn IConn
@@ -87,6 +105,10 @@ func (q *baseQuery) DB() *DB {
 	return q.db
 }
 
+func (q *baseQuery) GetConn() IConn {
+	return q.conn
+}
+
 func (q *baseQuery) GetModel() Model {
 	return q.model
 }
@@ -105,12 +127,16 @@ func (q *baseQuery) GetTableName() string {
 	}
 
 	if q.modelTableName.Query != "" {
-		b, _ := q.modelTableName.AppendQuery(q.db.fmter, nil)
-		return string(b)
+		return q.modelTableName.Query
 	}
+
 	if len(q.tables) > 0 {
-		return q.tables[0].Query
+		b, _ := q.tables[0].AppendQuery(q.db.fmter, nil)
+		if len(b) < 64 {
+			return string(b)
+		}
 	}
+
 	return ""
 }
 
@@ -166,6 +192,10 @@ func (q *baseQuery) beforeAppendModel(ctx context.Context, query Query) error {
 	return nil
 }
 
+func (q *baseQuery) hasFeature(feature feature.Feature) bool {
+	return q.db.features.Has(feature)
+}
+
 //------------------------------------------------------------------------------
 
 func (q *baseQuery) checkSoftDelete() error {
@@ -197,13 +227,14 @@ func (q *baseQuery) whereAllWithDeleted() {
 		q.setErr(err)
 		return
 	}
-	q.flags = q.flags.Set(allWithDeletedFlag)
-	q.flags = q.flags.Remove(deletedFlag)
+	q.flags = q.flags.Set(allWithDeletedFlag).Remove(deletedFlag)
 }
 
 func (q *baseQuery) isSoftDelete() bool {
 	if q.table != nil {
-		return q.table.SoftDeleteField != nil && !q.flags.Has(allWithDeletedFlag)
+		return q.table.SoftDeleteField != nil &&
+			!q.flags.Has(allWithDeletedFlag) &&
+			!q.flags.Has(forceDeleteFlag)
 	}
 	return false
 }
@@ -228,26 +259,68 @@ func (q *baseQuery) appendWith(fmter schema.Formatter, b []byte) (_ []byte, err 
 			b = append(b, ", "...)
 		}
 
-		b = fmter.AppendIdent(b, with.name)
-		if q, ok := with.query.(schema.ColumnsAppender); ok {
-			b = append(b, " ("...)
-			b, err = q.AppendColumns(fmter, b)
-			if err != nil {
-				return nil, err
-			}
-			b = append(b, ")"...)
-		}
-
-		b = append(b, " AS ("...)
-
-		b, err = with.query.AppendQuery(fmter, b)
+		b, err = q.appendCTE(fmter, b, with)
 		if err != nil {
 			return nil, err
 		}
-
-		b = append(b, ')')
 	}
 	b = append(b, ' ')
+	return b, nil
+}
+
+func (q *baseQuery) appendCTE(
+	fmter schema.Formatter, b []byte, cte withQuery,
+) (_ []byte, err error) {
+	if !fmter.Dialect().Features().Has(feature.WithValues) {
+		if values, ok := cte.query.(*ValuesQuery); ok {
+			return q.appendSelectFromValues(fmter, b, cte, values)
+		}
+	}
+
+	b = fmter.AppendIdent(b, cte.name)
+
+	if q, ok := cte.query.(schema.ColumnsAppender); ok {
+		b = append(b, " ("...)
+		b, err = q.AppendColumns(fmter, b)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, ")"...)
+	}
+
+	b = append(b, " AS ("...)
+
+	b, err = cte.query.AppendQuery(fmter, b)
+	if err != nil {
+		return nil, err
+	}
+
+	b = append(b, ")"...)
+	return b, nil
+}
+
+func (q *baseQuery) appendSelectFromValues(
+	fmter schema.Formatter, b []byte, cte withQuery, values *ValuesQuery,
+) (_ []byte, err error) {
+	b = fmter.AppendIdent(b, cte.name)
+	b = append(b, " AS (SELECT * FROM ("...)
+
+	b, err = cte.query.AppendQuery(fmter, b)
+	if err != nil {
+		return nil, err
+	}
+
+	b = append(b, ") AS t"...)
+	if q, ok := cte.query.(schema.ColumnsAppender); ok {
+		b = append(b, " ("...)
+		b, err = q.AppendColumns(fmter, b)
+		if err != nil {
+			return nil, err
+		}
+		b = append(b, ")"...)
+	}
+	b = append(b, ")"...)
+
 	return b, nil
 }
 
@@ -428,6 +501,9 @@ func (q *baseQuery) appendColumns(fmter schema.Formatter, b []byte) (_ []byte, e
 
 func (q *baseQuery) getFields() ([]*schema.Field, error) {
 	if len(q.columns) == 0 {
+		if q.table == nil {
+			return nil, errNilModel
+		}
 		return q.table.Fields, nil
 	}
 	return q._getFields(false)
@@ -435,6 +511,9 @@ func (q *baseQuery) getFields() ([]*schema.Field, error) {
 
 func (q *baseQuery) getDataFields() ([]*schema.Field, error) {
 	if len(q.columns) == 0 {
+		if q.table == nil {
+			return nil, errNilModel
+		}
 		return q.table.DataFields, nil
 	}
 	return q._getFields(true)
@@ -540,6 +619,62 @@ func (q *baseQuery) AppendNamedArg(fmter schema.Formatter, b []byte, name string
 
 	return b, false
 }
+
+//------------------------------------------------------------------------------
+
+func (q *baseQuery) Dialect() schema.Dialect {
+	return q.db.Dialect()
+}
+
+func (q *baseQuery) NewValues(model interface{}) *ValuesQuery {
+	return NewValuesQuery(q.db, model).Conn(q.conn)
+}
+
+func (q *baseQuery) NewSelect() *SelectQuery {
+	return NewSelectQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewInsert() *InsertQuery {
+	return NewInsertQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewUpdate() *UpdateQuery {
+	return NewUpdateQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewDelete() *DeleteQuery {
+	return NewDeleteQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewCreateTable() *CreateTableQuery {
+	return NewCreateTableQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewDropTable() *DropTableQuery {
+	return NewDropTableQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewCreateIndex() *CreateIndexQuery {
+	return NewCreateIndexQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewDropIndex() *DropIndexQuery {
+	return NewDropIndexQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewTruncateTable() *TruncateTableQuery {
+	return NewTruncateTableQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewAddColumn() *AddColumnQuery {
+	return NewAddColumnQuery(q.db).Conn(q.conn)
+}
+
+func (q *baseQuery) NewDropColumn() *DropColumnQuery {
+	return NewDropColumnQuery(q.db).Conn(q.conn)
+}
+
+//------------------------------------------------------------------------------
 
 func appendColumns(b []byte, table schema.Safe, fields []*schema.Field) []byte {
 	for i, f := range fields {
@@ -653,15 +788,18 @@ func (q *whereBaseQuery) appendWhere(
 		if len(b) > startLen {
 			b = append(b, " AND "...)
 		}
+
 		if withAlias {
 			b = append(b, q.tableModel.Table().SQLAlias...)
-			b = append(b, '.')
+		} else {
+			b = append(b, q.tableModel.Table().SQLName...)
 		}
+		b = append(b, '.')
 
 		field := q.tableModel.Table().SoftDeleteField
 		b = append(b, field.SQLName...)
 
-		if field.NullZero {
+		if field.IsPtr || field.NullZero {
 			if q.flags.Has(deletedFlag) {
 				b = append(b, " IS NOT NULL"...)
 			} else {
@@ -843,27 +981,21 @@ func (q *returningQuery) addReturningField(field *schema.Field) {
 	q.returningFields = append(q.returningFields, field)
 }
 
-func (q *returningQuery) hasReturning() bool {
-	if len(q.returning) == 1 {
-		if ret := q.returning[0]; len(ret.Args) == 0 {
-			switch ret.Query {
-			case "", "null", "NULL":
-				return false
-			}
-		}
-	}
-	return len(q.returning) > 0 || len(q.returningFields) > 0
-}
-
 func (q *returningQuery) appendReturning(
 	fmter schema.Formatter, b []byte,
 ) (_ []byte, err error) {
-	if !q.hasReturning() {
-		return b, nil
-	}
+	return q._appendReturning(fmter, b, "")
+}
 
-	b = append(b, " RETURNING "...)
+func (q *returningQuery) appendOutput(
+	fmter schema.Formatter, b []byte,
+) (_ []byte, err error) {
+	return q._appendReturning(fmter, b, "INSERTED")
+}
 
+func (q *returningQuery) _appendReturning(
+	fmter schema.Formatter, b []byte, table string,
+) (_ []byte, err error) {
 	for i, f := range q.returning {
 		if i > 0 {
 			b = append(b, ", "...)
@@ -878,8 +1010,20 @@ func (q *returningQuery) appendReturning(
 		return b, nil
 	}
 
-	b = appendColumns(b, "", q.returningFields)
+	b = appendColumns(b, schema.Safe(table), q.returningFields)
 	return b, nil
+}
+
+func (q *returningQuery) hasReturning() bool {
+	if len(q.returning) == 1 {
+		if ret := q.returning[0]; len(ret.Args) == 0 {
+			switch ret.Query {
+			case "", "null", "NULL":
+				return false
+			}
+		}
+	}
+	return len(q.returning) > 0 || len(q.returningFields) > 0
 }
 
 //------------------------------------------------------------------------------

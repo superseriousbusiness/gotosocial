@@ -35,15 +35,16 @@ require (
 	github.com/superseriousbusiness/exif-terminator v0.2.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
-	github.com/uptrace/bun v1.0.20
-	github.com/uptrace/bun/dialect/pgdialect v1.0.19
-	github.com/uptrace/bun/dialect/sqlitedialect v1.0.19
+	github.com/uptrace/bun v1.1.4
+	github.com/uptrace/bun/dialect/pgdialect v1.1.4
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.4
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/text v0.3.7
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
-	modernc.org/sqlite v1.14.6
+	modernc.org/sqlite v1.16.0
 	mvdan.cc/xurls/v2 v2.3.0
 )
 
@@ -108,8 +109,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -119,11 +119,11 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
-	modernc.org/cc/v3 v3.35.22 // indirect
-	modernc.org/ccgo/v3 v3.15.13 // indirect
-	modernc.org/libc v1.14.5 // indirect
+	modernc.org/cc/v3 v3.35.24 // indirect
+	modernc.org/ccgo/v3 v3.15.18 // indirect
+	modernc.org/libc v1.14.12 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
-	modernc.org/memory v1.0.5 // indirect
+	modernc.org/memory v1.0.7 // indirect
 	modernc.org/opt v0.1.1 // indirect
 	modernc.org/strutil v1.1.1 // indirect
 	modernc.org/token v1.0.0 // indirect
