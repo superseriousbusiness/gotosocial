@@ -273,9 +273,7 @@ func (q *UpdateQuery) appendSetStruct(
 	isTemplate := fmter.IsNop()
 	pos := len(b)
 	for _, f := range fields {
-		app, hasValue := q.modelValues[f.Name]
-
-		if !hasValue && q.omitZero && f.HasZeroValue(model.strct) {
+		if q.omitZero && f.HasZeroValue(model.strct) {
 			continue
 		}
 
@@ -292,7 +290,8 @@ func (q *UpdateQuery) appendSetStruct(
 			continue
 		}
 
-		if hasValue {
+		app, ok := q.modelValues[f.Name]
+		if ok {
 			b, err = app.AppendQuery(fmter, b)
 			if err != nil {
 				return nil, err
@@ -489,22 +488,11 @@ func (q *UpdateQuery) hasTableAlias(fmter schema.Formatter) bool {
 }
 
 //------------------------------------------------------------------------------
-
-func (q *UpdateQuery) QueryBuilder() QueryBuilder {
-	return &updateQueryBuilder{q}
-}
-
-func (q *UpdateQuery) ApplyQueryBuilder(fn func(QueryBuilder) QueryBuilder) *UpdateQuery {
-	return fn(q.QueryBuilder()).Unwrap().(*UpdateQuery)
-}
-
 type updateQueryBuilder struct {
 	*UpdateQuery
 }
 
-func (q *updateQueryBuilder) WhereGroup(
-	sep string, fn func(QueryBuilder) QueryBuilder,
-) QueryBuilder {
+func (q *updateQueryBuilder) WhereGroup(sep string, fn func(QueryBuilder) QueryBuilder) QueryBuilder {
 	q.UpdateQuery = q.UpdateQuery.WhereGroup(sep, func(qs *UpdateQuery) *UpdateQuery {
 		return fn(q).(*updateQueryBuilder).UpdateQuery
 	})
@@ -538,4 +526,8 @@ func (q *updateQueryBuilder) WherePK(cols ...string) QueryBuilder {
 
 func (q *updateQueryBuilder) Unwrap() interface{} {
 	return q.UpdateQuery
+}
+
+func (q *UpdateQuery) Query() QueryBuilder {
+	return &updateQueryBuilder{q}
 }

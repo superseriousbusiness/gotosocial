@@ -1,35 +1,17 @@
-## [1.1.4](https://github.com/uptrace/bun/compare/v1.1.3...v1.1.4) (2022-04-20)
+# [](https://github.com/uptrace/bun/compare/v1.1.2...v) (2022-03-29)
 
 
 ### Bug Fixes
 
-* automatically set nullzero when there is default:value option ([72c44ae](https://github.com/uptrace/bun/commit/72c44aebbeec3a83ed97ea25a3262174d744df65))
-* fix ForceDelete on live/undeleted rows ([1a33250](https://github.com/uptrace/bun/commit/1a33250f27f00e752a735ce10311ac95dcb0c968))
-* fix OmitZero and value overriding ([087ea07](https://github.com/uptrace/bun/commit/087ea0730551f1e841bacb6ad2fa3afd512a1df8))
-* rename Query to QueryBuilder ([98d111b](https://github.com/uptrace/bun/commit/98d111b7cc00fa61b6b2cec147f43285f4baadb4))
+* fix panic message when has-many encounter an error ([cfd2747](https://github.com/uptrace/bun/commit/cfd27475fac89a1c8cf798bfa64898bd77bbba79))
+* **migrate:** change rollback to match migrate behavior ([df5af9c](https://github.com/uptrace/bun/commit/df5af9c9cbdf54ce243e037bbb2c7b154f8422b3))
 
 
 ### Features
 
-* add ApplyQueryBuilder ([582eca0](https://github.com/uptrace/bun/commit/582eca09cf2b59e67c2e4a2ad24f1a74cb53addd))
-* **config.go:** add connect_timeout to DSN parsable params ([998b04d](https://github.com/uptrace/bun/commit/998b04d51a9a4f182ac3458f90db8dbf9185c4ba)), closes [#505](https://github.com/uptrace/bun/issues/505)
+* added QueryBuilder interface for SelectQuery, UpdateQuery, DeleteQuery ([#499](https://github.com/uptrace/bun/issues/499)) ([59fef48](https://github.com/uptrace/bun/commit/59fef48f6b3ec7f32bdda779b6693c333ff1dfdb))
 
 
-
-# [1.1.3](https://github.com/uptrace/bun/compare/v1.1.2...v) (2022-03-29)
-
-### Bug Fixes
-
-- fix panic message when has-many encounter an error
-  ([cfd2747](https://github.com/uptrace/bun/commit/cfd27475fac89a1c8cf798bfa64898bd77bbba79))
-- **migrate:** change rollback to match migrate behavior
-  ([df5af9c](https://github.com/uptrace/bun/commit/df5af9c9cbdf54ce243e037bbb2c7b154f8422b3))
-
-### Features
-
-- added QueryBuilder interface for SelectQuery, UpdateQuery, DeleteQuery
-  ([#499](https://github.com/uptrace/bun/issues/499))
-  ([59fef48](https://github.com/uptrace/bun/commit/59fef48f6b3ec7f32bdda779b6693c333ff1dfdb))
 
 # [1.1.2](https://github.com/uptrace/bun/compare/v1.1.2...v) (2022-03-22)
 

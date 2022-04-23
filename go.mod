@@ -35,9 +35,9 @@ require (
 	github.com/superseriousbusiness/exif-terminator v0.2.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB
 	github.com/tdewolff/minify/v2 v2.9.22
-	github.com/uptrace/bun v1.1.4
-	github.com/uptrace/bun/dialect/pgdialect v1.1.4
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.4
+	github.com/uptrace/bun v1.1.3
+	github.com/uptrace/bun/dialect/pgdialect v1.1.3
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.3
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63
