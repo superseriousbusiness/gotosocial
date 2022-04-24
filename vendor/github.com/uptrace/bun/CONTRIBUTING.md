@@ -7,6 +7,12 @@ cd internal/dbtest
 ./test.sh
 ```
 
+To ease debugging, you can run tests and print all executed queries:
+
+```shell
+BUNDEBUG=2 TZ= go test -run=TestName
+```
+
 ## Releasing
 
 1. Run `release.sh` script which updates versions in go.mod files and pushes a new branch to GitHub:
@@ -22,3 +28,7 @@ TAG=v1.0.0 ./scripts/release.sh
 ```shell
 TAG=v1.0.0 ./scripts/tag.sh
 ```
+
+## Documentation
+
+To contribute to the docs visit https://github.com/go-bun/bun-docs

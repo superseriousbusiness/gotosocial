@@ -904,10 +904,10 @@ func (t *Task) Main() (err error) {
 	}
 
 	abi, err := cc.NewABI(t.goos, t.goarch)
-	abi.Types[cc.LongDouble] = abi.Types[cc.Double]
 	if err != nil {
 		return err
 	}
+	abi.Types[cc.LongDouble] = abi.Types[cc.Double]
 
 	var re *regexp.Regexp
 	if t.ignoredIncludes != "" {

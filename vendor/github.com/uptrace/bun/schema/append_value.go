@@ -58,12 +58,24 @@ func FieldAppender(dialect Dialect, field *Field) AppenderFunc {
 		return appendMsgpack
 	}
 
+	fieldType := field.StructField.Type
+
 	switch strings.ToUpper(field.UserSQLType) {
 	case sqltype.JSON, sqltype.JSONB:
+		if fieldType.Implements(driverValuerType) {
+			return appendDriverValue
+		}
+
+		if fieldType.Kind() != reflect.Ptr {
+			if reflect.PtrTo(fieldType).Implements(driverValuerType) {
+				return addrAppender(appendDriverValue)
+			}
+		}
+
 		return AppendJSONValue
 	}
 
-	return Appender(dialect, field.StructField.Type)
+	return Appender(dialect, fieldType)
 }
 
 func Appender(dialect Dialect, typ reflect.Type) AppenderFunc {
@@ -85,6 +97,8 @@ func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 		return appendBytesValue
 	case timeType:
 		return appendTimeValue
+	case timePtrType:
+		return PtrAppender(appendTimeValue)
 	case ipType:
 		return appendIPValue
 	case ipNetType:
@@ -93,14 +107,20 @@ func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 		return appendJSONRawMessageValue
 	}
 
+	kind := typ.Kind()
+
 	if typ.Implements(queryAppenderType) {
+		if kind == reflect.Ptr {
+			return nilAwareAppender(appendQueryAppenderValue)
+		}
 		return appendQueryAppenderValue
 	}
 	if typ.Implements(driverValuerType) {
+		if kind == reflect.Ptr {
+			return nilAwareAppender(appendDriverValue)
+		}
 		return appendDriverValue
 	}
-
-	kind := typ.Kind()
 
 	if kind != reflect.Ptr {
 		ptr := reflect.PtrTo(typ)
@@ -116,6 +136,9 @@ func appender(dialect Dialect, typ reflect.Type) AppenderFunc {
 	case reflect.Interface:
 		return ifaceAppenderFunc
 	case reflect.Ptr:
+		if typ.Implements(jsonMarshalerType) {
+			return nilAwareAppender(AppendJSONValue)
+		}
 		if fn := Appender(dialect, typ.Elem()); fn != nil {
 			return PtrAppender(fn)
 		}
@@ -139,6 +162,15 @@ func ifaceAppenderFunc(fmter Formatter, b []byte, v reflect.Value) []byte {
 	elem := v.Elem()
 	appender := Appender(fmter.Dialect(), elem.Type())
 	return appender(fmter, b, elem)
+}
+
+func nilAwareAppender(fn AppenderFunc) AppenderFunc {
+	return func(fmter Formatter, b []byte, v reflect.Value) []byte {
+		if v.IsNil() {
+			return dialect.AppendNull(b)
+		}
+		return fn(fmter, b, v)
+	}
 }
 
 func PtrAppender(fn AppenderFunc) AppenderFunc {
