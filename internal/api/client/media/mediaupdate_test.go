@@ -140,7 +140,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePath, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePathV1, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Params = gin.Params{
@@ -205,7 +205,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePath, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/%s/%s", mediamodule.BasePathV1, toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 	ctx.Params = gin.Params{
