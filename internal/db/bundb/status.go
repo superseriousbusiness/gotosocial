@@ -70,7 +70,7 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 			return s.cache.GetByID(id)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("status.id = ?", id).Scan(ctx)
+			return s.newStatusQ(status).Where("LOWER(status.id) = LOWER(?)", id).Scan(ctx)
 		},
 	)
 }

@@ -62,8 +62,8 @@ func (p *processor) GetStatus(ctx context.Context, requestedUsername string, req
 	// get the status out of the database here
 	s := &gtsmodel.Status{}
 	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "id", Value: requestedStatusID},
-		{Key: "account_id", Value: requestedAccount.ID},
+		{Key: "id", Value: requestedStatusID, CaseInsensitive: true},
+		{Key: "account_id", Value: requestedAccount.ID, CaseInsensitive: true},
 	}, s); err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
 	}
