@@ -81,7 +81,7 @@ If you're running GoToSocial on another machine with the local ip of 192.168.178
 
 **Note**: `proxy_set_header Host $host;` is essential. It guarantees that the proxy and GoToSocial use the same server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
 
-**Note**: The `Connection` and `Upgrade` headers are used for WebSocket connections.
+**Note**: The `Connection` and `Upgrade` headers are used for WebSocket connections. See the [WebSocket docs](./websocket.md).
 
 Next we'll need to link the file we just created to the folder that nginx reads configurations for active sites from.
 
