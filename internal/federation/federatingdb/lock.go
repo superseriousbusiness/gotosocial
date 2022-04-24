@@ -52,7 +52,6 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 
 	// Acquire map lock
 	f.mutex.Lock()
-	defer f.mutex.Unlock()
 
 	// Get mutex, or create new
 	mu, ok := f.locks[idStr]
@@ -64,7 +63,8 @@ func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
 		f.locks[idStr] = mu
 	}
 
-	// Lock the mutex
+	// Unlock map, acquire mutex lock
+	f.mutex.Unlock()
 	mu.Lock()
 	return nil
 }
@@ -81,13 +81,13 @@ func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
 	}
 	idStr := id.String()
 
-	// Acquire map lock
+	// Check map for mutex
 	f.mutex.Lock()
-	defer f.mutex.Unlock()
-
 	mu, ok := f.locks[idStr]
+	f.mutex.Unlock()
+
 	if !ok {
-		return errors.New("Unlock: missing an id in unlock")
+		return errors.New("missing an id in unlock")
 	}
 
 	// Unlock the mutex
