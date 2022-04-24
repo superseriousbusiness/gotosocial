@@ -73,8 +73,8 @@ func (suite *UserStandardTestSuite) SetupSuite() {
 }
 
 func (suite *UserStandardTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)

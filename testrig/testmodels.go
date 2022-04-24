@@ -34,6 +34,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
@@ -1727,6 +1728,22 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
+	target = URLMustParse(statuses["local_account_1_status_1"].URI)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1 := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(strings.ToLower(statuses["local_account_1_status_1"].URI))
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1Lowercase := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
 	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
@@ -1778,6 +1795,8 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
 		"foss_satan_dereference_zork_public_key":                       fossSatanDereferenceZorkPublicKey,
+		"foss_satan_dereference_local_account_1_status_1":              fossSatanDereferenceLocalAccount1Status1,
+		"foss_satan_dereference_local_account_1_status_1_lowercase":    fossSatanDereferenceLocalAccount1Status1Lowercase,
 		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
 		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
 		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
