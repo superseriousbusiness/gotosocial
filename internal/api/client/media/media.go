@@ -28,6 +28,7 @@ import (
 
 // BasePathV1 is the base API path for making media requests through v1 of the api (for mastodon API compatibility)
 const BasePathV1 = "/api/v1/media"
+
 // BasePathV2 is the base API path for making media requests through v2 of the api (for mastodon API compatibility)
 const BasePathV2 = "/api/v2/media"
 
@@ -36,6 +37,7 @@ const IDKey = "id"
 
 // BasePathWithIDV1 corresponds to a media attachment with the given ID
 const BasePathWithIDV1 = BasePathV1 + "/:" + IDKey
+
 // BasePathWithIDV2 corresponds to a media attachment with the given ID
 const BasePathWithIDV2 = BasePathV2 + "/:" + IDKey
 
@@ -57,11 +59,11 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodPost, BasePathV1, m.MediaCreatePOSTHandler)
 	s.AttachHandler(http.MethodGet, BasePathWithIDV1, m.MediaGETHandler)
 	s.AttachHandler(http.MethodPut, BasePathWithIDV1, m.MediaPUTHandler)
-	
+
 	// v2 handlers
 	s.AttachHandler(http.MethodPost, BasePathV2, m.MediaCreatePOSTHandler)
 	s.AttachHandler(http.MethodGet, BasePathWithIDV2, m.MediaGETHandler)
 	s.AttachHandler(http.MethodPut, BasePathWithIDV2, m.MediaPUTHandler)
-	
+
 	return nil
 }
