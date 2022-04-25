@@ -259,11 +259,12 @@ func (w SocialWrappedCallbacks) create(c context.Context, a vocab.ActivityStream
 		if err != nil {
 			return err
 		}
-		err = w.db.Lock(c, id)
+		var unlock func()
+		unlock, err = w.db.Lock(c, id)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, id)
+		defer unlock()
 		if err := w.db.Create(c, obj); err != nil {
 			return err
 		}
@@ -301,11 +302,11 @@ func (w SocialWrappedCallbacks) update(c context.Context, a vocab.ActivityStream
 	// Create anonymous loop function to be able to properly scope the defer
 	// for the database lock at each iteration.
 	loopFn := func(idx int, loopId *url.URL) error {
-		err := w.db.Lock(c, loopId)
+		unlock, err := w.db.Lock(c, loopId)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, loopId)
+		defer unlock()
 		t, err := w.db.Get(c, loopId)
 		if err != nil {
 			return err
@@ -371,11 +372,11 @@ func (w SocialWrappedCallbacks) deleteFn(c context.Context, a vocab.ActivityStre
 	// Create anonymous loop function to be able to properly scope the defer
 	// for the database lock at each iteration.
 	loopFn := func(idx int, loopId *url.URL) error {
-		err := w.db.Lock(c, loopId)
+		unlock, err := w.db.Lock(c, loopId)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, loopId)
+		defer unlock()
 		t, err := w.db.Get(c, loopId)
 		if err != nil {
 			return err
@@ -458,23 +459,24 @@ func (w SocialWrappedCallbacks) like(c context.Context, a vocab.ActivityStreamsL
 		return ErrObjectRequired
 	}
 	// Get this actor's IRI.
-	if err := w.db.Lock(c, w.outboxIRI); err != nil {
+	unlock, err := w.db.Lock(c, w.outboxIRI)
+	if err != nil {
 		return err
 	}
 	// WARNING: Unlock not deferred.
 	actorIRI, err := w.db.ActorForOutbox(c, w.outboxIRI)
+	unlock() // unlock even on error
 	if err != nil {
-		w.db.Unlock(c, w.outboxIRI)
 		return err
 	}
-	w.db.Unlock(c, w.outboxIRI)
 	// Unlock must be called by now and every branch above.
 	//
 	// Now obtain this actor's 'liked' collection.
-	if err := w.db.Lock(c, actorIRI); err != nil {
+	unlock, err = w.db.Lock(c, actorIRI)
+	if err != nil {
 		return err
 	}
-	defer w.db.Unlock(c, actorIRI)
+	defer unlock()
 	liked, err := w.db.Liked(c, actorIRI)
 	if err != nil {
 		return err

@@ -535,8 +535,8 @@ github.com/stretchr/testify v1.7.0 h1:nwc3DEeHmmLAfoZucVR881uASk0Mfjw8xYJ99tb5Cc
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/subosito/gotenv v1.2.0 h1:Slr1R9HxAlEKefgq5jn9U+DnETlIUa6HfgEzj0g5d7s=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
-github.com/superseriousbusiness/activity v1.0.1-0.20220405135100-18e8f86a760a h1:tKr18ijUgZ+PCM/n+St6uO2BaPgkReRtM3IJHC/Otf4=
-github.com/superseriousbusiness/activity v1.0.1-0.20220405135100-18e8f86a760a/go.mod h1:AZw0Xb4Oju8rmaJCZ21gc5CPg47MmNgyac+Hx5jo8VM=
+github.com/superseriousbusiness/activity v1.1.0-gts h1:BSnMzs/84s0Zme7BngE9iJAHV7g1Bv1nhLCP0aJtU3I=
+github.com/superseriousbusiness/activity v1.1.0-gts/go.mod h1:AZw0Xb4Oju8rmaJCZ21gc5CPg47MmNgyac+Hx5jo8VM=
 github.com/superseriousbusiness/exif-terminator v0.2.0 h1:C21KOUr54E37qTqYS7WJX0J83sNzzCwBEy0KXyDprqU=
 github.com/superseriousbusiness/exif-terminator v0.2.0/go.mod h1:DHJuKguXqyOVqB/oyOylutEDIZCbkYsn2GZFNSUDT9E=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe h1:ksl2oCx/Qo8sNDc3Grb8WGKBM9nkvhCm25uvlT86azE=

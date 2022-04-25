@@ -263,11 +263,12 @@ func (w FederatingWrappedCallbacks) create(c context.Context, a vocab.ActivitySt
 		if err != nil {
 			return err
 		}
-		err = w.db.Lock(c, id)
+		var unlock func()
+		unlock, err = w.db.Lock(c, id)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, id)
+		defer unlock()
 		if err := w.db.Create(c, t); err != nil {
 			return err
 		}
@@ -304,11 +305,12 @@ func (w FederatingWrappedCallbacks) update(c context.Context, a vocab.ActivitySt
 		if err != nil {
 			return err
 		}
-		err = w.db.Lock(c, id)
+		var unlock func()
+		unlock, err = w.db.Lock(c, id)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, id)
+		defer unlock()
 		if err := w.db.Update(c, t); err != nil {
 			return err
 		}
@@ -341,11 +343,12 @@ func (w FederatingWrappedCallbacks) deleteFn(c context.Context, a vocab.Activity
 		if err != nil {
 			return err
 		}
-		err = w.db.Lock(c, id)
+		var unlock func()
+		unlock, err = w.db.Lock(c, id)
 		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, id)
+		defer unlock()
 		if err := w.db.Delete(c, id); err != nil {
 			return err
 		}
@@ -373,16 +376,16 @@ func (w FederatingWrappedCallbacks) follow(c context.Context, a vocab.ActivitySt
 	//
 	// If not then don't send a response. It was federated to us as an FYI,
 	// by mistake, or some other reason.
-	if err := w.db.Lock(c, w.inboxIRI); err != nil {
+	unlock, err := w.db.Lock(c, w.inboxIRI)
+	if err != nil {
 		return err
 	}
 	// WARNING: Unlock not deferred.
 	actorIRI, err := w.db.ActorForInbox(c, w.inboxIRI)
+	unlock() // unlock even on error
 	if err != nil {
-		w.db.Unlock(c, w.inboxIRI)
 		return err
 	}
-	w.db.Unlock(c, w.inboxIRI)
 	// Unlock must be called by now and every branch above.
 	isMe := false
 	if w.OnFollow != OnFollowDoNothing {
@@ -434,13 +437,14 @@ func (w FederatingWrappedCallbacks) follow(c context.Context, a vocab.ActivitySt
 			//
 			// If automatically rejecting, do not update the
 			// followers collection.
-			if err := w.db.Lock(c, actorIRI); err != nil {
+			unlock, err := w.db.Lock(c, actorIRI)
+			if err != nil {
 				return err
 			}
 			// WARNING: Unlock not deferred.
 			followers, err := w.db.Followers(c, actorIRI)
 			if err != nil {
-				w.db.Unlock(c, actorIRI)
+				unlock()
 				return err
 			}
 			items := followers.GetActivityStreamsItems()
@@ -451,21 +455,23 @@ func (w FederatingWrappedCallbacks) follow(c context.Context, a vocab.ActivitySt
 			for _, elem := range recipients {
 				items.PrependIRI(elem)
 			}
-			if err = w.db.Update(c, followers); err != nil {
-				w.db.Unlock(c, actorIRI)
+			err = w.db.Update(c, followers)
+			unlock() // unlock even on error
+			if err != nil {
 				return err
 			}
-			w.db.Unlock(c, actorIRI)
 			// Unlock must be called by now and every branch above.
 		}
 		// Lock without defer!
-		w.db.Lock(c, w.inboxIRI)
-		outboxIRI, err := w.db.OutboxForInbox(c, w.inboxIRI)
+		unlock, err := w.db.Lock(c, w.inboxIRI)
 		if err != nil {
-			w.db.Unlock(c, w.inboxIRI)
 			return err
 		}
-		w.db.Unlock(c, w.inboxIRI)
+		outboxIRI, err := w.db.OutboxForInbox(c, w.inboxIRI)
+		unlock() // unlock after, regardless
+		if err != nil {
+			return err
+		}
 		// Everything must be unlocked by now.
 		if err := w.addNewIds(c, response); err != nil {
 			return err
@@ -484,16 +490,16 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 	op := a.GetActivityStreamsObject()
 	if op != nil && op.Len() > 0 {
 		// Get this actor's id.
-		if err := w.db.Lock(c, w.inboxIRI); err != nil {
+		unlock, err := w.db.Lock(c, w.inboxIRI)
+		if err != nil {
 			return err
 		}
 		// WARNING: Unlock not deferred.
 		actorIRI, err := w.db.ActorForInbox(c, w.inboxIRI)
+		unlock() // unlock after regardless
 		if err != nil {
-			w.db.Unlock(c, w.inboxIRI)
 			return err
 		}
-		w.db.Unlock(c, w.inboxIRI)
 		// Unlock must be called by now and every branch above.
 		//
 		// Determine if we are in a follow on the 'object' property.
@@ -568,10 +574,11 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 			// Use an anonymous function to properly scope the
 			// database lock, immediately call it.
 			err = func() error {
-				if err := w.db.Lock(c, maybeMyFollowIRI); err != nil {
+				unlock, err := w.db.Lock(c, maybeMyFollowIRI)
+				if err != nil {
 					return err
 				}
-				defer w.db.Unlock(c, maybeMyFollowIRI)
+				defer unlock()
 				t, err := w.db.Get(c, maybeMyFollowIRI)
 				if err != nil {
 					return err
@@ -630,13 +637,14 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 				return err
 			}
 			// Add the peer to our following collection.
-			if err := w.db.Lock(c, actorIRI); err != nil {
+			unlock, err := w.db.Lock(c, actorIRI)
+			if err != nil {
 				return err
 			}
 			// WARNING: Unlock not deferred.
 			following, err := w.db.Following(c, actorIRI)
 			if err != nil {
-				w.db.Unlock(c, actorIRI)
+				unlock()
 				return err
 			}
 			items := following.GetActivityStreamsItems()
@@ -647,16 +655,16 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 			for iter := activityActors.Begin(); iter != activityActors.End(); iter = iter.Next() {
 				id, err := ToId(iter)
 				if err != nil {
-					w.db.Unlock(c, actorIRI)
+					unlock()
 					return err
 				}
 				items.PrependIRI(id)
 			}
-			if err = w.db.Update(c, following); err != nil {
-				w.db.Unlock(c, actorIRI)
+			err = w.db.Update(c, following)
+			unlock() // unlock after regardless
+			if err != nil {
 				return err
 			}
-			w.db.Unlock(c, actorIRI)
 			// Unlock must be called by now and every branch above.
 		}
 	}
@@ -729,10 +737,11 @@ func (w FederatingWrappedCallbacks) like(c context.Context, a vocab.ActivityStre
 		if err != nil {
 			return err
 		}
-		if err := w.db.Lock(c, objId); err != nil {
+		unlock, err := w.db.Lock(c, objId)
+		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, objId)
+		defer unlock()
 		if owns, err := w.db.Owns(c, objId); err != nil {
 			return err
 		} else if !owns {
@@ -810,10 +819,11 @@ func (w FederatingWrappedCallbacks) announce(c context.Context, a vocab.Activity
 		if err != nil {
 			return err
 		}
-		if err := w.db.Lock(c, objId); err != nil {
+		unlock, err := w.db.Lock(c, objId)
+		if err != nil {
 			return err
 		}
-		defer w.db.Unlock(c, objId)
+		defer unlock()
 		if owns, err := w.db.Owns(c, objId); err != nil {
 			return err
 		} else if !owns {
