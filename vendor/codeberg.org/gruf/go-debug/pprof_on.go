@@ -46,14 +46,18 @@ func WithPprof(handler http.Handler) http.Handler {
 
 	// Debug enabled, return wrapped handler func
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		switch trim := strings.TrimPrefix(r.URL.Path, "/debug/pprof"); {
-		// Path = /debug/pprof(/.*)?
-		case trim == "" || trim[0] == '/':
-			pprofmux.ServeHTTP(rw, r)
+		const prefix = "/debug/pprof"
 
-		// All others
-		default:
-			handler.ServeHTTP(rw, r)
+		// /debug/pprof(/.*)? -> pass to pprofmux
+		if strings.HasPrefix(r.URL.Path, prefix) {
+			path := r.URL.Path[len(prefix):]
+			if path == "" || path[0] == '/' {
+				pprofmux.ServeHTTP(rw, r)
+				return
+			}
 		}
+
+		// .* -> pass to handler
+		handler.ServeHTTP(rw, r)
 	})
 }

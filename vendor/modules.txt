@@ -1,7 +1,7 @@
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-debug v1.1.1
+# codeberg.org/gruf/go-debug v1.1.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
 # codeberg.org/gruf/go-errors v1.0.5
