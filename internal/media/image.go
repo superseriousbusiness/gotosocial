@@ -74,7 +74,7 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	case mimeImageJpeg:
 		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		i, err = png.Decode(r)
+		i, err = StrippedPngDecode(r)
 	default:
 		err = fmt.Errorf("content type %s not recognised", contentType)
 	}
@@ -117,13 +117,7 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*ima
 	case mimeImageJpeg:
 		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		// strip ancillary data from png to allow more lenient decoding of pngs into thumbnails
-		// see: https://github.com/golang/go/issues/43382
-		// and: https://github.com/google/wuffs/blob/414a011491ff513b86d8694c5d71800f3cb5a715/script/strip-png-ancillary-chunks.go
-		strippedPngReader := io.Reader(&PNGAncillaryChunkStripper{
-			Reader: r,
-		})
-		i, err = png.Decode(strippedPngReader)
+		i, err = StrippedPngDecode(r)
 	case mimeImageGif:
 		i, err = gif.Decode(r)
 	default:
@@ -181,7 +175,7 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 
 	switch contentType {
 	case mimeImagePng:
-		i, err = png.Decode(r)
+		i, err = StrippedPngDecode(r)
 		if err != nil {
 			return nil, err
 		}
