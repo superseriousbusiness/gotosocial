@@ -218,13 +218,3 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		certManager: m,
 	}, nil
 }
-
-func httpsRedirect(w http.ResponseWriter, req *http.Request) {
-	target := "https://" + req.Host + req.URL.Path
-
-	if len(req.URL.RawQuery) > 0 {
-		target += "?" + req.URL.RawQuery
-	}
-
-	http.Redirect(w, req, target, http.StatusTemporaryRedirect)
-}
