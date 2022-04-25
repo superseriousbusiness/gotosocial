@@ -175,6 +175,7 @@ func (r *PNGAncillaryChunkStripper) Read(p []byte) (int, error) {
 		//  - a PNG chunk (if we've already seen the PNG magic identifier),
 		//  - the PNG magic identifier itself (if the input is a PNG) or
 		//  - something else (if it's not a PNG).
+		//nolint:gocritic
 		if r.seenMagic {
 			// The number of pending bytes is equal to (N + 4) because of the 4
 			// byte trailer, a checksum.
