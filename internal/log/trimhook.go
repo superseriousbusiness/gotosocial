@@ -22,12 +22,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// trimHook is a wrapper round a logrus hook that trims the *entry.Message
+// to no more than 512 characters before sending it through to the wrapped hook,
+// to avoid spamming syslog with messages that are too long for it.
 type trimHook struct {
 	wrappedHook logrus.Hook
 }
 
 func (t *trimHook) Fire(e *logrus.Entry) error {
-	return t.wrappedHook.Fire(e)
+	// only copy/truncate if we need to
+	if len(e.Message) < 512 {
+		return t.wrappedHook.Fire(e)
+	}
+
+	// it's too long, truncate + fire a copy of the entry so we don't meddle with the original
+	return t.wrappedHook.Fire(&logrus.Entry{
+		Logger:  e.Logger,
+		Data:    e.Data,
+		Time:    e.Time,
+		Level:   e.Level,
+		Caller:  e.Caller,
+		Message: e.Message[:508] + "...", // truncate
+		Buffer:  e.Buffer,
+		Context: e.Context,
+	})
 }
 
 func (t *trimHook) Levels() []logrus.Level {
