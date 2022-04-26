@@ -234,8 +234,8 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	// do the actual authentication here!
 	algos := []httpsig.Algorithm{
-		httpsig.RSA_SHA512,
 		httpsig.RSA_SHA256,
+		httpsig.RSA_SHA512,
 		httpsig.ED25519,
 	}
 
