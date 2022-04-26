@@ -53,3 +53,26 @@ func InitTestSyslog() (*syslog.Server, chan format.LogParts, error) {
 
 	return server, channel, nil
 }
+
+// InitTestSyslog returns a test syslog running on a unix socket, and a channel for reading
+// messages sent to the server, or an error if something goes wrong.
+//
+// Callers of this function should call Kill() on the server when they're finished with it!
+func InitTestSyslogUnixgram(address string) (*syslog.Server, chan format.LogParts, error) {
+	channel := make(syslog.LogPartsChannel)
+	handler := syslog.NewChannelHandler(channel)
+
+	server := syslog.NewServer()
+	server.SetFormat(syslog.Automatic)
+	server.SetHandler(handler)
+
+	if err := server.ListenUnixgram(address); err != nil {
+		return nil, nil, err
+	}
+
+	if err := server.Boot(); err != nil {
+		return nil, nil, err
+	}
+
+	return server, channel, nil
+}
