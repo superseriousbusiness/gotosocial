@@ -73,7 +73,7 @@ func Initialize() error {
 			return err
 		}
 
-		logrus.AddHook(hook)
+		logrus.AddHook(&trimHook{hook})
 	}
 
 	return nil
