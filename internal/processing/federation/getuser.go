@@ -20,7 +20,6 @@ package federation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -46,13 +45,9 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 		}
 	} else {
 		// if it's any other path, we want to fully authenticate the request before we serve any data, and then we can serve a more complete profile
-		requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
-		if err != nil {
-			return nil, gtserror.NewErrorNotAuthorized(err, "not authorized")
-		}
-
-		if !authenticated {
-			return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
+		requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now

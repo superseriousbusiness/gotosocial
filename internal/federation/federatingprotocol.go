@@ -119,15 +119,17 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, fmt.Errorf("could not fetch receiving account with username %s: %s", username, err)
 	}
 
-	publicKeyOwnerURI, authenticated, err := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
-	if err != nil {
-		l.Debugf("request not authenticated: %s", err)
-		return ctx, false, err
-	}
-
-	if !authenticated {
-		w.WriteHeader(http.StatusForbidden)
-		return ctx, false, nil
+	publicKeyOwnerURI, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
+	if errWithCode != nil {
+		switch errWithCode.Code() {
+		case http.StatusUnauthorized, http.StatusForbidden, http.StatusBadRequest:
+			// if 400, 401, or 403, obey the interface by writing the header and bailing
+			w.WriteHeader(errWithCode.Code())
+			return ctx, false, nil
+		default:
+			// if not, there's been a proper error
+			return ctx, false, err
+		}
 	}
 
 	// authentication has passed, so add an instance entry for this instance if it hasn't been done already
