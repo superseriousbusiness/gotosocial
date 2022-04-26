@@ -168,6 +168,7 @@ All docs for installation and configuration are hosted at [docs.gotosocial.org](
 Thank you so much to the cool people who have put time and energy into packaging GoToSocial! Known third-party packaging projects are listed below:
 
 - [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
+- [GoToSocial Helm Chart](https://github.com/0hlov3/helm-charts/tree/main/helm-charts/gotosocial)
 
 These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
 
