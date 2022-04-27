@@ -33,7 +33,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-var (
+const (
 	readTimeout       = 60 * time.Second
 	writeTimeout      = 30 * time.Second
 	idleTimeout       = 30 * time.Second
@@ -91,8 +91,9 @@ func (r *router) Start() {
 			http.Redirect(rw, r, target, http.StatusTemporaryRedirect)
 		})
 
-		// Prepare autocert manager handler with fallback
-		autocert := r.certManager.HTTPHandler(redirect)
+		// Clone HTTP server but with autocert handler
+		srv := r.srv
+		srv.Handler = r.certManager.HTTPHandler(redirect)
 
 		// Start the LetsEncrypt autocert manager HTTP server.
 		go func() {
@@ -103,7 +104,7 @@ func (r *router) Start() {
 
 			logrus.Infof("letsencrypt listening on %s", addr)
 
-			if err := http.ListenAndServe(addr, autocert); err != nil &&
+			if err := srv.ListenAndServe(); err != nil &&
 				err != http.ErrServerClosed {
 				logrus.Fatalf("letsencrypt: listen: %s", err)
 			}
@@ -118,6 +119,12 @@ func (r *router) Start() {
 	// "debug" or "debugenv" build-tag is set pprof stats will be served
 	// at the standard "/debug/pprof" URL.
 	r.srv.Handler = debug.WithPprof(r.srv.Handler)
+	if debug.DEBUG() {
+		// Profiling requires timeouts longer than 30s, so reset these.
+		logrus.Warn("resetting http.Server{} timeout to support profiling")
+		r.srv.ReadTimeout = 0
+		r.srv.WriteTimeout = 0
+	}
 
 	// Start the main listener.
 	go func() {
