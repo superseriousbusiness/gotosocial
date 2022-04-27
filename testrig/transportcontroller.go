@@ -26,7 +26,9 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // NewTestTransportController returns a test transport controller with the given http client.
@@ -38,8 +40,8 @@ import (
 // Unlike the other test interfaces provided in this package, you'll probably want to call this function
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
-func NewTestTransportController(client pub.HttpClient, db db.DB) transport.Controller {
-	return transport.NewController(db, NewTestFederatingDB(db), &federation.Clock{}, client)
+func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *worker.Worker[messages.FromFederator]) transport.Controller {
+	return transport.NewController(db, NewTestFederatingDB(db, fedWorker), &federation.Clock{}, client)
 }
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface,

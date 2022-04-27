@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Processor wraps a bunch of functions for processing admin actions.
@@ -43,18 +44,18 @@ type Processor interface {
 }
 
 type processor struct {
-	tc            typeutils.TypeConverter
-	mediaManager  media.Manager
-	fromClientAPI chan messages.FromClientAPI
-	db            db.DB
+	tc           typeutils.TypeConverter
+	mediaManager media.Manager
+	clientWorker *worker.Worker[messages.FromClientAPI]
+	db           db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, clientWorker *worker.Worker[messages.FromClientAPI]) Processor {
 	return &processor{
-		tc:            tc,
-		mediaManager:  mediaManager,
-		fromClientAPI: fromClientAPI,
-		db:            db,
+		tc:           tc,
+		mediaManager: mediaManager,
+		clientWorker: clientWorker,
+		db:           db,
 	}
 }

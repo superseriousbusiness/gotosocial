@@ -26,7 +26,9 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // DB wraps the pub.Database interface with a couple of custom functions for GoToSocial.
@@ -45,16 +47,18 @@ type federatingDB struct {
 	locks         map[string]*mutex
 	pool          sync.Pool
 	db            db.DB
+	fedWorker     *worker.Worker[messages.FromFederator]
 	typeConverter typeutils.TypeConverter
 }
 
 // New returns a DB interface using the given database and config
-func New(db db.DB) DB {
+func New(db db.DB, fedWorker *worker.Worker[messages.FromFederator]) DB {
 	fdb := federatingDB{
 		mutex:         sync.Mutex{},
 		locks:         make(map[string]*mutex, 100),
 		pool:          sync.Pool{New: func() interface{} { return &mutex{} }},
 		db:            db,
+		fedWorker:     fedWorker,
 		typeConverter: typeutils.NewConverter(db),
 	}
 	go fdb.cleanupLocks()

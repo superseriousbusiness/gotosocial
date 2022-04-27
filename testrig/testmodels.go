@@ -42,6 +42,8 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -505,7 +507,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	if diff := len(accounts) - len(preserializedKeys); diff > 0 {
-		var keyStrings = make([]string, diff)
+		keyStrings := make([]string, diff)
 		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 			key, _ := x509.MarshalPKCS8PrivateKey(priv)
@@ -1823,8 +1825,13 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 		},
 	}
 
+	// Create temporary federator worker for transport controller
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	fedWorker.Start()
+	defer fedWorker.Stop()
+
 	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB())
+	c := NewTestTransportController(client, NewTestDB(), fedWorker)
 	tp, err := c.NewTransport(pubKeyID, privkey)
 	if err != nil {
 		panic(err)
@@ -1865,8 +1872,13 @@ func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 		},
 	}
 
+	// Create temporary federator worker for transport controller
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	fedWorker.Start()
+	defer fedWorker.Stop()
+
 	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB())
+	c := NewTestTransportController(client, NewTestDB(), fedWorker)
 	tp, err := c.NewTransport(pubKeyID, privkey)
 	if err != nil {
 		panic(err)
@@ -1899,7 +1911,8 @@ func newAPPerson(
 	avatarContentType string,
 	headerURL *url.URL,
 	headerContentType string,
-	manuallyApprovesFollowers bool) vocab.ActivityStreamsPerson {
+	manuallyApprovesFollowers bool,
+) vocab.ActivityStreamsPerson {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -2082,7 +2095,8 @@ func newAPGroup(
 	avatarContentType string,
 	headerURL *url.URL,
 	headerContentType string,
-	manuallyApprovesFollowers bool) vocab.ActivityStreamsGroup {
+	manuallyApprovesFollowers bool,
+) vocab.ActivityStreamsGroup {
 	group := streams.NewActivityStreamsGroup()
 
 	// id should be the activitypub URI of this group
@@ -2303,8 +2317,8 @@ func newAPNote(
 	noteCC []*url.URL,
 	noteSensitive bool,
 	noteMentions []vocab.ActivityStreamsMention,
-	noteAttachments []vocab.ActivityStreamsImage) vocab.ActivityStreamsNote {
-
+	noteAttachments []vocab.ActivityStreamsImage,
+) vocab.ActivityStreamsNote {
 	// create the note itself
 	note := streams.NewActivityStreamsNote()
 

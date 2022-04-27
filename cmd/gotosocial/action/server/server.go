@@ -63,6 +63,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -70,6 +71,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Start creates and starts a gotosocial server
@@ -87,7 +89,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
-	federatingDB := federatingdb.New(dbService)
+	// Create the client API and federator worker pools
+	// NOTE: these MUST NOT be used until they are passed to the
+	// processor and it is started. The reason being that the processor
+	// sets the Worker process functions and start the underlying pools
+	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+
+	federatingDB := federatingdb.New(dbService, fedWorker)
 
 	router, err := router.New(ctx, dbService)
 	if err != nil {
@@ -138,8 +147,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// create and start the message processor using the other services we've created so far
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender)
-	if err := processor.Start(ctx); err != nil {
+	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, storage, dbService, emailSender, clientWorker, fedWorker)
+	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 

@@ -84,13 +84,13 @@ func (p *processor) Fave(ctx context.Context, requestingAccount *gtsmodel.Accoun
 		}
 
 		// send it back to the processor for async processing
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityLike,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       gtsFave,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,
-		}
+		})
 	}
 
 	// return the apidon representation of the target status

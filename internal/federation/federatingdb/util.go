@@ -34,7 +34,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -310,7 +309,7 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 //   - The requesting account that posted to the inbox.
 //   - A channel that messages for the processor can be placed into.
 // If a value is not present, nil will be returned for it. It's up to the caller to check this and respond appropriately.
-func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) {
+func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account) {
 	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
 	if receivingAccountI != nil {
 		var ok bool
@@ -326,15 +325,6 @@ func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *g
 		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
 		if !ok {
 			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
-		}
-	}
-
-	fromFederatorChanI := ctx.Value(ap.ContextFromFederatorChan)
-	if fromFederatorChanI != nil {
-		var ok bool
-		fromFederatorChan, ok = fromFederatorChanI.(chan messages.FromFederator)
-		if !ok {
-			logrus.Panicf("extractFromCtx: context entry with key %s could not be asserted to chan messages.FromFederator", ap.ContextFromFederatorChan)
 		}
 	}
 

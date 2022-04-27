@@ -85,12 +85,12 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 
 	// there are side effects for creating a new account (sending confirmation emails etc)
 	// so pass a message to the processor so that it can do it asynchronously
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       user.Account,
 		OriginAccount:  user.Account,
-	}
+	})
 
 	return &apimodel.Token{
 		AccessToken: accessToken.GetAccess(),

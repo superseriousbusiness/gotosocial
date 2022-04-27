@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -40,8 +39,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	// remote_account_2 rejects the follow request
 	followingAccount := suite.testAccounts["local_account_1"]
 	followedAccount := suite.testAccounts["remote_account_2"]
-	fromFederatorChan := make(chan messages.FromFederator, 10)
-	ctx := createTestContext(followingAccount, followedAccount, fromFederatorChan)
+	ctx := createTestContext(followingAccount, followedAccount)
 
 	// put the follow request in the database
 	fr := &gtsmodel.FollowRequest{
@@ -84,7 +82,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	suite.NoError(err)
 
 	// there should be nothing in the federator channel since nothing needs to be passed
-	suite.Empty(fromFederatorChan)
+	suite.Empty(suite.fromFederator)
 
 	// the follow request should not be in the database anymore -- it's been rejected
 	err = suite.db.GetByID(ctx, fr.ID, &gtsmodel.FollowRequest{})

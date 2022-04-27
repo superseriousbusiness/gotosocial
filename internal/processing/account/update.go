@@ -117,12 +117,12 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, fmt.Errorf("could not update account %s: %s", account.ID, err)
 	}
 
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       updatedAccount,
 		OriginAccount:  updatedAccount,
-	}
+	})
 
 	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, updatedAccount)
 	if err != nil {

@@ -159,13 +159,13 @@ selectStatusesLoop:
 			// pass the status delete through the client api channel for processing
 			s.Account = account
 			l.Debug("putting status in the client api channel")
-			p.fromClientAPI <- messages.FromClientAPI{
+			p.clientWorker.Queue(messages.FromClientAPI{
 				APObjectType:   ap.ObjectNote,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       s,
 				OriginAccount:  account,
 				TargetAccount:  account,
-			}
+			})
 
 			if err := p.db.DeleteByID(ctx, s.ID, s); err != nil {
 				if err != db.ErrNoEntries {
@@ -195,13 +195,13 @@ selectStatusesLoop:
 				}
 
 				l.Debug("putting boost undo in the client api channel")
-				p.fromClientAPI <- messages.FromClientAPI{
+				p.clientWorker.Queue(messages.FromClientAPI{
 					APObjectType:   ap.ActivityAnnounce,
 					APActivityType: ap.ActivityUndo,
 					GTSModel:       s,
 					OriginAccount:  b.Account,
 					TargetAccount:  account,
-				}
+				})
 
 				if err := p.db.DeleteByID(ctx, b.ID, b); err != nil {
 					if err != db.ErrNoEntries {
@@ -331,7 +331,7 @@ func (p *processor) DeleteLocal(ctx context.Context, account *gtsmodel.Account, 
 	}
 
 	// put the delete in the processor queue to handle the rest of it asynchronously
-	p.fromClientAPI <- fromClientAPIMessage
+	p.clientWorker.Queue(fromClientAPIMessage)
 
 	return nil
 }

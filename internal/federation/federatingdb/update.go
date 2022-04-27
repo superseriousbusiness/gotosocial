@@ -57,9 +57,9 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Debug("entering Update")
 	}
 
-	receivingAccount, _, fromFederatorChan := extractFromCtx(ctx)
-	if receivingAccount == nil || fromFederatorChan == nil {
-		// If the receiving account or federator channel wasn't set on the context, that means this request didn't pass
+	receivingAccount, _ := extractFromCtx(ctx)
+	if receivingAccount == nil {
+		// If the receiving account wasn't set on the context, that means this request didn't pass
 		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
@@ -148,12 +148,12 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		}
 
 		// pass to the processor for further processing of eg., avatar/header
-		fromFederatorChan <- messages.FromFederator{
+		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityUpdate,
 			GTSModel:         updatedAcct,
 			ReceivingAccount: receivingAccount,
-		}
+		})
 	}
 
 	return nil

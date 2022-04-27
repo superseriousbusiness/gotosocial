@@ -101,13 +101,13 @@ func (p *processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// otherwise we leave the follow request as it is and we handle the rest of the process asynchronously
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       fr,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetAcct,
-	}
+	})
 
 	// return whatever relationship results from this
 	return p.RelationshipGet(ctx, requestingAccount, form.ID)
