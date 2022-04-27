@@ -1827,8 +1827,8 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 
 	// Create temporary federator worker for transport controller
 	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	fedWorker.Start()
-	defer fedWorker.Stop()
+	_ = fedWorker.Start()
+	defer func() { _ = fedWorker.Stop() }()
 
 	// use the client to create a new transport
 	c := NewTestTransportController(client, NewTestDB(), fedWorker)
@@ -1874,8 +1874,8 @@ func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 
 	// Create temporary federator worker for transport controller
 	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	fedWorker.Start()
-	defer fedWorker.Stop()
+	_ = fedWorker.Start()
+	defer func() { _ = fedWorker.Stop() }()
 
 	// use the client to create a new transport
 	c := NewTestTransportController(client, NewTestDB(), fedWorker)
