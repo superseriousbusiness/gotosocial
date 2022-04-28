@@ -33,20 +33,22 @@ import (
 
 // LoadTemplates loads html templates for use by the given engine
 func loadTemplates(engine *gin.Engine) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting current working directory: %s", err)
-	}
-
 	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
 
-	_, err = os.Stat(filepath.Join(cwd, templateBaseDir, "index.tmpl"))
-	if err != nil {
-		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", filepath.Join(cwd, templateBaseDir), err)
+	if !filepath.IsAbs(templateBaseDir) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("error getting current working directory: %w", err)
+		}
+
+		templateBaseDir = filepath.Join(cwd, viper.GetString(config.Keys.WebTemplateBaseDir))
 	}
 
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
-	engine.LoadHTMLGlob(tmPath)
+	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
+		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err)
+	}
+
+	engine.LoadHTMLGlob(fmt.Sprintf("%s*", templateBaseDir))
 	return nil
 }
 
