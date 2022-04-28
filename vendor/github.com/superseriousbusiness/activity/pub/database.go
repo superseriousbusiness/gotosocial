@@ -19,12 +19,7 @@ type Database interface {
 	// processes require tight loops acquiring and releasing locks.
 	//
 	// Used to ensure race conditions in multiple requests do not occur.
-	Lock(c context.Context, id *url.URL) error
-	// Unlock makes the lock for the object at the specified id available.
-	// If an error is returned, the lock must have still been freed.
-	//
-	// Used to ensure race conditions in multiple requests do not occur.
-	Unlock(c context.Context, id *url.URL) error
+	Lock(c context.Context, id *url.URL) (unlock func(), err error)
 	// InboxContains returns true if the OrderedCollection at 'inbox'
 	// contains the specified 'id'.
 	//

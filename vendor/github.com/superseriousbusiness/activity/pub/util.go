@@ -753,7 +753,8 @@ func mustHaveActivityActorsMatchObjectActors(c context.Context,
 	actors vocab.ActivityStreamsActorProperty,
 	op vocab.ActivityStreamsObjectProperty,
 	newTransport func(c context.Context, actorBoxIRI *url.URL, gofedAgent string) (t Transport, err error),
-	boxIRI *url.URL) error {
+	boxIRI *url.URL,
+) error {
 	activityActorMap := make(map[string]bool, actors.Len())
 	for iter := actors.Begin(); iter != actors.End(); iter = iter.Next() {
 		id, err := ToId(iter)
@@ -808,7 +809,8 @@ func mustHaveActivityActorsMatchObjectActors(c context.Context,
 func add(c context.Context,
 	op vocab.ActivityStreamsObjectProperty,
 	target vocab.ActivityStreamsTargetProperty,
-	db Database) error {
+	db Database,
+) error {
 	opIds := make([]*url.URL, 0, op.Len())
 	for iter := op.Begin(); iter != op.End(); iter = iter.Next() {
 		id, err := ToId(iter)
@@ -828,10 +830,11 @@ func add(c context.Context,
 	// Create anonymous loop function to be able to properly scope the defer
 	// for the database lock at each iteration.
 	loopFn := func(t *url.URL) error {
-		if err := db.Lock(c, t); err != nil {
+		unlock, err := db.Lock(c, t)
+		if err != nil {
 			return err
 		}
-		defer db.Unlock(c, t)
+		defer unlock()
 		if owns, err := db.Owns(c, t); err != nil {
 			return err
 		} else if !owns {
@@ -889,7 +892,8 @@ func add(c context.Context,
 func remove(c context.Context,
 	op vocab.ActivityStreamsObjectProperty,
 	target vocab.ActivityStreamsTargetProperty,
-	db Database) error {
+	db Database,
+) error {
 	opIds := make(map[string]bool, op.Len())
 	for iter := op.Begin(); iter != op.End(); iter = iter.Next() {
 		id, err := ToId(iter)
@@ -909,10 +913,11 @@ func remove(c context.Context,
 	// Create anonymous loop function to be able to properly scope the defer
 	// for the database lock at each iteration.
 	loopFn := func(t *url.URL) error {
-		if err := db.Lock(c, t); err != nil {
+		unlock, err := db.Lock(c, t)
+		if err != nil {
 			return err
 		}
-		defer db.Unlock(c, t)
+		defer unlock()
 		if owns, err := db.Owns(c, t); err != nil {
 			return err
 		} else if !owns {

@@ -64,18 +64,20 @@ func NewActivityStreamsHandlerScheme(db Database, clock Clock, scheme string) Ha
 		}
 		isASRequest = true
 		id := requestId(r, scheme)
+
+		var unlock func()
+
 		// Lock and obtain a copy of the requested ActivityStreams value
-		err = db.Lock(c, id)
+		unlock, err = db.Lock(c, id)
 		if err != nil {
 			return
 		}
 		// WARNING: Unlock not deferred
 		t, err := db.Get(c, id)
+		unlock() // unlock even on error
 		if err != nil {
-			db.Unlock(c, id)
 			return
 		}
-		db.Unlock(c, id)
 		// Unlock must have been called by this point and in every
 		// branch above
 		if t == nil {
