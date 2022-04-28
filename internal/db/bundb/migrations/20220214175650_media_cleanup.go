@@ -142,7 +142,7 @@ func init() {
 			}
 
 			// rename the new table to the same name as the old table was
-			if _, err := tx.QueryContext(ctx, "ALTER TABLE new_media_attachments RENAME TO media_attachments;"); err != nil {
+			if _, err := tx.ExecContext(ctx, "ALTER TABLE new_media_attachments RENAME TO media_attachments;"); err != nil {
 				return err
 			}
 
