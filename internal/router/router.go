@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"time"
 
+	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -32,7 +33,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-var (
+const (
 	readTimeout       = 60 * time.Second
 	writeTimeout      = 30 * time.Second
 	idleTimeout       = 30 * time.Second
@@ -69,38 +70,69 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
-	keys := config.Keys
-	leEnabled := viper.GetBool(keys.LetsEncryptEnabled)
+	var (
+		keys = config.Keys
 
-	if leEnabled {
-		bindAddress := viper.GetString(keys.BindAddress)
-		lePort := viper.GetInt(keys.LetsEncryptPort)
+		// listen is the server start function, by
+		// default pointing to regular HTTP listener,
+		// but updated to TLS if LetsEncrypt is enabled.
+		listen = r.srv.ListenAndServe
+	)
 
-		// serve the http handler on the selected letsencrypt port, for receiving letsencrypt requests and solving their devious riddles
+	if viper.GetBool(keys.LetsEncryptEnabled) {
+		// LetsEncrypt support is enabled
+
+		// Prepare an HTTPS-redirect handler for LetsEncrypt fallback
+		redirect := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			target := "https://" + r.Host + r.URL.Path
+			if len(r.URL.RawQuery) > 0 {
+				target += "?" + r.URL.RawQuery
+			}
+			http.Redirect(rw, r, target, http.StatusTemporaryRedirect)
+		})
+
+		// Clone HTTP server but with autocert handler
+		srv := r.srv
+		srv.Handler = r.certManager.HTTPHandler(redirect)
+
+		// Start the LetsEncrypt autocert manager HTTP server.
 		go func() {
-			listen := fmt.Sprintf("%s:%d", bindAddress, lePort)
-			logrus.Infof("letsencrypt listening on %s", listen)
-			if err := http.ListenAndServe(listen, r.certManager.HTTPHandler(http.HandlerFunc(httpsRedirect))); err != nil && err != http.ErrServerClosed {
+			addr := fmt.Sprintf("%s:%d",
+				viper.GetString(keys.BindAddress),
+				viper.GetInt(keys.LetsEncryptPort),
+			)
+
+			logrus.Infof("letsencrypt listening on %s", addr)
+
+			if err := srv.ListenAndServe(); err != nil &&
+				err != http.ErrServerClosed {
 				logrus.Fatalf("letsencrypt: listen: %s", err)
 			}
 		}()
 
-		// and serve the actual TLS handler
-		go func() {
-			logrus.Infof("listening on %s", r.srv.Addr)
-			if err := r.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
-				logrus.Fatalf("listen: %s", err)
-			}
-		}()
-	} else {
-		// no tls required
-		go func() {
-			logrus.Infof("listening on %s", r.srv.Addr)
-			if err := r.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logrus.Fatalf("listen: %s", err)
-			}
-		}()
+		// TLS is enabled, update the listen function
+		listen = func() error { return r.srv.ListenAndServeTLS("", "") }
 	}
+
+	// Pass the server handler through a debug pprof middleware handler.
+	// For standard production builds this will be a no-op, but when the
+	// "debug" or "debugenv" build-tag is set pprof stats will be served
+	// at the standard "/debug/pprof" URL.
+	r.srv.Handler = debug.WithPprof(r.srv.Handler)
+	if debug.DEBUG() {
+		// Profiling requires timeouts longer than 30s, so reset these.
+		logrus.Warn("resetting http.Server{} timeout to support profiling")
+		r.srv.ReadTimeout = 0
+		r.srv.WriteTimeout = 0
+	}
+
+	// Start the main listener.
+	go func() {
+		logrus.Infof("listening on %s", r.srv.Addr)
+		if err := listen(); err != nil && err != http.ErrServerClosed {
+			logrus.Fatalf("listen: %s", err)
+		}
+	}()
 }
 
 // Stop shuts down the router nicely
@@ -192,14 +224,4 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 		srv:         s,
 		certManager: m,
 	}, nil
-}
-
-func httpsRedirect(w http.ResponseWriter, req *http.Request) {
-	target := "https://" + req.Host + req.URL.Path
-
-	if len(req.URL.RawQuery) > 0 {
-		target += "?" + req.URL.RawQuery
-	}
-
-	http.Redirect(w, req, target, http.StatusTemporaryRedirect)
 }
