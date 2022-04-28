@@ -44,9 +44,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	)
 	l.Debug("entering Delete")
 
-	receivingAccount, _, fromFederatorChan := extractFromCtx(ctx)
-	if receivingAccount == nil || fromFederatorChan == nil {
-		// If the receiving account or federator channel wasn't set on the context, that means this request didn't pass
+	receivingAccount, _ := extractFromCtx(ctx)
+	if receivingAccount == nil {
+		// If the receiving account wasn't set on the context, that means this request didn't pass
 		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
@@ -61,24 +61,24 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		if err := f.db.DeleteByID(ctx, s.ID, &gtsmodel.Status{}); err != nil {
 			return fmt.Errorf("DELETE: err deleting status: %s", err)
 		}
-		fromFederatorChan <- messages.FromFederator{
+		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         s,
 			ReceivingAccount: receivingAccount,
-		}
+		})
 	}
 
 	a, err := f.db.GetAccountByURI(ctx, id.String())
 	if err == nil {
 		// it's an account
 		l.Debugf("uri is for an account with id %s, passing delete message to the processor", a.ID)
-		fromFederatorChan <- messages.FromFederator{
+		f.fedWorker.Queue(messages.FromFederator{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         a,
 			ReceivingAccount: receivingAccount,
-		}
+		})
 	}
 
 	return nil

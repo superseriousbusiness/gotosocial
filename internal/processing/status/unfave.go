@@ -73,13 +73,13 @@ func (p *processor) Unfave(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		// send it back to the processor for async processing
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityLike,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       gtsFave,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,
-		}
+		})
 	}
 
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)

@@ -80,7 +80,7 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 
 	// follow request status changed so send the UNDO activity to the channel for async processing
 	if frChanged {
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -90,12 +90,12 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAcct,
-		}
+		})
 	}
 
 	// follow status changed so send the UNDO activity to the channel for async processing
 	if fChanged {
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -105,7 +105,7 @@ func (p *processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAcct,
-		}
+		})
 	}
 
 	// return whatever relationship results from all this

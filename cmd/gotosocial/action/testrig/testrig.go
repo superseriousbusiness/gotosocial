@@ -55,8 +55,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -71,6 +73,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	storageBackend := testrig.NewTestStorage()
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 
+	// Create client API and federator worker pools
+	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+
 	// build backend handlers
 	oauthServer := testrig.NewTestOauthServer(dbService)
 	transportController := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
@@ -79,14 +85,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}), dbService)
+	}), dbService, fedWorker)
 	mediaManager := testrig.NewTestMediaManager(dbService, storageBackend)
-	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager)
+	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager, fedWorker)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
-	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager)
-	if err := processor.Start(ctx); err != nil {
+	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager, clientWorker, fedWorker)
+	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 

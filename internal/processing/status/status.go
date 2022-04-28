@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Processor wraps a bunch of functions for processing statuses.
@@ -69,22 +70,22 @@ type Processor interface {
 }
 
 type processor struct {
-	tc            typeutils.TypeConverter
-	db            db.DB
-	filter        visibility.Filter
-	formatter     text.Formatter
-	fromClientAPI chan messages.FromClientAPI
-	parseMention  gtsmodel.ParseMentionFunc
+	tc           typeutils.TypeConverter
+	db           db.DB
+	filter       visibility.Filter
+	formatter    text.Formatter
+	clientWorker *worker.Worker[messages.FromClientAPI]
+	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, fromClientAPI chan messages.FromClientAPI, parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *worker.Worker[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
-		tc:            tc,
-		db:            db,
-		filter:        visibility.NewFilter(db),
-		formatter:     text.NewFormatter(db),
-		fromClientAPI: fromClientAPI,
-		parseMention:  parseMention,
+		tc:           tc,
+		db:           db,
+		filter:       visibility.NewFilter(db),
+		formatter:    text.NewFormatter(db),
+		clientWorker: clientWorker,
+		parseMention: parseMention,
 	}
 }

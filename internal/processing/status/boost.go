@@ -65,13 +65,13 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 	}
 
 	// send it back to the processor for async processing
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       boostWrapperStatus,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetStatus.Account,
-	}
+	})
 
 	// return the frontend representation of the new status to the submitter
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, boostWrapperStatus, requestingAccount)

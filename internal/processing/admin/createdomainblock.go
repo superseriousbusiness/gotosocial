@@ -141,13 +141,13 @@ selectAccountsLoop:
 			l.Debugf("putting delete for account %s in the clientAPI channel", a.Username)
 
 			// pass the account delete through the client api channel for processing
-			p.fromClientAPI <- messages.FromClientAPI{
+			p.clientWorker.Queue(messages.FromClientAPI{
 				APObjectType:   ap.ActorPerson,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       block,
 				OriginAccount:  account,
 				TargetAccount:  a,
-			}
+			})
 
 			// if this is the last account in the slice, set the maxID appropriately for the next query
 			if i == len(accounts)-1 {

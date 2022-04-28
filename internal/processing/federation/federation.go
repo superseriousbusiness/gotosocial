@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
@@ -81,20 +80,18 @@ type Processor interface {
 }
 
 type processor struct {
-	db            db.DB
-	federator     federation.Federator
-	tc            typeutils.TypeConverter
-	filter        visibility.Filter
-	fromFederator chan messages.FromFederator
+	db        db.DB
+	federator federation.Federator
+	tc        typeutils.TypeConverter
+	filter    visibility.Filter
 }
 
 // New returns a new federation processor.
-func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator, fromFederator chan messages.FromFederator) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, federator federation.Federator) Processor {
 	return &processor{
-		db:            db,
-		federator:     federator,
-		tc:            tc,
-		filter:        visibility.NewFilter(db),
-		fromFederator: fromFederator,
+		db:        db,
+		federator: federator,
+		tc:        tc,
+		filter:    visibility.NewFilter(db),
 	}
 }

@@ -44,9 +44,9 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		l.Debug("entering Announce")
 	}
 
-	receivingAccount, _, fromFederatorChan := extractFromCtx(ctx)
-	if receivingAccount == nil || fromFederatorChan == nil {
-		// If the receiving account or federator channel wasn't set on the context, that means this request didn't pass
+	receivingAccount, _ := extractFromCtx(ctx)
+	if receivingAccount == nil {
+		// If the receiving account wasn't set on the context, that means this request didn't pass
 		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
 		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
 		return nil
@@ -63,12 +63,12 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	}
 
 	// it's a new announce so pass it back to the processor async for dereferencing etc
-	fromFederatorChan <- messages.FromFederator{
+	f.fedWorker.Queue(messages.FromFederator{
 		APObjectType:     ap.ActivityAnnounce,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         boost,
 		ReceivingAccount: receivingAccount,
-	}
+	})
 
 	return nil
 }

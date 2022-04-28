@@ -34,7 +34,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -73,12 +75,14 @@ func (suite *ProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	// the activity we're gonna use
 	activity := suite.activities["dm_for_zork"]
 
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+
 	// setup transport controller with a no-op client so we don't make external calls
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		return nil, nil
-	}), suite.db)
+	}), suite.db, fedWorker)
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	// setup request
 	ctx := context.Background()
@@ -105,9 +109,11 @@ func (suite *ProtocolTestSuite) TestAuthenticatePostInbox() {
 	sendingAccount := suite.accounts["remote_account_1"]
 	inboxAccount := suite.accounts["local_account_1"]
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
 	// we need these headers for the request to be validated
