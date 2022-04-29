@@ -41,6 +41,7 @@ type FilterStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
+	testFollows      map[string]*gtsmodel.Follow
 
 	filter visibility.Filter
 }
@@ -55,6 +56,7 @@ func (suite *FilterStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
 	suite.testMentions = testrig.NewTestMentions()
+	suite.testFollows = testrig.NewTestFollows()
 }
 
 func (suite *FilterStandardTestSuite) SetupTest() {
