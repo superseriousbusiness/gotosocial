@@ -140,4 +140,4 @@ At some point you'll likely want to do things like change instance information, 
 
 ## 9. Reverse proxy (optional)
 
-If you want to run other webservers on port 433 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
+If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
