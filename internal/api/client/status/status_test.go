@@ -92,7 +92,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	fedWorker := worker.New[messages.FromFederator](-1, -1)
 	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-	
+
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(suite.testHttpClient(), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
