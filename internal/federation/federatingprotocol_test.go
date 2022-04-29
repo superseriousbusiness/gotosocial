@@ -42,7 +42,7 @@ type FederatingProtocolTestSuite struct {
 // make sure PostInboxRequestBodyHook properly sets the inbox username and activity on the context
 func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	// the activity we're gonna use
-	activity := suite.activities["dm_for_zork"]
+	activity := suite.testActivities["dm_for_zork"]
 
 	fedWorker := worker.New[messages.FromFederator](-1, -1)
 
@@ -51,7 +51,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 		return nil, nil
 	}), suite.db, fedWorker)
 	// setup module being tested
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	// setup request
 	ctx := context.Background()
@@ -74,15 +74,15 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	// the activity we're gonna use
-	activity := suite.activities["dm_for_zork"]
-	sendingAccount := suite.accounts["remote_account_1"]
-	inboxAccount := suite.accounts["local_account_1"]
+	activity := suite.testActivities["dm_for_zork"]
+	sendingAccount := suite.testAccounts["remote_account_1"]
+	inboxAccount := suite.testAccounts["local_account_1"]
 
 	fedWorker := worker.New[messages.FromFederator](-1, -1)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
 	// now setup module being tested, with the mock transport controller
-	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.typeConverter, testrig.NewTestMediaManager(suite.db, suite.storage))
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil)
 	// we need these headers for the request to be validated
