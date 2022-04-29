@@ -63,6 +63,7 @@ type StatusStandardTestSuite struct {
 	testAccounts     map[string]*gtsmodel.Account
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
+	testFollows      map[string]*gtsmodel.Follow
 
 	// module being tested
 	statusModule *status.Module
@@ -76,25 +77,27 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testFollows = testrig.NewTestFollows()
 }
 
 func (suite *StatusStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
+	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
+
+	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(suite.testHttpClient(), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 	suite.statusModule = status.New(suite.processor).(*status.Module)
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
 func (suite *StatusStandardTestSuite) TearDownTest() {

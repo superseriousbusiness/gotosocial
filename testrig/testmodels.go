@@ -1435,6 +1435,26 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
 			Notify:          false,
 		},
+		"local_account_2_local_account_1": {
+			ID:              "01G1TK1RS4K3E0MSFTXBFWAH9Q",
+			CreatedAt:       time.Now().Add(-1 * time.Hour),
+			UpdatedAt:       time.Now().Add(-1 * time.Hour),
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/1happyturtle/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
+			Notify:          false,
+		},
+		"admin_account_local_account_1": {
+			ID:              "01G1TK3PQKFW1BQZ9WVYRTFECK",
+			CreatedAt:       time.Now().Add(-46 * time.Hour),
+			UpdatedAt:       time.Now().Add(-46 * time.Hour),
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/admin/follow/01G1TK3PQKFW1BQZ9WVYRTFECK",
+			Notify:          false,
+		},
 	}
 }
 

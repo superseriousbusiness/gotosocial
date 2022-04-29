@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type StatusVisibleTestSuite struct {
@@ -85,6 +86,8 @@ func (suite *StatusVisibleTestSuite) TestDMNotVisibleIfNotMentioned() {
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutuals() {
 	ctx := context.Background()
 
+	suite.db.DeleteByID(ctx, suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
+
 	testStatusID := suite.testStatuses["local_account_1_status_4"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
 	suite.NoError(err)
@@ -98,6 +101,8 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutuals() {
 
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowing() {
 	ctx := context.Background()
+
+	suite.db.DeleteByID(ctx, suite.testFollows["admin_account_local_account_1"].ID, &gtsmodel.Follow{})
 
 	testStatusID := suite.testStatuses["local_account_1_status_5"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
