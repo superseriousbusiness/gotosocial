@@ -30,27 +30,27 @@ import (
 
 type FederatorStandardTestSuite struct {
 	suite.Suite
-	db            db.DB
-	storage       *kv.KVStore
-	typeConverter typeutils.TypeConverter
-	accounts      map[string]*gtsmodel.Account
-	activities    map[string]testrig.ActivityWithSignature
+	db             db.DB
+	storage        *kv.KVStore
+	tc             typeutils.TypeConverter
+	testAccounts   map[string]*gtsmodel.Account
+	testActivities map[string]testrig.ActivityWithSignature
 }
 
 // SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *FederatorStandardTestSuite) SetupSuite() {
 	// setup standard items
 	suite.storage = testrig.NewTestStorage()
-	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
-	suite.accounts = testrig.NewTestAccounts()
+	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.testAccounts = testrig.NewTestAccounts()
 }
 
 func (suite *FederatorStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 	suite.db = testrig.NewTestDB()
-	suite.activities = testrig.NewTestActivities(suite.accounts)
-	testrig.StandardDBSetup(suite.db, suite.accounts)
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
+	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 
 // TearDownTest drops tables to make sure there's no data in the db

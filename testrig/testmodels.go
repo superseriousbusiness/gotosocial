@@ -1483,7 +1483,7 @@ type ActivityWithSignature struct {
 // A struct of accounts needs to be passed in because the activities will also be bundled along with
 // their requesting signatures.
 func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
-	dmForZork := newAPNote(
+	dmForZork := NewAPNote(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		time.Now(),
@@ -1496,14 +1496,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		[]vocab.ActivityStreamsMention{},
 		nil,
 	)
-	createDmForZork := wrapAPNoteInCreate(
+	createDmForZork := WrapAPNoteInCreate(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
 	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
-	forwardedMessage := newAPNote(
+	forwardedMessage := NewAPNote(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
 		time.Now(),
@@ -1516,7 +1516,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		[]vocab.ActivityStreamsMention{},
 		nil,
 	)
-	createForwardedMessage := wrapAPNoteInCreate(
+	createForwardedMessage := WrapAPNoteInCreate(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
 		URLMustParse("http://example.org/users/some_user"),
 		time.Now(),
@@ -1668,7 +1668,7 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
-		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": newAPNote(
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": NewAPNote(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
 			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),
 			time.Now(),
@@ -1683,7 +1683,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			nil,
 			nil,
 		),
-		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": newAPNote(
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": NewAPNote(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
 			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
 			time.Now(),
@@ -1703,7 +1703,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			},
 			nil,
 		),
-		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": newAPNote(
+		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": NewAPNote(
 			URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"),
 			URLMustParse("https://turnip.farm/@turniplover6969/70c53e54-3146-42d5-a630-83c8b6c7c042"),
 			time.Now(),
@@ -2325,8 +2325,8 @@ func newAPImage(url *url.URL, mediaType string, imageDescription string, blurhas
 	return image
 }
 
-// newAPNote returns a new activity streams note for the given parameters
-func newAPNote(
+// NewAPNote returns a new activity streams note for the given parameters
+func NewAPNote(
 	noteID *url.URL,
 	noteURL *url.URL,
 	noteCreatedAt time.Time,
@@ -2421,8 +2421,8 @@ func newAPNote(
 	return note
 }
 
-// wrapAPNoteInCreate wraps the given activity streams note in a Create activity streams action
-func wrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
+// WrapAPNoteInCreate wraps the given activity streams note in a Create activity streams action
+func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
 	// create the.... create
 	create := streams.NewActivityStreamsCreate()
 
