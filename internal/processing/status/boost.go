@@ -39,14 +39,11 @@ func (p *processor) Boost(ctx context.Context, requestingAccount *gtsmodel.Accou
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, targetStatus, requestingAccount)
+	boostable, err := p.filter.StatusBoostable(ctx, targetStatus, requestingAccount)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
 	}
-	if !visible {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
-	}
-	if !targetStatus.Boostable {
+	if !boostable {
 		return nil, gtserror.NewErrorForbidden(errors.New("status is not boostable"))
 	}
 
