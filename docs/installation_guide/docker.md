@@ -60,7 +60,23 @@ nano docker-compose.yaml
 
 Now, you should change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
 
-If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certificates (https), you should:
+You should also update the GoToSocial version number to use the latest stable release.
+
+The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top.
+
+Replace `latest` in the docker-compose.yaml with the number of the release (without the leading `v` or trailing version name). So for example if you want to run [v0.3.1 Sleepy Sloth](https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.3.1) you should replace:
+
+```text
+image: superseriousbusiness/gotosocial:latest
+```
+
+with:
+
+```text
+image: superseriousbusiness/gotosocial:0.3.1
+```
+
+If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certificates (https), you should also:
 
 1. Change the value of `GTS_LETSENCRYPT_ENABLED` to `"true"`.
 2. Remove the `#` before `- "80:80"` in the `ports` section.
