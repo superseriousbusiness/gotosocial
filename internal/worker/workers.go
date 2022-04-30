@@ -14,7 +14,7 @@ import (
 type Worker[MsgType any] struct {
 	workers runners.WorkerPool
 	process func(context.Context, MsgType) error
-	prefix  string
+	prefix  string // contains type prefix for logging
 }
 
 // New returns a new Worker[MsgType] with given number of workers and queue size
@@ -30,16 +30,16 @@ func New[MsgType any](workers int, queue int) *Worker[MsgType] {
 		queue = workers * 100
 	}
 
-	worker := Worker[MsgType]{
+	worker := &Worker[MsgType]{
 		workers: runners.NewWorkerPool(workers, queue),
 		process: nil,
+		prefix:  reflect.TypeOf(Worker[MsgType]{}).String(), //nolint
 	}
 
-	// Set worker type prefix and log creation
-	worker.prefix = reflect.TypeOf(worker).String()
+	// Log new worker creation with type prefix
 	logrus.Infof(worker.prefix+"created with workers=%d queue=%d", workers, queue)
 
-	return &worker
+	return worker
 }
 
 // Start will attempt to start the underlying worker pool, or return error.
