@@ -34,7 +34,7 @@ What follows is a per-quarter timeline of features that will be implemented on t
 
 Each quarter contains one 'big feature' which will probably take the longest amount of time that quarter.
 
-**This timeline is a best-guess about when things will be implemented. It may go faster or slower depending on the amount of hurdles we run into, and the amount of help we receive from community contribitions of code. It also does not include background tasks like admin, polishing existing features, refactoring code, and ensuring compatibility with other AP implementations.**
+**This timeline is a best-guess about when things will be implemented. The order of feature releases may change. It may go faster or slower depending on the amount of hurdles we run into, and the amount of help we receive from community contribitions of code. The timeline also does not include background tasks like admin, polishing existing features, refactoring code, and ensuring compatibility with other AP implementations.**
 
 ### Q2 2022
 
