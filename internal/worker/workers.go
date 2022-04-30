@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"errors"
+	"reflect"
 	"runtime"
 
 	"codeberg.org/gruf/go-runners"
@@ -13,6 +14,7 @@ import (
 type Worker[MsgType any] struct {
 	workers runners.WorkerPool
 	process func(context.Context, MsgType) error
+	prefix  string
 }
 
 // New returns a new Worker[MsgType] with given number of workers and queue size
@@ -20,33 +22,52 @@ type Worker[MsgType any] struct {
 // defaults are determined from the runtime's GOMAXPROCS variable.
 func New[MsgType any](workers int, queue int) *Worker[MsgType] {
 	if workers < 1 {
+		// ensure sensible workers
 		workers = runtime.GOMAXPROCS(0)
 	}
 	if queue < 1 {
+		// ensure sensible queue
 		queue = workers * 100
 	}
-	return &Worker[MsgType]{
+
+	worker := Worker[MsgType]{
 		workers: runners.NewWorkerPool(workers, queue),
 		process: nil,
 	}
+
+	// Set worker type prefix and log creation
+	worker.prefix = reflect.TypeOf(worker).String()
+	logrus.Infof(worker.prefix+"created with workers=%d queue=%d", workers, queue)
+
+	return &worker
 }
 
 // Start will attempt to start the underlying worker pool, or return error.
 func (w *Worker[MsgType]) Start() error {
+	logrus.Info(w.prefix + "starting")
+
+	// Check processor was set
 	if w.process == nil {
 		return errors.New("nil Worker.process function")
 	}
+
+	// Attempt to start pool
 	if !w.workers.Start() {
 		return errors.New("failed to start Worker pool")
 	}
+
 	return nil
 }
 
 // Stop will attempt to stop the underlying worker pool, or return error.
 func (w *Worker[MsgType]) Stop() error {
+	logrus.Info(w.prefix + "stopping")
+
+	// Attempt to stop pool
 	if !w.workers.Stop() {
 		return errors.New("failed to stop Worker pool")
 	}
+
 	return nil
 }
 
@@ -60,7 +81,7 @@ func (w *Worker[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) 
 
 // Queue will queue provided message to be processed with there's a free worker.
 func (w *Worker[MsgType]) Queue(msg MsgType) {
-	logrus.Tracef("queueing %[1]T message; %+[1]v", msg)
+	logrus.Tracef(w.prefix+"queueing message: %+v", msg)
 	w.workers.Enqueue(func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
 			logrus.Error(err)
