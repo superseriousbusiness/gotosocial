@@ -21,7 +21,7 @@ The milestone for beta in GoToSocial's case is to have a feature set that roughl
 
 Once feature parity is roughly in place, we will use beta time to start adding and polishing bonus features like slow federation, group moderation decisions, migration tooling, etc.
 
-We currently foresee entering beta phase around the middle of 2023.
+We currently foresee entering beta phase around the middle of 2023, though this is only an estimate and is subject to change.
 
 ## Timeline
 
