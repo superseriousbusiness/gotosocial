@@ -2,6 +2,8 @@
 
 This document contains the roadmap for GoToSocial to be considered eligible for its first [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), and a summary of progress made towards that goal.
 
+All the dates contained in this document are best-guess only. It's useful to have a rough timeline, but things will undoubtedly change along the way.
+
 ## Table of Contents <!-- omit in toc -->
 
 - [Beta Aims](#beta-aims)
