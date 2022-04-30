@@ -30,21 +30,21 @@ func New[MsgType any](workers int, queue int) *Worker[MsgType] {
 		queue = workers * 100
 	}
 
-	worker := &Worker[MsgType]{
+	w := &Worker[MsgType]{
 		workers: runners.NewWorkerPool(workers, queue),
 		process: nil,
 		prefix:  reflect.TypeOf(Worker[MsgType]{}).String(), //nolint
 	}
 
 	// Log new worker creation with type prefix
-	logrus.Infof(worker.prefix+"created with workers=%d queue=%d", workers, queue)
+	logrus.Infof("%s created with workers=%d queue=%d", w.prefix, workers, queue)
 
-	return worker
+	return w
 }
 
 // Start will attempt to start the underlying worker pool, or return error.
 func (w *Worker[MsgType]) Start() error {
-	logrus.Info(w.prefix + "starting")
+	logrus.Info(w.prefix, "starting")
 
 	// Check processor was set
 	if w.process == nil {
@@ -61,7 +61,7 @@ func (w *Worker[MsgType]) Start() error {
 
 // Stop will attempt to stop the underlying worker pool, or return error.
 func (w *Worker[MsgType]) Stop() error {
-	logrus.Info(w.prefix + "stopping")
+	logrus.Info(w.prefix, "stopping")
 
 	// Attempt to stop pool
 	if !w.workers.Stop() {
@@ -74,14 +74,14 @@ func (w *Worker[MsgType]) Stop() error {
 // SetProcessor will set the Worker's processor function, which is called for each queued message.
 func (w *Worker[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) {
 	if w.process != nil {
-		logrus.Panic("Worker.process is already set")
+		logrus.Panic(w.prefix, "Worker.process is already set")
 	}
 	w.process = fn
 }
 
 // Queue will queue provided message to be processed with there's a free worker.
 func (w *Worker[MsgType]) Queue(msg MsgType) {
-	logrus.Tracef(w.prefix+"queueing message: %+v", msg)
+	logrus.Tracef("%s queueing message: %+v", w.prefix, msg)
 	w.workers.Enqueue(func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
 			logrus.Error(err)
