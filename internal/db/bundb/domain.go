@@ -21,6 +21,7 @@ package bundb
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -39,6 +40,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 	q := d.conn.
 		NewSelect().
 		Model(&gtsmodel.DomainBlock{}).
+		ExcludeColumn("id", "created_at", "updated_at", "created_by_account_id", "private_comment", "public_comment", "obfuscate", "subscription_id").
 		Where("domain = ?", domain).
 		Limit(1)
 
@@ -50,7 +52,7 @@ func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (boo
 	uniqueDomains := util.UniqueStrings(domains)
 
 	for _, domain := range uniqueDomains {
-		if blocked, err := d.IsDomainBlocked(ctx, domain); err != nil {
+		if blocked, err := d.IsDomainBlocked(ctx, strings.ToLower(domain)); err != nil {
 			return false, err
 		} else if blocked {
 			return blocked, nil
