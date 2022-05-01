@@ -33,10 +33,6 @@ type RelationshipTestSuite struct {
 }
 
 func (suite *RelationshipTestSuite) TestIsBlocked() {
-	suite.Suite.T().Skip("TODO: implement")
-}
-
-func (suite *RelationshipTestSuite) TestGetBlock() {
 	ctx := context.Background()
 
 	account1 := suite.testAccounts["local_account_1"].ID
@@ -76,6 +72,10 @@ func (suite *RelationshipTestSuite) TestGetBlock() {
 	blocked, err = suite.db.IsBlocked(ctx, account2, account1, true)
 	suite.NoError(err)
 	suite.True(blocked)
+}
+
+func (suite *RelationshipTestSuite) TestGetBlock() {
+	suite.Suite.T().Skip("TODO: implement")
 }
 
 func (suite *RelationshipTestSuite) TestGetRelationship() {
