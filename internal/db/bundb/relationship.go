@@ -51,7 +51,9 @@ func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
 func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
 	q := r.conn.
 		NewSelect().
-		Model(&gtsmodel.Block{})
+		Model(&gtsmodel.Block{}).
+		ExcludeColumn("id", "created_at", "updated_at", "uri").
+		Limit(1)
 
 	if eitherDirection {
 		q = q.
