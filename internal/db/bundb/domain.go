@@ -39,7 +39,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 	q := d.conn.
 		NewSelect().
 		Model(&gtsmodel.DomainBlock{}).
-		Where("LOWER(domain) = LOWER(?)", domain).
+		Where("domain = ?", domain).
 		Limit(1)
 
 	return d.conn.Exists(ctx, q)

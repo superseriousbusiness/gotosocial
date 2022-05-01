@@ -36,14 +36,16 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	username := c.Param(usernameKey)
+	// usernames on our instance will always be lowercase
+	username := strings.ToLower(c.Param(usernameKey))
 	if username == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no account username specified"})
 		return
 	}
 
-	statusID := c.Param(statusIDKey)
-	if username == "" {
+	// status ids will always be uppercase
+	statusID := strings.ToUpper(c.Param(statusIDKey))
+	if statusID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id specified"})
 		return
 	}
