@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type RelationshipTestSuite struct {
@@ -36,7 +37,45 @@ func (suite *RelationshipTestSuite) TestIsBlocked() {
 }
 
 func (suite *RelationshipTestSuite) TestGetBlock() {
-	suite.Suite.T().Skip("TODO: implement")
+	ctx := context.Background()
+
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+
+	// no blocks exist between account 1 and account 2
+	blocked, err := suite.db.IsBlocked(ctx, account1, account2, false)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1, false)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	// have account1 block account2
+	suite.db.Put(ctx, &gtsmodel.Block{
+		ID:              "01G202BCSXXJZ70BHB5KCAHH8C",
+		URI:             "http://localhost:8080/some_block_uri_1",
+		AccountID:       account1,
+		TargetAccountID: account2,
+	})
+
+	// account 1 now blocks account 2
+	blocked, err = suite.db.IsBlocked(ctx, account1, account2, false)
+	suite.NoError(err)
+	suite.True(blocked)
+
+	// account 2 doesn't block account 1
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1, false)
+	suite.NoError(err)
+	suite.False(blocked)
+
+	// a block exists in either direction between the two
+	blocked, err = suite.db.IsBlocked(ctx, account1, account2, true)
+	suite.NoError(err)
+	suite.True(blocked)
+	blocked, err = suite.db.IsBlocked(ctx, account2, account1, true)
+	suite.NoError(err)
+	suite.True(blocked)
 }
 
 func (suite *RelationshipTestSuite) TestGetRelationship() {
