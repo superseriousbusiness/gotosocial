@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -35,13 +36,15 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		"url":  c.Request.RequestURI,
 	})
 
-	requestedUsername := c.Param(UsernameKey)
+	// usernames on our instance are always lowercase
+	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no username specified in request"})
 		return
 	}
 
-	requestedStatusID := c.Param(StatusIDKey)
+	// status IDs on our instance are always uppercase
+	requestedStatusID := strings.ToUpper(c.Param(StatusIDKey))
 	if requestedStatusID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "no status id specified in request"})
 		return
