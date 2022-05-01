@@ -51,15 +51,24 @@ func (r *relationshipDB) newFollowQ(follow interface{}) *bun.SelectQuery {
 func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account2 string, eitherDirection bool) (bool, db.Error) {
 	q := r.conn.
 		NewSelect().
-		Model(&gtsmodel.Block{}).
-		Where("account_id = ?", account1).
-		Where("target_account_id = ?", account2).
-		Limit(1)
+		Model(&gtsmodel.Block{})
 
 	if eitherDirection {
 		q = q.
-			WhereOr("target_account_id = ?", account1).
-			Where("account_id = ?", account2)
+			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+				return inner.
+					Where("account_id = ?", account1).
+					Where("target_account_id = ?", account2)
+			}).
+			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+				return inner.
+					Where("account_id = ?", account2).
+					Where("target_account_id = ?", account1)
+			})
+	} else {
+		q = q.
+			Where("account_id = ?", account1).
+			Where("target_account_id = ?", account2)
 	}
 
 	return r.conn.Exists(ctx, q)
