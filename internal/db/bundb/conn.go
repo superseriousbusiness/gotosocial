@@ -68,13 +68,12 @@ func (conn *DBConn) ProcessError(err error) db.Error {
 
 // Exists checks the results of a SelectQuery for the existence of the data in question, masking ErrNoEntries errors
 func (conn *DBConn) Exists(ctx context.Context, query *bun.SelectQuery) (bool, db.Error) {
-	// Get the select query result
-	count, err := query.Count(ctx)
+	exists, err := query.Exists(ctx)
 
 	// Process error as our own and check if it exists
 	switch err := conn.ProcessError(err); err {
 	case nil:
-		return (count != 0), nil
+		return exists, nil
 	case db.ErrNoEntries:
 		return false, nil
 	default:

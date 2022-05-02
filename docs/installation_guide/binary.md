@@ -22,16 +22,18 @@ cd /gotosocial
 
 Now, download the latest GoToSocial release archive corresponding to the operating system and architecture you're running on.
 
-For example, for version 0.1.0 running on 64-bit Linux:
+(You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.)
+
+For example, to download version 0.3.1 for running on 64-bit Linux:
 
 ```bash
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.1.0/gotosocial_0.1.0_linux_amd64.tar.gz
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.3.1/gotosocial_0.3.1_linux_amd64.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_0.1.0_linux_amd64.tar.gz
+tar -xzf gotosocial_0.3.1_linux_amd64.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
@@ -140,4 +142,4 @@ At some point you'll likely want to do things like change instance information, 
 
 ## 9. Reverse proxy (optional)
 
-If you want to run other webservers on port 433 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy
+If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy

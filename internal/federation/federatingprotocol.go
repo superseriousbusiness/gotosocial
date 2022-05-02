@@ -134,7 +134,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 
 	// authentication has passed, so add an instance entry for this instance if it hasn't been done already
 	i := &gtsmodel.Instance{}
-	if err := f.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: publicKeyOwnerURI.Host, CaseInsensitive: true}}, i); err != nil {
+	if err := f.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: publicKeyOwnerURI.Host}}, i); err != nil {
 		if err != db.ErrNoEntries {
 			// there's been an actual error
 			return ctx, false, fmt.Errorf("error getting requesting account with public key id %s: %s", publicKeyOwnerURI.String(), err)

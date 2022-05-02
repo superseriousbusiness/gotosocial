@@ -80,7 +80,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg", apimodelAccount.AvatarStatic)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.Header)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg", apimodelAccount.HeaderStatic)
-	suite.Zero(apimodelAccount.FollowersCount)
+	suite.Equal(2, apimodelAccount.FollowersCount)
 	suite.Equal(2, apimodelAccount.FollowingCount)
 	suite.Equal(5, apimodelAccount.StatusesCount)
 	suite.WithinDuration(time.Now(), lastStatusAt, 5*time.Minute)

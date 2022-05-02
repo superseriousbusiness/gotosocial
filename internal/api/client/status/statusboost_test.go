@@ -16,6 +16,7 @@
 package status_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -143,6 +145,10 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 
 // try to boost a status that's not visible to the user
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {
+
+	// stop local_account_2 following zork
+	err := suite.db.DeleteByID(context.Background(), suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
+	suite.NoError(err)
 
 	t := suite.testTokens["local_account_2"]
 	oauthToken := oauth.DBTokenToToken(t)

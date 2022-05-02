@@ -71,13 +71,13 @@ GoToSocial advocates for many small, weird, specialist servers where people can 
 
 ### History and Status
 
-This project sprang up in 2021 out of a dissatisfaction with the safety + privacy features of other Federated microblogging/social media applications, and a desire to implement something a little different.
+This project sprang up in February/March 2021 out of a dissatisfaction with the safety + privacy features of other Federated microblogging/social media applications, and a desire to implement something a little different.
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-The project is still in prerelease, but is already deployable and very useable, and it federates cleanly with most other Fediverse servers (not yet all).
+The project is still [alpha software](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha), but is already deployable and very useable, and it federates cleanly with many other Fediverse servers (not yet all).
 
-For a detailed view on what's implemented and what's not, and progress made towards a first v0.1.0 (beta) release, see [here](./PROGRESS.md).
+For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md).
 
 ## Features
 

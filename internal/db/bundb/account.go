@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -199,7 +200,7 @@ func (a *accountDB) GetLocalAccountByUsername(ctx context.Context, username stri
 	account := new(gtsmodel.Account)
 
 	q := a.newAccountQ(account).
-		Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username). // ignore casing
+		Where("username = ?", strings.ToLower(username)). // usernames on our instance will always be lowercase
 		WhereGroup(" AND ", whereEmptyOrNull("domain"))
 
 	if err := q.Scan(ctx); err != nil {
