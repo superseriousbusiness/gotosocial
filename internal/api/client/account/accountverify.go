@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 // AccountVerifyGETHandler swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
@@ -73,6 +74,10 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
+
+	// Remove all HTML from the account source note for specific handler
+	plainTxt := text.RemoveHTML(acctSensitive.Source.Note)
+	acctSensitive.Source.Note = plainTxt
 
 	c.JSON(http.StatusOK, acctSensitive)
 }

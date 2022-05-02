@@ -19,8 +19,12 @@
 package regexes
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
+	"sync"
+
+	"mvdan.cc/xurls/v2"
 )
 
 const (
@@ -47,6 +51,16 @@ const (
 )
 
 var (
+	schemes = `(((http|https))://)`
+	// LinkScheme captures http/https schemes in URLs.
+	LinkScheme = func() *regexp.Regexp {
+		rgx, err := xurls.StrictMatchingScheme(schemes)
+		if err != nil {
+			panic(err)
+		}
+		return rgx
+	}()
+
 	mentionName = `^@(\w+)(?:@([a-zA-Z0-9_\-\.:]+))?$`
 	// MentionName captures the username and domain part from a mention string
 	// such as @whatever_user@example.org, returning whatever_user and example.org (without the @ symbols)
@@ -134,3 +148,21 @@ var (
 	// from eg /users/example_username/blocks/01F7XT5JZW1WMVSW1KADS8PVDH
 	BlockPath = regexp.MustCompile(blockPath)
 )
+
+// bufpool is a memory pool of byte buffers for use in our regex utility functions.
+var bufpool = sync.Pool{
+	New: func() any {
+		buf := bytes.NewBuffer(make([]byte, 0, 512))
+		return buf
+	},
+}
+
+// ReplaceAllStringFunc will call through to .ReplaceAllStringFunc in the provided regex, but provide you a clean byte buffer for optimized string writes.
+func ReplaceAllStringFunc(rgx *regexp.Regexp, src string, repl func(match string, buf *bytes.Buffer) string) string {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer bufpool.Put(buf)
+	return rgx.ReplaceAllStringFunc(src, func(match string) string {
+		defer buf.Reset() // always reset after
+		return repl(match, buf)
+	})
+}

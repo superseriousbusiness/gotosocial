@@ -19,30 +19,22 @@
 package text
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/url"
 
-	"mvdan.cc/xurls/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
-
-// schemes is the regex for schemes we accept when looking for links.
-// Basically, we accept https or http.
-var schemes = `(((http|https))://)`
 
 // FindLinks parses the given string looking for recognizable URLs (including scheme).
 // It returns a list of those URLs, without changing the string, or an error if something goes wrong.
 // If no URLs are found within the given string, an empty slice and nil will be returned.
 func FindLinks(in string) ([]*url.URL, error) {
-	rxStrict, err := xurls.StrictMatchingScheme(schemes)
-	if err != nil {
-		return nil, err
-	}
-
 	urls := []*url.URL{}
 
 	// bail already if we don't find anything
-	found := rxStrict.FindAllString(in, -1)
+	found := regexes.LinkScheme.FindAllString(in, -1)
 	if len(found) == 0 {
 		return urls, nil
 	}
@@ -84,33 +76,39 @@ func contains(urls []*url.URL, url *url.URL) bool {
 // href will end up double-formatted, if the text you pass here contains one or more hrefs already.
 // To avoid this, you should sanitize any HTML out of text before you pass it into this function.
 func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
-	rxStrict, err := xurls.StrictMatchingScheme(schemes)
-	if err != nil {
-		panic(err)
-	}
-
-	replaced := rxStrict.ReplaceAllStringFunc(in, func(urlString string) string {
+	return regexes.ReplaceAllStringFunc(regexes.LinkScheme, in, func(urlString string, buf *bytes.Buffer) string {
+		// Check we have received parseable URL
 		thisURL, err := url.Parse(urlString)
 		if err != nil {
-			return urlString // we can't parse it as a URL so don't replace it
+			return urlString
 		}
 
-		shortString := thisURL.Hostname()
+		// Write HTML href with actual URL
+		fmt.Fprintf(buf, `<a href="%s" rel="noopener">`, urlString)
 
+		// Write hostname to buf
+		buf.WriteString(thisURL.Hostname())
+
+		// Write any path to buf
 		if thisURL.Path != "" {
-			shortString += thisURL.Path
+			buf.WriteString(thisURL.Path)
 		}
 
-		if thisURL.Fragment != "" {
-			shortString = shortString + "#" + thisURL.Fragment
-		}
-
+		// Write any query to buf
 		if thisURL.RawQuery != "" {
-			shortString = shortString + "?" + thisURL.RawQuery
+			buf.WriteByte('?')
+			buf.WriteString(thisURL.RawQuery)
 		}
 
-		replacement := fmt.Sprintf(`<a href="%s" rel="noopener">%s</a>`, urlString, shortString)
-		return replacement
+		// Write any fragment to buf
+		if thisURL.Fragment != "" {
+			buf.WriteByte('#')
+			buf.WriteString(thisURL.RawFragment)
+		}
+
+		// Write remainder of href
+		buf.WriteString(`</a>`)
+
+		return buf.String()
 	})
-	return replaced
 }

@@ -19,13 +19,17 @@
 package text
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"html"
 	"strings"
+	"unicode"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
@@ -63,38 +67,37 @@ func postformat(in string) string {
 }
 
 func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
-	return regexes.HashtagFinder.ReplaceAllStringFunc(in, func(match string) string {
+	return regexes.ReplaceAllStringFunc(regexes.HashtagFinder, in, func(match string, buf *bytes.Buffer) string {
 		// we have a match
 		matchTrimmed := strings.TrimSpace(match)
 		tagAsEntered := strings.Split(matchTrimmed, "#")[1]
 
 		// check through the tags to find what we're matching
 		for _, tag := range tags {
-
 			if strings.EqualFold(matchTrimmed, fmt.Sprintf("#%s", tag.Name)) {
-				// replace the #tag with the formatted tag content
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
-
-				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
-				if strings.HasPrefix(match, " ") {
-					tagContent = " " + tagContent
-				} else if strings.HasPrefix(match, "\n") {
-					tagContent = "\n" + tagContent
+				// Add any dropped space from match
+				if unicode.IsSpace(rune(match[0])) {
+					buf.WriteByte(match[0])
 				}
 
+				// replace the #tag with the formatted tag content
+				fmt.Fprintf(buf, `<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
+
 				// done
-				return tagContent
+				return buf.String()
 			}
 		}
+
 		// the match wasn't in the list of tags for whatever reason, so just return the match as we found it so nothing changes
 		return match
 	})
 }
 
 func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string {
-	return regexes.MentionFinder.ReplaceAllStringFunc(in, func(match string) string {
-		// we have a match
+	return regexes.ReplaceAllStringFunc(regexes.MentionFinder, in, func(match string, buf *bytes.Buffer) string {
+		// we have a match, trim any spaces
 		matchTrimmed := strings.TrimSpace(match)
+
 		// check through mentions to find what we're matching
 		for _, menchie := range mentions {
 			if strings.EqualFold(matchTrimmed, menchie.NameString) {
@@ -107,22 +110,34 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 					}
 					menchie.TargetAccount = a
 				}
+
+				// The mention's target is our target
 				targetAccount := menchie.TargetAccount
 
-				// replace the mention with the formatted mention content
-				mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-
-				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
-				if strings.HasPrefix(match, " ") {
-					mentionContent = " " + mentionContent
-				} else if strings.HasPrefix(match, "\n") {
-					mentionContent = "\n" + mentionContent
+				// Add any dropped space from match
+				if unicode.IsSpace(rune(match[0])) {
+					buf.WriteByte(match[0])
 				}
 
-				// done
-				return mentionContent
+				// Determine instance domain to use
+				domain := targetAccount.Domain
+				if domain == "" /* i.e. local */ {
+					domain = viper.GetString(config.Keys.AccountDomain)
+					if domain == "" /* no account domain */ {
+						domain = viper.GetString(config.Keys.Host)
+					}
+				}
+
+				// replace the mention with the formatted mention content
+				fmt.Fprintf(buf,
+					`<span class="h-card"><a href="%s" class="u-url mention"><span>@%s@%s</span></a></span>`,
+					targetAccount.URL, targetAccount.Username, domain,
+				)
+
+				return buf.String()
 			}
 		}
+
 		// the match wasn't in the list of mentions for whatever reason, so just return the match as we found it so nothing changes
 		return match
 	})
