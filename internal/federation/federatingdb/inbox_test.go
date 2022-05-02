@@ -36,9 +36,15 @@ func (suite *InboxTestSuite) TestInboxesForFollowersIRI() {
 
 	inboxIRIs, err := suite.federatingDB.InboxesForIRI(ctx, testrig.URLMustParse(testAccount.FollowersURI))
 	suite.NoError(err)
-	suite.Len(inboxIRIs, 2)
-	suite.Equal(inboxIRIs[0].String(), suite.testAccounts["local_account_2"].InboxURI)
-	suite.Equal(inboxIRIs[1].String(), suite.testAccounts["admin_account"].InboxURI)
+
+	asStrings := []string{}
+	for _, i := range inboxIRIs {
+		asStrings = append(asStrings, i.String())
+	}
+
+	suite.Len(asStrings, 2)
+	suite.Contains(asStrings, suite.testAccounts["local_account_2"].InboxURI)
+	suite.Contains(asStrings, suite.testAccounts["admin_account"].InboxURI)
 }
 
 func (suite *InboxTestSuite) TestInboxesForAccountIRI() {
@@ -47,8 +53,14 @@ func (suite *InboxTestSuite) TestInboxesForAccountIRI() {
 
 	inboxIRIs, err := suite.federatingDB.InboxesForIRI(ctx, testrig.URLMustParse(testAccount.URI))
 	suite.NoError(err)
-	suite.Len(inboxIRIs, 1)
-	suite.Equal(inboxIRIs[0].String(), testAccount.InboxURI)
+
+	asStrings := []string{}
+	for _, i := range inboxIRIs {
+		asStrings = append(asStrings, i.String())
+	}
+
+	suite.Len(asStrings, 1)
+	suite.Contains(asStrings, suite.testAccounts["local_account_1"].InboxURI)
 }
 
 func TestInboxTestSuite(t *testing.T) {

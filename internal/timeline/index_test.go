@@ -76,7 +76,7 @@ func (suite *IndexTestSuite) TestIndexBeforeLowID() {
 
 	postID, err := suite.timeline.OldestIndexedItemID(context.Background())
 	suite.NoError(err)
-	suite.Equal("01F8MHBBN8120SYH7D5S050MGK", postID)
+	suite.Equal("01F8MHBQCBTDKN6X5VHGMMN4MA", postID)
 
 	indexLength := suite.timeline.ItemIndexLength(context.Background())
 	suite.Equal(9, indexLength)
@@ -105,7 +105,7 @@ func (suite *IndexTestSuite) TestIndexBehindHighID() {
 	// the newest indexed post should be the highest one we have in our testrig
 	postID, err := suite.timeline.NewestIndexedItemID(context.Background())
 	suite.NoError(err)
-	suite.Equal("01FN3VJGFH10KR7S2PB0GFJZYG", postID)
+	suite.Equal("01G20ZM733MGN8J344T4ZDDFY1", postID)
 
 	// indexLength should be 9 because that's all this user has hometimelineable
 	indexLength := suite.timeline.ItemIndexLength(context.Background())

@@ -84,8 +84,8 @@ func (suite *GetTestSuite) TestGetDefault() {
 		suite.FailNow(err.Error())
 	}
 
-	// we only have 15 statuses in the test suite
-	suite.Len(statuses, 15)
+	// we only have 16 statuses in the test suite
+	suite.Len(statuses, 16)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -177,8 +177,8 @@ func (suite *GetTestSuite) TestGetMinID() {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 8 statuses back, since we asked for a min ID that excludes some of our entries
-	suite.Len(statuses, 8)
+	// we should only get 9 statuses back, since we asked for a min ID that excludes some of our entries
+	suite.Len(statuses, 9)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -199,8 +199,8 @@ func (suite *GetTestSuite) TestGetSinceID() {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 8 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 8)
+	// we should only get 9 statuses back, since we asked for a since ID that excludes some of our entries
+	suite.Len(statuses, 9)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -221,8 +221,8 @@ func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 8 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 8)
+	// we should only get 9 statuses back, since we asked for a since ID that excludes some of our entries
+	suite.Len(statuses, 9)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
