@@ -77,7 +77,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	err = suite.manager.PrepareXFromTop(context.Background(), testAccount.ID, 20)
 	suite.NoError(err)
 
-	// local_account_1 can see 14 statuses out of the testrig statuses in its home timeline
+	// local_account_1 can see 15 statuses out of the testrig statuses in its home timeline
 	indexedLen = suite.manager.GetIndexedLength(context.Background(), testAccount.ID)
 	suite.Equal(15, indexedLen)
 
