@@ -75,9 +75,7 @@ func (suite *LinkTestSuite) TestParseSimple() {
 }
 
 func (suite *LinkTestSuite) TestParseURLsFromText1() {
-	urls, err := text.FindLinks(text1)
-
-	assert.NoError(suite.T(), err)
+	urls := text.FindLinks(text1)
 
 	assert.Equal(suite.T(), "https://example.org/link/to/something#fragment", urls[0].String())
 	assert.Equal(suite.T(), "http://test.example.org?q=bahhhhhhhhhhhh", urls[1].String())
@@ -86,16 +84,14 @@ func (suite *LinkTestSuite) TestParseURLsFromText1() {
 }
 
 func (suite *LinkTestSuite) TestParseURLsFromText2() {
-	urls, err := text.FindLinks(text2)
-	assert.NoError(suite.T(), err)
+	urls := text.FindLinks(text2)
 
 	// assert length 1 because the found links will be deduplicated
 	assert.Len(suite.T(), urls, 1)
 }
 
 func (suite *LinkTestSuite) TestParseURLsFromText3() {
-	urls, err := text.FindLinks(text3)
-	assert.NoError(suite.T(), err)
+	urls := text.FindLinks(text3)
 
 	// assert length 0 because `mailto:` isn't accepted
 	assert.Len(suite.T(), urls, 0)

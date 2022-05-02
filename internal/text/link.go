@@ -30,14 +30,16 @@ import (
 // FindLinks parses the given string looking for recognizable URLs (including scheme).
 // It returns a list of those URLs, without changing the string, or an error if something goes wrong.
 // If no URLs are found within the given string, an empty slice and nil will be returned.
-func FindLinks(in string) ([]*url.URL, error) {
-	urls := []*url.URL{}
+func FindLinks(in string) []*url.URL {
+	var urls []*url.URL
 
 	// bail already if we don't find anything
 	found := regexes.LinkScheme.FindAllString(in, -1)
 	if len(found) == 0 {
-		return urls, nil
+		return nil
 	}
+
+	urlmap := map[string]struct{}{}
 
 	// for each string we find, we want to parse it into a URL if we can
 	// if we fail to parse it, just ignore this match and continue
@@ -46,29 +48,18 @@ func FindLinks(in string) ([]*url.URL, error) {
 		if err != nil {
 			continue
 		}
-		urls = append(urls, u)
-	}
 
-	// deduplicate the URLs
-	urlsDeduped := []*url.URL{}
+		// Calculate string
+		ustr := u.String()
 
-	for _, u := range urls {
-		if !contains(urlsDeduped, u) {
-			urlsDeduped = append(urlsDeduped, u)
+		if _, ok := urlmap[ustr]; !ok {
+			// Has not been encountered yet
+			urls = append(urls, u)
+			urlmap[ustr] = struct{}{}
 		}
 	}
 
-	return urlsDeduped, nil
-}
-
-// contains checks if the given url is already within a slice of URLs
-func contains(urls []*url.URL, url *url.URL) bool {
-	for _, u := range urls {
-		if u.String() == url.String() {
-			return true
-		}
-	}
-	return false
+	return urls
 }
 
 // ReplaceLinks replaces all detected links in a piece of text with their HTML (href) equivalents.
