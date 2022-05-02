@@ -51,7 +51,7 @@ const (
 )
 
 var (
-	schemes = `(((http|https))://)`
+	schemes = `(http|https)://`
 	// LinkScheme captures http/https schemes in URLs.
 	LinkScheme = func() *regexp.Regexp {
 		rgx, err := xurls.StrictMatchingScheme(schemes)
