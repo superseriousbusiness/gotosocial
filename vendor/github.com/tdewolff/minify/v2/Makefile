@@ -1,3 +1,4 @@
+SHELL=/usr/bin/env bash
 NAME=minify
 CMD=./cmd/minify
 TARGETS=linux_amd64 darwin_amd64 freebsd_amd64 netbsd_amd64 openbsd_amd64 windows_amd64
@@ -17,8 +18,9 @@ release:
 	if [ "${.SHELLSTATUS}" -eq 0 ]; then \
 		echo "Releasing ${VERSION}"; \
 	else \
-		echo "WARNING: commit is not tagged with a version"; \
+		echo "ERROR: commit is not tagged with a version"; \
 		echo ""; \
+		exit 1; \
 	fi
 	rm -rf dist
 	mkdir -p dist

@@ -36,6 +36,7 @@ all:
 	GOOS=openbsd GOARCH=amd64 go build
 	GOOS=windows GOARCH=386 go build
 	GOOS=windows GOARCH=amd64 go build
+	GOOS=windows GOARCH=arm64 go build
 	go vet -unsafeptr=false 2>&1 | grep -v $(ngrep) || true
 	golint 2>&1 | grep -v $(ngrep) || true
 	make todo
@@ -95,6 +96,10 @@ linux_s390x:
 	CCGO_CPP=s390x-linux-gnu-cpp TARGET_GOOS=linux TARGET_GOARCH=s390x go generate
 	GOOS=linux GOARCH=s390x go build -v ./...
 
+linux_ppc64le:
+	CCGO_CPP=powerpc64le-linux-gnu-cpp TARGET_GOOS=linux TARGET_GOARCH=ppc64le go generate
+	GOOS=linux GOARCH=ppc64le go build -v ./...
+
 # only on openbsd/amd64
 openbsd_amd64:
 	@echo "Should be executed only on openbsd/amd64."
@@ -103,6 +108,11 @@ openbsd_amd64:
 
 windows_amd64:
 	@echo "Should be executed only on windows/amd64."
+	go generate 2>&1 | tee log-generate
+	go build -v ./...
+
+windows_arm64:
+	@echo "Should be executed only on windows/arm64."
 	go generate 2>&1 | tee log-generate
 	go build -v ./...
 
@@ -131,6 +141,10 @@ build_all_targets:
 	GOOS=linux GOARCH=arm go test -c -o /dev/null
 	GOOS=linux GOARCH=arm64 go build -v ./...
 	GOOS=linux GOARCH=arm64 go test -c -o /dev/null
+	GOOS=linux GOARCH=ppc64le go test -c -o /dev/null
+	GOOS=linux GOARCH=ppc64le go test -c -o /dev/null
+	GOOS=linux GOARCH=riscv64 go build -v ./...
+	GOOS=linux GOARCH=riscv64 go build -v ./...
 	GOOS=linux GOARCH=s390x go build -v ./...
 	GOOS=linux GOARCH=s390x go test -c -o /dev/null
 	GOOS=netbsd GOARCH=amd64 go build -v ./...
@@ -141,6 +155,8 @@ build_all_targets:
 	GOOS=windows GOARCH=386 go test -c -o /dev/null
 	GOOS=windows GOARCH=amd64 go build -v ./...
 	GOOS=windows GOARCH=amd64 go test -c -o /dev/null
+	GOOS=windows GOARCH=arm64 go build -v ./...
+	GOOS=windows GOARCH=arm64 go test -c -o /dev/null
 	echo done
 
 devbench:

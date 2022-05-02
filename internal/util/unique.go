@@ -20,7 +20,7 @@ package util
 
 // UniqueStrings returns a deduplicated version of a given string slice.
 func UniqueStrings(s []string) []string {
-	keys := make(map[string]bool)
+	keys := make(map[string]bool, len(s))
 	list := []string{}
 	for _, entry := range s {
 		if _, value := keys[entry]; !value {

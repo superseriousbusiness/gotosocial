@@ -274,10 +274,10 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 					}
 				}
 
-				if o.KeepWhitespace || t.Traits&objectTag != 0 {
-					omitSpace = false
-				} else if t.Traits&nonPhrasingTag != 0 {
+				if t.Traits&nonPhrasingTag != 0 {
 					omitSpace = true // omit spaces after block elements
+				} else if o.KeepWhitespace || t.Traits&objectTag != 0 {
+					omitSpace = false
 				}
 
 				if !omitEndTag {
