@@ -74,7 +74,7 @@ func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel
 
 		// check through the tags to find what we're matching
 		for _, tag := range tags {
-			if strings.EqualFold(matchTrimmed, fmt.Sprintf("#%s", tag.Name)) {
+			if strings.EqualFold(matchTrimmed, "#"+tag.Name) {
 				// Add any dropped space from match
 				if unicode.IsSpace(rune(match[0])) {
 					buf.WriteByte(match[0])
@@ -130,10 +130,11 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 
 				// replace the mention with the formatted mention content
 				fmt.Fprintf(buf,
-					`<span class="h-card"><a href="%s" class="u-url mention"><span>@%s@%s</span></a></span>`,
+					`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</space>@<span>%s</space></a></span>`,
 					targetAccount.URL, targetAccount.Username, domain,
 				)
 
+				// done
 				return buf.String()
 			}
 		}

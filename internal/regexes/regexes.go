@@ -162,7 +162,7 @@ func ReplaceAllStringFunc(rgx *regexp.Regexp, src string, repl func(match string
 	buf := bufpool.Get().(*bytes.Buffer) //nolint
 	defer bufpool.Put(buf)
 	return rgx.ReplaceAllStringFunc(src, func(match string) string {
-		defer buf.Reset() // always reset after
+		buf.Reset() // reset use
 		return repl(match, buf)
 	})
 }
