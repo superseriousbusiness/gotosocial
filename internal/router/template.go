@@ -34,21 +34,20 @@ import (
 // LoadTemplates loads html templates for use by the given engine
 func loadTemplates(engine *gin.Engine) error {
 	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
+	if templateBaseDir == "" {
+		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebTemplateBaseDir)
+	}
 
-	if !filepath.IsAbs(templateBaseDir) {
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("error getting current working directory: %w", err)
-		}
-
-		templateBaseDir = filepath.Join(cwd, viper.GetString(config.Keys.WebTemplateBaseDir))
+	templateBaseDir, err := filepath.Abs(templateBaseDir)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path of %s: %s", templateBaseDir, err)
 	}
 
 	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
 		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err)
 	}
 
-	engine.LoadHTMLGlob(fmt.Sprintf("%s*", templateBaseDir))
+	engine.LoadHTMLGlob(filepath.Join(templateBaseDir, "*"))
 	return nil
 }
 
