@@ -35,7 +35,7 @@ var tagMap = map[Hash]traits{
 	Body:       nonPhrasingTag,
 	Br:         nonPhrasingTag,
 	Button:     objectTag,
-	Canvas:     objectTag,
+	Canvas:     objectTag | keepPTag,
 	Caption:    nonPhrasingTag,
 	Cite:       normalTag,
 	Code:       normalTag,
