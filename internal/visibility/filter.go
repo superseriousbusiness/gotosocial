@@ -45,6 +45,11 @@ type Filter interface {
 	//
 	// This function will call StatusVisible internally, so it's not necessary to call it beforehand.
 	StatusPublictimelineable(ctx context.Context, targetStatus *gtsmodel.Status, timelineOwnerAccount *gtsmodel.Account) (bool, error)
+
+	// StatusBoostable returns true if targetStatus can be boosted by the requesting account.
+	//
+	// this function will call StatusVisible internally so it's not necessary to call it beforehand.
+	StatusBoostable(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (bool, error)
 }
 
 type filter struct {
