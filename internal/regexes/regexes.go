@@ -159,7 +159,7 @@ var bufpool = sync.Pool{
 
 // ReplaceAllStringFunc will call through to .ReplaceAllStringFunc in the provided regex, but provide you a clean byte buffer for optimized string writes.
 func ReplaceAllStringFunc(rgx *regexp.Regexp, src string, repl func(match string, buf *bytes.Buffer) string) string {
-	buf := bufpool.Get().(*bytes.Buffer)
+	buf := bufpool.Get().(*bytes.Buffer) //nolint
 	defer bufpool.Put(buf)
 	return rgx.ReplaceAllStringFunc(src, func(match string) string {
 		defer buf.Reset() // always reset after
