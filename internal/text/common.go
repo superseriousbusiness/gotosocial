@@ -130,7 +130,7 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 
 				// replace the mention with the formatted mention content
 				fmt.Fprintf(buf,
-					`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</space>@<span>%s</space></a></span>`,
+					`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span>@<span>%s</span></a></span>`,
 					targetAccount.URL, targetAccount.Username, domain,
 				)
 
