@@ -79,6 +79,7 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 	// TODO: there is probably more HTML in this model to convert
 	plainTxt, err := html2text.FromString(acctSensitive.Source.Note, html2text.Options{
 		OmitLinks: true,
+		TextOnly:  true,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
