@@ -202,6 +202,9 @@ github.com/jinzhu/inflection
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
+# github.com/k3a/html2text v1.0.8
+## explicit; go 1.16
+github.com/k3a/html2text
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote

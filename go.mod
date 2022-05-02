@@ -22,6 +22,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.11.0
 	github.com/jackc/pgx/v4 v4.15.0
+	github.com/k3a/html2text v1.0.8
 	github.com/microcosm-cc/bluemonday v1.0.18
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646

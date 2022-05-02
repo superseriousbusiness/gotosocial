@@ -24,9 +24,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
+	"github.com/k3a/html2text"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 // AccountVerifyGETHandler swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
@@ -75,8 +75,9 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		return
 	}
 
-	// Remove all HTML from the account source note for specific handler
-	plainTxt := text.RemoveHTML(acctSensitive.Source.Note)
+	// For this specific handler we convert all HTML->plain text
+	// TODO: there is probably more HTML in this model to convert
+	plainTxt := html2text.HTML2Text(acctSensitive.Source.Note)
 	acctSensitive.Source.Note = plainTxt
 
 	c.JSON(http.StatusOK, acctSensitive)
