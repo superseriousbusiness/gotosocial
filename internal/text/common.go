@@ -21,7 +21,6 @@ package text
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"html"
 	"strings"
 	"unicode"
@@ -81,9 +80,12 @@ func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel
 				}
 
 				// replace the #tag with the formatted tag content
-				fmt.Fprintf(buf, `<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
-
-				// done
+				// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
+				buf.WriteString(`<a href="`)
+				buf.WriteString(tag.URL)
+				buf.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
+				buf.WriteString(tagAsEntered)
+				buf.WriteString(`</span></a>`)
 				return buf.String()
 			}
 		}
@@ -129,12 +131,14 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				}
 
 				// replace the mention with the formatted mention content
-				fmt.Fprintf(buf,
-					`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span>@<span>%s</span></a></span>`,
-					targetAccount.URL, targetAccount.Username, domain,
-				)
-
-				// done
+				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span>@<span>domain</span></a></span>
+				buf.WriteString(`<span class="h-card"><a href="`)
+				buf.WriteString(targetAccount.URL)
+				buf.WriteString(`" class="u-url mention">@<span>`)
+				buf.WriteString(targetAccount.Username)
+				buf.WriteString(`</span>@<span>`)
+				buf.WriteString(domain)
+				buf.WriteString(`</span></a></span>`)
 				return buf.String()
 			}
 		}

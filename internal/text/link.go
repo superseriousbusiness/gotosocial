@@ -21,7 +21,6 @@ package text
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -68,38 +67,16 @@ func FindLinks(in string) []*url.URL {
 // To avoid this, you should sanitize any HTML out of text before you pass it into this function.
 func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
 	return regexes.ReplaceAllStringFunc(regexes.LinkScheme, in, func(urlString string, buf *bytes.Buffer) string {
-		// Check we have received parseable URL
 		thisURL, err := url.Parse(urlString)
 		if err != nil {
-			return urlString
+			return urlString // we can't parse it as a URL so don't replace it
 		}
-
-		// Write HTML href with actual URL
-		fmt.Fprintf(buf, `<a href="%s" rel="noopener">`, urlString)
-
-		// Write hostname to buf
-		buf.WriteString(thisURL.Hostname())
-
-		// Write any path to buf
-		if thisURL.Path != "" {
-			buf.WriteString(thisURL.Path)
-		}
-
-		// Write any query to buf
-		if thisURL.RawQuery != "" {
-			buf.WriteByte('?')
-			buf.WriteString(thisURL.RawQuery)
-		}
-
-		// Write any fragment to buf
-		if thisURL.Fragment != "" {
-			buf.WriteByte('#')
-			buf.WriteString(thisURL.RawFragment)
-		}
-
-		// Write remainder of href
+		// <a href="thisURL.String()" rel="noopener">urlString</a>
+		buf.WriteString(`<a href="`)
+		buf.WriteString(thisURL.String())
+		buf.WriteString(`" rel="noopener">`)
+		buf.WriteString(urlString)
 		buf.WriteString(`</a>`)
-
 		return buf.String()
 	})
 }
