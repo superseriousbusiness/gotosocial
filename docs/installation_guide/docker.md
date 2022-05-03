@@ -123,7 +123,7 @@ Now that GoToSocial is running, you can execute commands inside the running cont
 First create a user (replace the username, email, and password with appropriate values):
 
 ```bash
-docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password some_very_good_password
+docker exec -it gotosocial /gotosocial/gotosocial admin account create --username some_username --email someone@example.org --password 'some_very_good_password'
 ```
 
 Now confirm the user, replacing username with the value you used in the command above.
