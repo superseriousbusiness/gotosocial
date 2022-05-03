@@ -109,7 +109,6 @@ type manager struct {
 // For a 4 core machine, this will be 2 workers, and a queue length of 20.
 // For a single or 2-core machine, the media manager will get 1 worker, and a queue of length 10.
 func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
-
 	// configure the worker pool
 	// make sure we always have at least 1 worker even on single-core machines
 	numWorkers := runtime.NumCPU() / 2
@@ -176,9 +175,13 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 			return nil
 		}
 
+		// Run an initial cache prune in case max age changed
+		logrus.Infof("media manager: running initial remote cache cleanup")
+		go pruneFunc()
+
 		// now start all the cron stuff we've lined up
 		c.Start()
-		logrus.Infof("started media manager remote cache cleanup job: will run next at %s", c.Entry(entryID).Next)
+		logrus.Infof("media manager: next scheduled remote cache cleanup is %q", c.Entry(entryID).Next)
 	}
 
 	return m, nil
