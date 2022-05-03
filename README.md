@@ -169,7 +169,7 @@ Thank you so much to the cool people who have put time and energy into packaging
 
 - [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
 - GoToSocial Helm Charts:
-  - [GoToSocial Helm Chart](https://github.com/Maxxblow/charts/tree/main/helm-charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
+  - [GoToSocial Helm Chart](https://github.com/Maxxblow/charts/tree/main/charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
 
 These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
 
