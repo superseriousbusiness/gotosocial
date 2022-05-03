@@ -175,10 +175,6 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 			return nil
 		}
 
-		// Run an initial cache prune in case max age changed
-		logrus.Infof("media manager: running initial remote cache cleanup")
-		go pruneFunc()
-
 		// now start all the cron stuff we've lined up
 		c.Start()
 		logrus.Infof("media manager: next scheduled remote cache cleanup is %q", c.Entry(entryID).Next)
