@@ -94,29 +94,23 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		return nil, err
 	}
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
+	req.Header.Add("User-Agent", t.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := t.client.Do(req)
+
+	resp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return nil, errors.New("response bytes was len 0")
 	}
 
@@ -250,31 +244,24 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
+	req.Header.Add("User-Agent", t.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := t.client.Do(req)
+
+	resp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return nil, errors.New("callNodeInfoWellKnown: response bytes was len 0")
 	}
 
@@ -309,31 +296,24 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
+	req.Header.Add("User-Agent", t.userAgent)
 	req.Header.Set("Host", iri.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := t.client.Do(req)
+
+	resp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return nil, errors.New("callNodeInfo: response bytes was len 0")
 	}
 

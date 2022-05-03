@@ -21,11 +21,17 @@ package transport
 import (
 	"context"
 	"crypto"
+	"crypto/x509"
+	"errors"
 	"io"
+	"net/http"
 	"net/url"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-fed/httpsig"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -43,28 +49,112 @@ type Transport interface {
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
 	Finger(ctx context.Context, targetUsername string, targetDomains string) ([]byte, error)
-	// SigTransport returns the underlying http signature transport wrapped by the GoToSocial transport.
-	SigTransport() pub.Transport
 }
 
 // transport implements the Transport interface
 type transport struct {
 	client       pub.HttpClient
-	appAgent     string
-	gofedAgent   string
+	userAgent    string
 	clock        pub.Clock
 	pubKeyID     string
 	privkey      crypto.PrivateKey
-	sigTransport *pub.HttpSigTransport
 	getSigner    httpsig.Signer
-	getSignerMu  *sync.Mutex
+	getSignerMu  sync.Mutex
+	postSigner   httpsig.Signer
+	postSignerMu sync.Mutex
 
 	// shortcuts for dereferencing things that exist on our instance without making an http call to ourself
-
 	dereferenceFollowersShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
 	dereferenceUserShortcut      func(ctx context.Context, iri *url.URL) ([]byte, error)
 }
 
-func (t *transport) SigTransport() pub.Transport {
-	return t.sigTransport
+func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error) {
+	if r.Method != "GET" {
+		return nil, errors.New("must be GET request")
+	}
+	return t.do(r, func(r *http.Request) error {
+		t.getSignerMu.Lock()
+		err := t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
+		t.getSignerMu.Unlock()
+		return err
+	}, retryOn...)
+}
+
+func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Response, error) {
+	if r.Method != "POST" {
+		return nil, errors.New("must be POST request")
+	}
+	return t.do(r, func(r *http.Request) error {
+		t.postSignerMu.Lock()
+		err := t.postSigner.SignRequest(t.privkey, t.pubKeyID, r, body)
+		t.postSignerMu.Unlock()
+		return err
+	}, retryOn...)
+}
+
+// do will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
+func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryOn ...int) (*http.Response, error) {
+	const maxRetries = 5
+	backoff := time.Second * 2
+
+	// Start a log entry for this request
+	l := logrus.WithFields(logrus.Fields{
+		"pubKeyID": t.pubKeyID,
+		"method":   r.Method,
+		"url":      r.URL.String(),
+	})
+
+	for i := 0; i < maxRetries; i++ {
+		// Set updated request time
+		now := t.clock.Now().UTC()
+		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+
+		// Perform request signing
+		if err := signer(r); err != nil {
+			return nil, err
+		}
+
+		l.Infof("performing request")
+
+		// Attempt to perform request
+		rsp, err := t.client.Do(r)
+		if err == nil {
+			// TooManyRequest means we need to slow
+			// down and retry our request. Codes over
+			// 500 generally indicate temp. outages.
+			if code := rsp.StatusCode; code < 500 &&
+				code != http.StatusTooManyRequests &&
+				!containsInt(retryOn, rsp.StatusCode) {
+				return rsp, nil
+			}
+
+			// Generate error from status code for logging
+			err = errors.New(`http response "` + rsp.Status + `"`)
+		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {
+			// Don't bother if net/http returned after too many redirects
+			return nil, err
+		} else if errors.As(err, &x509.UnknownAuthorityError{}) {
+			// Unknown authority errors we do NOT recover from
+			return nil, err
+		}
+
+		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
+
+		// Backoff for some time
+		time.Sleep(backoff)
+		backoff *= 2
+		continue
+	}
+
+	return nil, errors.New("transport reached max retries")
+}
+
+// containsInt checks if slice contains check.
+func containsInt(slice []int, check int) bool {
+	for _, i := range slice {
+		if i == check {
+			return true
+		}
+	}
+	return false
 }

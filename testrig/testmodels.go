@@ -21,7 +21,6 @@ package testrig
 import (
 	"bytes"
 	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -1854,7 +1853,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 
 // GetSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given activity, public key ID, private key, and destination.
-func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1892,7 +1891,7 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 	}
 
 	// trigger the delivery function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if err := tp.SigTransport().Deliver(context.Background(), bytes, destination); err != nil {
+	if err := tp.Deliver(context.Background(), bytes, destination); err != nil {
 		panic(err)
 	}
 
@@ -1902,7 +1901,7 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey cry
 
 // GetSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
 // the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// create a client that basically just pulls the signature out of the request and sets it
 	client := &mockHTTPClient{
 		do: func(req *http.Request) (*http.Response, error) {
@@ -1929,7 +1928,7 @@ func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, dest
 	}
 
 	// trigger the dereference function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if _, err := tp.SigTransport().Dereference(context.Background(), destination); err != nil {
+	if _, err := tp.Dereference(context.Background(), destination); err != nil {
 		panic(err)
 	}
 

@@ -20,17 +20,17 @@ package transport
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
-	l := logrus.WithField("func", "Dereference")
-
 	// if the request is to us, we can shortcut for certain URIs rather than going through
 	// the normal request flow, thereby saving time and energy
 	if iri.Host == viper.GetString(config.Keys.Host) {
@@ -45,7 +45,29 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 		}
 	}
 
-	// the request is either for a remote host or for us but we don't have a shortcut, so continue as normal
-	l.Debugf("performing GET to %s", iri.String())
-	return t.sigTransport.Dereference(ctx, iri)
+	urlStr := iri.String()
+
+	// Prepare new HTTP request to endpoint
+	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	req.Header.Add("Accept-Charset", "utf-8")
+	req.Header.Add("User-Agent", t.userAgent)
+	req.Header.Set("Host", iri.Host)
+
+	// Perform the HTTP request
+	rsp, err := t.GET(req)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	// Check for an expected status code
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
+	}
+
+	return ioutil.ReadAll(rsp.Body)
 }

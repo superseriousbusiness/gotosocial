@@ -3,6 +3,7 @@ module github.com/superseriousbusiness/gotosocial
 go 1.18
 
 require (
+	codeberg.org/gruf/go-cache/v2 v2.0.1
 	codeberg.org/gruf/go-debug v1.1.2
 	codeberg.org/gruf/go-errors v1.0.5
 	codeberg.org/gruf/go-mutexes v1.1.2
