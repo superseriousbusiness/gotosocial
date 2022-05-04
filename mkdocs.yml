@@ -43,6 +43,7 @@ nav:
     - "user_guide/password_management.md"
   - "Federation":
     - "federation/index.md"
+    - "federation/glossary.md"
     - "federation/security.md"
     - "federation/behaviors/outbox.md"
     - "federation/behaviors/conversation_threads.md"
