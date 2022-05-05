@@ -41,7 +41,10 @@ import (
 
 // Controller generates transports for use in making federation requests to other servers.
 type Controller interface {
+	// NewTransport returns an http signature transport with the given public key ID (URL location of pubkey), and the given private key.
 	NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Transport, error)
+
+	// NewTransportForUsername searches for account with username, and returns result of .NewTransport().
 	NewTransportForUsername(ctx context.Context, username string) (Transport, error)
 }
 
@@ -76,9 +79,13 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	return c
 }
 
-// NewTransport returns a new http signature transport with the given public key id (a URL), and the given private key.
 func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Transport, error) {
 	// Generate public key string for cache key
+	//
+	// NOTE: it is safe to use the public key as the cache
+	// key here as we are generating it ourselves from the
+	// private key. If we were simply using a public key
+	// provided as argument that would absolutely NOT be safe.
 	pubStr := privkeyToPublicStr(privkey)
 
 	// First check for cached transport

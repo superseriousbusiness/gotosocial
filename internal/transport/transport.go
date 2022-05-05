@@ -68,31 +68,32 @@ type transport struct {
 	dereferenceUserShortcut      func(ctx context.Context, iri *url.URL) ([]byte, error)
 }
 
+// GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
 func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error) {
 	if r.Method != "GET" {
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		t.getSignerMu.Lock()
+		defer t.getSignerMu.Unlock()
 		err := t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
-		t.getSignerMu.Unlock()
 		return err
 	}, retryOn...)
 }
 
+// POST will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
 func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Response, error) {
 	if r.Method != "POST" {
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
 		t.postSignerMu.Lock()
+		defer t.postSignerMu.Unlock()
 		err := t.postSigner.SignRequest(t.privkey, t.pubKeyID, r, body)
-		t.postSignerMu.Unlock()
 		return err
 	}, retryOn...)
 }
 
-// do will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
 func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryOn ...int) (*http.Response, error) {
 	const maxRetries = 5
 	backoff := time.Second * 2
