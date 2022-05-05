@@ -72,7 +72,7 @@ var (
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
 	// hashtag regex can be played with here: https://regex101.com/r/bPxeca/1
-	hashtagFinder = fmt.Sprintf(`(?:^|\n|\s)(#[a-zA-Z0-9]{1,%d})(?:\b)`, maximumHashtagLength)
+	hashtagFinder = fmt.Sprintf(`(?:^|\s)(?:#*)(#[a-zA-Z0-9]{1,%d})(?:#|\b)`, maximumHashtagLength)
 	// HashtagFinder finds possible hashtags in a string.
 	// It returns just the string part of the hashtag, not the # symbol.
 	HashtagFinder = regexp.MustCompile(hashtagFinder)
@@ -82,7 +82,7 @@ var (
 	EmojiShortcode = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcode))
 
 	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
-	emojiFinderString = fmt.Sprintf(`(?:\B)?:(%s):(?:\B)?`, emojiShortcode)
+	emojiFinderString = fmt.Sprintf(`(?:^|\s)?:(%s):(?:\b)`, emojiShortcode)
 	// EmojiFinder extracts emoji strings from a piece of text.
 	EmojiFinder = regexp.MustCompile(emojiFinderString)
 
