@@ -27,6 +27,7 @@ import (
 
 // breakReplacer replaces new-lines with HTML breaks.
 var breakReplacer = strings.NewReplacer(
+	"\r\n", "<br/>",
 	"\n", "<br/>",
 )
 
