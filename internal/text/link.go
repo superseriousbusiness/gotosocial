@@ -75,7 +75,7 @@ func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
 		// <a href="thisURL.String()" rel="noopener">urlString</a>
 		urlString = thisURL.String()
 		buf.WriteString(`<a href="`)
-		buf.WriteString(urlString)
+		buf.WriteString(thisURL.String())
 		buf.WriteString(`" rel="noopener">`)
 		urlString = strings.TrimPrefix(urlString, thisURL.Scheme)
 		urlString = strings.TrimPrefix(urlString, "://")
