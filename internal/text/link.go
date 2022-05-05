@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
@@ -72,9 +73,12 @@ func (f *formatter) ReplaceLinks(ctx context.Context, in string) string {
 			return urlString // we can't parse it as a URL so don't replace it
 		}
 		// <a href="thisURL.String()" rel="noopener">urlString</a>
+		urlString = thisURL.String()
 		buf.WriteString(`<a href="`)
-		buf.WriteString(thisURL.String())
+		buf.WriteString(urlString)
 		buf.WriteString(`" rel="noopener">`)
+		urlString = strings.TrimPrefix(urlString, thisURL.Scheme)
+		urlString = strings.TrimPrefix(urlString, "://")
 		buf.WriteString(urlString)
 		buf.WriteString(`</a>`)
 		return buf.String()

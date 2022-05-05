@@ -40,7 +40,7 @@ const (
 #Hashtag
 
 Text`
-	moreComplexFull = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
+	moreComplexFull = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan@fossbros-anonymous.io</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text</p>"
 )
 
 type PlainTestSuite struct {
@@ -53,7 +53,6 @@ func (suite *PlainTestSuite) TestParseSimple() {
 }
 
 func (suite *PlainTestSuite) TestParseWithTag() {
-
 	foundTags := []*gtsmodel.Tag{
 		suite.testTags["welcome"],
 	}
@@ -63,7 +62,6 @@ func (suite *PlainTestSuite) TestParseWithTag() {
 }
 
 func (suite *PlainTestSuite) TestParseMoreComplex() {
-
 	foundTags := []*gtsmodel.Tag{
 		suite.testTags["Hashtag"],
 	}

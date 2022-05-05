@@ -69,11 +69,11 @@ func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel
 	return regexes.ReplaceAllStringFunc(regexes.HashtagFinder, in, func(match string, buf *bytes.Buffer) string {
 		// we have a match
 		matchTrimmed := strings.TrimSpace(match)
-		tagAsEntered := strings.Split(matchTrimmed, "#")[1]
+		tagAsEntered := matchTrimmed[1:]
 
 		// check through the tags to find what we're matching
 		for _, tag := range tags {
-			if strings.EqualFold(matchTrimmed, "#"+tag.Name) {
+			if strings.EqualFold(tagAsEntered, tag.Name) {
 				// Add any dropped space from match
 				if unicode.IsSpace(rune(match[0])) {
 					buf.WriteByte(match[0])
@@ -130,14 +130,15 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 					}
 				}
 
+				// Drop initial '@' from match
+				matchTrimmed = matchTrimmed[1:]
+
 				// replace the mention with the formatted mention content
 				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span>@<span>domain</span></a></span>
 				buf.WriteString(`<span class="h-card"><a href="`)
 				buf.WriteString(targetAccount.URL)
 				buf.WriteString(`" class="u-url mention">@<span>`)
-				buf.WriteString(targetAccount.Username)
-				buf.WriteString(`</span>@<span>`)
-				buf.WriteString(domain)
+				buf.WriteString(matchTrimmed)
 				buf.WriteString(`</span></a></span>`)
 				return buf.String()
 			}

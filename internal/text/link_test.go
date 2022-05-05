@@ -108,7 +108,7 @@ Here's link number two: <a href="http://test.example.org?q=bahhhhhhhhhhhh" rel="
 
 really.cool.website <-- this one shouldn't be parsed as a link because it doesn't contain the scheme
 
-<a href="https://example.orghttps://google.com" rel="noopener">example.orghttps//google.com</a> <-- this shouldn't work either, but it does?! OK
+<a href="https://example.orghttps://google.com" rel="noopener">example.orghttps://google.com</a> <-- this shouldn't work either, but it does?! OK
 `, replaced)
 }
 
