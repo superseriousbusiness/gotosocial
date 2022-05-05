@@ -93,7 +93,7 @@ func (w *Worker[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) 
 
 // Queue will queue provided message to be processed with there's a free worker.
 func (w *Worker[MsgType]) Queue(msg MsgType) {
-	logrus.Tracef("%q queueing message (workers=%d queue=%q): %+v",
+	logrus.Tracef("%s queueing message (workers=%d queue=%d): %+v",
 		w.prefix, w.workers.Workers(), w.workers.Queue(), msg,
 	)
 	w.workers.Enqueue(func(ctx context.Context) {
