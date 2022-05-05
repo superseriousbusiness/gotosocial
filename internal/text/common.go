@@ -26,9 +26,7 @@ import (
 	"unicode"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
@@ -119,15 +117,6 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				// Add any dropped space from match
 				if unicode.IsSpace(rune(match[0])) {
 					buf.WriteByte(match[0])
-				}
-
-				// Determine instance domain to use
-				domain := targetAccount.Domain
-				if domain == "" /* i.e. local */ {
-					domain = viper.GetString(config.Keys.AccountDomain)
-					if domain == "" /* no account domain */ {
-						domain = viper.GetString(config.Keys.Host)
-					}
 				}
 
 				// Drop initial '@' from match
