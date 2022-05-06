@@ -87,16 +87,9 @@ type manager struct {
 // NewManager returns a media manager with the given db and underlying storage.
 //
 // A worker pool will also be initialized for the manager, to ensure that only
-// a limited number of media will be processed in parallel.
-//
-// The number of workers will be the number of CPUs available to the Go runtime,
-// divided by 2 (rounding down, but always at least 1).
-//
-// The length of the queue will be the number of workers multiplied by 10.
-//
-// So for an 8 core machine, the media manager will get 4 workers, and a queue of length 40.
-// For a 4 core machine, this will be 2 workers, and a queue length of 20.
-// For a single or 2-core machine, the media manager will get 1 worker, and a queue of length 10.
+// a limited number of media will be processed in parallel. The numbers of workers
+// is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
+// See internal/worker.New() documentation for further information.
 func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	m := &manager{
 		db:      database,
