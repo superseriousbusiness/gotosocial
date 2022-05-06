@@ -119,9 +119,6 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 					buf.WriteByte(match[0])
 				}
 
-				// Drop initial '@' from match
-				matchTrimmed = matchTrimmed[1:]
-
 				// replace the mention with the formatted mention content
 				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span>@<span>domain</span></a></span>
 				buf.WriteString(`<span class="h-card"><a href="`)
