@@ -115,7 +115,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 			return nil, err
 		}
 
-		l.Infof("performing request")
+		l.Infof("performing request #%d", i)
 
 		// Attempt to perform request
 		rsp, err := t.client.Do(r)
