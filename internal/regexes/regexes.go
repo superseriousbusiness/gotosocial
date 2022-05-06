@@ -82,7 +82,7 @@ var (
 	EmojiShortcode = regexp.MustCompile(fmt.Sprintf("^%s$", emojiShortcode))
 
 	// emoji regex can be played with here: https://regex101.com/r/478XGM/1
-	emojiFinderString = fmt.Sprintf(`(?:^|\s)?:(%s):(?:\b)`, emojiShortcode)
+	emojiFinderString = fmt.Sprintf(`(?:\b)?:(%s):(?:\b)?`, emojiShortcode)
 	// EmojiFinder extracts emoji strings from a piece of text.
 	EmojiFinder = regexp.MustCompile(emojiFinderString)
 

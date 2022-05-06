@@ -39,13 +39,11 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-	thisStatusURI := fmt.Sprintf("%s/%s", accountURIs.StatusesURI, thisStatusID)
-	thisStatusURL := fmt.Sprintf("%s/%s", accountURIs.StatusesURL, thisStatusID)
 
 	newStatus := &gtsmodel.Status{
 		ID:                       thisStatusID,
-		URI:                      thisStatusURI,
-		URL:                      thisStatusURL,
+		URI:                      accountURIs.StatusesURI + "/" + thisStatusID,
+		URL:                      accountURIs.StatusesURL + "/" + thisStatusID,
 		CreatedAt:                time.Now(),
 		UpdatedAt:                time.Now(),
 		Local:                    true,
