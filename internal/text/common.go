@@ -82,7 +82,7 @@ func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel
 				buf.WriteString(`<a href="`)
 				buf.WriteString(tag.URL)
 				buf.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
-				buf.WriteString(tagAsEntered)
+				buf.WriteString(tag.Name)
 				buf.WriteString(`</span></a>`)
 				return buf.String()
 			}
@@ -127,7 +127,7 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				buf.WriteString(`<span class="h-card"><a href="`)
 				buf.WriteString(targetAccount.URL)
 				buf.WriteString(`" class="u-url mention">@<span>`)
-				buf.WriteString(matchTrimmed)
+				buf.WriteString(targetAccount.Username)
 				buf.WriteString(`</span></a></span>`)
 				return buf.String()
 			}

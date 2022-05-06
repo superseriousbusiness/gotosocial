@@ -24,7 +24,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jaytaylor/html2text"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -74,20 +73,6 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		return
 	}
-
-	// For this specific handler we convert all HTML->plain text
-	// TODO: there is probably more HTML in this model to convert
-	plainTxt, err := html2text.FromString(acctSensitive.Source.Note, html2text.Options{
-		OmitLinks: true,
-		TextOnly:  true,
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
-		return
-	}
-
-	// Update the account fields
-	acctSensitive.Source.Note = plainTxt
 
 	c.JSON(http.StatusOK, acctSensitive)
 }

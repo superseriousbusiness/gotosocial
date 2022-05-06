@@ -58,7 +58,7 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		Privacy:             c.VisToAPIVis(ctx, a.Privacy),
 		Sensitive:           a.Sensitive,
 		Language:            a.Language,
-		Note:                a.Note,
+		Note:                a.NoteRaw,
 		Fields:              apiAccount.Fields,
 		FollowRequestsCount: frc,
 	}
@@ -703,7 +703,6 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 }
 
 func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*model.DomainBlock, error) {
-
 	domainBlock := &model.DomainBlock{
 		Domain:        b.Domain,
 		PublicComment: b.PublicComment,
