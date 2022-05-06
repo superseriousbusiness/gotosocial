@@ -27,10 +27,11 @@ import (
 )
 
 func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int, error) {
-	urlStr := iri.String()
+	// Build IRI just once
+	iriStr := iri.String()
 
 	// Prepare HTTP request to this media's IRI
-	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -46,7 +47,7 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.Read
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
+		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
 
 	return rsp.Body, int(rsp.ContentLength), nil

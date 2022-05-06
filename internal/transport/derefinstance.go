@@ -80,19 +80,20 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 }
 
 func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := logrus.WithField("func", "dereferenceByAPIV1Instance")
-
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
 		Path:   "api/v1/instance",
 	}
 
-	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
+	// Build IRI just once
+	iriStr := cleanIRI.String()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("User-Agent", t.userAgent)
 	req.Header.Set("Host", cleanIRI.Host)
@@ -104,7 +105,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
@@ -231,16 +232,16 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 }
 
 func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*url.URL, error) {
-	l := logrus.WithField("func", "callNodeInfoWellKnown")
-
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
 		Path:   ".well-known/nodeinfo",
 	}
 
-	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
+	// Build IRI just once
+	iriStr := cleanIRI.String()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +256,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
@@ -289,10 +290,10 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 }
 
 func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
-	l := logrus.WithField("func", "callNodeInfo")
+	// Build IRI just once
+	iriStr := iri.String()
 
-	l.Debugf("performing GET to %s", iri.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +308,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)

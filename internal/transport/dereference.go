@@ -45,10 +45,11 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 		}
 	}
 
-	urlStr := iri.String()
+	// Build IRI just once
+	iriStr := iri.String()
 
 	// Prepare new HTTP request to endpoint
-	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
+		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
 
 	return ioutil.ReadAll(rsp.Body)
