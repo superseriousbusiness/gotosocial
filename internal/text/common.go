@@ -120,7 +120,7 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 				}
 
 				// replace the mention with the formatted mention content
-				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span>@<span>domain</span></a></span>
+				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span></a></span>
 				buf.WriteString(`<span class="h-card"><a href="`)
 				buf.WriteString(targetAccount.URL)
 				buf.WriteString(`" class="u-url mention">@<span>`)
