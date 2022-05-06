@@ -40,9 +40,9 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -1869,7 +1869,7 @@ func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rs
 	}
 
 	// Create temporary federator worker for transport controller
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	_ = fedWorker.Start()
 	defer func() { _ = fedWorker.Stop() }()
 
@@ -1916,7 +1916,7 @@ func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destin
 	}
 
 	// Create temporary federator worker for transport controller
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	_ = fedWorker.Start()
 	defer func() { _ = fedWorker.Stop() }()
 

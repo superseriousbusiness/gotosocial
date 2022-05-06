@@ -36,12 +36,12 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	if iri.Host == viper.GetString(config.Keys.Host) {
 		if uris.IsFollowersPath(iri) {
 			// the request is for followers of one of our accounts, which we can shortcut
-			return t.dereferenceFollowersShortcut(ctx, iri)
+			return t.controller.dereferenceLocalFollowers(ctx, iri)
 		}
 
 		if uris.IsUserPath(iri) {
 			// the request is for one of our accounts, which we can shortcut
-			return t.dereferenceUserShortcut(ctx, iri)
+			return t.controller.dereferenceLocalUser(ctx, iri)
 		}
 	}
 

@@ -1,4 +1,4 @@
-package worker
+package concurrency
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Worker represents a proccessor for MsgType objects, using a worker pool to allocate resources.
-type Worker[MsgType any] struct {
+// WorkerPool represents a proccessor for MsgType objects, using a worker pool to allocate resources.
+type WorkerPool[MsgType any] struct {
 	workers runners.WorkerPool
 	process func(context.Context, MsgType) error
 	prefix  string // contains type prefix for logging
@@ -20,7 +20,7 @@ type Worker[MsgType any] struct {
 // New returns a new Worker[MsgType] with given number of workers and queue size
 // (see runners.WorkerPool for more information on args). If args < 1 then suitable
 // defaults are determined from the runtime's GOMAXPROCS variable.
-func New[MsgType any](workers int, queue int) *Worker[MsgType] {
+func NewWorkerPool[MsgType any](workers int, queue int) *WorkerPool[MsgType] {
 	if workers < 1 {
 		// ensure sensible workers
 		workers = runtime.GOMAXPROCS(0)
@@ -30,10 +30,10 @@ func New[MsgType any](workers int, queue int) *Worker[MsgType] {
 		queue = workers * 100
 	}
 
-	w := &Worker[MsgType]{
+	w := &WorkerPool[MsgType]{
 		workers: runners.NewWorkerPool(workers, queue),
 		process: nil,
-		prefix:  reflect.TypeOf(Worker[MsgType]{}).String(), //nolint
+		prefix:  reflect.TypeOf(WorkerPool[MsgType]{}).String(), //nolint
 	}
 
 	// Log new worker creation with type prefix
@@ -43,7 +43,7 @@ func New[MsgType any](workers int, queue int) *Worker[MsgType] {
 }
 
 // Start will attempt to start the underlying worker pool, or return error.
-func (w *Worker[MsgType]) Start() error {
+func (w *WorkerPool[MsgType]) Start() error {
 	logrus.Info(w.prefix, "starting")
 
 	// Check processor was set
@@ -60,7 +60,7 @@ func (w *Worker[MsgType]) Start() error {
 }
 
 // Stop will attempt to stop the underlying worker pool, or return error.
-func (w *Worker[MsgType]) Stop() error {
+func (w *WorkerPool[MsgType]) Stop() error {
 	logrus.Info(w.prefix, "stopping")
 
 	// Attempt to stop pool
@@ -72,7 +72,7 @@ func (w *Worker[MsgType]) Stop() error {
 }
 
 // SetProcessor will set the Worker's processor function, which is called for each queued message.
-func (w *Worker[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) {
+func (w *WorkerPool[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) {
 	if w.process != nil {
 		logrus.Panic(w.prefix, "Worker.process is already set")
 	}
@@ -80,7 +80,7 @@ func (w *Worker[MsgType]) SetProcessor(fn func(context.Context, MsgType) error) 
 }
 
 // Queue will queue provided message to be processed with there's a free worker.
-func (w *Worker[MsgType]) Queue(msg MsgType) {
+func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
 	logrus.Tracef("%s queueing message: %+v", w.prefix, msg)
 	w.workers.Enqueue(func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {

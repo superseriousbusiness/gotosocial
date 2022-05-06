@@ -53,19 +53,14 @@ type Transport interface {
 
 // transport implements the Transport interface
 type transport struct {
-	client       pub.HttpClient
+	controller   *controller
 	userAgent    string
-	clock        pub.Clock
 	pubKeyID     string
 	privkey      crypto.PrivateKey
 	getSigner    httpsig.Signer
 	getSignerMu  sync.Mutex
 	postSigner   httpsig.Signer
 	postSignerMu sync.Mutex
-
-	// shortcuts for dereferencing things that exist on our instance without making an http call to ourself
-	dereferenceFollowersShortcut func(ctx context.Context, iri *url.URL) ([]byte, error)
-	dereferenceUserShortcut      func(ctx context.Context, iri *url.URL) ([]byte, error)
 }
 
 // GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
@@ -107,7 +102,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 	for i := 0; i < maxRetries; i++ {
 		// Set updated request time
-		now := t.clock.Now().UTC()
+		now := t.controller.clock.Now().UTC()
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 
 		// Perform request signing
@@ -118,7 +113,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 		l.Infof("performing request #%d", i)
 
 		// Attempt to perform request
-		rsp, err := t.client.Do(r)
+		rsp, err := t.controller.client.Do(r)
 		if err == nil {
 			// TooManyRequest means we need to slow
 			// down and retry our request. Codes over

@@ -22,6 +22,7 @@ import (
 	"context"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -29,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Processor wraps a bunch of functions for processing statuses.
@@ -74,12 +74,12 @@ type processor struct {
 	db           db.DB
 	filter       visibility.Filter
 	formatter    text.Formatter
-	clientWorker *worker.Worker[messages.FromClientAPI]
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, clientWorker *worker.Worker[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
 		tc:           tc,
 		db:           db,

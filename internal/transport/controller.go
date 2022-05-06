@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"runtime"
 	"time"
 	"unsafe"
 
@@ -34,6 +35,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
@@ -49,12 +51,13 @@ type Controller interface {
 }
 
 type controller struct {
-	db       db.DB
-	fedDB    federatingdb.DB
-	clock    pub.Clock
-	client   pub.HttpClient
-	cache    cache.Cache[string, *transport]
-	appAgent string
+	db        db.DB
+	fedDB     federatingdb.DB
+	clock     pub.Clock
+	client    pub.HttpClient
+	cache     cache.Cache[string, *transport]
+	httpQueue concurrency.WorkQueue
+	appAgent  string
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
@@ -65,7 +68,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		db:       db,
 		fedDB:    federatingDB,
 		clock:    clock,
-		client:   client,
+		client:   wrapClient(client, runtime.GOMAXPROCS(0)*10),
 		cache:    cache.New[string, *transport](),
 		appAgent: applicationName + " " + host,
 	}
@@ -114,15 +117,12 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 
 	// Create the transport
 	transp = &transport{
-		client:                       c.client,
-		userAgent:                    c.appAgent + " (go-fed/activity v1.1.0-gts)",
-		clock:                        c.clock,
-		pubKeyID:                     pubKeyID,
-		privkey:                      privkey,
-		getSigner:                    getSigner,
-		postSigner:                   postSigner,
-		dereferenceFollowersShortcut: c.dereferenceLocalFollowers,
-		dereferenceUserShortcut:      c.dereferenceLocalUser,
+		controller: c,
+		userAgent:  c.appAgent + " (go-fed/activity v1.1.0-gts)",
+		pubKeyID:   pubKeyID,
+		privkey:    privkey,
+		getSigner:  getSigner,
+		postSigner: postSigner,
 	}
 
 	// Cache this transport under pubkey
