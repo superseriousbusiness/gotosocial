@@ -53,7 +53,6 @@ func (suite *PlainTestSuite) TestParseSimple() {
 }
 
 func (suite *PlainTestSuite) TestParseWithTag() {
-
 	foundTags := []*gtsmodel.Tag{
 		suite.testTags["welcome"],
 	}
@@ -63,7 +62,6 @@ func (suite *PlainTestSuite) TestParseWithTag() {
 }
 
 func (suite *PlainTestSuite) TestParseMoreComplex() {
-
 	foundTags := []*gtsmodel.Tag{
 		suite.testTags["Hashtag"],
 	}

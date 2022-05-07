@@ -60,10 +60,17 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.Note(*form.Note); err != nil {
 			return nil, err
 		}
+
+		// Set the raw note before processing
+		account.NoteRaw = *form.Note
+
+		// Process note to generate a valid HTML representation
 		note, err := p.processNote(ctx, *form.Note, account.ID)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set updated HTML-ified note
 		account.Note = note
 	}
 

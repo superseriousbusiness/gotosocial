@@ -86,6 +86,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.WithinDuration(time.Now(), lastStatusAt, 5*time.Minute)
 	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
 	suite.Equal(testAccount.Language, apimodelAccount.Source.Language)
+	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)
 }
 
 func TestAccountVerifyTestSuite(t *testing.T) {
