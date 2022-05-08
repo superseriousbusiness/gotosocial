@@ -77,6 +77,7 @@ type bunDBService struct {
 	db.Admin
 	db.Basic
 	db.Domain
+	db.Emoji
 	db.Instance
 	db.Media
 	db.Mention
@@ -166,6 +167,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 			conn: conn,
 		},
 		Domain: &domainDB{
+			conn: conn,
+		},
+		Emoji: &emojiDB{
 			conn: conn,
 		},
 		Instance: &instanceDB{

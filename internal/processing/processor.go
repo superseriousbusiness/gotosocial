@@ -122,6 +122,9 @@ type Processor interface {
 	// BlocksGet returns a list of accounts blocked by the requesting account.
 	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
 
+	// CustomEmojisGet returns an array of info about the custom emojis on this server
+	CustomEmojisGet(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
+
 	// FileGet handles the fetching of a media attachment file via the fileserver.
 	FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
 
