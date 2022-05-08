@@ -6,20 +6,19 @@ import (
 
 // allocate these just once
 var (
-	dot    = []byte(".")
-	dotStr = ".'"
+	dot    = []byte(dotStr)
+	dotStr = "."
 )
 
 type Builder struct {
-	B  []byte // B is the underlying byte buffer
-	dd int    // pos of last '..' appended to builder
-
-	abs bool // abs stores whether path passed to first .Append() is absolute
-	set bool // set stores whether b.abs has been set i.e. not first call to .Append()
+	B   []byte // B is the underlying byte buffer
+	dd  int    // pos of last '..' appended to builder
+	abs bool   // abs stores whether path passed to first .Append() is absolute
+	set bool   // set stores whether b.abs has been set i.e. not first call to .Append()
 }
 
-// NewBuilder returns a new Builder object using the supplied byte
-// slice as the underlying buffer
+// NewBuilder returns a new Builder object using the
+// supplied byte slice as the underlying buffer
 func NewBuilder(b []byte) Builder {
 	if b != nil {
 		b = b[:0]
@@ -53,7 +52,7 @@ func (b *Builder) Cap() int {
 
 // Bytes returns the accumulated path bytes.
 func (b *Builder) Bytes() []byte {
-	if b.Len() < 1 {
+	if len(b.B) < 1 {
 		return dot
 	}
 	return b.B
@@ -61,7 +60,7 @@ func (b *Builder) Bytes() []byte {
 
 // String returns the accumulated path string.
 func (b *Builder) String() string {
-	if b.Len() < 1 {
+	if len(b.B) < 1 {
 		return dotStr
 	}
 	return string(b.B)
@@ -74,7 +73,7 @@ func (b *Builder) String() string {
 // returned string changing. Consider using .String() if
 // this is undesired behaviour.
 func (b *Builder) StringPtr() string {
-	if b.Len() < 1 {
+	if len(b.B) < 1 {
 		return dotStr
 	}
 	return *(*string)(unsafe.Pointer(&b.B))
@@ -89,9 +88,9 @@ func (b *Builder) Absolute() bool {
 func (b *Builder) SetAbsolute(val bool) {
 	if !b.set {
 		if val {
-			// .Append() has not be called,
-			// add a '/' and set abs
-			b.guarantee(1)
+			// .Append() has not been
+			// called, add a '/' and set abs
+			b.Guarantee(1)
 			b.appendByte('/')
 			b.abs = true
 		}
@@ -107,7 +106,7 @@ func (b *Builder) SetAbsolute(val bool) {
 
 		// If not empty (i.e. not just '/'),
 		// then shift bytes 1 left
-		if b.Len() > 1 {
+		if len(b.B) > 1 {
 			copy(b.B, b.B[1:])
 		}
 
@@ -119,16 +118,16 @@ func (b *Builder) SetAbsolute(val bool) {
 		b.abs = true
 
 		// Guarantee 1 byte available
-		b.guarantee(1)
+		b.Guarantee(1)
 
 		// If empty, just append '/'
-		if b.Len() < 1 {
+		if len(b.B) < 1 {
 			b.appendByte('/')
 			return
 		}
 
 		// Increase length
-		l := b.Len()
+		l := len(b.B)
 		b.B = b.B[:l+1]
 
 		// Shift bytes 1 right
@@ -151,9 +150,9 @@ func (b *Builder) Append(p []byte) {
 // to accomodate the extra path length
 func (b *Builder) AppendString(path string) {
 	defer func() {
-		// If buffer is empty, and an absolute path,
-		// ensure it starts with a '/'
-		if b.Len() < 1 && b.abs {
+		// If buffer is empty, and an absolute
+		// path, ensure it starts with a '/'
+		if len(b.B) < 1 && b.abs {
 			b.appendByte('/')
 		}
 	}()
@@ -165,7 +164,7 @@ func (b *Builder) AppendString(path string) {
 
 	// Guarantee at least the total length
 	// of supplied path available in the buffer
-	b.guarantee(len(path))
+	b.Guarantee(len(path))
 
 	// Try store if absolute
 	if !b.set {
@@ -193,7 +192,7 @@ func (b *Builder) AppendString(path string) {
 			// our current state of the buffer. i.e. is
 			// our buffer length longer than the last
 			// '..' we placed?
-			case b.Len() > b.dd:
+			case len(b.B) > b.dd:
 				b.backtrack()
 				// b.cp = b.lp
 				// b.lp = 0
@@ -202,22 +201,22 @@ func (b *Builder) AppendString(path string) {
 			// we can append '..' to the path buffer,
 			// which is ONLY when path is NOT absolute
 			case !b.abs:
-				if b.Len() > 0 {
+				if len(b.B) > 0 {
 					b.appendByte('/')
 				}
 				b.appendByte('.')
 				b.appendByte('.')
-				b.dd = b.Len()
+				b.dd = len(b.B)
 				// b.lp = lp - 2
 				// b.cp = b.dd
 			}
 
 		default:
-			if (b.abs && b.Len() != 1) || (!b.abs && b.Len() > 0) {
+			if (b.abs && len(b.B) != 1) || (!b.abs && len(b.B) > 0) {
 				b.appendByte('/')
 			}
 			// b.lp = b.cp
-			// b.cp = b.Len()
+			// b.cp = len(b.B)
 			i += b.appendSlice(path[i:])
 		}
 	}
@@ -236,24 +235,29 @@ func (b *Builder) Clean(path string) string {
 // performing this operation and returning the shortest possible combination
 // of all the supplied paths. The builder object is NOT reset after return
 func (b *Builder) Join(base string, paths ...string) string {
-	empty := (len(base) < 1)
 	b.Reset()
 	b.AppendString(base)
-	for _, path := range paths {
-		b.AppendString(path)
-		empty = empty && (len(path) < 1)
+	size := len(base)
+	for i := 0; i < len(paths); i++ {
+		b.AppendString(paths[i])
+		size += len(paths[i])
 	}
-	if empty {
+	if size < 1 {
 		return ""
+	} else if len(b.B) < 1 {
+		return dotStr
 	}
-	return b.String()
+	return string(b.B)
 }
 
 // Guarantee ensures there is at least the requested size
-// free bytes available in the buffer, reallocating if
-// necessary
+// free bytes available in the buffer, reallocating if necessary
 func (b *Builder) Guarantee(size int) {
-	b.guarantee(size)
+	if size > cap(b.B)-len(b.B) {
+		nb := make([]byte, 2*cap(b.B)+size)
+		copy(nb, b.B)
+		b.B = nb[:len(b.B)]
+	}
 }
 
 // Truncate reduces the length of the buffer by the requested
@@ -261,7 +265,7 @@ func (b *Builder) Guarantee(size int) {
 // byte (i.e. '/') will never be truncated
 func (b *Builder) Truncate(size int) {
 	// If absolute and just '/', do nothing
-	if b.abs && b.Len() == 1 {
+	if b.abs && len(b.B) == 1 {
 		return
 	}
 
@@ -269,21 +273,10 @@ func (b *Builder) Truncate(size int) {
 	b.truncate(size)
 }
 
-// truncate reduces the length of the buffer by the requested size,
-// no sanity checks are performed
+// truncate reduces the length of the buffer by the requested
+// size, no sanity checks are performed
 func (b *Builder) truncate(size int) {
-	b.B = b.B[:b.Len()-size]
-}
-
-// guarantee ensures there is at least the requested size
-// free bytes available in the buffer, reallocating if necessary.
-// no sanity checks are performed
-func (b *Builder) guarantee(size int) {
-	if size > b.Cap()-b.Len() {
-		nb := make([]byte, 2*b.Cap()+size)
-		copy(nb, b.B)
-		b.B = nb[:b.Len()]
-	}
+	b.B = b.B[:len(b.B)-size]
 }
 
 // appendByte appends the supplied byte to the end of
@@ -291,8 +284,8 @@ func (b *Builder) guarantee(size int) {
 // buffer and setting the next byte-at-index, this is safe as guarantee()
 // will have been called beforehand
 func (b *Builder) appendByte(c byte) {
-	b.B = b.B[:b.Len()+1]
-	b.B[b.Len()-1] = c
+	b.B = b.B[:len(b.B)+1]
+	b.B[len(b.B)-1] = c
 }
 
 // appendSlice appends the supplied string slice to
@@ -304,8 +297,8 @@ func (b *Builder) appendByte(c byte) {
 func (b *Builder) appendSlice(slice string) int {
 	i := 0
 	for i < len(slice) && slice[i] != '/' {
-		b.B = b.B[:b.Len()+1]
-		b.B[b.Len()-1] = slice[i]
+		b.B = b.B[:len(b.B)+1]
+		b.B[len(b.B)-1] = slice[i]
 		i++
 	}
 	return i
@@ -314,13 +307,13 @@ func (b *Builder) appendSlice(slice string) int {
 // backtrack reduces the end of the buffer back to the last
 // separating '/', or end of buffer
 func (b *Builder) backtrack() {
-	b.B = b.B[:b.Len()-1]
+	b.B = b.B[:len(b.B)-1]
 
-	for b.Len()-1 > b.dd && b.B[b.Len()-1] != '/' {
-		b.B = b.B[:b.Len()-1]
+	for len(b.B)-1 > b.dd && b.B[len(b.B)-1] != '/' {
+		b.B = b.B[:len(b.B)-1]
 	}
 
-	if b.Len() > 0 {
-		b.B = b.B[:b.Len()-1]
+	if len(b.B) > 0 {
+		b.B = b.B[:len(b.B)-1]
 	}
 }

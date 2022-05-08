@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"codeberg.org/gruf/go-errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
@@ -26,8 +25,7 @@ type authorizeHandlerTestCase struct {
 }
 
 func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
-
-	var tests = []authorizeHandlerTestCase{
+	tests := []authorizeHandlerTestCase{
 		{
 			description: "user has their email unconfirmed",
 			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) {
@@ -80,7 +78,7 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 		testSession.Set(sessionUserID, user.ID)
 		testSession.Set(sessionClientID, suite.testApplications["application_1"].ClientID)
 		if err := testSession.Save(); err != nil {
-			panic(errors.WrapMsgf(err, "failed on case: %s", testCase.description))
+			panic(fmt.Errorf("failed on case %s: %w", testCase.description, err))
 		}
 
 		testCase.mutateUserAccount(user, account)

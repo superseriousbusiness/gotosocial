@@ -1,1 +1,0 @@
-simple but powerful errors library that allows providing context information with errors

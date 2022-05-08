@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+// closedctx is an always closed context.
+var closedctx = func() context.Context {
+	ctx := make(cancelctx)
+	close(ctx)
+	return ctx
+}()
+
 // ContextWithCancel returns a new context.Context impl with cancel.
 func ContextWithCancel() (context.Context, context.CancelFunc) {
 	ctx := make(cancelctx)
