@@ -21,6 +21,7 @@ package media
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-store/storage"
@@ -76,7 +77,7 @@ func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttach
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("PruneOne: deleting %s", attachment.File.Path)
-		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(attachment.File.Path); err != nil && (err != storage.ErrNotFound && !strings.Contains(err.Error(), "no such file or directory")) {
 			return err
 		}
 		attachment.Cached = false
@@ -85,7 +86,7 @@ func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttach
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
 		logrus.Tracef("PruneOne: deleting %s", attachment.Thumbnail.Path)
-		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && (err != storage.ErrNotFound && !strings.Contains(err.Error(), "no such file or directory")) {
 			return err
 		}
 		attachment.Cached = false
