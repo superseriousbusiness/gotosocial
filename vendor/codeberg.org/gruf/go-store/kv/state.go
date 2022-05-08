@@ -1,9 +1,9 @@
 package kv
 
 import (
+	"errors"
 	"io"
 
-	"codeberg.org/gruf/go-errors"
 	"codeberg.org/gruf/go-mutexes"
 )
 

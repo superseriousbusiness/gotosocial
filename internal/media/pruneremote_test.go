@@ -69,10 +69,8 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 
 	// media should no longer be stored
 	_, err = suite.storage.Get(testAttachment.File.Path)
-	suite.Error(err)
 	suite.ErrorIs(err, storage.ErrNotFound)
 	_, err = suite.storage.Get(testAttachment.Thumbnail.Path)
-	suite.Error(err)
 	suite.ErrorIs(err, storage.ErrNotFound)
 
 	// now recache the image....
@@ -104,6 +102,23 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	suite.NoError(err)
 	_, err = suite.storage.Get(recachedAttachment.Thumbnail.Path)
 	suite.NoError(err)
+}
+
+func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
+	ctx := context.Background()
+	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
+
+	// Delete this attachment cached on disk
+	media, err := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+	suite.NoError(err)
+	suite.True(media.Cached)
+	err = suite.storage.Delete(media.File.Path)
+	suite.NoError(err)
+
+	// Now attempt to prune remote for item with db entry no file
+	totalPruned, err := suite.manager.PruneRemote(ctx, 1)
+	suite.NoError(err)
+	suite.Equal(1, totalPruned)
 }
 
 func TestPruneRemoteTestSuite(t *testing.T) {
