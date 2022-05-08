@@ -1,51 +1,64 @@
 package storage
 
 import (
-	"fmt"
+	"errors"
 	"syscall"
 )
 
-// errorString is our own simple error type
-type errorString string
-
-// Error implements error
-func (e errorString) Error() string {
-	return string(e)
-}
-
-// Extend appends extra information to an errorString
-func (e errorString) Extend(s string, a ...interface{}) errorString {
-	return errorString(string(e) + ": " + fmt.Sprintf(s, a...))
-}
-
 var (
 	// ErrClosed is returned on operations on a closed storage
-	ErrClosed = errorString("store/storage: closed")
+	ErrClosed = errors.New("store/storage: closed")
 
 	// ErrNotFound is the error returned when a key cannot be found in storage
-	ErrNotFound = errorString("store/storage: key not found")
+	ErrNotFound = errors.New("store/storage: key not found")
 
 	// ErrAlreadyExist is the error returned when a key already exists in storage
-	ErrAlreadyExists = errorString("store/storage: key already exists")
+	ErrAlreadyExists = errors.New("store/storage: key already exists")
 
 	// ErrInvalidkey is the error returned when an invalid key is passed to storage
-	ErrInvalidKey = errorString("store/storage: invalid key")
-
-	// errPathIsFile is returned when a path for a disk config is actually a file
-	errPathIsFile = errorString("store/storage: path is file")
-
-	// errNoHashesWritten is returned when no blocks are written for given input value
-	errNoHashesWritten = errorString("storage/storage: no hashes written")
-
-	// errInvalidNode is returned when read on an invalid node in the store is attempted
-	errInvalidNode = errorString("store/storage: invalid node")
-
-	// errCorruptNodes is returned when nodes with missing blocks are found during a BlockStorage clean
-	errCorruptNodes = errorString("store/storage: corrupted nodes")
+	ErrInvalidKey = errors.New("store/storage: invalid key")
 
 	// ErrAlreadyLocked is returned on fail opening a storage lockfile
-	ErrAlreadyLocked = errorString("store/storage: storage lock already open")
+	ErrAlreadyLocked = errors.New("store/storage: storage lock already open")
+
+	// errPathIsFile is returned when a path for a disk config is actually a file
+	errPathIsFile = errors.New("store/storage: path is file")
+
+	// errNoHashesWritten is returned when no blocks are written for given input value
+	errNoHashesWritten = errors.New("storage/storage: no hashes written")
+
+	// errInvalidNode is returned when read on an invalid node in the store is attempted
+	errInvalidNode = errors.New("store/storage: invalid node")
+
+	// errCorruptNode is returned when a block fails to be opened / read during read of a node.
+	errCorruptNode = errors.New("store/storage: corrupted node")
 )
+
+// wrappedError allows wrapping together an inner with outer error.
+type wrappedError struct {
+	inner error
+	outer error
+}
+
+// wrap will return a new wrapped error from given inner and outer errors.
+func wrap(outer, inner error) *wrappedError {
+	return &wrappedError{
+		inner: inner,
+		outer: outer,
+	}
+}
+
+func (e *wrappedError) Is(target error) bool {
+	return e.outer == target || e.inner == target
+}
+
+func (e *wrappedError) Error() string {
+	return e.outer.Error() + ": " + e.inner.Error()
+}
+
+func (e *wrappedError) Unwrap() error {
+	return e.inner
+}
 
 // errSwapNoop performs no error swaps
 func errSwapNoop(err error) error {

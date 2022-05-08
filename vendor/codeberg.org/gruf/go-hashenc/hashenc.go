@@ -18,7 +18,7 @@ type HashEncoder interface {
 	Size() int
 }
 
-// New returns a new HashEncoder instance based on supplied hash.Hash and Encoder supplying functions
+// New returns a new HashEncoder instance based on supplied hash.Hash and Encoder supplying functions.
 func New(hash hash.Hash, enc Encoder) HashEncoder {
 	hashSize := hash.Size()
 	return &henc{
@@ -29,7 +29,7 @@ func New(hash hash.Hash, enc Encoder) HashEncoder {
 	}
 }
 
-// henc is the HashEncoder implementation
+// henc is the HashEncoder implementation.
 type henc struct {
 	hash hash.Hash
 	hbuf []byte

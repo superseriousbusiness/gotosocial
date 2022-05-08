@@ -1,7 +1,8 @@
 package kv
 
 import (
-	"codeberg.org/gruf/go-errors"
+	"errors"
+
 	"codeberg.org/gruf/go-mutexes"
 	"codeberg.org/gruf/go-store/storage"
 )
