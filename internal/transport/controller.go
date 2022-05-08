@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -35,7 +34,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
@@ -51,13 +49,12 @@ type Controller interface {
 }
 
 type controller struct {
-	db        db.DB
-	fedDB     federatingdb.DB
-	clock     pub.Clock
-	client    pub.HttpClient
-	cache     cache.Cache[string, *transport]
-	httpQueue concurrency.WorkQueue
-	appAgent  string
+	db       db.DB
+	fedDB    federatingdb.DB
+	clock    pub.Clock
+	client   pub.HttpClient
+	cache    cache.Cache[string, *transport]
+	appAgent string
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
@@ -68,7 +65,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		db:       db,
 		fedDB:    federatingDB,
 		clock:    clock,
-		client:   wrapClient(client, runtime.GOMAXPROCS(0)*10),
+		client:   client,
 		cache:    cache.New[string, *transport](),
 		appAgent: applicationName + " " + host,
 	}
@@ -81,6 +78,14 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 
 	return c
 }
+
+var (
+	// http signer preferences
+	prefs       = []httpsig.Algorithm{httpsig.RSA_SHA256}
+	digestAlgo  = httpsig.DigestSha256
+	getHeaders  = []string{httpsig.RequestTarget, "host", "date"}
+	postHeaders = []string{httpsig.RequestTarget, "host", "date", "digest"}
+)
 
 func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Transport, error) {
 	// Generate public key string for cache key
@@ -96,12 +101,6 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	if ok {
 		return transp, nil
 	}
-
-	// Prepare our signer preferences
-	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256}
-	digestAlgo := httpsig.DigestSha256
-	getHeaders := []string{httpsig.RequestTarget, "host", "date"}
-	postHeaders := []string{httpsig.RequestTarget, "host", "date", "digest"}
 
 	// Create new HTTP GET signer for our prefs and algorithm
 	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature, 120)

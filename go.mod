@@ -6,8 +6,9 @@ require (
 	codeberg.org/gruf/go-cache/v2 v2.0.1
 	codeberg.org/gruf/go-debug v1.1.2
 	codeberg.org/gruf/go-errors v1.0.5
+	codeberg.org/gruf/go-errors/v2 v2.0.1
 	codeberg.org/gruf/go-mutexes v1.1.2
-	codeberg.org/gruf/go-runners v1.2.0
+	codeberg.org/gruf/go-runners v1.2.1
 	codeberg.org/gruf/go-store v1.3.6
 	github.com/ReneKroon/ttlcache v1.7.0
 	github.com/buckket/go-blurhash v1.1.0
@@ -52,6 +53,7 @@ require (
 )
 
 require (
+	codeberg.org/gruf/go-bitutil v1.0.0 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastcopy v1.1.1 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.2 // indirect

@@ -1907,10 +1907,9 @@ func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destin
 		do: func(req *http.Request) (*http.Response, error) {
 			signatureHeader = req.Header.Get("Signature")
 			dateHeader = req.Header.Get("Date")
-			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
 			return &http.Response{
 				StatusCode: 200,
-				Body:       r,
+				Body:       http.NoBody,
 			}, nil
 		},
 	}

@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
@@ -110,7 +111,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 			return nil, err
 		}
 
-		l.Infof("performing request #%d", i)
+		l.Infof("performing request")
 
 		// Attempt to perform request
 		rsp, err := t.controller.client.Do(r)
@@ -126,6 +127,9 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 			// Generate error from status code for logging
 			err = errors.New(`http response "` + rsp.Status + `"`)
+		} else if errorsv2.Is(err, context.Canceled, context.DeadlineExceeded) {
+			// Return early if context has cancelled
+			return nil, err
 		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {
 			// Don't bother if net/http returned after too many redirects
 			return nil, err

@@ -35,6 +35,8 @@ cloud.google.com/go/storage v1.6.0/go.mod h1:N7U0C8pVQ/+NIKOBQyamJIeKQKkZ+mxpohl
 cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RXyy7KQOVs=
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3fOKtUw0Xmo=
+codeberg.org/gruf/go-bitutil v1.0.0 h1:pM3KeDACgQ0ARbdIVEuRyAi3XDyUQdoSR0X24nbCZt8=
+codeberg.org/gruf/go-bitutil v1.0.0/go.mod h1:sb8IjlDnjVTz8zPK/8lmHesKxY0Yb3iqHWjUM/SkphA=
 codeberg.org/gruf/go-bytes v1.0.0/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytes v1.0.1/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
@@ -46,6 +48,9 @@ codeberg.org/gruf/go-debug v1.1.2 h1:7Tqkktg60M/4WtXTTNUFH2T/6irBw4tI4viv7IRLZDE
 codeberg.org/gruf/go-debug v1.1.2/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors v1.0.5 h1:rxV70oQkfasUdggLHxOX2QAoJOMFM7XWxHQR45Zx/Fg=
 codeberg.org/gruf/go-errors v1.0.5/go.mod h1:n03EpmvcmfzU3/xJKC0XXtleXXJUNFpT2fgISODvZ1Y=
+codeberg.org/gruf/go-errors/v2 v2.0.0/go.mod h1:ZRhbdhvgoUA3Yw6e56kd9Ox984RrvbEFC2pOXyHDJP4=
+codeberg.org/gruf/go-errors/v2 v2.0.1 h1:Y2LNtwoXAk1LUcIPzbowXOi7YTLmzsHKPe2QRbMH1OU=
+codeberg.org/gruf/go-errors/v2 v2.0.1/go.mod h1:6sI75OmvXE2AtRm4WUyGMEyqEOKTsfe+CA+aBXwbtJY=
 codeberg.org/gruf/go-fastcopy v1.1.1 h1:HhPCeFdVR5pwiSVDnQEGJ+J2ny9b5QgfiESc0zrWQAY=
 codeberg.org/gruf/go-fastcopy v1.1.1/go.mod h1:GDDYR0Cnb3U/AIfGM3983V/L+GN+vuwVMvrmVABo21s=
 codeberg.org/gruf/go-fastpath v1.0.1/go.mod h1:edveE/Kp3Eqi0JJm0lXYdkVrB28cNUkcb/bRGFTPqeI=
@@ -62,8 +67,8 @@ codeberg.org/gruf/go-nowish v1.1.0/go.mod h1:70nvICNcqQ9OHpF07N614Dyk7cpL5ToWU1K
 codeberg.org/gruf/go-pools v1.0.2 h1:B0X6yoCL9FVmnvyoizb1SYRwMYPWwEJBjPnBMM5ILos=
 codeberg.org/gruf/go-pools v1.0.2/go.mod h1:MjUV3H6IASyBeBPCyCr7wjPpSNu8E2N87LG4r4TAyok=
 codeberg.org/gruf/go-runners v1.1.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
-codeberg.org/gruf/go-runners v1.2.0 h1:tkoPrwYMkVg1o/C4PGTR1YbC11XX4r06uLPOYajBsH4=
-codeberg.org/gruf/go-runners v1.2.0/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
+codeberg.org/gruf/go-runners v1.2.1 h1:eXXofOMkLTkrdqI0qFYm00hP9IW42JZbc+IRKgVyQ28=
+codeberg.org/gruf/go-runners v1.2.1/go.mod h1:9gTrmMnO3d+50C+hVzcmGBf+zTuswReS278E2EMvnmw=
 codeberg.org/gruf/go-store v1.3.6 h1:OKzdvfUC+nvsWV5FiSKdk+85yvxF2Tb7K5ZtRqlDBDU=
 codeberg.org/gruf/go-store v1.3.6/go.mod h1:a4vJtZf61UyrsejskX8q+s0lZeNGy7cJLUZt+fH00wo=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
