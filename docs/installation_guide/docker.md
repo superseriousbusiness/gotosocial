@@ -58,9 +58,9 @@ First open the docker-compose.yaml file in your editor of choice. For example:
 nano docker-compose.yaml
 ```
 
-Now, you should change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
+#### Version
 
-You should also update the GoToSocial version number to use the latest stable release.
+First, you should update the GoToSocial version number to the latest stable release.
 
 The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top.
 
@@ -75,6 +75,18 @@ with:
 ```text
 image: superseriousbusiness/gotosocial:0.3.1
 ```
+
+#### Host
+
+Change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
+
+#### User (optional / probably not necessary)
+
+By default, Dockerized GoToSocial runs with Linux user/group `1000:1000`, which is fine in most cases. If you want to run as a different user/group, you should change the `user` field in the docker-compose.yaml accordingly.
+
+For example, let's say you created the `~/gotosocial/data` directory for a user with id `1001`, and group id `1001`. If you now try to run GoToSocial without changing the `user` field, it will get a permissions error trying to open its database file in the directory. In this case, you would have to change the `user` field of the docker compose file to `1001:1001`.
+
+#### LetsEncrypt (optional)
 
 If you want to use [LetsEncrypt](../configuration/letsencrypt.md) for ssl certificates (https), you should also:
 
