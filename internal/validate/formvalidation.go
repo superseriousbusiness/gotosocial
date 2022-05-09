@@ -53,7 +53,12 @@ func NewPassword(password string) error {
 		return fmt.Errorf("password should be no more than %d chars", maximumPasswordLength)
 	}
 
-	return pwv.Validate(password, minimumPasswordEntropy)
+	if err := pwv.Validate(password, minimumPasswordEntropy); err != nil {
+		percent := int(100 * pwv.GetEntropy(password) / minimumPasswordEntropy)
+		return fmt.Errorf("Password is only %d%% as strong as it should be; %s", percent, err)
+	}
+
+	return nil // pasword OK
 }
 
 // Username makes sure that a given username is valid (ie., letters, numbers, underscores, check length).
