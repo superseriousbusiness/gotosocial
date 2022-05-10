@@ -21,6 +21,7 @@ package auth
 import (
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -28,13 +29,50 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type tokenBody struct {
-	ClientID     *string `form:"client_id" json:"client_id" xml:"client_id"`
-	ClientSecret *string `form:"client_secret" json:"client_secret" xml:"client_secret"`
-	Code         *string `form:"code" json:"code" xml:"code"`
-	GrantType    *string `form:"grant_type" json:"grant_type" xml:"grant_type"`
-	RedirectURI  *string `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
-	Scope        *string `form:"scope" json:"scope" xml:"scope"`
+// TokenRequestForm models a token request
+type TokenRequestForm struct {
+	ClientID     string      `form:"client_id" json:"client_id" xml:"client_id"`
+	ClientSecret string      `form:"client_secret" json:"client_secret" xml:"client_secret"`
+	Code         string      `form:"code" json:"code" xml:"code"`
+	GrantType    string      `form:"grant_type" json:"grant_type" xml:"grant_type"`
+	RedirectURI  string      `form:"redirect_uri" json:"redirect_uri" xml:"redirect_uri"`
+	Scope        interface{} `form:"scope" json:"scope" xml:"scope"` // scope might be an array or a string
+}
+
+func (m *Module) BindTokenRequestForm(c *gin.Context) error {
+	form := &TokenRequestForm{}
+
+	if err := c.ShouldBind(form); err != nil {
+		return err
+	}
+
+	// assign values onto the request form
+	if c.Request.Form == nil {
+		c.Request.Form = url.Values{}
+	}
+	c.Request.Form.Set("client_id", form.ClientID)
+	c.Request.Form.Set("client_secret", form.ClientSecret)
+	c.Request.Form.Set("code", form.Code)
+	c.Request.Form.Set("grant_type", form.GrantType)
+	c.Request.Form.Set("redirect_uri", form.RedirectURI)
+
+	// check if scope is a string
+	if scope, ok := form.Scope.(string); ok {
+		c.Request.Form.Set("scope", scope)
+	}
+
+	// check if scopeI is a slice of strings
+	if scopeI, ok := form.Scope.([]interface{}); ok {
+		var scope []string
+		for _, sI := range scopeI {
+			if scopeValue, ok := sI.(string); ok {
+				scope = append(scope, scopeValue)
+			}
+		}
+		c.Request.Form.Set("scope", strings.Join(scope, " "))
+	}
+
+	return nil
 }
 
 // TokenPOSTHandler should be served as a POST at https://example.org/oauth/token
@@ -48,27 +86,9 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form := &tokenBody{}
-	if err := c.ShouldBind(form); err == nil {
-		c.Request.Form = url.Values{}
-		if form.ClientID != nil {
-			c.Request.Form.Set("client_id", *form.ClientID)
-		}
-		if form.ClientSecret != nil {
-			c.Request.Form.Set("client_secret", *form.ClientSecret)
-		}
-		if form.Code != nil {
-			c.Request.Form.Set("code", *form.Code)
-		}
-		if form.GrantType != nil {
-			c.Request.Form.Set("grant_type", *form.GrantType)
-		}
-		if form.RedirectURI != nil {
-			c.Request.Form.Set("redirect_uri", *form.RedirectURI)
-		}
-		if form.Scope != nil {
-			c.Request.Form.Set("scope", *form.Scope)
-		}
+	if err := m.BindTokenRequestForm(c); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	if err := m.server.HandleTokenRequest(c.Writer, c.Request); err != nil {
