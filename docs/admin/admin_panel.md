@@ -9,9 +9,11 @@ To use the Admin API your account has to be promoted as such:
 ```
 After this, you can enter your instance domain in the login field (auto-filled if you run GoToSocial on the same domain), and login like you would with
 any other client.
+
 <p align="middle">
-	![../assets/admin-panel.png](Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings)
+	<img src="../../assets/admin-panel.png">Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings</img>
 </p>
+
 You can change the instance's settings like the title and descriptions, and add/remove/change domain blocks including a bulk import/export.
 
 ## Installing the panel
