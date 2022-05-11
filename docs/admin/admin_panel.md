@@ -1,6 +1,6 @@
 # Admin Control Panel
 
-[gotosocial-admin](https://github.com/superseriousbusiness/gotosocial-admin) is a simple webclient that uses the [admin api routes](https://docs.gotosocial.org/en/latest/api/swagger/#operations-tag-admin) to manage your instance. It uses the same OAUTH mechanism as normal clients (with scope: admin), and as such can be hosted anywhere, separately from your instance, or run locally. A public installation is available at https://gts.superseriousbusiness.org/admin/
+[gotosocial-admin](https://github.com/superseriousbusiness/gotosocial-admin) is a simple webclient that uses the [admin api routes](https://docs.gotosocial.org/en/latest/api/swagger/#operations-tag-admin) to manage your instance. It uses the same OAUTH mechanism as normal clients (with scope: admin), and as such can be hosted anywhere, separately from your instance, or run locally. A public installation is available here: [https://gts.superseriousbusiness.org/admin](https://gts.superseriousbusiness.org/admin).
 
 ## Using the panel
 To use the Admin API your account has to be promoted as such:
