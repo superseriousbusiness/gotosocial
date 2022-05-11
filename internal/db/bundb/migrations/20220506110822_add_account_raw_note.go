@@ -20,8 +20,8 @@ package migrations
 
 import (
 	"context"
+	"strings"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/uptrace/bun"
 )
 
@@ -29,11 +29,10 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// add account raw_note column
-			expr := tx.
-				NewAddColumn().
-				Model(&gtsmodel.Account{}).
-				ColumnExpr("note_raw")
-			_, err := expr.Exec(ctx)
+			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TEXT", bun.Ident("accounts"), bun.Ident("note_raw"))
+			if strings.Contains(err.Error(), "already exists") {
+				return nil
+			}
 			return err
 		})
 	}
