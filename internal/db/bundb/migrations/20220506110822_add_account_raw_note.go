@@ -27,14 +27,11 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// add account raw_note column
-			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TEXT", bun.Ident("accounts"), bun.Ident("note_raw"))
-			if strings.Contains(err.Error(), "already exists") {
-				return nil
-			}
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TEXT", bun.Ident("accounts"), bun.Ident("note_raw"))
+		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name")) {
 			return err
-		})
+		}
+		return nil
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
