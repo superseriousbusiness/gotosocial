@@ -91,10 +91,6 @@ func (r *router) Start() {
 			http.Redirect(rw, r, target, http.StatusTemporaryRedirect)
 		})
 
-		// Clone HTTP server but with autocert handler
-		srv := r.srv
-		srv.Handler = r.certManager.HTTPHandler(redirect)
-
 		// Start the LetsEncrypt autocert manager HTTP server.
 		go func() {
 			addr := fmt.Sprintf("%s:%d",
@@ -103,8 +99,7 @@ func (r *router) Start() {
 			)
 
 			logrus.Infof("letsencrypt listening on %s", addr)
-
-			if err := srv.ListenAndServe(); err != nil &&
+			if err := http.ListenAndServe(addr, r.certManager.HTTPHandler(redirect)); err != nil &&
 				err != http.ErrServerClosed {
 				logrus.Fatalf("letsencrypt: listen: %s", err)
 			}
