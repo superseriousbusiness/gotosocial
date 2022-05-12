@@ -16,11 +16,11 @@ https://github.com/superseriousbusiness/gotosocial / https://docs.gotosocial.org
 
 GoToSocial (GtS) is an ActivityPub social network server, which provides a lightweight and approachable entryway into Fediverse hosting. It is comparable to (but distinct from) projects such as Mastodon, Friendica, and PixelFed.
 
-GtS emphasizes user safety and privacy. Unlike other AP servers, it requires http signatures, and makes a strong differentiation between 'public' and other kinds of posts. It also makes it very easy for admins to block instances they don't want to interact with, by allowing them to subscribe to block lists and to mass import blocks, ensuring that users stay safe.
+GtS emphasizes user safety and privacy. Unlike other AP servers, it always requires http signatures, and makes a strong differentiation between 'public' and other kinds of posts. It also makes it very easy for admins to block instances they don't want to interact with, by allowing them to subscribe to block lists and to mass import blocks, ensuring that users stay safe.
 
 GtS values ease of deployment and maintenance; this means low system requirements, simple configuration, minimal external dependencies, and clear documentation. GtS makes it easy + affordable for self-hosting newcomers to set up a Fediverse server on low- (or even solar-) powered equipment they might have lying around at home.
 
-GtS began development in February 2021. It is still in Alpha, and we hope to use NLNet funding to bring it up to the Beta phase. The project roadmap (https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) gives more information on what we have planned.
+GtS began development in Feb 2021. It is still in Alpha, and we hope to use NLNet funding to bring it up to the Beta phase. The project roadmap (https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) gives more information on what we have planned.
 
 > Have you been involved with projects or organisations relevant to this project before? And if so, can you tell us a bit about your contributions? (Optional) This can help us determine if you are the right person to undertake this effort.
 
