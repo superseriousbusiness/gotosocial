@@ -1,71 +1,69 @@
 package httpclient
 
 import (
-	"context"
 	"errors"
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"runtime"
 	"time"
 )
 
-// ErrIsInternalAddr is returned if a dialed address resolves to an internal IP address.
-var ErrIsInternalAddr = errors.New("ip is private")
+// ErrReservedAddr is returned if a dialed address resolves to an IP within a blocked or reserved net.
+var ErrReservedAddr = errors.New("dial within blocked / reserved IP range")
 
 // ErrBodyTooLarge is returned when a received response body is above predefined limit (default 40MB).
 var ErrBodyTooLarge = errors.New("body size too large")
 
-// dialer is the net.Dialer used by all http.Transport{}'s.
+// dialer is the base net.Dialer used by all package-created http.Transports.
 var dialer = &net.Dialer{
 	Timeout:   30 * time.Second,
 	KeepAlive: 30 * time.Second,
 	Resolver:  &net.Resolver{Dial: nil},
 }
 
-// dialcontext wraps dialer.DialContext() to check for private addresses being dialed out to.
-func dialcontext(ctx context.Context, network string, address string) (net.Conn, error) {
-	// Attempt to dial out to requested address
-	conn, err := dialer.DialContext(ctx, network, address)
-	if err != nil {
-		return nil, err
-	}
-
-	// Cast remote addr so we can get IP
-	addr, ok := conn.RemoteAddr().(*net.TCPAddr)
-	if !ok /* this should never happen as HTTP is over tcp... */ {
-		_ = conn.Close() // immediately close
-		panic("unhandled network type")
-	} else if addr.IP.IsPrivate() {
-		_ = conn.Close() // immediately close
-		return nil, ErrIsInternalAddr
-	}
-
-	return conn, nil
-}
-
-// Config ...
+// Config provides configuration details for setting up a new
+// instance of httpclient.Client{}. Within are a subset of the
+// configuration values passed to initialized http.Transport{}
+// and http.Client{}, along with httpclient.Client{} specific.
 type Config struct {
 	// MaxOpenConns limits the max number of concurrent open connections.
 	MaxOpenConns int
 
-	// MaxIdleConns: see http.Transport{}.MaxIdleConns
+	// MaxIdleConns: see http.Transport{}.MaxIdleConns.
 	MaxIdleConns int
 
-	// ReadBufferSize: see http.Transport{}.ReadBufferSize
+	// ReadBufferSize: see http.Transport{}.ReadBufferSize.
 	ReadBufferSize int
 
-	// WriteBufferSize: see http.Transport{}.WriteBufferSize
+	// WriteBufferSize: see http.Transport{}.WriteBufferSize.
 	WriteBufferSize int
 
 	// MaxBodySize determines the maximum fetchable body size.
 	MaxBodySize int64
 
-	// AllowPrivateIPs allows dialing out to hosts in private address spaces.
-	AllowPrivateIPs bool
+	// Timeout: see http.Client{}.Timeout.
+	Timeout time.Duration
+
+	// DisableCompression: see http.Transport{}.DisableCompression.
+	DisableCompression bool
+
+	// AllowRanges allows outgoing communications to given IP nets.
+	AllowRanges []netip.Prefix
+
+	// BlockRanges blocks outgoing communiciations to given IP nets.
+	BlockRanges []netip.Prefix
 }
 
-// Client ...
+// Client wraps an underlying http.Client{} to provide the following:
+// - setting a maximum received request body size, returning error on
+//   large content lengths, and using a limited reader in all other
+//   cases to protect against forged / unknown content-lengths
+// - protection from server side request forgery (SSRF) by only dialing
+//   out to known public IP prefixes, configurable with allows/blocks
+// - limit number of concurrent requests, else blocking until a slot
+//   is available (context channels still respected)
 type Client struct {
 	client http.Client
 	queue  chan struct{}
@@ -75,6 +73,9 @@ type Client struct {
 // New returns a new instance of Client initialized using configuration.
 func New(cfg Config) *Client {
 	var c Client
+
+	// Copy global
+	d := dialer
 
 	if cfg.MaxOpenConns <= 0 {
 		// By default base this value on GOMAXPROCS.
@@ -92,31 +93,29 @@ func New(cfg Config) *Client {
 		cfg.MaxBodySize = 40 * 1024 * 1024
 	}
 
-	var dial func(context.Context, string, string) (net.Conn, error)
-
-	if cfg.AllowPrivateIPs {
-		// Bypase our wrapper that protects against private IP dialing
-		dial = dialer.DialContext
-	} else {
-		// By default use wrapper to block private IPs
-		dial = dialcontext
-	}
+	// Protect dialer with IP range sanitizer
+	d.Control = (&sanitizer{
+		allow: cfg.AllowRanges,
+		block: cfg.BlockRanges,
+	}).Sanitize
 
 	// Prepare client fields
 	c.bmax = cfg.MaxBodySize
 	c.queue = make(chan struct{}, cfg.MaxOpenConns)
+	c.client.Timeout = cfg.Timeout
 
 	// Set underlying HTTP client roundtripper
 	c.client.Transport = &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,
-		DialContext:           dial,
+		DialContext:           d.DialContext,
 		MaxIdleConns:          cfg.MaxIdleConns,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 		ReadBufferSize:        cfg.ReadBufferSize,
 		WriteBufferSize:       cfg.WriteBufferSize,
+		DisableCompression:    cfg.DisableCompression,
 	}
 
 	return &c
@@ -124,9 +123,8 @@ func New(cfg Config) *Client {
 
 // Do will perform given request when an available slot in the queue is available,
 // and block until this time. For returned values, this follows the same semantics
-// as the standard http.Client{}.Do() implementation, except that when response is
-// returned the response body will be wrapped to release queue slot on close. i.e.
-// YOU ABSOLUTELY MUST CLOSE THE RESPONSE BODY ON SUCCESSFUL REQUEST.
+// as the standard http.Client{}.Do() implementation except that response body will
+// be wrapped by an io.LimitReader() to limit response body sizes.
 func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	select {
 	// Request context cancelled
@@ -135,6 +133,16 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 	// Slot in queue acquired
 	case c.queue <- struct{}{}:
+		// NOTE:
+		// Ideally here we would set the slot release to happen either
+		// on error return, or via callback from the response body closer.
+		// However when implementing this, there appear deadlocks between
+		// the channel queue here and the media manager worker pool. So
+		// currently we only place a limit on connections dialing out, but
+		// there may still be more connections open than len(c.queue) given
+		// that connections may not be closed until response body is closed.
+		// The current implementation will reduce the viability of denial of
+		// service attacks, but if there are future issues heed this advice :]
 		defer func() { <-c.queue }()
 	}
 
@@ -150,13 +158,12 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	// Seperate the body implementers
-	cbody := (io.Closer)(rsp.Body)
 	rbody := (io.Reader)(rsp.Body)
+	cbody := (io.Closer)(rsp.Body)
 
 	var limit int64
 
-	limit = rsp.ContentLength
-	if limit = rsp.ContentLength; limit == -1 {
+	if limit = rsp.ContentLength; limit < 0 {
 		// If unknown, use max as reader limit
 		limit = c.bmax
 	}

@@ -61,6 +61,7 @@ type controller struct {
 func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	applicationName := viper.GetString(config.Keys.ApplicationName)
 	host := viper.GetString(config.Keys.Host)
+
 	c := &controller{
 		db:       db,
 		fedDB:    federatingDB,
@@ -117,7 +118,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	// Create the transport
 	transp = &transport{
 		controller: c,
-		userAgent:  c.appAgent + " (go-fed/activity v1.1.0-gts)",
+		userAgent:  c.appAgent + " (gotosocial+gofed/activity)", // todo: include build version
 		pubKeyID:   pubKeyID,
 		privkey:    privkey,
 		getSigner:  getSigner,
@@ -126,7 +127,16 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 
 	// Cache this transport under pubkey
 	if !c.cache.Put(pubStr, transp) {
-		transp, _ = c.cache.Get(pubStr)
+		var cached *transport
+
+		cached, ok = c.cache.Get(pubStr)
+		if !ok {
+			// Some ridiculous race cond.
+			c.cache.Set(pubStr, transp)
+		} else {
+			// Use already cached
+			transp = cached
+		}
 	}
 
 	return transp, nil
