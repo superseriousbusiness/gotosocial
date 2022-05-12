@@ -36,7 +36,7 @@ Aside from GoToSocial, I've also made small PRs upstream to the ActivityPub libr
 
 > Requested Amount (between 5,000 and 50,000 euro)
 
-42,450
+42,950
 
 > Explain what the requested budget will be used for?
 > Does the project have other funding sources, both past and present?
@@ -53,7 +53,7 @@ The remaining €10,000 in the budget will be divided as follows:
 
 €3750 - Pay contributors €18.75/hour for code submitted to the project towards features, bugfixes, and security patches. It's difficult to foresee in advance how much code we will receive in this way, and how many people will want to just donate code rather than asking for payment, so this number may need to be adjusted up or down. €3750 allows us to pay for 200 hours of contributed work over the coming year.
 
-€1500 - Pay our longtime contributor f0x €18.75/hour for an estimated 80 hours of upcoming frontend development work.
+€2000 - Pay our longtime contributor f0x €25/hour for an estimated 80 hours of upcoming frontend development work.
 
 €2100 - Pay our admin/fundraiser Maloki €175/month for one year, for part time contributions to GoToSocial admin, and work on the OpenCollective page.
 
