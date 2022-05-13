@@ -64,9 +64,9 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordWeakNew() {
 	user := suite.testUsers["local_account_1"]
 
 	errWithCode := suite.user.ChangePassword(context.Background(), user, "password", "1234")
-	suite.EqualError(errWithCode, "insecure password, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
+	suite.EqualError(errWithCode, "password is 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
 	suite.Equal(http.StatusBadRequest, errWithCode.Code())
-	suite.Equal("bad request: insecure password, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())
+	suite.Equal("bad request: password is 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())
 }
 
 func TestChangePasswordTestSuite(t *testing.T) {
