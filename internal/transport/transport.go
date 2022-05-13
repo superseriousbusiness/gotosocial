@@ -55,7 +55,6 @@ type Transport interface {
 // transport implements the Transport interface
 type transport struct {
 	controller *controller
-	userAgent  string
 	pubKeyID   string
 	privkey    crypto.PrivateKey
 	getSigner  httpsig.Signer
