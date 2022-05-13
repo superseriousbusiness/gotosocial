@@ -100,9 +100,11 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 	})
 
 	for i := 0; i < maxRetries; i++ {
-		// Set updated request time
+		// Reset signing header fields
 		now := t.controller.clock.Now().UTC()
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+		r.Header.Del("Signature")
+		r.Header.Del("Digest")
 
 		// Perform request signing
 		if err := signer(r); err != nil {
