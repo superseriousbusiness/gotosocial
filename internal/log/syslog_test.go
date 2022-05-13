@@ -47,7 +47,7 @@ func (suite *SyslogTestSuite) SetupTest() {
 
 	viper.Set(config.Keys.SyslogEnabled, true)
 	viper.Set(config.Keys.SyslogProtocol, "udp")
-	viper.Set(config.Keys.SyslogAddress, "localhost:42069")
+	viper.Set(config.Keys.SyslogAddress, "127.0.0.1:42069")
 	server, channel, err := testrig.InitTestSyslog()
 	if err != nil {
 		panic(err)
