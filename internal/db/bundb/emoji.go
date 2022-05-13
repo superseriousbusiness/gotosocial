@@ -37,7 +37,7 @@ func (e emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Err
 		Model(&emojis).
 		Where("visible_in_picker = true").
 		Where("disabled = false").
-		Order("shortcode DESC")
+		Order("shortcode ASC")
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, e.conn.ProcessError(err)
