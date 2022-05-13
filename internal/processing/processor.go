@@ -113,6 +113,8 @@ type Processor interface {
 	AdminDomainBlockGet(ctx context.Context, authed *oauth.Auth, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminDomainBlockDelete deletes one domain block, specified by ID, returning the deleted domain block.
 	AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
+	// AdminMediaRemotePrune triggers a prune of remote media according to the given number of mediaRemoteCacheDays
+	AdminMediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)

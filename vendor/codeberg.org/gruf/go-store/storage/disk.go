@@ -318,8 +318,12 @@ func (st *DiskStorage) Remove(key string) error {
 		return ErrClosed
 	}
 
-	// Attempt to remove file
-	return os.Remove(kpath)
+	// Remove at path (we know this is file)
+	if err := unlink(kpath); err != nil {
+		return errSwapNotFound(err)
+	}
+
+	return nil
 }
 
 // Close implements Storage.Close()

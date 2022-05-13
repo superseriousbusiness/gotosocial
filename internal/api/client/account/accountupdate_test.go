@@ -75,6 +75,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 	// check the returned api model account
 	// fields should be updated
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal(newBio, apimodelAccount.Source.Note)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUnlockLock() {
@@ -194,6 +195,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGet
 	// check the returned api model account
 	// fields should be updated
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal(newBio, apimodelAccount.Source.Note)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwoFields() {
@@ -235,6 +237,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 	// check the returned api model account
 	// fields should be updated
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal(newBio, apimodelAccount.Source.Note)
 	suite.True(apimodelAccount.Locked)
 }
 
@@ -280,6 +283,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWit
 	suite.Equal("updated zork display name!!!", apimodelAccount.DisplayName)
 	suite.True(apimodelAccount.Locked)
 	suite.Empty(apimodelAccount.Note)
+	suite.Empty(apimodelAccount.Source.Note)
 
 	// header values...
 	// should be set

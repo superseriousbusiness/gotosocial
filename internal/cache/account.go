@@ -134,6 +134,7 @@ func copyAccount(account *gtsmodel.Account) *gtsmodel.Account {
 		DisplayName:             account.DisplayName,
 		Fields:                  account.Fields,
 		Note:                    account.Note,
+		NoteRaw:                 account.NoteRaw,
 		Memorial:                account.Memorial,
 		MovedToAccountID:        account.MovedToAccountID,
 		CreatedAt:               account.CreatedAt,

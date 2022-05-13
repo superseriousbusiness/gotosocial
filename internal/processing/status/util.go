@@ -242,11 +242,11 @@ func (p *processor) ProcessTags(ctx context.Context, form *apimodel.AdvancedStat
 }
 
 func (p *processor) ProcessEmojis(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	emojis := []string{}
 	gtsEmojis, err := p.db.EmojiStringsToEmojis(ctx, util.DeriveEmojisFromText(form.Status))
 	if err != nil {
 		return fmt.Errorf("error generating emojis from status: %s", err)
 	}
+	emojis := make([]string, 0, len(gtsEmojis))
 	for _, e := range gtsEmojis {
 		emojis = append(emojis, e.ID)
 	}

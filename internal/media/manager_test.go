@@ -443,8 +443,6 @@ func (suite *ManagerTestSuite) TestSimpleJpegQueueSpamming() {
 	}
 
 	for _, processingMedia := range inProcess {
-		fmt.Printf("\n\n\nactive workers: %d, queue length: %d\n\n\n", suite.manager.ActiveWorkers(), suite.manager.JobsQueued())
-
 		// fetch the attachment id from the processing media
 		attachmentID := processingMedia.AttachmentID()
 
