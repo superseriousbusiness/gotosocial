@@ -126,7 +126,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 			// Generate error from status code for logging
 			err = errors.New(`http response "` + rsp.Status + `"`)
-		} else if errorsv2.Is(err, context.Canceled, context.DeadlineExceeded) {
+		} else if errorsv2.Is(err, context.DeadlineExceeded, context.Canceled) {
 			// Return early if context has cancelled
 			return nil, err
 		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {

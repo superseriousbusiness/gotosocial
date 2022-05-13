@@ -31,14 +31,13 @@ var bodies = []string{
 	"body with\r\nnewlines",
 }
 
-// func TestHTTPClient(t *testing.T) {
-// }
-
-// func _TestHTTPClientWithConns(t *testing.T, max int) {
-// 	client := httpclient.New(httpclient.Config{
-// 		MaxOpenConns: max,
-// 	})
-// }
+// Note:
+// There is no test for the .MaxOpenConns implementation
+// in the httpclient.Client{}, due to the difficult to test
+// this. The block is only held for the actual dial out to
+// the connection, so the usual test of blocking and holding
+// open this queue slot to check we can't open another isn't
+// an easy test here.
 
 func TestHTTPClientSmallBody(t *testing.T) {
 	for _, body := range bodies {
