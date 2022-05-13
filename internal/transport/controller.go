@@ -25,6 +25,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"runtime/debug"
 	"time"
 	"unsafe"
 
@@ -62,13 +63,16 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	applicationName := viper.GetString(config.Keys.ApplicationName)
 	host := viper.GetString(config.Keys.Host)
 
+	// Determine build information
+	build, _ := debug.ReadBuildInfo()
+
 	c := &controller{
 		db:       db,
 		fedDB:    federatingDB,
 		clock:    clock,
 		client:   client,
 		cache:    cache.New[string, *transport](),
-		appAgent: applicationName + " " + host,
+		appAgent: fmt.Sprintf("%s %s gofed/activity gotosocial-%s", applicationName, host, build.Main.Version),
 	}
 
 	// Transport cache has TTL=1hr freq=1m
@@ -118,7 +122,7 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 	// Create the transport
 	transp = &transport{
 		controller: c,
-		userAgent:  c.appAgent + " (gotosocial+gofed/activity)", // todo: include build version
+		userAgent:  c.appAgent,
 		pubKeyID:   pubKeyID,
 		privkey:    privkey,
 		getSigner:  getSigner,
