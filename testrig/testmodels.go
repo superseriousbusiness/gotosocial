@@ -835,6 +835,55 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Header: false,
 			Cached: true,
 		},
+		"remote_account_1_status_1_attachment_2": {
+			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY1",
+			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
+			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg",
+			CreatedAt: time.Now().Add(-48 * time.Hour),
+			UpdatedAt: time.Now().Add(-48 * time.Hour),
+			Type:      gtsmodel.FileTypeImage,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Small: gtsmodel.Small{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
+			ScheduledStatusID: "",
+			Blurhash:          "LARysgM_IU_3~pD%M_Rj_39FIAt6",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    19310,
+				UpdatedAt:   time.Now().Add(-48 * time.Hour),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    20395,
+				UpdatedAt:   time.Now().Add(-48 * time.Hour),
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
+			},
+			Avatar: false,
+			Header: false,
+			Cached: true,
+		},
 	}
 }
 

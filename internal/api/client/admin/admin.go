@@ -41,6 +41,7 @@ const (
 	AccountsPathWithID = AccountsPath + "/:" + IDKey
 	// AccountsActionPath is used for taking action on a single account.
 	AccountsActionPath = AccountsPathWithID + "/action"
+	MediaCleanupPath   = BasePath + "/media_cleanup"
 
 	// ExportQueryKey is for requesting a public export of some data.
 	ExportQueryKey = "export"
@@ -70,5 +71,6 @@ func (m *Module) Route(r router.Router) error {
 	r.AttachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
 	r.AttachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
 	r.AttachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
+	r.AttachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)
 	return nil
 }
