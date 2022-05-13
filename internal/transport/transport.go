@@ -113,7 +113,7 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 		// Attempt to perform request
 		rsp, err := t.controller.client.Do(r)
-		if err == nil {
+		if err == nil { //nolint shutup linter
 			// TooManyRequest means we need to slow
 			// down and retry our request. Codes over
 			// 500 generally indicate temp. outages.
