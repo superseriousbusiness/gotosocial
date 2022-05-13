@@ -32,16 +32,24 @@ import (
 // The goal here is to initialize the viper config store, and also read in
 // the config file (if present).
 //
+// Config then undergoes basic validation if 'validate' is true.
+//
 // The order of these is important: the init-config function reads the location
 // of the config file from the viper store so that it can be picked up by either
 // env vars or cli flag.
-func preRun(cmd *cobra.Command) error {
+func preRun(cmd *cobra.Command, validate bool) error {
 	if err := config.InitViper(cmd.Flags()); err != nil {
 		return fmt.Errorf("error initializing viper: %s", err)
 	}
 
 	if err := config.ReadFromFile(); err != nil {
 		return fmt.Errorf("error initializing config: %s", err)
+	}
+
+	if validate {
+		if err := config.Validate(); err != nil {
+			return fmt.Errorf("invalid config: %s", err)
+		}
 	}
 
 	return nil

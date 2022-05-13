@@ -36,7 +36,7 @@ func serverCommands() *cobra.Command {
 		Use:   "start",
 		Short: "start the gotosocial server",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(cmd, true)
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), server.Start)

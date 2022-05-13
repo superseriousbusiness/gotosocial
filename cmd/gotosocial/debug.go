@@ -35,7 +35,7 @@ func debugCommands() *cobra.Command {
 		Use:   "config",
 		Short: "print the collated config (derived from env, flag, and config file) to stdout",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(cmd, false) // don't validate for printing config to debug
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), configaction.Config)
