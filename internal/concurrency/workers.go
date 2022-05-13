@@ -19,19 +19,12 @@ type WorkerPool[MsgType any] struct {
 	prefix  string // contains type prefix for logging
 }
 
-<<<<<<< HEAD:internal/concurrency/workers.go
-// New returns a new Worker[MsgType] with given number of workers and queue size
-// (see runners.WorkerPool for more information on args). If args < 1 then suitable
-// defaults are determined from the runtime's GOMAXPROCS variable.
-func NewWorkerPool[MsgType any](workers int, queue int) *WorkerPool[MsgType] {
-=======
-// New returns a new Worker[MsgType] with given number of workers and queue ratio,
+// New returns a new WorkerPool[MsgType] with given number of workers and queue ratio,
 // where the queue ratio is multiplied by no. workers to get queue size. If args < 1
 // then suitable defaults are determined from the runtime's GOMAXPROCS variable.
-func New[MsgType any](workers int, queueRatio int) *Worker[MsgType] {
+func NewWorkerPool[MsgType any](workers int, queueRatio int) *WorkerPool[MsgType] {
 	var zero MsgType
 
->>>>>>> upstream/main:internal/worker/workers.go
 	if workers < 1 {
 		// ensure sensible workers
 		workers = runtime.GOMAXPROCS(0)
@@ -41,21 +34,14 @@ func New[MsgType any](workers int, queueRatio int) *Worker[MsgType] {
 		queueRatio = 100
 	}
 
-<<<<<<< HEAD:internal/concurrency/workers.go
-	w := &WorkerPool[MsgType]{
-		workers: runners.NewWorkerPool(workers, queue),
-		process: nil,
-		prefix:  reflect.TypeOf(WorkerPool[MsgType]{}).String(), //nolint
-=======
 	// Calculate the short type string for the msg type
 	msgType := reflect.TypeOf(zero).String()
 	_, msgType = path.Split(msgType)
 
-	w := &Worker[MsgType]{
+	w := &WorkerPool[MsgType]{
 		workers: runners.NewWorkerPool(workers, workers*queueRatio),
 		process: nil,
 		prefix:  fmt.Sprintf("worker.Worker[%s]", msgType),
->>>>>>> upstream/main:internal/worker/workers.go
 	}
 
 	// Log new worker creation with type prefix
@@ -69,13 +55,8 @@ func New[MsgType any](workers int, queueRatio int) *Worker[MsgType] {
 }
 
 // Start will attempt to start the underlying worker pool, or return error.
-<<<<<<< HEAD:internal/concurrency/workers.go
 func (w *WorkerPool[MsgType]) Start() error {
-	logrus.Info(w.prefix, "starting")
-=======
-func (w *Worker[MsgType]) Start() error {
 	logrus.Infof("%s starting", w.prefix)
->>>>>>> upstream/main:internal/worker/workers.go
 
 	// Check processor was set
 	if w.process == nil {
@@ -91,13 +72,8 @@ func (w *Worker[MsgType]) Start() error {
 }
 
 // Stop will attempt to stop the underlying worker pool, or return error.
-<<<<<<< HEAD:internal/concurrency/workers.go
 func (w *WorkerPool[MsgType]) Stop() error {
-	logrus.Info(w.prefix, "stopping")
-=======
-func (w *Worker[MsgType]) Stop() error {
 	logrus.Infof("%s stopping", w.prefix)
->>>>>>> upstream/main:internal/worker/workers.go
 
 	// Attempt to stop pool
 	if !w.workers.Stop() {
@@ -116,15 +92,10 @@ func (w *WorkerPool[MsgType]) SetProcessor(fn func(context.Context, MsgType) err
 }
 
 // Queue will queue provided message to be processed with there's a free worker.
-<<<<<<< HEAD:internal/concurrency/workers.go
 func (w *WorkerPool[MsgType]) Queue(msg MsgType) {
-	logrus.Tracef("%s queueing message: %+v", w.prefix, msg)
-=======
-func (w *Worker[MsgType]) Queue(msg MsgType) {
 	logrus.Tracef("%s queueing message (workers=%d queue=%d): %+v",
 		w.prefix, w.workers.Workers(), w.workers.Queue(), msg,
 	)
->>>>>>> upstream/main:internal/worker/workers.go
 	w.workers.Enqueue(func(ctx context.Context) {
 		if err := w.process(ctx, msg); err != nil {
 			logrus.Errorf("%s %v", w.prefix, err)
