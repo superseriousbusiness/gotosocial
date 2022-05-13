@@ -54,14 +54,13 @@ type Transport interface {
 
 // transport implements the Transport interface
 type transport struct {
-	controller   *controller
-	userAgent    string
-	pubKeyID     string
-	privkey      crypto.PrivateKey
-	getSigner    httpsig.Signer
-	getSignerMu  sync.Mutex
-	postSigner   httpsig.Signer
-	postSignerMu sync.Mutex
+	controller *controller
+	userAgent  string
+	pubKeyID   string
+	privkey    crypto.PrivateKey
+	getSigner  httpsig.Signer
+	postSigner httpsig.Signer
+	signerMu   sync.Mutex
 }
 
 // GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
@@ -70,8 +69,8 @@ func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error)
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
-		t.getSignerMu.Lock()
-		defer t.getSignerMu.Unlock()
+		t.signerMu.Lock()
+		defer t.signerMu.Unlock()
 		err := t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
 		return err
 	}, retryOn...)
@@ -83,8 +82,8 @@ func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Re
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
-		t.postSignerMu.Lock()
-		defer t.postSignerMu.Unlock()
+		t.signerMu.Lock()
+		defer t.signerMu.Unlock()
 		err := t.postSigner.SignRequest(t.privkey, t.pubKeyID, r, body)
 		return err
 	}, retryOn...)
