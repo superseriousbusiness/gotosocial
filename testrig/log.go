@@ -43,7 +43,7 @@ func InitTestSyslog() (*syslog.Server, chan format.LogParts, error) {
 	server.SetFormat(syslog.Automatic)
 	server.SetHandler(handler)
 
-	if err := server.ListenUDP("localhost:42069"); err != nil {
+	if err := server.ListenUDP("127.0.0.1:42069"); err != nil {
 		return nil, nil, err
 	}
 
