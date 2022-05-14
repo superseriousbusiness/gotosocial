@@ -72,7 +72,6 @@ func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmod
 		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
 	if attachment.Thumbnail.Path != "" {
@@ -81,7 +80,6 @@ func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmod
 		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
 	// delete the attachment entry completely
