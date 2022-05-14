@@ -140,53 +140,8 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 		return nil, err
 	}
 
-	// start remote cache cleanup cronjob if configured
-	cacheCleanupDays := viper.GetInt(config.Keys.MediaRemoteCacheDays)
-	if cacheCleanupDays != 0 {
-		// we need a way of cancelling running jobs if the media manager is told to stop
-		pruneCtx, pruneCancel := context.WithCancel(context.Background())
-
-		// create a new cron instance and add a function to it
-		c := cron.New(cron.WithLogger(&logrusWrapper{}))
-
-		pruneFunc := func() {
-			begin := time.Now()
-			pruned, err := m.PruneAllRemote(pruneCtx, cacheCleanupDays)
-			if err != nil {
-				logrus.Errorf("media manager: error pruning remote cache: %s", err)
-				return
-			}
-			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
-		}
-
-		// run every night
-		entryID, err := c.AddFunc("@midnight", pruneFunc)
-		if err != nil {
-			pruneCancel()
-			return nil, fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
-		}
-
-		// since we're running a cron job, we should define how the manager should stop them
-		m.stopCronJobs = func() error {
-			// try to stop any jobs gracefully by waiting til they're finished
-			cronCtx := c.Stop()
-
-			select {
-			case <-cronCtx.Done():
-				logrus.Infof("media manager: cron finished jobs and stopped gracefully")
-			case <-time.After(1 * time.Minute):
-				logrus.Infof("media manager: cron didn't stop after 60 seconds, will force close")
-				break
-			}
-
-			// whether the job is finished neatly or we had to wait a minute, cancel the context on the prune job
-			pruneCancel()
-			return nil
-		}
-
-		// now start all the cron stuff we've lined up
-		c.Start()
-		logrus.Infof("media manager: next scheduled remote cache cleanup is %q", c.Entry(entryID).Next)
+	if err := scheduleCleanupJobs(m); err != nil {
+		return nil, err
 	}
 
 	return m, nil
@@ -225,9 +180,7 @@ func (m *manager) Stop() error {
 	emojiErr := m.emojiWorker.Stop()
 
 	var cronErr error
-
 	if m.stopCronJobs != nil {
-		// only set if cache prune age > 0
 		cronErr = m.stopCronJobs()
 	}
 
@@ -236,5 +189,66 @@ func (m *manager) Stop() error {
 	} else if emojiErr != nil {
 		return emojiErr
 	}
+
 	return cronErr
+}
+
+func scheduleCleanupJobs(m *manager) error {
+	// create a new cron instance for scheduling cleanup jobs
+	c := cron.New(cron.WithLogger(&logrusWrapper{}))
+	cancels := []context.CancelFunc{}
+
+	pruneMetaCtx, pruneMetaCancel := context.WithCancel(context.Background())
+	cancels = append(cancels, pruneMetaCancel)
+
+	if _, err := c.AddFunc("@midnight", func() {
+		begin := time.Now()
+		pruned, err := m.PruneAllMeta(pruneMetaCtx)
+		if err != nil {
+			logrus.Errorf("media manager: error pruning meta: %s", err)
+			return
+		}
+		logrus.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
+	}); err != nil {
+		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
+	}
+
+	// start remote cache cleanup cronjob if configured
+	if mediaRemoteCacheDays := viper.GetInt(config.Keys.MediaRemoteCacheDays); mediaRemoteCacheDays > 0 {
+		pruneRemoteCtx, pruneRemoteCancel := context.WithCancel(context.Background())
+		cancels = append(cancels, pruneRemoteCancel)
+
+		if _, err := c.AddFunc("@midnight", func() {
+			begin := time.Now()
+			pruned, err := m.PruneAllRemote(pruneRemoteCtx, mediaRemoteCacheDays)
+			if err != nil {
+				logrus.Errorf("media manager: error pruning remote cache: %s", err)
+				return
+			}
+			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
+		}); err != nil {
+			return fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
+		}
+	}
+
+	// try to stop any jobs gracefully by waiting til they're finished
+	m.stopCronJobs = func() error {
+		cronCtx := c.Stop()
+
+		select {
+		case <-cronCtx.Done():
+			logrus.Infof("media manager: cron finished jobs and stopped gracefully")
+		case <-time.After(1 * time.Minute):
+			logrus.Infof("media manager: cron didn't stop after 60 seconds, will force close jobs")
+			break
+		}
+
+		for _, cancelFunc := range cancels {
+			cancelFunc()
+		}
+		return nil
+	}
+
+	c.Start()
+	return nil
 }
