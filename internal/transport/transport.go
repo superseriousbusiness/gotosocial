@@ -140,10 +140,15 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 		l.Errorf("backing off for %s after http request error: %v", backoff.String(), err)
 
+		select {
+		// Request ctx cancelled
+		case <-r.Context().Done():
+			return nil, r.Context().Err()
+
 		// Backoff for some time
-		time.Sleep(backoff)
-		backoff *= 2
-		continue
+		case <-time.After(backoff):
+			backoff *= 2
+		}
 	}
 
 	return nil, errors.New("transport reached max retries")
