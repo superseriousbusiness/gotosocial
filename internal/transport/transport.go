@@ -64,7 +64,7 @@ type transport struct {
 
 // GET will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
 func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error) {
-	if r.Method != "GET" {
+	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
@@ -77,7 +77,7 @@ func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error)
 
 // POST will perform given http request using transport client, retrying on certain preset errors, or if status code is among retryOn.
 func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Response, error) {
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
