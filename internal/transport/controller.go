@@ -168,7 +168,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	return transport, nil
 }
 
-// dereferenceFollowersShortcut is a shortcut to dereference followers of an
+// dereferenceLocalFollowers is a shortcut to dereference followers of an
 // account on this instance, without making any external api/http calls.
 //
 // It is passed to new transports, and should only be invoked when the iri.Host == this host.
@@ -186,7 +186,7 @@ func (c *controller) dereferenceLocalFollowers(ctx context.Context, iri *url.URL
 	return json.Marshal(i)
 }
 
-// dereferenceUserShortcut is a shortcut to dereference followers an account on
+// dereferenceLocalUser is a shortcut to dereference followers an account on
 // this instance, without making any external api/http calls.
 //
 // It is passed to new transports, and should only be invoked when the iri.Host == this host.
