@@ -41,7 +41,7 @@ type Processor interface {
 	DomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 	AccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode
 	EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
-	MediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 }
 
 type processor struct {
