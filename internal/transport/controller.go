@@ -72,7 +72,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		clock:     clock,
 		client:    client,
 		cache:     cache.New[string, *transport](),
-		userAgent: fmt.Sprintf("%s %s gofed/activity gotosocial-%s", applicationName, host, build.Main.Version),
+		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, build.Main.Version),
 	}
 
 	// Transport cache has TTL=1hr freq=1m
