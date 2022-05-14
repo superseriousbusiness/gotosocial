@@ -94,7 +94,7 @@ func (r *router) Start() {
 		go func() {
 			// Take our own copy of HTTP server
 			// with updated autocert manager endpoint
-			srv := (*r.srv)
+			srv := (*r.srv) //nolint
 			srv.Handler = r.certManager.HTTPHandler(redirect)
 			srv.Addr = fmt.Sprintf("%s:%d",
 				viper.GetString(keys.BindAddress),
