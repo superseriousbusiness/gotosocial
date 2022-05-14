@@ -57,6 +57,8 @@ type transport struct {
 	controller *controller
 	pubKeyID   string
 	privkey    crypto.PrivateKey
+
+	signerExp  time.Time
 	getSigner  httpsig.Signer
 	postSigner httpsig.Signer
 	signerMu   sync.Mutex
@@ -68,10 +70,7 @@ func (t *transport) GET(r *http.Request, retryOn ...int) (*http.Response, error)
 		return nil, errors.New("must be GET request")
 	}
 	return t.do(r, func(r *http.Request) error {
-		t.signerMu.Lock()
-		defer t.signerMu.Unlock()
-		err := t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
-		return err
+		return t.signGET(r)
 	}, retryOn...)
 }
 
@@ -81,10 +80,7 @@ func (t *transport) POST(r *http.Request, body []byte, retryOn ...int) (*http.Re
 		return nil, errors.New("must be POST request")
 	}
 	return t.do(r, func(r *http.Request) error {
-		t.signerMu.Lock()
-		defer t.signerMu.Unlock()
-		err := t.postSigner.SignRequest(t.privkey, t.pubKeyID, r, body)
-		return err
+		return t.signPOST(r, body)
 	}, retryOn...)
 }
 
@@ -152,6 +148,42 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 	}
 
 	return nil, errors.New("transport reached max retries")
+}
+
+// signGET will safely sign an HTTP GET request.
+func (t *transport) signGET(r *http.Request) (err error) {
+	t.safesign(func() {
+		err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
+	})
+	return
+}
+
+// signPOST will safely sign an HTTP POST request for given body.
+func (t *transport) signPOST(r *http.Request, body []byte) (err error) {
+	t.safesign(func() {
+		err = t.postSigner.SignRequest(t.privkey, t.pubKeyID, r, body)
+	})
+	return
+}
+
+// safesign will perform sign function within mutex protection,
+// and ensured that httpsig.Signers are up-to-date.
+func (t *transport) safesign(sign func()) {
+	// Perform within mu safety
+	t.signerMu.Lock()
+	defer t.signerMu.Unlock()
+
+	if now := time.Now(); now.After(t.signerExp) {
+		const expiry = 120
+
+		// Signers have expired and require renewal
+		t.getSigner, _ = NewGETSigner(expiry)
+		t.postSigner, _ = NewPOSTSigner(expiry)
+		t.signerExp = now.Add(time.Second * expiry)
+	}
+
+	// Perform signing
+	sign()
 }
 
 // containsInt checks if slice contains check.

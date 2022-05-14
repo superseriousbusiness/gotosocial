@@ -30,7 +30,6 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v2"
-	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
@@ -84,14 +83,6 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 	return c
 }
 
-var (
-	// http signer preferences
-	prefs       = []httpsig.Algorithm{httpsig.RSA_SHA256}
-	digestAlgo  = httpsig.DigestSha256
-	getHeaders  = []string{httpsig.RequestTarget, "host", "date"}
-	postHeaders = []string{httpsig.RequestTarget, "host", "date", "digest"}
-)
-
 func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Transport, error) {
 	// Generate public key string for cache key
 	//
@@ -107,25 +98,11 @@ func (c *controller) NewTransport(pubKeyID string, privkey *rsa.PrivateKey) (Tra
 		return transp, nil
 	}
 
-	// Create new HTTP GET signer for our prefs and algorithm
-	getSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, getHeaders, httpsig.Signature, 120)
-	if err != nil {
-		return nil, fmt.Errorf("error creating get signer: %s", err)
-	}
-
-	// Create new HTTP POST signer for our prefs and algorithm
-	postSigner, _, err := httpsig.NewSigner(prefs, digestAlgo, postHeaders, httpsig.Signature, 120)
-	if err != nil {
-		return nil, fmt.Errorf("error creating post signer: %s", err)
-	}
-
 	// Create the transport
 	transp = &transport{
 		controller: c,
 		pubKeyID:   pubKeyID,
 		privkey:    privkey,
-		getSigner:  getSigner,
-		postSigner: postSigner,
 	}
 
 	// Cache this transport under pubkey
