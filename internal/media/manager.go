@@ -32,6 +32,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
+// selectPruneLimit is the amount of media entries to select at a time from the db when pruning
+const selectPruneLimit = 20
+
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
 	// ProcessMedia begins the process of decoding and storing the given data as an attachment.
@@ -66,10 +69,13 @@ type Manager interface {
 	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
-	// PruneRemote prunes all remote media cached on this instance that's older than the given amount of days.
+
+	// PruneAllRemote prunes all remote media attachments cached on this instance which are older than the given amount of days.
 	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
 	// and setting 'cached' to false on the associated attachment.
-	PruneRemote(ctx context.Context, olderThanDays int) (int, error)
+	//
+	// The returned int is the amount of media that was pruned by this function.
+	PruneAllRemote(ctx context.Context, olderThanDays int) (int, error)
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
 	// It will block until workers are finished processing.
@@ -139,7 +145,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 
 		pruneFunc := func() {
 			begin := time.Now()
-			pruned, err := m.PruneRemote(pruneCtx, cacheCleanupDays)
+			pruned, err := m.PruneAllRemote(pruneCtx, cacheCleanupDays)
 			if err != nil {
 				logrus.Errorf("media manager: error pruning remote cache: %s", err)
 				return

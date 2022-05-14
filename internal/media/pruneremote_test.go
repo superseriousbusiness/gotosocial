@@ -37,7 +37,7 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(testAttachment.Cached)
 
-	totalPruned, err := suite.manager.PruneRemote(context.Background(), 1)
+	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
@@ -49,12 +49,12 @@ func (suite *PruneRemoteTestSuite) TestPruneRemote() {
 }
 
 func (suite *PruneRemoteTestSuite) TestPruneRemoteTwice() {
-	totalPruned, err := suite.manager.PruneRemote(context.Background(), 1)
+	totalPruned, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
 	// final prune should prune nothing, since the first prune already happened
-	totalPrunedAgain, err := suite.manager.PruneRemote(context.Background(), 1)
+	totalPrunedAgain, err := suite.manager.PruneAllRemote(context.Background(), 1)
 	suite.NoError(err)
 	suite.Equal(0, totalPrunedAgain)
 }
@@ -63,7 +63,7 @@ func (suite *PruneRemoteTestSuite) TestPruneAndRecache() {
 	ctx := context.Background()
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
-	totalPruned, err := suite.manager.PruneRemote(ctx, 1)
+	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 
@@ -116,7 +116,7 @@ func (suite *PruneRemoteTestSuite) TestPruneOneNonExistent() {
 	suite.NoError(err)
 
 	// Now attempt to prune remote for item with db entry no file
-	totalPruned, err := suite.manager.PruneRemote(ctx, 1)
+	totalPruned, err := suite.manager.PruneAllRemote(ctx, 1)
 	suite.NoError(err)
 	suite.Equal(1, totalPruned)
 }

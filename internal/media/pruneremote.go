@@ -29,10 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// amount of media attachments to select at a time from the db when pruning
-const selectPruneLimit = 20
-
-func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, error) {
+func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
 	var totalPruned int
 
 	// convert days into a duration string
@@ -56,7 +53,7 @@ func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, erro
 
 		// prune each attachment
 		for _, attachment := range attachments {
-			if err := m.PruneOne(ctx, attachment); err != nil {
+			if err := m.pruneOneRemote(ctx, attachment); err != nil {
 				return totalPruned, err
 			}
 			totalPruned++
@@ -72,7 +69,7 @@ func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, erro
 	return totalPruned, nil
 }
 
-func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
 		logrus.Tracef("PruneOne: deleting %s", attachment.File.Path)
