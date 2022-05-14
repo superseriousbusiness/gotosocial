@@ -43,6 +43,14 @@ func (suite *MediaTestSuite) TestGetOlder() {
 	suite.Len(attachments, 1)
 }
 
+func (suite *MediaTestSuite) TestGetAvisAndHeaders() {
+	ctx := context.Background()
+
+	attachments, err := suite.db.GetAvatarsAndHeaders(ctx, "", 20)
+	suite.NoError(err)
+	suite.Len(attachments, 2)
+}
+
 func TestMediaTestSuite(t *testing.T) {
 	suite.Run(t, new(MediaTestSuite))
 }
