@@ -51,8 +51,8 @@ func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
 				if err := m.pruneOneAvatarOrHeader(ctx, attachment); err != nil {
 					return totalPruned, err
 				}
+				totalPruned++
 			}
-			totalPruned++
 		}
 	}
 
