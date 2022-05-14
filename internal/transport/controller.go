@@ -27,8 +27,8 @@ import (
 	"net/url"
 	"runtime/debug"
 	"time"
-	"unsafe"
 
+	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
@@ -207,5 +207,5 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) ([]
 // privkeyToPublicStr will create a string representation of RSA public key from private.
 func privkeyToPublicStr(privkey *rsa.PrivateKey) string {
 	b := x509.MarshalPKCS1PublicKey(&privkey.PublicKey)
-	return *(*string)(unsafe.Pointer(&b))
+	return byteutil.B2S(b)
 }
