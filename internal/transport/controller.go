@@ -25,13 +25,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"runtime/debug"
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -59,11 +57,9 @@ type controller struct {
 
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
-	applicationName := viper.GetString(config.Keys.ApplicationName)
-	host := viper.GetString(config.Keys.Host)
-
-	// Determine build information
-	build, _ := debug.ReadBuildInfo()
+	applicationName := config.GetApplicationName()
+	host := config.GetHost()
+	version := config.GetSoftwareVersion()
 
 	c := &controller{
 		db:        db,
@@ -71,7 +67,7 @@ func NewController(db db.DB, federatingDB federatingdb.DB, clock pub.Clock, clie
 		clock:     clock,
 		client:    client,
 		cache:     cache.New[string, *transport](),
-		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, build.Main.Version),
+		userAgent: fmt.Sprintf("%s; %s (gofed/activity gotosocial-%s)", applicationName, host, version),
 	}
 
 	// Transport cache has TTL=1hr freq=1m
@@ -128,7 +124,7 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	// Otherwise, we can take the instance account and use those credentials to make the request.
 	var u string
 	if username == "" {
-		u = viper.GetString(config.Keys.Host)
+		u = config.GetHost()
 	} else {
 		u = username
 	}

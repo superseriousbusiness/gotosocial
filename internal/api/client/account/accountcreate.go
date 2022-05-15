@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -123,9 +122,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 // validateCreateAccount checks through all the necessary prerequisites for creating a new account,
 // according to the provided account create request. If the account isn't eligible, an error will be returned.
 func validateCreateAccount(form *model.AccountCreateRequest) error {
-	keys := config.Keys
-
-	if !viper.GetBool(keys.AccountsRegistrationOpen) {
+	if !config.GetAccountsRegistrationOpen() {
 		return errors.New("registration is not open for this server")
 	}
 
@@ -149,7 +146,7 @@ func validateCreateAccount(form *model.AccountCreateRequest) error {
 		return err
 	}
 
-	if err := validate.SignUpReason(form.Reason, viper.GetBool(keys.AccountsReasonRequired)); err != nil {
+	if err := validate.SignUpReason(form.Reason, config.GetAccountsReasonRequired()); err != nil {
 		return err
 	}
 

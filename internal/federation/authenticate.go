@@ -29,7 +29,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/activity/pub"
@@ -168,8 +167,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	requestingRemoteAccount := &gtsmodel.Account{}
 	requestingLocalAccount := &gtsmodel.Account{}
 	requestingHost := requestingPublicKeyID.Host
-	host := viper.GetString(config.Keys.Host)
-	if strings.EqualFold(requestingHost, host) {
+	if host := config.GetHost(); strings.EqualFold(requestingHost, host) {
 		// LOCAL ACCOUNT REQUEST
 		// the request is coming from INSIDE THE HOUSE so skip the remote dereferencing
 		l.Tracef("proceeding without dereference for local public key %s", requestingPublicKeyID)

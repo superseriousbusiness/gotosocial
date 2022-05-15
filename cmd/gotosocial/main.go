@@ -24,9 +24,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
 	_ "github.com/superseriousbusiness/gotosocial/docs"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -59,8 +57,10 @@ func main() {
 		versionString = fmt.Sprintf("%s %s %s [%s]", Version, commit, time, goVersion)
 	}
 
-	// override software version in viper store
-	viper.Set(config.Keys.SoftwareVersion, versionString)
+	// override software version in config store
+	config.Config(func(cfg *config.Configuration) {
+		cfg.SoftwareVersion = versionString
+	})
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
@@ -73,10 +73,10 @@ func main() {
 	}
 
 	// attach global flags to the root command so that they can be accessed from any subcommand
-	flag.Global(rootCmd, config.Defaults)
+	config.AddGlobalFlags(rootCmd)
 
-	// bind the config-path flag to viper early so that we can call it in the pre-run of following commands
-	if err := viper.BindPFlag(config.Keys.ConfigPath, rootCmd.PersistentFlags().Lookup(config.Keys.ConfigPath)); err != nil {
+	// bind the config-path flag early so that we can call it in the pre-run of following commands
+	if err := config.BindConfigPath(rootCmd); err != nil {
 		logrus.Fatalf("error attaching config flag: %s", err)
 	}
 

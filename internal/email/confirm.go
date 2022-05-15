@@ -23,7 +23,6 @@ import (
 	"net/smtp"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -43,7 +42,7 @@ func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {
 	if err != nil {
 		return err
 	}
-	logrus.WithField("func", "SendConfirmEmail").Trace(s.hostAddress + "\n" + viper.GetString(config.Keys.SMTPUsername) + ":password" + "\n" + s.from + "\n" + toAddress + "\n\n" + string(msg) + "\n")
+	logrus.WithField("func", "SendConfirmEmail").Trace(s.hostAddress + "\n" + config.GetSMTPUsername() + ":password" + "\n" + s.from + "\n" + toAddress + "\n\n" + string(msg) + "\n")
 	return smtp.SendMail(s.hostAddress, s.auth, s.from, []string{toAddress}, msg)
 }
 

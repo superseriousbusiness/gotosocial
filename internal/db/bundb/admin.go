@@ -30,7 +30,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -178,7 +177,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 }
 
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
-	username := viper.GetString(config.Keys.Host)
+	username := config.GetHost()
 
 	q := a.conn.
 		NewSelect().
@@ -237,8 +236,8 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 }
 
 func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 
 	// check if instance entry already exists
 	q := a.conn.

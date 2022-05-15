@@ -23,7 +23,6 @@ import (
 	"net/smtp"
 	"text/template"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -38,19 +37,17 @@ type Sender interface {
 
 // NewSender returns a new email Sender interface with the given configuration, or an error if something goes wrong.
 func NewSender() (Sender, error) {
-	keys := config.Keys
-
-	templateBaseDir := viper.GetString(keys.WebTemplateBaseDir)
+	templateBaseDir := config.GetWebTemplateBaseDir()
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
 		return nil, err
 	}
 
-	username := viper.GetString(keys.SMTPUsername)
-	password := viper.GetString(keys.SMTPPassword)
-	host := viper.GetString(keys.SMTPHost)
-	port := viper.GetInt(keys.SMTPPort)
-	from := viper.GetString(keys.SMTPFrom)
+	username := config.GetSMTPUsername()
+	password := config.GetSMTPPassword()
+	host := config.GetSMTPHost()
+	port := config.GetSMTPPort()
+	from := config.GetSMTPFrom()
 
 	return &sender{
 		hostAddress: fmt.Sprintf("%s:%d", host, port),

@@ -24,7 +24,6 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -44,8 +43,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	l.Debug("entering Owns")
 
 	// if the id host isn't this instance host, we don't own this IRI
-	host := viper.GetString(config.Keys.Host)
-	if id.Host != host {
+	if host := config.GetHost(); id.Host != host {
 		l.Tracef("we DO NOT own activity because the host is %s not %s", id.Host, host)
 		return false, nil
 	}

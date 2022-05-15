@@ -26,7 +26,6 @@ import (
 	"runtime"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -38,7 +37,9 @@ import (
 // value as the template base directory instead.
 func NewTestRouter(db db.DB) router.Router {
 	if alternativeTemplateBaseDir := os.Getenv("GTS_WEB_TEMPLATE_BASE_DIR"); alternativeTemplateBaseDir != "" {
-		viper.Set(config.Keys.WebTemplateBaseDir, alternativeTemplateBaseDir)
+		config.Config(func(cfg *config.Configuration) {
+			cfg.WebTemplateBaseDir = alternativeTemplateBaseDir
+		})
 	}
 
 	r, err := router.New(context.Background(), db)
@@ -52,7 +53,7 @@ func NewTestRouter(db db.DB) router.Router {
 func ConfigureTemplatesWithGin(engine *gin.Engine) {
 	router.LoadTemplateFunctions(engine)
 
-	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
+	templateBaseDir := config.GetWebTemplateBaseDir()
 
 	if !filepath.IsAbs(templateBaseDir) {
 		// https://stackoverflow.com/questions/31873396/is-it-possible-to-get-the-current-root-of-package-structure-as-a-string-in-golan

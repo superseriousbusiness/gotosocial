@@ -27,7 +27,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -54,9 +53,9 @@ type Module struct {
 
 // New returns a new api.ClientModule for web pages.
 func New(processor processing.Processor) (api.ClientModule, error) {
-	assetsBaseDir := viper.GetString(config.Keys.WebAssetBaseDir)
+	assetsBaseDir := config.GetWebAssetBaseDir()
 	if assetsBaseDir == "" {
-		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebAssetBaseDir)
+		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Name("WebAssetBaseDir"))
 	}
 
 	assetsPath, err := filepath.Abs(assetsBaseDir)
@@ -106,7 +105,7 @@ func (m *Module) baseHandler(c *gin.Context) {
 	l := logrus.WithField("func", "BaseGETHandler")
 	l.Trace("serving index html")
 
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)
@@ -124,7 +123,7 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	l := logrus.WithField("func", "404")
 	l.Trace("serving 404 html")
 
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)

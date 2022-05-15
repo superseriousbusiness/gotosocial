@@ -35,7 +35,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -119,7 +118,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 func NewBunDBService(ctx context.Context) (db.DB, error) {
 	var conn *DBConn
 	var err error
-	dbType := strings.ToLower(viper.GetString(config.Keys.DbType))
+	dbType := strings.ToLower(config.GetDbType())
 
 	switch dbType {
 	case dbTypePostgres:
@@ -138,7 +137,7 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 
 	// add a hook to log queries and the time they take
 	// only do this for logging where performance isn't 1st concern
-	if logrus.GetLevel() >= logrus.DebugLevel && viper.GetBool(config.Keys.LogDbQueries) {
+	if logrus.GetLevel() >= logrus.DebugLevel && config.GetLogDbQueries() {
 		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 
@@ -205,9 +204,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 
 func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// validate db address has actually been set
-	dbAddress := viper.GetString(config.Keys.DbAddress)
+	dbAddress := config.GetDbAddress()
 	if dbAddress == "" {
-		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.Keys.DbAddress)
+		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.Name("DbAddress"))
 	}
 
 	// Drop anything fancy from DB address
@@ -278,26 +277,24 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	keys := config.Keys
-
-	if strings.ToUpper(viper.GetString(keys.DbType)) != db.DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, viper.GetString(keys.DbType))
+	if strings.ToUpper(config.GetDbType()) != db.DBTypePostgres {
+		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, config.Name("DbType"))
 	}
 
 	// these are all optional, the db adapter figures out defaults
-	port := viper.GetInt(keys.DbPort)
-	address := viper.GetString(keys.DbAddress)
-	username := viper.GetString(keys.DbUser)
-	password := viper.GetString(keys.DbPassword)
+	port := config.GetDbPort()
+	address := config.GetDbAddress()
+	username := config.GetDbUser()
+	password := config.GetDbPassword()
 
 	// validate database
-	database := viper.GetString(keys.DbDatabase)
+	database := config.GetDbDatabase()
 	if database == "" {
 		return nil, errors.New("no database set")
 	}
 
 	var tlsConfig *tls.Config
-	tlsMode := viper.GetString(keys.DbTLSMode)
+	tlsMode := config.GetDbTLSMode()
 	switch tlsMode {
 	case dbTLSModeDisable, dbTLSModeUnset:
 		break // nothing to do
@@ -309,12 +306,12 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	case dbTLSModeRequire:
 		tlsConfig = &tls.Config{
 			InsecureSkipVerify: false,
-			ServerName:         viper.GetString(keys.DbAddress),
+			ServerName:         address,
 			MinVersion:         tls.VersionTLS12,
 		}
 	}
 
-	caCertPath := viper.GetString(keys.DbTLSCACert)
+	caCertPath := config.GetDbTLSCACert()
 	if tlsConfig != nil && caCertPath != "" {
 		// load the system cert pool first -- we'll append the given CA cert to this
 		certPool, err := x509.SystemCertPool()
@@ -366,7 +363,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	}
 	cfg.Database = database
 	cfg.PreferSimpleProtocol = true
-	cfg.RuntimeParams["application_name"] = viper.GetString(keys.ApplicationName)
+	cfg.RuntimeParams["application_name"] = config.GetApplicationName()
 
 	return cfg, nil
 }
@@ -383,8 +380,8 @@ func tweakConnectionValues(sqldb *sql.DB) {
 */
 
 func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 
 	newTags := []*gtsmodel.Tag{}
 	for _, t := range tags {

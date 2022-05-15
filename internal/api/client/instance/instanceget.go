@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 
@@ -41,7 +40,7 @@ func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 		return
 	}
 
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 
 	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
 	if err != nil {

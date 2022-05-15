@@ -24,7 +24,6 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -45,8 +44,7 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 	l.Debug("entering DereferenceThread")
 
 	// if it's our status we already have everything stashed so we can bail early
-	host := viper.GetString(config.Keys.Host)
-	if statusIRI.Host == host {
+	if statusIRI.Host == config.GetHost() {
 		l.Debug("iri belongs to us, bailing")
 		return nil
 	}
@@ -80,8 +78,7 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 	l.Debug("entering iterateAncestors")
 
 	// if it's our status we don't need to dereference anything so we can immediately move up the chain
-	host := viper.GetString(config.Keys.Host)
-	if statusIRI.Host == host {
+	if statusIRI.Host == config.GetHost() {
 		l.Debug("iri belongs to us, moving up to next ancestor")
 
 		// since this is our status, we know we can extract the id from the status path
@@ -133,8 +130,7 @@ func (d *deref) iterateDescendants(ctx context.Context, username string, statusI
 	l.Debug("entering iterateDescendants")
 
 	// if it's our status we already have descendants stashed so we can bail early
-	host := viper.GetString(config.Keys.Host)
-	if statusIRI.Host == host {
+	if statusIRI.Host == config.GetHost() {
 		l.Debug("iri belongs to us, bailing")
 		return nil
 	}
@@ -210,8 +206,7 @@ pageLoop:
 				continue
 			}
 
-			host := viper.GetString(config.Keys.Host)
-			if itemURI.Host == host {
+			if itemURI.Host == config.GetHost() {
 				// skip if the reply is from us -- we already have it then
 				continue
 			}

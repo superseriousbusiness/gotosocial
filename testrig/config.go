@@ -19,45 +19,19 @@
 package testrig
 
 import (
-	"reflect"
-
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// InitTestConfig resets + initializes the viper configuration with test defaults.
+// InitTestConfig initializes viper configuration with test defaults.
 func InitTestConfig() {
-	// reset viper to an empty state
-	viper.Reset()
-
-	// get the field names of config.Keys
-	keyFields := reflect.VisibleFields(reflect.TypeOf(config.Keys))
-
-	// get the field values of config.Keys
-	keyValues := reflect.ValueOf(config.Keys)
-
-	// get the field values of TestDefaults
-	testDefaults := reflect.ValueOf(TestDefaults)
-
-	// for each config field...
-	for _, field := range keyFields {
-		// the viper config key should be the value of the key
-		key, ok := keyValues.FieldByName(field.Name).Interface().(string)
-		if !ok {
-			panic("could not convert config.Keys value to string")
-		}
-
-		// the value should be the test default corresponding to the given fieldName
-		value := testDefaults.FieldByName(field.Name).Interface()
-
-		// actually set the value in viper -- this will override everything
-		viper.Set(key, value)
-	}
+	config.Config(func(cfg *config.Configuration) {
+		*cfg = TestDefaults
+	})
 }
 
 // TestDefaults returns a Values struct with values set that are suitable for local testing.
-var TestDefaults = config.Values{
+var TestDefaults = config.Configuration{
 	LogLevel:        "trace",
 	LogDbQueries:    true,
 	ApplicationName: "gotosocial",

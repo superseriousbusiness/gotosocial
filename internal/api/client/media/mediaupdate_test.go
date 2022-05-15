@@ -31,7 +31,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -188,7 +187,9 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 
 func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	// set the min description length
-	viper.Set(config.Keys.MediaDescriptionMinChars, 50)
+	config.Config(func(cfg *config.Configuration) {
+		cfg.MediaDescriptionMinChars = 50
+	})
 
 	toUpdate := suite.testAttachments["local_account_1_unattached_1"]
 

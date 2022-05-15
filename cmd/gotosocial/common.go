@@ -36,12 +36,12 @@ import (
 // of the config file from the viper store so that it can be picked up by either
 // env vars or cli flag.
 func preRun(cmd *cobra.Command) error {
-	if err := config.InitViper(cmd.Flags()); err != nil {
-		return fmt.Errorf("error initializing viper: %s", err)
+	if err := config.BindFlags(cmd); err != nil {
+		return fmt.Errorf("error binding config flags: %s", err)
 	}
 
-	if err := config.ReadFromFile(); err != nil {
-		return fmt.Errorf("error initializing config: %s", err)
+	if err := config.Reload(); err != nil {
+		return fmt.Errorf("error reloading config: %s", err)
 	}
 
 	return nil

@@ -26,7 +26,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -45,9 +44,12 @@ type SyslogTestSuite struct {
 func (suite *SyslogTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.SyslogEnabled, true)
-	viper.Set(config.Keys.SyslogProtocol, "udp")
-	viper.Set(config.Keys.SyslogAddress, "127.0.0.1:42069")
+	config.Config(func(cfg *config.Configuration) {
+		cfg.SyslogEnabled = true
+		cfg.SyslogProtocol = "udp"
+		cfg.SyslogAddress = "127.0.0.1:42069"
+	})
+
 	server, channel, err := testrig.InitTestSyslog()
 	if err != nil {
 		panic(err)
@@ -93,9 +95,12 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 	syslogServer := server
 	syslogChannel := channel
 
-	viper.Set(config.Keys.SyslogEnabled, true)
-	viper.Set(config.Keys.SyslogProtocol, "unixgram")
-	viper.Set(config.Keys.SyslogAddress, socketPath)
+	config.Config(func(cfg *config.Configuration) {
+		cfg.SyslogEnabled = true
+		cfg.SyslogProtocol = "unixgram"
+		cfg.SyslogAddress = socketPath
+	})
+
 	testrig.InitTestLog()
 
 	logrus.Warn(longMessage)

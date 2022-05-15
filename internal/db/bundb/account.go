@@ -25,7 +25,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -133,9 +132,8 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 			Where("account.username = ?", domain).
 			Where("account.domain = ?", domain)
 	} else {
-		host := viper.GetString(config.Keys.Host)
 		q = q.
-			Where("account.username = ?", host).
+			Where("account.username = ?", config.GetHost()).
 			WhereGroup(" AND ", whereEmptyOrNull("domain"))
 	}
 

@@ -26,7 +26,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -129,8 +128,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	}
 
 	// start remote cache cleanup cronjob if configured
-	cacheCleanupDays := viper.GetInt(config.Keys.MediaRemoteCacheDays)
-	if cacheCleanupDays != 0 {
+	if days := config.GetMediaRemoteCacheDays(); days != 0 {
 		// we need a way of cancelling running jobs if the media manager is told to stop
 		pruneCtx, pruneCancel := context.WithCancel(context.Background())
 
@@ -139,7 +137,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 
 		pruneFunc := func() {
 			begin := time.Now()
-			pruned, err := m.PruneRemote(pruneCtx, cacheCleanupDays)
+			pruned, err := m.PruneRemote(pruneCtx, days)
 			if err != nil {
 				logrus.Errorf("media manager: error pruning remote cache: %s", err)
 				return

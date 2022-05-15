@@ -26,7 +26,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -48,12 +47,9 @@ func Initialize() error {
 		FullTimestamp: true,
 	})
 
-	keys := config.Keys
-
 	// check if a desired log level has been set
-	logLevel := viper.GetString(keys.LogLevel)
-	if logLevel != "" {
-		level, err := logrus.ParseLevel(logLevel)
+	if lvl := config.GetLogLevel(); lvl != "" {
+		level, err := logrus.ParseLevel(lvl)
 		if err != nil {
 			return err
 		}
@@ -65,9 +61,9 @@ func Initialize() error {
 	}
 
 	// check if syslog has been enabled, and configure it if so
-	if syslogEnabled := viper.GetBool(keys.SyslogEnabled); syslogEnabled {
-		protocol := viper.GetString(keys.SyslogProtocol)
-		address := viper.GetString(keys.SyslogAddress)
+	if config.GetSyslogEnabled() {
+		protocol := config.GetSyslogProtocol()
+		address := config.GetSyslogAddress()
 
 		hook, err := lSyslog.NewSyslogHook(protocol, address, syslog.LOG_INFO, "")
 		if err != nil {

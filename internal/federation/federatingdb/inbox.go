@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -80,7 +79,7 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs []*url.URL, err error) {
 	// check if this is a followers collection iri for a local account...
-	if iri.Host == viper.GetString(config.Keys.Host) && uris.IsFollowersPath(iri) {
+	if iri.Host == config.GetHost() && uris.IsFollowersPath(iri) {
 		localAccountUsername, err := uris.ParseFollowersPath(iri)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't extract local account username from uri %s: %s", iri, err)

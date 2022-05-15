@@ -26,7 +26,6 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
@@ -108,8 +107,8 @@ func (suite *AdminStandardTestSuite) newContext(recorder *httptest.ResponseRecor
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["admin_account"])
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
 
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)

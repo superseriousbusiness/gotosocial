@@ -29,7 +29,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
@@ -107,7 +106,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	typeConverter := typeutils.NewConverter(dbService)
 
 	// Open the storage backend
-	storageBasePath := viper.GetString(config.Keys.StorageLocalBasePath)
+	storageBasePath := config.GetStorageLocalBasePath()
 	storage, err := kv.OpenFile(storageBasePath, &storage.DiskConfig{
 		// Put the store lockfile in the storage dir itself.
 		// Normally this would not be safe, since we could end up
@@ -134,8 +133,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
 	var emailSender email.Sender
-	smtpHost := viper.GetString(config.Keys.SMTPHost)
-	if smtpHost != "" {
+	if smtpHost := config.GetSMTPHost(); smtpHost != "" {
 		// host is defined so create a proper sender
 		emailSender, err = email.NewSender()
 		if err != nil {
@@ -239,7 +237,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// perform initial media prune in case value of MediaRemoteCacheDays changed
-	if err := processor.AdminMediaRemotePrune(ctx, viper.GetInt(config.Keys.MediaRemoteCacheDays)); err != nil {
+	if err := processor.AdminMediaRemotePrune(ctx, config.GetMediaRemoteCacheDays()); err != nil {
 		return fmt.Errorf("error during initial media prune: %s", err)
 	}
 

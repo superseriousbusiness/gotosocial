@@ -33,7 +33,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -261,7 +260,9 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 
 func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	// set the min description length
-	viper.Set(config.Keys.MediaDescriptionMinChars, 500)
+	config.Config(func(cfg *config.Configuration) {
+		cfg.MediaDescriptionMinChars = 500
+	})
 
 	// set up the context for the request
 	t := suite.testTokens["local_account_1"]

@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -64,8 +63,8 @@ func (p *processor) packageBlocksResponse(accounts []*apimodel.Account, path str
 
 	// prepare the next and previous links
 	if len(accounts) != 0 {
-		protocol := viper.GetString(config.Keys.Protocol)
-		host := viper.GetString(config.Keys.Host)
+		protocol := config.GetProtocol()
+		host := config.GetHost()
 
 		nextLink := &url.URL{
 			Scheme:   protocol,

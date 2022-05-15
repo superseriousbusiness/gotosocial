@@ -22,7 +22,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -41,7 +40,9 @@ func (suite *BundbNewTestSuite) TestCreateNewDB() {
 
 func (suite *BundbNewTestSuite) TestCreateNewSqliteDBNoAddress() {
 	// create a new db with no address specified
-	viper.Set(config.Keys.DbAddress, "")
+	config.Config(func(cfg *config.Configuration) {
+		cfg.DbAddress = ""
+	})
 	db, err := bundb.NewBunDBService(context.Background())
 	suite.EqualError(err, "'db-address' was not set when attempting to start sqlite")
 	suite.Nil(db)

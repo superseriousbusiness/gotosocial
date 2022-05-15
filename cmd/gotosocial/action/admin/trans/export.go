@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -39,7 +38,7 @@ var Export action.GTSAction = func(ctx context.Context) error {
 
 	exporter := trans.NewExporter(dbConn)
 
-	path := viper.GetString(config.Keys.AdminTransPath)
+	path := config.GetAdminTransPath()
 	if path == "" {
 		return errors.New("no path set")
 	}

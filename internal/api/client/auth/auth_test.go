@@ -26,7 +26,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -96,8 +95,8 @@ func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath
 	testrig.ConfigureTemplatesWithGin(engine)
 
 	// create the request
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 	baseURI := fmt.Sprintf("%s://%s", protocol, host)
 	requestURI := fmt.Sprintf("%s/%s", baseURI, requestPath)
 	ctx.Request = httptest.NewRequest(requestMethod, requestURI, nil) // the endpoint we're hitting

@@ -24,7 +24,6 @@ import (
 	"strconv"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -69,11 +68,15 @@ var testModels = []interface{}{
 // value as the port instead.
 func NewTestDB() db.DB {
 	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
-		viper.Set(config.Keys.DbAddress, alternateAddress)
+		config.Config(func(cfg *config.Configuration) {
+			cfg.DbAddress = alternateAddress
+		})
 	}
 
 	if alternateDBType := os.Getenv("GTS_DB_TYPE"); alternateDBType != "" {
-		viper.Set(config.Keys.DbType, alternateDBType)
+		config.Config(func(cfg *config.Configuration) {
+			cfg.DbType = alternateDBType
+		})
 	}
 
 	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
@@ -81,7 +84,9 @@ func NewTestDB() db.DB {
 		if err != nil {
 			panic(err)
 		}
-		viper.Set(config.Keys.DbPort, port)
+		config.Config(func(cfg *config.Configuration) {
+			cfg.DbPort = int(port)
+		})
 	}
 
 	testDB, err := bundb.NewBunDBService(context.Background())

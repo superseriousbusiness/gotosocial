@@ -28,7 +28,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"golang.org/x/net/idna"
@@ -38,19 +37,19 @@ import (
 func SessionOptions() sessions.Options {
 	return sessions.Options{
 		Path:     "/",
-		Domain:   viper.GetString(config.Keys.Host),
-		MaxAge:   120,                                              // 2 minutes
-		Secure:   viper.GetString(config.Keys.Protocol) == "https", // only use cookie over https
-		HttpOnly: true,                                             // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteDefaultMode,                         // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		Domain:   config.GetHost(),
+		MaxAge:   120,                             // 2 minutes
+		Secure:   config.GetProtocol() == "https", // only use cookie over https
+		HttpOnly: true,                            // exclude javascript from inspecting cookie
+		SameSite: http.SameSiteDefaultMode,        // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
 	}
 }
 
 // SessionName is a utility function that derives an appropriate session name from the hostname.
 func SessionName() (string, error) {
 	// parse the protocol + host
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 	u, err := url.Parse(fmt.Sprintf("%s://%s", protocol, host))
 	if err != nil {
 		return "", err
