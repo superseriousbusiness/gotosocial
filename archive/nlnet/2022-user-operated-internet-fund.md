@@ -49,7 +49,7 @@ The requested NLNet budget will be used to fund the remaining Alpha portion of d
 
 To pay my living costs + rent I need to make about €2,000/month after tax, working full time. In Belgium, that equates to about €3,000/month, which is €36,000 for one year of work. Naively calculated at 40 hours / week, that's €18.75 per hour.
 
-The remaining €10,000 in the budget will be divided as follows:
+The remaining budget will be divided as follows:
 
 €3750 - Pay contributors €18.75/hour for code submitted to the project towards features, bugfixes, and security patches. It's difficult to foresee in advance how much code we will receive in this way, and how many people will want to just donate code rather than asking for payment, so this number may need to be adjusted up or down. €3750 allows us to pay for 200 hours of contributed work over the coming year.
 
