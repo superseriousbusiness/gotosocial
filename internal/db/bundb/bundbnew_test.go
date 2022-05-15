@@ -40,9 +40,7 @@ func (suite *BundbNewTestSuite) TestCreateNewDB() {
 
 func (suite *BundbNewTestSuite) TestCreateNewSqliteDBNoAddress() {
 	// create a new db with no address specified
-	config.Config(func(cfg *config.Configuration) {
-		cfg.DbAddress = ""
-	})
+	config.SetDbAddress("")
 	db, err := bundb.NewBunDBService(context.Background())
 	suite.EqualError(err, "'db-address' was not set when attempting to start sqlite")
 	suite.Nil(db)

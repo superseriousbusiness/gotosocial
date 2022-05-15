@@ -44,11 +44,9 @@ type SyslogTestSuite struct {
 func (suite *SyslogTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 
-	config.Config(func(cfg *config.Configuration) {
-		cfg.SyslogEnabled = true
-		cfg.SyslogProtocol = "udp"
-		cfg.SyslogAddress = "127.0.0.1:42069"
-	})
+	config.SetSyslogEnabled(true)
+	config.SetSyslogProtocol("udp")
+	config.SetSyslogAddress("127.0.0.1:42069")
 
 	server, channel, err := testrig.InitTestSyslog()
 	if err != nil {
@@ -95,11 +93,9 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 	syslogServer := server
 	syslogChannel := channel
 
-	config.Config(func(cfg *config.Configuration) {
-		cfg.SyslogEnabled = true
-		cfg.SyslogProtocol = "unixgram"
-		cfg.SyslogAddress = socketPath
-	})
+	config.SetSyslogEnabled(true)
+	config.SetSyslogProtocol("unixgram")
+	config.SetSyslogAddress(socketPath)
 
 	testrig.InitTestLog()
 

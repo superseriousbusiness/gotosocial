@@ -55,7 +55,7 @@ type Module struct {
 func New(processor processing.Processor) (api.ClientModule, error) {
 	assetsBaseDir := config.GetWebAssetBaseDir()
 	if assetsBaseDir == "" {
-		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Name("WebAssetBaseDir"))
+		return nil, fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebAssetBaseDirFlag())
 	}
 
 	assetsPath, err := filepath.Abs(assetsBaseDir)

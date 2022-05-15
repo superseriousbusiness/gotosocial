@@ -187,9 +187,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 
 func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	// set the min description length
-	config.Config(func(cfg *config.Configuration) {
-		cfg.MediaDescriptionMinChars = 50
-	})
+	config.SetMediaDescriptionMinChars(50)
 
 	toUpdate := suite.testAttachments["local_account_1_unattached_1"]
 

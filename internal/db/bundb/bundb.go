@@ -206,7 +206,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// validate db address has actually been set
 	dbAddress := config.GetDbAddress()
 	if dbAddress == "" {
-		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.Name("DbAddress"))
+		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
 	// Drop anything fancy from DB address
@@ -278,7 +278,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	if strings.ToUpper(config.GetDbType()) != db.DBTypePostgres {
-		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, config.Name("DbType"))
+		return nil, fmt.Errorf("expected db type of %s but got %s", db.DBTypePostgres, config.DbTypeFlag())
 	}
 
 	// these are all optional, the db adapter figures out defaults

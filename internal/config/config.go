@@ -19,17 +19,11 @@ func fieldtag(field, tag string) string {
 	return sfield.Tag.Get(tag)
 }
 
-// Name returns the flag name for given Configuration{} field.
-func Name(field string) string {
-	return fieldtag(field, "name")
-}
-
-// Usage returns the flag usage for given Configuration{} field.
-func Usage(field string) string {
-	return fieldtag(field, "usage")
-}
-
 // Configuration represents global GTS server runtime configuration.
+//
+// Please note that if you update this struct's fields or tags, you
+// will need to regenerate the global Getter/Setter helpers by running:
+// `go run ./internal/config/gen/ -out ./internal/config/values.gen.go`
 type Configuration struct {
 	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
 	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`

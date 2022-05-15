@@ -28,6 +28,11 @@ func init() {
 	global = Defaults
 }
 
+// TODO: in the future we should move away from using globals in this config
+// package, and instead wrap the functionality in Configuration{} and pass this
+// round as a state to all of the gotosocial subsystems. The generator will still
+// come in handy for that in generating getters/setters :)
+
 // Config provides you safe access to the global configuration.
 func Config(fn func(cfg *Configuration)) {
 	mutex.Lock()

@@ -34,7 +34,7 @@ import (
 func loadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
-		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Name("WebTemplateBaseDir"))
+		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebTemplateBaseDirFlag())
 	}
 
 	templateBaseDir, err := filepath.Abs(templateBaseDir)

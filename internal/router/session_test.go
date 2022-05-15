@@ -36,10 +36,8 @@ func (suite *SessionTestSuite) SetupTest() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = "http"
-		cfg.Host = "localhost:8080"
-	})
+	config.SetProtocol("http")
+	config.SetHost("localhost:8080")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -47,10 +45,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = "http"
-		cfg.Host = "localhost"
-	})
+	config.SetProtocol("http")
+	config.SetHost("localhost")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -58,10 +54,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = ""
-		cfg.Host = "localhost"
-	})
+	config.SetProtocol("")
+	config.SetHost("localhost")
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "parse \"://localhost\": missing protocol scheme")
@@ -69,11 +63,9 @@ func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = "https"
-		cfg.Host = ""
-		cfg.Port = 0
-	})
+	config.SetProtocol("https")
+	config.SetHost("")
+	config.SetPort(0)
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "could not derive hostname without port from https://")
@@ -81,10 +73,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionOK() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = "https"
-		cfg.Host = "example.org"
-	})
+	config.SetProtocol("https")
+	config.SetHost("example.org")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -92,10 +82,8 @@ func (suite *SessionTestSuite) TestDeriveSessionOK() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionIDNOK() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Protocol = "https"
-		cfg.Host = "fóid.org"
-	})
+	config.SetProtocol("https")
+	config.SetHost("fóid.org")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)

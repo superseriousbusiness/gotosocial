@@ -260,9 +260,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 
 func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	// set the min description length
-	config.Config(func(cfg *config.Configuration) {
-		cfg.MediaDescriptionMinChars = 500
-	})
+	config.SetMediaDescriptionMinChars(500)
 
 	// set up the context for the request
 	t := suite.testTokens["local_account_1"]

@@ -68,10 +68,8 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Host = "gts.example.org"
-		cfg.AccountDomain = "example.org"
-	})
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.org")
 
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
@@ -107,10 +105,8 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
-	config.Config(func(cfg *config.Configuration) {
-		cfg.Host = "gts.example.org"
-		cfg.AccountDomain = "example.org"
-	})
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.org")
 
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
