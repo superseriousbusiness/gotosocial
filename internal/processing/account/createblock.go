@@ -113,7 +113,7 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 
 	// follow request status changed so send the UNDO activity to the channel for async processing
 	if frChanged {
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -123,12 +123,12 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAccount,
-		}
+		})
 	}
 
 	// follow status changed so send the UNDO activity to the channel for async processing
 	if fChanged {
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -138,17 +138,17 @@ func (p *processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 			},
 			OriginAccount: requestingAccount,
 			TargetAccount: targetAccount,
-		}
+		})
 	}
 
 	// handle the rest of the block process asynchronously
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ActivityBlock,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       block,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  targetAccount,
-	}
+	})
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }

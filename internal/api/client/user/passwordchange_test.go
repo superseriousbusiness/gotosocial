@@ -153,7 +153,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordWeakNewPassword() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"bad request: insecure password, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
+	suite.Equal(`{"error":"bad request: password is 94% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"}`, string(b))
 }
 
 func TestPasswordChangeTestSuite(t *testing.T) {

@@ -20,9 +20,9 @@ package log
 
 import (
 	"bytes"
-	"os"
-
+	"io"
 	"log/syslog"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
@@ -34,12 +34,13 @@ import (
 // log level from the viper store, or using a default if the level
 // has not been set in viper.
 //
-// It also sets the output to log.outputSplitter,
+// It also sets the output to log.SplitErrOutputs(...)
 // so you get error logs on stderr and normal logs on stdout.
 //
 // If syslog settings are also in viper, then Syslog will be initialized as well.
 func Initialize() error {
-	logrus.SetOutput(&outputSplitter{})
+	out := SplitErrOutputs(os.Stdout, os.Stderr)
+	logrus.SetOutput(out)
 
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
@@ -73,20 +74,38 @@ func Initialize() error {
 			return err
 		}
 
-		logrus.AddHook(hook)
+		logrus.AddHook(&trimHook{hook})
 	}
 
 	return nil
 }
 
-// outputSplitter implements the io.Writer interface for use with Logrus, and simply
-// splits logs between stdout and stderr depending on their severity.
-// See: https://github.com/sirupsen/logrus/issues/403#issuecomment-346437512
-type outputSplitter struct{}
-
-func (splitter *outputSplitter) Write(p []byte) (n int, err error) {
-	if bytes.Contains(p, []byte("level=error")) {
-		return os.Stderr.Write(p)
+// SplitErrOutputs returns an OutputSplitFunc that splits output to either one of
+// two given outputs depending on whether the level is "error","fatal","panic".
+func SplitErrOutputs(out, err io.Writer) OutputSplitFunc {
+	return func(lvl []byte) io.Writer {
+		switch string(lvl) /* convert to str for compare is no-alloc */ {
+		case "error", "fatal", "panic":
+			return err
+		default:
+			return out
+		}
 	}
-	return os.Stdout.Write(p)
+}
+
+// OutputSplitFunc implements the io.Writer interface for use with Logrus, and simply
+// splits logs between stdout and stderr depending on their severity.
+type OutputSplitFunc func(lvl []byte) io.Writer
+
+var levelBytes = []byte("level=")
+
+func (fn OutputSplitFunc) Write(b []byte) (int, error) {
+	var lvl []byte
+	if i := bytes.Index(b, levelBytes); i >= 0 {
+		blvl := b[i+len(levelBytes):]
+		if i := bytes.IndexByte(blvl, ' '); i >= 0 {
+			lvl = blvl[:i]
+		}
+	}
+	return fn(lvl).Write(b)
 }

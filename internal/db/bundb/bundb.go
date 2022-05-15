@@ -136,9 +136,9 @@ func NewBunDBService(ctx context.Context) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", dbType)
 	}
 
-	// add a hook to just log queries and the time they take
+	// add a hook to log queries and the time they take
 	// only do this for logging where performance isn't 1st concern
-	if logrus.GetLevel() >= logrus.DebugLevel {
+	if logrus.GetLevel() >= logrus.DebugLevel && viper.GetBool(config.Keys.LogDbQueries) {
 		conn.DB.AddQueryHook(newDebugQueryHook())
 	}
 
@@ -381,86 +381,6 @@ func tweakConnectionValues(sqldb *sql.DB) {
 /*
 	CONVERSION FUNCTIONS
 */
-
-// TODO: move these to the type converter, it's bananas that they're here and not there
-
-func (ps *bunDBService) MentionStringsToMentions(ctx context.Context, targetAccounts []string, originAccountID string, statusID string) ([]*gtsmodel.Mention, error) {
-	ogAccount := &gtsmodel.Account{}
-	if err := ps.conn.NewSelect().Model(ogAccount).Where("id = ?", originAccountID).Scan(ctx); err != nil {
-		return nil, err
-	}
-
-	menchies := []*gtsmodel.Mention{}
-	for _, a := range targetAccounts {
-		// A mentioned account looks like "@test@example.org" or just "@test" for a local account
-		// -- we can guarantee this from the regex that targetAccounts should have been derived from.
-		// But we still need to do a bit of fiddling to get what we need here -- the username and domain (if given).
-
-		// 1.  trim off the first @
-		t := strings.TrimPrefix(a, "@")
-
-		// 2. split the username and domain
-		s := strings.Split(t, "@")
-
-		// 3. if it's length 1 it's a local account, length 2 means remote, anything else means something is wrong
-		var local bool
-		switch len(s) {
-		case 1:
-			local = true
-		case 2:
-			local = false
-		default:
-			return nil, fmt.Errorf("mentioned account format '%s' was not valid", a)
-		}
-
-		var username, domain string
-		username = s[0]
-		if !local {
-			domain = s[1]
-		}
-
-		// 4. check we now have a proper username and domain
-		if username == "" || (!local && domain == "") {
-			return nil, fmt.Errorf("username or domain for '%s' was nil", a)
-		}
-
-		// okay we're good now, we can start pulling accounts out of the database
-		mentionedAccount := &gtsmodel.Account{}
-		var err error
-
-		// match username + account, case insensitive
-		if local {
-			// local user -- should have a null domain
-			err = ps.conn.NewSelect().Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username).Where("? IS NULL", bun.Ident("domain")).Scan(ctx)
-		} else {
-			// remote user -- should have domain defined
-			err = ps.conn.NewSelect().Model(mentionedAccount).Where("LOWER(?) = LOWER(?)", bun.Ident("username"), username).Where("LOWER(?) = LOWER(?)", bun.Ident("domain"), domain).Scan(ctx)
-		}
-
-		if err != nil {
-			if err == sql.ErrNoRows {
-				// no result found for this username/domain so just don't include it as a mencho and carry on about our business
-				logrus.Debugf("no account found with username '%s' and domain '%s', skipping it", username, domain)
-				continue
-			}
-			// a serious error has happened so bail
-			return nil, fmt.Errorf("error getting account with username '%s' and domain '%s': %s", username, domain, err)
-		}
-
-		// id, createdAt and updatedAt will be populated by the db, so we have everything we need!
-		menchies = append(menchies, &gtsmodel.Mention{
-			StatusID:         statusID,
-			OriginAccountID:  ogAccount.ID,
-			OriginAccountURI: ogAccount.URI,
-			TargetAccountID:  mentionedAccount.ID,
-			NameString:       a,
-			TargetAccountURI: mentionedAccount.URI,
-			TargetAccountURL: mentionedAccount.URL,
-			OriginAccount:    mentionedAccount,
-		})
-	}
-	return menchies, nil
-}
 
 func (ps *bunDBService) TagStringsToTags(ctx context.Context, tags []string, originAccountID string) ([]*gtsmodel.Tag, error) {
 	protocol := viper.GetString(config.Keys.Protocol)

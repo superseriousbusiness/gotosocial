@@ -12,6 +12,10 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
 
 Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
 
+Here's a screenshot of the instance landing page!
+
+![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](./docs/assets/instancesplash.png)
+
 ## Table of Contents <!-- omit in toc -->
 
 - [What is GoToSocial?](#what-is-gotosocial)
@@ -28,6 +32,10 @@ Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can 
   - [Backend-first design](#backend-first-design)
 - [Wishlist](#wishlist)
 - [Getting Started](#getting-started)
+- [Third-Party Packaging](#third-party-packaging)
+- [Known Issues](#known-issues)
+  - [Client App Issues](#client-app-issues)
+  - [Federation Issues](#federation-issues)
 - [Contributing](#contributing)
 - [Contact](#contact)
 - [Credits](#credits)
@@ -43,6 +51,8 @@ Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can 
 GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendica.net), and [PixelFed](https://pixelfed.org/).
 
 If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSocial will probably feel familiar to you: You can follow people and have followers, you make posts which people can favourite and reply to and share, and you scroll through posts from people you follow using a timeline. You can write long posts or short posts, or just post images, it's up to you. You can also, of course, block people or otherwise limit interactions that you don't want by posting just to your friends.
+
+![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](./docs/assets/profile1.png)
 
 **GoToSocial does NOT use algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
 
@@ -64,13 +74,13 @@ GoToSocial advocates for many small, weird, specialist servers where people can 
 
 ### History and Status
 
-This project sprang up in 2021 out of a dissatisfaction with the safety + privacy features of other Federated microblogging/social media applications, and a desire to implement something a little different.
+This project sprang up in February/March 2021 out of a dissatisfaction with the safety + privacy features of other Federated microblogging/social media applications, and a desire to implement something a little different.
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-The project is still in prerelease, but is already deployable and very useable, and it federates cleanly with most other Fediverse servers (not yet all).
+The project is still [alpha software](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha), but is already deployable and very useable, and it federates cleanly with many other Fediverse servers (not yet all).
 
-For a detailed view on what's implemented and what's not, and progress made towards a first v0.1.0 (beta) release, see [here](./PROGRESS.md).
+For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md).
 
 ## Features
 
@@ -156,6 +166,28 @@ These cool things will be implemented if time allows (because we really want the
 
 All docs for installation and configuration are hosted at [docs.gotosocial.org](https://docs.gotosocial.org).
 
+## Third-Party Packaging
+
+Thank you so much to the cool people who have put time and energy into packaging GoToSocial! Known third-party packaging projects are listed below:
+
+- [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
+- GoToSocial Helm Charts:
+  - [GoToSocial Helm Chart](https://github.com/Maxxblow/charts/tree/main/charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
+
+These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
+
+## Known Issues
+
+Since GoToSocial is still in alpha, there are plenty of bugs. We use Github issues to track these. [Check them out here](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug).
+
+### Client App Issues
+
+GoToSocial works great with Tusky and Pinafore, but some other client applications still need work or have issues connecting to GoToSocial. We're tracking them [right here](https://github.com/superseriousbusiness/gotosocial/projects/5). It's our goal to make any app that's compatible with the Mastodon API work seamlessly with GoToSocial.
+
+### Federation Issues
+
+Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
+
 ## Contributing
 
 You wanna contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you wanna jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
@@ -181,10 +213,13 @@ The following libraries and frameworks are used by GoToSocial, with gratitude �
   - [gin-contrib/static](https://github.com/gin-contrib/static); Gin static page middleware. [MIT License](https://spdx.org/licenses/MIT.html)
 - [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html)
+- [google/wuffs](https://github.com/google/wuffs); png-stripping code. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html)
 - [gorilla/websocket](https://github.com/gorilla/websocket); Websocket connectivity. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
+- [gruf/go-debug](https://codeberg.org/gruf/go-debug); profiling support in debug builds. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
 - [gruf/go-runners](https://codeberg.org/gruf/go-runners); worker pool library. [MIT License](https://spdx.org/licenses/MIT.html).
-- [gruf/go-store](https://codeberg.org/gruf/go-store); cacheing library. [MIT License](https://spdx.org/licenses/MIT.html).
+- [gruf/go-store](https://codeberg.org/gruf/go-store); local media store. [MIT License](https://spdx.org/licenses/MIT.html).
 - [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
 - [jackc/pgx](https://github.com/jackc/pgx); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
 - [mcuadros/go-syslog](https://github.com/mcuadros/go-syslog); Syslog server library. [MIT License](https://spdx.org/licenses/MIT.html).

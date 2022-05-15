@@ -22,16 +22,18 @@ cd /gotosocial
 
 Now, download the latest GoToSocial release archive corresponding to the operating system and architecture you're running on.
 
-For example, for version 0.1.0 running on 64-bit Linux:
+(You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.)
+
+For example, to download version 0.3.1 for running on 64-bit Linux:
 
 ```bash
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.1.0/gotosocial_0.1.0_linux_amd64.tar.gz
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.3.1/gotosocial_0.3.1_linux_amd64.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_0.1.0_linux_amd64.tar.gz
+tar -xzf gotosocial_0.3.1_linux_amd64.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
@@ -77,7 +79,7 @@ You can use the GoToSocial binary to also create, confirm, and promote your user
 Run the following command to create a new account:
 
 ```bash
-./gotosocial --config-path ./config.yaml admin account create --username some_username --email some_email@whatever.org --password SOME_PASSWORD
+./gotosocial --config-path ./config.yaml admin account create --username some_username --email some_email@whatever.org --password 'SOME_PASSWORD'
 ```
 
 In the above command, replace `some_username` with your desired username, `some_email@whatever.org` with the email address you want to associate with your account, and `SOME_PASSWORD` with a secure password.
@@ -138,6 +140,6 @@ sudo systemctl enable --now gotosocial.service
 
 At some point you'll likely want to do things like change instance information, and block domains you don't want to interact with. See the [admin panel](../admin/admin_panel.md) instructions for this.
 
-## 9. Reverse proxy with nginx (optional)
+## 9. Reverse proxy (optional)
 
-If you want to run other webservers on port 433 or simply want to add an additional layer of security you might want to [use nginx as a reverse proxy](./nginx.md).
+If you want to run other webservers on port 443 or want to add an additional layer of security you might want to use [nginx](./nginx.md) or [Apache httpd](./apache-httpd.md) as reverse proxy

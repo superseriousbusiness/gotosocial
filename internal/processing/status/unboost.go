@@ -91,13 +91,13 @@ func (p *processor) Unboost(ctx context.Context, requestingAccount *gtsmodel.Acc
 		gtsBoost.BoostOf.Account = targetStatus.Account
 
 		// send it back to the processor for async processing
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       gtsBoost,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,
-		}
+		})
 	}
 
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)

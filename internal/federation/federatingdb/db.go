@@ -20,12 +20,13 @@ package federatingdb
 
 import (
 	"context"
-	"sync"
-	"time"
 
+	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -41,39 +42,19 @@ type DB interface {
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
-	mutex         sync.Mutex
-	locks         map[string]*mutex
-	pool          sync.Pool
+	locks         mutexes.MutexMap
 	db            db.DB
+	fedWorker     *concurrency.WorkerPool[messages.FromFederator]
 	typeConverter typeutils.TypeConverter
 }
 
 // New returns a DB interface using the given database and config
-func New(db db.DB) DB {
+func New(db db.DB, fedWorker *concurrency.WorkerPool[messages.FromFederator]) DB {
 	fdb := federatingDB{
-		mutex:         sync.Mutex{},
-		locks:         make(map[string]*mutex, 100),
-		pool:          sync.Pool{New: func() interface{} { return &mutex{} }},
+		locks:         mutexes.NewMap(-1, -1), // use defaults
 		db:            db,
+		fedWorker:     fedWorker,
 		typeConverter: typeutils.NewConverter(db),
 	}
-	go fdb.cleanupLocks()
 	return &fdb
-}
-
-func (db *federatingDB) cleanupLocks() {
-	for {
-		// Sleep for a minute...
-		time.Sleep(time.Minute)
-
-		// Delete unused locks from map
-		db.mutex.Lock()
-		for id, mu := range db.locks {
-			if !mu.inUse() {
-				delete(db.locks, id)
-				db.pool.Put(mu)
-			}
-		}
-		db.mutex.Unlock()
-	}
 }

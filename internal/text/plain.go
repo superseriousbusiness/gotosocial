@@ -20,10 +20,15 @@ package text
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
+
+// breakReplacer replaces new-lines with HTML breaks.
+var breakReplacer = strings.NewReplacer(
+	"\r\n", "<br/>",
+	"\n", "<br/>",
 )
 
 func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gtsmodel.Mention, tags []*gtsmodel.Tag) string {
@@ -42,10 +47,10 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 	content = f.ReplaceMentions(ctx, content, mentions)
 
 	// replace newlines with breaks
-	content = strings.ReplaceAll(content, "\n", "<br />")
+	content = breakReplacer.Replace(content)
 
 	// wrap the whole thing in a pee
-	content = fmt.Sprintf(`<p>%s</p>`, content)
+	content = `<p>` + content + `</p>`
 
 	return postformat(content)
 }

@@ -10,13 +10,15 @@ import (
 
 var (
 	bytesType          = reflect.TypeOf((*[]byte)(nil)).Elem()
-	timeType           = reflect.TypeOf((*time.Time)(nil)).Elem()
+	timePtrType        = reflect.TypeOf((*time.Time)(nil))
+	timeType           = timePtrType.Elem()
 	ipType             = reflect.TypeOf((*net.IP)(nil)).Elem()
 	ipNetType          = reflect.TypeOf((*net.IPNet)(nil)).Elem()
 	jsonRawMessageType = reflect.TypeOf((*json.RawMessage)(nil)).Elem()
 
 	driverValuerType  = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 	queryAppenderType = reflect.TypeOf((*QueryAppender)(nil)).Elem()
+	jsonMarshalerType = reflect.TypeOf((*json.Marshaler)(nil)).Elem()
 )
 
 func indirectType(t reflect.Type) reflect.Type {

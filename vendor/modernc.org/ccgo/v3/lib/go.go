@@ -1491,7 +1491,7 @@ func (p *project) layoutDefines() error {
 			}
 			name = p.scope.take(cc.String(name))
 			p.defines[nm] = define{name, val}
-			p.defineLines = append(p.defineLines, fmt.Sprintf("%s = %s", name, src))
+			p.defineLines = append(p.defineLines, fmt.Sprintf("%s = %s // %v:", name, src, p.pos(m)))
 		}
 	}
 	return nil

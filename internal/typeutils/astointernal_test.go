@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -40,7 +39,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, false)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
 	suite.Equal("https://unknown-instance.com/users/brand_new_person/following", acct.FollowingURI)
@@ -57,19 +56,37 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 	suite.False(acct.Locked)
 }
 
+func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(publicStatusActivityJson), &m)
+	suite.NoError(err)
+
+	t, err := streams.ToType(context.Background(), m)
+	suite.NoError(err)
+
+	rep, ok := t.(ap.Statusable)
+	suite.True(ok)
+
+	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
+	suite.NoError(err)
+
+	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
+	suite.Equal(`<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
+}
+
 func (suite *ASToInternalTestSuite) TestParseGargron() {
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(gargronAsActivityJson), &m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	rep, ok := t.(ap.Accountable)
-	assert.True(suite.T(), ok)
+	suite.True(ok)
 
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	fmt.Printf("%+v", acct)
 	// TODO: write assertions here, rn we're just eyeballing the output
@@ -78,10 +95,10 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(statusWithMentionsActivityJson), &m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	t, err := streams.ToType(context.Background(), m)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	create, ok := t.(vocab.ActivityStreamsCreate)
 	suite.True(ok)

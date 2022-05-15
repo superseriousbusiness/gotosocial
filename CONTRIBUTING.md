@@ -21,6 +21,7 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
     - [SQLite](#sqlite)
     - [Postgres](#postgres)
     - [Both](#both)
+  - [CLI Tests](#cli-tests)
 - [Project Structure](#project-structure)
 - [Style](#style)
 - [Linting and Formatting](#linting-and-formatting)
@@ -47,7 +48,7 @@ In lieu of a fuller code of conduct, here are a few ground rules.
 
 ## Setting up your development environment
 
-To get started, you first need to have Go installed. GtS is currently using Go 1.17, so you should take that too. See [here](https://golang.org/doc/install).
+To get started, you first need to have Go installed. GtS is currently using Go 1.18, so you should take that too. See [here](https://golang.org/doc/install).
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 

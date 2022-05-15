@@ -111,6 +111,7 @@ func (s *session) Flashes(vars ...string) []interface{} {
 }
 
 func (s *session) Options(options Options) {
+	s.written = true
 	s.Session().Options = options.ToGorillaOptions()
 }
 

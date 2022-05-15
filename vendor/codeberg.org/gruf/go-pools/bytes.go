@@ -3,16 +3,16 @@ package pools
 import (
 	"sync"
 
-	"codeberg.org/gruf/go-bytes"
+	"codeberg.org/gruf/go-byteutil"
 )
 
 // BufferPool is a pooled allocator for bytes.Buffer objects
 type BufferPool interface {
 	// Get fetches a bytes.Buffer from pool
-	Get() *bytes.Buffer
+	Get() *byteutil.Buffer
 
 	// Put places supplied bytes.Buffer in pool
-	Put(*bytes.Buffer)
+	Put(*byteutil.Buffer)
 }
 
 // NewBufferPool returns a newly instantiated bytes.Buffer pool
@@ -20,7 +20,7 @@ func NewBufferPool(size int) BufferPool {
 	return &bufferPool{
 		pool: sync.Pool{
 			New: func() interface{} {
-				return &bytes.Buffer{B: make([]byte, 0, size)}
+				return &byteutil.Buffer{B: make([]byte, 0, size)}
 			},
 		},
 		size: size,
@@ -33,11 +33,11 @@ type bufferPool struct {
 	size int
 }
 
-func (p *bufferPool) Get() *bytes.Buffer {
-	return p.pool.Get().(*bytes.Buffer)
+func (p *bufferPool) Get() *byteutil.Buffer {
+	return p.pool.Get().(*byteutil.Buffer)
 }
 
-func (p *bufferPool) Put(buf *bytes.Buffer) {
+func (p *bufferPool) Put(buf *byteutil.Buffer) {
 	if buf.Cap() < p.size {
 		return
 	}

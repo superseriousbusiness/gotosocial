@@ -33,9 +33,11 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -83,10 +85,13 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	suite.NoError(err)
 	body := bytes.NewReader(bodyJson)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -183,10 +188,13 @@ func (suite *InboxPostTestSuite) TestPostUnblock() {
 	suite.NoError(err)
 	body := bytes.NewReader(bodyJson)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -273,10 +281,13 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	suite.NoError(err)
 	body := bytes.NewReader(bodyJson)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -392,11 +403,14 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.NoError(err)
 	body := bytes.NewReader(bodyJson)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
-	err = processor.Start(context.Background())
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
+	err = processor.Start()
 	suite.NoError(err)
 	userModule := user.New(processor).(*user.Module)
 
@@ -440,7 +454,7 @@ func (suite *InboxPostTestSuite) TestPostDelete() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 
 	// no statuses from foss satan should be left in the database
-	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, "", "", false, false, false)
+	dbStatuses, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false, false)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(dbStatuses)
 

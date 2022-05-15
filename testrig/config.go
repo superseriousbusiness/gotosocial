@@ -59,6 +59,7 @@ func InitTestConfig() {
 // TestDefaults returns a Values struct with values set that are suitable for local testing.
 var TestDefaults = config.Values{
 	LogLevel:        "trace",
+	LogDbQueries:    true,
 	ApplicationName: "gotosocial",
 	ConfigPath:      "",
 	Host:            "localhost:8080",

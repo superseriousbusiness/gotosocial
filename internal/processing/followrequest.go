@@ -78,13 +78,13 @@ func (p *processor) FollowRequestAccept(ctx context.Context, auth *oauth.Auth, a
 		follow.TargetAccount = followTargetAccount
 	}
 
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityAccept,
 		GTSModel:       follow,
 		OriginAccount:  follow.Account,
 		TargetAccount:  follow.TargetAccount,
-	}
+	})
 
 	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
 	if err != nil {
@@ -121,13 +121,13 @@ func (p *processor) FollowRequestReject(ctx context.Context, auth *oauth.Auth, a
 		followRequest.TargetAccount = a
 	}
 
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityReject,
 		GTSModel:       followRequest,
 		OriginAccount:  followRequest.Account,
 		TargetAccount:  followRequest.TargetAccount,
-	}
+	})
 
 	gtsR, err := p.db.GetRelationship(ctx, auth.Account.ID, accountID)
 	if err != nil {

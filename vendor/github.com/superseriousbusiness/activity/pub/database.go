@@ -19,12 +19,7 @@ type Database interface {
 	// processes require tight loops acquiring and releasing locks.
 	//
 	// Used to ensure race conditions in multiple requests do not occur.
-	Lock(c context.Context, id *url.URL) error
-	// Unlock makes the lock for the object at the specified id available.
-	// If an error is returned, the lock must have still been freed.
-	//
-	// Used to ensure race conditions in multiple requests do not occur.
-	Unlock(c context.Context, id *url.URL) error
+	Lock(c context.Context, id *url.URL) (unlock func(), err error)
 	// InboxContains returns true if the OrderedCollection at 'inbox'
 	// contains the specified 'id'.
 	//
@@ -59,13 +54,23 @@ type Database interface {
 	//
 	// The library makes this call only after acquiring a lock first.
 	OutboxForInbox(c context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error)
-	// InboxForActor fetches the inbox corresponding to the given actorIRI.
+	// InboxesForIRI fetches inboxes corresponding to the given iri.
+	// This allows your server to skip remote dereferencing of iris
+	// in order to speed up message delivery, if desired.
 	//
-	// It is acceptable to just return nil for the inboxIRI. In this case, the library will
-	// attempt to resolve the inbox of the actor by remote dereferencing instead.
+	// It is acceptable to just return nil or an empty slice for the inboxIRIs,
+	// if you don't know the inbox iri, or you don't wish to use this feature.
+	// In this case, the library will attempt to resolve inboxes of the iri
+	// by remote dereferencing instead.
+	//
+	// If the input iri is the iri of an Actor, then the inbox for the actor
+	// should be returned as a single-entry slice.
+	//
+	// If the input iri is a Collection (such as a Collection of followers),
+	// then each follower inbox IRI should be returned in the inboxIRIs slice.
 	//
 	// The library makes this call only after acquiring a lock first.
-	InboxForActor(c context.Context, actorIRI *url.URL) (inboxIRI *url.URL, err error)
+	InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs []*url.URL, err error)
 	// Exists returns true if the database has an entry for the specified
 	// id. It may not be owned by this application instance.
 	//

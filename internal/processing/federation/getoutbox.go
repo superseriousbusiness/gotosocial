@@ -20,7 +20,6 @@ package federation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -37,9 +36,9 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 	}
 
 	// authenticate the request
-	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
-	if err != nil || !authenticated {
-		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
+	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
@@ -89,7 +88,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 
 	// scenario 2 -- get the requested page
 	// limit pages to 30 entries per page
-	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, maxID, minID, false, false, true)
+	publicStatuses, err := p.db.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, true, maxID, minID, false, false, true)
 	if err != nil && err != db.ErrNoEntries {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

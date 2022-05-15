@@ -54,7 +54,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -71,6 +73,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	storageBackend := testrig.NewTestStorage()
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 
+	// Create client API and federator worker pools
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
 	// build backend handlers
 	oauthServer := testrig.NewTestOauthServer(dbService)
 	transportController := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
@@ -79,20 +85,26 @@ var Start action.GTSAction = func(ctx context.Context) error {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}), dbService)
+	}), dbService, fedWorker)
 	mediaManager := testrig.NewTestMediaManager(dbService, storageBackend)
-	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager)
+	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager, fedWorker)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
 
-	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager)
-	if err := processor.Start(ctx); err != nil {
+	processor := testrig.NewTestProcessor(dbService, storageBackend, federator, emailSender, mediaManager, clientWorker, fedWorker)
+	if err := processor.Start(); err != nil {
 		return fmt.Errorf("error starting processor: %s", err)
 	}
 
 	idp, err := oidc.NewIDP(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating oidc idp: %s", err)
+	}
+
+	// build web module
+	webModule, err := web.New(processor)
+	if err != nil {
+		return fmt.Errorf("error creating web module: %s", err)
 	}
 
 	// build client api modules
@@ -103,7 +115,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	followRequestsModule := followrequest.New(processor)
 	webfingerModule := webfinger.New(processor)
 	nodeInfoModule := nodeinfo.New(processor)
-	webBaseModule := web.New(processor)
 	usersModule := user.New(processor)
 	timelineModule := timeline.New(processor)
 	notificationModule := notification.New(processor)
@@ -126,8 +137,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		securityModule,
 		authModule,
 
+		// now the web module
+		webModule,
+
 		// now everything else
-		webBaseModule,
 		accountModule,
 		instanceModule,
 		appsModule,

@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -76,9 +77,10 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctInfo, err := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
+	acctInfo, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		logrus.Debug(errWithCode.Error())
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

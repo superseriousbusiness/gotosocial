@@ -19,25 +19,82 @@
 package transport
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"net/http"
 	"net/url"
+	"strings"
+	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error {
-	return t.sigTransport.BatchDeliver(ctx, b, recipients)
+	// concurrently deliver to recipients; for each delivery, buffer the error if it fails
+	wg := sync.WaitGroup{}
+	errCh := make(chan error, len(recipients))
+	for _, recipient := range recipients {
+		wg.Add(1)
+		go func(r *url.URL) {
+			defer wg.Done()
+			if err := t.Deliver(ctx, b, r); err != nil {
+				errCh <- err
+			}
+		}(recipient)
+	}
+
+	// wait until all deliveries have succeeded or failed
+	wg.Wait()
+
+	// receive any buffered errors
+	errs := make([]string, 0, len(recipients))
+outer:
+	for {
+		select {
+		case e := <-errCh:
+			errs = append(errs, e.Error())
+		default:
+			break outer
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("BatchDeliver: at least one failure: %s", strings.Join(errs, "; "))
+	}
+
+	return nil
 }
 
 func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 	// if the 'to' host is our own, just skip this delivery since we by definition already have the message!
-	if to.Host == viper.GetString(config.Keys.Host) {
+	if to.Host == viper.GetString(config.Keys.Host) || to.Host == viper.GetString(config.Keys.AccountDomain) {
 		return nil
 	}
 
-	l := logrus.WithField("func", "Deliver")
-	l.Debugf("performing POST to %s", to.String())
-	return t.sigTransport.Deliver(ctx, b, to)
+	urlStr := to.String()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	req.Header.Add("Accept-Charset", "utf-8")
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", to.Host)
+
+	resp, err := t.POST(req, b)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if code := resp.StatusCode; code != http.StatusOK &&
+		code != http.StatusCreated && code != http.StatusAccepted {
+		return fmt.Errorf("POST request to %s failed (%d): %s", urlStr, resp.StatusCode, resp.Status)
+	}
+
+	return nil
 }

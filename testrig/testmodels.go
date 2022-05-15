@@ -20,8 +20,6 @@ package testrig
 
 import (
 	"bytes"
-	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -29,11 +27,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
@@ -41,6 +39,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -316,6 +315,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			DisplayName:             "",
 			Fields:                  []gtsmodel.Field{},
 			Note:                    "",
+			NoteRaw:                 "",
 			Memorial:                false,
 			MovedToAccountID:        "",
 			CreatedAt:               time.Now().Add(-72 * time.Hour),
@@ -353,7 +353,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HeaderMediaAttachmentID: "01PFPMWK2FF0D9WMHEJHR07C3Q",
 			DisplayName:             "original zork (he/they)",
 			Fields:                  []gtsmodel.Field{},
-			Note:                    "hey yo this is my profile!",
+			Note:                    "<p>hey yo this is my profile!</p>",
+			NoteRaw:                 "hey yo this is my profile!",
 			Memorial:                false,
 			MovedToAccountID:        "",
 			CreatedAt:               time.Now().Add(-48 * time.Hour),
@@ -391,7 +392,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HeaderMediaAttachmentID: "",
 			DisplayName:             "happy little turtle :3",
 			Fields:                  []gtsmodel.Field{},
-			Note:                    "i post about things that concern me",
+			Note:                    "<p>i post about things that concern me</p>",
+			NoteRaw:                 "i post about things that concern me",
 			Memorial:                false,
 			MovedToAccountID:        "",
 			CreatedAt:               time.Now().Add(-190 * time.Hour),
@@ -504,7 +506,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	if diff := len(accounts) - len(preserializedKeys); diff > 0 {
-		var keyStrings = make([]string, diff)
+		keyStrings := make([]string, diff)
 		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 			key, _ := x509.MarshalPKCS8PrivateKey(priv)
@@ -1260,6 +1262,30 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Likeable:                 true,
 			ActivityStreamsType:      ap.ObjectNote,
 		},
+		"local_account_2_status_7": {
+			ID:                       "01G20ZM733MGN8J344T4ZDDFY1",
+			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
+			URL:                      "http://localhost:8080/@1happyturtle/statuses/01G20ZM733MGN8J344T4ZDDFY1",
+			Content:                  "🐢 hi followers! did u know i'm a turtle? 🐢",
+			AttachmentIDs:            []string{},
+			CreatedAt:                time.Now().Add(-1 * time.Minute),
+			UpdatedAt:                time.Now().Add(-1 * time.Minute),
+			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/1happyturtle",
+			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
+			InReplyToID:              "",
+			BoostOfID:                "",
+			ContentWarning:           "",
+			Visibility:               gtsmodel.VisibilityFollowersOnly,
+			Sensitive:                false,
+			Language:                 "en",
+			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
+			Federated:                true,
+			Boostable:                true,
+			Replyable:                true,
+			Likeable:                 true,
+			ActivityStreamsType:      ap.ObjectNote,
+		},
 		"remote_account_1_status_1": {
 			ID:                       "01FVW7JHQFSFK166WWKR8CBA6M",
 			URI:                      "http://fossbros-anonymous.io/users/foss_satan/statuses/01FVW7JHQFSFK166WWKR8CBA6M",
@@ -1432,6 +1458,26 @@ func NewTestFollows() map[string]*gtsmodel.Follow {
 			URI:             "http://localhost:8080/users/the_mighty_zork/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
 			Notify:          false,
 		},
+		"local_account_2_local_account_1": {
+			ID:              "01G1TK1RS4K3E0MSFTXBFWAH9Q",
+			CreatedAt:       time.Now().Add(-1 * time.Hour),
+			UpdatedAt:       time.Now().Add(-1 * time.Hour),
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/1happyturtle/follow/01F8PYDCE8XE23GRE5DPZJDZDP",
+			Notify:          false,
+		},
+		"admin_account_local_account_1": {
+			ID:              "01G1TK3PQKFW1BQZ9WVYRTFECK",
+			CreatedAt:       time.Now().Add(-46 * time.Hour),
+			UpdatedAt:       time.Now().Add(-46 * time.Hour),
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ShowReblogs:     true,
+			URI:             "http://localhost:8080/users/admin/follow/01G1TK3PQKFW1BQZ9WVYRTFECK",
+			Notify:          false,
+		},
 	}
 }
 
@@ -1460,7 +1506,7 @@ type ActivityWithSignature struct {
 // A struct of accounts needs to be passed in because the activities will also be bundled along with
 // their requesting signatures.
 func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]ActivityWithSignature {
-	dmForZork := newAPNote(
+	dmForZork := NewAPNote(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		time.Now(),
@@ -1473,14 +1519,14 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		[]vocab.ActivityStreamsMention{},
 		nil,
 	)
-	createDmForZork := wrapAPNoteInCreate(
+	createDmForZork := WrapAPNoteInCreate(
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity"),
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		time.Now(),
 		dmForZork)
 	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
-	forwardedMessage := newAPNote(
+	forwardedMessage := NewAPNote(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
 		time.Now(),
@@ -1493,7 +1539,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		[]vocab.ActivityStreamsMention{},
 		nil,
 	)
-	createForwardedMessage := wrapAPNoteInCreate(
+	createForwardedMessage := WrapAPNoteInCreate(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
 		URLMustParse("http://example.org/users/some_user"),
 		time.Now(),
@@ -1645,7 +1691,7 @@ func NewTestFediAttachments(relativePath string) map[string]RemoteAttachmentFile
 
 func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 	return map[string]vocab.ActivityStreamsNote{
-		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": newAPNote(
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839": NewAPNote(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"),
 			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE4NTHKWW7THT67EF10EB839"),
 			time.Now(),
@@ -1660,7 +1706,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			nil,
 			nil,
 		),
-		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": newAPNote(
+		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": NewAPNote(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV"),
 			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01FE5Y30E3W4P7TRE0R98KAYQV"),
 			time.Now(),
@@ -1680,7 +1726,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			},
 			nil,
 		),
-		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": newAPNote(
+		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": NewAPNote(
 			URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"),
 			URLMustParse("https://turnip.farm/@turniplover6969/70c53e54-3146-42d5-a630-83c8b6c7c042"),
 			time.Now(),
@@ -1722,6 +1768,22 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	target = URLMustParse(accounts["local_account_1"].PublicKeyURI)
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceZorkPublicKey := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(statuses["local_account_1_status_1"].URI)
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1 := ActivityWithSignature{
+		SignatureHeader: sig,
+		DigestHeader:    digest,
+		DateHeader:      date,
+	}
+
+	target = URLMustParse(strings.ToLower(statuses["local_account_1_status_1"].URI))
+	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
+	fossSatanDereferenceLocalAccount1Status1Lowercase := ActivityWithSignature{
 		SignatureHeader: sig,
 		DigestHeader:    digest,
 		DateHeader:      date,
@@ -1778,6 +1840,8 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	return map[string]ActivityWithSignature{
 		"foss_satan_dereference_zork":                                  fossSatanDereferenceZork,
 		"foss_satan_dereference_zork_public_key":                       fossSatanDereferenceZorkPublicKey,
+		"foss_satan_dereference_local_account_1_status_1":              fossSatanDereferenceLocalAccount1Status1,
+		"foss_satan_dereference_local_account_1_status_1_lowercase":    fossSatanDereferenceLocalAccount1Status1Lowercase,
 		"foss_satan_dereference_local_account_1_status_1_replies":      fossSatanDereferenceLocalAccount1Status1Replies,
 		"foss_satan_dereference_local_account_1_status_1_replies_next": fossSatanDereferenceLocalAccount1Status1RepliesNext,
 		"foss_satan_dereference_local_account_1_status_1_replies_last": fossSatanDereferenceLocalAccount1Status1RepliesLast,
@@ -1787,76 +1851,71 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 }
 
-// GetSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
-// the HTTP Signature for the given activity, public key ID, private key, and destination.
-func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
-	// create a client that basically just pulls the signature out of the request and sets it
-	client := &mockHTTPClient{
-		do: func(req *http.Request) (*http.Response, error) {
-			signatureHeader = req.Header.Get("Signature")
-			digestHeader = req.Header.Get("Digest")
-			dateHeader = req.Header.Get("Date")
-			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB())
-	tp, err := c.NewTransport(pubKeyID, privkey)
-	if err != nil {
-		panic(err)
-	}
-
+// GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// convert the activity into json bytes
 	m, err := activity.Serialize()
 	if err != nil {
 		panic(err)
 	}
-	bytes, err := json.Marshal(m)
+	b, err := json.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
 
-	// trigger the delivery function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if err := tp.SigTransport().Deliver(context.Background(), bytes, destination); err != nil {
+	// Prepare HTTP request signer
+	sig, err := transport.NewPOSTSigner(120)
+	if err != nil {
 		panic(err)
 	}
+
+	// Prepare a mock request ready for signing
+	r, err := http.NewRequest("POST", destination.String(), bytes.NewReader(b))
+	if err != nil {
+		panic(err)
+	}
+	r.Header.Set("Host", destination.Host)
+	r.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+
+	// Sign this new HTTP request
+	if err := sig.SignRequest(privkey, pubKeyID, r, b); err != nil {
+		panic(err)
+	}
+
+	// Load signed data from request
+	signatureHeader = r.Header.Get("Signature")
+	digestHeader = r.Header.Get("Digest")
+	dateHeader = r.Header.Get("Date")
 
 	// headers should now be populated
 	return
 }
 
-// GetSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
-// the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
-	// create a client that basically just pulls the signature out of the request and sets it
-	client := &mockHTTPClient{
-		do: func(req *http.Request) (*http.Response, error) {
-			signatureHeader = req.Header.Get("Signature")
-			dateHeader = req.Header.Get("Date")
-			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB())
-	tp, err := c.NewTransport(pubKeyID, privkey)
+// GetSignatureForDereference prepares a mock HTTP request as if it were going to dereference destination signed for privkey and pubKeyID, signs the request and returns the header values.
+func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+	// Prepare HTTP request signer
+	sig, err := transport.NewGETSigner(120)
 	if err != nil {
 		panic(err)
 	}
 
-	// trigger the dereference function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if _, err := tp.SigTransport().Dereference(context.Background(), destination); err != nil {
+	// Prepare a mock request ready for signing
+	r, err := http.NewRequest("GET", destination.String(), nil)
+	if err != nil {
 		panic(err)
 	}
+	r.Header.Set("Host", destination.Host)
+	r.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+
+	// Sign this new HTTP request
+	if err := sig.SignRequest(privkey, pubKeyID, r, nil); err != nil {
+		panic(err)
+	}
+
+	// Load signed data from request
+	signatureHeader = r.Header.Get("Signature")
+	digestHeader = r.Header.Get("Digest")
+	dateHeader = r.Header.Get("Date")
 
 	// headers should now be populated
 	return
@@ -1880,7 +1939,8 @@ func newAPPerson(
 	avatarContentType string,
 	headerURL *url.URL,
 	headerContentType string,
-	manuallyApprovesFollowers bool) vocab.ActivityStreamsPerson {
+	manuallyApprovesFollowers bool,
+) vocab.ActivityStreamsPerson {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -2063,7 +2123,8 @@ func newAPGroup(
 	avatarContentType string,
 	headerURL *url.URL,
 	headerContentType string,
-	manuallyApprovesFollowers bool) vocab.ActivityStreamsGroup {
+	manuallyApprovesFollowers bool,
+) vocab.ActivityStreamsGroup {
 	group := streams.NewActivityStreamsGroup()
 
 	// id should be the activitypub URI of this group
@@ -2272,8 +2333,8 @@ func newAPImage(url *url.URL, mediaType string, imageDescription string, blurhas
 	return image
 }
 
-// newAPNote returns a new activity streams note for the given parameters
-func newAPNote(
+// NewAPNote returns a new activity streams note for the given parameters
+func NewAPNote(
 	noteID *url.URL,
 	noteURL *url.URL,
 	noteCreatedAt time.Time,
@@ -2284,8 +2345,8 @@ func newAPNote(
 	noteCC []*url.URL,
 	noteSensitive bool,
 	noteMentions []vocab.ActivityStreamsMention,
-	noteAttachments []vocab.ActivityStreamsImage) vocab.ActivityStreamsNote {
-
+	noteAttachments []vocab.ActivityStreamsImage,
+) vocab.ActivityStreamsNote {
 	// create the note itself
 	note := streams.NewActivityStreamsNote()
 
@@ -2368,8 +2429,8 @@ func newAPNote(
 	return note
 }
 
-// wrapAPNoteInCreate wraps the given activity streams note in a Create activity streams action
-func wrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
+// WrapAPNoteInCreate wraps the given activity streams note in a Create activity streams action
+func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished time.Time, createNote vocab.ActivityStreamsNote) vocab.ActivityStreamsCreate {
 	// create the.... create
 	create := streams.NewActivityStreamsCreate()
 

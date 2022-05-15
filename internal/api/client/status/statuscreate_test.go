@@ -29,7 +29,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/status"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -85,26 +84,69 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), "hello hello", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
-	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because the mastodon api has no idea about mutuals_only
-	assert.Len(suite.T(), statusReply.Tags, 1)
-	assert.Equal(suite.T(), model.Tag{
+	suite.Equal("hello hello", statusReply.SpoilerText)
+	suite.Equal("<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
+	suite.True(statusReply.Sensitive)
+	suite.Equal(model.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because the mastodon api has no idea about mutuals_only
+	suite.Len(statusReply.Tags, 1)
+	suite.Equal(model.Tag{
 		Name: "helloworld",
 		URL:  "http://localhost:8080/tags/helloworld",
 	}, statusReply.Tags[0])
 
 	gtsTag := &gtsmodel.Tag{}
 	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
+	suite.NoError(err)
+	suite.Equal(statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
+}
+
+// mention an account that is not yet known to the instance -- it should be looked up and put in the db
+func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
+
+	// first remove remote account 1 from the database so it gets looked up again
+	remoteAccount := suite.testAccounts["remote_account_1"]
+	if err := suite.db.DeleteByID(context.Background(), remoteAccount.ID, &gtsmodel.Account{}); err != nil {
+		panic(err)
+	}
+
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(recorder)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", status.BasePath), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Request.Form = url.Values{
+		"status":     {"hello @foss_satan@fossbros-anonymous.io"},
+		"visibility": {string(model.VisibilityPublic)},
+	}
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	statusReply := &model.Status{}
+	err = json.Unmarshal(b, statusReply)
+	suite.NoError(err)
+
+	// if the status is properly formatted, that means the account has been put in the db
+	suite.Equal("<p>hello <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span></p>", statusReply.Content)
+	suite.Equal(model.VisibilityPublic, statusReply.Visibility)
 }
 
 func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
@@ -134,13 +176,13 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), "<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
+	suite.Equal("<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"noopener nofollow noreferrer\" target=\"_blank\">docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
@@ -167,22 +209,22 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
+	suite.Equal("", statusReply.SpoilerText)
+	suite.Equal("<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
 
-	assert.Len(suite.T(), statusReply.Emojis, 1)
+	suite.Len(statusReply.Emojis, 1)
 	apiEmoji := statusReply.Emojis[0]
 	gtsEmoji := testrig.NewTestEmojis()["rainbow"]
 
-	assert.Equal(suite.T(), gtsEmoji.Shortcode, apiEmoji.Shortcode)
-	assert.Equal(suite.T(), gtsEmoji.ImageURL, apiEmoji.URL)
-	assert.Equal(suite.T(), gtsEmoji.ImageStaticURL, apiEmoji.StaticURL)
+	suite.Equal(gtsEmoji.Shortcode, apiEmoji.Shortcode)
+	suite.Equal(gtsEmoji.ImageURL, apiEmoji.URL)
+	suite.Equal(gtsEmoji.ImageStaticURL, apiEmoji.StaticURL)
 }
 
 // Try to reply to a status that doesn't exist
@@ -213,8 +255,8 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"bad request"}`, string(b))
+	suite.NoError(err)
+	suite.Equal(`{"error":"bad request"}`, string(b))
 }
 
 // Post a reply to the status of a local user that allows replies.
@@ -243,19 +285,19 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusReply := &model.Status{}
 	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), "", statusReply.SpoilerText)
-	assert.Equal(suite.T(), fmt.Sprintf("<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@%s\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>%s</span></a></span> this reply should work!</p>", testrig.NewTestAccounts()["local_account_2"].Username, testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
-	assert.False(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPublic, statusReply.Visibility)
-	assert.Equal(suite.T(), testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
-	assert.Equal(suite.T(), testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
-	assert.Len(suite.T(), statusReply.Mentions, 1)
+	suite.Equal("", statusReply.SpoilerText)
+	suite.Equal(fmt.Sprintf("<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@%s\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>%s</span></a></span> this reply should work!</p>", testrig.NewTestAccounts()["local_account_2"].Username, testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
+	suite.False(statusReply.Sensitive)
+	suite.Equal(model.VisibilityPublic, statusReply.Visibility)
+	suite.Equal(testrig.NewTestStatuses()["local_account_2_status_1"].ID, statusReply.InReplyToID)
+	suite.Equal(testrig.NewTestAccounts()["local_account_2"].ID, statusReply.InReplyToAccountID)
+	suite.Len(statusReply.Mentions, 1)
 }
 
 // Take a media file which is currently not associated with a status, and attach it to a new status.
@@ -286,33 +328,33 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	statusResponse := &model.Status{}
 	err = json.Unmarshal(b, statusResponse)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
-	assert.Equal(suite.T(), "", statusResponse.SpoilerText)
-	assert.Equal(suite.T(), "<p>here's an image attachment</p>", statusResponse.Content)
-	assert.False(suite.T(), statusResponse.Sensitive)
-	assert.Equal(suite.T(), model.VisibilityPublic, statusResponse.Visibility)
+	suite.Equal("", statusResponse.SpoilerText)
+	suite.Equal("<p>here's an image attachment</p>", statusResponse.Content)
+	suite.False(statusResponse.Sensitive)
+	suite.Equal(model.VisibilityPublic, statusResponse.Visibility)
 
 	// there should be one media attachment
-	assert.Len(suite.T(), statusResponse.MediaAttachments, 1)
+	suite.Len(statusResponse.MediaAttachments, 1)
 
 	// get the updated media attachment from the database
 	gtsAttachment, err := suite.db.GetAttachmentByID(context.Background(), statusResponse.MediaAttachments[0].ID)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// convert it to a api attachment
 	gtsAttachmentAsapi, err := suite.tc.AttachmentToAPIAttachment(context.Background(), gtsAttachment)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// compare it with what we have now
-	assert.EqualValues(suite.T(), statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
+	suite.EqualValues(statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
 
 	// the status id of the attachment should now be set to the id of the status we just created
-	assert.Equal(suite.T(), statusResponse.ID, gtsAttachment.StatusID)
+	suite.Equal(statusResponse.ID, gtsAttachment.StatusID)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

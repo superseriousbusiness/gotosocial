@@ -37,12 +37,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -81,14 +83,18 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	// setup standard items
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db), suite.storage, suite.mediaManager)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.processor).(*mediamodule.Module)
@@ -150,7 +156,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -234,7 +240,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -275,7 +281,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	if err != nil {
 		panic(err)
 	}
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePath), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", mediamodule.BasePathV1), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
 

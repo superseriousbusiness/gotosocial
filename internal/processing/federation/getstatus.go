@@ -20,14 +20,11 @@ package federation
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (p *processor) GetStatus(ctx context.Context, requestedUsername string, requestedStatusID string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
@@ -38,9 +35,9 @@ func (p *processor) GetStatus(ctx context.Context, requestedUsername string, req
 	}
 
 	// authenticate the request
-	requestingAccountURI, authenticated, err := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
-	if err != nil || !authenticated {
-		return nil, gtserror.NewErrorNotAuthorized(errors.New("not authorized"), "not authorized")
+	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
@@ -60,12 +57,13 @@ func (p *processor) GetStatus(ctx context.Context, requestedUsername string, req
 	}
 
 	// get the status out of the database here
-	s := &gtsmodel.Status{}
-	if err := p.db.GetWhere(ctx, []db.Where{
-		{Key: "id", Value: requestedStatusID},
-		{Key: "account_id", Value: requestedAccount.ID},
-	}, s); err != nil {
+	s, err := p.db.GetStatusByID(ctx, requestedStatusID)
+	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting status with id %s and account id %s: %s", requestedStatusID, requestedAccount.ID, err))
+	}
+
+	if s.AccountID != requestedAccount.ID {
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", s.ID, requestedAccount.ID))
 	}
 
 	visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)

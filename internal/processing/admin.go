@@ -53,3 +53,7 @@ func (p *processor) AdminDomainBlockGet(ctx context.Context, authed *oauth.Auth,
 func (p *processor) AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode) {
 	return p.adminProcessor.DomainBlockDelete(ctx, authed.Account, id)
 }
+
+func (p *processor) AdminMediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
+	return p.adminProcessor.MediaRemotePrune(ctx, mediaRemoteCacheDays)
+}

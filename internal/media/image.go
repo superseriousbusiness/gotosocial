@@ -74,7 +74,7 @@ func decodeImage(r io.Reader, contentType string) (*imageMeta, error) {
 	case mimeImageJpeg:
 		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		i, err = png.Decode(r)
+		i, err = StrippedPngDecode(r)
 	default:
 		err = fmt.Errorf("content type %s not recognised", contentType)
 	}
@@ -117,7 +117,7 @@ func deriveThumbnail(r io.Reader, contentType string, createBlurhash bool) (*ima
 	case mimeImageJpeg:
 		i, err = jpeg.Decode(r)
 	case mimeImagePng:
-		i, err = png.Decode(r)
+		i, err = StrippedPngDecode(r)
 	case mimeImageGif:
 		i, err = gif.Decode(r)
 	default:
@@ -175,7 +175,7 @@ func deriveStaticEmoji(r io.Reader, contentType string) (*imageMeta, error) {
 
 	switch contentType {
 	case mimeImagePng:
-		i, err = png.Decode(r)
+		i, err = StrippedPngDecode(r)
 		if err != nil {
 			return nil, err
 		}

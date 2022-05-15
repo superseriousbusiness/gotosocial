@@ -21,6 +21,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -35,9 +36,12 @@ import (
 )
 
 func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Account, domain string, obfuscate bool, publicComment string, privateComment string, subscriptionID string) (*apimodel.DomainBlock, gtserror.WithCode) {
+	// domain blocks will always be lowercase
+	domain = strings.ToLower(domain)
+
 	// first check if we already have a block -- if err == nil we already had a block so we can skip a whole lot of work
 	domainBlock := &gtsmodel.DomainBlock{}
-	err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain, CaseInsensitive: true}}, domainBlock)
+	err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: domain}}, domainBlock)
 	if err != nil {
 		if err != db.ErrNoEntries {
 			// something went wrong in the DB
@@ -68,9 +72,8 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("DomainBlockCreate: db error putting new domain block %s: %s", domain, err))
 			}
 		}
-
 		// process the side effects of the domain block asynchronously since it might take a while
-		go p.initiateDomainBlockSideEffects(ctx, account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
+		go p.initiateDomainBlockSideEffects(context.Background(), account, domainBlock) // TODO: add this to a queuing system so it can retry/resume
 	}
 
 	apiDomainBlock, err := p.tc.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
@@ -96,7 +99,7 @@ func (p *processor) initiateDomainBlockSideEffects(ctx context.Context, account 
 
 	// if we have an instance entry for this domain, update it with the new block ID and clear all fields
 	instance := &gtsmodel.Instance{}
-	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain, CaseInsensitive: true}}, instance); err == nil {
+	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: block.Domain}}, instance); err == nil {
 		instance.Title = ""
 		instance.UpdatedAt = time.Now()
 		instance.SuspendedAt = time.Now()
@@ -142,13 +145,13 @@ selectAccountsLoop:
 			l.Debugf("putting delete for account %s in the clientAPI channel", a.Username)
 
 			// pass the account delete through the client api channel for processing
-			p.fromClientAPI <- messages.FromClientAPI{
+			p.clientWorker.Queue(messages.FromClientAPI{
 				APObjectType:   ap.ActorPerson,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       block,
 				OriginAccount:  account,
 				TargetAccount:  a,
-			}
+			})
 
 			// if this is the last account in the slice, set the maxID appropriately for the next query
 			if i == len(accounts)-1 {

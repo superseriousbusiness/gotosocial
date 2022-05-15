@@ -29,9 +29,11 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -148,6 +150,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 
 		return response, nil
 	}
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	mockClient := testrig.NewMockHTTPClient(do)
-	return testrig.NewTestTransportController(mockClient, suite.db)
+	return testrig.NewTestTransportController(mockClient, suite.db, fedWorker)
 }

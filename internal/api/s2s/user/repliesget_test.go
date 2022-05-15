@@ -33,6 +33,8 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -47,10 +49,13 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	targetAccount := suite.testAccounts["local_account_1"]
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -108,10 +113,13 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	targetAccount := suite.testAccounts["local_account_1"]
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request
@@ -172,10 +180,13 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	targetAccount := suite.testAccounts["local_account_1"]
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db)
-	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager)
+	processor := testrig.NewTestProcessor(suite.db, suite.storage, federator, emailSender, suite.mediaManager, clientWorker, fedWorker)
 	userModule := user.New(processor).(*user.Module)
 
 	// setup request

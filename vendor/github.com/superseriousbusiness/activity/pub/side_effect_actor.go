@@ -148,7 +148,7 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 	// Obtain the id of the activity
 	id := activity.GetJSONLDId()
 	// Acquire a lock for the id. To be held for the rest of execution.
-	err := a.db.Lock(c, id.Get())
+	unlock, err := a.db.Lock(c, id.Get())
 	if err != nil {
 		return err
 	}
@@ -157,19 +157,18 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 	// If the database already contains the activity, exit early.
 	exists, err := a.db.Exists(c, id.Get())
 	if err != nil {
-		a.db.Unlock(c, id.Get())
+		unlock()
 		return err
 	} else if exists {
-		a.db.Unlock(c, id.Get())
+		unlock()
 		return nil
 	}
 	// Attempt to create the activity entry.
 	err = a.db.Create(c, activity)
+	unlock() // unlock even on error return
 	if err != nil {
-		a.db.Unlock(c, id.Get())
 		return err
 	}
-	a.db.Unlock(c, id.Get())
 	// Unlock by this point and in every branch above.
 	//
 	// 2. The values of 'to', 'cc', or 'audience' are Collections owned by
@@ -212,19 +211,19 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 		if err != nil {
 			return err
 		}
-		err = a.db.Lock(c, iri)
+		var unlock func()
+		unlock, err = a.db.Lock(c, iri)
 		if err != nil {
 			return err
 		}
 		// WARNING: Unlock is not deferred
-		if owns, err := a.db.Owns(c, iri); err != nil {
-			a.db.Unlock(c, iri)
+		owns, err := a.db.Owns(c, iri)
+		unlock() // unlock even on error
+		if err != nil {
 			return err
 		} else if !owns {
-			a.db.Unlock(c, iri)
 			continue
 		}
-		a.db.Unlock(c, iri)
 		// Unlock by this point and in every branch above.
 		myIRIs = append(myIRIs, iri)
 	}
@@ -236,7 +235,8 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 	col := make(map[string]itemser)
 	oCol := make(map[string]orderedItemser)
 	for _, iri := range myIRIs {
-		err = a.db.Lock(c, iri)
+		var unlock func()
+		unlock, err = a.db.Lock(c, iri)
 		if err != nil {
 			return err
 		}
@@ -249,20 +249,20 @@ func (a *sideEffectActor) InboxForwarding(c context.Context, inboxIRI *url.URL, 
 			if im, ok := t.(orderedItemser); ok {
 				oCol[iri.String()] = im
 				colIRIs = append(colIRIs, iri)
-				defer a.db.Unlock(c, iri)
+				defer unlock()
 			} else {
-				a.db.Unlock(c, iri)
+				unlock() // unlock instantly
 			}
 		} else if streams.IsOrExtendsActivityStreamsCollection(t) {
 			if im, ok := t.(itemser); ok {
 				col[iri.String()] = im
 				colIRIs = append(colIRIs, iri)
-				defer a.db.Unlock(c, iri)
+				defer unlock()
 			} else {
-				a.db.Unlock(c, iri)
+				unlock() // unlock instantly
 			}
 		} else {
-			a.db.Unlock(c, iri)
+			unlock() // unlock instantly
 		}
 	}
 	// If we own none of the Collection IRIs in 'to', 'cc', or 'audience'
@@ -409,17 +409,17 @@ func (a *sideEffectActor) Deliver(c context.Context, outboxIRI *url.URL, activit
 
 // WrapInCreate wraps an object with a Create activity.
 func (a *sideEffectActor) WrapInCreate(c context.Context, obj vocab.Type, outboxIRI *url.URL) (create vocab.ActivityStreamsCreate, err error) {
-	err = a.db.Lock(c, outboxIRI)
+	var unlock func()
+	unlock, err = a.db.Lock(c, outboxIRI)
 	if err != nil {
 		return
 	}
 	// WARNING: No deferring the Unlock
 	actorIRI, err := a.db.ActorForOutbox(c, outboxIRI)
+	unlock() // unlock after regardless
 	if err != nil {
-		a.db.Unlock(c, outboxIRI)
 		return
 	}
-	a.db.Unlock(c, outboxIRI)
 	// Unlock the lock at this point and every branch above
 	return wrapInCreate(c, obj, actorIRI)
 }
@@ -447,26 +447,25 @@ func (a *sideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL
 func (a *sideEffectActor) addToOutbox(c context.Context, outboxIRI *url.URL, activity Activity) error {
 	// Set the activity in the database first.
 	id := activity.GetJSONLDId()
-	err := a.db.Lock(c, id.Get())
+	unlock, err := a.db.Lock(c, id.Get())
 	if err != nil {
 		return err
 	}
 	// WARNING: Unlock not deferred
 	err = a.db.Create(c, activity)
+	unlock() // unlock after regardless
 	if err != nil {
-		a.db.Unlock(c, id.Get())
 		return err
 	}
-	a.db.Unlock(c, id.Get())
 	// WARNING: Unlock(c, id) should be called by this point and in every
 	// return before here.
 	//
 	// Acquire a lock to read the outbox. Defer release.
-	err = a.db.Lock(c, outboxIRI)
+	unlock, err = a.db.Lock(c, outboxIRI)
 	if err != nil {
 		return err
 	}
-	defer a.db.Unlock(c, outboxIRI)
+	defer unlock()
 	outbox, err := a.db.GetOutbox(c, outboxIRI)
 	if err != nil {
 		return err
@@ -491,11 +490,12 @@ func (a *sideEffectActor) addToOutbox(c context.Context, outboxIRI *url.URL, act
 // Returns true when the activity is novel.
 func (a *sideEffectActor) addToInboxIfNew(c context.Context, inboxIRI *url.URL, activity Activity) (isNew bool, err error) {
 	// Acquire a lock to read the inbox. Defer release.
-	err = a.db.Lock(c, inboxIRI)
+	var unlock func()
+	unlock, err = a.db.Lock(c, inboxIRI)
 	if err != nil {
 		return
 	}
-	defer a.db.Unlock(c, inboxIRI)
+	defer unlock()
 	// Obtain the id of the activity
 	id := activity.GetJSONLDId()
 	// If the inbox already contains the URL, early exit.
@@ -539,19 +539,18 @@ func (a *sideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 	types, iris := getInboxForwardingValues(val)
 	// For IRIs, simply check if we own them.
 	for _, iri := range iris {
-		err := a.db.Lock(c, iri)
+		unlock, err := a.db.Lock(c, iri)
 		if err != nil {
 			return false, err
 		}
 		// WARNING: Unlock is not deferred
-		if owns, err := a.db.Owns(c, iri); err != nil {
-			a.db.Unlock(c, iri)
+		owns, err := a.db.Owns(c, iri)
+		unlock() // unlock after regardless
+		if err != nil {
 			return false, err
 		} else if owns {
-			a.db.Unlock(c, iri)
 			return true, nil
 		}
-		a.db.Unlock(c, iri)
 		// Unlock by this point and in every branch above
 	}
 	// For embedded literals, check the id.
@@ -560,19 +559,19 @@ func (a *sideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 		if err != nil {
 			return false, err
 		}
-		err = a.db.Lock(c, id)
+		var unlock func()
+		unlock, err = a.db.Lock(c, id)
 		if err != nil {
 			return false, err
 		}
 		// WARNING: Unlock is not deferred
-		if owns, err := a.db.Owns(c, id); err != nil {
-			a.db.Unlock(c, id)
+		owns, err := a.db.Owns(c, id)
+		unlock() // unlock after regardless
+		if err != nil {
 			return false, err
 		} else if owns {
-			a.db.Unlock(c, id)
 			return true, nil
 		}
-		a.db.Unlock(c, id)
 		// Unlock by this point and in every branch above
 	}
 	// Recur Preparation: Try fetching the IRIs so we can recur into them.
@@ -681,37 +680,32 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 	// first check if the implemented database logic can return any inboxes
 	// from our list of actor IRIs.
 	foundInboxesFromDB := []*url.URL{}
-	foundActorsFromDB := []*url.URL{}
 	for _, actorIRI := range r {
 		// BEGIN LOCK
-		err = a.db.Lock(c, actorIRI)
+		var unlock func()
+		unlock, err = a.db.Lock(c, actorIRI)
 		if err != nil {
 			return
 		}
 
-		inbox, err := a.db.InboxForActor(c, actorIRI)
+		inboxes, err := a.db.InboxesForIRI(c, actorIRI)
 		if err != nil {
 			// bail on error
-			a.db.Unlock(c, actorIRI)
+			unlock()
 			return nil, err
 		}
-		if inbox != nil {
+
+		if len(inboxes) > 0 {
 			// we have a hit
-			foundInboxesFromDB = append(foundInboxesFromDB, inbox)
-			foundActorsFromDB = append(foundActorsFromDB, actorIRI)
+			foundInboxesFromDB = append(foundInboxesFromDB, inboxes...)
+
+			// if we found inboxes for this iri, we should remove it from
+			// the list of actors/iris we still need to dereference
+			r = removeOne(r, actorIRI)
 		}
 
 		// END LOCK
-		a.db.Unlock(c, actorIRI)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// for every actor we found an inbox for in the db, we should
-	// remove it from the list of actors we still need to dereference
-	for _, actorIRI := range foundActorsFromDB {
-		r = removeOne(r, actorIRI)
+		unlock()
 	}
 
 	// look for any actors' inboxes that weren't already discovered above;
@@ -736,25 +730,25 @@ func (a *sideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 	targets = append(targets, foundInboxesFromRemote...)
 
 	// Get inboxes of sender.
-	err = a.db.Lock(c, outboxIRI)
+	var unlock func()
+	unlock, err = a.db.Lock(c, outboxIRI)
 	if err != nil {
 		return
 	}
 	// WARNING: No deferring the Unlock
 	actorIRI, err := a.db.ActorForOutbox(c, outboxIRI)
+	unlock() // unlock after regardless
 	if err != nil {
-		a.db.Unlock(c, outboxIRI)
 		return
 	}
-	a.db.Unlock(c, outboxIRI)
 	// Get the inbox on the sender.
-	err = a.db.Lock(c, actorIRI)
+	unlock, err = a.db.Lock(c, actorIRI)
 	if err != nil {
 		return nil, err
 	}
 	// BEGIN LOCK
 	thisActor, err := a.db.Get(c, actorIRI)
-	a.db.Unlock(c, actorIRI)
+	unlock()
 	// END LOCK -- Still need to handle err
 	if err != nil {
 		return nil, err

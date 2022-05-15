@@ -53,13 +53,13 @@ func (p *processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	// send it back to the processor for async processing
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityDelete,
 		GTSModel:       targetStatus,
 		OriginAccount:  requestingAccount,
 		TargetAccount:  requestingAccount,
-	}
+	})
 
 	return apiStatus, nil
 }

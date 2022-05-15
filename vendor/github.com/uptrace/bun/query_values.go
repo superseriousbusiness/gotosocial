@@ -37,6 +37,13 @@ func (q *ValuesQuery) Conn(db IConn) *ValuesQuery {
 	return q
 }
 
+func (q *ValuesQuery) Column(columns ...string) *ValuesQuery {
+	for _, column := range columns {
+		q.addColumn(schema.UnsafeIdent(column))
+	}
+	return q
+}
+
 // Value overwrites model value for the column.
 func (q *ValuesQuery) Value(column string, expr string, args ...interface{}) *ValuesQuery {
 	if q.table == nil {
@@ -98,7 +105,7 @@ func (q *ValuesQuery) AppendColumns(fmter schema.Formatter, b []byte) (_ []byte,
 }
 
 func (q *ValuesQuery) Operation() string {
-	return "SELECT"
+	return "VALUES"
 }
 
 func (q *ValuesQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, err error) {

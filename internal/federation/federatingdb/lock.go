@@ -22,10 +22,6 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"sync"
-	"sync/atomic"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Lock takes a lock for the object at the specified id. If an error
@@ -39,83 +35,10 @@ import (
 // processes require tight loops acquiring and releasing locks.
 //
 // Used to ensure race conditions in multiple requests do not occur.
-func (f *federatingDB) Lock(c context.Context, id *url.URL) error {
-	// Before any other Database methods are called, the relevant `id`
-	// entries are locked to allow for fine-grained concurrency.
-
-	// Strategy: create a new lock, if stored, continue. Otherwise, lock the
-	// existing mutex.
+func (f *federatingDB) Lock(c context.Context, id *url.URL) (func(), error) {
 	if id == nil {
-		return errors.New("Lock: id was nil")
+		return nil, errors.New("Lock: id was nil")
 	}
-	idStr := id.String()
-
-	// Acquire map lock
-	f.mutex.Lock()
-
-	// Get mutex, or create new
-	mu, ok := f.locks[idStr]
-	if !ok {
-		mu, ok = f.pool.Get().(*mutex)
-		if !ok {
-			logrus.Panic("Lock: pool entry was not a *mutex")
-		}
-		f.locks[idStr] = mu
-	}
-
-	// Unlock map, acquire mutex lock
-	f.mutex.Unlock()
-	mu.Lock()
-	return nil
-}
-
-// Unlock makes the lock for the object at the specified id available.
-// If an error is returned, the lock must have still been freed.
-//
-// Used to ensure race conditions in multiple requests do not occur.
-func (f *federatingDB) Unlock(c context.Context, id *url.URL) error {
-	// Once Go-Fed is done calling Database methods, the relevant `id`
-	// entries are unlocked.
-	if id == nil {
-		return errors.New("Unlock: id was nil")
-	}
-	idStr := id.String()
-
-	// Check map for mutex
-	f.mutex.Lock()
-	mu, ok := f.locks[idStr]
-	f.mutex.Unlock()
-
-	if !ok {
-		return errors.New("missing an id in unlock")
-	}
-
-	// Unlock the mutex
-	mu.Unlock()
-	return nil
-}
-
-// mutex defines a mutex we can check the lock status of.
-// this is not perfect, but it's good enough for a semi
-// regular mutex cleanup routine
-type mutex struct {
-	mu sync.Mutex
-	st uint32
-}
-
-// inUse returns if the mutex is in use
-func (mu *mutex) inUse() bool {
-	return atomic.LoadUint32(&mu.st) == 1
-}
-
-// Lock acquire mutex lock
-func (mu *mutex) Lock() {
-	mu.mu.Lock()
-	atomic.StoreUint32(&mu.st, 1)
-}
-
-// Unlock releases mutex lock
-func (mu *mutex) Unlock() {
-	mu.mu.Unlock()
-	atomic.StoreUint32(&mu.st, 0)
+	unlock := f.locks.Lock(id.String())
+	return unlock, nil
 }

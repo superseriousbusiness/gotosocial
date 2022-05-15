@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,9 +34,11 @@ import (
 
 type FederatingDBTestSuite struct {
 	suite.Suite
-	db           db.DB
-	tc           typeutils.TypeConverter
-	federatingDB federatingdb.DB
+	db            db.DB
+	tc            typeutils.TypeConverter
+	fedWorker     *concurrency.WorkerPool[messages.FromFederator]
+	fromFederator chan messages.FromFederator
+	federatingDB  federatingdb.DB
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client
@@ -62,10 +65,17 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	suite.fedWorker = concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	suite.fromFederator = make(chan messages.FromFederator, 10)
+	suite.fedWorker.SetProcessor(func(ctx context.Context, msg messages.FromFederator) error {
+		suite.fromFederator <- msg
+		return nil
+	})
+	_ = suite.fedWorker.Start()
 	suite.db = testrig.NewTestDB()
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.federatingDB = testrig.NewTestFederatingDB(suite.db)
+	suite.federatingDB = testrig.NewTestFederatingDB(suite.db, suite.fedWorker)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 }
 
@@ -73,10 +83,9 @@ func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, fromFederatorChan chan messages.FromFederator) context.Context {
+func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ap.ContextReceivingAccount, receivingAccount)
 	ctx = context.WithValue(ctx, ap.ContextRequestingAccount, requestingAccount)
-	ctx = context.WithValue(ctx, ap.ContextFromFederatorChan, fromFederatorChan)
 	return ctx
 }

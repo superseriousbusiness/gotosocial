@@ -34,6 +34,8 @@ const (
 	LimitKey = "limit"
 	// ExcludeRepliesKey is for specifying whether to exclude replies in a list of returned statuses by an account.
 	ExcludeRepliesKey = "exclude_replies"
+	// ExcludeReblogsKey is for specifying whether to exclude reblogs in a list of returned statuses by an account.
+	ExcludeReblogsKey = "exclude_reblogs"
 	// PinnedKey is for specifying whether to include pinned statuses in a list of returned statuses by an account.
 	PinnedKey = "pinned"
 	// MaxIDKey is for specifying the maximum ID of the status to retrieve.

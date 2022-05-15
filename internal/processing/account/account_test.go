@@ -19,9 +19,12 @@
 package account_test
 
 import (
+	"context"
+
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -29,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -77,6 +81,16 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
 
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	clientWorker.SetProcessor(func(_ context.Context, msg messages.FromClientAPI) error {
+		suite.fromClientAPIChan <- msg
+		return nil
+	})
+
+	_ = fedWorker.Start()
+	_ = clientWorker.Start()
+
 	suite.db = testrig.NewTestDB()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.storage = testrig.NewTestStorage()
@@ -84,11 +98,11 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
 	suite.httpClient = testrig.NewMockHTTPClient(nil)
-	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager)
+	suite.transportController = testrig.NewTestTransportController(suite.httpClient, suite.db, fedWorker)
+	suite.federator = testrig.NewTestFederator(suite.db, suite.transportController, suite.storage, suite.mediaManager, fedWorker)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
-	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaManager, suite.oauthServer, suite.fromClientAPIChan, suite.federator)
+	suite.accountProcessor = account.New(suite.db, suite.tc, suite.mediaManager, suite.oauthServer, clientWorker, suite.federator, processing.GetParseMentionFunc(suite.db, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

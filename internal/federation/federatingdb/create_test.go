@@ -25,7 +25,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 type CreateTestSuite struct {
@@ -35,9 +34,8 @@ type CreateTestSuite struct {
 func (suite *CreateTestSuite) TestCreateNote() {
 	receivingAccount := suite.testAccounts["local_account_1"]
 	requestingAccount := suite.testAccounts["remote_account_1"]
-	fromFederatorChan := make(chan messages.FromFederator, 10)
 
-	ctx := createTestContext(receivingAccount, requestingAccount, fromFederatorChan)
+	ctx := createTestContext(receivingAccount, requestingAccount)
 
 	create := suite.testActivities["dm_for_zork"].Activity
 
@@ -45,7 +43,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-fromFederatorChan
+	msg := <-suite.fromFederator
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
@@ -65,9 +63,8 @@ func (suite *CreateTestSuite) TestCreateNote() {
 func (suite *CreateTestSuite) TestCreateNoteForward() {
 	receivingAccount := suite.testAccounts["local_account_1"]
 	requestingAccount := suite.testAccounts["remote_account_1"]
-	fromFederatorChan := make(chan messages.FromFederator, 10)
 
-	ctx := createTestContext(receivingAccount, requestingAccount, fromFederatorChan)
+	ctx := createTestContext(receivingAccount, requestingAccount)
 
 	create := suite.testActivities["forwarded_message"].Activity
 
@@ -75,7 +72,7 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-fromFederatorChan
+	msg := <-suite.fromFederator
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 

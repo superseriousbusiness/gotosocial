@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -47,12 +48,14 @@ type Processor interface {
 	// Unlike Delete, it will propagate the deletion out across the federating API to other instances.
 	DeleteLocal(ctx context.Context, account *gtsmodel.Account, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// Get processes the given request for account information.
-	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, error)
+	Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.Account, gtserror.WithCode)
+	// GetLocalByUsername processes the given request for account information targeting a local account by username.
+	GetLocalByUsername(ctx context.Context, requestingAccount *gtsmodel.Account, username string) (*apimodel.Account, gtserror.WithCode)
 	// Update processes the update of an account with the given form
 	Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
 	// StatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
-	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode)
+	StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode)
 	// FollowersGet fetches a list of the target account's followers.
 	FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]apimodel.Account, gtserror.WithCode)
 	// FollowingGet fetches a list of the accounts that target account is following.
@@ -79,26 +82,28 @@ type Processor interface {
 }
 
 type processor struct {
-	tc            typeutils.TypeConverter
-	mediaManager  media.Manager
-	fromClientAPI chan messages.FromClientAPI
-	oauthServer   oauth.Server
-	filter        visibility.Filter
-	formatter     text.Formatter
-	db            db.DB
-	federator     federation.Federator
+	tc           typeutils.TypeConverter
+	mediaManager media.Manager
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
+	oauthServer  oauth.Server
+	filter       visibility.Filter
+	formatter    text.Formatter
+	db           db.DB
+	federator    federation.Federator
+	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, fromClientAPI chan messages.FromClientAPI, federator federation.Federator) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], federator federation.Federator, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
-		tc:            tc,
-		mediaManager:  mediaManager,
-		fromClientAPI: fromClientAPI,
-		oauthServer:   oauthServer,
-		filter:        visibility.NewFilter(db),
-		formatter:     text.NewFormatter(db),
-		db:            db,
-		federator:     federator,
+		tc:           tc,
+		mediaManager: mediaManager,
+		clientWorker: clientWorker,
+		oauthServer:  oauthServer,
+		filter:       visibility.NewFilter(db),
+		formatter:    text.NewFormatter(db),
+		db:           db,
+		federator:    federator,
+		parseMention: parseMention,
 	}
 }

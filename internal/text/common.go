@@ -19,10 +19,11 @@
 package text
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"html"
 	"strings"
+	"unicode"
 
 	"github.com/sirupsen/logrus"
 
@@ -63,38 +64,40 @@ func postformat(in string) string {
 }
 
 func (f *formatter) ReplaceTags(ctx context.Context, in string, tags []*gtsmodel.Tag) string {
-	return regexes.HashtagFinder.ReplaceAllStringFunc(in, func(match string) string {
+	return regexes.ReplaceAllStringFunc(regexes.HashtagFinder, in, func(match string, buf *bytes.Buffer) string {
 		// we have a match
 		matchTrimmed := strings.TrimSpace(match)
-		tagAsEntered := strings.Split(matchTrimmed, "#")[1]
+		tagAsEntered := matchTrimmed[1:]
 
 		// check through the tags to find what we're matching
 		for _, tag := range tags {
-
-			if strings.EqualFold(matchTrimmed, fmt.Sprintf("#%s", tag.Name)) {
-				// replace the #tag with the formatted tag content
-				tagContent := fmt.Sprintf(`<a href="%s" class="mention hashtag" rel="tag">#<span>%s</span></a>`, tag.URL, tagAsEntered)
-
-				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
-				if strings.HasPrefix(match, " ") {
-					tagContent = " " + tagContent
-				} else if strings.HasPrefix(match, "\n") {
-					tagContent = "\n" + tagContent
+			if strings.EqualFold(tagAsEntered, tag.Name) {
+				// Add any dropped space from match
+				if unicode.IsSpace(rune(match[0])) {
+					buf.WriteByte(match[0])
 				}
 
-				// done
-				return tagContent
+				// replace the #tag with the formatted tag content
+				// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
+				buf.WriteString(`<a href="`)
+				buf.WriteString(tag.URL)
+				buf.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
+				buf.WriteString(tagAsEntered)
+				buf.WriteString(`</span></a>`)
+				return buf.String()
 			}
 		}
+
 		// the match wasn't in the list of tags for whatever reason, so just return the match as we found it so nothing changes
 		return match
 	})
 }
 
 func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*gtsmodel.Mention) string {
-	return regexes.MentionFinder.ReplaceAllStringFunc(in, func(match string) string {
-		// we have a match
+	return regexes.ReplaceAllStringFunc(regexes.MentionFinder, in, func(match string, buf *bytes.Buffer) string {
+		// we have a match, trim any spaces
 		matchTrimmed := strings.TrimSpace(match)
+
 		// check through mentions to find what we're matching
 		for _, menchie := range mentions {
 			if strings.EqualFold(matchTrimmed, menchie.NameString) {
@@ -107,22 +110,26 @@ func (f *formatter) ReplaceMentions(ctx context.Context, in string, mentions []*
 					}
 					menchie.TargetAccount = a
 				}
+
+				// The mention's target is our target
 				targetAccount := menchie.TargetAccount
 
-				// replace the mention with the formatted mention content
-				mentionContent := fmt.Sprintf(`<span class="h-card"><a href="%s" class="u-url mention">@<span>%s</span></a></span>`, targetAccount.URL, targetAccount.Username)
-
-				// in case the match picked up any previous space or newlines (thanks to the regex), include them as well
-				if strings.HasPrefix(match, " ") {
-					mentionContent = " " + mentionContent
-				} else if strings.HasPrefix(match, "\n") {
-					mentionContent = "\n" + mentionContent
+				// Add any dropped space from match
+				if unicode.IsSpace(rune(match[0])) {
+					buf.WriteByte(match[0])
 				}
 
-				// done
-				return mentionContent
+				// replace the mention with the formatted mention content
+				// <span class="h-card"><a href="targetAccount.URL" class="u-url mention">@<span>targetAccount.Username</span></a></span>
+				buf.WriteString(`<span class="h-card"><a href="`)
+				buf.WriteString(targetAccount.URL)
+				buf.WriteString(`" class="u-url mention">@<span>`)
+				buf.WriteString(targetAccount.Username)
+				buf.WriteString(`</span></a></span>`)
+				return buf.String()
 			}
 		}
+
 		// the match wasn't in the list of mentions for whatever reason, so just return the match as we found it so nothing changes
 		return match
 	})

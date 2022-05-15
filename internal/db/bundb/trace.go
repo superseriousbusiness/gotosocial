@@ -47,6 +47,11 @@ func (q *debugQueryHook) AfterQuery(_ context.Context, event *bun.QueryEvent) {
 		"operation": event.Operation(),
 	})
 
+	if dur > 1*time.Second {
+		l.Warnf("SLOW DATABASE QUERY [%s] %s", dur, event.Query)
+		return
+	}
+
 	if logrus.GetLevel() == logrus.TraceLevel {
 		l.Tracef("[%s] %s", dur, event.Query)
 	} else {

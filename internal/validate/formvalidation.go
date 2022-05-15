@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -53,7 +54,16 @@ func NewPassword(password string) error {
 		return fmt.Errorf("password should be no more than %d chars", maximumPasswordLength)
 	}
 
-	return pwv.Validate(password, minimumPasswordEntropy)
+	if err := pwv.Validate(password, minimumPasswordEntropy); err != nil {
+		// Modify error message to include percentage requred entropy the password has
+		percent := int(100 * pwv.GetEntropy(password) / minimumPasswordEntropy)
+		return errors.New(strings.ReplaceAll(
+			err.Error(),
+			"insecure password",
+			fmt.Sprintf("password is %d%% strength", percent)))
+	}
+
+	return nil // pasword OK
 }
 
 // Username makes sure that a given username is valid (ie., letters, numbers, underscores, check length).

@@ -23,46 +23,36 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-
-	"github.com/sirupsen/logrus"
 )
 
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
-	l := logrus.WithField("func", "Finger")
-	urlString := fmt.Sprintf("https://%s/.well-known/webfinger?resource=acct:%s@%s", targetDomain, targetUsername, targetDomain)
-	l.Debugf("performing GET to %s", urlString)
+	// Prepare URL string
+	urlStr := "https://" +
+		targetDomain +
+		"/.well-known/webfinger?resource=acct:" +
+		targetUsername + "@" + targetDomain
 
-	iri, err := url.Parse(urlString)
-	if err != nil {
-		return nil, fmt.Errorf("Finger: error parsing url %s: %s", urlString, err)
-	}
-
-	l.Debugf("performing GET to %s", iri.String())
-
-	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
+	// Generate new GET request from URL string
+	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Accept", "application/jrd+json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
-	req.Header.Set("Host", iri.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", req.URL.Host)
+
+	// Perform the HTTP request
+	rsp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := t.client.Do(req)
-	if err != nil {
-		return nil, err
+	defer rsp.Body.Close()
+
+	// Check for an expected status code
+	if rsp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET request to %s failed (%d): %s", urlStr, rsp.StatusCode, rsp.Status)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
-	}
-	return ioutil.ReadAll(resp.Body)
+
+	return ioutil.ReadAll(rsp.Body)
 }

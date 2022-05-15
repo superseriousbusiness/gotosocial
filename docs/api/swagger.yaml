@@ -2086,6 +2086,11 @@ paths:
         in: query
         name: exclude_replies
         type: boolean
+      - default: false
+        description: Exclude statuses that are a reblog/boost of another status.
+        in: query
+        name: exclude_reblogs
+        type: boolean
       - description: |-
           Return only statuses *OLDER* than the given max status ID.
           The status with the specified ID will not be included in the response.
@@ -2099,7 +2104,7 @@ paths:
         name: min_id
         type: string
       - default: false
-        description: Show only pinned statuses. In other words,e xclude statuses that
+        description: Show only pinned statuses. In other words, exclude statuses that
           are not pinned to the given account ID.
         in: query
         name: pinned_only

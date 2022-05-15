@@ -34,12 +34,12 @@ func (p *processor) AccountAction(ctx context.Context, account *gtsmodel.Account
 	case string(gtsmodel.AdminActionSuspend):
 		adminAction.Type = gtsmodel.AdminActionSuspend
 		// pass the account delete through the client api channel for processing
-		p.fromClientAPI <- messages.FromClientAPI{
+		p.clientWorker.Queue(messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
 			OriginAccount:  account,
 			TargetAccount:  targetAccount,
-		}
+		})
 	default:
 		return gtserror.NewErrorBadRequest(fmt.Errorf("admin action type %s is not supported for this endpoint", form.Type))
 	}

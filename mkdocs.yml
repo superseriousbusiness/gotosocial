@@ -18,6 +18,9 @@ nav:
     - "installation_guide/binary.md"
     - "installation_guide/docker.md"
     - "installation_guide/nginx.md"
+    - "installation_guide/apache-httpd.md"
+    - "installation_guide/third_party.md"
+    - "installation_guide/websocket.md"
   - "Configuration":
     - "configuration/index.md"
     - "configuration/general.md"
@@ -40,6 +43,7 @@ nav:
     - "user_guide/password_management.md"
   - "Federation":
     - "federation/index.md"
+    - "federation/glossary.md"
     - "federation/security.md"
     - "federation/behaviors/outbox.md"
     - "federation/behaviors/conversation_threads.md"

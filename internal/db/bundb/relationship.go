@@ -52,14 +52,25 @@ func (r *relationshipDB) IsBlocked(ctx context.Context, account1 string, account
 	q := r.conn.
 		NewSelect().
 		Model(&gtsmodel.Block{}).
-		Where("account_id = ?", account1).
-		Where("target_account_id = ?", account2).
+		ExcludeColumn("id", "created_at", "updated_at", "uri").
 		Limit(1)
 
 	if eitherDirection {
 		q = q.
-			WhereOr("target_account_id = ?", account1).
-			Where("account_id = ?", account2)
+			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+				return inner.
+					Where("account_id = ?", account1).
+					Where("target_account_id = ?", account2)
+			}).
+			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
+				return inner.
+					Where("account_id = ?", account2).
+					Where("target_account_id = ?", account1)
+			})
+	} else {
+		q = q.
+			Where("account_id = ?", account1).
+			Where("target_account_id = ?", account2)
 	}
 
 	return r.conn.Exists(ctx, q)

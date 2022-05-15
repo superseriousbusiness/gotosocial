@@ -60,10 +60,17 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.Note(*form.Note); err != nil {
 			return nil, err
 		}
+
+		// Set the raw note before processing
+		account.NoteRaw = *form.Note
+
+		// Process note to generate a valid HTML representation
 		note, err := p.processNote(ctx, *form.Note, account.ID)
 		if err != nil {
 			return nil, err
 		}
+
+		// Set updated HTML-ified note
 		account.Note = note
 	}
 
@@ -117,12 +124,12 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, fmt.Errorf("could not update account %s: %s", account.ID, err)
 	}
 
-	p.fromClientAPI <- messages.FromClientAPI{
+	p.clientWorker.Queue(messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       updatedAccount,
 		OriginAccount:  updatedAccount,
-	}
+	})
 
 	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, updatedAccount)
 	if err != nil {
@@ -199,10 +206,14 @@ func (p *processor) processNote(ctx context.Context, note string, accountID stri
 		return "", err
 	}
 
-	mentionStrings := util.DeriveMentionsFromText(note)
-	mentions, err := p.db.MentionStringsToMentions(ctx, mentionStrings, accountID, "")
-	if err != nil {
-		return "", err
+	mentionStrings := util.DeriveMentionNamesFromText(note)
+	mentions := []*gtsmodel.Mention{}
+	for _, mentionString := range mentionStrings {
+		mention, err := p.parseMention(ctx, mentionString, accountID, "")
+		if err != nil {
+			continue
+		}
+		mentions = append(mentions, mention)
 	}
 
 	// TODO: support emojis in account notes

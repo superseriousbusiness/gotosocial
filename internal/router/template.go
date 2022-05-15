@@ -33,20 +33,21 @@ import (
 
 // LoadTemplates loads html templates for use by the given engine
 func loadTemplates(engine *gin.Engine) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return fmt.Errorf("error getting current working directory: %s", err)
-	}
-
 	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
-
-	_, err = os.Stat(filepath.Join(cwd, templateBaseDir, "index.tmpl"))
-	if err != nil {
-		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %s", filepath.Join(cwd, templateBaseDir), err)
+	if templateBaseDir == "" {
+		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebTemplateBaseDir)
 	}
 
-	tmPath := filepath.Join(cwd, fmt.Sprintf("%s*", templateBaseDir))
-	engine.LoadHTMLGlob(tmPath)
+	templateBaseDir, err := filepath.Abs(templateBaseDir)
+	if err != nil {
+		return fmt.Errorf("error getting absolute path of %s: %s", templateBaseDir, err)
+	}
+
+	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
+		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err)
+	}
+
+	engine.LoadHTMLGlob(filepath.Join(templateBaseDir, "*"))
 	return nil
 }
 
@@ -65,6 +66,11 @@ func noescape(str string) template.HTML {
 func timestamp(stamp string) string {
 	t, _ := time.Parse(time.RFC3339, stamp)
 	return t.Format("January 2, 2006, 15:04:05")
+}
+
+func timestampShort(stamp string) string {
+	t, _ := time.Parse(time.RFC3339, stamp)
+	return t.Format("January, 2006")
 }
 
 type iconWithLabel struct {
@@ -98,5 +104,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"oddOrEven":      oddOrEven,
 		"visibilityIcon": visibilityIcon,
 		"timestamp":      timestamp,
+		"timestampShort": timestampShort,
 	})
 }

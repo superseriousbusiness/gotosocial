@@ -28,16 +28,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode) {
-	if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	} else if blocked {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+	if requestingAccount != nil {
+		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		} else if blocked {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts"))
+		}
 	}
 
 	apiStatuses := []apimodel.Status{}
 
-	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
+	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			return apiStatuses, nil

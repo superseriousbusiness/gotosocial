@@ -82,7 +82,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 			return s.cache.GetByURI(uri)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("LOWER(status.uri) = LOWER(?)", uri).Scan(ctx)
+			return s.newStatusQ(status).Where("status.uri = ?", uri).Scan(ctx)
 		},
 	)
 }
@@ -94,7 +94,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 			return s.cache.GetByURL(url)
 		},
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("LOWER(status.url) = LOWER(?)", url).Scan(ctx)
+			return s.newStatusQ(status).Where("status.url = ?", url).Scan(ctx)
 		},
 	)
 }

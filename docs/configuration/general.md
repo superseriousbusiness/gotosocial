@@ -16,6 +16,13 @@ The only things you *really* need to set here are `host`, which should be the ho
 # Default: "info"
 log-level: "info"
 
+# Bool. Log database queries when log-level is set to debug or trace.
+# This setting produces verbose logs, so it's better to only enable it
+# when you're trying to track an issue down.
+# Options: [true, false]
+# Default: false
+log-db-queries: false
+
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"

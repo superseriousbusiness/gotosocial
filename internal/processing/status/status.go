@@ -22,6 +22,7 @@ import (
 	"context"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -69,20 +70,22 @@ type Processor interface {
 }
 
 type processor struct {
-	tc            typeutils.TypeConverter
-	db            db.DB
-	filter        visibility.Filter
-	formatter     text.Formatter
-	fromClientAPI chan messages.FromClientAPI
+	tc           typeutils.TypeConverter
+	db           db.DB
+	filter       visibility.Filter
+	formatter    text.Formatter
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
+	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(db db.DB, tc typeutils.TypeConverter, fromClientAPI chan messages.FromClientAPI) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
-		tc:            tc,
-		db:            db,
-		filter:        visibility.NewFilter(db),
-		formatter:     text.NewFormatter(db),
-		fromClientAPI: fromClientAPI,
+		tc:           tc,
+		db:           db,
+		filter:       visibility.NewFilter(db),
+		formatter:    text.NewFormatter(db),
+		clientWorker: clientWorker,
+		parseMention: parseMention,
 	}
 }

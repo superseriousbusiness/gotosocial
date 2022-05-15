@@ -204,30 +204,6 @@ func (t *Table) initFields() {
 	t.Fields = make([]*Field, 0, t.Type.NumField())
 	t.FieldMap = make(map[string]*Field, t.Type.NumField())
 	t.addFields(t.Type, "", nil)
-
-	if len(t.PKs) == 0 {
-		for _, name := range []string{"id", "uuid", "pk_" + t.ModelName} {
-			if field, ok := t.FieldMap[name]; ok {
-				field.markAsPK()
-				t.PKs = []*Field{field}
-				t.DataFields = removeField(t.DataFields, field)
-				break
-			}
-		}
-	}
-
-	if len(t.PKs) == 1 {
-		pk := t.PKs[0]
-		if pk.SQLDefault != "" {
-			return
-		}
-
-		switch pk.IndirectType.Kind() {
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			pk.AutoIncrement = true
-		}
-	}
 }
 
 func (t *Table) addFields(typ reflect.Type, prefix string, index []int) {
@@ -250,26 +226,27 @@ func (t *Table) addFields(typ reflect.Type, prefix string, index []int) {
 				continue
 			}
 
+			// If field is an embedded struct, add each field of the embedded struct.
 			fieldType := indirectType(f.Type)
-			if fieldType.Kind() != reflect.Struct {
+			if fieldType.Kind() == reflect.Struct {
+				t.addFields(fieldType, "", withIndex(index, f.Index))
+
+				tag := tagparser.Parse(f.Tag.Get("bun"))
+				if tag.HasOption("inherit") || tag.HasOption("extend") {
+					embeddedTable := t.dialect.Tables().Ref(fieldType)
+					t.TypeName = embeddedTable.TypeName
+					t.SQLName = embeddedTable.SQLName
+					t.SQLNameForSelects = embeddedTable.SQLNameForSelects
+					t.Alias = embeddedTable.Alias
+					t.SQLAlias = embeddedTable.SQLAlias
+					t.ModelName = embeddedTable.ModelName
+				}
 				continue
 			}
-			t.addFields(fieldType, "", withIndex(index, f.Index))
-
-			tag := tagparser.Parse(f.Tag.Get("bun"))
-			if _, inherit := tag.Options["inherit"]; inherit {
-				embeddedTable := t.dialect.Tables().Ref(fieldType)
-				t.TypeName = embeddedTable.TypeName
-				t.SQLName = embeddedTable.SQLName
-				t.SQLNameForSelects = embeddedTable.SQLNameForSelects
-				t.Alias = embeddedTable.Alias
-				t.SQLAlias = embeddedTable.SQLAlias
-				t.ModelName = embeddedTable.ModelName
-			}
-
-			continue
 		}
 
+		// If field is not a struct, add it.
+		// This will also add any embedded non-struct type as a field.
 		if field := t.newField(f, prefix, index); field != nil {
 			t.addField(field)
 		}
@@ -355,6 +332,7 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 
 	field := &Field{
 		StructField: f,
+		IsPtr:       f.Type.Kind() == reflect.Ptr,
 
 		Tag:          tag,
 		IndirectType: indirectType(f.Type),
@@ -367,9 +345,13 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 
 	field.NotNull = tag.HasOption("notnull")
 	field.NullZero = tag.HasOption("nullzero")
-	field.AutoIncrement = tag.HasOption("autoincrement")
 	if tag.HasOption("pk") {
-		field.markAsPK()
+		field.IsPK = true
+		field.NotNull = true
+	}
+	if tag.HasOption("autoincrement") {
+		field.AutoIncrement = true
+		field.NullZero = true
 	}
 
 	if v, ok := tag.Options["unique"]; ok {
@@ -415,20 +397,8 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 	}
 
 	if _, ok := tag.Options["soft_delete"]; ok {
-		field.NullZero = true
 		t.SoftDeleteField = field
 		t.UpdateSoftDeleteField = softDeleteFieldUpdater(field)
-	}
-
-	// Check this in the end to undo NullZero.
-	if tag.HasOption("allowzero") {
-		if tag.HasOption("nullzero") {
-			internal.Warn.Printf(
-				"%s.%s: nullzero and allowzero options are mutually exclusive",
-				t.TypeName, f.Name,
-			)
-		}
-		field.NullZero = false
 	}
 
 	return field
@@ -651,7 +621,7 @@ func (t *Table) hasManyRelation(field *Field) *Relation {
 				rel.BaseFields = append(rel.BaseFields, f)
 			} else {
 				panic(fmt.Errorf(
-					"bun: %s has-one %s: %s must have column %s",
+					"bun: %s has-many %s: %s must have column %s",
 					t.TypeName, field.GoName, t.TypeName, baseColumn,
 				))
 			}
@@ -660,7 +630,7 @@ func (t *Table) hasManyRelation(field *Field) *Relation {
 				rel.JoinFields = append(rel.JoinFields, f)
 			} else {
 				panic(fmt.Errorf(
-					"bun: %s has-one %s: %s must have column %s",
+					"bun: %s has-many %s: %s must have column %s",
 					t.TypeName, field.GoName, t.TypeName, baseColumn,
 				))
 			}
@@ -879,7 +849,6 @@ func isKnownFieldOption(name string) bool {
 		"msgpack",
 		"notnull",
 		"nullzero",
-		"allowzero",
 		"default",
 		"unique",
 		"soft_delete",

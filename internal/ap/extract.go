@@ -248,7 +248,10 @@ func ExtractSummary(i WithSummary) (string, error) {
 	}
 
 	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
-		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
+		switch {
+		case iter.IsIRI():
+			return iter.GetIRI().String(), nil
+		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString(), nil
 		}
 	}
