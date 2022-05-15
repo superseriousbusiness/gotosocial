@@ -26,18 +26,27 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (p *processor) MediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
+func (p *processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
 	if mediaRemoteCacheDays < 0 {
-		err := fmt.Errorf("invalid value for mediaRemoteCacheDays prune: value was %d, cannot be less than 0", mediaRemoteCacheDays)
+		err := fmt.Errorf("MediaPrune: invalid value for mediaRemoteCacheDays prune: value was %d, cannot be less than 0", mediaRemoteCacheDays)
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	go func() {
-		pruned, err := p.mediaManager.PruneRemote(ctx, mediaRemoteCacheDays)
+		pruned, err := p.mediaManager.PruneAllRemote(ctx, mediaRemoteCacheDays)
 		if err != nil {
-			logrus.Errorf("MediaRemotePrune: error pruning: %s", err)
+			logrus.Errorf("MediaPrune: error pruning remote cache: %s", err)
 		} else {
-			logrus.Infof("MediaRemotePrune: pruned %d entries", pruned)
+			logrus.Infof("MediaPrune: pruned %d remote cache entries", pruned)
+		}
+	}()
+
+	go func() {
+		pruned, err := p.mediaManager.PruneAllMeta(ctx)
+		if err != nil {
+			logrus.Errorf("MediaPrune: error pruning meta: %s", err)
+		} else {
+			logrus.Infof("MediaPrune: pruned %d meta entries", pruned)
 		}
 	}()
 

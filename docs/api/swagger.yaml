@@ -2574,6 +2574,39 @@ paths:
       summary: View domain block with the given ID.
       tags:
       - admin
+  /api/v1/admin/media_cleanup:
+    post:
+      consumes:
+      - application/json
+      - application/xml
+      - application/x-www-form-urlencoded
+      description: Also cleans up unused headers + avatars from the media cache.
+      operationId: mediaCleanup
+      parameters:
+      - description: |-
+          Number of days of remote media to keep. Native values will be treated as 0.
+          If value is not specified, the value of media-remote-cache-days in the server config will be used.
+        format: int64
+        in: query
+        name: remote_cache_days
+        type: integer
+        x-go-name: RemoteCacheDays
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Echos the number of days requested. The cleanup is performed
+            asynchronously after the request completes.
+        "400":
+          description: bad request
+        "403":
+          description: forbidden
+      security:
+      - OAuth2 Bearer:
+        - admin
+      summary: Clean up remote media older than the specified number of days.
+      tags:
+      - admin
   /api/v1/apps:
     post:
       consumes:

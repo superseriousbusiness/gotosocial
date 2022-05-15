@@ -20,8 +20,6 @@ package media
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"codeberg.org/gruf/go-store/storage"
 	"github.com/sirupsen/logrus"
@@ -29,34 +27,32 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
+func (m *manager) PruneAllMeta(ctx context.Context) (int, error) {
 	var totalPruned int
-
-	// convert days into a duration string
-	olderThanHoursString := fmt.Sprintf("%dh", olderThanDays*24)
-	// parse the duration string into a duration
-	olderThanHours, err := time.ParseDuration(olderThanHoursString)
-	if err != nil {
-		return totalPruned, fmt.Errorf("PruneAllRemote: %d", err)
-	}
-	// 'subtract' that from the time now to give our threshold
-	olderThan := time.Now().Add(-olderThanHours)
-	logrus.Infof("PruneAllRemote: pruning media older than %s", olderThan)
+	var maxID string
+	var attachments []*gtsmodel.MediaAttachment
+	var err error
 
 	// select 20 attachments at a time and prune them
-	for attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
-
-		// use the age of the oldest attachment (the last one in the slice) as the next 'older than' value
+	for attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetAvatarsAndHeaders(ctx, maxID, selectPruneLimit) {
+		// use the id of the last attachment in the slice as the next 'maxID' value
 		l := len(attachments)
-		logrus.Tracef("PruneAllRemote: got %d attachments older than %s", l, olderThan)
-		olderThan = attachments[l-1].CreatedAt
+		logrus.Tracef("PruneAllMeta: got %d attachments with maxID < %s", l, maxID)
+		maxID = attachments[l-1].ID
 
-		// prune each attachment
+		// prune each attachment that meets one of the following criteria:
+		// - has no owning account in the database
+		// - is a header but isn't the owning account's current header
+		// - is an avatar but isn't the owning account's current avatar
 		for _, attachment := range attachments {
-			if err := m.pruneOneRemote(ctx, attachment); err != nil {
-				return totalPruned, err
+			if attachment.Account == nil ||
+				(attachment.Header && attachment.ID != attachment.Account.HeaderMediaAttachmentID) ||
+				(attachment.Avatar && attachment.ID != attachment.Account.AvatarMediaAttachmentID) {
+				if err := m.pruneOneAvatarOrHeader(ctx, attachment); err != nil {
+					return totalPruned, err
+				}
+				totalPruned++
 			}
-			totalPruned++
 		}
 	}
 
@@ -65,29 +61,27 @@ func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, e
 		return totalPruned, err
 	}
 
-	logrus.Infof("PruneAllRemote: finished pruning remote media: pruned %d entries", totalPruned)
+	logrus.Infof("PruneAllMeta: finished pruning avatars + headers: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 
-func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *manager) pruneOneAvatarOrHeader(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
-		logrus.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
+		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
-		logrus.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
+		logrus.Tracef("pruneOneAvatarOrHeader: deleting %s", attachment.Thumbnail.Path)
 		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
-		attachment.Cached = false
 	}
 
-	// update the attachment to reflect that we no longer have it cached
-	return m.db.UpdateByPrimaryKey(ctx, attachment)
+	// delete the attachment entry completely
+	return m.db.DeleteByID(ctx, attachment.ID, &gtsmodel.MediaAttachment{})
 }

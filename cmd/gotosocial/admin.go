@@ -45,7 +45,7 @@ func adminCommands() *cobra.Command {
 		Use:   "create",
 		Short: "create a new account",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Create)
@@ -58,7 +58,7 @@ func adminCommands() *cobra.Command {
 		Use:   "confirm",
 		Short: "confirm an existing account manually, thereby skipping email confirmation",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Confirm)
@@ -71,7 +71,7 @@ func adminCommands() *cobra.Command {
 		Use:   "promote",
 		Short: "promote an account to admin",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Promote)
@@ -84,7 +84,7 @@ func adminCommands() *cobra.Command {
 		Use:   "demote",
 		Short: "demote an account from admin to normal user",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Demote)
@@ -97,7 +97,7 @@ func adminCommands() *cobra.Command {
 		Use:   "disable",
 		Short: "prevent an account from signing in or posting etc, but don't delete anything",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Disable)
@@ -110,7 +110,7 @@ func adminCommands() *cobra.Command {
 		Use:   "suspend",
 		Short: "completely remove an account and all of its posts, media, etc",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Suspend)
@@ -123,7 +123,7 @@ func adminCommands() *cobra.Command {
 		Use:   "password",
 		Short: "set a new password for the given account",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), account.Password)
@@ -142,7 +142,7 @@ func adminCommands() *cobra.Command {
 		Use:   "export",
 		Short: "export data from the database to file at the given path",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), trans.Export)
@@ -155,7 +155,7 @@ func adminCommands() *cobra.Command {
 		Use:   "import",
 		Short: "import data from a file into the database",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(cmd)
+			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return run(cmd.Context(), trans.Import)

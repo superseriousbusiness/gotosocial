@@ -42,6 +42,10 @@ func NewTestRouter(db db.DB) router.Router {
 		})
 	}
 
+	if alternativeBindAddress := os.Getenv("GTS_BIND_ADDRESS"); alternativeBindAddress != "" {
+		config.SetBindAddress(alternativeBindAddress)
+	}
+
 	r, err := router.New(context.Background(), db)
 	if err != nil {
 		panic(err)
