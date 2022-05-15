@@ -2580,6 +2580,7 @@ paths:
       - application/json
       - application/xml
       - application/x-www-form-urlencoded
+      description: Also cleans up unused headers + avatars from the media cache.
       operationId: mediaCleanup
       parameters:
       - description: |-
