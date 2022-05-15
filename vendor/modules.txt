@@ -4,9 +4,12 @@ codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-byteutil v1.0.0
+# codeberg.org/gruf/go-byteutil v1.0.1
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
+# codeberg.org/gruf/go-cache/v2 v2.0.1
+## explicit; go 1.18
+codeberg.org/gruf/go-cache/v2
 # codeberg.org/gruf/go-debug v1.1.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug

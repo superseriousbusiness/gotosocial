@@ -21,6 +21,7 @@ package status_test
 import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -30,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -42,7 +42,7 @@ type StatusStandardTestSuite struct {
 	storage       *kv.KVStore
 	mediaManager  media.Manager
 	federator     federation.Federator
-	clientWorker  *worker.Worker[messages.FromClientAPI]
+	clientWorker  *concurrency.WorkerPool[messages.FromClientAPI]
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -75,11 +75,11 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	suite.db = testrig.NewTestDB()
 	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
-	suite.clientWorker = worker.New[messages.FromClientAPI](-1, -1)
+	suite.clientWorker = concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	suite.tc = testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)

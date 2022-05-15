@@ -27,9 +27,9 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
@@ -79,8 +79,8 @@ type Manager interface {
 type manager struct {
 	db           db.DB
 	storage      *kv.KVStore
-	emojiWorker  *worker.Worker[*ProcessingEmoji]
-	mediaWorker  *worker.Worker[*ProcessingMedia]
+	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
+	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
 	stopCronJobs func() error
 }
 
@@ -89,7 +89,7 @@ type manager struct {
 // A worker pool will also be initialized for the manager, to ensure that only
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
-// See internal/worker.New() documentation for further information.
+// See internal/concurrency.NewWorkerPool() documentation for further information.
 func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	m := &manager{
 		db:      database,
@@ -97,7 +97,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	}
 
 	// Prepare the media worker pool
-	m.mediaWorker = worker.New[*ProcessingMedia](-1, 10)
+	m.mediaWorker = concurrency.NewWorkerPool[*ProcessingMedia](-1, 10)
 	m.mediaWorker.SetProcessor(func(ctx context.Context, media *ProcessingMedia) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -109,7 +109,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	})
 
 	// Prepare the emoji worker pool
-	m.emojiWorker = worker.New[*ProcessingEmoji](-1, 10)
+	m.emojiWorker = concurrency.NewWorkerPool[*ProcessingEmoji](-1, 10)
 	m.emojiWorker.SetProcessor(func(ctx context.Context, emoji *ProcessingEmoji) error {
 		if err := ctx.Err(); err != nil {
 			return err

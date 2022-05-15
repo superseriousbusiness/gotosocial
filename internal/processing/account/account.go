@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -33,7 +34,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
@@ -84,7 +84,7 @@ type Processor interface {
 type processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
-	clientWorker *worker.Worker[messages.FromClientAPI]
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	oauthServer  oauth.Server
 	filter       visibility.Filter
 	formatter    text.Formatter
@@ -94,7 +94,7 @@ type processor struct {
 }
 
 // New returns a new account processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, clientWorker *worker.Worker[messages.FromClientAPI], federator federation.Federator, parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, oauthServer oauth.Server, clientWorker *concurrency.WorkerPool[messages.FromClientAPI], federator federation.Federator, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return &processor{
 		tc:           tc,
 		mediaManager: mediaManager,

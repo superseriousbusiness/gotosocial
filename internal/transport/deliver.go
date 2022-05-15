@@ -19,13 +19,14 @@
 package transport
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -72,6 +73,28 @@ func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 		return nil
 	}
 
-	logrus.Debugf("Deliver: posting as %s to %s", t.pubKeyID, to.String())
-	return t.sigTransport.Deliver(ctx, b, to)
+	urlStr := to.String()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", urlStr, bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	req.Header.Add("Accept-Charset", "utf-8")
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", to.Host)
+
+	resp, err := t.POST(req, b)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if code := resp.StatusCode; code != http.StatusOK &&
+		code != http.StatusCreated && code != http.StatusAccepted {
+		return fmt.Errorf("POST request to %s failed (%d): %s", urlStr, resp.StatusCode, resp.Status)
+	}
+
+	return nil
 }

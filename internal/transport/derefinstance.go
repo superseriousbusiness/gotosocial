@@ -80,43 +80,38 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 }
 
 func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
-	l := logrus.WithField("func", "dereferenceByAPIV1Instance")
-
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
 		Path:   "api/v1/instance",
 	}
 
-	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
-	req.Header.Set("Host", cleanIRI.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := t.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
-	}
-	b, err := ioutil.ReadAll(resp.Body)
+	// Build IRI just once
+	iriStr := cleanIRI.String()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(b) == 0 {
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", cleanIRI.Host)
+
+	resp, err := t.GET(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	} else if len(b) == 0 {
 		return nil, errors.New("response bytes was len 0")
 	}
 
@@ -237,44 +232,37 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 }
 
 func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*url.URL, error) {
-	l := logrus.WithField("func", "callNodeInfoWellKnown")
-
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
 		Path:   ".well-known/nodeinfo",
 	}
 
-	l.Debugf("performing GET to %s", cleanIRI.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", cleanIRI.String(), nil)
-	if err != nil {
-		return nil, err
-	}
+	// Build IRI just once
+	iriStr := cleanIRI.String()
 
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
-	req.Header.Set("Host", cleanIRI.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := t.client.Do(req)
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", cleanIRI.Host)
+
+	resp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", cleanIRI.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfoWellKnown: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return nil, errors.New("callNodeInfoWellKnown: response bytes was len 0")
 	}
 
@@ -302,38 +290,31 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 }
 
 func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
-	l := logrus.WithField("func", "callNodeInfo")
+	// Build IRI just once
+	iriStr := iri.String()
 
-	l.Debugf("performing GET to %s", iri.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
+	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := t.client.Do(req)
+
+	resp, err := t.GET(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("callNodeInfo: GET request to %s failed (%d): %s", iriStr, resp.StatusCode, resp.Status)
 	}
+
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(b) == 0 {
+	} else if len(b) == 0 {
 		return nil, errors.New("callNodeInfo: response bytes was len 0")
 	}
 
