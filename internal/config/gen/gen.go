@@ -43,7 +43,7 @@ func main() {
 			fmt.Fprintf(output, "}\n\n")
 		}
 		output.Close()
-		exec.Command("gofmt", "-w", out).Run()
+		_ = exec.Command("gofmt", "-w", out).Run()
 
 	// Unknown type
 	default:
