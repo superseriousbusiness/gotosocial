@@ -10,10 +10,13 @@ import (
 var (
 	global Configuration
 	mutex  sync.Mutex
-	gviper viper.Viper
+	gviper *viper.Viper
 )
 
 func init() {
+	// init global viper
+	gviper = viper.New()
+
 	// Flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
 	gviper.SetEnvPrefix("gts")
 	gviper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -39,12 +42,12 @@ func Reload() (err error) {
 		gviper.SetConfigFile(cfg.ConfigPath)
 
 		// Read in configuration from file
-		if err = viper.ReadInConfig(); err != nil {
+		if err = gviper.ReadInConfig(); err != nil {
 			return
 		}
 
 		// Unmarshal configuration to Configuration struct
-		if err = viper.UnmarshalExact(cfg); err != nil {
+		if err = cfg.unmarshal(gviper.AllSettings()); err != nil {
 			return
 		}
 	})

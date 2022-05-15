@@ -64,21 +64,20 @@ func main() {
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
-		Use:           "gotosocial",
-		Short:         "GoToSocial - a fediverse social media server",
-		Long:          "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
-		Version:       versionString,
+		Use:     "gotosocial",
+		Short:   "GoToSocial - a fediverse social media server",
+		Long:    "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
+		Version: versionString,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			// before running any other cmd funcs, we must load config-path
+			return config.BindConfigPath(cmd)
+		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 
 	// attach global flags to the root command so that they can be accessed from any subcommand
 	config.AddGlobalFlags(rootCmd)
-
-	// bind the config-path flag early so that we can call it in the pre-run of following commands
-	if err := config.BindConfigPath(rootCmd); err != nil {
-		logrus.Fatalf("error attaching config flag: %s", err)
-	}
 
 	// add subcommands
 	rootCmd.AddCommand(serverCommands())

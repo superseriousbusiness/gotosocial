@@ -2,6 +2,8 @@ package config
 
 import (
 	"reflect"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // cfgtype is the reflected type information of Configuration{}.
@@ -100,4 +102,13 @@ type Configuration struct {
 	AdminAccountEmail    string `name:"email" usage:"the email address of this account"`
 	AdminAccountPassword string `name:"password" usage:"the password to set for this account"`
 	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
+}
+
+// unmarshal provides mapstructure unmarshaling with a custom decoder to use a different field tag name.
+func (cfg *Configuration) unmarshal(raw map[string]interface{}) error {
+	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName: "name",
+		Result:  cfg,
+	})
+	return dec.Decode(raw)
 }
