@@ -196,37 +196,33 @@ func (m *manager) Stop() error {
 func scheduleCleanupJobs(m *manager) error {
 	// create a new cron instance for scheduling cleanup jobs
 	c := cron.New(cron.WithLogger(&logrusWrapper{}))
-	cancels := []context.CancelFunc{}
-
-	pruneMetaCtx, pruneMetaCancel := context.WithCancel(context.Background())
-	cancels = append(cancels, pruneMetaCancel)
+	pruneCtx, pruneCancel := context.WithCancel(context.Background())
 
 	if _, err := c.AddFunc("@midnight", func() {
 		begin := time.Now()
-		pruned, err := m.PruneAllMeta(pruneMetaCtx)
+		pruned, err := m.PruneAllMeta(pruneCtx)
 		if err != nil {
 			logrus.Errorf("media manager: error pruning meta: %s", err)
 			return
 		}
 		logrus.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
 	}); err != nil {
+		pruneCancel()
 		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
 	}
 
 	// start remote cache cleanup cronjob if configured
 	if mediaRemoteCacheDays := viper.GetInt(config.Keys.MediaRemoteCacheDays); mediaRemoteCacheDays > 0 {
-		pruneRemoteCtx, pruneRemoteCancel := context.WithCancel(context.Background())
-		cancels = append(cancels, pruneRemoteCancel)
-
 		if _, err := c.AddFunc("@midnight", func() {
 			begin := time.Now()
-			pruned, err := m.PruneAllRemote(pruneRemoteCtx, mediaRemoteCacheDays)
+			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays)
 			if err != nil {
 				logrus.Errorf("media manager: error pruning remote cache: %s", err)
 				return
 			}
 			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
 		}); err != nil {
+			pruneCancel()
 			return fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
 		}
 	}
@@ -243,9 +239,7 @@ func scheduleCleanupJobs(m *manager) error {
 			break
 		}
 
-		for _, cancelFunc := range cancels {
-			cancelFunc()
-		}
+		pruneCancel()
 		return nil
 	}
 
