@@ -39,7 +39,7 @@ func BindFlags(cmd *cobra.Command) (err error) {
 	return nil
 }
 
-// AddGlobalFlags will attach global configuration flags to given cobra command.
+// AddGlobalFlags will attach global configuration flags to given cobra command, loading defaults from global config.
 func AddGlobalFlags(cmd *cobra.Command) {
 	Config(func(cfg *Configuration) {
 		// General
@@ -63,7 +63,7 @@ func AddGlobalFlags(cmd *cobra.Command) {
 	})
 }
 
-// AddServerFlags will attach server configuration flags to given cobra command.
+// AddServerFlags will attach server configuration flags to given cobra command, loading defaults from global config.
 func AddServerFlags(cmd *cobra.Command) {
 	Config(func(cfg *Configuration) {
 		// Router
