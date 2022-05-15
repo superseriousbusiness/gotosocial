@@ -24,34 +24,31 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-
-	"github.com/sirupsen/logrus"
 )
 
 func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int, error) {
-	l := logrus.WithField("func", "DereferenceMedia")
-	l.Debugf("performing GET to %s", iri.String())
-	req, err := http.NewRequestWithContext(ctx, "GET", iri.String(), nil)
+	// Build IRI just once
+	iriStr := iri.String()
+
+	// Prepare HTTP request to this media's IRI
+	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
+	req.Header.Add("User-Agent", t.controller.userAgent)
+	req.Header.Set("Host", iri.Host)
+
+	// Perform the HTTP request
+	rsp, err := t.GET(req)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
-	req.Header.Add("Date", t.clock.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s", t.appAgent, t.gofedAgent))
-	req.Header.Set("Host", iri.Host)
-	t.getSignerMu.Lock()
-	err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, req, nil)
-	t.getSignerMu.Unlock()
-	if err != nil {
-		return nil, 0, err
+	// Check for an expected status code
+	if rsp.StatusCode != http.StatusOK {
+		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iriStr, rsp.StatusCode, rsp.Status)
 	}
-	resp, err := t.client.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, 0, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
-	}
-	return resp.Body, int(resp.ContentLength), nil
+
+	return rsp.Body, int(rsp.ContentLength), nil
 }

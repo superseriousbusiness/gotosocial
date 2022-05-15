@@ -33,9 +33,9 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -49,8 +49,8 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	signedRequest := derefRequests["foss_satan_dereference_zork"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)
@@ -130,8 +130,8 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	derefRequests := testrig.NewTestDereferenceRequests(suite.testAccounts)
 	signedRequest := derefRequests["foss_satan_dereference_zork_public_key"]
 
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
 	federator := testrig.NewTestFederator(suite.db, tc, suite.storage, suite.mediaManager, fedWorker)

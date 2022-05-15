@@ -91,3 +91,12 @@ type AdminAccountActionRequest struct {
 	// ID of the account to be acted on.
 	TargetAccountID string `form:"-" json:"-" xml:"-"`
 }
+
+// MediaCleanupRequest models admin media cleanup parameters
+//
+// swagger:parameters mediaCleanup
+type MediaCleanupRequest struct {
+	// Number of days of remote media to keep. Native values will be treated as 0.
+	// If value is not specified, the value of media-remote-cache-days in the server config will be used.
+	RemoteCacheDays *int `form:"remote_cache_days" json:"remote_cache_days" xml:"remote_cache_days"`
+}

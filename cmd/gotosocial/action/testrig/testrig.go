@@ -54,11 +54,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -74,8 +74,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageSetup(storageBackend, "./testrig/media")
 
 	// Create client API and federator worker pools
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	// build backend handlers
 	oauthServer := testrig.NewTestOauthServer(dbService)

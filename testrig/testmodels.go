@@ -20,8 +20,6 @@ package testrig
 
 import (
 	"bytes"
-	"context"
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -29,7 +27,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -42,8 +39,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
 // NewTestTokens returns a map of tokens keyed according to which account the token belongs to.
@@ -828,6 +824,55 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 				ContentType: "image/jpeg",
 				FileSize:    20395,
 				UpdatedAt:   TimeMustParse("2021-09-20T12:40:37+02:00"),
+				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
+			},
+			Avatar: false,
+			Header: false,
+			Cached: true,
+		},
+		"remote_account_1_status_1_attachment_2": {
+			ID:        "01FVW7RXPQ8YJHTEXYPE7Q8ZY1",
+			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
+			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpeg",
+			CreatedAt: time.Now().Add(-48 * time.Hour),
+			UpdatedAt: time.Now().Add(-48 * time.Hour),
+			Type:      gtsmodel.FileTypeImage,
+			FileMeta: gtsmodel.FileMeta{
+				Original: gtsmodel.Original{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Small: gtsmodel.Small{
+					Width:  472,
+					Height: 291,
+					Size:   137352,
+					Aspect: 1.6219931271477663,
+				},
+				Focus: gtsmodel.Focus{
+					X: 0,
+					Y: 0,
+				},
+			},
+			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Description:       "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
+			ScheduledStatusID: "",
+			Blurhash:          "LARysgM_IU_3~pD%M_Rj_39FIAt6",
+			Processing:        2,
+			File: gtsmodel.File{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    19310,
+				UpdatedAt:   time.Now().Add(-48 * time.Hour),
+			},
+			Thumbnail: gtsmodel.Thumbnail{
+				Path:        "01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
+				ContentType: "image/jpeg",
+				FileSize:    20395,
+				UpdatedAt:   time.Now().Add(-48 * time.Hour),
 				URL:         "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				RemoteURL:   "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpeg",
 			},
@@ -1855,86 +1900,71 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 }
 
-// GetSignatureForActivity does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
-// the HTTP Signature for the given activity, public key ID, private key, and destination.
-func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
-	// create a client that basically just pulls the signature out of the request and sets it
-	client := &mockHTTPClient{
-		do: func(req *http.Request) (*http.Response, error) {
-			signatureHeader = req.Header.Get("Signature")
-			digestHeader = req.Header.Get("Digest")
-			dateHeader = req.Header.Get("Date")
-			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	// Create temporary federator worker for transport controller
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	_ = fedWorker.Start()
-	defer func() { _ = fedWorker.Stop() }()
-
-	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB(), fedWorker)
-	tp, err := c.NewTransport(pubKeyID, privkey)
-	if err != nil {
-		panic(err)
-	}
-
+// GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
+func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// convert the activity into json bytes
 	m, err := activity.Serialize()
 	if err != nil {
 		panic(err)
 	}
-	bytes, err := json.Marshal(m)
+	b, err := json.Marshal(m)
 	if err != nil {
 		panic(err)
 	}
 
-	// trigger the delivery function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if err := tp.SigTransport().Deliver(context.Background(), bytes, destination); err != nil {
+	// Prepare HTTP request signer
+	sig, err := transport.NewPOSTSigner(120)
+	if err != nil {
 		panic(err)
 	}
+
+	// Prepare a mock request ready for signing
+	r, err := http.NewRequest("POST", destination.String(), bytes.NewReader(b))
+	if err != nil {
+		panic(err)
+	}
+	r.Header.Set("Host", destination.Host)
+	r.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+
+	// Sign this new HTTP request
+	if err := sig.SignRequest(privkey, pubKeyID, r, b); err != nil {
+		panic(err)
+	}
+
+	// Load signed data from request
+	signatureHeader = r.Header.Get("Signature")
+	digestHeader = r.Header.Get("Digest")
+	dateHeader = r.Header.Get("Date")
 
 	// headers should now be populated
 	return
 }
 
-// GetSignatureForDereference does some sneaky sneaky work with a mock http client and a test transport controller, in order to derive
-// the HTTP Signature for the given derefence GET request using public key ID, private key, and destination.
-func GetSignatureForDereference(pubKeyID string, privkey crypto.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
-	// create a client that basically just pulls the signature out of the request and sets it
-	client := &mockHTTPClient{
-		do: func(req *http.Request) (*http.Response, error) {
-			signatureHeader = req.Header.Get("Signature")
-			dateHeader = req.Header.Get("Date")
-			r := ioutil.NopCloser(bytes.NewReader([]byte{})) // we only need this so the 'close' func doesn't nil out
-			return &http.Response{
-				StatusCode: 200,
-				Body:       r,
-			}, nil
-		},
-	}
-
-	// Create temporary federator worker for transport controller
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	_ = fedWorker.Start()
-	defer func() { _ = fedWorker.Stop() }()
-
-	// use the client to create a new transport
-	c := NewTestTransportController(client, NewTestDB(), fedWorker)
-	tp, err := c.NewTransport(pubKeyID, privkey)
+// GetSignatureForDereference prepares a mock HTTP request as if it were going to dereference destination signed for privkey and pubKeyID, signs the request and returns the header values.
+func GetSignatureForDereference(pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
+	// Prepare HTTP request signer
+	sig, err := transport.NewGETSigner(120)
 	if err != nil {
 		panic(err)
 	}
 
-	// trigger the dereference function for the underlying signature transport, which will trigger the 'do' function of the recorder above
-	if _, err := tp.SigTransport().Dereference(context.Background(), destination); err != nil {
+	// Prepare a mock request ready for signing
+	r, err := http.NewRequest("GET", destination.String(), nil)
+	if err != nil {
 		panic(err)
 	}
+	r.Header.Set("Host", destination.Host)
+	r.Header.Set("Date", time.Now().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+
+	// Sign this new HTTP request
+	if err := sig.SignRequest(privkey, pubKeyID, r, nil); err != nil {
+		panic(err)
+	}
+
+	// Load signed data from request
+	signatureHeader = r.Header.Get("Signature")
+	digestHeader = r.Header.Get("Digest")
+	dateHeader = r.Header.Get("Date")
 
 	// headers should now be populated
 	return
