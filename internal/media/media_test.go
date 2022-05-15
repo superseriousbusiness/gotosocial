@@ -34,6 +34,7 @@ type MediaStandardTestSuite struct {
 	storage         *kv.KVStore
 	manager         media.Manager
 	testAttachments map[string]*gtsmodel.MediaAttachment
+	testAccounts    map[string]*gtsmodel.Account
 }
 
 func (suite *MediaStandardTestSuite) SetupSuite() {
@@ -48,6 +49,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 	testrig.StandardDBSetup(suite.db, nil)
 	suite.testAttachments = testrig.NewTestAttachments()
+	suite.testAccounts = testrig.NewTestAccounts()
 	suite.manager = testrig.NewTestMediaManager(suite.db, suite.storage)
 }
 

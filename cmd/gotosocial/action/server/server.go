@@ -239,7 +239,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// perform initial media prune in case value of MediaRemoteCacheDays changed
-	if err := processor.AdminMediaRemotePrune(ctx, viper.GetInt(config.Keys.MediaRemoteCacheDays)); err != nil {
+	if err := processor.AdminMediaPrune(ctx, viper.GetInt(config.Keys.MediaRemoteCacheDays)); err != nil {
 		return fmt.Errorf("error during initial media prune: %s", err)
 	}
 

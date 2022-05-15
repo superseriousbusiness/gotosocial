@@ -72,3 +72,29 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 	}
 	return attachments, nil
 }
+
+func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+	attachments := []*gtsmodel.MediaAttachment{}
+
+	q := m.newMediaQ(&attachments).
+		WhereGroup(" AND ", func(innerQ *bun.SelectQuery) *bun.SelectQuery {
+			return innerQ.
+				WhereOr("media_attachment.avatar = true").
+				WhereOr("media_attachment.header = true")
+		}).
+		Order("media_attachment.id DESC")
+
+	if maxID != "" {
+		q = q.Where("media_attachment.id < ?", maxID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, m.conn.ProcessError(err)
+	}
+
+	return attachments, nil
+}
