@@ -100,7 +100,7 @@ func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 		remoteCacheDays = 0
 	}
 
-	if errWithCode := m.processor.AdminMediaRemotePrune(c.Request.Context(), remoteCacheDays); errWithCode != nil {
+	if errWithCode := m.processor.AdminMediaPrune(c.Request.Context(), remoteCacheDays); errWithCode != nil {
 		l.Debugf("error starting prune of remote media: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
