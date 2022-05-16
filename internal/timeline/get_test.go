@@ -20,7 +20,6 @@ package timeline_test
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"testing"
 	"time"
@@ -76,11 +75,10 @@ func (suite *GetTestSuite) SetupTest() {
 
 	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
 	for _, s := range statuses {
-		inserted, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
+		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
-		fmt.Printf("\n\n\n %s %t \n\n\n", s.GetID(), inserted)
 	}
 
 	suite.timeline = tl
