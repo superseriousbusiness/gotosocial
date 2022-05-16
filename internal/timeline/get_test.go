@@ -20,10 +20,13 @@ package timeline_test
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -62,12 +65,22 @@ func (suite *GetTestSuite) SetupTest() {
 		suite.FailNow(err.Error())
 	}
 
-	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
+	// put the status IDs in a determinate order since we can't trust a map to keep its order
+	statuses := []*gtsmodel.Status{}
 	for _, s := range suite.testStatuses {
-		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
+		statuses = append(statuses, s)
+	}
+	sort.Slice(statuses, func(i, j int) bool {
+		return statuses[i].ID > statuses[j].ID
+	})
+
+	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
+	for _, s := range statuses {
+		inserted, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
+		fmt.Printf("\n\n\n %s %t \n\n\n", s.GetID(), inserted)
 	}
 
 	suite.timeline = tl
@@ -85,7 +98,7 @@ func (suite *GetTestSuite) TestGetDefault() {
 	}
 
 	// we only have 16 statuses in the test suite
-	suite.Len(statuses, 16)
+	suite.Len(statuses, 17)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -171,14 +184,14 @@ func (suite *GetTestSuite) TestGetMaxIDPrepareNext() {
 }
 
 func (suite *GetTestSuite) TestGetMinID() {
-	// ask for 10 with a min ID somewhere in the middle of the stack
+	// ask for 15 with a min ID somewhere in the middle of the stack
 	statuses, err := suite.timeline.Get(context.Background(), 10, "", "01F8MHBQCBTDKN6X5VHGMMN4MA", "", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 9 statuses back, since we asked for a min ID that excludes some of our entries
-	suite.Len(statuses, 9)
+	// we should only get 10 statuses back, since we asked for a min ID that excludes some of our entries
+	suite.Len(statuses, 10)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -193,14 +206,14 @@ func (suite *GetTestSuite) TestGetMinID() {
 }
 
 func (suite *GetTestSuite) TestGetSinceID() {
-	// ask for 10 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
+	// ask for 15 with a since ID somewhere in the middle of the stack
+	statuses, err := suite.timeline.Get(context.Background(), 15, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 9 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 9)
+	// we should only get 10 statuses back, since we asked for a since ID that excludes some of our entries
+	suite.Len(statuses, 10)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
@@ -215,14 +228,14 @@ func (suite *GetTestSuite) TestGetSinceID() {
 }
 
 func (suite *GetTestSuite) TestGetSinceIDPrepareNext() {
-	// ask for 10 with a since ID somewhere in the middle of the stack
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
+	// ask for 15 with a since ID somewhere in the middle of the stack
+	statuses, err := suite.timeline.Get(context.Background(), 15, "", "", "01F8MHBQCBTDKN6X5VHGMMN4MA", true)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// we should only get 9 statuses back, since we asked for a since ID that excludes some of our entries
-	suite.Len(statuses, 9)
+	// we should only get 10 statuses back, since we asked for a since ID that excludes some of our entries
+	suite.Len(statuses, 10)
 
 	// statuses should be sorted highest to lowest ID
 	var highest string
