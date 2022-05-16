@@ -51,7 +51,7 @@ func Reload() (err error) {
 			return
 		}
 
-		// Unmarshal configuration to Configuration struct
+		// Unmarshal raw settings to Configuration struct
 		if err = cfg.unmarshal(gviper.AllSettings()); err != nil {
 			return
 		}
