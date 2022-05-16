@@ -36,7 +36,7 @@ func main() {
 
 	// Load runtime config flags
 	flag.StringVar(&out, "out", "", "Generated file output path")
-	flag.StringVar(&gen, "gen", "values", "Type of file to generate (values)")
+	flag.StringVar(&gen, "gen", "helpers", "Type of file to generate (helpers)")
 	flag.Parse()
 
 	// Open output file path
@@ -47,7 +47,7 @@ func main() {
 
 	switch gen {
 	// Generate config field helper methods
-	case "values":
+	case "helpers":
 		fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
 		fmt.Fprint(output, "package config\n\n")
 		t := reflect.TypeOf(config.Configuration{})
@@ -81,6 +81,9 @@ func main() {
 		}
 		output.Close()
 		_ = exec.Command("gofmt", "-w", out).Run()
+
+	// The plain here is that eventually we might be able
+	// to generate an example configuration from struct tags
 
 	// Unknown type
 	default:
