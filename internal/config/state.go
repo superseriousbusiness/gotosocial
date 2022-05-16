@@ -29,7 +29,7 @@ import (
 // ConfigState manages safe concurrent access to Configuration{} values,
 // and provides ease of linking them (including reloading) via viper to
 // environment, CLI and configuration file variables.
-type ConfigState struct {
+type ConfigState struct { //nolint
 	viper  *viper.Viper
 	config Configuration
 	mutex  sync.Mutex
