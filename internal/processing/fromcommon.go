@@ -442,7 +442,7 @@ func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 	return p.streamingProcessor.StreamDelete(status.ID)
 }
 
-// wipeStatus contains common logic used to totally delete a status 
+// wipeStatus contains common logic used to totally delete a status
 // + all its attachments, notifications, boosts, and timeline entries.
 func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status) error {
 	// delete all attachments for this status
