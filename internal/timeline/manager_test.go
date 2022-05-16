@@ -84,7 +84,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	// oldest should now be set
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", oldestIndexed)
+	suite.Equal("01F8MH82FYRXD2RC6108DAJ5HB", oldestIndexed)
 
 	// get hometimeline
 	statuses, err := suite.manager.GetTimeline(context.Background(), testAccount.ID, "", "", "", 20, false)
@@ -92,7 +92,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	suite.Len(statuses, 15)
 
 	// now wipe the last status from all timelines, as though it had been deleted by the owner
-	err = suite.manager.WipeItemFromAllTimelines(context.Background(), "01F8MH75CBF9JFX4ZAD54N0W0R")
+	err = suite.manager.WipeItemFromAllTimelines(context.Background(), "01F8MH82FYRXD2RC6108DAJ5HB")
 	suite.NoError(err)
 
 	// timeline should be shorter
@@ -102,10 +102,10 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	// oldest should now be different
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal("01F8MH82FYRXD2RC6108DAJ5HB", oldestIndexed)
+	suite.Equal("01F8MHAAY43M6RJ473VQFCVH37", oldestIndexed)
 
 	// delete the new oldest status specifically from this timeline, as though local_account_1 had muted or blocked it
-	removed, err := suite.manager.Remove(context.Background(), testAccount.ID, "01F8MH82FYRXD2RC6108DAJ5HB")
+	removed, err := suite.manager.Remove(context.Background(), testAccount.ID, "01F8MHAAY43M6RJ473VQFCVH37")
 	suite.NoError(err)
 	suite.Equal(2, removed) // 1 status should be removed, but from both indexed and prepared, so 2 removals total
 
@@ -116,7 +116,7 @@ func (suite *ManagerTestSuite) TestManagerIntegration() {
 	// oldest should now be different
 	oldestIndexed, err = suite.manager.GetOldestIndexedID(context.Background(), testAccount.ID)
 	suite.NoError(err)
-	suite.Equal("01F8MHAAY43M6RJ473VQFCVH37", oldestIndexed)
+	suite.Equal("01F8MHAMCHF6Y650WCRSCP4WMY", oldestIndexed)
 
 	// now remove all entries by local_account_2 from the timeline
 	err = suite.manager.WipeItemsFromAccountID(context.Background(), testAccount.ID, suite.testAccounts["local_account_2"].ID)
