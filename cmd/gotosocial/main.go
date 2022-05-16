@@ -58,9 +58,7 @@ func main() {
 	}
 
 	// override software version in config store
-	config.Config(func(cfg *config.Configuration) {
-		cfg.SoftwareVersion = versionString
-	})
+	config.SetSoftwareVersion(versionString)
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
@@ -70,7 +68,7 @@ func main() {
 		Version: versionString,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// before running any other cmd funcs, we must load config-path
-			return config.BindConfigPath(cmd)
+			return config.LoadEarlyFlags(cmd)
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,

@@ -1,60 +1,53 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package config
 
-import (
-	"strings"
-	"sync"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/viper"
-)
-
-var (
-	global Configuration
-	mutex  sync.Mutex
-	gviper *viper.Viper
-)
+var global *ConfigState
 
 func init() {
-	// init global viper
-	gviper = viper.New()
-
-	// Flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
-	gviper.SetEnvPrefix("gts")
-	gviper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-
-	// Load appropriate named vals from env
-	gviper.AutomaticEnv()
-
-	// Set starting defaults
-	global = Defaults
+	// init global state
+	global = NewState()
 }
 
 // TODO: in the future we should move away from using globals in this config
-// package, and instead wrap the functionality in Configuration{} and pass this
-// round as a state to all of the gotosocial subsystems. The generator will still
-// come in handy for that in generating getters/setters :)
+// package, and instead pass the ConfigState round in a global gts state.
 
 // Config provides you safe access to the global configuration.
 func Config(fn func(cfg *Configuration)) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	fn(&global)
+	global.Config(fn)
 }
 
 // Reload will reload the current configuration values from file.
-func Reload() (err error) {
-	Config(func(cfg *Configuration) {
-		// Ensure configuration path is set
-		gviper.SetConfigFile(cfg.ConfigPath)
+func Reload() error {
+	return global.Reload()
+}
 
-		// Read in configuration from file
-		if err = gviper.ReadInConfig(); err != nil {
-			return
-		}
+// LoadEarlyFlags will bind specific flags from given Cobra command to global viper
+// instance, and load the current configuration values. This is useful for flags like
+// .ConfigPath which have to parsed first in order to perform early configuration load.
+func LoadEarlyFlags(cmd *cobra.Command) error {
+	return global.LoadEarlyFlags(cmd)
+}
 
-		// Unmarshal raw settings to Configuration struct
-		if err = cfg.unmarshal(gviper.AllSettings()); err != nil {
-			return
-		}
-	})
-	return
+// BindFlags binds given command's pflags to the global viper instance.
+func BindFlags(cmd *cobra.Command) error {
+	return global.BindFlags(cmd)
 }

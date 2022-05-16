@@ -4,38 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// BindConfigPath binds the given command's .ConfigPath pflag to global viper instance.
-func BindConfigPath(cmd *cobra.Command) (err error) {
-	Config(func(cfg *Configuration) {
-		name := ConfigPathFlag()
-		flag := cmd.Flags().Lookup(name)
-
-		// Bind the config path pflag to global viper
-		if err = gviper.BindPFlag(name, flag); err != nil {
-			return
-		}
-
-		// Manually set config path from flag
-		cfg.ConfigPath = flag.Value.String()
-	})
-	return
-}
-
-// BindFlags binds given command's pflags to the global viper instance.
-func BindFlags(cmd *cobra.Command) (err error) {
-	Config(func(cfg *Configuration) {
-		// Bind the command pflags to global viper
-		if err = gviper.BindPFlags(cmd.Flags()); err != nil {
-			return
-		}
-
-		// Unmarshal viper values into global
-		if err := cfg.unmarshal(gviper.AllSettings()); err != nil {
-			return
-		}
-	})
-	return
-}
+// TODO: consolidate these methods into the Configuration{} or ConfigState{} structs.
 
 // AddGlobalFlags will attach global configuration flags to given cobra command, loading defaults from global config.
 func AddGlobalFlags(cmd *cobra.Command) {

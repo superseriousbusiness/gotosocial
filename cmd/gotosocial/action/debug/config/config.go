@@ -23,17 +23,29 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // Config just prints the collated config out to stdout as json.
-var Config action.GTSAction = func(ctx context.Context) error {
-	allSettings := viper.AllSettings()
-	b, err := json.Marshal(&allSettings)
+var Config action.GTSAction = func(ctx context.Context) (err error) {
+	var raw map[string]interface{}
+
+	// Marshal configuration to a raw JSON map
+	config.Config(func(cfg *config.Configuration) {
+		raw, err = cfg.MarshalMap()
+	})
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(b))
+
+	// Marshal map to JSON
+	b, err := json.Marshal(raw)
+	if err != nil {
+		return err
+	}
+
+	// Print to stdout
+	fmt.Printf("%s\n", b)
 	return nil
 }

@@ -1,3 +1,21 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package config
 
 import (
@@ -98,11 +116,24 @@ type Configuration struct {
 	AdminTransPath       string `name:"path" usage:"the path of the file to import from/export to"`
 }
 
-// unmarshal provides mapstructure unmarshaling with a custom decoder to use a different field tag name.
-func (cfg *Configuration) unmarshal(raw map[string]interface{}) error {
+// MarshalMap will marshal current Configuration into a map structure (useful for JSON).
+func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
+	var dst map[string]interface{}
+	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		TagName: "name",
+		Result:  &dst,
+	})
+	if err := dec.Decode(cfg); err != nil {
+		return nil, err
+	}
+	return dst, nil
+}
+
+// UnmarshalMap will unmarshal a map structure into the receiving Configuration.
+func (cfg *Configuration) UnmarshalMap(src map[string]interface{}) error {
 	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
 		TagName: "name",
 		Result:  cfg,
 	})
-	return dec.Decode(raw)
+	return dec.Decode(src)
 }
