@@ -28,17 +28,22 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+type preRunArgs struct {
+	cmd            *cobra.Command
+	skipValidation bool
+}
+
 // preRun should be run in the pre-run stage of every cobra command.
 // The goal here is to initialize the viper config store, and also read in
 // the config file (if present).
 //
-// Config then undergoes basic validation if 'validate' is true.
+// Config then undergoes basic validation if 'skipValidation' is not true.
 //
 // The order of these is important: the init-config function reads the location
 // of the config file from the viper store so that it can be picked up by either
 // env vars or cli flag.
-func preRun(cmd *cobra.Command, validate bool) error {
-	if err := config.InitViper(cmd.Flags()); err != nil {
+func preRun(a preRunArgs) error {
+	if err := config.InitViper(a.cmd.Flags()); err != nil {
 		return fmt.Errorf("error initializing viper: %s", err)
 	}
 
@@ -46,7 +51,7 @@ func preRun(cmd *cobra.Command, validate bool) error {
 		return fmt.Errorf("error initializing config: %s", err)
 	}
 
-	if validate {
+	if !a.skipValidation {
 		if err := config.Validate(); err != nil {
 			return fmt.Errorf("invalid config: %s", err)
 		}
