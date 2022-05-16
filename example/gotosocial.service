@@ -48,6 +48,8 @@ CapabilityBoundingSet=~CAP_SYS_TTY_CONFIG
 CapabilityBoundingSet=~CAP_MAC_ADMIN CAP_MAC_OVERRIDE
 CapabilityBoundingSet=~CAP_NET_ADMIN CAP_NET_BROADCAST CAP_NET_RAW
 CapabilityBoundingSet=~CAP_SYS_ADMIN CAP_SYS_PTRACE CAP_SYSLOG 
+# You might need this if you are running as non-root on a privileged port (below 1024)
+#AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 
 [Install]
