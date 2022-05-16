@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
@@ -111,6 +112,52 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 
 	// the irrelevant messages stream should also be empty
 	suite.Empty(irrelevantStream.Messages)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
+	ctx := context.Background()
+
+	deletingAccount := suite.testAccounts["local_account_1"]
+	receivingAccount := suite.testAccounts["local_account_2"]
+
+	deletedStatus := suite.testStatuses["local_account_1_status_1"]
+	boostOfDeletedStatus := suite.testStatuses["admin_account_status_4"]
+
+	// open a home timeline stream for turtle, who follows zork
+	wssStream, errWithCode := suite.processor.OpenStreamForAccount(ctx, receivingAccount, stream.TimelineHome)
+	suite.NoError(errWithCode)
+
+	// delete the status from the db first, to mimic what would have already happened earlier up the flow
+	err := suite.db.DeleteByID(ctx, deletedStatus.ID, &gtsmodel.Status{})
+	suite.NoError(err)
+
+	// process the status delete
+	err = suite.processor.ProcessFromClientAPI(ctx, messages.FromClientAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityDelete,
+		GTSModel:       deletedStatus,
+		OriginAccount:  deletingAccount,
+	})
+	suite.NoError(err)
+
+	// turtle's stream should have the delete of admin's boost in it now
+	msg := <-wssStream.Messages
+	suite.Equal(stream.EventTypeDelete, msg.Event)
+	suite.Equal(boostOfDeletedStatus.ID, msg.Payload)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+
+	// turtle's stream should also have the delete of the message itself in it
+	msg = <-wssStream.Messages
+	suite.Equal(stream.EventTypeDelete, msg.Event)
+	suite.Equal(deletedStatus.ID, msg.Payload)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+
+	// stream should now be empty
+	suite.Empty(wssStream.Messages)
+
+	// the boost should no longer be in the database
+	_, err = suite.db.GetStatusByID(ctx, boostOfDeletedStatus.ID)
+	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
 func TestFromClientAPITestSuite(t *testing.T) {
