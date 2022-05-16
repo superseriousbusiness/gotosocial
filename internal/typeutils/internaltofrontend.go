@@ -574,8 +574,7 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
-	host := config.GetHost()
-	if i.Domain == host {
+	if host := config.GetHost(); i.Domain == host {
 		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
 			mi.Stats["user_count"] = userCount

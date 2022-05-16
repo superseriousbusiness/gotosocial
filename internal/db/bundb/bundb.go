@@ -282,10 +282,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	}
 
 	// these are all optional, the db adapter figures out defaults
-	port := config.GetDbPort()
 	address := config.GetDbAddress()
-	username := config.GetDbUser()
-	password := config.GetDbPassword()
 
 	// validate database
 	database := config.GetDbDatabase()
@@ -294,8 +291,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	}
 
 	var tlsConfig *tls.Config
-	tlsMode := config.GetDbTLSMode()
-	switch tlsMode {
+	switch config.GetDbTLSMode() {
 	case dbTLSModeDisable, dbTLSModeUnset:
 		break // nothing to do
 	case dbTLSModeEnable:
@@ -311,8 +307,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		}
 	}
 
-	caCertPath := config.GetDbTLSCACert()
-	if tlsConfig != nil && caCertPath != "" {
+	if certPath := config.GetDbTLSCACert(); tlsConfig != nil && certPath != "" {
 		// load the system cert pool first -- we'll append the given CA cert to this
 		certPool, err := x509.SystemCertPool()
 		if err != nil {
@@ -320,24 +315,24 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		}
 
 		// open the file itself and make sure there's something in it
-		caCertBytes, err := os.ReadFile(caCertPath)
+		caCertBytes, err := os.ReadFile(certPath)
 		if err != nil {
-			return nil, fmt.Errorf("error opening CA certificate at %s: %s", caCertPath, err)
+			return nil, fmt.Errorf("error opening CA certificate at %s: %s", certPath, err)
 		}
 		if len(caCertBytes) == 0 {
-			return nil, fmt.Errorf("ca cert at %s was empty", caCertPath)
+			return nil, fmt.Errorf("ca cert at %s was empty", certPath)
 		}
 
 		// make sure we have a PEM block
 		caPem, _ := pem.Decode(caCertBytes)
 		if caPem == nil {
-			return nil, fmt.Errorf("could not parse cert at %s into PEM", caCertPath)
+			return nil, fmt.Errorf("could not parse cert at %s into PEM", certPath)
 		}
 
 		// parse the PEM block into the certificate
 		caCert, err := x509.ParseCertificate(caPem.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", caCertPath, err)
+			return nil, fmt.Errorf("could not parse cert at %s into x509 certificate: %s", certPath, err)
 		}
 
 		// we're happy, add it to the existing pool and then use this pool in our tls config
@@ -349,14 +344,14 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	if address != "" {
 		cfg.Host = address
 	}
-	if port > 0 {
+	if port := config.GetPort(); port > 0 {
 		cfg.Port = uint16(port)
 	}
-	if username != "" {
-		cfg.User = username
+	if u := config.GetDbUser(); u != "" {
+		cfg.User = u
 	}
-	if password != "" {
-		cfg.Password = password
+	if p := config.GetDbPassword(); p != "" {
+		cfg.Password = p
 	}
 	if tlsConfig != nil {
 		cfg.TLSConfig = tlsConfig
