@@ -65,7 +65,7 @@ func (suite *StatusStatusHometimelineableTestSuite) TestNotFollowingStatusHometi
 	suite.False(timelineable)
 }
 
-func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyNotHometimelineable() {
+func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyFollowersOnly() {
 	ctx := context.Background()
 
 	// This scenario makes sure that we don't timeline a status which is a followers-only
@@ -168,6 +168,119 @@ func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyNotHometimelin
 		BoostOfID:                "",
 		ContentWarning:           "",
 		Visibility:               gtsmodel.VisibilityFollowersOnly,
+		Sensitive:                false,
+		Language:                 "en",
+		CreatedWithApplicationID: "",
+		Federated:                true,
+		Boostable:                true,
+		Replyable:                true,
+		Likeable:                 true,
+		ActivityStreamsType:      ap.ObjectNote,
+	}
+	if err := suite.db.PutStatus(ctx, secondReplyStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// this status should ALSO not be hometimelineable for local_account_2
+	secondReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, secondReplyStatus, timelineOwnerAccount)
+	suite.NoError(err)
+	suite.False(secondReplyStatusTimelineable)
+}
+
+func (suite *StatusStatusHometimelineableTestSuite) TestChainReplyPublicAndUnlocked() {
+	ctx := context.Background()
+
+	// This scenario is exactly the same as the above test, but for a mix of unlocked + public posts
+
+	originalStatusParent := suite.testAccounts["remote_account_1"]
+	replyingAccount := suite.testAccounts["local_account_1"]
+	timelineOwnerAccount := suite.testAccounts["local_account_2"]
+
+	// put an unlocked status by remote_account_1 in the db
+	originalStatus := &gtsmodel.Status{
+		ID:                       "01G3957TS7XE2CMDKFG3MZPWAF",
+		URI:                      "http://fossbros-anonymous.io/users/foss_satan/statuses/01G3957TS7XE2CMDKFG3MZPWAF",
+		URL:                      "http://fossbros-anonymous.io/@foss_satan/statuses/01G3957TS7XE2CMDKFG3MZPWAF",
+		Content:                  "didn't expect dog",
+		CreatedAt:                testrig.TimeMustParse("2021-09-20T12:40:37+02:00"),
+		UpdatedAt:                testrig.TimeMustParse("2021-09-20T12:40:37+02:00"),
+		Local:                    false,
+		AccountURI:               "http://fossbros-anonymous.io/users/foss_satan",
+		AccountID:                originalStatusParent.ID,
+		InReplyToID:              "",
+		InReplyToAccountID:       "",
+		InReplyToURI:             "",
+		BoostOfID:                "",
+		ContentWarning:           "",
+		Visibility:               gtsmodel.VisibilityUnlocked,
+		Sensitive:                false,
+		Language:                 "en",
+		CreatedWithApplicationID: "",
+		Federated:                true,
+		Boostable:                true,
+		Replyable:                true,
+		Likeable:                 true,
+		ActivityStreamsType:      ap.ObjectNote,
+	}
+	if err := suite.db.PutStatus(ctx, originalStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+	// this status should not be hometimelineable for local_account_2
+	originalStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, originalStatus, timelineOwnerAccount)
+	suite.NoError(err)
+	suite.False(originalStatusTimelineable)
+
+	// now a public reply from zork
+	firstReplyStatus := &gtsmodel.Status{
+		ID:                       "01G395ESAYPK9161QSQEZKATJN",
+		URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01G395ESAYPK9161QSQEZKATJN",
+		URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01G395ESAYPK9161QSQEZKATJN",
+		Content:                  "nbnbdy expects dog",
+		CreatedAt:                testrig.TimeMustParse("2021-09-20T12:41:37+02:00"),
+		UpdatedAt:                testrig.TimeMustParse("2021-09-20T12:41:37+02:00"),
+		Local:                    false,
+		AccountURI:               "http://localhost:8080/users/the_mighty_zork",
+		AccountID:                replyingAccount.ID,
+		InReplyToID:              originalStatus.ID,
+		InReplyToAccountID:       originalStatusParent.ID,
+		InReplyToURI:             originalStatus.URI,
+		BoostOfID:                "",
+		ContentWarning:           "",
+		Visibility:               gtsmodel.VisibilityPublic,
+		Sensitive:                false,
+		Language:                 "en",
+		CreatedWithApplicationID: "",
+		Federated:                true,
+		Boostable:                true,
+		Replyable:                true,
+		Likeable:                 true,
+		ActivityStreamsType:      ap.ObjectNote,
+	}
+	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+	// this status should not be hometimelineable for local_account_2
+	firstReplyStatusTimelineable, err := suite.filter.StatusHometimelineable(ctx, firstReplyStatus, timelineOwnerAccount)
+	suite.NoError(err)
+	suite.False(firstReplyStatusTimelineable)
+
+	// now an unlocked reply from zork to the status they just replied to
+	secondReplyStatus := &gtsmodel.Status{
+		ID:                       "01G395NZQZGJYRBAES57KYZ7XP",
+		URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01G395NZQZGJYRBAES57KYZ7XP",
+		URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01G395NZQZGJYRBAES57KYZ7XP",
+		Content:                  "*nobody",
+		CreatedAt:                testrig.TimeMustParse("2021-09-20T12:42:37+02:00"),
+		UpdatedAt:                testrig.TimeMustParse("2021-09-20T12:42:37+02:00"),
+		Local:                    false,
+		AccountURI:               "http://localhost:8080/users/the_mighty_zork",
+		AccountID:                replyingAccount.ID,
+		InReplyToID:              firstReplyStatus.ID,
+		InReplyToAccountID:       replyingAccount.ID,
+		InReplyToURI:             firstReplyStatus.URI,
+		BoostOfID:                "",
+		ContentWarning:           "",
+		Visibility:               gtsmodel.VisibilityUnlocked,
 		Sensitive:                false,
 		Language:                 "en",
 		CreatedWithApplicationID: "",
