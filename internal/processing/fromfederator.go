@@ -26,7 +26,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -342,36 +341,12 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 
 // processDeleteStatusFromFederator handles Activity Delete and Object Note
 func (p *processor) processDeleteStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	// TODO: handle side effects of status deletion here:
-	// 1. delete all media associated with status
-	// 2. delete boosts of status
-	// 3. etc etc etc
 	statusToDelete, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("note was not parseable as *gtsmodel.Status")
 	}
 
-	// delete all attachments for this status
-	for _, a := range statusToDelete.AttachmentIDs {
-		if err := p.mediaProcessor.Delete(ctx, a); err != nil {
-			return err
-		}
-	}
-
-	// delete all mentions for this status
-	for _, m := range statusToDelete.MentionIDs {
-		if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
-			return err
-		}
-	}
-
-	// delete all notifications for this status
-	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
-		return err
-	}
-
-	// remove this status from any and all timelines
-	return p.deleteStatusFromTimelines(ctx, statusToDelete)
+	return p.wipeStatus(ctx, statusToDelete)
 }
 
 // processDeleteAccountFromFederator handles Activity Delete and Object Profile

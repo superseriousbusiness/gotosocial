@@ -441,3 +441,47 @@ func (p *processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 
 	return p.streamingProcessor.StreamDelete(status.ID)
 }
+
+// wipeStatus contains common logic used to totally delete a status
+// + all its attachments, notifications, boosts, and timeline entries.
+func (p *processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Status) error {
+	// delete all attachments for this status
+	for _, a := range statusToDelete.AttachmentIDs {
+		if err := p.mediaProcessor.Delete(ctx, a); err != nil {
+			return err
+		}
+	}
+
+	// delete all mentions for this status
+	for _, m := range statusToDelete.MentionIDs {
+		if err := p.db.DeleteByID(ctx, m, &gtsmodel.Mention{}); err != nil {
+			return err
+		}
+	}
+
+	// delete all notifications for this status
+	if err := p.db.DeleteWhere(ctx, []db.Where{{Key: "status_id", Value: statusToDelete.ID}}, &[]*gtsmodel.Notification{}); err != nil {
+		return err
+	}
+
+	// delete all boosts for this status + remove them from timelines
+	boosts, err := p.db.GetStatusReblogs(ctx, statusToDelete)
+	if err != nil {
+		return err
+	}
+	for _, b := range boosts {
+		if err := p.deleteStatusFromTimelines(ctx, b); err != nil {
+			return err
+		}
+		if err := p.db.DeleteByID(ctx, b.ID, b); err != nil {
+			return err
+		}
+	}
+
+	// delete this status from any and all timelines
+	if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
+		return err
+	}
+
+	return nil
+}
