@@ -1612,7 +1612,13 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
-		nil,
+		[]vocab.ActivityStreamsImage{
+			newAPImage(
+				URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+				"image/jpeg",
+				"trent reznor looking handsome as balls",
+				"LEDara58O=t5EMSOENEN9]}?aK%0"),
+		},
 	)
 	createForwardedMessage := WrapAPNoteInCreate(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
@@ -1620,6 +1626,33 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		time.Now(),
 		forwardedMessage)
 	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	announceForwarded1Zork := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/first_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded1ZorkSig, announceForwarded1ZorkDigest, announceForwarded1ZorkDate := GetSignatureForActivity(announceForwarded1Zork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	announceForwarded1Turtle := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/first_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded1TurtleSig, announceForwarded1TurtleDigest, announceForwarded1TurtleDate := GetSignatureForActivity(announceForwarded1Turtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
+
+	announceForwarded2Zork := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/second_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded2ZorkSig, announceForwarded2ZorkDigest, announceForwarded2ZorkDate := GetSignatureForActivity(announceForwarded2Zork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
@@ -1633,6 +1666,24 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			SignatureHeader: createForwardedMessageSig,
 			DigestHeader:    createForwardedMessageDigest,
 			DateHeader:      createForwardedMessageDate,
+		},
+		"announce_forwarded_1_zork": {
+			Activity:        announceForwarded1Zork,
+			SignatureHeader: announceForwarded1ZorkSig,
+			DigestHeader:    announceForwarded1ZorkDigest,
+			DateHeader:      announceForwarded1ZorkDate,
+		},
+		"announce_forwarded_1_turtle": {
+			Activity:        announceForwarded1Turtle,
+			SignatureHeader: announceForwarded1TurtleSig,
+			DigestHeader:    announceForwarded1TurtleDigest,
+			DateHeader:      announceForwarded1TurtleDate,
+		},
+		"announce_forwarded_2_zork": {
+			Activity:        announceForwarded2Zork,
+			SignatureHeader: announceForwarded2ZorkSig,
+			DigestHeader:    announceForwarded2ZorkDigest,
+			DateHeader:      announceForwarded2ZorkDate,
 		},
 	}
 }
@@ -2548,4 +2599,42 @@ func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished
 	}
 
 	return create
+}
+
+func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublished time.Time, announceTo *url.URL, announceNote vocab.ActivityStreamsNote) vocab.ActivityStreamsAnnounce {
+	announce := streams.NewActivityStreamsAnnounce()
+
+	if announceID != nil {
+		id := streams.NewJSONLDIdProperty()
+		id.Set(announceID)
+		announce.SetJSONLDId(id)
+	}
+
+	if announceActor != nil {
+		actor := streams.NewActivityStreamsActorProperty()
+		actor.AppendIRI(announceActor)
+		announce.SetActivityStreamsActor(actor)
+	}
+
+	if !announcePublished.IsZero() {
+		published := streams.NewActivityStreamsPublishedProperty()
+		published.Set(announcePublished)
+		announce.SetActivityStreamsPublished(published)
+	}
+
+	to := streams.NewActivityStreamsToProperty()
+	to.AppendIRI(announceTo)
+	announce.SetActivityStreamsTo(announceNote.GetActivityStreamsTo())
+
+	cc := streams.NewActivityStreamsCcProperty()
+	cc.AppendIRI(announceNote.GetActivityStreamsAttributedTo().Begin().GetIRI())
+	announce.SetActivityStreamsCc(cc)
+
+	if announceNote != nil {
+		noteIRI := streams.NewActivityStreamsObjectProperty()
+		noteIRI.AppendIRI(announceNote.GetJSONLDId().Get())
+		announce.SetActivityStreamsObject(noteIRI)
+	}
+
+	return announce
 }
