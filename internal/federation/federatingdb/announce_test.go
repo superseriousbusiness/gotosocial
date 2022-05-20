@@ -57,8 +57,8 @@ func (suite *AnnounceTestSuite) TestNewAnnounce() {
 func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 	receivingAccount1 := suite.testAccounts["local_account_1"]
 	receivingAccount2 := suite.testAccounts["local_account_2"]
-   
-   announcingAccount := suite.testAccounts["remote_account_1"]
+
+	announcingAccount := suite.testAccounts["remote_account_1"]
 
 	ctx1 := createTestContext(receivingAccount1, announcingAccount)
 	announce1 := suite.testActivities["announce_forwarded_1_zork"]
@@ -83,9 +83,9 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 	err = suite.federatingDB.Announce(ctx2, announce2.Activity.(vocab.ActivityStreamsAnnounce))
 	suite.NoError(err)
 
-   // since this is a repeat announce with the same URI, just delivered to a different inbox,
-   // we should have nothing in the messages channel...
-   suite.Empty(suite.fromFederator)
+	// since this is a repeat announce with the same URI, just delivered to a different inbox,
+	// we should have nothing in the messages channel...
+	suite.Empty(suite.fromFederator)
 }
 
 func TestAnnounceTestSuite(t *testing.T) {
