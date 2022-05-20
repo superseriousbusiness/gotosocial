@@ -380,8 +380,8 @@ type TypeUtilsTestSuite struct {
 }
 
 func (suite *TypeUtilsTestSuite) SetupSuite() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.testAccounts = testrig.NewTestAccounts()
