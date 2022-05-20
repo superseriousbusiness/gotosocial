@@ -525,10 +525,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		panic(fmt.Sprintf("mismatch between number of hardcoded test RSA keys and accounts used for test data. Insert the following generated key[s]: \n%+v", keyStrings))
 	}
 
-	// generate keys for each account
-	i := 0
-
-	for _, v := range accountsSorted {
+	for i, v := range accountsSorted {
 		premadeBytes, err := base64.StdEncoding.DecodeString(preserializedKeys[i])
 		if err != nil {
 			panic(err)
@@ -543,8 +540,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		}
 		v.PrivateKey = priv
 		v.PublicKey = &priv.PublicKey
-		i++
 	}
+
 	return accounts
 }
 
