@@ -41,6 +41,7 @@ func (p *processor) GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gts
 		apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, gtsEmoji)
 		if err != nil {
 			logrus.Errorf("error converting emoji with id %s: %s", gtsEmoji.ID, err)
+			continue
 		}
 		apiEmojis = append(apiEmojis, &apiEmoji)
 	}
