@@ -108,7 +108,7 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
 		var err error
-		status, _, _, err = p.federator.GetRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
+		status, _, err = p.federator.GetRemoteStatus(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri, false, false)
 		if err != nil {
 			return err
 		}
