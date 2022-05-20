@@ -23,12 +23,12 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -36,7 +36,7 @@ type FederatingDBTestSuite struct {
 	suite.Suite
 	db            db.DB
 	tc            typeutils.TypeConverter
-	fedWorker     *worker.Worker[messages.FromFederator]
+	fedWorker     *concurrency.WorkerPool[messages.FromFederator]
 	fromFederator chan messages.FromFederator
 	federatingDB  federatingdb.DB
 
@@ -65,7 +65,7 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
-	suite.fedWorker = worker.New[messages.FromFederator](-1, -1)
+	suite.fedWorker = concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	suite.fromFederator = make(chan messages.FromFederator, 10)
 	suite.fedWorker.SetProcessor(func(ctx context.Context, msg messages.FromFederator) error {
 		suite.fromFederator <- msg

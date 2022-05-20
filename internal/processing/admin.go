@@ -54,6 +54,6 @@ func (p *processor) AdminDomainBlockDelete(ctx context.Context, authed *oauth.Au
 	return p.adminProcessor.DomainBlockDelete(ctx, authed.Account, id)
 }
 
-func (p *processor) AdminMediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
-	return p.adminProcessor.MediaRemotePrune(ctx, mediaRemoteCacheDays)
+func (p *processor) AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode {
+	return p.adminProcessor.MediaPrune(ctx, mediaRemoteCacheDays)
 }

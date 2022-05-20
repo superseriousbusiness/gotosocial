@@ -21,7 +21,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -56,12 +55,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/user"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/api/security"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -71,7 +72,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Start creates and starts a gotosocial server
@@ -93,8 +93,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// NOTE: these MUST NOT be used until they are passed to the
 	// processor and it is started. The reason being that the processor
 	// sets the Worker process functions and start the underlying pools
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
 	federatingDB := federatingdb.New(dbService, fedWorker)
 
@@ -120,13 +120,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating storage backend: %s", err)
 	}
 
+	// Build HTTP client (TODO: add configurables here)
+	client := httpclient.New(httpclient.Config{})
+
 	// build backend handlers
 	mediaManager, err := media.NewManager(dbService, storage)
 	if err != nil {
 		return fmt.Errorf("error creating media manager: %s", err)
 	}
 	oauthServer := oauth.New(ctx, dbService)
-	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, http.DefaultClient)
+	transportController := transport.NewController(dbService, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(dbService, federatingDB, transportController, typeConverter, mediaManager)
 
 	// decide whether to create a noop email sender (won't send emails) or a real one
@@ -236,7 +239,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// perform initial media prune in case value of MediaRemoteCacheDays changed
-	if err := processor.AdminMediaRemotePrune(ctx, viper.GetInt(config.Keys.MediaRemoteCacheDays)); err != nil {
+	if err := processor.AdminMediaPrune(ctx, viper.GetInt(config.Keys.MediaRemoteCacheDays)); err != nil {
 		return fmt.Errorf("error during initial media prune: %s", err)
 	}
 

@@ -22,6 +22,7 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -30,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -58,8 +58,8 @@ type UserStandardTestSuite struct {
 func (suite *UserStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 	testrig.InitTestConfig()
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()

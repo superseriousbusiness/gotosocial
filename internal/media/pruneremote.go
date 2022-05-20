@@ -29,10 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// amount of media attachments to select at a time from the db when pruning
-const selectPruneLimit = 20
-
-func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, error) {
+func (m *manager) PruneAllRemote(ctx context.Context, olderThanDays int) (int, error) {
 	var totalPruned int
 
 	// convert days into a duration string
@@ -40,23 +37,23 @@ func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, erro
 	// parse the duration string into a duration
 	olderThanHours, err := time.ParseDuration(olderThanHoursString)
 	if err != nil {
-		return totalPruned, fmt.Errorf("PruneRemote: %d", err)
+		return totalPruned, fmt.Errorf("PruneAllRemote: %d", err)
 	}
 	// 'subtract' that from the time now to give our threshold
 	olderThan := time.Now().Add(-olderThanHours)
-	logrus.Infof("PruneRemote: pruning media older than %s", olderThan)
+	logrus.Infof("PruneAllRemote: pruning media older than %s", olderThan)
 
 	// select 20 attachments at a time and prune them
 	for attachments, err := m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit); err == nil && len(attachments) != 0; attachments, err = m.db.GetRemoteOlderThan(ctx, olderThan, selectPruneLimit) {
 
 		// use the age of the oldest attachment (the last one in the slice) as the next 'older than' value
 		l := len(attachments)
-		logrus.Tracef("PruneRemote: got %d attachments older than %s", l, olderThan)
+		logrus.Tracef("PruneAllRemote: got %d attachments older than %s", l, olderThan)
 		olderThan = attachments[l-1].CreatedAt
 
 		// prune each attachment
 		for _, attachment := range attachments {
-			if err := m.PruneOne(ctx, attachment); err != nil {
+			if err := m.pruneOneRemote(ctx, attachment); err != nil {
 				return totalPruned, err
 			}
 			totalPruned++
@@ -68,14 +65,14 @@ func (m *manager) PruneRemote(ctx context.Context, olderThanDays int) (int, erro
 		return totalPruned, err
 	}
 
-	logrus.Infof("PruneRemote: finished pruning remote media: pruned %d entries", totalPruned)
+	logrus.Infof("PruneAllRemote: finished pruning remote media: pruned %d entries", totalPruned)
 	return totalPruned, nil
 }
 
-func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
+func (m *manager) pruneOneRemote(ctx context.Context, attachment *gtsmodel.MediaAttachment) error {
 	if attachment.File.Path != "" {
 		// delete the full size attachment from storage
-		logrus.Tracef("PruneOne: deleting %s", attachment.File.Path)
+		logrus.Tracef("pruneOneRemote: deleting %s", attachment.File.Path)
 		if err := m.storage.Delete(attachment.File.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}
@@ -84,7 +81,7 @@ func (m *manager) PruneOne(ctx context.Context, attachment *gtsmodel.MediaAttach
 
 	if attachment.Thumbnail.Path != "" {
 		// delete the thumbnail from storage
-		logrus.Tracef("PruneOne: deleting %s", attachment.Thumbnail.Path)
+		logrus.Tracef("pruneOneRemote: deleting %s", attachment.Thumbnail.Path)
 		if err := m.storage.Delete(attachment.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
 			return err
 		}

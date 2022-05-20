@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-store/kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -44,7 +45,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Processor should be passed to api modules (see internal/apimodule/...). It is used for
@@ -114,7 +114,7 @@ type Processor interface {
 	// AdminDomainBlockDelete deletes one domain block, specified by ID, returning the deleted domain block.
 	AdminDomainBlockDelete(ctx context.Context, authed *oauth.Auth, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 	// AdminMediaRemotePrune triggers a prune of remote media according to the given number of mediaRemoteCacheDays
-	AdminMediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
 	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
@@ -240,8 +240,8 @@ type Processor interface {
 
 // processor just implements the Processor interface
 type processor struct {
-	clientWorker *worker.Worker[messages.FromClientAPI]
-	fedWorker    *worker.Worker[messages.FromFederator]
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
+	fedWorker    *concurrency.WorkerPool[messages.FromFederator]
 
 	federator       federation.Federator
 	tc              typeutils.TypeConverter
@@ -274,8 +274,8 @@ func NewProcessor(
 	storage *kv.KVStore,
 	db db.DB,
 	emailSender email.Sender,
-	clientWorker *worker.Worker[messages.FromClientAPI],
-	fedWorker *worker.Worker[messages.FromFederator],
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI],
+	fedWorker *concurrency.WorkerPool[messages.FromFederator],
 ) Processor {
 	parseMentionFunc := GetParseMentionFunc(db, federator)
 

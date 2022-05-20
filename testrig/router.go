@@ -41,6 +41,10 @@ func NewTestRouter(db db.DB) router.Router {
 		viper.Set(config.Keys.WebTemplateBaseDir, alternativeTemplateBaseDir)
 	}
 
+	if alternativeBindAddress := os.Getenv("GTS_BIND_ADDRESS"); alternativeBindAddress != "" {
+		viper.Set(config.Keys.BindAddress, alternativeBindAddress)
+	}
+
 	r, err := router.New(context.Background(), db)
 	if err != nil {
 		panic(err)

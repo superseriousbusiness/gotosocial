@@ -33,7 +33,7 @@ func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmo
 	})
 
 	// status owner should always be able to see their own status in their timeline so we can return early if this is the case
-	if timelineOwnerAccount != nil && targetStatus.AccountID == timelineOwnerAccount.ID {
+	if targetStatus.AccountID == timelineOwnerAccount.ID {
 		return true, nil
 	}
 
@@ -54,13 +54,29 @@ func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmo
 		}
 	}
 
+	// check we follow the originator of the status
+	if targetStatus.Account == nil {
+		tsa, err := f.db.GetAccountByID(ctx, targetStatus.AccountID)
+		if err != nil {
+			return false, fmt.Errorf("StatusHometimelineable: error getting status author account with id %s: %s", targetStatus.AccountID, err)
+		}
+		targetStatus.Account = tsa
+	}
+	following, err := f.db.IsFollowing(ctx, timelineOwnerAccount, targetStatus.Account)
+	if err != nil {
+		return false, fmt.Errorf("StatusHometimelineable: error checking if %s follows %s: %s", timelineOwnerAccount.ID, targetStatus.AccountID, err)
+	}
+	if !following {
+		return false, nil
+	}
+
 	// Don't timeline a status whose parent hasn't been dereferenced yet or can't be dereferenced.
 	// If we have the reply to URI but don't have an ID for the replied-to account or the replied-to status in our database, we haven't dereferenced it yet.
 	if targetStatus.InReplyToURI != "" && (targetStatus.InReplyToID == "" || targetStatus.InReplyToAccountID == "") {
 		return false, nil
 	}
 
-	// if a status replies to an ID we know in the database, we need to make sure we also follow the replied-to status owner account
+	// if a status replies to an ID we know in the database, we need to check that parent status too
 	if targetStatus.InReplyToID != "" {
 		// pin the reply to status on to this status if it hasn't been done already
 		if targetStatus.InReplyTo == nil {
@@ -81,18 +97,16 @@ func (f *filter) StatusHometimelineable(ctx context.Context, targetStatus *gtsmo
 		}
 
 		// if it's a reply to the timelineOwnerAccount, we don't need to check if the timelineOwnerAccount follows itself, just return true, they can see it
-		if targetStatus.AccountID == timelineOwnerAccount.ID {
+		if targetStatus.InReplyToAccountID == timelineOwnerAccount.ID {
 			return true, nil
 		}
 
-		// the replied-to account != timelineOwnerAccount, so make sure the timelineOwnerAccount follows the replied-to account
-		follows, err := f.db.IsFollowing(ctx, timelineOwnerAccount, targetStatus.InReplyToAccount)
+		// make sure the parent status is also home timelineable, otherwise we shouldn't timeline this one either
+		parentStatusTimelineable, err := f.StatusHometimelineable(ctx, targetStatus.InReplyTo, timelineOwnerAccount)
 		if err != nil {
-			return false, fmt.Errorf("StatusHometimelineable: error checking follow from account %s to account %s: %s", timelineOwnerAccount.ID, targetStatus.InReplyToAccountID, err)
+			return false, fmt.Errorf("StatusHometimelineable: error checking timelineability of parent status %s of status %s: %s", targetStatus.InReplyToID, targetStatus.ID, err)
 		}
-
-		// we don't want to timeline a reply to a status whose owner isn't followed by the requesting account
-		if !follows {
+		if !parentStatusTimelineable {
 			return false, nil
 		}
 	}

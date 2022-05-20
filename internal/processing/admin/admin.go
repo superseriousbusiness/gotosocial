@@ -23,13 +23,13 @@ import (
 	"mime/multipart"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
 
 // Processor wraps a bunch of functions for processing admin actions.
@@ -41,18 +41,18 @@ type Processor interface {
 	DomainBlockDelete(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.DomainBlock, gtserror.WithCode)
 	AccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode
 	EmojiCreate(ctx context.Context, account *gtsmodel.Account, user *gtsmodel.User, form *apimodel.EmojiCreateRequest) (*apimodel.Emoji, gtserror.WithCode)
-	MediaRemotePrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
+	MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 }
 
 type processor struct {
 	tc           typeutils.TypeConverter
 	mediaManager media.Manager
-	clientWorker *worker.Worker[messages.FromClientAPI]
+	clientWorker *concurrency.WorkerPool[messages.FromClientAPI]
 	db           db.DB
 }
 
 // New returns a new admin processor.
-func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, clientWorker *worker.Worker[messages.FromClientAPI]) Processor {
+func New(db db.DB, tc typeutils.TypeConverter, mediaManager media.Manager, clientWorker *concurrency.WorkerPool[messages.FromClientAPI]) Processor {
 	return &processor{
 		tc:           tc,
 		mediaManager: mediaManager,

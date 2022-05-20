@@ -27,10 +27,13 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 )
+
+// selectPruneLimit is the amount of media entries to select at a time from the db when pruning
+const selectPruneLimit = 20
 
 // Manager provides an interface for managing media: parsing, storing, and retrieving media objects like photos, videos, and gifs.
 type Manager interface {
@@ -66,10 +69,19 @@ type Manager interface {
 	ProcessEmoji(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo) (*ProcessingEmoji, error)
 	// RecacheMedia refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
 	RecacheMedia(ctx context.Context, data DataFunc, postData PostDataCallbackFunc, attachmentID string) (*ProcessingMedia, error)
-	// PruneRemote prunes all remote media cached on this instance that's older than the given amount of days.
+
+	// PruneAllRemote prunes all remote media attachments cached on this instance which are older than the given amount of days.
 	// 'Pruning' in this context means removing the locally stored data of the attachment (both thumbnail and full size),
 	// and setting 'cached' to false on the associated attachment.
-	PruneRemote(ctx context.Context, olderThanDays int) (int, error)
+	//
+	// The returned int is the amount of media that was pruned by this function.
+	PruneAllRemote(ctx context.Context, olderThanDays int) (int, error)
+	// PruneAllMeta prunes unused meta media -- currently, this means unused avatars + headers, but can also be extended
+	// to include things like attachments that were uploaded on this server but left unused, etc.
+	//
+	// The returned int is the amount of media that was pruned by this function.
+	PruneAllMeta(ctx context.Context) (int, error)
+
 	// Stop stops the underlying worker pool of the manager. It should be called
 	// when closing GoToSocial in order to cleanly finish any in-progress jobs.
 	// It will block until workers are finished processing.
@@ -79,8 +91,8 @@ type Manager interface {
 type manager struct {
 	db           db.DB
 	storage      *kv.KVStore
-	emojiWorker  *worker.Worker[*ProcessingEmoji]
-	mediaWorker  *worker.Worker[*ProcessingMedia]
+	emojiWorker  *concurrency.WorkerPool[*ProcessingEmoji]
+	mediaWorker  *concurrency.WorkerPool[*ProcessingMedia]
 	stopCronJobs func() error
 }
 
@@ -89,7 +101,7 @@ type manager struct {
 // A worker pool will also be initialized for the manager, to ensure that only
 // a limited number of media will be processed in parallel. The numbers of workers
 // is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
-// See internal/worker.New() documentation for further information.
+// See internal/concurrency.NewWorkerPool() documentation for further information.
 func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	m := &manager{
 		db:      database,
@@ -97,7 +109,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	}
 
 	// Prepare the media worker pool
-	m.mediaWorker = worker.New[*ProcessingMedia](-1, 10)
+	m.mediaWorker = concurrency.NewWorkerPool[*ProcessingMedia](-1, 10)
 	m.mediaWorker.SetProcessor(func(ctx context.Context, media *ProcessingMedia) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -109,7 +121,7 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 	})
 
 	// Prepare the emoji worker pool
-	m.emojiWorker = worker.New[*ProcessingEmoji](-1, 10)
+	m.emojiWorker = concurrency.NewWorkerPool[*ProcessingEmoji](-1, 10)
 	m.emojiWorker.SetProcessor(func(ctx context.Context, emoji *ProcessingEmoji) error {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -128,53 +140,8 @@ func NewManager(database db.DB, storage *kv.KVStore) (Manager, error) {
 		return nil, err
 	}
 
-	// start remote cache cleanup cronjob if configured
-	cacheCleanupDays := viper.GetInt(config.Keys.MediaRemoteCacheDays)
-	if cacheCleanupDays != 0 {
-		// we need a way of cancelling running jobs if the media manager is told to stop
-		pruneCtx, pruneCancel := context.WithCancel(context.Background())
-
-		// create a new cron instance and add a function to it
-		c := cron.New(cron.WithLogger(&logrusWrapper{}))
-
-		pruneFunc := func() {
-			begin := time.Now()
-			pruned, err := m.PruneRemote(pruneCtx, cacheCleanupDays)
-			if err != nil {
-				logrus.Errorf("media manager: error pruning remote cache: %s", err)
-				return
-			}
-			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
-		}
-
-		// run every night
-		entryID, err := c.AddFunc("@midnight", pruneFunc)
-		if err != nil {
-			pruneCancel()
-			return nil, fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
-		}
-
-		// since we're running a cron job, we should define how the manager should stop them
-		m.stopCronJobs = func() error {
-			// try to stop any jobs gracefully by waiting til they're finished
-			cronCtx := c.Stop()
-
-			select {
-			case <-cronCtx.Done():
-				logrus.Infof("media manager: cron finished jobs and stopped gracefully")
-			case <-time.After(1 * time.Minute):
-				logrus.Infof("media manager: cron didn't stop after 60 seconds, will force close")
-				break
-			}
-
-			// whether the job is finished neatly or we had to wait a minute, cancel the context on the prune job
-			pruneCancel()
-			return nil
-		}
-
-		// now start all the cron stuff we've lined up
-		c.Start()
-		logrus.Infof("media manager: next scheduled remote cache cleanup is %q", c.Entry(entryID).Next)
+	if err := scheduleCleanupJobs(m); err != nil {
+		return nil, err
 	}
 
 	return m, nil
@@ -213,9 +180,7 @@ func (m *manager) Stop() error {
 	emojiErr := m.emojiWorker.Stop()
 
 	var cronErr error
-
 	if m.stopCronJobs != nil {
-		// only set if cache prune age > 0
 		cronErr = m.stopCronJobs()
 	}
 
@@ -224,5 +189,60 @@ func (m *manager) Stop() error {
 	} else if emojiErr != nil {
 		return emojiErr
 	}
+
 	return cronErr
+}
+
+func scheduleCleanupJobs(m *manager) error {
+	// create a new cron instance for scheduling cleanup jobs
+	c := cron.New(cron.WithLogger(&logrusWrapper{}))
+	pruneCtx, pruneCancel := context.WithCancel(context.Background())
+
+	if _, err := c.AddFunc("@midnight", func() {
+		begin := time.Now()
+		pruned, err := m.PruneAllMeta(pruneCtx)
+		if err != nil {
+			logrus.Errorf("media manager: error pruning meta: %s", err)
+			return
+		}
+		logrus.Infof("media manager: pruned %d meta entries in %s", pruned, time.Since(begin))
+	}); err != nil {
+		pruneCancel()
+		return fmt.Errorf("error starting media manager meta cleanup job: %s", err)
+	}
+
+	// start remote cache cleanup cronjob if configured
+	if mediaRemoteCacheDays := viper.GetInt(config.Keys.MediaRemoteCacheDays); mediaRemoteCacheDays > 0 {
+		if _, err := c.AddFunc("@midnight", func() {
+			begin := time.Now()
+			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays)
+			if err != nil {
+				logrus.Errorf("media manager: error pruning remote cache: %s", err)
+				return
+			}
+			logrus.Infof("media manager: pruned %d remote cache entries in %s", pruned, time.Since(begin))
+		}); err != nil {
+			pruneCancel()
+			return fmt.Errorf("error starting media manager remote cache cleanup job: %s", err)
+		}
+	}
+
+	// try to stop any jobs gracefully by waiting til they're finished
+	m.stopCronJobs = func() error {
+		cronCtx := c.Stop()
+
+		select {
+		case <-cronCtx.Done():
+			logrus.Infof("media manager: cron finished jobs and stopped gracefully")
+		case <-time.After(1 * time.Minute):
+			logrus.Infof("media manager: cron didn't stop after 60 seconds, will force close jobs")
+			break
+		}
+
+		pruneCancel()
+		return nil
+	}
+
+	c.Start()
+	return nil
 }

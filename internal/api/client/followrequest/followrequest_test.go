@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequest"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -37,7 +38,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -77,8 +77,8 @@ func (suite *FollowRequestStandardTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()

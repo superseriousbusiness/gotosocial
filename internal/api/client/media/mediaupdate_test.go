@@ -35,6 +35,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -45,7 +46,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/worker"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -82,8 +82,8 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	fedWorker := worker.New[messages.FromFederator](-1, -1)
-	clientWorker := worker.New[messages.FromClientAPI](-1, -1)
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()

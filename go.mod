@@ -3,7 +3,10 @@ module github.com/superseriousbusiness/gotosocial
 go 1.18
 
 require (
+	codeberg.org/gruf/go-byteutil v1.0.1
+	codeberg.org/gruf/go-cache/v2 v2.0.1
 	codeberg.org/gruf/go-debug v1.1.2
+	codeberg.org/gruf/go-errors/v2 v2.0.1
 	codeberg.org/gruf/go-mutexes v1.1.2
 	codeberg.org/gruf/go-runners v1.2.1
 	codeberg.org/gruf/go-store v1.3.7
@@ -45,15 +48,13 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/text v0.3.7
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
-	modernc.org/sqlite v1.17.0
+	modernc.org/sqlite v1.17.2
 	mvdan.cc/xurls/v2 v2.3.0
 )
 
 require (
 	codeberg.org/gruf/go-bitutil v1.0.0 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
-	codeberg.org/gruf/go-byteutil v1.0.0 // indirect
-	codeberg.org/gruf/go-errors/v2 v2.0.1 // indirect
 	codeberg.org/gruf/go-fastcopy v1.1.1 // indirect
 	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
@@ -123,8 +124,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.36.0 // indirect
-	modernc.org/ccgo/v3 v3.16.4 // indirect
-	modernc.org/libc v1.16.1 // indirect
+	modernc.org/ccgo/v3 v3.16.6 // indirect
+	modernc.org/libc v1.16.7 // indirect
 	modernc.org/mathutil v1.4.1 // indirect
 	modernc.org/memory v1.1.1 // indirect
 	modernc.org/opt v0.1.3 // indirect

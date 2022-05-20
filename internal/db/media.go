@@ -35,4 +35,7 @@ type Media interface {
 	// The selected media attachments will be those with both a URL and a RemoteURL filled in.
 	// In other words, media attachments that originated remotely, and that we currently have cached locally.
 	GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
+	// GetAvatarsAndHeaders fetches limit n avatars and headers with an id < maxID. These headers
+	// and avis may be in use or not; the caller should check this if it's important.
+	GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, Error)
 }
