@@ -38,7 +38,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -54,7 +53,6 @@ type ProcessingStandardTestSuite struct {
 	transportController transport.Controller
 	federator           federation.Federator
 	oauthServer         oauth.Server
-	timelineManager     timeline.Manager
 	emailSender         email.Sender
 
 	// standard suite models
