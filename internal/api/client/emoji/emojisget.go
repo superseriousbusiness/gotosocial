@@ -14,5 +14,11 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, []string{})
+	emojis, errWithCode := m.processor.CustomEmojisGet(c)
+	if errWithCode != nil {
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		return
+	}
+
+	c.JSON(http.StatusOK, emojis)
 }

@@ -35,6 +35,7 @@ type DB interface {
 	Admin
 	Basic
 	Domain
+	Emoji
 	Instance
 	Media
 	Mention
