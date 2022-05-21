@@ -67,6 +67,14 @@ func (suite *StatusTestSuite) TestGetStatusByURI() {
 	suite.False(status.Likeable)
 }
 
+func (suite *StatusTestSuite) TestGetAccountIDForStatusURI() {
+	accountID, err := suite.db.GetAccountIDForStatusURI(context.Background(), suite.testStatuses["local_account_2_status_3"].URI)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(suite.testAccounts["local_account_2"].ID, accountID)
+}
+
 func (suite *StatusTestSuite) TestGetStatusWithExtras() {
 	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["admin_account_status_1"].ID)
 	if err != nil {

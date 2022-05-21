@@ -32,6 +32,9 @@ type Status interface {
 	// GetStatusByURI returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, Error)
 
+	// GetAccountIDForStatusURI returns just the accountID of the status with the given URI, or an error if something goes wrong.
+	GetAccountIDForStatusURI(ctx context.Context, uri string) (string, Error)
+
 	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, Error)
 
