@@ -273,7 +273,8 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		return blocked, nil
 	}
 
-	// finally, check if any of the involved IRIs are statuses or accounts that we know about, and block appropriately
+	// get account IDs for other involved accounts
+	var involvedAccountIDs []string
 	for _, iri := range otherInvolvedIRIs {
 		var involvedAccountID string
 		if id, err := f.db.GetAccountIDForStatusURI(ctx, iri.String()); err == nil {
@@ -283,23 +284,28 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		}
 
 		if involvedAccountID != "" {
-			// the involved account shouldn't block whoever is making this request
-			blocked, err = f.db.IsBlocked(ctx, involvedAccountID, requestingAccount.ID, false)
-			if err != nil {
-				return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
-			}
-			if blocked {
-				return blocked, nil
-			}
+			involvedAccountIDs = append(involvedAccountIDs, involvedAccountID)
+		}
+	}
+	deduped := util.UniqueStrings(involvedAccountIDs)
+	
+	for _, involvedAccountID := range deduped {
+		// the involved account shouldn't block whoever is making this request
+		blocked, err = f.db.IsBlocked(ctx, involvedAccountID, requestingAccount.ID, false)
+		if err != nil {
+			return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
+		}
+		if blocked {
+			return blocked, nil
+		}
 
-			// whoever is receiving this request shouldn't block the involved account
-			blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, involvedAccountID, false)
-			if err != nil {
-				return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
-			}
-			if blocked {
-				return blocked, nil
-			}
+		// whoever is receiving this request shouldn't block the involved account
+		blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, involvedAccountID, false)
+		if err != nil {
+			return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
+		}
+		if blocked {
+			return blocked, nil
 		}
 	}
 
