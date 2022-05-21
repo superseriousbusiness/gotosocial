@@ -22,8 +22,6 @@ package ap
 type ContextKey string
 
 const (
-	// ContextActivity can be used to set and retrieve the actual go-fed pub.Activity within a context.
-	ContextActivity ContextKey = "activity"
 	// ContextReceivingAccount can be used the set and retrieve the account being interacted with / receiving an activity in their inbox.
 	ContextReceivingAccount ContextKey = "receivingAccount"
 	// ContextRequestingAccount can be used to set and retrieve the account of an incoming federation request.
