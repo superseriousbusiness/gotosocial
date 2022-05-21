@@ -221,7 +221,7 @@ func (suite *FederatingProtocolTestSuite) TestBlocked4() {
 	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
 
 	// local account 2 (replied status account) blocks sending account already so we don't need to add a block here
-	
+
 	blocked, err := federator.Blocked(ctxWithOtherInvolvedIRIs, actorIRIs)
 	suite.NoError(err)
 	suite.True(blocked)
