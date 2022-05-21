@@ -39,8 +39,7 @@ type FederatingProtocolTestSuite struct {
 	FederatorStandardTestSuite
 }
 
-// make sure PostInboxRequestBodyHook properly sets the inbox username and activity on the context
-func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook1() {
 	// the activity we're gonna use
 	activity := suite.testActivities["dm_for_zork"]
 
@@ -62,6 +61,83 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
 	suite.NoError(err)
 	suite.NotNil(newContext)
+
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 1)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork"))
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook2() {
+	// the activity we're gonna use
+	activity := suite.testActivities["reply_to_turtle_for_zork"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	// setup transport controller with a no-op client so we don't make external calls
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return nil, nil
+	}), suite.db, fedWorker)
+	// setup module being tested
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	// setup request
+	ctx := context.Background()
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
+	request.Header.Set("Signature", activity.SignatureHeader)
+
+	// trigger the function being tested, and return the new context it creates
+	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	suite.NoError(err)
+	suite.NotNil(newContext)
+
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 2)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/1happyturtle"))
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"))
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook3() {
+	// the activity we're gonna use
+	activity := suite.testActivities["reply_to_turtle_for_turtle"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	// setup transport controller with a no-op client so we don't make external calls
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return nil, nil
+	}), suite.db, fedWorker)
+	// setup module being tested
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	// setup request
+	ctx := context.Background()
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/1happyturtle/inbox", nil) // the endpoint we're hitting
+	request.Header.Set("Signature", activity.SignatureHeader)
+
+	// trigger the function being tested, and return the new context it creates
+	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	suite.NoError(err)
+	suite.NotNil(newContext)
+
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 2)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/1happyturtle"))
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"))
 }
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
