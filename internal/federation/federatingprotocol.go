@@ -62,19 +62,30 @@ import (
 // write a response to the ResponseWriter as is expected that the caller
 // to PostInbox will do so when handling the error.
 func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":      "PostInboxRequestBodyHook",
-		"useragent": r.UserAgent(),
-		"url":       r.URL.String(),
-	})
-
-	if activity == nil {
-		err := errors.New("nil activity in PostInboxRequestBodyHook")
-		l.Debug(err)
-		return nil, err
-	}
 	// set the activity on the context for use later on
-	return context.WithValue(ctx, ap.ContextActivity, activity), nil
+	withActivity := context.WithValue(ctx, ap.ContextActivity, activity)
+
+	// extract any other IRIs involved in this activity
+	otherInvolvedIRIs := []*url.URL{}
+
+	// first check if the Activity itself has an 'inReplyTo'
+	if replyToable, ok := activity.(ap.ReplyToable); ok {
+		if inReplyToURI := ap.ExtractInReplyToURI(replyToable); inReplyToURI != nil {
+			otherInvolvedIRIs = append(otherInvolvedIRIs, inReplyToURI)
+		}
+	}
+
+	// now check if the Object of the Activity (usually a Note or something) has an 'inReplyTo'
+	if object := activity.GetActivityStreamsObject(); object != nil {
+		if replyToable, ok := object.(ap.ReplyToable); ok {
+			if inReplyToURI := ap.ExtractInReplyToURI(replyToable); inReplyToURI != nil {
+				otherInvolvedIRIs = append(otherInvolvedIRIs, inReplyToURI)
+			}
+		}
+	}
+
+	withOtherInvolvedIRIs := context.WithValue(withActivity, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
+	return withOtherInvolvedIRIs, nil
 }
 
 // AuthenticatePostInbox delegates the authentication of a POST to an
@@ -185,40 +196,61 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	})
 	l.Debugf("entering BLOCKED function with IRI list: %+v", actorIRIs)
 
+	// check domain blocks first for the given actor IRIs
+	blocked, err := f.db.AreURIsBlocked(ctx, actorIRIs)
+	if err != nil {
+		return false, fmt.Errorf("error checking domain blocks of actorIRIs: %s", err)
+	}
+	if blocked {
+		return blocked, nil
+	}
+
+	// check domain blocks for any other involved IRIs
+	otherInvolvedIRIsI := ctx.Value(ap.ContextOtherInvolvedIRIs)
+	otherInvolvedIRIs, ok := otherInvolvedIRIsI.([]*url.URL)
+	if !ok {
+		l.Errorf("other involved IRIs not set on request context")
+		return false, errors.New("other involved IRIs not set on request context, so couldn't determine blocks")
+	}
+	blocked, err = f.db.AreURIsBlocked(ctx, otherInvolvedIRIs)
+	if err != nil {
+		return false, fmt.Errorf("error checking domain blocks of otherInvolvedIRIs: %s", err)
+	}
+	if blocked {
+		return blocked, nil
+	}
+
+	// now check for user-level block from receiving against requesting account
 	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
 	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
 	if !ok {
 		l.Errorf("receiving account not set on request context")
 		return false, errors.New("receiving account not set on request context, so couldn't determine blocks")
 	}
-
-	blocked, err := f.db.AreURIsBlocked(ctx, actorIRIs)
+	requestingAccountI := ctx.Value(ap.ContextRequestingAccount)
+	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
+	if !ok {
+		l.Errorf("requesting account not set on request context")
+		return false, errors.New("requesting account not set on request context, so couldn't determine blocks")
+	}
+	blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID, false)
 	if err != nil {
-		return false, fmt.Errorf("error checking domain blocks: %s", err)
+		return false, fmt.Errorf("error checking user-level blocks: %s", err)
 	}
 	if blocked {
 		return blocked, nil
 	}
 
-	for _, uri := range actorIRIs {
-		requestingAccount, err := f.db.GetAccountByURI(ctx, uri.String())
-		if err != nil {
-			if err == db.ErrNoEntries {
-				// we don't have an entry for this account so it's not blocked
-				// TODO: allow a different default to be set for this behavior
-				l.Tracef("no entry for account with URI %s so it can't be blocked", uri)
-				continue
+	// finally, check if any of the involved IRIs are statuses, and make sure the status author doesn't block the requester
+	for _, iri := range otherInvolvedIRIs {
+		if repliedTo, err := f.db.GetStatusByURI(ctx, iri.String()); err == nil {
+			blocked, err = f.db.IsBlocked(ctx, repliedTo.AccountID, requestingAccount.ID, false)
+			if err != nil {
+				return false, fmt.Errorf("error checking user-level otherInvolvedIRI blocks: %s", err)
 			}
-			return false, fmt.Errorf("error getting account with uri %s: %s", uri.String(), err)
-		}
-
-		blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID, false)
-		if err != nil {
-			return false, fmt.Errorf("error checking account block: %s", err)
-		}
-		if blocked {
-			l.Tracef("local account %s blocks account with uri %s", receivingAccount.Username, uri)
-			return true, nil
+			if blocked {
+				return blocked, nil
+			}
 		}
 	}
 
