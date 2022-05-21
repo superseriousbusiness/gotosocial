@@ -140,6 +140,11 @@ type Addressable interface {
 	WithCC
 }
 
+// ReplyToable represents the minimum interface for an Activity that can be InReplyTo another activity.
+type ReplyToable interface {
+	WithInReplyTo
+}
+
 // CollectionPageable represents the minimum interface for an activitystreams 'CollectionPage' object.
 type CollectionPageable interface {
 	WithJSONLDId
