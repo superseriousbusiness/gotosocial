@@ -288,7 +288,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 		}
 	}
 	deduped := util.UniqueStrings(involvedAccountIDs)
-	
+
 	for _, involvedAccountID := range deduped {
 		// the involved account shouldn't block whoever is making this request
 		blocked, err = f.db.IsBlocked(ctx, involvedAccountID, requestingAccount.ID, false)
