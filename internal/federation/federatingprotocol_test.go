@@ -26,7 +26,6 @@ import (
 
 	"github.com/go-fed/httpsig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -62,14 +61,6 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
 	suite.NoError(err)
 	suite.NotNil(newContext)
-
-	// activity should be set on context now
-	activityI := newContext.Value(ap.ContextActivity)
-	suite.NotNil(activityI)
-	returnedActivity, ok := activityI.(pub.Activity)
-	suite.True(ok)
-	suite.NotNil(returnedActivity)
-	suite.EqualValues(activity.Activity, returnedActivity)
 }
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
@@ -97,8 +88,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
 	ctxWithAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
-	ctxWithActivity := context.WithValue(ctxWithAccount, ap.ContextActivity, activity)
-	ctxWithVerifier := context.WithValue(ctxWithActivity, ap.ContextRequestingPublicKeyVerifier, verifier)
+	ctxWithVerifier := context.WithValue(ctxWithAccount, ap.ContextRequestingPublicKeyVerifier, verifier)
 	ctxWithSignature := context.WithValue(ctxWithVerifier, ap.ContextRequestingPublicKeySignature, activity.SignatureHeader)
 
 	// we can pass this recorder as a writer and read it back after
