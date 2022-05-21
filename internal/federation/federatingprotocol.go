@@ -66,7 +66,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 	// extract any other IRIs involved in this activity
 	otherInvolvedIRIs := []*url.URL{}
 
-	// first check if the Activity itself has an 'inReplyTo'
+	// check if the Activity itself has an 'inReplyTo'
 	if replyToable, ok := activity.(ap.ReplyToable); ok {
 		if inReplyToURI := ap.ExtractInReplyToURI(replyToable); inReplyToURI != nil {
 			otherInvolvedIRIs = append(otherInvolvedIRIs, inReplyToURI)
@@ -82,10 +82,13 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		}
 	}
 
-	// check for CCs on Activity itself
+	// check for Tos and CCs on Activity itself
 	if addressable, ok := activity.(ap.Addressable); ok {
 		if ccURIs, err := ap.ExtractCCs(addressable); err == nil {
 			otherInvolvedIRIs = append(otherInvolvedIRIs, ccURIs...)
+		}
+		if toURIs, err := ap.ExtractTos(addressable); err == nil {
+			otherInvolvedIRIs = append(otherInvolvedIRIs, toURIs...)
 		}
 	}
 
@@ -94,6 +97,9 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		if addressable, ok := object.(ap.Addressable); ok {
 			if ccURIs, err := ap.ExtractCCs(addressable); err == nil {
 				otherInvolvedIRIs = append(otherInvolvedIRIs, ccURIs...)
+			}
+			if toURIs, err := ap.ExtractTos(addressable); err == nil {
+				otherInvolvedIRIs = append(otherInvolvedIRIs, toURIs...)
 			}
 		}
 	}
