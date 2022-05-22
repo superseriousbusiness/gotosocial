@@ -46,14 +46,6 @@ func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
 	suite.NotEmpty(account.HeaderMediaAttachment.URL)
 }
 
-func (suite *AccountTestSuite) TestGetAccountIDForAccountURI() {
-	accountID, err := suite.db.GetAccountIDForAccountURI(context.Background(), suite.testAccounts["local_account_1"].URI)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.Equal(suite.testAccounts["local_account_1"].ID, accountID)
-}
-
 func (suite *AccountTestSuite) TestUpdateAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 

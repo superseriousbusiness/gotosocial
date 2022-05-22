@@ -87,22 +87,6 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 	)
 }
 
-func (s *statusDB) GetAccountIDForStatusURI(ctx context.Context, uri string) (string, db.Error) {
-	if cached, ok := s.cache.GetByURI(uri); ok {
-		return cached.AccountID, nil
-	}
-
-	status := &gtsmodel.Status{}
-	if err := s.conn.NewSelect().
-		Model(status).
-		Column("account_id").
-		Where("uri = ?", uri).Scan(ctx); err != nil {
-		return "", s.conn.ProcessError(err)
-	}
-
-	return status.AccountID, nil
-}
-
 func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.Status, db.Error) {
 	return s.getStatus(
 		ctx,

@@ -277,10 +277,10 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	var involvedAccountIDs []string
 	for _, iri := range otherInvolvedIRIs {
 		var involvedAccountID string
-		if id, err := f.db.GetAccountIDForStatusURI(ctx, iri.String()); err == nil {
-			involvedAccountID = id
-		} else if id, err := f.db.GetAccountIDForAccountURI(ctx, iri.String()); err == nil {
-			involvedAccountID = id
+		if involvedStatus, err := f.db.GetStatusByURI(ctx, iri.String()); err == nil {
+			involvedAccountID = involvedStatus.AccountID
+		} else if involvedAccount, err := f.db.GetAccountByURI(ctx, iri.String()); err == nil {
+			involvedAccountID = involvedAccount.ID
 		}
 
 		if involvedAccountID != "" {

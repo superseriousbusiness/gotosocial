@@ -33,9 +33,6 @@ type Account interface {
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
 	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 
-	// GetAccountIDForAccountURI returns just the database ID of one account with the given URI, or an error if something goes wrong.
-	GetAccountIDForAccountURI(ctx context.Context, uri string) (string, Error)
-
 	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
 	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, Error)
 

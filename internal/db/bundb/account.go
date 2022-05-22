@@ -70,22 +70,6 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 	)
 }
 
-func (a *accountDB) GetAccountIDForAccountURI(ctx context.Context, uri string) (string, db.Error) {
-	if cached, ok := a.cache.GetByURI(uri); ok {
-		return cached.ID, nil
-	}
-
-	account := &gtsmodel.Account{}
-	if err := a.conn.NewSelect().
-		Model(account).
-		Column("id").
-		Where("uri = ?", uri).Scan(ctx); err != nil {
-		return "", a.conn.ProcessError(err)
-	}
-
-	return account.ID, nil
-}
-
 func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
