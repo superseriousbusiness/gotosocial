@@ -4,7 +4,7 @@
 
 For this guide you will need [Caddy 2](https://caddyserver.com/), there are no other dependencies. Caddy manages Lets Encrypt certificates and renewal for them.
 
-Caddy is in the most popular package managers, or you can get a static binary. For all latest installation guides, refer to [https://caddyserver.com/docs/install](their manual).
+Caddy is in the most popular package managers, or you can get a static binary. For all latest installation guides, refer to [their manual](https://caddyserver.com/docs/install).
 
 ### Debian, Ubuntu, Raspbian
 
