@@ -76,23 +76,13 @@ example.org:443 {
 
 	# The actual proxy configuration to port 8080 (unless you've chosen another port number)
 	reverse_proxy * http://127.0.0.1:8080 {
-		# Flush immediatly (important)
+		# Flush immediatly, to prevent buffered response to the client
 		flush_interval -1
-
-		# Set the proper headers for information for HTTP signatures etc.
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
-		header_up X-Forwarded-Host {host}
-
-		# Tell the world what origin and methods we allow
-		header_down Access-Control-Allow-Origin *
-		header_down Access-Control-Allow-Methods "GET, POST, HEAD, OPTIONS, PUT, PATCH, DELETE"
 	}
 }
 ```
 
-**Note**: `header_up X-Forwarded-Host {host}` is essential. It guarantees that the proxy and GoToSocial use the same server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401.
+For advanced configuration check the [reverse_proxy directive](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy) at the Caddy documentation.
 
 Now check for configuration errors.
 
