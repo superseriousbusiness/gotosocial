@@ -16,32 +16,31 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package bundb
 
-import "net/url"
+import (
+	"context"
 
-// UniqueStrings returns a deduplicated version of a given string slice.
-func UniqueStrings(s []string) []string {
-	keys := make(map[string]bool, len(s))
-	list := []string{}
-	for _, entry := range s {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
+
+type emojiDB struct {
+	conn *DBConn
 }
 
-// UniqueURIs returns a deduplicated version of a given *url.URL slice.
-func UniqueURIs(s []*url.URL) []*url.URL {
-	keys := make(map[string]bool, len(s))
-	list := []*url.URL{}
-	for _, entry := range s {
-		if _, value := keys[entry.String()]; !value {
-			keys[entry.String()] = true
-			list = append(list, entry)
-		}
+func (e emojiDB) GetCustomEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
+	emojis := []*gtsmodel.Emoji{}
+
+	q := e.conn.
+		NewSelect().
+		Model(&emojis).
+		Where("visible_in_picker = true").
+		Where("disabled = false").
+		Order("shortcode ASC")
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, e.conn.ProcessError(err)
 	}
-	return list
+	return emojis, nil
 }

@@ -39,6 +39,7 @@ type Processor interface {
 	Delete(ctx context.Context, mediaAttachmentID string) gtserror.WithCode
 	// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
 	GetFile(ctx context.Context, account *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode)
+	GetCustomEmojis(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode)
 	GetMedia(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string) (*apimodel.Attachment, gtserror.WithCode)
 	Update(ctx context.Context, account *gtsmodel.Account, mediaAttachmentID string, form *apimodel.AttachmentUpdateRequest) (*apimodel.Attachment, gtserror.WithCode)
 }

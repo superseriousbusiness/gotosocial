@@ -1609,6 +1609,30 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		dmForZork)
 	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
+	replyToTurtle := NewAPNote(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		URLMustParse("http://fossbros-anonymous.io/@foss_satan/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		time.Now(),
+		"@1happyturtle@localhost:8080 u suck lol",
+		"",
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		[]*url.URL{URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers")},
+		[]*url.URL{URLMustParse("http://localhost:8080/users/1happyturtle")},
+		false,
+		[]vocab.ActivityStreamsMention{newAPMention(
+			URLMustParse("http://localhost:8080/users/1happyturtle"),
+			"@1happyturtle@localhost:8080",
+		)},
+		nil,
+	)
+	createReplyToTurtle := WrapAPNoteInCreate(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		replyToTurtle)
+	createReplyToTurtleForZorkSig, createReplyToTurtleForZorkDigest, createReplyToTurtleForZorkDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	createReplyToTurtleForTurtleSig, createReplyToTurtleForTurtleDigest, createReplyToTurtleForTurtleDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
+
 	forwardedMessage := NewAPNote(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
@@ -1668,6 +1692,18 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			SignatureHeader: createDmForZorkSig,
 			DigestHeader:    createDmForZorkDigest,
 			DateHeader:      creatDmForZorkDate,
+		},
+		"reply_to_turtle_for_zork": {
+			Activity:        createReplyToTurtle,
+			SignatureHeader: createReplyToTurtleForZorkSig,
+			DigestHeader:    createReplyToTurtleForZorkDigest,
+			DateHeader:      createReplyToTurtleForZorkDate,
+		},
+		"reply_to_turtle_for_turtle": {
+			Activity:        createReplyToTurtle,
+			SignatureHeader: createReplyToTurtleForTurtleSig,
+			DigestHeader:    createReplyToTurtleForTurtleDigest,
+			DateHeader:      createReplyToTurtleForTurtleDate,
 		},
 		"forwarded_message": {
 			Activity:        createForwardedMessage,

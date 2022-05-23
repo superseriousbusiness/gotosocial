@@ -41,3 +41,7 @@ func (p *processor) MediaUpdate(ctx context.Context, authed *oauth.Auth, mediaAt
 func (p *processor) FileGet(ctx context.Context, authed *oauth.Auth, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
 	return p.mediaProcessor.GetFile(ctx, authed.Account, form)
 }
+
+func (p *processor) CustomEmojisGet(ctx context.Context) ([]*apimodel.Emoji, gtserror.WithCode) {
+	return p.mediaProcessor.GetCustomEmojis(ctx)
+}

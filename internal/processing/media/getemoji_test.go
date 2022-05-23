@@ -16,32 +16,27 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package util
+package media_test
 
-import "net/url"
+import (
+	"context"
+	"testing"
 
-// UniqueStrings returns a deduplicated version of a given string slice.
-func UniqueStrings(s []string) []string {
-	keys := make(map[string]bool, len(s))
-	list := []string{}
-	for _, entry := range s {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
-	}
-	return list
+	"github.com/stretchr/testify/suite"
+)
+
+type GetEmojiTestSuite struct {
+	MediaStandardTestSuite
 }
 
-// UniqueURIs returns a deduplicated version of a given *url.URL slice.
-func UniqueURIs(s []*url.URL) []*url.URL {
-	keys := make(map[string]bool, len(s))
-	list := []*url.URL{}
-	for _, entry := range s {
-		if _, value := keys[entry.String()]; !value {
-			keys[entry.String()] = true
-			list = append(list, entry)
-		}
-	}
-	return list
+func (suite *GetEmojiTestSuite) TestGetCustomEmojis() {
+	emojis, err := suite.mediaProcessor.GetCustomEmojis(context.Background())
+
+	suite.NoError(err)
+	suite.Equal(1, len(emojis))
+	suite.Equal("rainbow", emojis[0].Shortcode)
+}
+
+func TestGetEmojiTestSuite(t *testing.T) {
+	suite.Run(t, &GetEmojiTestSuite{})
 }
