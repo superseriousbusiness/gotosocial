@@ -22,11 +22,11 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/go-fed/httpsig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -39,8 +39,7 @@ type FederatingProtocolTestSuite struct {
 	FederatorStandardTestSuite
 }
 
-// make sure PostInboxRequestBodyHook properly sets the inbox username and activity on the context
-func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook1() {
 	// the activity we're gonna use
 	activity := suite.testActivities["dm_for_zork"]
 
@@ -63,13 +62,82 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook() {
 	suite.NoError(err)
 	suite.NotNil(newContext)
 
-	// activity should be set on context now
-	activityI := newContext.Value(ap.ContextActivity)
-	suite.NotNil(activityI)
-	returnedActivity, ok := activityI.(pub.Activity)
-	suite.True(ok)
-	suite.NotNil(returnedActivity)
-	suite.EqualValues(activity.Activity, returnedActivity)
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 1)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork"))
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook2() {
+	// the activity we're gonna use
+	activity := suite.testActivities["reply_to_turtle_for_zork"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	// setup transport controller with a no-op client so we don't make external calls
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return nil, nil
+	}), suite.db, fedWorker)
+	// setup module being tested
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	// setup request
+	ctx := context.Background()
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/the_mighty_zork/inbox", nil) // the endpoint we're hitting
+	request.Header.Set("Signature", activity.SignatureHeader)
+
+	// trigger the function being tested, and return the new context it creates
+	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	suite.NoError(err)
+	suite.NotNil(newContext)
+
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 2)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/1happyturtle"))
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"))
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook3() {
+	// the activity we're gonna use
+	activity := suite.testActivities["reply_to_turtle_for_turtle"]
+
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+
+	// setup transport controller with a no-op client so we don't make external calls
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return nil, nil
+	}), suite.db, fedWorker)
+	// setup module being tested
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	// setup request
+	ctx := context.Background()
+	request := httptest.NewRequest(http.MethodPost, "http://localhost:8080/users/1happyturtle/inbox", nil) // the endpoint we're hitting
+	request.Header.Set("Signature", activity.SignatureHeader)
+
+	// trigger the function being tested, and return the new context it creates
+	newContext, err := federator.PostInboxRequestBodyHook(ctx, request, activity.Activity)
+	suite.NoError(err)
+	suite.NotNil(newContext)
+
+	involvedIRIsI := newContext.Value(ap.ContextOtherInvolvedIRIs)
+	involvedIRIs, ok := involvedIRIsI.([]*url.URL)
+	if !ok {
+		suite.FailNow("couldn't get involved IRIs from context")
+	}
+
+	suite.Len(involvedIRIs, 2)
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://localhost:8080/users/1happyturtle"))
+	suite.Contains(involvedIRIs, testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"))
 }
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
@@ -97,8 +165,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	// by the time AuthenticatePostInbox is called, PostInboxRequestBodyHook should have already been called,
 	// which should have set the account and username onto the request. We can replicate that behavior here:
 	ctxWithAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
-	ctxWithActivity := context.WithValue(ctxWithAccount, ap.ContextActivity, activity)
-	ctxWithVerifier := context.WithValue(ctxWithActivity, ap.ContextRequestingPublicKeyVerifier, verifier)
+	ctxWithVerifier := context.WithValue(ctxWithAccount, ap.ContextRequestingPublicKeyVerifier, verifier)
 	ctxWithSignature := context.WithValue(ctxWithVerifier, ap.ContextRequestingPublicKeySignature, activity.SignatureHeader)
 
 	// we can pass this recorder as a writer and read it back after
@@ -115,6 +182,125 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
 	suite.True(ok)
 	suite.Equal(sendingAccount.Username, requestingAccount.Username)
+}
+
+func (suite *FederatingProtocolTestSuite) TestBlocked1() {
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	sendingAccount := suite.testAccounts["remote_account_1"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+	otherInvolvedIRIs := []*url.URL{}
+	actorIRIs := []*url.URL{
+		testrig.URLMustParse(sendingAccount.URI),
+	}
+
+	ctx := context.Background()
+	ctxWithReceivingAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithRequestingAccount := context.WithValue(ctxWithReceivingAccount, ap.ContextRequestingAccount, sendingAccount)
+	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
+
+	blocked, err := federator.Blocked(ctxWithOtherInvolvedIRIs, actorIRIs)
+	suite.NoError(err)
+	suite.False(blocked)
+}
+
+func (suite *FederatingProtocolTestSuite) TestBlocked2() {
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	sendingAccount := suite.testAccounts["remote_account_1"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+	otherInvolvedIRIs := []*url.URL{}
+	actorIRIs := []*url.URL{
+		testrig.URLMustParse(sendingAccount.URI),
+	}
+
+	ctx := context.Background()
+	ctxWithReceivingAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithRequestingAccount := context.WithValue(ctxWithReceivingAccount, ap.ContextRequestingAccount, sendingAccount)
+	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
+
+	// insert a block from inboxAccount targeting sendingAccount
+	if err := suite.db.Put(context.Background(), &gtsmodel.Block{
+		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
+		URI:             "whatever",
+		AccountID:       inboxAccount.ID,
+		TargetAccountID: sendingAccount.ID,
+	}); err != nil {
+		suite.Fail(err.Error())
+	}
+
+	// request should be blocked now
+	blocked, err := federator.Blocked(ctxWithOtherInvolvedIRIs, actorIRIs)
+	suite.NoError(err)
+	suite.True(blocked)
+}
+
+func (suite *FederatingProtocolTestSuite) TestBlocked3() {
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	sendingAccount := suite.testAccounts["remote_account_1"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+	ccedAccount := suite.testAccounts["remote_account_2"]
+
+	otherInvolvedIRIs := []*url.URL{
+		testrig.URLMustParse(ccedAccount.URI),
+	}
+	actorIRIs := []*url.URL{
+		testrig.URLMustParse(sendingAccount.URI),
+	}
+
+	ctx := context.Background()
+	ctxWithReceivingAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithRequestingAccount := context.WithValue(ctxWithReceivingAccount, ap.ContextRequestingAccount, sendingAccount)
+	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
+
+	// insert a block from inboxAccount targeting CCed account
+	if err := suite.db.Put(context.Background(), &gtsmodel.Block{
+		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
+		URI:             "whatever",
+		AccountID:       inboxAccount.ID,
+		TargetAccountID: ccedAccount.ID,
+	}); err != nil {
+		suite.Fail(err.Error())
+	}
+
+	blocked, err := federator.Blocked(ctxWithOtherInvolvedIRIs, actorIRIs)
+	suite.NoError(err)
+	suite.True(blocked)
+}
+
+func (suite *FederatingProtocolTestSuite) TestBlocked4() {
+	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
+	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker)
+	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
+
+	sendingAccount := suite.testAccounts["remote_account_1"]
+	inboxAccount := suite.testAccounts["local_account_1"]
+	repliedStatus := suite.testStatuses["local_account_2_status_1"]
+
+	otherInvolvedIRIs := []*url.URL{
+		testrig.URLMustParse(repliedStatus.URI), // this status is involved because the hypothetical activity is a reply to this status
+	}
+	actorIRIs := []*url.URL{
+		testrig.URLMustParse(sendingAccount.URI),
+	}
+
+	ctx := context.Background()
+	ctxWithReceivingAccount := context.WithValue(ctx, ap.ContextReceivingAccount, inboxAccount)
+	ctxWithRequestingAccount := context.WithValue(ctxWithReceivingAccount, ap.ContextRequestingAccount, sendingAccount)
+	ctxWithOtherInvolvedIRIs := context.WithValue(ctxWithRequestingAccount, ap.ContextOtherInvolvedIRIs, otherInvolvedIRIs)
+
+	// local account 2 (replied status account) blocks sending account already so we don't need to add a block here
+
+	blocked, err := federator.Blocked(ctxWithOtherInvolvedIRIs, actorIRIs)
+	suite.NoError(err)
+	suite.True(blocked)
 }
 
 func TestFederatingProtocolTestSuite(t *testing.T) {
