@@ -33,6 +33,10 @@ dnf install caddy
 pacman -Syu caddy
 ```
 
+### FreeBSD
+```bash
+sudo pkg install caddy
+```
 
 ## Configure GoToSocial
 
@@ -41,9 +45,6 @@ If GoToSocial is already running, stop it.
 ```bash
 sudo systemctl stop gotosocial
 ```
-
-Or if you don't have a systemd service just stop it manually.
-
 In your GoToSocial config turn off Lets Encrypt by setting `letsencrypt-enabled` to `false`.
 
 If you we running GoToSocial on port 443, change the `port` value back to the default `8080`.
@@ -90,7 +91,7 @@ Now check for configuration errors.
 sudo caddy validate
 ```
 
-If everything is fine, you should get some info lines as output. Unless there are lines marked with [err] in front of them, you are all set.
+If everything is fine, you should get some info lines as output. Unless there are lines marked with *[err]* in front of them, you are all set.
 
 Everything working? Great! Then restart caddy to load your new config file.
 
