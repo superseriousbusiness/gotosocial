@@ -1,0 +1,58 @@
+/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package typeutils_test
+
+import (
+	"context"
+	"encoding/json"
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+)
+
+type InternalToFrontendTestSuite struct {
+	TypeUtilsTestSuite
+}
+
+func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
+	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	b, err := json.Marshal(apiAccount)
+	suite.NoError(err)
+	suite.Equal(`{"id":"01F8MH1H7YV1Z7D2C8K2730QBF","username":"the_mighty_zork","acct":"the_mighty_zork","display_name":"original zork (he/they)","locked":false,"bot":false,"created_at":"2022-05-20T11:09:18Z","note":"\u003cp\u003ehey yo this is my profile!\u003c/p\u003e","url":"http://localhost:8080/@the_mighty_zork","avatar":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpeg","avatar_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpeg","header":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","header_static":"http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpeg","followers_count":2,"following_count":2,"statuses_count":5,"last_status_at":"2022-05-20T11:37:55Z","emojis":[],"fields":[]}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	requestingAccount := suite.testAccounts["local_account_1"]
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	suite.NoError(err)
+
+	b, err := json.Marshal(apiStatus)
+	suite.NoError(err)
+
+	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45Z","sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !","application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37Z","emojis":[],"fields":[]},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg","meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH261H1KSV3GW3016GZRY3/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH261H1KSV3GW3016GZRY3/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true}],"card":null,"poll":null,"text":""}`, string(b))
+}
+
+func TestInternalToFrontendTestSuite(t *testing.T) {
+	suite.Run(t, new(InternalToFrontendTestSuite))
+}

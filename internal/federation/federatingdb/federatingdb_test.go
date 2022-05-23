@@ -63,8 +63,9 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 }
 
 func (suite *FederatingDBTestSuite) SetupTest() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
 	suite.fedWorker = concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	suite.fromFederator = make(chan messages.FromFederator, 10)
 	suite.fedWorker.SetProcessor(func(ctx context.Context, msg messages.FromFederator) error {
