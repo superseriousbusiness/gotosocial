@@ -367,6 +367,53 @@ const (
 		}
 	  }	  
 	`
+	publicStatusActivityJsonNoURL = `
+	{
+		"@context": [
+		  "https://www.w3.org/ns/activitystreams",
+		  {
+			"ostatus": "http://ostatus.org#",
+			"atomUri": "ostatus:atomUri",
+			"inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+			"conversation": "ostatus:conversation",
+			"sensitive": "as:sensitive",
+			"toot": "http://joinmastodon.org/ns#",
+			"votersCount": "toot:votersCount"
+		  }
+		],
+		"id": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167",
+		"type": "Note",
+		"summary": "reading: Punishment and Reward in the Corporate University",
+		"inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
+		"published": "2022-04-15T23:49:37Z",
+		"attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
+		"to": [
+		  "https://www.w3.org/ns/activitystreams#Public"
+		],
+		"cc": [
+		  "http://fossbros-anonymous.io/users/foss_satan/followers"
+		],
+		"sensitive": true,
+		"atomUri": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167",
+		"inReplyToAtomUri": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
+		"content": "<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>",
+		"contentMap": {
+		  "en": "<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>"
+		},
+		"attachment": [],
+		"tag": [],
+		"replies": {
+		  "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies",
+		  "type": "Collection",
+		  "first": {
+			"type": "CollectionPage",
+			"next": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies?only_other_accounts=true&page=true",
+			"partOf": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies",
+			"items": []
+		  }
+		}
+	  }	  
+	`
 )
 
 type TypeUtilsTestSuite struct {
