@@ -349,7 +349,7 @@ func ExtractContent(i WithContent) string {
 		}
 		if iter.IsIRI() && iter.GetIRI() != nil {
 			return iter.GetIRI().String()
-		} 
+		}
 	}
 
 	return ""
