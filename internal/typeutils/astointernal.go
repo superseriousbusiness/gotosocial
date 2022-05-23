@@ -184,10 +184,11 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	l := logrus.WithField("statusURI", status.URI)
 
 	// web url for viewing this status
-	if statusURL, err := ap.ExtractURL(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status URL: %s", err)
-	} else {
+	if statusURL, err := ap.ExtractURL(statusable); err == nil {
 		status.URL = statusURL.String()
+	} else {
+		// if no URL was set, just take the URI
+		status.URL = status.URI
 	}
 
 	// the html-formatted content of this status
