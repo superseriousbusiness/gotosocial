@@ -92,6 +92,10 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	note.SetActivityStreamsTag(tags)
 
+	content := streams.NewActivityStreamsContentProperty()
+	content.AppendXMLSchemaString("hey @f0x and @dumpsterqueer")
+	note.SetActivityStreamsContent(content)
+
 	return note
 }
 
