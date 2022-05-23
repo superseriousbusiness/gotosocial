@@ -191,11 +191,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 
 	// the html-formatted content of this status
-	if content, err := ap.ExtractContent(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status content: %s", err)
-	} else {
-		status.Content = content
-	}
+	status.Content = ap.ExtractContent(statusable)
 
 	// attachments to dereference and fetch later on (we don't do that here)
 	if attachments, err := ap.ExtractAttachments(statusable); err != nil {
