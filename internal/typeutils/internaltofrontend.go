@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -31,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*model.Account, error) {
@@ -93,7 +93,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	var lastStatusAt string
 	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID)
 	if err == nil && !lastPosted.IsZero() {
-		lastStatusAt = lastPosted.Format(time.RFC3339)
+		lastStatusAt = util.FormatISO8601(lastPosted)
 	}
 
 	// set account avatar fields if available
@@ -140,7 +140,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			Value: f.Value,
 		}
 		if !f.VerifiedAt.IsZero() {
-			mField.VerifiedAt = f.VerifiedAt.Format(time.RFC3339)
+			mField.VerifiedAt = util.FormatISO8601(f.VerifiedAt)
 		}
 		fields = append(fields, mField)
 	}
@@ -169,7 +169,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		DisplayName:    a.DisplayName,
 		Locked:         a.Locked,
 		Bot:            a.Bot,
-		CreatedAt:      a.CreatedAt.Format(time.RFC3339),
+		CreatedAt:      util.FormatISO8601(a.CreatedAt),
 		Note:           a.Note,
 		URL:            a.URL,
 		Avatar:         aviURL,
@@ -209,7 +209,7 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		Acct:        acct,
 		DisplayName: a.DisplayName,
 		Bot:         a.Bot,
-		CreatedAt:   a.CreatedAt.Format(time.RFC3339),
+		CreatedAt:   util.FormatISO8601(a.CreatedAt),
 		URL:         a.URL,
 		Suspended:   suspended,
 	}, nil
@@ -511,7 +511,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 
 	apiStatus := &model.Status{
 		ID:                 s.ID,
-		CreatedAt:          s.CreatedAt.Format(time.RFC3339),
+		CreatedAt:          util.FormatISO8601(s.CreatedAt),
 		InReplyToID:        s.InReplyToID,
 		InReplyToAccountID: s.InReplyToAccountID,
 		Sensitive:          s.Sensitive,
@@ -695,7 +695,7 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 	return &model.Notification{
 		ID:        n.ID,
 		Type:      string(n.NotificationType),
-		CreatedAt: n.CreatedAt.Format(time.RFC3339),
+		CreatedAt: util.FormatISO8601(n.CreatedAt),
 		Account:   apiAccount,
 		Status:    apiStatus,
 	}, nil
@@ -714,7 +714,7 @@ func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel
 		domainBlock.PrivateComment = b.PrivateComment
 		domainBlock.SubscriptionID = b.SubscriptionID
 		domainBlock.CreatedBy = b.CreatedByAccountID
-		domainBlock.CreatedAt = b.CreatedAt.Format(time.RFC3339)
+		domainBlock.CreatedAt = util.FormatISO8601(b.CreatedAt)
 	}
 
 	return domainBlock, nil
