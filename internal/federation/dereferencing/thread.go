@@ -219,7 +219,7 @@ pageLoop:
 			foundReplies++
 
 			// get the remote statusable and put it in the db
-			_, statusable, err := d.GetRemoteStatus(ctx, username, itemURI, false, false)
+			_, statusable, err := d.GetRemoteStatus(ctx, username, itemURI, true, false)
 			if err == nil {
 				// now iterate descendants of *that* status
 				if err := d.iterateDescendants(ctx, username, *itemURI, statusable); err != nil {
