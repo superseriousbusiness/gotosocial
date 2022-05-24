@@ -24,6 +24,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InternalToFrontendTestSuite struct {
@@ -51,6 +53,51 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	suite.NoError(err)
 
 	suite.Equal(`{"id":"01F8MH75CBF9JFX4ZAD54N0W0R","created_at":"2021-10-20T11:36:45Z","sensitive":false,"spoiler_text":"","visibility":"public","language":"en","uri":"http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","url":"http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R","replies_count":0,"reblogs_count":0,"favourites_count":1,"favourited":true,"reblogged":false,"muted":false,"bookmarked":false,"content":"hello world! #welcome ! first post on the instance :rainbow: !","application":{"name":"superseriousbusiness","website":"https://superserious.business"},"account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37Z","emojis":[],"fields":[]},"media_attachments":[{"id":"01F8MH6NEM8D7527KZAECTCR76","type":"image","url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpeg","preview_url":"http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpeg","meta":{"original":{"width":1200,"height":630,"size":"1200x630","aspect":1.9047619},"small":{"width":256,"height":134,"size":"256x134","aspect":1.9104477},"focus":{"x":0,"y":0}},"description":"Black and white image of some 50's style text saying: Welcome On Board","blurhash":"LNJRdVM{00Rj%Mayt7j[4nWBofRj"}],"mentions":[],"tags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome"}],"emojis":[{"shortcode":"rainbow","url":"http://localhost:8080/fileserver/01F8MH261H1KSV3GW3016GZRY3/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","static_url":"http://localhost:8080/fileserver/01F8MH261H1KSV3GW3016GZRY3/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png","visible_in_picker":true}],"card":null,"poll":null,"text":""}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestInstanceToFrontend() {
+	testInstance := &gtsmodel.Instance{
+		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		Domain:           "example.org",
+		Title:            "example instance",
+		URI:              "https://example.org",
+		ShortDescription: "a little description",
+		Description:      "a much longer description",
+		ContactEmail:     "someone@example.org",
+		Version:          "software-from-hell 0.666",
+	}
+
+	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
+	suite.NoError(err)
+
+	b, err := json.Marshal(apiInstance)
+	suite.NoError(err)
+
+	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","max_toot_chars":0}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestInstanceToFrontendWithAdminAccount() {
+	testInstance := &gtsmodel.Instance{
+		CreatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		UpdatedAt:        testrig.TimeMustParse("2021-10-20T11:36:45Z"),
+		Domain:           "example.org",
+		Title:            "example instance",
+		URI:              "https://example.org",
+		ShortDescription: "a little description",
+		Description:      "a much longer description",
+		ContactEmail:     "someone@example.org",
+		ContactAccountID: suite.testAccounts["remote_account_2"].ID,
+		Version:          "software-from-hell 0.666",
+	}
+
+	apiInstance, err := suite.typeconverter.InstanceToAPIInstance(context.Background(), testInstance)
+	suite.NoError(err)
+
+	b, err := json.Marshal(apiInstance)
+	suite.NoError(err)
+
+	suite.Equal(`{"uri":"https://example.org","title":"example instance","description":"a much longer description","short_description":"a little description","email":"someone@example.org","version":"software-from-hell 0.666","registrations":false,"approval_required":false,"invites_enabled":false,"thumbnail":"","contact_account":{"id":"01FHMQX3GAABWSM0S2VZEC2SWC","username":"some_user","acct":"some_user@example.org","display_name":"some user","locked":true,"bot":false,"created_at":"2020-08-10T12:13:28Z","note":"i'm a real son of a gun","url":"http://example.org/@some_user","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":"","emojis":[],"fields":[]},"max_toot_chars":0}`, string(b))
 }
 
 func TestInternalToFrontendTestSuite(t *testing.T) {
