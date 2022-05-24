@@ -13,14 +13,14 @@
 	{{range .stylesheets}}<link rel="stylesheet" href="{{.}}">
 	{{end}}
 	<link rel="shortcut icon" href="/assets/logo.png" type="image/png">
-	<title>{{.instance.Title}} - GoToSocial</title>
+	<title>{{.instance.Title | noescape}} - GoToSocial</title>
 </head>
 <body>
 	<header>
 		<img src="/assets/logo.png" alt="Instance Logo"/>
 		<div>
 			<h1>
-				{{.instance.Title}}
+				{{.instance.Title | noescape}}
 			</h1>
 		</div>
 		<div></div>
