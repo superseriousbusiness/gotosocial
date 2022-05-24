@@ -65,9 +65,9 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 		}
 	}
 
-	// check if the query is a URI and just do a lookup for that, straight up
+	// check if the query is a URI with a recognizable scheme and just do a lookup for that, straight up
 	if !foundOne {
-		if uri, err := url.Parse(query); err == nil {
+		if uri, err := url.Parse(query); err == nil && (uri.Scheme == "https" || uri.Scheme == "http") {
 			// 1. check if it's a status
 			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
 				foundStatuses = append(foundStatuses, foundStatus)
@@ -201,8 +201,10 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 			return nil, fmt.Errorf("error fingering remote account with username %s and domain %s: %s", username, domain, err)
 		}
 
-		// return the attempt to get the remove account
-		return p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
+		if acctURI.Scheme == "https" || acctURI.Scheme == "http" {
+			// return the attempt to get the remove account
+			return p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
+		}
 	}
 
 	return nil, nil
