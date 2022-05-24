@@ -571,7 +571,6 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 		Email:            i.ContactEmail,
 		Version:          i.Version,
 		Stats:            make(map[string]int),
-		ContactAccount:   &model.Account{},
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
