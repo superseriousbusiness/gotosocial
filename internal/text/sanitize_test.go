@@ -70,6 +70,54 @@ func (suite *SanitizeTestSuite) TestSanitizeWithEscaped() {
 	suite.Equal(withEscapedExpected, s)
 }
 
+func (suite *SanitizeTestSuite) TestSanitizeCaption1() {
+	dodgyCaption := "<script>console.log('haha!')</script>this is just a normal caption ;)"
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("this is just a normal caption ;)", sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeCaption2() {
+	dodgyCaption := "<em>here's a LOUD caption</em>"
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("here's a LOUD caption", sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeCaption3() {
+	dodgyCaption := ""
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("", sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeCaption4() {
+	dodgyCaption := `
+
+
+here is
+a multi line
+caption
+with some newlines
+
+
+
+`
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("here is\na multi line\ncaption\nwith some newlines", sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeCaption5() {
+	// html-escaped: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;script&gt;console.log(&apos;aha!&apos;)&lt;/script&gt; hello world`
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("hello world", sanitized)
+}
+
+func (suite *SanitizeTestSuite) TestSanitizeCaption6() {
+	// html-encoded: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#99;&#111;&#110;&#115;&#111;&#108;&#101;&period;&#108;&#111;&#103;&lpar;&apos;&#97;&#104;&#97;&excl;&apos;&rpar;&lt;&sol;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#32;&#104;&#101;&#108;&#108;&#111;&#32;&#119;&#111;&#114;&#108;&#100;`
+	sanitized := text.SanitizePlaintext(dodgyCaption)
+	suite.Equal("hello world", sanitized)
+}
+
 func TestSanitizeTestSuite(t *testing.T) {
 	suite.Run(t, new(SanitizeTestSuite))
 }
