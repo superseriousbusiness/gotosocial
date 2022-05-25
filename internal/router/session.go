@@ -42,7 +42,7 @@ func SessionOptions() sessions.Options {
 		MaxAge:   120,                                              // 2 minutes
 		Secure:   viper.GetString(config.Keys.Protocol) == "https", // only use cookie over https
 		HttpOnly: true,                                             // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteDefaultMode,                         // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		SameSite: http.SameSiteStrictMode,                          // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
 	}
 }
 
