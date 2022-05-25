@@ -26,28 +26,14 @@ import (
 )
 
 const (
-	removeHTML  = `<p>Another test <span class="h-card"><a href="http://fossbros-anonymous.io/@foss_satan" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>foss_satan</span></a></span><br/><br/><a href="http://localhost:8080/tags/Hashtag" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>Hashtag</span></a><br/><br/>Text</p>`
-	removedHTML = `Another test @foss_satan#HashtagText`
-
-	sanitizeHTML  = `here's some naughty html: <script>alert(ahhhh)</script> !!!`
-	sanitizedHTML = `here&#39;s some naughty html:  !!!`
-
-	withEscapedLiteral         = `it\u0026amp;#39;s its it is`
-	withEscapedLiteralExpected = `it\u0026amp;#39;s its it is`
-	withEscaped                = "it\u0026amp;#39;s its it is"
-	withEscapedExpected        = "it&amp;#39;s its it is"
-
+	sanitizeHTML      = `here's some naughty html: <script>alert(ahhhh)</script> !!!`
+	sanitizedHTML     = `here&#39;s some naughty html:  !!!`
 	sanitizeOutgoing  = `<p>gotta test some fucking &#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39; marks</p>`
 	sanitizedOutgoing = `<p>gotta test some fucking &#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39;&#39; marks</p>`
 )
 
 type SanitizeTestSuite struct {
 	suite.Suite
-}
-
-func (suite *SanitizeTestSuite) TestRemoveHTML() {
-	s := text.RemoveHTML(removeHTML)
-	suite.Equal(removedHTML, s)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeOutgoing() {
@@ -58,16 +44,6 @@ func (suite *SanitizeTestSuite) TestSanitizeOutgoing() {
 func (suite *SanitizeTestSuite) TestSanitizeHTML() {
 	s := text.SanitizeHTML(sanitizeHTML)
 	suite.Equal(sanitizedHTML, s)
-}
-
-func (suite *SanitizeTestSuite) TestSanitizeWithEscapedLiteral() {
-	s := text.RemoveHTML(withEscapedLiteral)
-	suite.Equal(withEscapedLiteralExpected, s)
-}
-
-func (suite *SanitizeTestSuite) TestSanitizeWithEscaped() {
-	s := text.RemoveHTML(withEscaped)
-	suite.Equal(withEscapedExpected, s)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption1() {
