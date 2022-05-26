@@ -45,7 +45,7 @@ func NewWorkerPool[MsgType any](workers int, queueRatio int) *WorkerPool[MsgType
 
 	if workers < 1 {
 		// ensure sensible workers
-		workers = runtime.GOMAXPROCS(0)
+		workers = runtime.GOMAXPROCS(0) * 2
 	}
 	if queueRatio < 1 {
 		// ensure sensible ratio
