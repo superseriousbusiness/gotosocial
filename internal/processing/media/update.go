@@ -45,7 +45,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, media
 	}
 
 	if form.Description != nil {
-		attachment.Description = text.SanitizeCaption(*form.Description)
+		attachment.Description = text.SanitizePlaintext(*form.Description)
 		if err := p.db.UpdateByPrimaryKey(ctx, attachment); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating description: %s", err))
 		}

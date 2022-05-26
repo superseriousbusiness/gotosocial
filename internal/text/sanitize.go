@@ -46,12 +46,20 @@ var regular *bluemonday.Policy = bluemonday.UGCPolicy().
 // Source: https://github.com/microcosm-cc/bluemonday#usage
 var strict *bluemonday.Policy = bluemonday.StrictPolicy()
 
-// SanitizeHTML cleans up HTML in the given string, allowing through only safe HTML elements.
+// removeHTML strictly removes *all* recognized HTML elements from the given string.
+func removeHTML(in string) string {
+	return strict.Sanitize(in)
+}
+
+// SanitizeHTML sanitizes risky html elements from the given string, allowing only safe ones through.
 func SanitizeHTML(in string) string {
 	return regular.Sanitize(in)
 }
 
-// RemoveHTML removes all HTML from the given string.
-func RemoveHTML(in string) string {
-	return strict.Sanitize(in)
+// SanitizePlaintext runs text through basic sanitization. This removes
+// any html elements that were in the string, and returns clean plaintext.
+func SanitizePlaintext(in string) string {
+	content := preformat(in)
+	content = removeHTML(content)
+	return postformat(content)
 }
