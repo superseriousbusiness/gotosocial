@@ -35,6 +35,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 )
 
 // Transport wraps the pub.Transport interface with some additional functionality for fetching remote media.
@@ -123,8 +124,14 @@ func (t *transport) do(r *http.Request, signer func(*http.Request) error, retryO
 
 			// Generate error from status code for logging
 			err = errors.New(`http response "` + rsp.Status + `"`)
-		} else if errorsv2.Is(err, context.DeadlineExceeded, context.Canceled) {
-			// Return early if context has cancelled
+		} else if errorsv2.Is(err,
+			context.DeadlineExceeded,
+			context.Canceled,
+			httpclient.ErrInvalidRequest,
+			httpclient.ErrBodyTooLarge,
+			httpclient.ErrReservedAddr,
+		) {
+			// Return on non-retryable errors
 			return nil, err
 		} else if strings.Contains(err.Error(), "stopped after 10 redirects") {
 			// Don't bother if net/http returned after too many redirects
