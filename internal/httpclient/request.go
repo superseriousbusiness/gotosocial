@@ -39,7 +39,7 @@ func ValidateRequest(r *http.Request) error {
 		return fmt.Errorf("%w: empty url host", ErrInvalidRequest)
 	case r.URL.Scheme != "http" && r.URL.Scheme != "https":
 		return fmt.Errorf("%w: unsupported protocol %q", ErrInvalidRequest, r.URL.Scheme)
-	case strings.IndexFunc(r.Method, httpguts.IsTokenRune) != -1:
+	case strings.IndexFunc(r.Method, func(r rune) bool { return !httpguts.IsTokenRune(r) }) != -1:
 		return fmt.Errorf("%w: invalid method %q", ErrInvalidRequest, r.Method)
 	}
 
