@@ -202,8 +202,12 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 		}
 
 		if acctURI.Scheme == "https" || acctURI.Scheme == "http" {
-			// return the attempt to get the remove account
-			return p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
+			acct, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
+			if err != nil {
+				logrus.Debugf("could not get remote account by mention %s with uri %s: %s", mention, acctURI, err)
+				return nil, err
+			}
+			return acct, nil
 		}
 	}
 
