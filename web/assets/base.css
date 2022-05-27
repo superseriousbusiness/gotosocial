@@ -18,6 +18,7 @@ main {
 	background: #525c66;
 	display: grid;
 	padding-top: 2rem;
+	padding-bottom: 2rem;
 	grid-template-columns: 1fr 50% 1fr;
 	grid-template-columns: auto min(92%, 90ch) auto;
 }
