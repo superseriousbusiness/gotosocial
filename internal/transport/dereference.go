@@ -54,6 +54,7 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 		return nil, err
 	}
 	req.Header.Add("Accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	req.Header.Add("Accept", "application/activity+json")
 	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)
