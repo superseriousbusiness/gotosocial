@@ -157,6 +157,49 @@ func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 	suite.Equal(gtsmodel.VisibilityUnlocked, status.Visibility)
 }
 
+func (suite *ASToInternalTestSuite) TestParseOwncastService() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(owncastService), &m)
+	suite.NoError(err)
+
+	t, err := streams.ToType(context.Background(), m)
+	suite.NoError(err)
+
+	rep, ok := t.(ap.Accountable)
+	suite.True(ok)
+
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
+	suite.NoError(err)
+
+	suite.Equal("rgh", acct.Username)
+	suite.Equal("owncast.example.org", acct.Domain)
+	suite.Equal("https://owncast.example.org/logo/external", acct.AvatarRemoteURL)
+	suite.Equal("https://owncast.example.org/logo/external", acct.HeaderRemoteURL)
+	suite.Equal("Rob's Owncast Server", acct.DisplayName)
+	suite.Equal("linux audio stuff ", acct.Note)
+	suite.True(acct.Bot)
+	suite.False(acct.Locked)
+	suite.True(acct.Discoverable)
+	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URL)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/inbox", acct.InboxURI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/outbox", acct.OutboxURI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/followers", acct.FollowersURI)
+	suite.Equal("Service", acct.ActorType)
+	suite.Equal("https://owncast.example.org/federation/user/rgh#main-key", acct.PublicKeyURI)
+
+	acct.ID = "01G42D57DTCJQE8XT9KD4K88RK"
+
+	apiAcct, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), acct)
+	suite.NoError(err)
+	suite.NotNil(apiAcct)
+
+	b, err := json.Marshal(apiAcct)
+	suite.NoError(err)
+
+	fmt.Printf("\n\n\n%s\n\n\n", string(b))
+}
+
 func TestASToInternalTestSuite(t *testing.T) {
 	suite.Run(t, new(ASToInternalTestSuite))
 }
