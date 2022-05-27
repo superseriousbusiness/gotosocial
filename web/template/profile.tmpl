@@ -5,7 +5,9 @@
         <div class="basic">
             <a href="{{.account.URL}}" class="displayname">{{if .account.DisplayName}}{{.account.DisplayName}}{{else}}{{.account.Username}}{{end}}</a>
             <a href="{{.account.URL}}" class="username">@{{.account.Username}}</a>
-            <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
+            <div class="avatar-container">
+                <a href="{{.account.Avatar}}" class="avatar"><img src="{{.account.Avatar}}"></a>
+            </div>
         </div>
         <div class="detailed">
             <h2>About @{{.account.Username}}</h2>
