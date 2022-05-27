@@ -31,6 +31,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -318,8 +319,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			NoteRaw:                 "",
 			Memorial:                false,
 			MovedToAccountID:        "",
-			CreatedAt:               time.Now().Add(-72 * time.Hour),
-			UpdatedAt:               time.Now().Add(-72 * time.Hour),
+			CreatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
+			UpdatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
 			Bot:                     false,
 			Reason:                  "",
 			Locked:                  false,
@@ -357,8 +358,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			NoteRaw:                 "hey yo this is my profile!",
 			Memorial:                false,
 			MovedToAccountID:        "",
-			CreatedAt:               time.Now().Add(-48 * time.Hour),
-			UpdatedAt:               time.Now().Add(-48 * time.Hour),
+			CreatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
+			UpdatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
 			Bot:                     false,
 			Reason:                  "I wanna be on this damned webbed site so bad! Please! Wow",
 			Locked:                  false,
@@ -496,6 +497,15 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		},
 	}
 
+	var accountsSorted []*gtsmodel.Account
+	for _, a := range accounts {
+		accountsSorted = append(accountsSorted, a)
+	}
+
+	sort.Slice(accountsSorted, func(i, j int) bool {
+		return accountsSorted[i].ID > accountsSorted[j].ID
+	})
+
 	preserializedKeys := []string{
 		"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",
@@ -505,7 +515,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		"MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDSIsx0TsUCeSHXDYPzViqRwB/wZhBkj5f0Mrc+Q0yogUmiTcubYQcf/xj9LOvtArJ+8/rori0j8aFX17jZqtFyDDINyhICT+i5bk1ZKPt/uH/H5oFpjtsL+bCoOF8F4AUeELExH0dO3uwl8v9fPZZ3AZEGj6UB6Ru13LON7fKHt+JT6s9jNtUIUpHUDg2GZYv9gLFGDDm9H91Yervl8yF6VWbK+7pcVyhlz5wqHR/qNUiyUXhiie+veiJc9ipCU7RriNEuehvF12d3rRIOK/wRsFAG4LxufJS8Shu8VJrOBlKzsufqjDZtnZb8SrTY0EjLJpslMf67zRDD1kEDpq4jAgMBAAECggEBAMeKxe2YMxpjHpBRRECZTTk0YN/ue5iShrAcTMeyLqRAiUS3bSXyIErw+bDIrIxXKFrHoja71x+vvw9kSSNhQxxymkFf5nQNn6geJxMIiLJC6AxSRgeP4U/g3jEPvqQck592KFzGH/e0Vji/JGMzX6NIeIfrdbx3uJmcp2CaWNkoOs7UYV5VbNDaIWYcgptQS9hJpCQ+cuMov7scXE88uKtwAl+0VVopNr/XA7vV+npsESBCt3dfnp6poA13ldfqReLdPTmDWH7Z8QrTIagrfPi5mKpxksTYyC0/quKyk4yTj8Ge5GWmsXCHtyf19NX7reeJa8MjEWonYDCdnqReDoECgYEA8R5OHNIGC6yw6ZyTuyEt2epXwUj0h2Z9d+JAT9ndRGK9xdMqJt4acjxfcEck2wjv9BuNLr5YvLc4CYiOgyqJHNt5c5Ys5rJEOgBZ2IFoaoXZNom2LEtr583T4RFXp/Id8ix85D6EZj8Hp6OvZygQFwEYQexY383hZZh5enkorUECgYEA3xr3u/SbttM86ib1RP1uuON9ZURfzpmrr2ubSWiRDqwift0T2HesdhWi6xDGjzGyeT5e7irf1BsBKUq2dp/wFX6+15A6eV12C7PvC4N8u3NJwGBdvCmufh5wZ19rerelaB7+vG9c+Nbw9h1BbDi8MlGs06oVSawvwUzp2oVKLmMCgYEAq1RFXOU/tnv3GYhQ0N86nWWPBaC5YJzK+qyh1huQxk8DWdY6VXPshs+vYTCsV5d6KZKKN3S5yR7Hir6lxT4sP30UR7WmIib5o90r+lO5xjdlqQMhl0fgXM48h+iyyHuaG8LQ274whhazccM1l683/6Cfg/hVDnJUfsRhTU1aQgECgYBrZPTZcf6+u+I3qHcqNYBl2YPUCly/+7LsJzVB2ebxlCSqwsq5yamn0fRxiMq7xSVvPXm+1b6WwEUH1mIMqiKMhk1hQJkVMMsRCRVJioqxROa8hua4G6xWI1riN8lp8hraCwl+NXEgi37ESgLjEFBvPGegH+BNbWgzeU2clcrGlwKBgHBxlFLf6AjDxjR8Z5dnZVPyvLOUjejs5nsLdOfONJ8F/MU0PoKFWdBavhbnwXwium6NvcearnhbWL758sKooZviQL6m/sKDGWMq3O8SCnX+TKTEOw+kLLFn4L3sT02WaHYg+C5iVEDdGlsXSehhI2e7hBoTulE/zbUkbA3+wlmv",
 	}
 
-	if diff := len(accounts) - len(preserializedKeys); diff > 0 {
+	if diff := len(accountsSorted) - len(preserializedKeys); diff > 0 {
 		keyStrings := make([]string, diff)
 		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
@@ -515,9 +525,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		panic(fmt.Sprintf("mismatch between number of hardcoded test RSA keys and accounts used for test data. Insert the following generated key[s]: \n%+v", keyStrings))
 	}
 
-	// generate keys for each account
-	i := 0
-	for _, v := range accounts {
+	for i, v := range accountsSorted {
 		premadeBytes, err := base64.StdEncoding.DecodeString(preserializedKeys[i])
 		if err != nil {
 			panic(err)
@@ -532,8 +540,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 		}
 		v.PrivateKey = priv
 		v.PublicKey = &priv.PublicKey
-		i++
 	}
+
 	return accounts
 }
 
@@ -1049,6 +1057,32 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Likeable:                 true,
 			ActivityStreamsType:      ap.ObjectNote,
 		},
+		"admin_account_status_4": {
+			ID:                       "01G36SF3V6Y6V5BF9P4R7PQG7G",
+			URI:                      "http://localhost:8080/users/admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
+			URL:                      "http://localhost:8080/@admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
+			Content:                  "hello everyone!",
+			CreatedAt:                TimeMustParse("2021-10-20T12:41:37+02:00"),
+			UpdatedAt:                TimeMustParse("2021-10-20T12:41:37+02:00"),
+			Local:                    true,
+			AccountURI:               "http://localhost:8080/users/admin",
+			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
+			InReplyToID:              "",
+			InReplyToAccountID:       "",
+			InReplyToURI:             "",
+			BoostOfID:                "01F8MHAMCHF6Y650WCRSCP4WMY",
+			BoostOfAccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ContentWarning:           "introduction post",
+			Visibility:               gtsmodel.VisibilityPublic,
+			Sensitive:                true,
+			Language:                 "en",
+			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
+			Federated:                true,
+			Boostable:                true,
+			Replyable:                true,
+			Likeable:                 true,
+			ActivityStreamsType:      ap.ObjectNote,
+		},
 		"local_account_1_status_1": {
 			ID:                       "01F8MHAMCHF6Y650WCRSCP4WMY",
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -1148,8 +1182,8 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01FCTA44PW9H1TB328S9AQXKDS",
 			Content:                  "hi!",
 			AttachmentIDs:            []string{},
-			CreatedAt:                time.Now().Add(-1 * time.Minute),
-			UpdatedAt:                time.Now().Add(-1 * time.Minute),
+			CreatedAt:                TimeMustParse("2022-05-20T11:37:55Z"),
+			UpdatedAt:                TimeMustParse("2022-05-20T11:37:55Z"),
 			Local:                    true,
 			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -1575,6 +1609,30 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		dmForZork)
 	createDmForZorkSig, createDmForZorkDigest, creatDmForZorkDate := GetSignatureForActivity(createDmForZork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
+	replyToTurtle := NewAPNote(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		URLMustParse("http://fossbros-anonymous.io/@foss_satan/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		time.Now(),
+		"@1happyturtle@localhost:8080 u suck lol",
+		"",
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		[]*url.URL{URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers")},
+		[]*url.URL{URLMustParse("http://localhost:8080/users/1happyturtle")},
+		false,
+		[]vocab.ActivityStreamsMention{newAPMention(
+			URLMustParse("http://localhost:8080/users/1happyturtle"),
+			"@1happyturtle@localhost:8080",
+		)},
+		nil,
+	)
+	createReplyToTurtle := WrapAPNoteInCreate(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		replyToTurtle)
+	createReplyToTurtleForZorkSig, createReplyToTurtleForZorkDigest, createReplyToTurtleForZorkDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+	createReplyToTurtleForTurtleSig, createReplyToTurtleForTurtleDigest, createReplyToTurtleForTurtleDate := GetSignatureForActivity(createReplyToTurtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
+
 	forwardedMessage := NewAPNote(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 		URLMustParse("http://example.org/@some_user/afaba698-5740-4e32-a702-af61aa543bc1"),
@@ -1586,7 +1644,13 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
-		nil,
+		[]vocab.ActivityStreamsImage{
+			newAPImage(
+				URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpeg"),
+				"image/jpeg",
+				"trent reznor looking handsome as balls",
+				"LEDara58O=t5EMSOENEN9]}?aK%0"),
+		},
 	)
 	createForwardedMessage := WrapAPNoteInCreate(
 		URLMustParse("http://example.org/users/some_user/statuses/afaba698-5740-4e32-a702-af61aa543bc1/activity"),
@@ -1595,6 +1659,33 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		forwardedMessage)
 	createForwardedMessageSig, createForwardedMessageDigest, createForwardedMessageDate := GetSignatureForActivity(createForwardedMessage, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
 
+	announceForwarded1Zork := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/first_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded1ZorkSig, announceForwarded1ZorkDigest, announceForwarded1ZorkDate := GetSignatureForActivity(announceForwarded1Zork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
+	announceForwarded1Turtle := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/first_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded1TurtleSig, announceForwarded1TurtleDigest, announceForwarded1TurtleDate := GetSignatureForActivity(announceForwarded1Turtle, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_2"].InboxURI))
+
+	announceForwarded2Zork := newAPAnnounce(
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/second_announce"),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
+		time.Now(),
+		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
+		forwardedMessage,
+	)
+	announceForwarded2ZorkSig, announceForwarded2ZorkDigest, announceForwarded2ZorkDate := GetSignatureForActivity(announceForwarded2Zork, accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, URLMustParse(accounts["local_account_1"].InboxURI))
+
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
 			Activity:        createDmForZork,
@@ -1602,11 +1693,41 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			DigestHeader:    createDmForZorkDigest,
 			DateHeader:      creatDmForZorkDate,
 		},
+		"reply_to_turtle_for_zork": {
+			Activity:        createReplyToTurtle,
+			SignatureHeader: createReplyToTurtleForZorkSig,
+			DigestHeader:    createReplyToTurtleForZorkDigest,
+			DateHeader:      createReplyToTurtleForZorkDate,
+		},
+		"reply_to_turtle_for_turtle": {
+			Activity:        createReplyToTurtle,
+			SignatureHeader: createReplyToTurtleForTurtleSig,
+			DigestHeader:    createReplyToTurtleForTurtleDigest,
+			DateHeader:      createReplyToTurtleForTurtleDate,
+		},
 		"forwarded_message": {
 			Activity:        createForwardedMessage,
 			SignatureHeader: createForwardedMessageSig,
 			DigestHeader:    createForwardedMessageDigest,
 			DateHeader:      createForwardedMessageDate,
+		},
+		"announce_forwarded_1_zork": {
+			Activity:        announceForwarded1Zork,
+			SignatureHeader: announceForwarded1ZorkSig,
+			DigestHeader:    announceForwarded1ZorkDigest,
+			DateHeader:      announceForwarded1ZorkDate,
+		},
+		"announce_forwarded_1_turtle": {
+			Activity:        announceForwarded1Turtle,
+			SignatureHeader: announceForwarded1TurtleSig,
+			DigestHeader:    announceForwarded1TurtleDigest,
+			DateHeader:      announceForwarded1TurtleDate,
+		},
+		"announce_forwarded_2_zork": {
+			Activity:        announceForwarded2Zork,
+			SignatureHeader: announceForwarded2ZorkSig,
+			DigestHeader:    announceForwarded2ZorkDigest,
+			DateHeader:      announceForwarded2ZorkDate,
 		},
 	}
 }
@@ -1691,6 +1812,37 @@ func NewTestFediGroups() map[string]vocab.ActivityStreamsGroup {
 			true,
 			URLMustParse("https://unknown-instance.com/groups/some_group#main-key"),
 			newGroup1Pub,
+			nil,
+			"image/jpeg",
+			nil,
+			"image/png",
+			false,
+		),
+	}
+}
+
+func NewTestFediServices() map[string]vocab.ActivityStreamsService {
+	newService1Priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	newService1Pub := &newService1Priv.PublicKey
+
+	return map[string]vocab.ActivityStreamsService{
+		"https://owncast.example.org/federation/user/rgh": newAPService(
+			URLMustParse("https://owncast.example.org/federation/user/rgh"),
+			nil,
+			URLMustParse("https://owncast.example.org/federation/user/rgh/followers"),
+			URLMustParse("https://owncast.example.org/federation/user/rgh/inbox"),
+			URLMustParse("https://owncast.example.org/federation/user/rgh/outbox"),
+			nil,
+			"rgh",
+			"linux audio stuff ",
+			"",
+			URLMustParse("https://owncast.example.org/federation/user/rgh"),
+			true,
+			URLMustParse("https://owncast.example.org/federation/user/rgh#main-key"),
+			newService1Pub,
 			nil,
 			"image/jpeg",
 			nil,
@@ -2338,6 +2490,190 @@ func newAPGroup(
 	return group
 }
 
+func newAPService(
+	profileIDURI *url.URL,
+	followingURI *url.URL,
+	followersURI *url.URL,
+	inboxURI *url.URL,
+	outboxURI *url.URL,
+	featuredURI *url.URL,
+	username string,
+	displayName string,
+	note string,
+	profileURL *url.URL,
+	discoverable bool,
+	publicKeyURI *url.URL,
+	pkey *rsa.PublicKey,
+	avatarURL *url.URL,
+	avatarContentType string,
+	headerURL *url.URL,
+	headerContentType string,
+	manuallyApprovesFollowers bool,
+) vocab.ActivityStreamsService {
+	service := streams.NewActivityStreamsService()
+
+	// id should be the activitypub URI of this group
+	// something like https://example.org/users/example_group
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(profileIDURI)
+	service.SetJSONLDId(idProp)
+
+	// following
+	// The URI for retrieving a list of accounts this group is following
+	followingProp := streams.NewActivityStreamsFollowingProperty()
+	followingProp.SetIRI(followingURI)
+	service.SetActivityStreamsFollowing(followingProp)
+
+	// followers
+	// The URI for retrieving a list of this user's followers
+	followersProp := streams.NewActivityStreamsFollowersProperty()
+	followersProp.SetIRI(followersURI)
+	service.SetActivityStreamsFollowers(followersProp)
+
+	// inbox
+	// the activitypub inbox of this user for accepting messages
+	inboxProp := streams.NewActivityStreamsInboxProperty()
+	inboxProp.SetIRI(inboxURI)
+	service.SetActivityStreamsInbox(inboxProp)
+
+	// outbox
+	// the activitypub outbox of this user for serving messages
+	outboxProp := streams.NewActivityStreamsOutboxProperty()
+	outboxProp.SetIRI(outboxURI)
+	service.SetActivityStreamsOutbox(outboxProp)
+
+	// featured posts
+	// Pinned posts.
+	featuredProp := streams.NewTootFeaturedProperty()
+	featuredProp.SetIRI(featuredURI)
+	service.SetTootFeatured(featuredProp)
+
+	// featuredTags
+	// NOT IMPLEMENTED
+
+	// preferredUsername
+	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
+	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
+	preferredUsernameProp.SetXMLSchemaString(username)
+	service.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+
+	// name
+	// Used as profile display name.
+	nameProp := streams.NewActivityStreamsNameProperty()
+	if displayName != "" {
+		nameProp.AppendXMLSchemaString(displayName)
+	} else {
+		nameProp.AppendXMLSchemaString(username)
+	}
+	service.SetActivityStreamsName(nameProp)
+
+	// summary
+	// Used as profile bio.
+	if note != "" {
+		summaryProp := streams.NewActivityStreamsSummaryProperty()
+		summaryProp.AppendXMLSchemaString(note)
+		service.SetActivityStreamsSummary(summaryProp)
+	}
+
+	// url
+	// Used as profile link.
+	urlProp := streams.NewActivityStreamsUrlProperty()
+	urlProp.AppendIRI(profileURL)
+	service.SetActivityStreamsUrl(urlProp)
+
+	// manuallyApprovesFollowers
+	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
+	manuallyApprovesFollowersProp.Set(manuallyApprovesFollowers)
+	service.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
+
+	// discoverable
+	// Will be shown in the profile directory.
+	discoverableProp := streams.NewTootDiscoverableProperty()
+	discoverableProp.Set(discoverable)
+	service.SetTootDiscoverable(discoverableProp)
+
+	// devices
+	// NOT IMPLEMENTED, probably won't implement
+
+	// alsoKnownAs
+	// Required for Move activity.
+	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+
+	// publicKey
+	// Required for signatures.
+	publicKeyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	// create the public key
+	publicKey := streams.NewW3IDSecurityV1PublicKey()
+
+	// set ID for the public key
+	publicKeyIDProp := streams.NewJSONLDIdProperty()
+	publicKeyIDProp.SetIRI(publicKeyURI)
+	publicKey.SetJSONLDId(publicKeyIDProp)
+
+	// set owner for the public key
+	publicKeyOwnerProp := streams.NewW3IDSecurityV1OwnerProperty()
+	publicKeyOwnerProp.SetIRI(profileIDURI)
+	publicKey.SetW3IDSecurityV1Owner(publicKeyOwnerProp)
+
+	// set the pem key itself
+	encodedPublicKey, err := x509.MarshalPKIXPublicKey(pkey)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: encodedPublicKey,
+	})
+	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
+
+	// append the public key to the public key property
+	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
+
+	// set the public key property on the Person
+	service.SetW3IDSecurityV1PublicKey(publicKeyProp)
+
+	// tag
+	// TODO: Any tags used in the summary of this profile
+
+	// attachment
+	// Used for profile fields.
+	// TODO: The PropertyValue type has to be added: https://schema.org/PropertyValue
+
+	// endpoints
+	// NOT IMPLEMENTED -- this is for shared inbox which we don't use
+
+	// icon
+	// Used as profile avatar.
+	iconProperty := streams.NewActivityStreamsIconProperty()
+	iconImage := streams.NewActivityStreamsImage()
+	mediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(avatarContentType)
+	iconImage.SetActivityStreamsMediaType(mediaType)
+	avatarURLProperty := streams.NewActivityStreamsUrlProperty()
+	avatarURLProperty.AppendIRI(avatarURL)
+	iconImage.SetActivityStreamsUrl(avatarURLProperty)
+	iconProperty.AppendActivityStreamsImage(iconImage)
+	service.SetActivityStreamsIcon(iconProperty)
+
+	// image
+	// Used as profile header.
+	headerProperty := streams.NewActivityStreamsImageProperty()
+	headerImage := streams.NewActivityStreamsImage()
+	headerMediaType := streams.NewActivityStreamsMediaTypeProperty()
+	mediaType.Set(headerContentType)
+	headerImage.SetActivityStreamsMediaType(headerMediaType)
+	headerURLProperty := streams.NewActivityStreamsUrlProperty()
+	headerURLProperty.AppendIRI(headerURL)
+	headerImage.SetActivityStreamsUrl(headerURLProperty)
+	headerProperty.AppendActivityStreamsImage(headerImage)
+	service.SetActivityStreamsImage(headerProperty)
+
+	return service
+}
+
 func newAPMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention {
 	mention := streams.NewActivityStreamsMention()
 
@@ -2522,4 +2858,42 @@ func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished
 	}
 
 	return create
+}
+
+func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublished time.Time, announceTo *url.URL, announceNote vocab.ActivityStreamsNote) vocab.ActivityStreamsAnnounce {
+	announce := streams.NewActivityStreamsAnnounce()
+
+	if announceID != nil {
+		id := streams.NewJSONLDIdProperty()
+		id.Set(announceID)
+		announce.SetJSONLDId(id)
+	}
+
+	if announceActor != nil {
+		actor := streams.NewActivityStreamsActorProperty()
+		actor.AppendIRI(announceActor)
+		announce.SetActivityStreamsActor(actor)
+	}
+
+	if !announcePublished.IsZero() {
+		published := streams.NewActivityStreamsPublishedProperty()
+		published.Set(announcePublished)
+		announce.SetActivityStreamsPublished(published)
+	}
+
+	to := streams.NewActivityStreamsToProperty()
+	to.AppendIRI(announceTo)
+	announce.SetActivityStreamsTo(announceNote.GetActivityStreamsTo())
+
+	cc := streams.NewActivityStreamsCcProperty()
+	cc.AppendIRI(announceNote.GetActivityStreamsAttributedTo().Begin().GetIRI())
+	announce.SetActivityStreamsCc(cc)
+
+	if announceNote != nil {
+		noteIRI := streams.NewActivityStreamsObjectProperty()
+		noteIRI.AppendIRI(announceNote.GetJSONLDId().Get())
+		announce.SetActivityStreamsObject(noteIRI)
+	}
+
+	return announce
 }

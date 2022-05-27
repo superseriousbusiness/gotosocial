@@ -34,6 +34,7 @@ type FederatorStandardTestSuite struct {
 	storage        *kv.KVStore
 	tc             typeutils.TypeConverter
 	testAccounts   map[string]*gtsmodel.Account
+	testStatuses   map[string]*gtsmodel.Status
 	testActivities map[string]testrig.ActivityWithSignature
 }
 
@@ -43,6 +44,7 @@ func (suite *FederatorStandardTestSuite) SetupSuite() {
 	suite.storage = testrig.NewTestStorage()
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testStatuses = testrig.NewTestStatuses()
 }
 
 func (suite *FederatorStandardTestSuite) SetupTest() {

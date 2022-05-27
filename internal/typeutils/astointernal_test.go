@@ -74,6 +74,27 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
 	suite.Equal(`<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
 }
 
+func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(publicStatusActivityJsonNoURL), &m)
+	suite.NoError(err)
+
+	t, err := streams.ToType(context.Background(), m)
+	suite.NoError(err)
+
+	rep, ok := t.(ap.Statusable)
+	suite.True(ok)
+
+	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
+	suite.NoError(err)
+
+	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
+	suite.Equal(`<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
+
+	// on statuses with no URL in them (like ones we get from pleroma sometimes) we should use the AP URI of the status as URL
+	suite.Equal("http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167", status.URL)
+}
+
 func (suite *ASToInternalTestSuite) TestParseGargron() {
 	m := make(map[string]interface{})
 	err := json.Unmarshal([]byte(gargronAsActivityJson), &m)
@@ -134,6 +155,49 @@ func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 	suite.Equal(inReplyToAccount.URI, m1.TargetAccountURI)
 	suite.Equal("@the_mighty_zork@localhost:8080", m1.NameString)
 	suite.Equal(gtsmodel.VisibilityUnlocked, status.Visibility)
+}
+
+func (suite *ASToInternalTestSuite) TestParseOwncastService() {
+	m := make(map[string]interface{})
+	err := json.Unmarshal([]byte(owncastService), &m)
+	suite.NoError(err)
+
+	t, err := streams.ToType(context.Background(), m)
+	suite.NoError(err)
+
+	rep, ok := t.(ap.Accountable)
+	suite.True(ok)
+
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, false)
+	suite.NoError(err)
+
+	suite.Equal("rgh", acct.Username)
+	suite.Equal("owncast.example.org", acct.Domain)
+	suite.Equal("https://owncast.example.org/logo/external", acct.AvatarRemoteURL)
+	suite.Equal("https://owncast.example.org/logo/external", acct.HeaderRemoteURL)
+	suite.Equal("Rob's Owncast Server", acct.DisplayName)
+	suite.Equal("linux audio stuff ", acct.Note)
+	suite.True(acct.Bot)
+	suite.False(acct.Locked)
+	suite.True(acct.Discoverable)
+	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URL)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/inbox", acct.InboxURI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/outbox", acct.OutboxURI)
+	suite.Equal("https://owncast.example.org/federation/user/rgh/followers", acct.FollowersURI)
+	suite.Equal("Service", acct.ActorType)
+	suite.Equal("https://owncast.example.org/federation/user/rgh#main-key", acct.PublicKeyURI)
+
+	acct.ID = "01G42D57DTCJQE8XT9KD4K88RK"
+
+	apiAcct, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), acct)
+	suite.NoError(err)
+	suite.NotNil(apiAcct)
+
+	b, err := json.Marshal(apiAcct)
+	suite.NoError(err)
+
+	fmt.Printf("\n\n\n%s\n\n\n", string(b))
 }
 
 func TestASToInternalTestSuite(t *testing.T) {

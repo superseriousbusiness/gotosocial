@@ -27,6 +27,7 @@ Check the [issues](https://github.com/superseriousbusiness/gotosocial/issues) to
 - [Linting and Formatting](#linting-and-formatting)
 - [Updating Swagger docs](#updating-swagger-docs)
 - [CI/CD configuration](#cicd-configuration)
+- [Release Checklist](#release-checklist)
 - [Building releases and Docker containers](#building-releases-and-docker-containers)
   - [With GoReleaser](#with-goreleaser)
   - [Manually](#manually)
@@ -260,6 +261,43 @@ To sign the file, first install and setup the [drone cli tool](https://docs.dron
 ```bash
 drone -t PUT_YOUR_DRONE_ADMIN_TOKEN_HERE -s https://drone.superseriousbusiness.org sign superseriousbusiness/gotosocial --save
 ```
+
+## Release Checklist
+
+First things first: If this is a security hot-fix, we'll probably rush thru this list, and make a prettier release a few days later.
+
+Now, with that out of the way, here's our Checklist.
+
+GoToSocial follows [Semantic Versioning](https://semver.org/).
+So our first concern on the Checklist is:
+
+- what version are we releasing?
+
+Next we need to check:
+
+- do the assets need to be rebuilt and committed to the repository.
+- do the swagger docs need to be rebuilt?
+
+On the project management side:
+
+- are there any issues that need to be moved to a different milestone?
+- are there any things on the [Roadmap](./ROADMAP.md) that can be ticked off?
+
+Once we're happy with our Checklist, we can create the tag, and push it.
+And the rest [is automation](./.drone.yml).
+
+We can now head to github, and add some personality to the release notes.
+Finally, we make announcements on the all our channels that the release is out!
+
+### What if something goes wrong?
+
+Sometimes things go awry.
+We release a buggy release, we forgot something ­ something important.
+
+If the release is so bad that it's unusable ­ or dangerous! ­ to a great part of our user-base, we can pull.
+That is: Delete the tag.
+
+Either way, once we've fixed the issue, we just start from the top of this list again. Version numbers are cheap. It's cheap to burn them.
 
 ## Building releases and Docker containers
 

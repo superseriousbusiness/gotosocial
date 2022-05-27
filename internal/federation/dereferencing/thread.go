@@ -50,9 +50,9 @@ func (d *deref) DereferenceThread(ctx context.Context, username string, statusIR
 	}
 
 	// first make sure we have this status in our db
-	_, statusable, _, err := d.GetRemoteStatus(ctx, username, statusIRI, true, false)
+	_, statusable, err := d.GetRemoteStatus(ctx, username, statusIRI, true, false)
 	if err != nil {
-		return fmt.Errorf("DereferenceThread: error getting status with id %s: %s", statusIRI.String(), err)
+		return fmt.Errorf("DereferenceThread: error getting initial status with id %s: %s", statusIRI.String(), err)
 	}
 
 	// first iterate up through ancestors, dereferencing if necessary as we go
@@ -103,9 +103,8 @@ func (d *deref) iterateAncestors(ctx context.Context, username string, statusIRI
 		return d.iterateAncestors(ctx, username, *nextIRI)
 	}
 
-	// If we reach here, we're looking at a remote status -- make sure we have it in our db by calling GetRemoteStatus
-	// We call it with refresh to true because we want the statusable representation to parse inReplyTo from.
-	_, statusable, _, err := d.GetRemoteStatus(ctx, username, &statusIRI, true, false)
+	// If we reach here, we're looking at a remote status
+	_, statusable, err := d.GetRemoteStatus(ctx, username, &statusIRI, true, false)
 	if err != nil {
 		l.Debugf("error getting remote status: %s", err)
 		return nil
@@ -215,8 +214,8 @@ pageLoop:
 			foundReplies++
 
 			// get the remote statusable and put it in the db
-			_, statusable, new, err := d.GetRemoteStatus(ctx, username, itemURI, false, false)
-			if new && err == nil && statusable != nil {
+			_, statusable, err := d.GetRemoteStatus(ctx, username, itemURI, true, false)
+			if err == nil {
 				// now iterate descendants of *that* status
 				if err := d.iterateDescendants(ctx, username, *itemURI, statusable); err != nil {
 					continue

@@ -64,7 +64,7 @@ func (p *processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		if err := validate.SiteTitle(*form.Title); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
-		i.Title = text.RemoveHTML(*form.Title) // don't allow html in site title
+		i.Title = text.SanitizePlaintext(*form.Title) // don't allow html in site title
 	}
 
 	// validate & update site contact account if it's set on the form

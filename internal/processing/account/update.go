@@ -52,7 +52,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.DisplayName(*form.DisplayName); err != nil {
 			return nil, err
 		}
-		account.DisplayName = text.RemoveHTML(*form.DisplayName)
+		account.DisplayName = text.SanitizePlaintext(*form.DisplayName)
 	}
 
 	if form.Note != nil {

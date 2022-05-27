@@ -28,6 +28,9 @@ import (
 	"time"
 )
 
+// ErrInvalidRequest is returned if a given HTTP request is invalid and cannot be performed.
+var ErrInvalidRequest = errors.New("invalid http request")
+
 // ErrReservedAddr is returned if a dialed address resolves to an IP within a blocked or reserved net.
 var ErrReservedAddr = errors.New("dial within blocked / reserved IP range")
 
@@ -162,6 +165,11 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 		// The current implementation will reduce the viability of denial of
 		// service attacks, but if there are future issues heed this advice :]
 		defer func() { <-c.queue }()
+	}
+
+	// Firstly, ensure this is a valid request
+	if err := ValidateRequest(req); err != nil {
+		return nil, err
 	}
 
 	// Perform the HTTP request

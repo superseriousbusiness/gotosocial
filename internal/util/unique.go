@@ -18,6 +18,8 @@
 
 package util
 
+import "net/url"
+
 // UniqueStrings returns a deduplicated version of a given string slice.
 func UniqueStrings(s []string) []string {
 	keys := make(map[string]bool, len(s))
@@ -25,6 +27,19 @@ func UniqueStrings(s []string) []string {
 	for _, entry := range s {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
+}
+
+// UniqueURIs returns a deduplicated version of a given *url.URL slice.
+func UniqueURIs(s []*url.URL) []*url.URL {
+	keys := make(map[string]bool, len(s))
+	list := []*url.URL{}
+	for _, entry := range s {
+		if _, value := keys[entry.String()]; !value {
+			keys[entry.String()] = true
 			list = append(list, entry)
 		}
 	}

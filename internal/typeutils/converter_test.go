@@ -367,6 +367,104 @@ const (
 		}
 	  }	  
 	`
+	publicStatusActivityJsonNoURL = `
+	{
+		"@context": [
+		  "https://www.w3.org/ns/activitystreams",
+		  {
+			"ostatus": "http://ostatus.org#",
+			"atomUri": "ostatus:atomUri",
+			"inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+			"conversation": "ostatus:conversation",
+			"sensitive": "as:sensitive",
+			"toot": "http://joinmastodon.org/ns#",
+			"votersCount": "toot:votersCount"
+		  }
+		],
+		"id": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167",
+		"type": "Note",
+		"summary": "reading: Punishment and Reward in the Corporate University",
+		"inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
+		"published": "2022-04-15T23:49:37Z",
+		"attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
+		"to": [
+		  "https://www.w3.org/ns/activitystreams#Public"
+		],
+		"cc": [
+		  "http://fossbros-anonymous.io/users/foss_satan/followers"
+		],
+		"sensitive": true,
+		"atomUri": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167",
+		"inReplyToAtomUri": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
+		"content": "<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>",
+		"contentMap": {
+		  "en": "<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>"
+		},
+		"attachment": [],
+		"tag": [],
+		"replies": {
+		  "id": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies",
+		  "type": "Collection",
+		  "first": {
+			"type": "CollectionPage",
+			"next": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies?only_other_accounts=true&page=true",
+			"partOf": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167/replies",
+			"items": []
+		  }
+		}
+	  }	  
+	`
+	owncastService = `
+	{
+		"@context": [
+		  "https://www.w3.org/ns/activitystreams",
+		  "http://joinmastodon.org/ns",
+		  "https://w3id.org/security/v1"
+		],
+		"attachment": {
+		  "name": "Stream",
+		  "type": "PropertyValue",
+		  "value": "<a href=\"https://owncast.example.org\" rel=\"me nofollow noopener noreferrer\" target=\"_blank\">https://owncast.example.org</a>"
+		},
+		"discoverable": true,
+		"followers": "https://owncast.example.org/federation/user/rgh/followers",
+		"icon": {
+		  "type": "Image",
+		  "url": "https://owncast.example.org/logo/external"
+		},
+		"id": "https://owncast.example.org/federation/user/rgh",
+		"image": {
+		  "type": "Image",
+		  "url": "https://owncast.example.org/logo/external"
+		},
+		"inbox": "https://owncast.example.org/federation/user/rgh/inbox",
+		"manuallyApprovesFollowers": false,
+		"name": "Rob's Owncast Server",
+		"outbox": "https://owncast.example.org/federation/user/rgh/outbox",
+		"preferredUsername": "rgh",
+		"publicKey": {
+		  "id": "https://owncast.example.org/federation/user/rgh#main-key",
+		  "owner": "https://owncast.example.org/federation/user/rgh",
+		  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAurN+lUNwcGV2poLNtaoT\naRtJzN6s4SDcBmIFk82lxhdMKC6/Nssm+hvDuxWGqL0+dHwSvrG11rA6irGuSzRk\niHjYyVwYe/p1CxqJxzUfZVJAWdsCFWy+HtDrTWs5sggj1MiL59uGxvkCep+OYBuG\nBI8CvSOMLrDp8soCg3EY+zSgpXtGMuRaaUukavsfuglApShB61ny7W8LG252iKC5\nmyO8L7l8TNa5BrIi/pRHLzvv9aWiCa8VKtvmqj+mClEhpkRhImSk5GPJXgouTTgl\ntT28NYYciSf9YYgZ0SNWHdLUCdkMF592j4+BbkPvdgzc70G4yyu2GcWnTzBuvF5X\nYwIDAQAB\n-----END PUBLIC KEY-----\n"
+		},
+		"published": "2022-05-22T18:44:57Z",
+		"summary": "linux audio stuff ",
+		"tag": [
+		  {
+			"href": "https://directory.owncast.online/tags/owncast",
+			"name": "#owncast",
+			"type": "Hashtag"
+		  },
+		  {
+			"href": "https://directory.owncast.online/tags/streaming",
+			"name": "#streaming",
+			"type": "Hashtag"
+		  }
+		],
+		"type": "Service",
+		"url": "https://owncast.example.org/federation/user/rgh"
+	} 
+`
 )
 
 type TypeUtilsTestSuite struct {
@@ -380,8 +478,8 @@ type TypeUtilsTestSuite struct {
 }
 
 func (suite *TypeUtilsTestSuite) SetupSuite() {
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB()
 	suite.testAccounts = testrig.NewTestAccounts()

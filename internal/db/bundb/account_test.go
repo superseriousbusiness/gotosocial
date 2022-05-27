@@ -34,6 +34,12 @@ type AccountTestSuite struct {
 	BunDBStandardTestSuite
 }
 
+func (suite *AccountTestSuite) TestGetAccountStatuses() {
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false, false)
+	suite.NoError(err)
+	suite.Len(statuses, 5)
+}
+
 func (suite *AccountTestSuite) TestGetAccountByIDWithExtras() {
 	account, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {

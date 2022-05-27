@@ -53,79 +53,63 @@ func (d *deref) EnrichRemoteStatus(ctx context.Context, username string, status 
 }
 
 // GetRemoteStatus completely dereferences a remote status, converts it to a GtS model status,
-// puts it in the database, and returns it to a caller. The boolean indicates whether the status is new
-// to us or not. If we haven't seen the status before, bool will be true. If we have seen the status before,
-// it will be false.
+// puts it in the database, and returns it to a caller.
 //
-// If refresh is true, then even if we have the status in our database already, it will be dereferenced from its
-// remote representation, as will its owner.
+// If refetch is true, then regardless of whether we have the original status in the database or not,
+// the ap.Statusable representation of the status will be dereferenced and returned.
 //
-// If a dereference was performed, then the function also returns the ap.Statusable representation for further processing.
+// If refetch is false, the ap.Statusable will only be returned if this is a new status, so callers
+// should check whether or not this is nil.
 //
 // SIDE EFFECTS: remote status will be stored in the database, and the remote status owner will also be stored.
-func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refresh, includeParent bool) (*gtsmodel.Status, ap.Statusable, bool, error) {
-	new := true
-
-	// check if we already have the status in our db
+func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStatusID *url.URL, refetch, includeParent bool) (*gtsmodel.Status, ap.Statusable, error) {
 	maybeStatus, err := d.db.GetStatusByURI(ctx, remoteStatusID.String())
-	if err == nil {
-		// we've seen this status before so it's not new
-		new = false
-
-		// if we're not being asked to refresh, we can just return the maybeStatus as-is and avoid doing any external calls
-		if !refresh {
-			return maybeStatus, nil, new, nil
-		}
+	if err == nil && !refetch {
+		// we already had the status and we aren't being asked to refetch the AP representation
+		return maybeStatus, nil, nil
 	}
 
 	statusable, err := d.dereferenceStatusable(ctx, username, remoteStatusID)
 	if err != nil {
-		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error dereferencing statusable: %s", err)
 	}
 
+	if maybeStatus != nil && refetch {
+		// we already had the status and we've successfully fetched the AP representation as requested
+		return maybeStatus, statusable, nil
+	}
+
+	// from here on out we can consider this to be a 'new' status because we didn't have the status in the db already
 	accountURI, err := ap.ExtractAttributedTo(statusable)
 	if err != nil {
-		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error extracting attributedTo: %s", err)
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error extracting attributedTo: %s", err)
 	}
 
-	// do this so we know we have the remote account of the status in the db
 	_, err = d.GetRemoteAccount(ctx, username, accountURI, true, false)
 	if err != nil {
-		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: couldn't derive status author: %s", err)
+		return nil, nil, fmt.Errorf("GetRemoteStatus: couldn't get status author: %s", err)
 	}
 
 	gtsStatus, err := d.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
-		return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
+		return nil, statusable, fmt.Errorf("GetRemoteStatus: error converting statusable to status: %s", err)
 	}
 
-	if new {
-		ulid, err := id.NewULIDFromTime(gtsStatus.CreatedAt)
-		if err != nil {
-			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error generating new id for status: %s", err)
-		}
-		gtsStatus.ID = ulid
+	ulid, err := id.NewULIDFromTime(gtsStatus.CreatedAt)
+	if err != nil {
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error generating new id for status: %s", err)
+	}
+	gtsStatus.ID = ulid
 
-		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
-			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
-		}
-
-		if err := d.db.PutStatus(ctx, gtsStatus); err != nil {
-			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
-		}
-	} else {
-		gtsStatus.ID = maybeStatus.ID
-
-		if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
-			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
-		}
-
-		if err := d.db.UpdateByPrimaryKey(ctx, gtsStatus); err != nil {
-			return nil, statusable, new, fmt.Errorf("GetRemoteStatus: error updating status: %s", err)
-		}
+	if err := d.populateStatusFields(ctx, gtsStatus, username, includeParent); err != nil {
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error populating status fields: %s", err)
 	}
 
-	return gtsStatus, statusable, new, nil
+	if err := d.db.PutStatus(ctx, gtsStatus); err != nil {
+		return nil, nil, fmt.Errorf("GetRemoteStatus: error putting new status: %s", err)
+	}
+
+	return gtsStatus, statusable, nil
 }
 
 func (d *deref) dereferenceStatusable(ctx context.Context, username string, remoteStatusID *url.URL) (ap.Statusable, error) {
@@ -429,14 +413,9 @@ func (d *deref) populateStatusRepliedTo(ctx context.Context, status *gtsmodel.St
 			return err
 		}
 
-		// see if we have the status in our db already
-		replyToStatus, err := d.db.GetStatusByURI(ctx, status.InReplyToURI)
+		replyToStatus, _, err := d.GetRemoteStatus(ctx, requestingUsername, statusURI, false, false)
 		if err != nil {
-			// Status was not in the DB, try fetch
-			replyToStatus, _, _, err = d.GetRemoteStatus(ctx, requestingUsername, statusURI, false, false)
-			if err != nil {
-				return fmt.Errorf("populateStatusRepliedTo: couldn't get reply to status with uri %s: %s", status.InReplyToURI, err)
-			}
+			return fmt.Errorf("populateStatusRepliedTo: couldn't get reply to status with uri %s: %s", status.InReplyToURI, err)
 		}
 
 		// we have the status

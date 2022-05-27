@@ -22,20 +22,16 @@ package ap
 type ContextKey string
 
 const (
-	// ContextActivity can be used to set and retrieve the actual go-fed pub.Activity within a context.
-	ContextActivity ContextKey = "activity"
 	// ContextReceivingAccount can be used the set and retrieve the account being interacted with / receiving an activity in their inbox.
-	ContextReceivingAccount ContextKey = "account"
+	ContextReceivingAccount ContextKey = "receivingAccount"
 	// ContextRequestingAccount can be used to set and retrieve the account of an incoming federation request.
 	// This will often be the actor of the instance that's posting the request.
 	ContextRequestingAccount ContextKey = "requestingAccount"
-	// ContextRequestingActorIRI can be used to set and retrieve the actor of an incoming federation request.
-	// This will usually be the owner of whatever activity is being posted.
-	ContextRequestingActorIRI ContextKey = "requestingActorIRI"
+	// ContextOtherInvolvedIRIs can be used to set and retrieve a slice of all IRIs that are 'involved' in an Activity without being
+	// the receivingAccount or the requestingAccount. In other words, people or notes who are CC'ed or Replied To by an Activity.
+	ContextOtherInvolvedIRIs ContextKey = "otherInvolvedIRIs"
 	// ContextRequestingPublicKeyVerifier can be used to set and retrieve the public key verifier of an incoming federation request.
 	ContextRequestingPublicKeyVerifier ContextKey = "requestingPublicKeyVerifier"
 	// ContextRequestingPublicKeySignature can be used to set and retrieve the value of the signature header of an incoming federation request.
 	ContextRequestingPublicKeySignature ContextKey = "requestingPublicKeySignature"
-	// ContextFromFederatorChan can be used to pass a pointer to the fromFederator channel into the federator for use in callbacks.
-	ContextFromFederatorChan ContextKey = "fromFederatorChan"
 )

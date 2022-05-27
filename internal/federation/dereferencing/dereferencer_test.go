@@ -46,6 +46,7 @@ type DereferencerStandardTestSuite struct {
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemotePeople      map[string]vocab.ActivityStreamsPerson
 	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
+	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]testrig.RemoteAttachmentFile
 	testAccounts          map[string]*gtsmodel.Account
 
@@ -60,6 +61,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.testRemoteStatuses = testrig.NewTestFediStatuses()
 	suite.testRemotePeople = testrig.NewTestFediPeople()
 	suite.testRemoteGroups = testrig.NewTestFediGroups()
+	suite.testRemoteServices = testrig.NewTestFediServices()
 	suite.testRemoteAttachments = testrig.NewTestFediAttachments("../../../testrig/media")
 
 	suite.db = testrig.NewTestDB()
@@ -123,6 +125,19 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 				panic(err)
 			}
 			responseBytes = groupJson
+			responseType = "application/activity+json"
+		}
+
+		if service, ok := suite.testRemoteServices[req.URL.String()]; ok {
+			serviceI, err := streams.Serialize(service)
+			if err != nil {
+				panic(err)
+			}
+			serviceJson, err := json.Marshal(serviceI)
+			if err != nil {
+				panic(err)
+			}
+			responseBytes = serviceJson
 			responseType = "application/activity+json"
 		}
 

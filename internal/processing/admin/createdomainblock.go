@@ -59,8 +59,8 @@ func (p *processor) DomainBlockCreate(ctx context.Context, account *gtsmodel.Acc
 			ID:                 blockID,
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
-			PrivateComment:     text.RemoveHTML(privateComment),
-			PublicComment:      text.RemoveHTML(publicComment),
+			PrivateComment:     text.SanitizePlaintext(privateComment),
+			PublicComment:      text.SanitizePlaintext(publicComment),
 			Obfuscate:          obfuscate,
 			SubscriptionID:     subscriptionID,
 		}

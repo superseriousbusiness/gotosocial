@@ -65,8 +65,6 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 
 	createdAt, err := time.Parse(time.RFC3339, apimodelAccount.CreatedAt)
 	suite.NoError(err)
-	lastStatusAt, err := time.Parse(time.RFC3339, apimodelAccount.LastStatusAt)
-	suite.NoError(err)
 
 	suite.Equal(testAccount.ID, apimodelAccount.ID)
 	suite.Equal(testAccount.Username, apimodelAccount.Username)
@@ -83,7 +81,6 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal(2, apimodelAccount.FollowersCount)
 	suite.Equal(2, apimodelAccount.FollowingCount)
 	suite.Equal(5, apimodelAccount.StatusesCount)
-	suite.WithinDuration(time.Now(), lastStatusAt, 5*time.Minute)
 	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
 	suite.Equal(testAccount.Language, apimodelAccount.Source.Language)
 	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)

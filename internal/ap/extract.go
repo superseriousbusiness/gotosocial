@@ -335,18 +335,24 @@ func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKe
 	return nil, nil, errors.New("couldn't find public key")
 }
 
-// ExtractContent returns a string representation of the interface's Content property.
-func ExtractContent(i WithContent) (string, error) {
+// ExtractContent returns a string representation of the interface's Content property,
+// or an empty string if no Content is found.
+func ExtractContent(i WithContent) string {
 	contentProperty := i.GetActivityStreamsContent()
 	if contentProperty == nil {
-		return "", nil
+		return ""
 	}
+
 	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
-		if iter.IsXMLSchemaString() && iter.GetXMLSchemaString() != "" {
-			return iter.GetXMLSchemaString(), nil
+		if iter.IsXMLSchemaString() {
+			return iter.GetXMLSchemaString()
+		}
+		if iter.IsIRI() && iter.GetIRI() != nil {
+			return iter.GetIRI().String()
 		}
 	}
-	return "", errors.New("no content found")
+
+	return ""
 }
 
 // ExtractAttachments returns a slice of attachments on the interface.

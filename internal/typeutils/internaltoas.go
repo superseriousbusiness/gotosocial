@@ -392,9 +392,9 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if s.InReplyToID != "" {
 		// fetch the replied status if we don't have it on hand already
 		if s.InReplyTo == nil {
-			rs := &gtsmodel.Status{}
-			if err := c.db.GetByID(ctx, s.InReplyToID, rs); err != nil {
-				return nil, fmt.Errorf("StatusToAS: error retrieving replied-to status from db: %s", err)
+			rs, err := c.db.GetStatusByID(ctx, s.InReplyToID)
+			if err != nil {
+				return nil, fmt.Errorf("StatusToAS: error getting replied to status %s: %s", s.InReplyToID, err)
 			}
 			s.InReplyTo = rs
 		}

@@ -35,7 +35,7 @@ func (f *formatter) FromPlain(ctx context.Context, plain string, mentions []*gts
 	content := preformat(plain)
 
 	// sanitize any html elements
-	content = RemoveHTML(content)
+	content = removeHTML(content)
 
 	// format links nicely
 	content = f.ReplaceLinks(ctx, content)
