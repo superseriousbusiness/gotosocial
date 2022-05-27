@@ -23,7 +23,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -35,7 +34,7 @@ type domainDB struct {
 }
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
-	if domain == "" || domain == viper.GetString(config.Keys.Host) {
+	if domain == "" || domain == config.GetHost() {
 		return false, nil
 	}
 
