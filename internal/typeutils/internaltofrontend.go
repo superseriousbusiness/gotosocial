@@ -238,6 +238,7 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 		ID:               a.ID,
 		Type:             strings.ToLower(string(a.Type)),
 		URL:              a.URL,
+		TextURL:          a.URL,
 		PreviewURL:       a.Thumbnail.URL,
 		RemoteURL:        a.RemoteURL,
 		PreviewRemoteURL: a.Thumbnail.RemoteURL,
