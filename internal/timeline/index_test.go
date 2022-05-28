@@ -84,7 +84,7 @@ func (suite *IndexTestSuite) TestIndexBeforeLowID() {
 
 func (suite *IndexTestSuite) TestIndexBeforeHighID() {
 	// index 10 before the highest status ID possible
-	err := suite.timeline.IndexBefore(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZ.00Z", 10)
+	err := suite.timeline.IndexBefore(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", 10)
 	suite.NoError(err)
 
 	// the oldest indexed post should be empty
@@ -99,7 +99,7 @@ func (suite *IndexTestSuite) TestIndexBeforeHighID() {
 
 func (suite *IndexTestSuite) TestIndexBehindHighID() {
 	// index 10 behind the highest status ID possible
-	err := suite.timeline.IndexBehind(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZ.00Z", 10)
+	err := suite.timeline.IndexBehind(context.Background(), "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", 10)
 	suite.NoError(err)
 
 	// the newest indexed post should be the highest one we have in our testrig
