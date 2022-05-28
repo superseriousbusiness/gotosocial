@@ -30,10 +30,10 @@ type Status struct {
 	CreatedAt string `json:"created_at"`
 	// ID of the status being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
-	InReplyToID string `json:"in_reply_to_id,omitempty"`
+	InReplyToID string `json:"in_reply_to_id"`
 	// ID of the account being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
-	InReplyToAccountID string `json:"in_reply_to_account_id,omitempty"`
+	InReplyToAccountID string `json:"in_reply_to_account_id"`
 	// Status contains sensitive content.
 	// example: false
 	Sensitive bool `json:"sensitive"`
@@ -67,13 +67,13 @@ type Status struct {
 	// This status has been bookmarked by the account viewing it.
 	Bookmarked bool `json:"bookmarked"`
 	// This status has been pinned by the account viewing it (only relevant for your own statuses).
-	Pinned bool `json:"pinned,omitempty"`
+	Pinned bool `json:"pinned"`
 	// The content of this status. Should be HTML, but might also be plaintext in some cases.
 	// example: <p>Hey this is a status!</p>
 	Content string `json:"content"`
 	// The status that this status reblogs/boosts.
 	// nullable: true
-	Reblog *StatusReblogged `json:"reblog,omitempty"`
+	Reblog *StatusReblogged `json:"reblog"`
 	// The application used to post this status, if visible.
 	Application *Application `json:"application"`
 	// The account that authored this status.
