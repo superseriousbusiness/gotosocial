@@ -90,7 +90,7 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZ.00Z", "00000000000000000000000000")
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
@@ -104,7 +104,7 @@ func (suite *NotificationTestSuite) TestGetNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestGetNotificationsWithoutSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZZ", "00000000000000000000000000")
+	notifications, err := suite.db.GetNotifications(context.Background(), testAccount.ID, 20, "ZZZZZZZZZZZZZZZZZZZZZZZZZ.00Z", "00000000000000000000000000")
 	suite.NoError(err)
 	timeTaken := time.Since(before)
 	fmt.Printf("\n\n\n withoutSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)

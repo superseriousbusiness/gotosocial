@@ -33,19 +33,19 @@ type TimeSuite struct {
 func (suite *TimeSuite) TestISO8601Format1() {
 	testTime := testrig.TimeMustParse("2022-05-17T13:10:59Z")
 	testTimeString := util.FormatISO8601(testTime)
-	suite.Equal("2022-05-17T13:10:59Z", testTimeString)
+	suite.Equal("2022-05-17T13:10:59.00Z", testTimeString)
 }
 
 func (suite *TimeSuite) TestISO8601Format2() {
 	testTime := testrig.TimeMustParse("2022-05-09T07:34:35+02:00")
 	testTimeString := util.FormatISO8601(testTime)
-	suite.Equal("2022-05-09T05:34:35Z", testTimeString)
+	suite.Equal("2022-05-09T05:34:35.00Z", testTimeString)
 }
 
 func (suite *TimeSuite) TestISO8601Format3() {
 	testTime := testrig.TimeMustParse("2021-10-04T10:52:36+02:00")
 	testTimeString := util.FormatISO8601(testTime)
-	suite.Equal("2021-10-04T08:52:36Z", testTimeString)
+	suite.Equal("2021-10-04T08:52:36.00Z", testTimeString)
 }
 
 func TestTimeSuite(t *testing.T) {

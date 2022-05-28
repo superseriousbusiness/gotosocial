@@ -44,7 +44,7 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 	notification := &apimodel.Notification{
 		ID:        "01FH57SJCMDWQGEAJ0X08CE3WV",
 		Type:      "follow",
-		CreatedAt: "2021-10-04T08:52:36Z",
+		CreatedAt: "2021-10-04T08:52:36.00Z",
 		Account:   followAccountAPIModel,
 	}
 
@@ -52,7 +52,7 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 	suite.NoError(err)
 
 	msg := <-openStream.Messages
-	suite.Equal(`{"id":"01FH57SJCMDWQGEAJ0X08CE3WV","type":"follow","created_at":"2021-10-04T08:52:36Z","account":{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"bot":false,"created_at":"2021-09-26T10:52:36Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":0,"following_count":0,"statuses_count":1,"last_status_at":"2021-09-20T10:40:37Z","emojis":[],"fields":[]}}`, msg.Payload)
+	suite.Equal(`{"id":"01FH57SJCMDWQGEAJ0X08CE3WV","type":"follow","created_at":"2021-10-04T08:52:36.00Z","account":{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"bot":false,"created_at":"2021-09-26T10:52:36.00Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":0,"following_count":0,"statuses_count":1,"last_status_at":"2021-09-20T10:40:37.00Z","emojis":[],"fields":[]}}`, msg.Payload)
 }
 
 func TestNotificationTestSuite(t *testing.T) {

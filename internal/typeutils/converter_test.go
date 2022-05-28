@@ -44,7 +44,7 @@ const (
 		"id": "http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552/activity",
 		"type": "Create",
 		"actor": "http://fossbros-anonymous.io/users/foss_satan",
-		"published": "2021-05-12T09:58:38Z",
+		"published": "2021-05-12T09:58:38.00Z",
 		"to": [
 		  "http://fossbros-anonymous.io/users/foss_satan/followers"
 		],
@@ -57,7 +57,7 @@ const (
 		  "type": "Note",
 		  "summary": null,
 		  "inReplyTo": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
-		  "published": "2021-05-12T09:58:38Z",
+		  "published": "2021-05-12T09:58:38.00Z",
 		  "url": "https://ondergrond.org/@dumpsterqueer/106221634728637552",
 		  "attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
 		  "to": [
@@ -115,7 +115,7 @@ const (
 		"id": "http://fossbros-anonymous.io/users/foss_satan/statuses/106221567884565704/activity",
 		"type": "Create",
 		"actor": "http://fossbros-anonymous.io/users/foss_satan",
-		"published": "2021-05-12T09:41:38Z",
+		"published": "2021-05-12T09:41:38.00Z",
 		"to": [
 		  "http://fossbros-anonymous.io/users/foss_satan/followers"
 		],
@@ -127,7 +127,7 @@ const (
 		  "type": "Note",
 		  "summary": null,
 		  "inReplyTo": null,
-		  "published": "2021-05-12T09:41:38Z",
+		  "published": "2021-05-12T09:41:38.00Z",
 		  "url": "https://ondergrond.org/@dumpsterqueer/106221567884565704",
 		  "attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
 		  "to": [
@@ -160,7 +160,7 @@ const (
 			  "id": "https://ondergrond.org/emojis/2390",
 			  "type": "Emoji",
 			  "name": ":party_parrot:",
-			  "updated": "2020-11-06T13:42:11Z",
+			  "updated": "2020-11-06T13:42:11.00Z",
 			  "icon": {
 				"type": "Image",
 				"mediaType": "image/gif",
@@ -171,7 +171,7 @@ const (
 			  "id": "https://ondergrond.org/emojis/2395",
 			  "type": "Emoji",
 			  "name": ":amaze:",
-			  "updated": "2020-09-26T12:29:56Z",
+			  "updated": "2020-09-26T12:29:56.00Z",
 			  "icon": {
 				"type": "Image",
 				"mediaType": "image/png",
@@ -182,7 +182,7 @@ const (
 			  "id": "https://ondergrond.org/emojis/764",
 			  "type": "Emoji",
 			  "name": ":blobsunglasses:",
-			  "updated": "2020-09-26T12:13:23Z",
+			  "updated": "2020-09-26T12:13:23.00Z",
 			  "icon": {
 				"type": "Image",
 				"mediaType": "image/png",
@@ -337,7 +337,7 @@ const (
 		"type": "Note",
 		"summary": "reading: Punishment and Reward in the Corporate University",
 		"inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
-		"published": "2022-04-15T23:49:37Z",
+		"published": "2022-04-15T23:49:37.00Z",
 		"url": "http://fossbros-anonymous.io/@foss_satan/108138763199405167",
 		"attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
 		"to": [
@@ -385,7 +385,7 @@ const (
 		"type": "Note",
 		"summary": "reading: Punishment and Reward in the Corporate University",
 		"inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/108138729399508469",
-		"published": "2022-04-15T23:49:37Z",
+		"published": "2022-04-15T23:49:37.00Z",
 		"attributedTo": "http://fossbros-anonymous.io/users/foss_satan",
 		"to": [
 		  "https://www.w3.org/ns/activitystreams#Public"
@@ -447,7 +447,7 @@ const (
 		  "owner": "https://owncast.example.org/federation/user/rgh",
 		  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAurN+lUNwcGV2poLNtaoT\naRtJzN6s4SDcBmIFk82lxhdMKC6/Nssm+hvDuxWGqL0+dHwSvrG11rA6irGuSzRk\niHjYyVwYe/p1CxqJxzUfZVJAWdsCFWy+HtDrTWs5sggj1MiL59uGxvkCep+OYBuG\nBI8CvSOMLrDp8soCg3EY+zSgpXtGMuRaaUukavsfuglApShB61ny7W8LG252iKC5\nmyO8L7l8TNa5BrIi/pRHLzvv9aWiCa8VKtvmqj+mClEhpkRhImSk5GPJXgouTTgl\ntT28NYYciSf9YYgZ0SNWHdLUCdkMF592j4+BbkPvdgzc70G4yyu2GcWnTzBuvF5X\nYwIDAQAB\n-----END PUBLIC KEY-----\n"
 		},
-		"published": "2022-05-22T18:44:57Z",
+		"published": "2022-05-22T18:44:57.00Z",
 		"summary": "linux audio stuff ",
 		"tag": [
 		  {
