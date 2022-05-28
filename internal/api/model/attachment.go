@@ -87,7 +87,7 @@ type Attachment struct {
 	Meta MediaMeta `json:"meta,omitempty"`
 	// Alt text that describes what is in the media attachment.
 	// example: This is a picture of a kitten.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	// A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
 	// See https://github.com/woltapp/blurhash
 	Blurhash string `json:"blurhash,omitempty"`
