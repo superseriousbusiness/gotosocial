@@ -82,7 +82,7 @@ type Attachment struct {
 	PreviewRemoteURL string `json:"preview_remote_url,omitempty"`
 	// A shorter URL for the attachment.
 	// Not currently used.
-	TextURL string `json:"text_url,omitempty"`
+	TextURL string `json:"text_url"`
 	// Metadata for this attachment.
 	Meta MediaMeta `json:"meta,omitempty"`
 	// Alt text that describes what is in the media attachment.
