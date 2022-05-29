@@ -20,6 +20,7 @@ package main
 
 import (
 	"runtime/debug"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -34,34 +35,18 @@ var Version string
 
 //go:generate swagger generate spec
 func main() {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		panic("could not read buildinfo")
-	}
+	// Load version string
+	version := version()
 
-	var commit string
-	for _, s := range buildInfo.Settings {
-		if s.Key == "vcs.revision" {
-			commit = s.Value[:7]
-			continue
-		}
-	}
-
-	var versionString string
-
-	if Version != "" {
-		Version = "devel"
-	}
-
-	// override software version in config store
-	config.SetSoftwareVersion(Version + " " + commit)
+	// override version in config store
+	config.SetSoftwareVersion(version)
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
 		Use:     "gotosocial",
 		Short:   "GoToSocial - a fediverse social media server",
 		Long:    "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
-		Version: versionString,
+		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// before running any other cmd funcs, we must load config-path
 			return config.LoadEarlyFlags(cmd)
@@ -83,4 +68,46 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatalf("error executing command: %s", err)
 	}
+}
+
+// version will build a version string from binary's stored build information.
+func version() string {
+	// Read build information from binary
+	build, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+
+	// Define easy getter to fetch build settings
+	getSetting := func(key string) string {
+		for i := 0; i < len(build.Settings); i++ {
+			if build.Settings[i].Key == key {
+				return build.Settings[i].Value
+			}
+		}
+		return ""
+	}
+
+	var info []string
+
+	if Version != "" {
+		// Append version if set
+		info = append(info, Version)
+	}
+
+	if vcs := getSetting("vcs"); vcs != "" {
+		// A VCS type was set (99.9% probably git)
+
+		if commit := getSetting("vcs.revision"); commit != "" {
+			if len(commit) > 7 {
+				// Truncate commit
+				commit = commit[:7]
+			}
+
+			// Append VCS + commit if set
+			info = append(info, vcs+"-"+commit)
+		}
+	}
+
+	return strings.Join(info, " ")
 }
