@@ -19,7 +19,6 @@
 package main
 
 import (
-	"fmt"
 	"runtime/debug"
 
 	"github.com/sirupsen/logrus"
@@ -40,25 +39,22 @@ func main() {
 		panic("could not read buildinfo")
 	}
 
-	goVersion := buildInfo.GoVersion
 	var commit string
-	var time string
 	for _, s := range buildInfo.Settings {
 		if s.Key == "vcs.revision" {
 			commit = s.Value[:7]
-		}
-		if s.Key == "vcs.time" {
-			time = s.Value
+			continue
 		}
 	}
 
 	var versionString string
+
 	if Version != "" {
-		versionString = fmt.Sprintf("%s %s %s [%s]", Version, commit, time, goVersion)
+		Version = "devel"
 	}
 
 	// override software version in config store
-	config.SetSoftwareVersion(versionString)
+	config.SetSoftwareVersion(Version + " " + commit)
 
 	// instantiate the root command
 	rootCmd := &cobra.Command{
