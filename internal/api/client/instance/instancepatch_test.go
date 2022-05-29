@@ -62,7 +62,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"uri":"http://localhost:8080","title":"Example Instance","description":"","short_description":"","email":"someone@example.org","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":0,"status_count":16,"user_count":4},"thumbnail":"","contact_account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37Z","emojis":[],"fields":[]},"max_toot_chars":5000}`, string(b))
+	suite.Equal(`{"uri":"http://localhost:8080","title":"Example Instance","description":"","short_description":"","email":"someone@example.org","version":"","registrations":true,"approval_required":true,"invites_enabled":false,"urls":{"streaming_api":"wss://localhost:8080"},"stats":{"domain_count":0,"status_count":16,"user_count":4},"thumbnail":"","contact_account":{"id":"01F8MH17FWEB39HZJ76B6VXSKF","username":"admin","acct":"admin","display_name":"","locked":false,"bot":false,"created_at":"2022-05-17T13:10:59.00Z","note":"","url":"http://localhost:8080/@admin","avatar":"","avatar_static":"","header":"","header_static":"","followers_count":1,"following_count":1,"statuses_count":4,"last_status_at":"2021-10-20T10:41:37.00Z","emojis":[],"fields":[]},"max_toot_chars":5000}`, string(b))
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch2() {

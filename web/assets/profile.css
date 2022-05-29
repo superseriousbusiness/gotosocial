@@ -34,12 +34,32 @@ main {
       text-decoration: none;
     }
 
-.profile .basic .avatar img {
-        height: 25em;
-        width: 25em;
-        object-fit: cover;
-        border-radius: 10px;
+.profile .basic .avatar-container {
+      position: relative;
+      width: 100%;
+      max-width: 25em;
+    }
+
+.profile .basic .avatar-container .avatar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
       }
+
+.profile .basic .avatar-container .avatar img {
+          object-fit: cover;
+          border-radius: 10px;
+          width: 100%;
+          height: 100%;
+        }
+
+.profile .basic .avatar-container:before {
+      content: "";
+      float: left;
+      padding-top: 100%;
+    }
 
 .profile .basic .displayname {
       font-weight: bold;
