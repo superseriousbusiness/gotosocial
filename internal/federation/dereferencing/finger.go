@@ -27,38 +27,52 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-func (d *deref) fingerRemoteAccount(ctx context.Context, t transport.Transport, targetUsername string, targetDomain string) (*url.URL, error) {
-	b, err := t.Finger(ctx, targetUsername, targetDomain)
+func (d *deref) fingerRemoteAccount(ctx context.Context, username string, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
+	t, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetDomain, err)
+		err = fmt.Errorf("fingerRemoteAccount: error getting transport for %s: %s", username, err)
+		return
+	}
+
+	b, err := t.Finger(ctx, targetUsername, targetHost)
+	if err != nil {
+		err = fmt.Errorf("fingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetHost, err)
+		return
 	}
 
 	resp := &apimodel.WellKnownResponse{}
-	if err := json.Unmarshal(b, resp); err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse while dereferencing @%s@%s: %s", targetUsername, targetDomain, err)
+	if err = json.Unmarshal(b, resp); err != nil {
+		err = fmt.Errorf("fingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse while dereferencing @%s@%s: %s", targetUsername, targetHost, err)
+		return
 	}
 
 	if len(resp.Links) == 0 {
-		return nil, fmt.Errorf("FingerRemoteAccount: no links found in webfinger response %s", string(b))
+		err = fmt.Errorf("fingerRemoteAccount: no links found in webfinger response %s", string(b))
+		return
 	}
+
+	if resp.Subject == "" {
+		err = fmt.Errorf("fingerRemoteAccount: no subject found in webfinger response %s", string(b))
+		return
+	}
+
+	aaaaaaaaaaaaaaaaccountDomain
 
 	// look through the links for the first one that matches "application/activity+json", this is what we need
 	for _, l := range resp.Links {
-		if strings.EqualFold(l.Type, "application/activity+json") {
-			if l.Href == "" || l.Rel != "self" {
-				continue
-			}
-			accountURI, err := url.Parse(l.Href)
+		if strings.EqualFold(l.Type, "application/activity+json") && l.Href != "" && l.Rel == "self" {
+			accountURI, err = url.Parse(l.Href)
 			if err != nil {
-				return nil, fmt.Errorf("FingerRemoteAccount: couldn't parse url %s: %s", l.Href, err)
+				err = fmt.Errorf("fingerRemoteAccount: couldn't parse url %s: %s", l.Href, err)
+				return
 			}
 			// found it!
-			return accountURI, nil
+			return
 		}
 	}
 
-	return nil, errors.New("FingerRemoteAccount: no match found in webfinger response")
+	err = errors.New("fingerRemoteAccount: no match found in webfinger response")
+	return
 }
