@@ -129,6 +129,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Password)
 		},
 	}
+	config.AddAdminAccount(adminAccountPasswordCmd)
 	config.AddAdminAccountPassword(adminAccountPasswordCmd)
 	adminAccountCmd.AddCommand(adminAccountPasswordCmd)
 

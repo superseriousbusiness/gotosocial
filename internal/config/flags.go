@@ -124,7 +124,6 @@ func AddAdminAccount(cmd *cobra.Command) {
 
 // AddAdminAccountPassword attaches flags pertaining to admin account password reset.
 func AddAdminAccountPassword(cmd *cobra.Command) {
-	AddAdminAccount(cmd)
 	name := AdminAccountPasswordFlag()
 	usage := fieldtag("AdminAccountPassword", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
@@ -135,7 +134,10 @@ func AddAdminAccountPassword(cmd *cobra.Command) {
 
 // AddAdminAccountCreate attaches flags pertaining to admin account creation.
 func AddAdminAccountCreate(cmd *cobra.Command) {
+	// Requires both account and password
+	AddAdminAccount(cmd)
 	AddAdminAccountPassword(cmd)
+
 	name := AdminAccountEmailFlag()
 	usage := fieldtag("AdminAccountEmail", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
