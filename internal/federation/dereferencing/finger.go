@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package federation
+package dereferencing
 
 import (
 	"context"
@@ -27,26 +27,18 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-func (f *federator) FingerRemoteAccount(ctx context.Context, requestingUsername string, targetUsername string, targetDomain string) (*url.URL, error) {
-	if blocked, err := f.db.IsDomainBlocked(ctx, targetDomain); blocked || err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: domain %s is blocked", targetDomain)
-	}
-
-	t, err := f.transportController.NewTransportForUsername(ctx, requestingUsername)
-	if err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: error getting transport for username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
-	}
-
+func (d *deref) fingerRemoteAccount(ctx context.Context, t transport.Transport, targetUsername string, targetDomain string) (*url.URL, error) {
 	b, err := t.Finger(ctx, targetUsername, targetDomain)
 	if err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: error doing request on behalf of username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
+		return nil, fmt.Errorf("FingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetDomain, err)
 	}
 
 	resp := &apimodel.WellKnownResponse{}
 	if err := json.Unmarshal(b, resp); err != nil {
-		return nil, fmt.Errorf("FingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse on behalf of username %s while dereferencing @%s@%s: %s", requestingUsername, targetUsername, targetDomain, err)
+		return nil, fmt.Errorf("FingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse while dereferencing @%s@%s: %s", targetUsername, targetDomain, err)
 	}
 
 	if len(resp.Links) == 0 {
