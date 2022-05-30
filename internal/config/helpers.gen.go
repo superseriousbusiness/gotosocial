@@ -29,9 +29,9 @@ func (st *ConfigState) GetLogLevel() (v string) {
 // SetLogLevel safely sets the Configuration value for state's 'LogLevel' field
 func (st *ConfigState) SetLogLevel(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LogLevel = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LogLevelFlag returns the flag name for the 'LogLevel' field
@@ -54,9 +54,9 @@ func (st *ConfigState) GetLogDbQueries() (v bool) {
 // SetLogDbQueries safely sets the Configuration value for state's 'LogDbQueries' field
 func (st *ConfigState) SetLogDbQueries(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LogDbQueries = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LogDbQueriesFlag returns the flag name for the 'LogDbQueries' field
@@ -79,9 +79,9 @@ func (st *ConfigState) GetApplicationName() (v string) {
 // SetApplicationName safely sets the Configuration value for state's 'ApplicationName' field
 func (st *ConfigState) SetApplicationName(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.ApplicationName = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // ApplicationNameFlag returns the flag name for the 'ApplicationName' field
@@ -104,9 +104,9 @@ func (st *ConfigState) GetConfigPath() (v string) {
 // SetConfigPath safely sets the Configuration value for state's 'ConfigPath' field
 func (st *ConfigState) SetConfigPath(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.ConfigPath = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // ConfigPathFlag returns the flag name for the 'ConfigPath' field
@@ -129,9 +129,9 @@ func (st *ConfigState) GetHost() (v string) {
 // SetHost safely sets the Configuration value for state's 'Host' field
 func (st *ConfigState) SetHost(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.Host = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // HostFlag returns the flag name for the 'Host' field
@@ -154,9 +154,9 @@ func (st *ConfigState) GetAccountDomain() (v string) {
 // SetAccountDomain safely sets the Configuration value for state's 'AccountDomain' field
 func (st *ConfigState) SetAccountDomain(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AccountDomain = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AccountDomainFlag returns the flag name for the 'AccountDomain' field
@@ -179,9 +179,9 @@ func (st *ConfigState) GetProtocol() (v string) {
 // SetProtocol safely sets the Configuration value for state's 'Protocol' field
 func (st *ConfigState) SetProtocol(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.Protocol = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // ProtocolFlag returns the flag name for the 'Protocol' field
@@ -204,9 +204,9 @@ func (st *ConfigState) GetBindAddress() (v string) {
 // SetBindAddress safely sets the Configuration value for state's 'BindAddress' field
 func (st *ConfigState) SetBindAddress(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.BindAddress = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // BindAddressFlag returns the flag name for the 'BindAddress' field
@@ -229,9 +229,9 @@ func (st *ConfigState) GetPort() (v int) {
 // SetPort safely sets the Configuration value for state's 'Port' field
 func (st *ConfigState) SetPort(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.Port = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // PortFlag returns the flag name for the 'Port' field
@@ -254,9 +254,9 @@ func (st *ConfigState) GetTrustedProxies() (v []string) {
 // SetTrustedProxies safely sets the Configuration value for state's 'TrustedProxies' field
 func (st *ConfigState) SetTrustedProxies(v []string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.TrustedProxies = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // TrustedProxiesFlag returns the flag name for the 'TrustedProxies' field
@@ -279,9 +279,9 @@ func (st *ConfigState) GetSoftwareVersion() (v string) {
 // SetSoftwareVersion safely sets the Configuration value for state's 'SoftwareVersion' field
 func (st *ConfigState) SetSoftwareVersion(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SoftwareVersion = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SoftwareVersionFlag returns the flag name for the 'SoftwareVersion' field
@@ -304,9 +304,9 @@ func (st *ConfigState) GetDbType() (v string) {
 // SetDbType safely sets the Configuration value for state's 'DbType' field
 func (st *ConfigState) SetDbType(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbType = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbTypeFlag returns the flag name for the 'DbType' field
@@ -329,9 +329,9 @@ func (st *ConfigState) GetDbAddress() (v string) {
 // SetDbAddress safely sets the Configuration value for state's 'DbAddress' field
 func (st *ConfigState) SetDbAddress(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbAddress = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbAddressFlag returns the flag name for the 'DbAddress' field
@@ -354,9 +354,9 @@ func (st *ConfigState) GetDbPort() (v int) {
 // SetDbPort safely sets the Configuration value for state's 'DbPort' field
 func (st *ConfigState) SetDbPort(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbPort = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbPortFlag returns the flag name for the 'DbPort' field
@@ -379,9 +379,9 @@ func (st *ConfigState) GetDbUser() (v string) {
 // SetDbUser safely sets the Configuration value for state's 'DbUser' field
 func (st *ConfigState) SetDbUser(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbUser = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbUserFlag returns the flag name for the 'DbUser' field
@@ -404,9 +404,9 @@ func (st *ConfigState) GetDbPassword() (v string) {
 // SetDbPassword safely sets the Configuration value for state's 'DbPassword' field
 func (st *ConfigState) SetDbPassword(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbPassword = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbPasswordFlag returns the flag name for the 'DbPassword' field
@@ -429,9 +429,9 @@ func (st *ConfigState) GetDbDatabase() (v string) {
 // SetDbDatabase safely sets the Configuration value for state's 'DbDatabase' field
 func (st *ConfigState) SetDbDatabase(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbDatabase = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbDatabaseFlag returns the flag name for the 'DbDatabase' field
@@ -454,9 +454,9 @@ func (st *ConfigState) GetDbTLSMode() (v string) {
 // SetDbTLSMode safely sets the Configuration value for state's 'DbTLSMode' field
 func (st *ConfigState) SetDbTLSMode(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbTLSMode = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbTLSModeFlag returns the flag name for the 'DbTLSMode' field
@@ -479,9 +479,9 @@ func (st *ConfigState) GetDbTLSCACert() (v string) {
 // SetDbTLSCACert safely sets the Configuration value for state's 'DbTLSCACert' field
 func (st *ConfigState) SetDbTLSCACert(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.DbTLSCACert = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // DbTLSCACertFlag returns the flag name for the 'DbTLSCACert' field
@@ -504,9 +504,9 @@ func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
 // SetWebTemplateBaseDir safely sets the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) SetWebTemplateBaseDir(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.WebTemplateBaseDir = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // WebTemplateBaseDirFlag returns the flag name for the 'WebTemplateBaseDir' field
@@ -529,9 +529,9 @@ func (st *ConfigState) GetWebAssetBaseDir() (v string) {
 // SetWebAssetBaseDir safely sets the Configuration value for state's 'WebAssetBaseDir' field
 func (st *ConfigState) SetWebAssetBaseDir(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.WebAssetBaseDir = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // WebAssetBaseDirFlag returns the flag name for the 'WebAssetBaseDir' field
@@ -554,9 +554,9 @@ func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 // SetAccountsRegistrationOpen safely sets the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) SetAccountsRegistrationOpen(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AccountsRegistrationOpen = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AccountsRegistrationOpenFlag returns the flag name for the 'AccountsRegistrationOpen' field
@@ -579,9 +579,9 @@ func (st *ConfigState) GetAccountsApprovalRequired() (v bool) {
 // SetAccountsApprovalRequired safely sets the Configuration value for state's 'AccountsApprovalRequired' field
 func (st *ConfigState) SetAccountsApprovalRequired(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AccountsApprovalRequired = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AccountsApprovalRequiredFlag returns the flag name for the 'AccountsApprovalRequired' field
@@ -604,9 +604,9 @@ func (st *ConfigState) GetAccountsReasonRequired() (v bool) {
 // SetAccountsReasonRequired safely sets the Configuration value for state's 'AccountsReasonRequired' field
 func (st *ConfigState) SetAccountsReasonRequired(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AccountsReasonRequired = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AccountsReasonRequiredFlag returns the flag name for the 'AccountsReasonRequired' field
@@ -629,9 +629,9 @@ func (st *ConfigState) GetMediaImageMaxSize() (v int) {
 // SetMediaImageMaxSize safely sets the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) SetMediaImageMaxSize(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.MediaImageMaxSize = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // MediaImageMaxSizeFlag returns the flag name for the 'MediaImageMaxSize' field
@@ -654,9 +654,9 @@ func (st *ConfigState) GetMediaVideoMaxSize() (v int) {
 // SetMediaVideoMaxSize safely sets the Configuration value for state's 'MediaVideoMaxSize' field
 func (st *ConfigState) SetMediaVideoMaxSize(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.MediaVideoMaxSize = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // MediaVideoMaxSizeFlag returns the flag name for the 'MediaVideoMaxSize' field
@@ -679,9 +679,9 @@ func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
 // SetMediaDescriptionMinChars safely sets the Configuration value for state's 'MediaDescriptionMinChars' field
 func (st *ConfigState) SetMediaDescriptionMinChars(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.MediaDescriptionMinChars = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // MediaDescriptionMinCharsFlag returns the flag name for the 'MediaDescriptionMinChars' field
@@ -704,9 +704,9 @@ func (st *ConfigState) GetMediaDescriptionMaxChars() (v int) {
 // SetMediaDescriptionMaxChars safely sets the Configuration value for state's 'MediaDescriptionMaxChars' field
 func (st *ConfigState) SetMediaDescriptionMaxChars(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.MediaDescriptionMaxChars = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // MediaDescriptionMaxCharsFlag returns the flag name for the 'MediaDescriptionMaxChars' field
@@ -729,9 +729,9 @@ func (st *ConfigState) GetMediaRemoteCacheDays() (v int) {
 // SetMediaRemoteCacheDays safely sets the Configuration value for state's 'MediaRemoteCacheDays' field
 func (st *ConfigState) SetMediaRemoteCacheDays(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.MediaRemoteCacheDays = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // MediaRemoteCacheDaysFlag returns the flag name for the 'MediaRemoteCacheDays' field
@@ -754,9 +754,9 @@ func (st *ConfigState) GetStorageBackend() (v string) {
 // SetStorageBackend safely sets the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) SetStorageBackend(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StorageBackend = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StorageBackendFlag returns the flag name for the 'StorageBackend' field
@@ -779,9 +779,9 @@ func (st *ConfigState) GetStorageLocalBasePath() (v string) {
 // SetStorageLocalBasePath safely sets the Configuration value for state's 'StorageLocalBasePath' field
 func (st *ConfigState) SetStorageLocalBasePath(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StorageLocalBasePath = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StorageLocalBasePathFlag returns the flag name for the 'StorageLocalBasePath' field
@@ -804,9 +804,9 @@ func (st *ConfigState) GetStatusesMaxChars() (v int) {
 // SetStatusesMaxChars safely sets the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) SetStatusesMaxChars(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StatusesMaxChars = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StatusesMaxCharsFlag returns the flag name for the 'StatusesMaxChars' field
@@ -829,9 +829,9 @@ func (st *ConfigState) GetStatusesCWMaxChars() (v int) {
 // SetStatusesCWMaxChars safely sets the Configuration value for state's 'StatusesCWMaxChars' field
 func (st *ConfigState) SetStatusesCWMaxChars(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StatusesCWMaxChars = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StatusesCWMaxCharsFlag returns the flag name for the 'StatusesCWMaxChars' field
@@ -854,9 +854,9 @@ func (st *ConfigState) GetStatusesPollMaxOptions() (v int) {
 // SetStatusesPollMaxOptions safely sets the Configuration value for state's 'StatusesPollMaxOptions' field
 func (st *ConfigState) SetStatusesPollMaxOptions(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StatusesPollMaxOptions = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StatusesPollMaxOptionsFlag returns the flag name for the 'StatusesPollMaxOptions' field
@@ -879,9 +879,9 @@ func (st *ConfigState) GetStatusesPollOptionMaxChars() (v int) {
 // SetStatusesPollOptionMaxChars safely sets the Configuration value for state's 'StatusesPollOptionMaxChars' field
 func (st *ConfigState) SetStatusesPollOptionMaxChars(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StatusesPollOptionMaxChars = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StatusesPollOptionMaxCharsFlag returns the flag name for the 'StatusesPollOptionMaxChars' field
@@ -904,9 +904,9 @@ func (st *ConfigState) GetStatusesMediaMaxFiles() (v int) {
 // SetStatusesMediaMaxFiles safely sets the Configuration value for state's 'StatusesMediaMaxFiles' field
 func (st *ConfigState) SetStatusesMediaMaxFiles(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.StatusesMediaMaxFiles = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // StatusesMediaMaxFilesFlag returns the flag name for the 'StatusesMediaMaxFiles' field
@@ -929,9 +929,9 @@ func (st *ConfigState) GetLetsEncryptEnabled() (v bool) {
 // SetLetsEncryptEnabled safely sets the Configuration value for state's 'LetsEncryptEnabled' field
 func (st *ConfigState) SetLetsEncryptEnabled(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LetsEncryptEnabled = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LetsEncryptEnabledFlag returns the flag name for the 'LetsEncryptEnabled' field
@@ -954,9 +954,9 @@ func (st *ConfigState) GetLetsEncryptPort() (v int) {
 // SetLetsEncryptPort safely sets the Configuration value for state's 'LetsEncryptPort' field
 func (st *ConfigState) SetLetsEncryptPort(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LetsEncryptPort = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LetsEncryptPortFlag returns the flag name for the 'LetsEncryptPort' field
@@ -979,9 +979,9 @@ func (st *ConfigState) GetLetsEncryptCertDir() (v string) {
 // SetLetsEncryptCertDir safely sets the Configuration value for state's 'LetsEncryptCertDir' field
 func (st *ConfigState) SetLetsEncryptCertDir(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LetsEncryptCertDir = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LetsEncryptCertDirFlag returns the flag name for the 'LetsEncryptCertDir' field
@@ -1004,9 +1004,9 @@ func (st *ConfigState) GetLetsEncryptEmailAddress() (v string) {
 // SetLetsEncryptEmailAddress safely sets the Configuration value for state's 'LetsEncryptEmailAddress' field
 func (st *ConfigState) SetLetsEncryptEmailAddress(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.LetsEncryptEmailAddress = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // LetsEncryptEmailAddressFlag returns the flag name for the 'LetsEncryptEmailAddress' field
@@ -1029,9 +1029,9 @@ func (st *ConfigState) GetOIDCEnabled() (v bool) {
 // SetOIDCEnabled safely sets the Configuration value for state's 'OIDCEnabled' field
 func (st *ConfigState) SetOIDCEnabled(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCEnabled = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCEnabledFlag returns the flag name for the 'OIDCEnabled' field
@@ -1054,9 +1054,9 @@ func (st *ConfigState) GetOIDCIdpName() (v string) {
 // SetOIDCIdpName safely sets the Configuration value for state's 'OIDCIdpName' field
 func (st *ConfigState) SetOIDCIdpName(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCIdpName = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCIdpNameFlag returns the flag name for the 'OIDCIdpName' field
@@ -1079,9 +1079,9 @@ func (st *ConfigState) GetOIDCSkipVerification() (v bool) {
 // SetOIDCSkipVerification safely sets the Configuration value for state's 'OIDCSkipVerification' field
 func (st *ConfigState) SetOIDCSkipVerification(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCSkipVerification = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCSkipVerificationFlag returns the flag name for the 'OIDCSkipVerification' field
@@ -1104,9 +1104,9 @@ func (st *ConfigState) GetOIDCIssuer() (v string) {
 // SetOIDCIssuer safely sets the Configuration value for state's 'OIDCIssuer' field
 func (st *ConfigState) SetOIDCIssuer(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCIssuer = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCIssuerFlag returns the flag name for the 'OIDCIssuer' field
@@ -1129,9 +1129,9 @@ func (st *ConfigState) GetOIDCClientID() (v string) {
 // SetOIDCClientID safely sets the Configuration value for state's 'OIDCClientID' field
 func (st *ConfigState) SetOIDCClientID(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCClientID = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCClientIDFlag returns the flag name for the 'OIDCClientID' field
@@ -1154,9 +1154,9 @@ func (st *ConfigState) GetOIDCClientSecret() (v string) {
 // SetOIDCClientSecret safely sets the Configuration value for state's 'OIDCClientSecret' field
 func (st *ConfigState) SetOIDCClientSecret(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCClientSecret = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCClientSecretFlag returns the flag name for the 'OIDCClientSecret' field
@@ -1179,9 +1179,9 @@ func (st *ConfigState) GetOIDCScopes() (v []string) {
 // SetOIDCScopes safely sets the Configuration value for state's 'OIDCScopes' field
 func (st *ConfigState) SetOIDCScopes(v []string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.OIDCScopes = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // OIDCScopesFlag returns the flag name for the 'OIDCScopes' field
@@ -1204,9 +1204,9 @@ func (st *ConfigState) GetSMTPHost() (v string) {
 // SetSMTPHost safely sets the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) SetSMTPHost(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SMTPHost = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SMTPHostFlag returns the flag name for the 'SMTPHost' field
@@ -1229,9 +1229,9 @@ func (st *ConfigState) GetSMTPPort() (v int) {
 // SetSMTPPort safely sets the Configuration value for state's 'SMTPPort' field
 func (st *ConfigState) SetSMTPPort(v int) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SMTPPort = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SMTPPortFlag returns the flag name for the 'SMTPPort' field
@@ -1254,9 +1254,9 @@ func (st *ConfigState) GetSMTPUsername() (v string) {
 // SetSMTPUsername safely sets the Configuration value for state's 'SMTPUsername' field
 func (st *ConfigState) SetSMTPUsername(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SMTPUsername = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SMTPUsernameFlag returns the flag name for the 'SMTPUsername' field
@@ -1279,9 +1279,9 @@ func (st *ConfigState) GetSMTPPassword() (v string) {
 // SetSMTPPassword safely sets the Configuration value for state's 'SMTPPassword' field
 func (st *ConfigState) SetSMTPPassword(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SMTPPassword = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SMTPPasswordFlag returns the flag name for the 'SMTPPassword' field
@@ -1304,9 +1304,9 @@ func (st *ConfigState) GetSMTPFrom() (v string) {
 // SetSMTPFrom safely sets the Configuration value for state's 'SMTPFrom' field
 func (st *ConfigState) SetSMTPFrom(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SMTPFrom = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SMTPFromFlag returns the flag name for the 'SMTPFrom' field
@@ -1329,9 +1329,9 @@ func (st *ConfigState) GetSyslogEnabled() (v bool) {
 // SetSyslogEnabled safely sets the Configuration value for state's 'SyslogEnabled' field
 func (st *ConfigState) SetSyslogEnabled(v bool) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SyslogEnabled = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SyslogEnabledFlag returns the flag name for the 'SyslogEnabled' field
@@ -1354,9 +1354,9 @@ func (st *ConfigState) GetSyslogProtocol() (v string) {
 // SetSyslogProtocol safely sets the Configuration value for state's 'SyslogProtocol' field
 func (st *ConfigState) SetSyslogProtocol(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SyslogProtocol = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SyslogProtocolFlag returns the flag name for the 'SyslogProtocol' field
@@ -1379,9 +1379,9 @@ func (st *ConfigState) GetSyslogAddress() (v string) {
 // SetSyslogAddress safely sets the Configuration value for state's 'SyslogAddress' field
 func (st *ConfigState) SetSyslogAddress(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.SyslogAddress = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // SyslogAddressFlag returns the flag name for the 'SyslogAddress' field
@@ -1404,9 +1404,9 @@ func (st *ConfigState) GetAdminAccountUsername() (v string) {
 // SetAdminAccountUsername safely sets the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) SetAdminAccountUsername(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AdminAccountUsername = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AdminAccountUsernameFlag returns the flag name for the 'AdminAccountUsername' field
@@ -1429,9 +1429,9 @@ func (st *ConfigState) GetAdminAccountEmail() (v string) {
 // SetAdminAccountEmail safely sets the Configuration value for state's 'AdminAccountEmail' field
 func (st *ConfigState) SetAdminAccountEmail(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AdminAccountEmail = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AdminAccountEmailFlag returns the flag name for the 'AdminAccountEmail' field
@@ -1454,9 +1454,9 @@ func (st *ConfigState) GetAdminAccountPassword() (v string) {
 // SetAdminAccountPassword safely sets the Configuration value for state's 'AdminAccountPassword' field
 func (st *ConfigState) SetAdminAccountPassword(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AdminAccountPassword = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AdminAccountPasswordFlag returns the flag name for the 'AdminAccountPassword' field
@@ -1479,9 +1479,9 @@ func (st *ConfigState) GetAdminTransPath() (v string) {
 // SetAdminTransPath safely sets the Configuration value for state's 'AdminTransPath' field
 func (st *ConfigState) SetAdminTransPath(v string) {
 	st.mutex.Lock()
+	defer st.mutex.Unlock()
 	st.config.AdminTransPath = v
 	st.reloadToViper()
-	st.mutex.Unlock()
 }
 
 // AdminTransPathFlag returns the flag name for the 'AdminTransPath' field

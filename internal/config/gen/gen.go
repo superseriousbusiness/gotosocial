@@ -85,9 +85,9 @@ func main() {
 			fmt.Fprintf(output, "// Set%s safely sets the Configuration value for state's '%s' field\n", field.Name, field.Name)
 			fmt.Fprintf(output, "func (st *ConfigState) Set%s(v %s) {\n", field.Name, field.Type.String())
 			fmt.Fprintf(output, "\tst.mutex.Lock()\n")
+			fmt.Fprintf(output, "\tdefer st.mutex.Unlock()\n")
 			fmt.Fprintf(output, "\tst.config.%s = v\n", field.Name)
 			fmt.Fprintf(output, "\tst.reloadToViper()\n")
-			fmt.Fprintf(output, "\tst.mutex.Unlock()\n")
 			fmt.Fprintf(output, "}\n\n")
 
 			// Global ConfigState helper methods
