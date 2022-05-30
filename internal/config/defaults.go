@@ -20,8 +20,8 @@ package config
 
 import "github.com/coreos/go-oidc/v3/oidc"
 
-// Defaults returns a populated Values struct with most of the values set to reasonable defaults.
-// Note that if you use this, you still need to set Host and, if desired, ConfigPath.
+// Defaults contains a populated Configuration with reasonable defaults. Note that
+// if you use this, you will still need to set Host, and, if desired, ConfigPath.
 var Defaults = Configuration{
 	LogLevel:        "info",
 	LogDbQueries:    false,
