@@ -46,6 +46,39 @@ func instanceAccount(account *gtsmodel.Account) bool {
 		(account.Username == "internal.fetch" && strings.Contains(account.Note, "internal service actor"))
 }
 
+// GetRemoteAccountParams wraps parameters for a remote account lookup.
+//
+// RequestingUsername: the username of the user doing the lookup request (optional).
+// If not set, then the GtS instance account will be used to do the lookup.
+//
+// RemoteAccountID: the ActivityPub URI of the remote account (optional).
+// If not set, the ActivityPub URI of the remote account will be discovered
+// via webfinger, so you must set RemoteAccountUsername and RemoteAccountDomain
+// if this parameter is not set.
+//
+// RemoteAccountUsername: the username of the remote account (optional).
+// If RemoteAccountID is not set, then this value must be set.
+//
+// RemoteAccountDomain: the domain of the remote account (optional).
+// If RemoteAccountID is not set, then this value must be set.
+// 
+// Blocking: whether to do a blocking call to the remote instance. If true,
+// then the account's media and other fields will be fully dereferenced before it is returned.
+// If false, then the account's media and other fields will be dereferenced in the background,
+// so only a minimal account representation will be returned by GetRemoteAccount.
+//
+// Refresh: whether to refresh the account by performing dereferencing all over again.
+// If true, the account will be updated and returned.
+// If false, and the account already exists in the database, then that will be returned instead.
+type GetRemoteAccountParams struct {
+	RequestingUsername    string
+	RemoteAccountID       *url.URL
+	RemoteAccountUsername string
+	RemoteAccountDomain   string
+	Blocking              bool
+	Refresh               bool
+}
+
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
 // puts it in the database, and returns it to a caller.
 //
@@ -54,7 +87,7 @@ func instanceAccount(account *gtsmodel.Account) bool {
 // the fetched account is complete.
 //
 // SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
-func (d *deref) GetRemoteAccount(ctx context.Context, username string, remoteAccountID *url.URL, blocking bool, refresh bool) (*gtsmodel.Account, error) {
+func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (*gtsmodel.Account, error) {
 	new := true
 
 	// check if we already have the account in our db, and just return it unless we'd doing a refresh
