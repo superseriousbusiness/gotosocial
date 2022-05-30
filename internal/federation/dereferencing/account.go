@@ -47,71 +47,66 @@ func instanceAccount(account *gtsmodel.Account) bool {
 }
 
 // GetRemoteAccountParams wraps parameters for a remote account lookup.
-//
-// RequestingUsername: the username of the user doing the lookup request (optional).
-// If not set, then the GtS instance account will be used to do the lookup.
-//
-// RemoteAccountID: the ActivityPub URI of the remote account (optional).
-// If not set, the ActivityPub URI of the remote account will be discovered
-// via webfinger, so you must set RemoteAccountUsername and RemoteAccountDomain
-// if this parameter is not set.
-//
-// RemoteAccountUsername: the username of the remote account (optional).
-// If RemoteAccountID is not set, then this value must be set.
-//
-// RemoteAccountDomain: the domain of the remote account (optional).
-// If RemoteAccountID is not set, then this value must be set.
-// 
-// Blocking: whether to do a blocking call to the remote instance. If true,
-// then the account's media and other fields will be fully dereferenced before it is returned.
-// If false, then the account's media and other fields will be dereferenced in the background,
-// so only a minimal account representation will be returned by GetRemoteAccount.
-//
-// Refresh: whether to refresh the account by performing dereferencing all over again.
-// If true, the account will be updated and returned.
-// If false, and the account already exists in the database, then that will be returned instead.
 type GetRemoteAccountParams struct {
-	RequestingUsername    string
-	RemoteAccountID       *url.URL
+	// The username of the user doing the lookup request (optional).
+	// If not set, then the GtS instance account will be used to do the lookup.
+	RequestingUsername string
+	// The ActivityPub URI of the remote account (optional).
+	// If not set, the ActivityPub URI of the remote account will be discovered
+	// via webfinger, so you must set RemoteAccountUsername and RemoteAccountHost
+	// if this parameter is not set.
+	RemoteAccountID *url.URL
+	// The username of the remote account (optional).
+	// If RemoteAccountID is not set, then this value must be set.
 	RemoteAccountUsername string
-	RemoteAccountDomain   string
-	Blocking              bool
-	Refresh               bool
+	// The host of the remote account (optional).
+	// If RemoteAccountID is not set, then this value must be set.
+	RemoteAccountHost string
+	// Whether to do a blocking call to the remote instance. If true,
+	// then the account's media and other fields will be fully dereferenced before it is returned.
+	// If false, then the account's media and other fields will be dereferenced in the background,
+	// so only a minimal account representation will be returned by GetRemoteAccount.
+	Blocking bool
+	// Whether to refresh the account by performing dereferencing all over again.
+	// If true, the account will be updated and returned.
+	// If false, and the account already exists in the database, then that will be returned instead.
+	Refresh bool
 }
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
-// puts it in the database, and returns it to a caller.
-//
-// Refresh indicates whether--if the account exists in our db already--it should be refreshed by calling
-// the remote instance again. Blocking indicates whether the function should block until processing of
-// the fetched account is complete.
-//
-// SIDE EFFECTS: remote account will be stored in the database, or updated if it already exists (and refresh is true).
+// puts or updates it in the database (if necessary), and returns it to a caller.
 func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (*gtsmodel.Account, error) {
+	// check for sensible params
+	if params.RemoteAccountID == nil && (params.RemoteAccountUsername == "" || params.RemoteAccountHost == "") {
+		return nil, errors.New("GetRemoteAccount: RemoteAccountID wasn't set, and RemoteAccountUsername/RemoteAccountHost weren't set either, so a lookup couldn't be performed")
+	}
+
 	new := true
 
-	// check if we already have the account in our db, and just return it unless we'd doing a refresh
-	remoteAccount, err := d.db.GetAccountByURI(ctx, remoteAccountID.String())
-	if err == nil {
-		new = false
-		if !refresh {
-			// make sure the account fields are populated before returning:
-			// even if we're not doing a refresh, the caller might want to block
-			// until everything is loaded
-			changed, err := d.populateAccountFields(ctx, remoteAccount, username, refresh, blocking)
-			if err != nil {
-				return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
-			}
-
-			if changed {
-				updatedAccount, err := d.db.UpdateAccount(ctx, remoteAccount)
+	if params.RemoteAccountID != nil {
+		// check if we already have the account in our db, and just return it unless we'd doing a refresh
+		remoteAccount, err := d.db.GetAccountByURI(ctx, params.RemoteAccountID.String())
+		if err == nil {
+			new = false
+			if !params.Refresh {
+				// make sure the account fields are populated before returning:
+				// even if we're not doing a refresh, the caller might want to block
+				// until everything is loaded
+				changed, err := d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Refresh, params.Blocking)
 				if err != nil {
-					return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+					return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
 				}
-				return updatedAccount, err
-			}
 
-			return remoteAccount, nil
+				if changed {
+					updatedAccount, err := d.db.UpdateAccount(ctx, remoteAccount)
+					if err != nil {
+						return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+					}
+					return updatedAccount, err
+				}
+
+				return remoteAccount, nil
+			}
 		}
 	}
 
