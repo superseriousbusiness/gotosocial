@@ -28,6 +28,25 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
+const license = `/*
+   GoToSocial
+   Copyright (C) 2021-2022 GoToSocial Authors admin@gotosocial.org
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+`
+
 func main() {
 	var (
 		out string
@@ -49,6 +68,7 @@ func main() {
 	// Generate config field helper methods
 	case "helpers":
 		fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
+		fmt.Fprint(output, license)
 		fmt.Fprint(output, "package config\n\n")
 		t := reflect.TypeOf(config.Configuration{})
 		for i := 0; i < t.NumField(); i++ {
@@ -79,7 +99,7 @@ func main() {
 			fmt.Fprintf(output, "// Set%s safely sets the value for global configuration '%s' field\n", field.Name, field.Name)
 			fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", field.Name, field.Type.String())
 		}
-		output.Close()
+		_ = output.Close()
 		_ = exec.Command("gofmt", "-w", out).Run()
 
 	// The plain here is that eventually we might be able
