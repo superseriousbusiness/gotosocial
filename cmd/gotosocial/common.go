@@ -43,12 +43,12 @@ type preRunArgs struct {
 // of the config file from the viper store so that it can be picked up by either
 // env vars or cli flag.
 func preRun(a preRunArgs) error {
-	if err := config.InitViper(a.cmd.Flags()); err != nil {
-		return fmt.Errorf("error initializing viper: %s", err)
+	if err := config.BindFlags(a.cmd); err != nil {
+		return fmt.Errorf("error binding flags: %s", err)
 	}
 
-	if err := config.ReadFromFile(); err != nil {
-		return fmt.Errorf("error initializing config: %s", err)
+	if err := config.Reload(); err != nil {
+		return fmt.Errorf("error reloading config: %s", err)
 	}
 
 	if !a.skipValidation {

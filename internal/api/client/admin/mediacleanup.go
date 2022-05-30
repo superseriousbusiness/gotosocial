@@ -24,7 +24,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -93,7 +92,7 @@ func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 
 	var remoteCacheDays int
 	if form.RemoteCacheDays == nil {
-		remoteCacheDays = viper.GetInt(config.Keys.MediaRemoteCacheDays)
+		remoteCacheDays = config.GetMediaRemoteCacheDays()
 	} else {
 		remoteCacheDays = *form.RemoteCacheDays
 	}

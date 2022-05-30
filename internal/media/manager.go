@@ -26,7 +26,6 @@ import (
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -212,7 +211,7 @@ func scheduleCleanupJobs(m *manager) error {
 	}
 
 	// start remote cache cleanup cronjob if configured
-	if mediaRemoteCacheDays := viper.GetInt(config.Keys.MediaRemoteCacheDays); mediaRemoteCacheDays > 0 {
+	if mediaRemoteCacheDays := config.GetMediaRemoteCacheDays(); mediaRemoteCacheDays > 0 {
 		if _, err := c.AddFunc("@midnight", func() {
 			begin := time.Now()
 			pruned, err := m.PruneAllRemote(pruneCtx, mediaRemoteCacheDays)

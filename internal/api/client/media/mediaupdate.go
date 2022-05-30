@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -141,9 +140,8 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 }
 
 func validateUpdateMedia(form *model.AttachmentUpdateRequest) error {
-	keys := config.Keys
-	minDescriptionChars := viper.GetInt(keys.MediaDescriptionMinChars)
-	maxDescriptionChars := viper.GetInt(keys.MediaDescriptionMaxChars)
+	minDescriptionChars := config.GetMediaDescriptionMinChars()
+	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
 
 	if form.Description != nil {
 		if len(*form.Description) < minDescriptionChars || len(*form.Description) > maxDescriptionChars {

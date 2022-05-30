@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -133,11 +132,10 @@ func validateCreateMedia(form *model.AttachmentRequest) error {
 		return errors.New("no attachment given")
 	}
 
-	keys := config.Keys
-	maxVideoSize := viper.GetInt(keys.MediaVideoMaxSize)
-	maxImageSize := viper.GetInt(keys.MediaImageMaxSize)
-	minDescriptionChars := viper.GetInt(keys.MediaDescriptionMinChars)
-	maxDescriptionChars := viper.GetInt(keys.MediaDescriptionMaxChars)
+	maxVideoSize := config.GetMediaVideoMaxSize()
+	maxImageSize := config.GetMediaImageMaxSize()
+	minDescriptionChars := config.GetMediaDescriptionMinChars()
+	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
 
 	// a very superficial check to see if no size limits are exceeded
 	// we still don't actually know which media types we're dealing with but the other handlers will go into more detail there

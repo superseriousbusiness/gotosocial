@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // Validate validates global config settings which don't have defaults, to make sure they are set sensibly.
@@ -32,22 +31,21 @@ func Validate() error {
 	errs := []error{}
 
 	// host
-	if viper.GetString(Keys.Host) == "" {
-		errs = append(errs, fmt.Errorf("%s must be set", Keys.Host))
+	if GetHost() == "" {
+		errs = append(errs, fmt.Errorf("%s must be set", HostFlag()))
 	}
 
 	// protocol
-	protocol := viper.GetString(Keys.Protocol)
-	switch protocol {
+	switch proto := GetProtocol(); proto {
 	case "https":
 		// no problem
 		break
 	case "http":
-		logrus.Warnf("%s was set to 'http'; this should *only* be used for debugging and tests!", Keys.Protocol)
+		logrus.Warnf("%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
 	case "":
-		errs = append(errs, fmt.Errorf("%s must be set", Keys.Protocol))
+		errs = append(errs, fmt.Errorf("%s must be set", ProtocolFlag()))
 	default:
-		errs = append(errs, fmt.Errorf("%s must be set to either http or https, provided value was %s", Keys.Protocol, protocol))
+		errs = append(errs, fmt.Errorf("%s must be set to either http or https, provided value was %s", ProtocolFlag(), proto))
 	}
 
 	if len(errs) > 0 {

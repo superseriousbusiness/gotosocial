@@ -27,7 +27,6 @@ import (
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"golang.org/x/crypto/acme/autocert"
@@ -70,16 +69,12 @@ func (r *router) AttachStaticFS(relativePath string, fs http.FileSystem) {
 
 // Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
 func (r *router) Start() {
-	var (
-		keys = config.Keys
+	// listen is the server start function, by
+	// default pointing to regular HTTP listener,
+	// but updated to TLS if LetsEncrypt is enabled.
+	listen := r.srv.ListenAndServe
 
-		// listen is the server start function, by
-		// default pointing to regular HTTP listener,
-		// but updated to TLS if LetsEncrypt is enabled.
-		listen = r.srv.ListenAndServe
-	)
-
-	if viper.GetBool(keys.LetsEncryptEnabled) {
+	if config.GetLetsEncryptEnabled() {
 		// LetsEncrypt support is enabled
 
 		// Prepare an HTTPS-redirect handler for LetsEncrypt fallback
@@ -97,8 +92,8 @@ func (r *router) Start() {
 			srv := (*r.srv) //nolint
 			srv.Handler = r.certManager.HTTPHandler(redirect)
 			srv.Addr = fmt.Sprintf("%s:%d",
-				viper.GetString(keys.BindAddress),
-				viper.GetInt(keys.LetsEncryptPort),
+				config.GetBindAddress(),
+				config.GetLetsEncryptPort(),
 			)
 
 			// Start the LetsEncrypt autocert manager HTTP server.
@@ -144,8 +139,6 @@ func (r *router) Stop(ctx context.Context) error {
 // The given DB is only used in the New function for parsing config values, and is not otherwise
 // pinned to the router.
 func New(ctx context.Context, db db.DB) (Router, error) {
-	keys := config.Keys
-
 	gin.SetMode(gin.ReleaseMode)
 
 	// create the actual engine here -- this is the core request routing handler for gts
@@ -158,7 +151,7 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	engine.MaxMultipartMemory = 8 << 20
 
 	// set up IP forwarding via x-forward-* headers.
-	trustedProxies := viper.GetStringSlice(keys.TrustedProxies)
+	trustedProxies := config.GetTrustedProxies()
 	if err := engine.SetTrustedProxies(trustedProxies); err != nil {
 		return nil, err
 	}
@@ -187,8 +180,8 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 	}
 
 	// create the http server here, passing the gin engine as handler
-	bindAddress := viper.GetString(keys.BindAddress)
-	port := viper.GetInt(keys.Port)
+	bindAddress := config.GetBindAddress()
+	port := config.GetPort()
 	listen := fmt.Sprintf("%s:%d", bindAddress, port)
 	s := &http.Server{
 		Addr:              listen,
@@ -201,14 +194,14 @@ func New(ctx context.Context, db db.DB) (Router, error) {
 
 	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
 	// In either case, the gin engine will still be used for routing requests.
-	leEnabled := viper.GetBool(keys.LetsEncryptEnabled)
+	leEnabled := config.GetLetsEncryptEnabled()
 
 	var m *autocert.Manager
 	if leEnabled {
 		// le IS enabled, so roll up an autocert manager for handling letsencrypt requests
-		host := viper.GetString(keys.Host)
-		leCertDir := viper.GetString(keys.LetsEncryptCertDir)
-		leEmailAddress := viper.GetString(keys.LetsEncryptEmailAddress)
+		host := config.GetHost()
+		leCertDir := config.GetLetsEncryptCertDir()
+		leEmailAddress := config.GetLetsEncryptEmailAddress()
 		m = &autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(host),

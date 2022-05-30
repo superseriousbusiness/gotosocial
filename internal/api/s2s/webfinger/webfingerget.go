@@ -26,7 +26,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
@@ -90,8 +89,8 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	accountDomain := viper.GetString(config.Keys.AccountDomain)
-	host := viper.GetString(config.Keys.Host)
+	accountDomain := config.GetAccountDomain()
+	host := config.GetHost()
 
 	if requestedAccountDomain != accountDomain && requestedAccountDomain != host {
 		l.Debugf("aborting request because accountDomain %s does not belong to this instance", requestedAccountDomain)

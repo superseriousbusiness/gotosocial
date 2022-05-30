@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"golang.org/x/oauth2"
 )
@@ -56,36 +55,33 @@ type idp struct {
 // is set to false, then nil, nil will be returned. If OIDCConfig.Enabled is true,
 // then the other OIDC config fields must also be set.
 func NewIDP(ctx context.Context) (IDP, error) {
-	keys := config.Keys
-
-	oidcEnabled := viper.GetBool(keys.OIDCEnabled)
-	if !oidcEnabled {
+	if !config.GetOIDCEnabled() {
 		// oidc isn't enabled so we don't need to do anything
 		return nil, nil
 	}
 
 	// validate config fields
-	idpName := viper.GetString(keys.OIDCIdpName)
+	idpName := config.GetOIDCIdpName()
 	if idpName == "" {
 		return nil, fmt.Errorf("not set: IDPName")
 	}
 
-	issuer := viper.GetString(keys.OIDCIssuer)
+	issuer := config.GetOIDCIssuer()
 	if issuer == "" {
 		return nil, fmt.Errorf("not set: Issuer")
 	}
 
-	clientID := viper.GetString(keys.OIDCClientID)
+	clientID := config.GetOIDCClientID()
 	if clientID == "" {
 		return nil, fmt.Errorf("not set: ClientID")
 	}
 
-	clientSecret := viper.GetString(keys.OIDCClientSecret)
+	clientSecret := config.GetOIDCClientSecret()
 	if clientSecret == "" {
 		return nil, fmt.Errorf("not set: ClientSecret")
 	}
 
-	scopes := viper.GetStringSlice(keys.OIDCScopes)
+	scopes := config.GetOIDCScopes()
 	if len(scopes) == 0 {
 		return nil, fmt.Errorf("not set: Scopes")
 	}
@@ -95,8 +91,8 @@ func NewIDP(ctx context.Context) (IDP, error) {
 		return nil, err
 	}
 
-	protocol := viper.GetString(keys.Protocol)
-	host := viper.GetString(keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 
 	oauth2Config := oauth2.Config{
 		// client_id and client_secret of the client.
@@ -120,8 +116,7 @@ func NewIDP(ctx context.Context) (IDP, error) {
 		ClientID: clientID,
 	}
 
-	skipVerification := viper.GetBool(keys.OIDCSkipVerification)
-	if skipVerification {
+	if config.GetOIDCSkipVerification() {
 		oidcConf.SkipClientIDCheck = true
 		oidcConf.SkipExpiryCheck = true
 		oidcConf.SkipIssuerCheck = true

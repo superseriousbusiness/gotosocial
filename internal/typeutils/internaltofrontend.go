@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -575,9 +574,7 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 	}
 
 	// if the requested instance is *this* instance, we can add some extra information
-	keys := config.Keys
-	host := viper.GetString(keys.Host)
-	if i.Domain == host {
+	if host := config.GetHost(); i.Domain == host {
 		userCount, err := c.db.CountInstanceUsers(ctx, host)
 		if err == nil {
 			mi.Stats["user_count"] = userCount
@@ -593,14 +590,14 @@ func (c *converter) InstanceToAPIInstance(ctx context.Context, i *gtsmodel.Insta
 			mi.Stats["domain_count"] = domainCount
 		}
 
-		mi.Registrations = viper.GetBool(keys.AccountsRegistrationOpen)
-		mi.ApprovalRequired = viper.GetBool(keys.AccountsApprovalRequired)
+		mi.Registrations = config.GetAccountsRegistrationOpen()
+		mi.ApprovalRequired = config.GetAccountsApprovalRequired()
 		mi.InvitesEnabled = false // TODO
-		mi.MaxTootChars = uint(viper.GetInt(keys.StatusesMaxChars))
+		mi.MaxTootChars = uint(config.GetStatusesMaxChars())
 		mi.URLS = &model.InstanceURLs{
 			StreamingAPI: fmt.Sprintf("wss://%s", host),
 		}
-		mi.Version = viper.GetString(keys.SoftwareVersion)
+		mi.Version = config.GetSoftwareVersion()
 	}
 
 	// get the instance account if it exists and just skip if it doesn't

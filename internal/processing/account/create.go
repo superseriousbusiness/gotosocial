@@ -23,7 +23,6 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -53,9 +52,8 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 		return nil, fmt.Errorf("username %s in use", form.Username)
 	}
 
-	keys := config.Keys
-	reasonRequired := viper.GetBool(keys.AccountsReasonRequired)
-	approvalRequired := viper.GetBool(keys.AccountsApprovalRequired)
+	reasonRequired := config.GetAccountsReasonRequired()
+	approvalRequired := config.GetAccountsApprovalRequired()
 
 	// don't store a reason if we don't require one
 	reason := form.Reason

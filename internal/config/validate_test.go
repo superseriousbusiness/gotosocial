@@ -21,7 +21,6 @@ package config_test
 import (
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -41,7 +40,7 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigOK() {
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoHost() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.Host, "")
+	config.SetHost("")
 
 	err := config.Validate()
 	suite.EqualError(err, "host must be set")
@@ -50,7 +49,7 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoHost() {
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocol() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.Protocol, "")
+	config.SetProtocol("")
 
 	err := config.Validate()
 	suite.EqualError(err, "protocol must be set")
@@ -59,8 +58,8 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocol() {
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocolOrHost() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.Host, "")
-	viper.Set(config.Keys.Protocol, "")
+	config.SetHost("")
+	config.SetProtocol("")
 
 	err := config.Validate()
 	suite.EqualError(err, "host must be set; protocol must be set")
@@ -69,7 +68,7 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocolOrHost() {
 func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocol() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.Protocol, "foo")
+	config.SetProtocol("foo")
 
 	err := config.Validate()
 	suite.EqualError(err, "protocol must be set to either http or https, provided value was foo")
@@ -78,8 +77,8 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocol() {
 func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocolNoHost() {
 	testrig.InitTestConfig()
 
-	viper.Set(config.Keys.Host, "")
-	viper.Set(config.Keys.Protocol, "foo")
+	config.SetHost("")
+	config.SetProtocol("foo")
 
 	err := config.Validate()
 	suite.EqualError(err, "host must be set; protocol must be set to either http or https, provided value was foo")

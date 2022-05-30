@@ -23,7 +23,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -45,7 +44,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -25,7 +25,6 @@ import (
 	"mime/multipart"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -142,7 +141,7 @@ func (p *processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new avatar image.
 func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
-	maxImageSize := viper.GetInt(config.Keys.MediaImageMaxSize)
+	maxImageSize := config.GetMediaImageMaxSize()
 	if int(avatar.Size) > maxImageSize {
 		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
 	}
@@ -169,7 +168,7 @@ func (p *processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHead
 // parsing and checking the image, and doing the necessary updates in the database for this to become
 // the account's new header image.
 func (p *processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, accountID string) (*gtsmodel.MediaAttachment, error) {
-	maxImageSize := viper.GetInt(config.Keys.MediaImageMaxSize)
+	maxImageSize := config.GetMediaImageMaxSize()
 	if int(header.Size) > maxImageSize {
 		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
 	}

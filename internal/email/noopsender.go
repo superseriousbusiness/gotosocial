@@ -23,7 +23,6 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -32,7 +31,7 @@ import (
 //
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
 func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
-	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
+	templateBaseDir := config.GetWebTemplateBaseDir()
 
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {

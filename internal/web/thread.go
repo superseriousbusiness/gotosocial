@@ -23,7 +23,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -57,7 +56,7 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	instance, err := m.processor.InstanceGet(ctx, host)
 	if err != nil {
 		l.Debugf("error getting instance from processor: %s", err)

@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/flag"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -40,7 +39,7 @@ func adminCommands() *cobra.Command {
 		Use:   "account",
 		Short: "admin commands related to accounts",
 	}
-	flag.AdminAccount(adminAccountCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountCmd)
 
 	adminAccountCreateCmd := &cobra.Command{
 		Use:   "create",
@@ -52,7 +51,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Create)
 		},
 	}
-	flag.AdminAccountCreate(adminAccountCreateCmd, config.Defaults)
+	config.AddAdminAccountCreate(adminAccountCreateCmd)
 	adminAccountCmd.AddCommand(adminAccountCreateCmd)
 
 	adminAccountConfirmCmd := &cobra.Command{
@@ -65,7 +64,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Confirm)
 		},
 	}
-	flag.AdminAccount(adminAccountConfirmCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountConfirmCmd)
 	adminAccountCmd.AddCommand(adminAccountConfirmCmd)
 
 	adminAccountPromoteCmd := &cobra.Command{
@@ -78,7 +77,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Promote)
 		},
 	}
-	flag.AdminAccount(adminAccountPromoteCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountPromoteCmd)
 	adminAccountCmd.AddCommand(adminAccountPromoteCmd)
 
 	adminAccountDemoteCmd := &cobra.Command{
@@ -91,7 +90,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Demote)
 		},
 	}
-	flag.AdminAccount(adminAccountDemoteCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountDemoteCmd)
 	adminAccountCmd.AddCommand(adminAccountDemoteCmd)
 
 	adminAccountDisableCmd := &cobra.Command{
@@ -104,7 +103,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Disable)
 		},
 	}
-	flag.AdminAccount(adminAccountDisableCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountDisableCmd)
 	adminAccountCmd.AddCommand(adminAccountDisableCmd)
 
 	adminAccountSuspendCmd := &cobra.Command{
@@ -117,7 +116,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Suspend)
 		},
 	}
-	flag.AdminAccount(adminAccountSuspendCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountSuspendCmd)
 	adminAccountCmd.AddCommand(adminAccountSuspendCmd)
 
 	adminAccountPasswordCmd := &cobra.Command{
@@ -130,7 +129,8 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), account.Password)
 		},
 	}
-	flag.AdminAccountPassword(adminAccountPasswordCmd, config.Defaults)
+	config.AddAdminAccount(adminAccountPasswordCmd)
+	config.AddAdminAccountPassword(adminAccountPasswordCmd)
 	adminAccountCmd.AddCommand(adminAccountPasswordCmd)
 
 	adminCmd.AddCommand(adminAccountCmd)
@@ -149,7 +149,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), trans.Export)
 		},
 	}
-	flag.AdminTrans(adminExportCmd, config.Defaults)
+	config.AddAdminTrans(adminExportCmd)
 	adminCmd.AddCommand(adminExportCmd)
 
 	adminImportCmd := &cobra.Command{
@@ -162,7 +162,7 @@ func adminCommands() *cobra.Command {
 			return run(cmd.Context(), trans.Import)
 		},
 	}
-	flag.AdminTrans(adminImportCmd, config.Defaults)
+	config.AddAdminTrans(adminImportCmd)
 	adminCmd.AddCommand(adminImportCmd)
 
 	return adminCmd

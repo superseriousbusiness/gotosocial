@@ -26,16 +26,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // LoadTemplates loads html templates for use by the given engine
 func loadTemplates(engine *gin.Engine) error {
-	templateBaseDir := viper.GetString(config.Keys.WebTemplateBaseDir)
+	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
-		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.Keys.WebTemplateBaseDir)
+		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebTemplateBaseDirFlag())
 	}
 
 	templateBaseDir, err := filepath.Abs(templateBaseDir)

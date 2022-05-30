@@ -27,7 +27,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -52,7 +51,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	instance, errWithCode := m.processor.InstanceGet(ctx, viper.GetString(config.Keys.Host))
+	instance, errWithCode := m.processor.InstanceGet(ctx, config.GetHost())
 	if errWithCode != nil {
 		l.Debugf("error getting instance from processor: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

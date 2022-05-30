@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,7 +40,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -49,7 +48,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	email := viper.GetString(config.Keys.AdminAccountEmail)
+	email := config.GetAdminAccountEmail()
 	if email == "" {
 		return errors.New("no email set")
 	}
@@ -57,7 +56,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	password := viper.GetString(config.Keys.AdminAccountPassword)
+	password := config.GetAdminAccountPassword()
 	if password == "" {
 		return errors.New("no password set")
 	}
@@ -80,7 +79,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -115,7 +114,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -147,7 +146,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -179,7 +178,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -217,7 +216,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	username := viper.GetString(config.Keys.AdminAccountUsername)
+	username := config.GetAdminAccountUsername()
 	if username == "" {
 		return errors.New("no username set")
 	}
@@ -225,7 +224,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	password := viper.GetString(config.Keys.AdminAccountPassword)
+	password := config.GetAdminAccountPassword()
 	if password == "" {
 		return errors.New("no password set")
 	}

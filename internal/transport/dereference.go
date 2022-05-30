@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -33,7 +32,7 @@ import (
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
 	// if the request is to us, we can shortcut for certain URIs rather than going through
 	// the normal request flow, thereby saving time and energy
-	if iri.Host == viper.GetString(config.Keys.Host) {
+	if iri.Host == config.GetHost() {
 		if uris.IsFollowersPath(iri) {
 			// the request is for followers of one of our accounts, which we can shortcut
 			return t.controller.dereferenceLocalFollowers(ctx, iri)

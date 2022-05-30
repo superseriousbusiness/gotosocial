@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -40,8 +39,8 @@ var (
 )
 
 func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (*apimodel.WellKnownResponse, gtserror.WithCode) {
-	protocol := viper.GetString(config.Keys.Protocol)
-	host := viper.GetString(config.Keys.Host)
+	protocol := config.GetProtocol()
+	host := config.GetHost()
 
 	return &apimodel.WellKnownResponse{
 		Links: []apimodel.Link{
@@ -54,8 +53,8 @@ func (p *processor) GetNodeInfoRel(ctx context.Context, request *http.Request) (
 }
 
 func (p *processor) GetNodeInfo(ctx context.Context, request *http.Request) (*apimodel.Nodeinfo, gtserror.WithCode) {
-	openRegistration := viper.GetBool(config.Keys.AccountsRegistrationOpen)
-	softwareVersion := viper.GetString(config.Keys.SoftwareVersion)
+	openRegistration := config.GetAccountsRegistrationOpen()
+	softwareVersion := config.GetSoftwareVersion()
 
 	return &apimodel.Nodeinfo{
 		Version: nodeInfoVersion,

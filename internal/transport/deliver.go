@@ -27,7 +27,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -69,7 +68,7 @@ outer:
 
 func (t *transport) Deliver(ctx context.Context, b []byte, to *url.URL) error {
 	// if the 'to' host is our own, just skip this delivery since we by definition already have the message!
-	if to.Host == viper.GetString(config.Keys.Host) || to.Host == viper.GetString(config.Keys.AccountDomain) {
+	if to.Host == config.GetHost() || to.Host == config.GetAccountDomain() {
 		return nil
 	}
 

@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -166,8 +165,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
-	host := viper.GetString(config.Keys.Host)
-	if domain == host {
+	if domain == config.GetHost() {
 		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)

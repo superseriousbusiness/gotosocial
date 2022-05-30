@@ -27,7 +27,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/s2s/webfinger"
@@ -46,7 +45,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	// setup request
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
@@ -69,8 +68,9 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
-	viper.Set(config.Keys.Host, "gts.example.org")
-	viper.Set(config.Keys.AccountDomain, "example.org")
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.org")
+
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(suite.db, suite.storage), suite.storage, suite.db, suite.emailSender, clientWorker, fedWorker)
@@ -82,7 +82,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 	}
 
 	// setup request
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()
@@ -105,8 +105,9 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHo
 }
 
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAccountDomain() {
-	viper.Set(config.Keys.Host, "gts.example.org")
-	viper.Set(config.Keys.AccountDomain, "example.org")
+	config.SetHost("gts.example.org")
+	config.SetAccountDomain("example.org")
+
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 	suite.processor = processing.NewProcessor(suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(suite.db, suite.storage), suite.storage, suite.db, suite.emailSender, clientWorker, fedWorker)
@@ -118,7 +119,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByAc
 	}
 
 	// setup request
-	accountDomain := viper.GetString(config.Keys.AccountDomain)
+	accountDomain := config.GetAccountDomain()
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, accountDomain)
 
 	recorder := httptest.NewRecorder()
@@ -144,7 +145,7 @@ func (suite *WebfingerGetTestSuite) TestFingerUserWithoutAcct() {
 	targetAccount := suite.testAccounts["local_account_1"]
 
 	// setup request -- leave out the 'acct:' prefix, which is prettymuch what pixelfed currently does
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	requestPath := fmt.Sprintf("/%s?resource=%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, host)
 
 	recorder := httptest.NewRecorder()

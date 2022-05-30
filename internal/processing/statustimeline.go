@@ -25,7 +25,6 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -111,8 +110,8 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 		nextItemAccountID string,
 		nextItemBoostOfID string,
 		nextItemBoostOfAccountID string,
-		depth int) (bool, error) {
-
+		depth int,
+	) (bool, error) {
 		// make sure we don't insert a duplicate
 		if newItemID == nextItemID {
 			return true, nil
@@ -148,8 +147,8 @@ func (p *processor) packageStatusResponse(statuses []*apimodel.Status, path stri
 
 	// prepare the next and previous links
 	if len(statuses) != 0 {
-		protocol := viper.GetString(config.Keys.Protocol)
-		host := viper.GetString(config.Keys.Host)
+		protocol := config.GetProtocol()
+		host := config.GetHost()
 
 		nextLink := &url.URL{
 			Scheme:   protocol,

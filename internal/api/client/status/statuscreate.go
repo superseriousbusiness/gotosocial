@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -130,12 +129,11 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 		return errors.New("can't post media + poll in same status")
 	}
 
-	keys := config.Keys
-	maxChars := viper.GetInt(keys.StatusesMaxChars)
-	maxMediaFiles := viper.GetInt(keys.StatusesMediaMaxFiles)
-	maxPollOptions := viper.GetInt(keys.StatusesPollMaxOptions)
-	maxPollChars := viper.GetInt(keys.StatusesPollOptionMaxChars)
-	maxCwChars := viper.GetInt(keys.StatusesCWMaxChars)
+	maxChars := config.GetStatusesMaxChars()
+	maxMediaFiles := config.GetStatusesMediaMaxFiles()
+	maxPollOptions := config.GetStatusesPollMaxOptions()
+	maxPollChars := config.GetStatusesPollOptionMaxChars()
+	maxCwChars := config.GetStatusesCWMaxChars()
 
 	// validate status
 	if form.Status != "" {

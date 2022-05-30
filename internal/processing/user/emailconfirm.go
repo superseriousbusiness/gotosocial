@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -34,9 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-var (
-	oneWeek = 168 * time.Hour
-)
+var oneWeek = 168 * time.Hour
 
 func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, username string) error {
 	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
@@ -57,7 +54,7 @@ func (p *processor) SendConfirmEmail(ctx context.Context, user *gtsmodel.User, u
 
 	// pull our instance entry from the database so we can greet the user nicely in the email
 	instance := &gtsmodel.Instance{}
-	host := viper.GetString(config.Keys.Host)
+	host := config.GetHost()
 	if err := p.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
 		return fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
 	}

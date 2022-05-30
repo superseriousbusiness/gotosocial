@@ -21,7 +21,6 @@ package router_test
 import (
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -37,8 +36,8 @@ func (suite *SessionTestSuite) SetupTest() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
-	viper.Set(config.Keys.Protocol, "http")
-	viper.Set(config.Keys.Host, "localhost:8080")
+	config.SetProtocol("http")
+	config.SetHost("localhost:8080")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -46,8 +45,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhostWithPort() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
-	viper.Set(config.Keys.Protocol, "http")
-	viper.Set(config.Keys.Host, "localhost")
+	config.SetProtocol("http")
+	config.SetHost("localhost")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -55,8 +54,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNameLocalhost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
-	viper.Set(config.Keys.Protocol, "")
-	viper.Set(config.Keys.Host, "localhost")
+	config.SetProtocol("")
+	config.SetHost("localhost")
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "parse \"://localhost\": missing protocol scheme")
@@ -64,9 +63,9 @@ func (suite *SessionTestSuite) TestDeriveSessionNoProtocol() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
-	viper.Set(config.Keys.Protocol, "https")
-	viper.Set(config.Keys.Host, "")
-	viper.Set(config.Keys.Port, 0)
+	config.SetProtocol("https")
+	config.SetHost("")
+	config.SetPort(0)
 
 	sessionName, err := router.SessionName()
 	suite.EqualError(err, "could not derive hostname without port from https://")
@@ -74,8 +73,8 @@ func (suite *SessionTestSuite) TestDeriveSessionNoHost() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionOK() {
-	viper.Set(config.Keys.Protocol, "https")
-	viper.Set(config.Keys.Host, "example.org")
+	config.SetProtocol("https")
+	config.SetHost("example.org")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
@@ -83,8 +82,8 @@ func (suite *SessionTestSuite) TestDeriveSessionOK() {
 }
 
 func (suite *SessionTestSuite) TestDeriveSessionIDNOK() {
-	viper.Set(config.Keys.Protocol, "https")
-	viper.Set(config.Keys.Host, "fóid.org")
+	config.SetProtocol("https")
+	config.SetHost("fóid.org")
 
 	sessionName, err := router.SessionName()
 	suite.NoError(err)
