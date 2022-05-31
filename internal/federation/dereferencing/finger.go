@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (d *deref) fingerRemoteAccount(ctx context.Context, username string, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
@@ -58,7 +59,8 @@ func (d *deref) fingerRemoteAccount(ctx context.Context, username string, target
 		return
 	}
 
-	aaaaaaaaaaaaaaaaccountDomain
+	var username, accountDomain string
+	username, accountDomain, err = util.ExtractWebfingerParts(resp.Subject)
 
 	// look through the links for the first one that matches "application/activity+json", this is what we need
 	for _, l := range resp.Links {
