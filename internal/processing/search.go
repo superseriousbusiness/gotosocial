@@ -54,7 +54,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 
 	var foundOne bool
 	// check if the query is something like @whatever_username@example.org -- this means it's a remote account
-	if _, domain, err := util.ExtractMentionParts(searchQuery.Query); err == nil && domain != "" {
+	if _, domain, err := util.ExtractNamestringParts(searchQuery.Query); err == nil && domain != "" {
 		l.Debug("search term is a mention, looking it up...")
 		foundAccount, err := p.searchAccountByMention(ctx, authed, searchQuery.Query, searchQuery.Resolve)
 		if err == nil && foundAccount != nil {
@@ -158,7 +158,7 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, mention string, resolve bool) (*gtsmodel.Account, error) {
 	// query is for a remote account
-	username, domain, err := util.ExtractMentionParts(mention)
+	username, domain, err := util.ExtractNamestringParts(mention)
 	if err != nil {
 		return nil, fmt.Errorf("searchAccountByMention: error extracting mention parts: %s", err)
 	}

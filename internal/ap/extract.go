@@ -574,7 +574,7 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	}
 
 	// just make sure the mention string is valid so we can handle it properly later on...
-	_, _, err = util.ExtractMentionParts(mentionString)
+	_, _, err = util.ExtractNamestringParts(mentionString)
 	if err != nil {
 		return nil, err
 	}
