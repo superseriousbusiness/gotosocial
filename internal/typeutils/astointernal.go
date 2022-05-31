@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, update bool) (*gtsmodel.Account, error) {
+func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string, update bool) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
@@ -63,7 +63,11 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	acct.Username = username
 
 	// Domain
-	acct.Domain = uri.Host
+	if accountDomain != "" {
+		acct.Domain = accountDomain
+	} else {
+		acct.Domain = uri.Host
+	}
 
 	// avatar aka icon
 	// if this one isn't extractable in a format we recognise we'll just skip it
