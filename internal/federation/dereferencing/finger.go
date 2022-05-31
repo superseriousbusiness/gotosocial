@@ -59,19 +59,19 @@ func (d *deref) fingerRemoteAccount(ctx context.Context, username string, target
 		return
 	}
 
-	var username, accountDomain string
-	username, accountDomain, err = util.ExtractWebfingerParts(resp.Subject)
+	_, accountDomain, err = util.ExtractWebfingerParts(resp.Subject)
+	if err != nil {
+		err = fmt.Errorf("fingerRemoteAccount: error extracting webfinger subject parts: %s", err)
+	}
 
-	// look through the links for the first one that matches "application/activity+json", this is what we need
+	// look through the links for the first one that matches what we need
 	for _, l := range resp.Links {
-		if strings.EqualFold(l.Type, "application/activity+json") && l.Href != "" && l.Rel == "self" {
-			accountURI, err = url.Parse(l.Href)
-			if err != nil {
-				err = fmt.Errorf("fingerRemoteAccount: couldn't parse url %s: %s", l.Href, err)
+		if l.Rel == "self" && (strings.EqualFold(l.Type, "application/activity+json") || strings.EqualFold(l.Type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")) {
+			if uri, thiserr := url.Parse(l.Href); thiserr == nil && (uri.Scheme == "http" || uri.Scheme == "https") {
+				// found it!
+				accountURI = uri
 				return
 			}
-			// found it!
-			return
 		}
 	}
 
