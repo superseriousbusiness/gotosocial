@@ -26,6 +26,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -130,7 +131,11 @@ func (p *processor) processCreateStatusFromFederator(ctx context.Context, federa
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername: federatorMsg.ReceivingAccount.Username,
+			RemoteAccountID:    remoteAccountID,
+			Blocking:           true,
+		})
 		if err != nil {
 			return err
 		}
@@ -172,7 +177,11 @@ func (p *processor) processCreateFaveFromFederator(ctx context.Context, federato
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername: federatorMsg.ReceivingAccount.Username,
+			RemoteAccountID:    remoteAccountID,
+			Blocking:           true,
+		})
 		if err != nil {
 			return err
 		}
@@ -210,7 +219,11 @@ func (p *processor) processCreateFollowRequestFromFederator(ctx context.Context,
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername: federatorMsg.ReceivingAccount.Username,
+			RemoteAccountID:    remoteAccountID,
+			Blocking:           true,
+		})
 		if err != nil {
 			return err
 		}
@@ -267,7 +280,11 @@ func (p *processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 			return err
 		}
 
-		a, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, remoteAccountID, true, false)
+		a, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername: federatorMsg.ReceivingAccount.Username,
+			RemoteAccountID:    remoteAccountID,
+			Blocking:           true,
+		})
 		if err != nil {
 			return err
 		}
@@ -332,7 +349,11 @@ func (p *processor) processUpdateAccountFromFederator(ctx context.Context, feder
 		return err
 	}
 
-	if _, err := p.federator.GetRemoteAccount(ctx, federatorMsg.ReceivingAccount.Username, incomingAccountURL, false, true); err != nil {
+	if _, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		RequestingUsername: federatorMsg.ReceivingAccount.Username,
+		RemoteAccountID:    incomingAccountURL,
+		Blocking:           true,
+	}); err != nil {
 		return fmt.Errorf("error enriching updated account from federator: %s", err)
 	}
 

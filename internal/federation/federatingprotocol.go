@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -197,7 +198,10 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	requestingAccount, err := f.GetRemoteAccount(ctx, username, publicKeyOwnerURI, false, false)
+	requestingAccount, err := f.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+		RequestingUsername: username,
+		RemoteAccountID:    publicKeyOwnerURI,
+	})
 	if err != nil {
 		return nil, false, fmt.Errorf("couldn't get requesting account %s: %s", publicKeyOwnerURI, err)
 	}

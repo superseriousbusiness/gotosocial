@@ -85,7 +85,10 @@ func (d *deref) GetRemoteStatus(ctx context.Context, username string, remoteStat
 		return nil, nil, fmt.Errorf("GetRemoteStatus: error extracting attributedTo: %s", err)
 	}
 
-	_, err = d.GetRemoteAccount(ctx, username, accountURI, true, false)
+	_, err = d.GetRemoteAccount(ctx, GetRemoteAccountParams{
+		RequestingUsername: username,
+		RemoteAccountID:    accountURI,
+	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("GetRemoteStatus: couldn't get status author: %s", err)
 	}
@@ -316,7 +319,10 @@ func (d *deref) populateStatusMentions(ctx context.Context, status *gtsmodel.Sta
 		if targetAccount == nil {
 			// we didn't find the account in our database already
 			// check if we can get the account remotely (dereference it)
-			if a, err := d.GetRemoteAccount(ctx, requestingUsername, targetAccountURI, false, false); err != nil {
+			if a, err := d.GetRemoteAccount(ctx, GetRemoteAccountParams{
+				RequestingUsername: requestingUsername,
+				RemoteAccountID:    targetAccountURI,
+			}); err != nil {
 				errs = append(errs, err.Error())
 			} else {
 				logrus.Debugf("populateStatusMentions: got target account %s with id %s through GetRemoteAccount", targetAccountURI, a.ID)

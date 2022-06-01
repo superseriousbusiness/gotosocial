@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -52,7 +53,10 @@ func (p *processor) GetUser(ctx context.Context, requestedUsername string, reque
 
 		// if we're not already handshaking/dereferencing a remote account, dereference it now
 		if !p.federator.Handshaking(ctx, requestedUsername, requestingAccountURI) {
-			requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
+			requestingAccount, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+				RequestingUsername: requestedUsername,
+				RemoteAccountID:    requestingAccountURI,
+			})
 			if err != nil {
 				return nil, gtserror.NewErrorNotAuthorized(err)
 			}

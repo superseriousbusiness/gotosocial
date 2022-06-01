@@ -25,6 +25,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
@@ -105,25 +106,18 @@ func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.
 					return nil, fmt.Errorf("error getting account with username '%s' and domain '%s': %s", username, domain, err)
 				}
 
-				// We just don't have the account, so try webfingering it.
-				//
-				// If the mention originates from our instance we should use the username of the origin account to do the dereferencing,
-				// otherwise we should just use our instance account (that is, provide an empty string), since obviously we can't use
-				// a remote account to do remote dereferencing!
-				var fingeringUsername string
+				// We just don't have the account, so try getting it.
+				var requestingUsername string
 				if originAccount.Domain == "" {
-					fingeringUsername = originAccount.Username
+					requestingUsername = originAccount.Username
 				}
-
-				acctURI, err := federator.FingerRemoteAccount(ctx, fingeringUsername, username, domain)
+				resolvedAccount, err := federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+					RequestingUsername:    requestingUsername,
+					RemoteAccountUsername: username,
+					RemoteAccountHost:     domain,
+				})
 				if err != nil {
-					// something went wrong doing the webfinger lookup so we can't process the request
-					return nil, fmt.Errorf("error fingering remote account with username %s and domain %s: %s", username, domain, err)
-				}
-
-				resolvedAccount, err := federator.GetRemoteAccount(ctx, fingeringUsername, acctURI, true, true)
-				if err != nil {
-					return nil, fmt.Errorf("error dereferencing account with uri %s: %s", acctURI.String(), err)
+					return nil, fmt.Errorf("error dereferencing account: %s", err)
 				}
 
 				// we were able to resolve it!

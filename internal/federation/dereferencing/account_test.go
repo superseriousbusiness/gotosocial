@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -35,7 +36,10 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	groupURL := testrig.URLMustParse("https://unknown-instance.com/groups/some_group")
-	group, err := suite.dereferencer.GetRemoteAccount(context.Background(), fetchingAccount.Username, groupURL, false, false)
+	group, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername: fetchingAccount.Username,
+		RemoteAccountID:    groupURL,
+	})
 	suite.NoError(err)
 	suite.NotNil(group)
 	suite.NotNil(group)
@@ -55,7 +59,10 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	serviceURL := testrig.URLMustParse("https://owncast.example.org/federation/user/rgh")
-	service, err := suite.dereferencer.GetRemoteAccount(context.Background(), fetchingAccount.Username, serviceURL, false, false)
+	service, err := suite.dereferencer.GetRemoteAccount(context.Background(), dereferencing.GetRemoteAccountParams{
+		RequestingUsername: fetchingAccount.Username,
+		RemoteAccountID:    serviceURL,
+	})
 	suite.NoError(err)
 	suite.NotNil(service)
 	suite.NotNil(service)
@@ -69,6 +76,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	suite.NoError(err)
 	suite.Equal(service.ID, dbService.ID)
 	suite.Equal(ap.ActorService, dbService.ActorType)
+	suite.Equal("example.org", dbService.Domain)
 }
 
 func TestAccountTestSuite(t *testing.T) {

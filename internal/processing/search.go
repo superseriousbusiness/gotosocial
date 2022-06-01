@@ -28,6 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -147,7 +148,10 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 	if resolve {
 		// we don't have it locally so try and dereference it
-		account, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, uri, true, true)
+		account, err := p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername: authed.Account.Username,
+			RemoteAccountID:    uri,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByURI: error dereferencing account with uri %s: %s", uri.String(), err)
 		}
@@ -158,14 +162,14 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 
 func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, mention string, resolve bool) (*gtsmodel.Account, error) {
 	// query is for a remote account
-	username, domain, err := util.ExtractNamestringParts(mention)
+	username, host, err := util.ExtractNamestringParts(mention)
 	if err != nil {
 		return nil, fmt.Errorf("searchAccountByMention: error extracting mention parts: %s", err)
 	}
 
 	// if it's a local account we can skip a whole bunch of stuff
 	maybeAcct := &gtsmodel.Account{}
-	if domain == config.GetHost() {
+	if host == config.GetHost() {
 		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
@@ -176,7 +180,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	// it's not a local account so first we'll check if it's in the database already...
 	where := []db.Where{
 		{Key: "username", Value: username, CaseInsensitive: true},
-		{Key: "domain", Value: domain, CaseInsensitive: true},
+		{Key: "domain", Value: host, CaseInsensitive: true},
 	}
 	err = p.db.GetWhere(ctx, where, maybeAcct)
 	if err == nil {
@@ -191,22 +195,15 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 
 	// we got a db.ErrNoEntries, so we just don't have the account locally stored -- check if we can dereference it
 	if resolve {
-		// we're allowed to resolve it so let's try
-		// first we need to webfinger the remote account to convert the username and domain into the activitypub URI for the account
-		acctURI, err := p.federator.FingerRemoteAccount(ctx, authed.Account.Username, username, domain)
+		maybeAcct, err = p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
+			RequestingUsername:    authed.Account.Username,
+			RemoteAccountUsername: username,
+			RemoteAccountHost:     host,
+		})
 		if err != nil {
-			// something went wrong doing the webfinger lookup so we can't process the request
-			return nil, fmt.Errorf("error fingering remote account with username %s and domain %s: %s", username, domain, err)
+			return nil, fmt.Errorf("searchAccountByMention: error getting remote account: %s", err)
 		}
-
-		if acctURI.Scheme == "https" || acctURI.Scheme == "http" {
-			acct, err := p.federator.GetRemoteAccount(ctx, authed.Account.Username, acctURI, true, true)
-			if err != nil {
-				logrus.Debugf("could not get remote account by mention %s with uri %s: %s", mention, acctURI, err)
-				return nil, err
-			}
-			return acct, nil
-		}
+		return maybeAcct, nil
 	}
 
 	return nil, nil
