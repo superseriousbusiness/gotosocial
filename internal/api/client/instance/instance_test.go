@@ -85,7 +85,7 @@ func (suite *InstanceStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB()
 	suite.storage = testrig.NewTestStorage()
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)

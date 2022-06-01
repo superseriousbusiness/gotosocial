@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/concurrency"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -49,6 +50,18 @@ func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *conc
 	return transport.NewController(db, NewTestFederatingDB(db, fedWorker), &federation.Clock{}, client)
 }
 
+type MockHTTPClient struct {
+	do func(req *http.Request) (*http.Response, error)
+
+	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
+	testRemotePeople      map[string]vocab.ActivityStreamsPerson
+	testRemoteGroups      map[string]vocab.ActivityStreamsGroup
+	testRemoteServices    map[string]vocab.ActivityStreamsService
+	testRemoteAttachments map[string]RemoteAttachmentFile
+
+	
+}
+
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface.
 //
 // If do is nil, then a standard response set will be mocked out, which includes models stored in the
@@ -58,102 +71,105 @@ func NewTestTransportController(client pub.HttpClient, db db.DB, fedWorker *conc
 // to customize how the client is mocked.
 //
 // Note that you should never ever make ACTUAL http calls with this thing.
-func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error)) pub.HttpClient {
-	if do == nil {
-		do = func(req *http.Request) (*http.Response, error) {
-			responseCode := http.StatusNotFound
-			responseBytes := []byte(`{"error":"404 not found"}`)
-			responseContentType := "application/json"
-			responseContentLength := len(responseBytes)
+func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string) pub.HttpClient {
+	mockHttpClient := &MockHTTPClient{}
 
-			if strings.Contains(req.URL.String(), ".well-known/webfinger") {
-				responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
-			} else {
-				if note, ok := suite.testRemoteStatuses[req.URL.String()]; ok {
-					// the request is for a note that we have stored
-					noteI, err := streams.Serialize(note)
-					if err != nil {
-						panic(err)
-					}
-					noteJson, err := json.Marshal(noteI)
-					if err != nil {
-						panic(err)
-					}
-					responseBytes = noteJson
-					responseContentType = "application/activity+json"
-				}
+	if do != nil {
+		mockHttpClient.do = do
+		return mockHttpClient
+	}
 
-				if person, ok := suite.testRemotePeople[req.URL.String()]; ok {
-					// the request is for a person that we have stored
-					personI, err := streams.Serialize(person)
-					if err != nil {
-						panic(err)
-					}
-					personJson, err := json.Marshal(personI)
-					if err != nil {
-						panic(err)
-					}
-					responseBytes = personJson
-					responseContentType = "application/activity+json"
-				}
+	mockHttpClient.testRemoteStatuses = NewTestFediStatuses()
+	mockHttpClient.testRemotePeople = NewTestFediPeople()
+	mockHttpClient.testRemoteGroups = NewTestFediGroups()
+	mockHttpClient.testRemoteServices = NewTestFediServices()
+	mockHttpClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
 
-				if group, ok := suite.testRemoteGroups[req.URL.String()]; ok {
-					// the request is for a person that we have stored
-					groupI, err := streams.Serialize(group)
-					if err != nil {
-						panic(err)
-					}
-					groupJson, err := json.Marshal(groupI)
-					if err != nil {
-						panic(err)
-					}
-					responseBytes = groupJson
-					responseContentType = "application/activity+json"
-				}
+	mockHttpClient.do = func(req *http.Request) (*http.Response, error) {
+		responseCode := http.StatusNotFound
+		responseBytes := []byte(`{"error":"404 not found"}`)
+		responseContentType := "application/json"
+		responseContentLength := len(responseBytes)
 
-				if service, ok := suite.testRemoteServices[req.URL.String()]; ok {
-					serviceI, err := streams.Serialize(service)
-					if err != nil {
-						panic(err)
-					}
-					serviceJson, err := json.Marshal(serviceI)
-					if err != nil {
-						panic(err)
-					}
-					responseBytes = serviceJson
-					responseContentType = "application/activity+json"
-				}
-
-				if attachment, ok := suite.testRemoteAttachments[req.URL.String()]; ok {
-					responseBytes = attachment.Data
-					responseContentType = attachment.ContentType
-				}
+		if strings.Contains(req.URL.String(), ".well-known/webfinger") {
+			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+		} else if note, ok := mockHttpClient.testRemoteStatuses[req.URL.String()]; ok {
+			// the request is for a note that we have stored
+			noteI, err := streams.Serialize(note)
+			if err != nil {
+				panic(err)
 			}
-
-			logrus.Debugf("returning response %s", string(responseBytes))
-			reader := bytes.NewReader(responseBytes)
-			readCloser := io.NopCloser(reader)
-			return &http.Response{
-				StatusCode:    responseCode,
-				Body:          readCloser,
-				ContentLength: int64(responseContentLength),
-				Header: http.Header{
-					"content-type": {responseContentType},
-				},
-			}, nil
+			noteJson, err := json.Marshal(noteI)
+			if err != nil {
+				panic(err)
+			}
+			responseBytes = noteJson
+			responseContentType = "application/activity+json"
+		} else if person, ok := mockHttpClient.testRemotePeople[req.URL.String()]; ok {
+			// the request is for a person that we have stored
+			personI, err := streams.Serialize(person)
+			if err != nil {
+				panic(err)
+			}
+			personJson, err := json.Marshal(personI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = personJson
+			responseContentType = "application/activity+json"
+			responseContentLength = len(personJson)
+		} else if group, ok := mockHttpClient.testRemoteGroups[req.URL.String()]; ok {
+			// the request is for a person that we have stored
+			groupI, err := streams.Serialize(group)
+			if err != nil {
+				panic(err)
+			}
+			groupJson, err := json.Marshal(groupI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = groupJson
+			responseContentType = "application/activity+json"
+			responseContentLength = len(groupJson)
+		} else if service, ok := mockHttpClient.testRemoteServices[req.URL.String()]; ok {
+			serviceI, err := streams.Serialize(service)
+			if err != nil {
+				panic(err)
+			}
+			serviceJson, err := json.Marshal(serviceI)
+			if err != nil {
+				panic(err)
+			}
+			responseCode = http.StatusOK
+			responseBytes = serviceJson
+			responseContentType = "application/activity+json"
+			responseContentLength = len(serviceJson)
+		} else if attachment, ok := mockHttpClient.testRemoteAttachments[req.URL.String()]; ok {
+			responseCode = http.StatusOK
+			responseBytes = attachment.Data
+			responseContentType = attachment.ContentType
+			responseContentLength = len(attachment.Data)
 		}
+
+		logrus.Debugf("returning response %s", string(responseBytes))
+		reader := bytes.NewReader(responseBytes)
+		readCloser := io.NopCloser(reader)
+		return &http.Response{
+			StatusCode:    responseCode,
+			Body:          readCloser,
+			ContentLength: int64(responseContentLength),
+			Header: http.Header{
+				"content-type": {responseContentType},
+			},
+		}, nil
 	}
 
-	return &mockHTTPClient{
-		do: do,
-	}
+	return mockHttpClient
 }
 
-type mockHTTPClient struct {
-	do func(req *http.Request) (*http.Response, error)
-}
-
-func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.do(req)
 }
 

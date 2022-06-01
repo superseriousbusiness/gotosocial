@@ -85,7 +85,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}), dbService, fedWorker)
+	}, ""), dbService, fedWorker)
 	mediaManager := testrig.NewTestMediaManager(dbService, storageBackend)
 	federator := testrig.NewTestFederator(dbService, transportController, storageBackend, mediaManager, fedWorker)
 

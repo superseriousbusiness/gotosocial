@@ -89,7 +89,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 	suite.tc = testrig.NewTestTypeConverter(suite.db)
 	suite.mediaManager = testrig.NewTestMediaManager(suite.db, suite.storage)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
+	suite.federator = testrig.NewTestFederator(suite.db, testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, "../../../../testrig/media"), suite.db, fedWorker), suite.storage, suite.mediaManager, fedWorker)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(suite.db, suite.storage, suite.federator, suite.emailSender, suite.mediaManager, clientWorker, fedWorker)
 

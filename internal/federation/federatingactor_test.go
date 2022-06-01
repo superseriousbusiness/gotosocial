@@ -68,7 +68,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}), suite.db, fedWorker)
+	}, ""), suite.db, fedWorker)
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
@@ -123,7 +123,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	}), suite.db, fedWorker)
+	}, ""), suite.db, fedWorker)
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 

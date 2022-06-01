@@ -230,7 +230,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 			StatusCode: 200,
 			Body:       r,
 		}, nil
-	})
+	}, "")
 
 	clientWorker := concurrency.NewWorkerPool[messages.FromClientAPI](-1, -1)
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
