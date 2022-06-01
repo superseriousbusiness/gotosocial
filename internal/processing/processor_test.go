@@ -25,6 +25,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/stretchr/testify/suite"
@@ -116,6 +117,22 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 				panic(err)
 			}
 			suite.sentHTTPRequests[req.URL.String()] = requestBytes
+		}
+
+		if strings.Contains(req.URL.String(), ".well-known/webfinger") {
+			responseCode, responseBytes, responseContentType, responseContentLength := testrig.WebfingerResponse(req)
+			reader := bytes.NewReader(responseBytes)
+			readCloser := io.NopCloser(reader)
+
+			response := &http.Response{
+				StatusCode:    responseCode,
+				Body:          readCloser,
+				ContentLength: int64(responseContentLength),
+				Header: http.Header{
+					"content-type": {responseContentType},
+				},
+			}
+			return response, nil
 		}
 
 		if req.URL.String() == suite.testAccounts["remote_account_1"].URI {

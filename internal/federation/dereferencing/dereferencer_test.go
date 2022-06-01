@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"codeberg.org/gruf/go-store/kv"
 	"github.com/sirupsen/logrus"
@@ -83,8 +84,9 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 		logrus.Debugf("received request for %s", req.URL)
 
 		responseBytes := []byte{}
-		responseType := ""
-		responseLength := 0
+		responseContentType := ""
+		responseContentLength := 0
+		responseCode := http.StatusOK
 
 		if note, ok := suite.testRemoteStatuses[req.URL.String()]; ok {
 			// the request is for a note that we have stored
@@ -97,7 +99,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 				panic(err)
 			}
 			responseBytes = noteJson
-			responseType = "application/activity+json"
+			responseContentType = "application/activity+json"
 		}
 
 		if person, ok := suite.testRemotePeople[req.URL.String()]; ok {
@@ -111,7 +113,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 				panic(err)
 			}
 			responseBytes = personJson
-			responseType = "application/activity+json"
+			responseContentType = "application/activity+json"
 		}
 
 		if group, ok := suite.testRemoteGroups[req.URL.String()]; ok {
@@ -125,7 +127,7 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 				panic(err)
 			}
 			responseBytes = groupJson
-			responseType = "application/activity+json"
+			responseContentType = "application/activity+json"
 		}
 
 		if service, ok := suite.testRemoteServices[req.URL.String()]; ok {
@@ -138,28 +140,32 @@ func (suite *DereferencerStandardTestSuite) mockTransportController() transport.
 				panic(err)
 			}
 			responseBytes = serviceJson
-			responseType = "application/activity+json"
+			responseContentType = "application/activity+json"
 		}
 
 		if attachment, ok := suite.testRemoteAttachments[req.URL.String()]; ok {
 			responseBytes = attachment.Data
-			responseType = attachment.ContentType
+			responseContentType = attachment.ContentType
+		}
+
+		if strings.Contains(req.URL.String(), ".well-known/webfinger") {
+			responseCode, responseBytes, responseContentType, _ = testrig.WebfingerResponse(req)
 		}
 
 		if len(responseBytes) != 0 {
 			// we found something, so print what we're going to return
 			logrus.Debugf("returning response %s", string(responseBytes))
 		}
-		responseLength = len(responseBytes)
+		responseContentLength = len(responseBytes)
 
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
 		response := &http.Response{
-			StatusCode:    200,
+			StatusCode:    responseCode,
 			Body:          readCloser,
-			ContentLength: int64(responseLength),
+			ContentLength: int64(responseContentLength),
 			Header: http.Header{
-				"content-type": {responseType},
+				"content-type": {responseContentType},
 			},
 		}
 
