@@ -68,7 +68,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 
 	requestedUsername, requestedHost, err := util.ExtractWebfingerParts(resourceQuery)
 	if err != nil {
-		l.Debug("bad webfinger request with resource query %s: %s", resourceQuery, err)
+		l.Debugf("bad webfinger request with resource query %s: %s", resourceQuery, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("bad webfinger request with resource query %s", resourceQuery)})
 		return
 	}
