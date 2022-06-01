@@ -67,17 +67,13 @@ type GetRemoteAccountParams struct {
 	// If false, then the account's media and other fields will be dereferenced in the background,
 	// so only a minimal account representation will be returned by GetRemoteAccount.
 	Blocking bool
-	// Whether to refresh the account by performing dereferencing all over again.
-	// If true, the account will be updated and returned.
-	// If false, and the account already exists in the database, then that will be returned instead.
-	Refresh bool
 }
 
 func (d *deref) populateAccountBeforeReturn(ctx context.Context, params GetRemoteAccountParams, remoteAccount *gtsmodel.Account) (*gtsmodel.Account, error) {
 	// make sure the account fields are populated before returning:
 	// even if we're not doing a refresh, the caller might want to block
 	// until everything is loaded
-	changed, err := d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Refresh, params.Blocking)
+	changed, err := d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, false, params.Blocking)
 	if err != nil {
 		return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
 	}
@@ -94,106 +90,84 @@ func (d *deref) populateAccountBeforeReturn(ctx context.Context, params GetRemot
 
 // GetRemoteAccount completely dereferences a remote account, converts it to a GtS model account,
 // puts or updates it in the database (if necessary), and returns it to a caller.
-//
-// It will try to make as few remote calls as possible, unless 'Refresh' is set to true in params.
 func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountParams) (remoteAccount *gtsmodel.Account, err error) {
-	var new = true
+
+	/*
+		In this function we want to retrieve a gtsmodel representation of a remote account, with its proper
+		accountDomain set, while making as few calls to remote instances as possible to save time and bandwidth.
+
+		There are a few different paths through this function, and the path taken depends on how much
+		initial information we are provided with via parameters, and how much information we already have stored.
+	*/
+
 	var accountDomain string
 	var accountable ap.Accountable
 
-	if params.RemoteAccountID == nil {
-		if params.RemoteAccountUsername == "" || params.RemoteAccountHost == "" {
-			err = errors.New("GetRemoteAccount: RemoteAccountID wasn't set, and RemoteAccountUsername/RemoteAccountHost weren't set either, so a lookup couldn't be performed")
+	if params.RemoteAccountID == nil && (params.RemoteAccountUsername == "" || params.RemoteAccountHost == "") {
+		err = errors.New("GetRemoteAccount: no identifying parameters were set so we cannot dereference account")
+		return
+	}
+
+	if params.RemoteAccountUsername == "" || params.RemoteAccountHost == "" {
+		accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
+		if err != nil {
+			err = fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
 			return
 		}
 
-		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
+		params.RemoteAccountHost = params.RemoteAccountID.Host
+		params.RemoteAccountUsername, err = ap.ExtractPreferredUsername(accountable)
 		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
+			err = fmt.Errorf("GetRemoteAccount: error extracting accountable username: %s", err)
 			return
 		}
 	}
 
-	// if we reach here then params.RemoteAccountID must be set,
+	// if we reach this point, params.RemoteAccountHost and params.RemoteAccountUsername must be set
+	// params.RemoteAccountID may or may not be set, but we have enough information to fetch it again in any case
+	accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
+	if err != nil {
+		err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
+		return
+	}
+
+	// if we reach here then all params must now be set,
 	// either in original params or through fingering
 
-	// see if we have this account stored already
+	// see if we have this account stored already and just return it if so
 	if a, dbErr := d.db.GetAccountByURI(ctx, params.RemoteAccountID.String()); dbErr == nil {
-		new = false
-		remoteAccount = a
-		if !params.Refresh {
-			// found it and no need to go any further
-			remoteAccount, err = d.populateAccountBeforeReturn(ctx, params, remoteAccount)
-			return
-		}
+		remoteAccount, err = d.populateAccountBeforeReturn(ctx, params, a)
+		return
 	}
 
-	// if we reach here then
-
-	if params.RemoteAccountID != nil && (params.RemoteAccountUsername != "" && params.RemoteAccountHost != "") {
-		// scenario 2: all three things are defined, do a webfinger lookup just for the accountDomain
-		accountDomain, _, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
-		if err != nil {
-			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
-			return
-		}
-	} else if params.RemoteAccountID != nil && (params.RemoteAccountUsername == "" || params.RemoteAccountHost == "") {
-		// scenario 3: remote account ID is defined but nothing else is
-		return nil, errors.New("GetRemoteAccount: RemoteAccountID wasn't set, and RemoteAccountUsername/RemoteAccountHost weren't set either, so a lookup couldn't be performed")
-	} else
-
-	// check if we already have the account in our db, and just return it unless we'd doing a refresh
-	if params.RemoteAccountID != nil {
-
-	}
-
-	if new {
-		// we haven't seen this account before: dereference it from remote and store it in the database
-		if accountable == nil {
-			accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
-			if err != nil {
-				return nil, fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
-			}
-		}
-
-		newAccount, err := d.typeConverter.ASRepresentationToAccount(ctx, accountable, accountDomain, params.Refresh)
-		if err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error converting accountable to account: %s", err)
-		}
-
-		ulid, err := id.NewRandomULID()
-		if err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error generating new id for account: %s", err)
-		}
-		newAccount.ID = ulid
-
-		if _, err := d.populateAccountFields(ctx, newAccount, params.RequestingUsername, params.Refresh, params.Blocking); err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error populating further account fields: %s", err)
-		}
-
-		if err := d.db.Put(ctx, newAccount); err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
-		}
-
-		return newAccount, nil
-	}
-
-	// we have seen this account before, but we have to refresh it
+	// if we reach here then  we haven't seen this account before: dereference it from remote (f we haven't already)
 	if accountable == nil {
-		accountable, err = d.dereferenceAccountable(ctx, username, remoteAccountID)
+		accountable, err = d.dereferenceAccountable(ctx, params.RequestingUsername, params.RemoteAccountID)
 		if err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error dereferencing refreshedAccountable: %s", err)
+			return nil, fmt.Errorf("GetRemoteAccount: error dereferencing accountable: %s", err)
 		}
 	}
 
-	refreshedAccount, err := d.typeConverter.ASRepresentationToAccount(ctx, accountable, accountDomain, refresh)
+	newAccount, err := d.typeConverter.ASRepresentationToAccount(ctx, accountable, accountDomain, false)
 	if err != nil {
-		return nil, fmt.Errorf("GetRemoteAccount: error converting refreshedAccountable to refreshedAccount: %s", err)
+		return nil, fmt.Errorf("GetRemoteAccount: error converting accountable to account: %s", err)
 	}
-	refreshedAccount.ID = remoteAccount.ID
 
-	remoteAccount, err = d.populateAccountBeforeReturn(ctx, params, remoteAccount)
-	return
+	ulid, err := id.NewRandomULID()
+	if err != nil {
+		return nil, fmt.Errorf("GetRemoteAccount: error generating new id for account: %s", err)
+	}
+	newAccount.ID = ulid
+
+	if _, err := d.populateAccountFields(ctx, newAccount, params.RequestingUsername, params.Blocking, false); err != nil {
+		return nil, fmt.Errorf("GetRemoteAccount: error populating further account fields: %s", err)
+	}
+
+	if err := d.db.Put(ctx, newAccount); err != nil {
+		return nil, fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
+	}
+
+	return newAccount, nil
 }
 
 // dereferenceAccountable calls remoteAccountID with a GET request, and tries to parse whatever
