@@ -1,6 +1,6 @@
 name: Feature request
 description: Suggest an idea for this project
-title: "[name of the chart e.g. gotosocial] Issue Title"
+title: "[feature] Issue Title"
 labels: [enhancement]
 assignees:
   - 
@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for taking the time to fill out this feature request!
 
   - type: textarea
     id: desc
