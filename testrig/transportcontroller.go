@@ -59,7 +59,7 @@ type MockHTTPClient struct {
 	testRemoteServices    map[string]vocab.ActivityStreamsService
 	testRemoteAttachments map[string]RemoteAttachmentFile
 
-	
+	SentMessages map[string][]byte
 }
 
 // NewMockHTTPClient returns a client that conforms to the pub.HttpClient interface.
@@ -71,7 +71,7 @@ type MockHTTPClient struct {
 // to customize how the client is mocked.
 //
 // Note that you should never ever make ACTUAL http calls with this thing.
-func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string) pub.HttpClient {
+func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string) *MockHTTPClient {
 	mockHttpClient := &MockHTTPClient{}
 
 	if do != nil {
@@ -85,13 +85,26 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 	mockHttpClient.testRemoteServices = NewTestFediServices()
 	mockHttpClient.testRemoteAttachments = NewTestFediAttachments(relativeMediaPath)
 
+	mockHttpClient.SentMessages = make(map[string][]byte)
+
 	mockHttpClient.do = func(req *http.Request) (*http.Response, error) {
 		responseCode := http.StatusNotFound
 		responseBytes := []byte(`{"error":"404 not found"}`)
 		responseContentType := "application/json"
 		responseContentLength := len(responseBytes)
 
-		if strings.Contains(req.URL.String(), ".well-known/webfinger") {
+		if req.Method == http.MethodPost {
+			b, err := io.ReadAll(req.Body)
+			if err != nil {
+				panic(err)
+			}
+			mockHttpClient.SentMessages[req.URL.String()] = b
+
+			responseCode = http.StatusOK
+			responseBytes = []byte(`{"ok":"accepted"}`)
+			responseContentType = "application/json"
+			responseContentLength = len(responseBytes)
+		} else if strings.Contains(req.URL.String(), ".well-known/webfinger") {
 			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
 		} else if note, ok := mockHttpClient.testRemoteStatuses[req.URL.String()]; ok {
 			// the request is for a note that we have stored
@@ -103,8 +116,10 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			if err != nil {
 				panic(err)
 			}
+			responseCode = http.StatusOK
 			responseBytes = noteJson
 			responseContentType = "application/activity+json"
+			responseContentLength = len(noteJson)
 		} else if person, ok := mockHttpClient.testRemotePeople[req.URL.String()]; ok {
 			// the request is for a person that we have stored
 			personI, err := streams.Serialize(person)

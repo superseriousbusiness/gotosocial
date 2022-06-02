@@ -57,7 +57,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 	time.Sleep(1 * time.Second)
 
 	// accept should be sent to some_user
-	sent, ok := suite.sentHTTPRequests[requestingAccount.InboxURI]
+	sent, ok := suite.httpClient.SentMessages[requestingAccount.InboxURI]
 	suite.True(ok)
 
 	accept := &struct {
@@ -109,7 +109,7 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 	time.Sleep(1 * time.Second)
 
 	// reject should be sent to some_user
-	sent, ok := suite.sentHTTPRequests[requestingAccount.InboxURI]
+	sent, ok := suite.httpClient.SentMessages[requestingAccount.InboxURI]
 	suite.True(ok)
 
 	reject := &struct {

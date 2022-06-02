@@ -45,8 +45,8 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook1() {
 
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	// setup transport controller with a no-op client so we don't make external calls
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
@@ -76,8 +76,8 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook2() {
 
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	// setup transport controller with a no-op client so we don't make external calls
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
@@ -109,8 +109,8 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHook3() {
 
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	// setup transport controller with a no-op client so we don't make external calls
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 
 	// setup module being tested
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
@@ -144,7 +144,8 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
 
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 
 	// now setup module being tested, with the mock transport controller
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
@@ -183,7 +184,8 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 
 func (suite *FederatingProtocolTestSuite) TestBlocked1() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	sendingAccount := suite.testAccounts["remote_account_1"]
@@ -205,7 +207,8 @@ func (suite *FederatingProtocolTestSuite) TestBlocked1() {
 
 func (suite *FederatingProtocolTestSuite) TestBlocked2() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	sendingAccount := suite.testAccounts["remote_account_1"]
@@ -238,7 +241,8 @@ func (suite *FederatingProtocolTestSuite) TestBlocked2() {
 
 func (suite *FederatingProtocolTestSuite) TestBlocked3() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	sendingAccount := suite.testAccounts["remote_account_1"]
@@ -274,7 +278,8 @@ func (suite *FederatingProtocolTestSuite) TestBlocked3() {
 
 func (suite *FederatingProtocolTestSuite) TestBlocked4() {
 	fedWorker := concurrency.NewWorkerPool[messages.FromFederator](-1, -1)
-	tc := testrig.NewTestTransportController(testrig.NewMockHTTPClient(nil, ""), suite.db, fedWorker)
+	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	tc := testrig.NewTestTransportController(httpClient, suite.db, fedWorker)
 	federator := federation.NewFederator(suite.db, testrig.NewTestFederatingDB(suite.db, fedWorker), tc, suite.tc, testrig.NewTestMediaManager(suite.db, suite.storage))
 
 	sendingAccount := suite.testAccounts["remote_account_1"]
