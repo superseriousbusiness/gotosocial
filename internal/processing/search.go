@@ -20,6 +20,7 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -35,47 +36,63 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQuery *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
+func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, search *apimodel.SearchQuery) (*apimodel.SearchResult, gtserror.WithCode) {
 	l := logrus.WithFields(logrus.Fields{
 		"func":  "SearchGet",
-		"query": searchQuery.Query,
+		"query": search.Query,
 	})
 
-	results := &apimodel.SearchResult{
+	// tidy up the query and make sure it wasn't just spaces
+	query := strings.TrimSpace(search.Query)
+	if query == "" {
+		err := errors.New("search query was empty string after trimming space")
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	searchResult := &apimodel.SearchResult{
 		Accounts: []apimodel.Account{},
 		Statuses: []apimodel.Status{},
 		Hashtags: []apimodel.Tag{},
 	}
 	foundAccounts := []*gtsmodel.Account{}
 	foundStatuses := []*gtsmodel.Status{}
-	// foundHashtags := []*gtsmodel.Tag{}
-
-	// convert the query to lowercase and trim leading/trailing spaces
-	query := strings.ToLower(strings.TrimSpace(searchQuery.Query))
 
 	var foundOne bool
-	// check if the query is something like @whatever_username@example.org -- this means it's a remote account
-	if _, domain, err := util.ExtractNamestringParts(searchQuery.Query); err == nil && domain != "" {
-		l.Debug("search term is a mention, looking it up...")
-		foundAccount, err := p.searchAccountByMention(ctx, authed, searchQuery.Query, searchQuery.Resolve)
-		if err == nil && foundAccount != nil {
+
+	/*
+		SEARCH BY MENTION
+		check if the query is something like @whatever_username@example.org -- this means it's a remote account
+	*/
+	maybeNamestring := query
+	if maybeNamestring[0] != '@' {
+		maybeNamestring = "@" + maybeNamestring
+	}
+
+	if username, domain, err := util.ExtractNamestringParts(maybeNamestring); err == nil {
+		l.Debugf("search term %s is a mention, looking it up...", maybeNamestring)
+		if foundAccount, err := p.searchAccountByMention(ctx, authed, username, domain, search.Resolve); err == nil && foundAccount != nil {
 			foundAccounts = append(foundAccounts, foundAccount)
 			foundOne = true
 			l.Debug("got an account by searching by mention")
+		} else if err != nil {
+			l.Debugf("error looking up account %s: %s", maybeNamestring, err)
 		}
 	}
 
-	// check if the query is a URI with a recognizable scheme and just do a lookup for that, straight up
+	/*
+		SEARCH BY URI
+		check if the query is a URI with a recognizable scheme and dereference it
+	*/
 	if !foundOne {
 		if uri, err := url.Parse(query); err == nil && (uri.Scheme == "https" || uri.Scheme == "http") {
 			// 1. check if it's a status
-			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundStatus != nil {
+			if foundStatus, err := p.searchStatusByURI(ctx, authed, uri, search.Resolve); err == nil && foundStatus != nil {
 				foundStatuses = append(foundStatuses, foundStatus)
 				l.Debug("got a status by searching by URI")
 			}
 
 			// 2. check if it's an account
-			if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, searchQuery.Resolve); err == nil && foundAccount != nil {
+			if foundAccount, err := p.searchAccountByURI(ctx, authed, uri, search.Resolve); err == nil && foundAccount != nil {
 				foundAccounts = append(foundAccounts, foundAccount)
 				l.Debug("got an account by searching by URI")
 			}
@@ -91,7 +108,7 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 		if blocked, err := p.db.IsBlocked(ctx, authed.Account.ID, foundAccount.ID, true); err == nil && !blocked {
 			// all good, convert it and add it to the results
 			if apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, foundAccount); err == nil && apiAcct != nil {
-				results.Accounts = append(results.Accounts, *apiAcct)
+				searchResult.Accounts = append(searchResult.Accounts, *apiAcct)
 			}
 		}
 	}
@@ -106,10 +123,10 @@ func (p *processor) SearchGet(ctx context.Context, authed *oauth.Auth, searchQue
 			continue
 		}
 
-		results.Statuses = append(results.Statuses, *apiStatus)
+		searchResult.Statuses = append(searchResult.Statuses, *apiStatus)
 	}
 
-	return results, nil
+	return searchResult, nil
 }
 
 func (p *processor) searchStatusByURI(ctx context.Context, authed *oauth.Auth, uri *url.URL, resolve bool) (*gtsmodel.Status, error) {
