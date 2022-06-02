@@ -160,16 +160,12 @@ func (p *processor) searchAccountByURI(ctx context.Context, authed *oauth.Auth, 
 	return nil, nil
 }
 
-func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, mention string, resolve bool) (*gtsmodel.Account, error) {
-	// query is for a remote account
-	username, host, err := util.ExtractNamestringParts(mention)
-	if err != nil {
-		return nil, fmt.Errorf("searchAccountByMention: error extracting mention parts: %s", err)
-	}
+func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Auth, username string, domain string, resolve bool) (*gtsmodel.Account, error) {
+	maybeAcct := &gtsmodel.Account{}
+	var err error
 
 	// if it's a local account we can skip a whole bunch of stuff
-	maybeAcct := &gtsmodel.Account{}
-	if host == config.GetHost() {
+	if domain == config.GetHost() {
 		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
@@ -180,7 +176,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	// it's not a local account so first we'll check if it's in the database already...
 	where := []db.Where{
 		{Key: "username", Value: username, CaseInsensitive: true},
-		{Key: "domain", Value: host, CaseInsensitive: true},
+		{Key: "domain", Value: domain, CaseInsensitive: true},
 	}
 	err = p.db.GetWhere(ctx, where, maybeAcct)
 	if err == nil {
@@ -198,7 +194,7 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 		maybeAcct, err = p.federator.GetRemoteAccount(ctx, dereferencing.GetRemoteAccountParams{
 			RequestingUsername:    authed.Account.Username,
 			RemoteAccountUsername: username,
-			RemoteAccountHost:     host,
+			RemoteAccountHost:     domain,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("searchAccountByMention: error getting remote account: %s", err)
