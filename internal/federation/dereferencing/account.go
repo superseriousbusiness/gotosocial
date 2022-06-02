@@ -40,6 +40,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
+var webfingerInterval = -48 * time.Hour // 2 days in the past
+
 func instanceAccount(account *gtsmodel.Account) bool {
 	return strings.EqualFold(account.Username, account.Domain) ||
 		account.FollowersURI == "" ||
@@ -91,11 +93,11 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 
 		Scenario 2: We are allowed to resolve remotely, and we have an account URI but no username or host.
 		            In this case, we can use the URI to resolve the remote account and find the username,
-					and then we can webfinger the account to discover the accountDomain.
+					and then we can webfinger the account to discover the accountDomain if necessary.
 
 		Scenario 3: We are allowed to resolve remotely, and we have the username and host but no URI.
-		            In this case, we webfinger the account to discover the URI. We then check in the db
-
+		            In this case, we can webfinger the account to discover the URI, and then dereference
+					from that.
 	*/
 
 	// first check if we can retrieve the account locally just with what we've been given
@@ -156,16 +158,30 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	}
 
 	// if we reach this point, params.RemoteAccountHost and params.RemoteAccountUsername must be set
-	// params.RemoteAccountID may or may not be set, but we have enough information to fetch it in any case
+	// params.RemoteAccountID may or may not be set, but we have enough information to fetch it if we need it
+
+	// we finger to fetch the account domain but just in case we're not fingering, make a best guess
+	// already about what the account domain might be; this var will be overwritten later if necessary
 	var accountDomain string
-	accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
-	if err != nil {
-		err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
-		return
+	if remoteAccount != nil {
+		accountDomain = remoteAccount.Domain
+	} else if params.RemoteAccountID != nil {
+		accountDomain = params.RemoteAccountID.Host
+	} else {
+		accountDomain = params.RemoteAccountHost
 	}
 
-	// if we reach here then all params must now be set,
-	// either in original params or through fingering
+	// to save on remote calls, only webfinger if we don't have a remoteAccount yet, or if we haven't
+	// fingered the remote account for at least 2 days
+	var fingered time.Time
+	if remoteAccount == nil || remoteAccount.LastWebfingeredAt.Before(time.Now().Add(webfingerInterval)) {
+		accountDomain, params.RemoteAccountID, err = d.fingerRemoteAccount(ctx, params.RequestingUsername, params.RemoteAccountUsername, params.RemoteAccountHost)
+		if err != nil {
+			err = fmt.Errorf("GetRemoteAccount: error while fingering: %s", err)
+			return
+		}
+		fingered = time.Now()
+	}
 
 	// we may also have some extra information already, like the account we had in the db, or the
 	// accountable representation that we dereferenced from remote
@@ -201,6 +217,9 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 			return
 		}
 
+		remoteAccount.LastWebfingeredAt = fingered
+		remoteAccount.UpdatedAt = time.Now()
+
 		err = d.db.Put(ctx, remoteAccount)
 		if err != nil {
 			err = fmt.Errorf("GetRemoteAccount: error putting new account: %s", err)
@@ -221,13 +240,20 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 
 		// make sure the account fields are populated before returning:
 		// the caller might want to block until everything is loaded
-		var changed bool
-		changed, err = d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Blocking)
+		var fieldsChanged bool
+		fieldsChanged, err = d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Blocking)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
 		}
 
-		if changed {
+		var fingeredChanged bool
+		if !fingered.IsZero() {
+			fingeredChanged = true
+			remoteAccount.LastWebfingeredAt = fingered
+		}
+
+		if fieldsChanged || fingeredChanged {
+			remoteAccount.UpdatedAt = time.Now()
 			remoteAccount, err = d.db.UpdateAccount(ctx, remoteAccount)
 			if err != nil {
 				return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
