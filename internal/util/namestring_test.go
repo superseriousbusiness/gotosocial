@@ -65,6 +65,54 @@ func (suite *NamestringSuite) TestExtractWebfingerParts4() {
 	suite.Equal("stonerkitty.monster", host)
 }
 
+func (suite *NamestringSuite) TestExtractWebfingerParts5() {
+	webfinger := "@stonerkitty.monster"
+	username, host, err := util.ExtractWebfingerParts(webfinger)
+	suite.NoError(err)
+
+	suite.Equal("stonerkitty.monster", username)
+	suite.Empty(host)
+}
+
+func (suite *NamestringSuite) TestExtractWebfingerParts6() {
+	webfinger := "@@stonerkitty.monster"
+	_, _, err := util.ExtractWebfingerParts(webfinger)
+	suite.EqualError(err, "couldn't match mention @@stonerkitty.monster")
+}
+
+func (suite *NamestringSuite) TestExtractNamestringParts1() {
+	namestring := "@stonerkitty.monster@stonerkitty.monster"
+	username, host, err := util.ExtractNamestringParts(namestring)
+	suite.NoError(err)
+
+	suite.Equal("stonerkitty.monster", username)
+	suite.Equal("stonerkitty.monster", host)
+}
+
+func (suite *NamestringSuite) TestExtractNamestringParts2() {
+	namestring := "@stonerkitty.monster"
+	username, host, err := util.ExtractNamestringParts(namestring)
+	suite.NoError(err)
+
+	suite.Equal("stonerkitty.monster", username)
+	suite.Empty(host)
+}
+
+func (suite *NamestringSuite) TestExtractNamestringParts3() {
+	namestring := "@someone@somewhere"
+	username, host, err := util.ExtractWebfingerParts(namestring)
+	suite.NoError(err)
+
+	suite.Equal("someone", username)
+	suite.Equal("somewhere", host)
+}
+
+func (suite *NamestringSuite) TestExtractNamestringParts4() {
+	namestring := ""
+	_, _, err := util.ExtractNamestringParts(namestring)
+	suite.EqualError(err, "couldn't match mention ")
+}
+
 func TestNamestringSuite(t *testing.T) {
 	suite.Run(t, &NamestringSuite{})
 }
