@@ -1787,26 +1787,6 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			"image/png",
 			false,
 		),
-		" ://unknown-instance.com/users/brand_new_person": newAPPerson(
-			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/following"),
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/followers"),
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/inbox"),
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
-			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
-			"brand_new_person",
-			"Geoff Brando New Personson",
-			"hey I'm a new person, your instance hasn't seen me yet uwu",
-			URLMustParse("https://unknown-instance.com/@brand_new_person"),
-			true,
-			URLMustParse("https://unknown-instance.com/users/brand_new_person#main-key"),
-			newPerson1Pub,
-			nil,
-			"image/jpeg",
-			nil,
-			"image/png",
-			false,
-		),
 	}
 }
 

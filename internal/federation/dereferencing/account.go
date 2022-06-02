@@ -101,14 +101,15 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	*/
 
 	// first check if we can retrieve the account locally just with what we've been given
-	if params.RemoteAccountID != nil {
+	switch {
+	case params.RemoteAccountID != nil:
 		// try with uri
 		if a, dbErr := d.db.GetAccountByURI(ctx, params.RemoteAccountID.String()); dbErr == nil {
 			remoteAccount = a
 		} else if dbErr != db.ErrNoEntries {
 			err = fmt.Errorf("GetRemoteAccount: database error looking for account %s: %s", params.RemoteAccountID, err)
 		}
-	} else if params.RemoteAccountUsername != "" && params.RemoteAccountHost != "" {
+	case params.RemoteAccountUsername != "" && params.RemoteAccountHost != "":
 		// try with username/host
 		a := &gtsmodel.Account{}
 		where := []db.Where{{Key: "username", Value: params.RemoteAccountUsername}, {Key: "domain", Value: params.RemoteAccountHost}}
@@ -117,7 +118,7 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		} else if dbErr != db.ErrNoEntries {
 			err = fmt.Errorf("GetRemoteAccount: database error looking for account with username %s and host %s: %s", params.RemoteAccountUsername, params.RemoteAccountHost, err)
 		}
-	} else {
+	default:
 		err = errors.New("GetRemoteAccount: no identifying parameters were set so we cannot get account")
 		return
 	}
@@ -163,11 +164,12 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 	// we finger to fetch the account domain but just in case we're not fingering, make a best guess
 	// already about what the account domain might be; this var will be overwritten later if necessary
 	var accountDomain string
-	if remoteAccount != nil {
+	switch {
+	case remoteAccount != nil:
 		accountDomain = remoteAccount.Domain
-	} else if params.RemoteAccountID != nil {
+	case params.RemoteAccountID != nil:
 		accountDomain = params.RemoteAccountID.Host
-	} else {
+	default:
 		accountDomain = params.RemoteAccountHost
 	}
 
@@ -227,41 +229,41 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		}
 
 		return // the new account
-	} else {
-		// we had the account already, but now we know the account domain, so update it if it's different
-		if !strings.EqualFold(remoteAccount.Domain, accountDomain) {
-			remoteAccount.Domain = accountDomain
-			remoteAccount, err = d.db.UpdateAccount(ctx, remoteAccount)
-			if err != nil {
-				err = fmt.Errorf("GetRemoteAccount: error updating account: %s", err)
-				return
-			}
-		}
-
-		// make sure the account fields are populated before returning:
-		// the caller might want to block until everything is loaded
-		var fieldsChanged bool
-		fieldsChanged, err = d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Blocking)
-		if err != nil {
-			return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
-		}
-
-		var fingeredChanged bool
-		if !fingered.IsZero() {
-			fingeredChanged = true
-			remoteAccount.LastWebfingeredAt = fingered
-		}
-
-		if fieldsChanged || fingeredChanged {
-			remoteAccount.UpdatedAt = time.Now()
-			remoteAccount, err = d.db.UpdateAccount(ctx, remoteAccount)
-			if err != nil {
-				return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
-			}
-		}
-
-		return // the account we already had + possibly updated
 	}
+
+	// we had the account already, but now we know the account domain, so update it if it's different
+	if !strings.EqualFold(remoteAccount.Domain, accountDomain) {
+		remoteAccount.Domain = accountDomain
+		remoteAccount, err = d.db.UpdateAccount(ctx, remoteAccount)
+		if err != nil {
+			err = fmt.Errorf("GetRemoteAccount: error updating account: %s", err)
+			return
+		}
+	}
+
+	// make sure the account fields are populated before returning:
+	// the caller might want to block until everything is loaded
+	var fieldsChanged bool
+	fieldsChanged, err = d.populateAccountFields(ctx, remoteAccount, params.RequestingUsername, params.Blocking)
+	if err != nil {
+		return nil, fmt.Errorf("GetRemoteAccount: error populating remoteAccount fields: %s", err)
+	}
+
+	var fingeredChanged bool
+	if !fingered.IsZero() {
+		fingeredChanged = true
+		remoteAccount.LastWebfingeredAt = fingered
+	}
+
+	if fieldsChanged || fingeredChanged {
+		remoteAccount.UpdatedAt = time.Now()
+		remoteAccount, err = d.db.UpdateAccount(ctx, remoteAccount)
+		if err != nil {
+			return nil, fmt.Errorf("GetRemoteAccount: error updating remoteAccount: %s", err)
+		}
+	}
+
+	return // the account we already had + possibly updated
 }
 
 // dereferenceAccountable calls remoteAccountID with a GET request, and tries to parse whatever
