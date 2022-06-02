@@ -120,6 +120,9 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 		}
 	default:
 		err = errors.New("GetRemoteAccount: no identifying parameters were set so we cannot get account")
+	}
+
+	if err != nil {
 		return
 	}
 
@@ -183,6 +186,20 @@ func (d *deref) GetRemoteAccount(ctx context.Context, params GetRemoteAccountPar
 			return
 		}
 		fingered = time.Now()
+	}
+
+	if !fingered.IsZero() && remoteAccount == nil {
+		// if we just fingered and now have a discovered account domain but still no account,
+		// we should do a final lookup in the database with the discovered username + accountDomain
+		// to make absolutely sure we don't already have this account
+		a := &gtsmodel.Account{}
+		where := []db.Where{{Key: "username", Value: params.RemoteAccountUsername}, {Key: "domain", Value: accountDomain}}
+		if dbErr := d.db.GetWhere(ctx, where, a); dbErr == nil {
+			remoteAccount = a
+		} else if dbErr != db.ErrNoEntries {
+			err = fmt.Errorf("GetRemoteAccount: database error looking for account with username %s and host %s: %s", params.RemoteAccountUsername, params.RemoteAccountHost, err)
+			return
+		}
 	}
 
 	// we may also have some extra information already, like the account we had in the db, or the
