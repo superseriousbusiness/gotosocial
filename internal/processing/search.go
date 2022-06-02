@@ -182,9 +182,9 @@ func (p *processor) searchAccountByMention(ctx context.Context, authed *oauth.Au
 	var err error
 
 	// if it's a local account we can skip a whole bunch of stuff
-	if domain == config.GetHost() {
+	if domain == config.GetHost() || domain == config.GetAccountDomain() || domain == "" {
 		maybeAcct, err = p.db.GetLocalAccountByUsername(ctx, username)
-		if err != nil {
+		if err != nil && err != db.ErrNoEntries {
 			return nil, fmt.Errorf("searchAccountByMention: error getting local account by username: %s", err)
 		}
 		return maybeAcct, nil
