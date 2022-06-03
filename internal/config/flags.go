@@ -109,6 +109,9 @@ func AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Bool(SyslogEnabledFlag(), cfg.SyslogEnabled, fieldtag("SyslogEnabled", "usage"))
 		cmd.Flags().String(SyslogProtocolFlag(), cfg.SyslogProtocol, fieldtag("SyslogProtocol", "usage"))
 		cmd.Flags().String(SyslogAddressFlag(), cfg.SyslogAddress, fieldtag("SyslogAddress", "usage"))
+
+		// Advanced flags
+		cmd.Flags().String(AdvancedCookiesSamesiteFlag(), cfg.AdvancedCookiesSamesite, fieldtag("AdvancedCookiesSamesite", "usage"))
 	})
 }
 
