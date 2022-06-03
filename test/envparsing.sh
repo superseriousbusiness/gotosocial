@@ -2,7 +2,7 @@
 
 set -eu
 
-EXPECTED='{"account-domain":"peepee","accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"application-name":"gts","bind-address":"127.0.0.1","config-path":"./test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["[read,write]","profile","email","groups"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","0.0.0.0/0"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
+EXPECTED='{"account-domain":"peepee","accounts-approval-required":false,"accounts-reason-required":false,"accounts-registration-open":true,"advanced-cookies-samesite":"strict","application-name":"gts","bind-address":"127.0.0.1","config-path":"./test/test.yaml","db-address":":memory:","db-database":"gotosocial_prod","db-password":"hunter2","db-port":6969,"db-tls-ca-cert":"","db-tls-mode":"disable","db-type":"sqlite","db-user":"sex-haver","email":"","host":"example.com","letsencrypt-cert-dir":"/gotosocial/storage/certs","letsencrypt-email-address":"","letsencrypt-enabled":true,"letsencrypt-port":80,"log-db-queries":true,"log-level":"info","media-description-max-chars":5000,"media-description-min-chars":69,"media-image-max-size":420,"media-remote-cache-days":30,"media-video-max-size":420,"oidc-client-id":"1234","oidc-client-secret":"shhhh its a secret","oidc-enabled":true,"oidc-idp-name":"sex-haver","oidc-issuer":"whoknows","oidc-scopes":["read,write","profile","email","groups"],"oidc-skip-verification":true,"password":"","path":"","port":6969,"protocol":"http","smtp-from":"queen@terfisland.org","smtp-host":"example.com","smtp-password":"hunter2","smtp-port":4269,"smtp-username":"sex-haver","software-version":"","statuses-cw-max-chars":420,"statuses-max-chars":69,"statuses-media-max-files":1,"statuses-poll-max-options":1,"statuses-poll-option-max-chars":50,"storage-backend":"local","storage-local-base-path":"/root/store","syslog-address":"127.0.0.1:6969","syslog-enabled":true,"syslog-protocol":"udp","trusted-proxies":["127.0.0.1/32","0.0.0.0/0"],"username":"","web-asset-base-dir":"/root","web-template-base-dir":"/root"}'
 
 # Set all the environment variables to 
 # ensure that these are parsed without panic
@@ -50,7 +50,7 @@ GTS_OIDC_SKIP_VERIFICATION=true \
 GTS_OIDC_ISSUER='whoknows' \
 GTS_OIDC_CLIENT_ID='1234' \
 GTS_OIDC_CLIENT_SECRET='shhhh its a secret' \
-GTS_OIDC_SCOPES='[read,write]' \
+GTS_OIDC_SCOPES='read,write' \
 GTS_SMTP_HOST='example.com' \
 GTS_SMTP_PORT=4269 \
 GTS_SMTP_USERNAME='sex-haver' \
@@ -59,6 +59,7 @@ GTS_SMTP_FROM='queen@terfisland.org' \
 GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
+GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 go run ./cmd/gotosocial/... --config-path $(dirname ${0})/test.yaml debug config)
 
 if [ "${OUTPUT}" != "${EXPECTED}" ]; then
