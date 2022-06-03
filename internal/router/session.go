@@ -24,10 +24,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"golang.org/x/net/idna"
@@ -35,13 +37,28 @@ import (
 
 // SessionOptions returns the standard set of options to use for each session.
 func SessionOptions() sessions.Options {
+	var samesite http.SameSite
+	switch strings.TrimSpace(strings.ToLower(config.GetAdvancedCookiesSamesite())) {
+	case "lax":
+		samesite = http.SameSiteLaxMode
+	case "strict":
+		samesite = http.SameSiteStrictMode
+	default:
+		logrus.Warnf("%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
+		samesite = http.SameSiteLaxMode
+	}
+
 	return sessions.Options{
-		Path:     "/",
-		Domain:   config.GetHost(),
-		MaxAge:   120,                             // 2 minutes
-		Secure:   config.GetProtocol() == "https", // only use cookie over https
-		HttpOnly: true,                            // exclude javascript from inspecting cookie
-		SameSite: http.SameSiteStrictMode,         // https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		Path:   "/",
+		Domain: config.GetHost(),
+		// 2 minutes
+		MaxAge: 120,
+		// only set secure over https
+		Secure: config.GetProtocol() == "https",
+		// forbid javascript from inspecting cookie
+		HttpOnly: true,
+		// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
+		SameSite: samesite,
 	}
 }
 
