@@ -26,9 +26,11 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) ([]*apimodel.Notification, gtserror.WithCode) {
+func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, limit int, maxID string, sinceID string) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	l := logrus.WithField("func", "NotificationsGet")
 
 	notifs, err := p.db.GetNotifications(ctx, authed.Account.ID, limit, maxID, sinceID)
@@ -36,15 +38,26 @@ func (p *processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, li
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiNotifs := []*apimodel.Notification{}
+	if len(notifs) == 0 {
+		return util.EmptyTimelineResponse(), nil
+	}
+
+	timelineables := []timeline.Timelineable{}
 	for _, n := range notifs {
 		apiNotif, err := p.tc.NotificationToAPINotification(ctx, n)
 		if err != nil {
 			l.Debugf("got an error converting a notification to api, will skip it: %s", err)
 			continue
 		}
-		apiNotifs = append(apiNotifs, apiNotif)
+		timelineables = append(timelineables, apiNotif)
 	}
 
-	return apiNotifs, nil
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:          timelineables,
+		Path:           "api/v1/notifications",
+		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
+		PrevMinIDKey:   "since_id",
+		PrevMinIDValue: timelineables[0].GetID(),
+		Limit:          limit,
+	})
 }

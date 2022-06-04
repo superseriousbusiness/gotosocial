@@ -74,12 +74,15 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		sinceID = sinceIDString
 	}
 
-	notifs, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
+	resp, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
 	if errWithCode != nil {
 		l.Debugf("error processing notifications get: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 
-	c.JSON(http.StatusOK, notifs)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Items)
 }
