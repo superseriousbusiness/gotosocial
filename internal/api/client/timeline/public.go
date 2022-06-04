@@ -171,5 +171,5 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 	if resp.LinkHeader != "" {
 		c.Header("Link", resp.LinkHeader)
 	}
-	c.JSON(http.StatusOK, resp.Statuses)
+	c.JSON(http.StatusOK, resp.Items)
 }
