@@ -26,9 +26,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode) {
+func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinnedOnly bool, mediaOnly bool, publicOnly bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	if requestingAccount != nil {
 		if blocked, err := p.db.IsBlocked(ctx, requestingAccount.ID, targetAccountID, true); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
@@ -37,29 +39,48 @@ func (p *processor) StatusesGet(ctx context.Context, requestingAccount *gtsmodel
 		}
 	}
 
-	apiStatuses := []apimodel.Status{}
-
 	statuses, err := p.db.GetAccountStatuses(ctx, targetAccountID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if err != nil {
 		if err == db.ErrNoEntries {
-			return apiStatuses, nil
+			return util.EmptyTimelineResponse(), nil
 		}
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	var filtered []*gtsmodel.Status
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(ctx, s, requestingAccount)
-		if err != nil || !visible {
-			continue
+		if err == nil && visible {
+			filtered = append(filtered, s)
 		}
+	}
 
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
+	if len(filtered) == 0 {
+		return util.EmptyTimelineResponse(), nil
+	}
+
+	timelineables := []timeline.Timelineable{}
+	for _, i := range filtered {
+		apiStatus, err := p.tc.StatusToAPIStatus(ctx, i, requestingAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting status to api: %s", err))
 		}
 
-		apiStatuses = append(apiStatuses, *apiStatus)
+		timelineables = append(timelineables, apiStatus)
 	}
 
-	return apiStatuses, nil
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:          timelineables,
+		Path:           fmt.Sprintf("/api/v1/accounts/%s/statuses", targetAccountID),
+		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
+		PrevMinIDValue: timelineables[0].GetID(),
+		Limit:          limit,
+		ExtraQueryParams: []string{
+			fmt.Sprintf("exclude_replies=%t", excludeReplies),
+			fmt.Sprintf("exclude_reblogs=%t", excludeReblogs),
+			fmt.Sprintf("pinned_only=%t", pinnedOnly),
+			fmt.Sprintf("only_media=%t", mediaOnly),
+			fmt.Sprintf("only_public=%t", publicOnly),
+		},
+	})
 }
