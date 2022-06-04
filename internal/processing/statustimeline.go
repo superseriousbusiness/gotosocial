@@ -22,18 +22,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/sirupsen/logrus"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
@@ -139,114 +138,100 @@ func StatusSkipInsertFunction() timeline.SkipInsertFunction {
 	}
 }
 
-func (p *processor) packageStatusResponse(statuses []*apimodel.Status, path string, nextMaxID string, prevMinID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
-	resp := &apimodel.StatusTimelineResponse{
-		Statuses: []*apimodel.Status{},
-	}
-	resp.Statuses = statuses
-
-	// prepare the next and previous links
-	if len(statuses) != 0 {
-		protocol := config.GetProtocol()
-		host := config.GetHost()
-
-		nextLink := &url.URL{
-			Scheme:   protocol,
-			Host:     host,
-			Path:     path,
-			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, nextMaxID),
-		}
-		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
-
-		prevLink := &url.URL{
-			Scheme:   protocol,
-			Host:     host,
-			Path:     path,
-			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, prevMinID),
-		}
-		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLink.String())
-		resp.LinkHeader = fmt.Sprintf("%s, %s", next, prev)
-	}
-
-	return resp, nil
-}
-
-func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+func (p *processor) HomeTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	preparedItems, err := p.statusTimelines.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if len(preparedItems) == 0 {
-		return &apimodel.StatusTimelineResponse{
-			Statuses: []*apimodel.Status{},
-		}, nil
+		return util.EmptyTimelineResponse(), nil
 	}
 
-	statuses := []*apimodel.Status{}
+	timelineables := []timeline.Timelineable{}
 	for _, i := range preparedItems {
 		status, ok := i.(*apimodel.Status)
 		if !ok {
 			return nil, gtserror.NewErrorInternalError(errors.New("error converting prepared timeline entry to api status"))
 		}
-		statuses = append(statuses, status)
+		timelineables = append(timelineables, status)
 	}
 
-	return p.packageStatusResponse(statuses, "api/v1/timelines/home", statuses[len(preparedItems)-1].ID, statuses[0].ID, limit)
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:          timelineables,
+		Path:           "api/v1/timelines/home",
+		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
+		PrevMinIDValue: timelineables[0].GetID(),
+		Limit:          limit,
+	})
 }
 
-func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+func (p *processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	statuses, err := p.db.GetPublicTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
-			return &apimodel.StatusTimelineResponse{
-				Statuses: []*apimodel.Status{},
-			}, nil
+			return util.EmptyTimelineResponse(), nil
 		}
 		// there's an actual error
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	s, err := p.filterPublicStatuses(ctx, authed, statuses)
+	filtered, err := p.filterPublicStatuses(ctx, authed, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(s) == 0 {
-		return &apimodel.StatusTimelineResponse{
-			Statuses: []*apimodel.Status{},
-		}, nil
+	if len(filtered) == 0 {
+		return util.EmptyTimelineResponse(), nil
 	}
 
-	return p.packageStatusResponse(s, "api/v1/timelines/public", s[len(s)-1].ID, s[0].ID, limit)
+	timelineables := []timeline.Timelineable{}
+	for _, i := range filtered {
+		timelineables = append(timelineables, i)
+	}
+
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:          timelineables,
+		Path:           "api/v1/timelines/public",
+		NextMaxIDValue: timelineables[len(timelineables)-1].GetID(),
+		PrevMinIDValue: timelineables[0].GetID(),
+		Limit:          limit,
+	})
 }
 
-func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.StatusTimelineResponse, gtserror.WithCode) {
+func (p *processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.TimelineResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.db.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil {
 		if err == db.ErrNoEntries {
 			// there are just no entries left
-			return &apimodel.StatusTimelineResponse{
-				Statuses: []*apimodel.Status{},
-			}, nil
+			return util.EmptyTimelineResponse(), nil
 		}
 		// there's an actual error
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	s, err := p.filterFavedStatuses(ctx, authed, statuses)
+	filtered, err := p.filterFavedStatuses(ctx, authed, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(s) == 0 {
-		return &apimodel.StatusTimelineResponse{
-			Statuses: []*apimodel.Status{},
-		}, nil
+	if len(filtered) == 0 {
+		return util.EmptyTimelineResponse(), nil
 	}
 
-	return p.packageStatusResponse(s, "api/v1/favourites", nextMaxID, prevMinID, limit)
+	timelineables := []timeline.Timelineable{}
+	for _, i := range filtered {
+		timelineables = append(timelineables, i)
+	}
+
+	return util.PackageTimelineableResponse(util.TimelineableResponseParams{
+		Items:          timelineables,
+		Path:           "api/v1/favourites",
+		NextMaxIDValue: nextMaxID,
+		PrevMinIDValue: prevMinID,
+		Limit:          limit,
+	})
 }
 
 func (p *processor) filterPublicStatuses(ctx context.Context, authed *oauth.Auth, statuses []*gtsmodel.Status) ([]*apimodel.Status, error) {
