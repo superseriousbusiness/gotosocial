@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -79,7 +80,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	// get latest 10 top-level public statuses;
 	// ie., exclude replies and boosts, public only,
 	// with or without media
-	statuses, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, true, "", "", false, false, true)
+	statusResp, errWithCode := m.processor.AccountStatusesGet(ctx, authed, account.ID, 10, true, true, "", "", false, false, true)
 	if errWithCode != nil {
 		l.Debugf("error getting statuses from processor: %s", errWithCode.Error())
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
@@ -92,7 +93,11 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 		randomIndex := rand.Intn(len(m.defaultAvatars))
 		dummyAvatar := m.defaultAvatars[randomIndex]
 		account.Avatar = dummyAvatar
-		for _, s := range statuses {
+		for _, i := range statusResp.Items {
+			s, ok := i.(*apimodel.Status)
+			if !ok {
+				panic("timelineable was not *apimodel.Status")
+			}
 			s.Account.Avatar = dummyAvatar
 		}
 	}
@@ -100,7 +105,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
 		"instance": instance,
 		"account":  account,
-		"statuses": statuses,
+		"statuses": statusResp.Items,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 			"/assets/status.css",
