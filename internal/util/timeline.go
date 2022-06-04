@@ -95,7 +95,7 @@ func PackageTimelineableResponse(params TimelineableResponseParams) (*apimodel.T
 	return timelineResponse, nil
 }
 
-// EmptyTimelineResponse just returns an empty 
+// EmptyTimelineResponse just returns an empty
 // TimelineResponse with no link header or items.
 func EmptyTimelineResponse() *apimodel.TimelineResponse {
 	return &apimodel.TimelineResponse{
