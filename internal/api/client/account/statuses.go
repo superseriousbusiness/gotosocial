@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountStatusesGETHandler swagger:operation GET /api/v1/accounts/{id}/statuses accountStatuses
@@ -224,8 +225,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 
 	statuses, errWithCode := m.processor.AccountStatusesGet(c.Request.Context(), authed, targetAcctID, limit, excludeReplies, excludeReblogs, maxID, minID, pinnedOnly, mediaOnly, publicOnly)
 	if errWithCode != nil {
-		l.Debugf("error from processor account statuses get: %s", errWithCode)
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

@@ -170,7 +170,7 @@ type Processor interface {
 	// StatusFavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 	StatusFavedBy(ctx context.Context, authed *oauth.Auth, targetStatusID string) ([]*apimodel.Account, error)
 	// StatusGet gets the given status, taking account of privacy settings and blocks etc.
-	StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
+	StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode)
 	// StatusUnfave processes the unfaving of a given status, returning the updated status if the fave goes through.
 	StatusUnfave(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error)
 	// StatusGetContext returns the context (previous and following posts) from the given status ID

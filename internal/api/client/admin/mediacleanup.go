@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // MediaCleanupPOSTHandler swagger:operation POST /api/v1/admin/media_cleanup mediaCleanup
@@ -101,8 +102,7 @@ func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 	}
 
 	if errWithCode := m.processor.AdminMediaPrune(c.Request.Context(), remoteCacheDays); errWithCode != nil {
-		l.Debugf("error starting prune of remote media: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

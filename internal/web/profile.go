@@ -29,8 +29,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (m *Module) profileTemplateHandler(c *gin.Context) {
@@ -62,7 +65,9 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 	if errWithCode != nil {
 		l.Debugf("error getting account from processor: %s", errWithCode.Error())
 		if errWithCode.Code() == http.StatusNotFound {
-			m.NotFoundHandler(c)
+			util.NotFoundHandler(c, func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+				return instance, nil
+			})
 			return
 		}
 		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})

@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountDeletePOSTHandler swagger:operation POST /api/v1/accounts/delete accountDelete
@@ -81,8 +82,7 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 	form.DeleteOriginID = authed.Account.ID
 
 	if errWithCode := m.processor.AccountDeleteLocal(c.Request.Context(), authed, form); errWithCode != nil {
-		l.Debugf("could not delete account: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

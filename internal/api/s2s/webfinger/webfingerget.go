@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // WebfingerGETRequest swagger:operation GET /.well-known/webfinger webfingerGet
@@ -105,10 +106,9 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
 	}
 
-	resp, err := m.processor.GetWebfingerAccount(ctx, username)
-	if err != nil {
-		l.Debugf("aborting request with an error: %s", err.Error())
-		c.JSON(err.Code(), gin.H{"error": err.Safe()})
+	resp, errWithCode := m.processor.GetWebfingerAccount(ctx, username)
+	if errWithCode != nil {
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

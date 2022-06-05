@@ -54,7 +54,7 @@ func (p *processor) StatusFavedBy(ctx context.Context, authed *oauth.Auth, targe
 	return p.statusProcessor.FavedBy(ctx, authed.Account, targetStatusID)
 }
 
-func (p *processor) StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, error) {
+func (p *processor) StatusGet(ctx context.Context, authed *oauth.Auth, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	return p.statusProcessor.Get(ctx, authed.Account, targetStatusID)
 }
 

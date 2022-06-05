@@ -24,13 +24,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	// if there's no token in the query, just serve the 404 web handler
 	token := c.Query(tokenParam)
 	if token == "" {
-		m.NotFoundHandler(c)
+		util.NotFoundHandler(c, m.processor.InstanceGet)
 		return
 	}
 
@@ -40,7 +41,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	if errWithCode != nil {
 		logrus.Debugf("error confirming email: %s", errWithCode.Error())
 		// if something goes wrong, just log it and direct to the 404 handler to not give anything away
-		m.NotFoundHandler(c)
+		util.NotFoundHandler(c, m.processor.InstanceGet)
 		return
 	}
 

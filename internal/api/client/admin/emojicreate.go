@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -120,8 +121,7 @@ func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 
 	apiEmoji, errWithCode := m.processor.AdminEmojiCreate(c.Request.Context(), authed, form)
 	if errWithCode != nil {
-		l.Debugf("error creating emoji: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

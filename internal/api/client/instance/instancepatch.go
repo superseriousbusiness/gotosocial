@@ -9,6 +9,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // InstanceUpdatePATCHHandler swagger:operation PATCH /api/v1/instance instanceUpdate
@@ -126,8 +127,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 
 	i, errWithCode := m.processor.InstancePatch(c.Request.Context(), form)
 	if errWithCode != nil {
-		l.Debugf("error with instance patch request: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

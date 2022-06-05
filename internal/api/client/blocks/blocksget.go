@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // BlocksGETHandler swagger:operation GET /api/v1/blocks blocksGet
@@ -127,8 +128,7 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.BlocksGet(c.Request.Context(), authed, maxID, sinceID, limit)
 	if errWithCode != nil {
-		l.Debugf("error from processor BlocksGet: %s", errWithCode)
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

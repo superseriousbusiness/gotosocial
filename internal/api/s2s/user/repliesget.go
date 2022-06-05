@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusRepliesGETHandler swagger:operation GET /users/{username}/statuses/{status}/replies s2sRepliesGet
@@ -143,8 +144,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 
 	replies, errWithCode := m.processor.GetFediStatusReplies(ctx, requestedUsername, requestedStatusID, page, onlyOtherAccounts, minID, c.Request.URL)
 	if errWithCode != nil {
-		l.Info(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

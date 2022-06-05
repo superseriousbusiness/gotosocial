@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // PublicKeyGETHandler should be served at eg https://example.org/users/:username/main-key.
@@ -56,8 +57,7 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 
 	user, errWithCode := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL)
 	if errWithCode != nil {
-		l.Info(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusUnboostPOSTHandler swagger:operation POST /api/v1/statuses/{id}/unreblog statusUnreblog
@@ -92,8 +93,7 @@ func (m *Module) StatusUnboostPOSTHandler(c *gin.Context) {
 
 	apiStatus, errWithCode := m.processor.StatusUnboost(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
-		l.Debugf("error processing status unboost: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

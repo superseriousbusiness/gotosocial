@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FollowRequestRejectPOSTHandler swagger:operation POST /api/v1/follow_requests/{account_id}/reject rejectFollowRequest
@@ -94,8 +95,7 @@ func (m *Module) FollowRequestRejectPOSTHandler(c *gin.Context) {
 
 	relationship, errWithCode := m.processor.FollowRequestReject(c.Request.Context(), authed, originAccountID)
 	if errWithCode != nil {
-		l.Debug(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

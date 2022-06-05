@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // MediaPUTHandler swagger:operation PUT /api/v1/media/{id} mediaUpdate
@@ -132,7 +133,7 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 
 	attachment, errWithCode := m.processor.MediaUpdate(c.Request.Context(), authed, attachmentID, &form)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

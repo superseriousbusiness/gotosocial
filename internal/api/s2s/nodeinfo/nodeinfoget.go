@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
@@ -45,20 +45,14 @@ import (
 //     schema:
 //       "$ref": "#/definitions/nodeinfo"
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":       "NodeInfoGETHandler",
-		"user-agent": c.Request.UserAgent(),
-	})
-
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return
 	}
 
-	ni, err := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
-	if err != nil {
-		l.Debugf("error with get node info request: %s", err)
-		c.JSON(err.Code(), err.Safe())
+	ni, errWithCode := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
+	if errWithCode != nil {
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

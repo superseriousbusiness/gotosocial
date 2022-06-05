@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountActionPOSTHandler swagger:operation POST /api/v1/admin/accounts/{id}/action adminAccountAction
@@ -117,8 +118,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 	form.TargetAccountID = targetAcctID
 
 	if errWithCode := m.processor.AdminAccountAction(c.Request.Context(), authed, form); errWithCode != nil {
-		l.Debugf("error performing account action: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

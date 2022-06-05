@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // DomainBlockDELETEHandler swagger:operation DELETE /api/v1/admin/domain_blocks/{id} domainBlockDelete
@@ -76,8 +77,7 @@ func (m *Module) DomainBlockDELETEHandler(c *gin.Context) {
 
 	domainBlock, errWithCode := m.processor.AdminDomainBlockDelete(c.Request.Context(), authed, domainBlockID)
 	if errWithCode != nil {
-		l.Debugf("error deleting domain block: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

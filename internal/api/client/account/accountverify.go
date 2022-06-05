@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountVerifyGETHandler swagger:operation GET /api/v1/accounts/verify_credentials accountVerify
@@ -67,10 +68,9 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		return
 	}
 
-	acctSensitive, err := m.processor.AccountGet(c.Request.Context(), authed, authed.Account.ID)
-	if err != nil {
-		l.Debugf("error getting account from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	acctSensitive, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, authed.Account.ID)
+	if errWithCode != nil {
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

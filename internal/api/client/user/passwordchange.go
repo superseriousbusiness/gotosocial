@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // PasswordChangePOSTHandler swagger:operation POST /api/v1/user/password_change userPasswordChange
@@ -94,8 +95,7 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 	}
 
 	if errWithCode := m.processor.UserChangePassword(c.Request.Context(), authed, form); errWithCode != nil {
-		l.Debugf("error changing user password: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

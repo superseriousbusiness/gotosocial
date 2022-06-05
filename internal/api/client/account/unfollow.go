@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountUnfollowPOSTHandler swagger:operation POST /api/v1/accounts/{id}/unfollow accountUnfollow
@@ -85,8 +86,7 @@ func (m *Module) AccountUnfollowPOSTHandler(c *gin.Context) {
 
 	relationship, errWithCode := m.processor.AccountFollowRemove(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
-		l.Debug(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

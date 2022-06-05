@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // SearchGETHandler swagger:operation GET /api/v1/search searchGet
@@ -172,8 +173,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 
 	results, errWithCode := m.processor.SearchGet(c.Request.Context(), authed, searchQuery)
 	if errWithCode != nil {
-		l.Debugf("error searching: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

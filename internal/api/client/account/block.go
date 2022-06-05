@@ -24,6 +24,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountBlockPOSTHandler swagger:operation POST /api/v1/accounts/{id}/block accountBlock
@@ -80,7 +81,7 @@ func (m *Module) AccountBlockPOSTHandler(c *gin.Context) {
 
 	relationship, errWithCode := m.processor.AccountBlockCreate(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

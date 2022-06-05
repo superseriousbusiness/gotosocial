@@ -19,14 +19,18 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (m *Module) threadTemplateHandler(c *gin.Context) {
@@ -64,9 +68,15 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		return
 	}
 
-	status, err := m.processor.StatusGet(ctx, authed, statusID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "status not found"})
+	status, errWithCode := m.processor.StatusGet(ctx, authed, statusID)
+	if errWithCode != nil {
+		if errWithCode.Code() == http.StatusNotFound {
+			util.NotFoundHandler(c, func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode) {
+				return instance, nil
+			})
+			return
+		}
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
 		return
 	}
 

@@ -22,9 +22,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountGETHandler swagger:operation GET /api/v1/accounts/{id} accountGet
@@ -78,9 +78,8 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 	}
 
 	acctInfo, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
-	if err != nil {
-		logrus.Debug(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+	if errWithCode != nil {
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

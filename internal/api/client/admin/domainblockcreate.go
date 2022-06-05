@@ -11,6 +11,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // DomainBlocksPOSTHandler swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
@@ -147,23 +148,22 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	if imp {
 		// we're importing multiple blocks
-		domainBlocks, err := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
-		if err != nil {
-			l.Debugf("error importing domain blocks: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
+		if errWithCode != nil {
+			util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		c.JSON(http.StatusOK, domainBlocks)
-	} else {
-		// we're just creating one block
-		domainBlock, err := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
-		if err != nil {
-			l.Debugf("error creating domain block: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, domainBlock)
+		return
 	}
+
+	// we're just creating one block
+	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		return
+	}
+	c.JSON(http.StatusOK, domainBlock)
 }
 
 func validateCreateDomainBlock(form *model.DomainBlockCreateRequest, imp bool) error {

@@ -24,6 +24,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountFollowingGETHandler swagger:operation GET /api/v1/accounts/{id}/following accountFollowing
@@ -82,7 +83,7 @@ func (m *Module) AccountFollowingGETHandler(c *gin.Context) {
 
 	following, errWithCode := m.processor.AccountFollowingGet(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

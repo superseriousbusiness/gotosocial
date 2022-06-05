@@ -25,6 +25,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusBoostPOSTHandler swagger:operation POST /api/v1/statuses/{id}/reblog statusReblog
@@ -95,8 +96,7 @@ func (m *Module) StatusBoostPOSTHandler(c *gin.Context) {
 
 	apiStatus, errWithCode := m.processor.StatusBoost(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
-		l.Debugf("error processing status boost: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

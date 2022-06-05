@@ -43,7 +43,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 
 	requestingAccount, err := p.federator.GetRemoteAccount(ctx, requestedUsername, requestingAccountURI, false, false)
 	if err != nil {
-		return nil, gtserror.NewErrorNotAuthorized(err)
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
 	// authorize the request:
@@ -53,7 +53,7 @@ func (p *processor) GetOutbox(ctx context.Context, requestedUsername string, pag
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if blocked {
-		return nil, gtserror.NewErrorNotAuthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
+		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID))
 	}
 
 	var data map[string]interface{}

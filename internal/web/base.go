@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 const (
@@ -118,24 +119,6 @@ func (m *Module) baseHandler(c *gin.Context) {
 	})
 }
 
-// NotFoundHandler serves a 404 html page instead of a blank 404 error.
-func (m *Module) NotFoundHandler(c *gin.Context) {
-	l := logrus.WithField("func", "404")
-	l.Trace("serving 404 html")
-
-	host := config.GetHost()
-	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
-	if err != nil {
-		l.Debugf("error getting instance from processor: %s", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
-		return
-	}
-
-	c.HTML(404, "404.tmpl", gin.H{
-		"instance": instance,
-	})
-}
-
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
@@ -161,7 +144,9 @@ func (m *Module) Route(s router.Router) error {
 	s.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 
 	// 404 handler
-	s.AttachNoRouteHandler(m.NotFoundHandler)
+	s.AttachNoRouteHandler(func(c *gin.Context) {
+		util.NotFoundHandler(c, m.processor.InstanceGet)
+	})
 
 	return nil
 }

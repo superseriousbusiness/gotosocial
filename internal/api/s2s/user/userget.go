@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // UsersGETHandler should be served at https://example.org/users/:username.
@@ -60,8 +61,7 @@ func (m *Module) UsersGETHandler(c *gin.Context) {
 
 	user, errWithCode := m.processor.GetFediUser(ctx, requestedUsername, c.Request.URL) // GetFediUser handles auth as well
 	if errWithCode != nil {
-		l.Info(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
