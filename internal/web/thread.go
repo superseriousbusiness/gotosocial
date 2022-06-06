@@ -87,7 +87,7 @@ func (m *Module) threadTemplateHandler(c *gin.Context) {
 		"context":  context,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/bundled/status.css",
+			"/assets/dist/status.css",
 		},
 	})
 }

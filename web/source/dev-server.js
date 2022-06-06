@@ -49,7 +49,7 @@ app.use("/assets", express.static("../assets/"));
 
 if (process.env.NODE_ENV != "development") {
 	console.log("adding static asset route");
-	app.use(express.static("../assets/bundled"));
+	app.use(express.static("../assets/dist"));
 }
 
 module.exports = app;

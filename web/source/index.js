@@ -13,7 +13,7 @@ const fs = require("fs");
 const {Writable} = require("stream");
 
 function out(name = "") {
-	return path.join(__dirname, "../assets/bundled/", name);
+	return path.join(__dirname, "../assets/dist/", name);
 }
 
 const postcssPlugins = [
