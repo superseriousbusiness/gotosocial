@@ -1,8 +1,9 @@
+
 html, body {
 	padding: 0;
 	margin: 0;
-	background: rgb(70, 79, 88);
-	color: #fafaff;
+	background: var(--bg_accent);
+	color: var(--fg);
 	font-family: sans-serif;
 }
 
@@ -15,7 +16,7 @@ body {
 }
 
 main {
-	background: #525c66;
+	background: var(--bg);
 	display: grid;
 	padding-top: 2rem;
 	padding-bottom: 2rem;
@@ -32,7 +33,7 @@ main .right {
 	}
 
 main.lightgray {
-		background: #525c66;
+		background: var(--bg);
 	}
 
 main > * {
@@ -41,7 +42,7 @@ main > * {
 	}
 
 header {
-	background: rgb(70, 79, 88);
+	background: var(--bg_accent);
 	padding: 2rem 0;
 	padding-bottom: 0;
 	display: flex;
@@ -74,13 +75,13 @@ h1 {
 }
 
 a {
-	color: #de8957;
+	color: var(--acc1);
 }
 
 .button, button {
 	border-radius: 0.2rem;
-	background: #de8957;
-	color: #fafaff;
+	background: var(--acc1);
+	color: var(--fg);
 	text-decoration: none;
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -90,11 +91,11 @@ a {
 }
 
 .button:hover, button:hover {
-		background: #c76d33;
+		background: var(--acc2);
 	}
 
 .count {
-	background: rgb(70, 79, 88);
+	background: var(--bg_accent);
 	border-radius: 0.3rem;
 	padding: 0.2rem;
 }
@@ -104,7 +105,7 @@ a {
 }
 
 .accent {
-	color: #de8957;
+	color: var(--acc1);
 }
 
 .logo {
@@ -131,20 +132,21 @@ section.apps .applist .entry {
 			grid-template-columns: 30% 1fr;
 			gap: 0.5rem;
 			padding: 0.5rem;
-			background: rgb(70, 79, 88);
+			background: var(--bg_accent);
 			border-radius: 0.5rem;
 		}
 
 section.apps .applist .entry .logo {
 				align-self: center;
 				width: 100%;
-				object-fit: contain;
+				-o-object-fit: contain;
+				   object-fit: contain;
 				flex: 1 1 auto;
 			}
 
 section.apps .applist .entry .logo.redraw {
-				fill: #fafaff;
-				stroke: #fafaff;
+				fill: var(--fg);
+				stroke: var(--fg);
 			}
 
 section.apps .applist .entry div {
@@ -187,9 +189,9 @@ section.error pre {
   }
 
 input, select, textarea {
-	border: 1px solid #fafaff;
-	color: #fafaff;
-	background: #525c66;
+	border: 1px solid var(--fg);
+	color: var(--fg);
+	background: var(--bg);
 	width: 100%;
 }
 
@@ -227,3 +229,4 @@ footer a {
 		grid-template-columns: 1fr;
 	}
 }
+

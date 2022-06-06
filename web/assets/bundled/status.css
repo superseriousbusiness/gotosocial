@@ -1,3 +1,4 @@
+
 main {
 	background: transparent;
 	grid-auto-rows: auto;
@@ -10,12 +11,13 @@ main {
 
 .toot {
 	position: relative;
-	background: rgb(75, 84, 93);
+	background: color(var(--bg) lightness(-3%));
 	padding: 2rem;
 	/* padding-bottom: 0; */
 	display: grid;
 	grid-template-columns: 3.2rem auto 1fr;
-	column-gap: 0.5rem;
+	-moz-column-gap: 0.5rem;
+	     column-gap: 0.5rem;
 	margin-bottom: 0.2rem;
 }
 
@@ -33,7 +35,8 @@ main {
 .toot .avatar img {
 			height: 3.2rem;
 			width: 3.2rem;
-			object-fit: cover;
+			-o-object-fit: cover;
+			   object-fit: cover;
 		}
 
 .toot .displayname {
@@ -43,7 +46,7 @@ main {
 	}
 
 .toot .username {
-		color: #b0b0b5;
+		color: var(--fg_dark);
 		justify-self: start;
 	}
 
@@ -52,7 +55,7 @@ main {
 	}
 
 .toot .spoiler label {
-			background: #de8957;
+			background: var(--acc1);
 			border-radius: 0.3rem;
 			padding: 0.3rem;
 			margin-left: 0.4rem;
@@ -67,7 +70,7 @@ main {
 	}
 
 .toot .text a {
-			color: #de8957;
+			color: var(--acc1);
 			text-decoration: underline;
 		}
 
@@ -92,7 +95,7 @@ main {
 			bottom: 0.1rem;
 			right: 0.4rem;
 			color: white;
-			background: #5897df;
+			background: var(--blue);
 			padding: 0.2rem 0.4rem;
 			border-radius: 100%;
 			z-index: 3;
@@ -119,7 +122,8 @@ main {
 .toot .media img {
 			width: 100%;
 			height: 100%;
-			object-fit: cover;
+			-o-object-fit: cover;
+			   object-fit: cover;
 		}
 
 .toot .media.single a {
@@ -156,13 +160,14 @@ main {
 		}
 
 .toot .info div::after {
+			--size: 0.25rem;
 			display: block;
-			background: #b0b0b5;
-			height: 0.25rem;
-			width: 0.25rem;
+			background: var(--fg_dark);
+			height: var(--size);
+			width: var(--size);
 			content: "";
 			position: absolute;
-			top: calc((1.5rem - 0.25rem) / 2);
+			top: calc((1.5rem - var(--size)) / 2);
 			right: 0.55rem;
 			border-radius: 1rem;
 		}
@@ -188,21 +193,24 @@ main {
 		z-index: 0;
 	}
 
-.toot {}
+.toot {
+
+	--border-radius: 0.3rem;
+}
 
 .toot:first-child {
 		/* top left, top right */
-		border-radius: 0.3rem 0.3rem 0 0;
+		border-radius: var(--border)-radius var(--border)-radius 0 0;
 	}
 
 .toot:last-child {
 		/* bottom left, bottom right */
-		border-radius: 0 0 0.3rem 0.3rem;
+		border-radius: 0 0 var(--border)-radius var(--border)-radius;
 		padding-bottom: 1.5rem;
 	}
 
 .toot.expanded {
-		background: #525c66;
+		background: var(--bg);
 		padding-bottom: 1.5rem;
 	}
 

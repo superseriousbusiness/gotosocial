@@ -1,3 +1,4 @@
+
 main {
   background: transparent;
 }
@@ -5,13 +6,14 @@ main {
 .headerimage img {
     width: 100%;
     height: 15em;
-    object-fit: cover;
+    -o-object-fit: cover;
+       object-fit: cover;
     border-radius: 10px;
   }
 
 .profile {
   position: relative;
-  background: rgb(75, 84, 93);
+  background: color(var(--bg) lightness(-3%));
   padding: 2rem;
   display: flex;
   flex-wrap: wrap;
@@ -49,7 +51,8 @@ main {
       }
 
 .profile .basic .avatar-container .avatar img {
-          object-fit: cover;
+          -o-object-fit: cover;
+             object-fit: cover;
           border-radius: 10px;
           width: 100%;
           height: 100%;
@@ -82,13 +85,13 @@ main {
     }
 
 .profile .detailed .bio a {
-        color: #de8957;
+        color: var(--acc1);
         text-decoration: underline;
       }
 
 .accountstats {
   position: relative;
-  background: rgb(75, 84, 93);
+  background: color(var(--bg) lightness(-3%));
   padding: 0.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -98,7 +101,7 @@ main {
 }
 
 .accountstats .entry {
-    background: rgb(89, 99, 110);
+    background: color(var(--bg) lightness(+3%));
     padding: 0.5rem;
     flex-grow: 1;
     text-align: center;
@@ -108,3 +111,4 @@ footer + div {
   /* something weird from the devstack.. */
   display: none;
 }
+
