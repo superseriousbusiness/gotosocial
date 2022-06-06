@@ -145,7 +145,7 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s",LimitKey, err)
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
 			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}

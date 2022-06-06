@@ -50,7 +50,7 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 		return nil, gtserror.NewErrorBadRequest(err)
 	}
 	if !usernameAvailable {
-		return nil,  gtserror.NewErrorConflict(fmt.Errorf("username %s in use", form.Username))
+		return nil, gtserror.NewErrorConflict(fmt.Errorf("username %s in use", form.Username))
 	}
 
 	reasonRequired := config.GetAccountsReasonRequired()
@@ -71,13 +71,13 @@ func (p *processor) Create(ctx context.Context, applicationToken oauth2.TokenInf
 	l.Tracef("generating a token for user %s with account %s and application %s", user.ID, user.AccountID, application.ID)
 	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, applicationToken, application.ClientSecret, user.ID)
 	if err != nil {
-		return nil,  gtserror.NewErrorInternalError(fmt.Errorf("error creating new access token for user %s: %s", user.ID, err))
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating new access token for user %s: %s", user.ID, err))
 	}
 
 	if user.Account == nil {
 		a, err := p.db.GetAccountByID(ctx, user.AccountID)
 		if err != nil {
-			return nil,  gtserror.NewErrorInternalError(fmt.Errorf("error getting new account from the database: %s", err))
+			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting new account from the database: %s", err))
 		}
 		user.Account = a
 	}
