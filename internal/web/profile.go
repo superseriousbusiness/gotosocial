@@ -103,6 +103,7 @@ func (m *Module) profileTemplateHandler(c *gin.Context) {
 		"statuses": statuses,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
+			"/assets/dist/status.css",
 			"/assets/dist/profile.css",
 		},
 	})
