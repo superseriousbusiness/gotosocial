@@ -45,16 +45,6 @@ var HTMLOrJSONAcceptHeaders = []MIME{
 	AppJSON,
 }
 
-// AllBindingAcceptHeaders is a slice of offers for eg POST requests that we
-// can typically bind any struct to using gin.
-var AllBindingAcceptHeaders = []MIME{
-	AppJSON,
-	AppXML,
-	TextXML,
-	AppForm,
-	MultipartForm,
-}
-
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
 var HTMLAcceptHeaders = []MIME{
 	TextHTML,

@@ -60,10 +60,10 @@ import (
 //     description: "An OAuth2 access token for the newly-created account."
 //     schema:
 //       "$ref": "#/definitions/oauthToken"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
 //   '404':
 //      description: not found
 //   '406':
@@ -77,7 +77,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if _, err := api.NegotiateAccept(c, api.AllBindingAcceptHeaders...); err != nil {
+	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
@@ -102,9 +102,9 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	}
 	form.IP = signUpIP
 
-	ti, err := m.processor.AccountCreate(c.Request.Context(), authed, form)
-	if err != nil {
-		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+	ti, errWithCode := m.processor.AccountCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

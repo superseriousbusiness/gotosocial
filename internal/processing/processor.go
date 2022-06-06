@@ -72,7 +72,7 @@ type Processor interface {
 	*/
 
 	// AccountCreate processes the given form for creating a new account, returning an oauth token for that account if successful.
-	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, error)
+	AccountCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode)
 	// AccountDeleteLocal processes the delete of a LOCAL account using the given form.
 	AccountDeleteLocal(ctx context.Context, authed *oauth.Auth, form *apimodel.AccountDeleteRequest) gtserror.WithCode
 	// AccountGet processes the given request for account information.
@@ -80,7 +80,7 @@ type Processor interface {
 	// AccountGet processes the given request for account information.
 	AccountGetLocalByUsername(ctx context.Context, authed *oauth.Auth, username string) (*apimodel.Account, gtserror.WithCode)
 	// AccountUpdate processes the update of an account with the given form
-	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, error)
+	AccountUpdate(ctx context.Context, authed *oauth.Auth, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode)
 	// AccountStatusesGet fetches a number of statuses (in time descending order) from the given account, filtered by visibility for
 	// the account given in authed.
 	AccountStatusesGet(ctx context.Context, authed *oauth.Auth, targetAccountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, pinned bool, mediaOnly bool, publicOnly bool) ([]apimodel.Status, gtserror.WithCode)
