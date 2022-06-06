@@ -117,7 +117,7 @@ type Processor interface {
 	AdminMediaPrune(ctx context.Context, mediaRemoteCacheDays int) gtserror.WithCode
 
 	// AppCreate processes the creation of a new API application
-	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, error)
+	AppCreate(ctx context.Context, authed *oauth.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode)
 
 	// BlocksGet returns a list of accounts blocked by the requesting account.
 	BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode)
