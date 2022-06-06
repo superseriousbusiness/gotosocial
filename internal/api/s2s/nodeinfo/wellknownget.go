@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
@@ -46,13 +46,13 @@ import (
 //       "$ref": "#/definitions/wellKnownResponse"
 func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	niRel, errWithCode := m.processor.GetNodeInfoRel(c.Request.Context(), c.Request)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

@@ -25,7 +25,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGETHandler swagger:operation GET /api/v1/statuses/{id} statusGet
@@ -92,7 +91,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 
 	apiStatus, errWithCode := m.processor.StatusGet(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

@@ -27,8 +27,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // WebfingerGETRequest swagger:operation GET /.well-known/webfinger webfingerGet
@@ -108,7 +108,7 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 
 	resp, errWithCode := m.processor.GetWebfingerAccount(ctx, username)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

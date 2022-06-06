@@ -26,7 +26,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FollowersGETHandler returns a collection of URIs for followers of the target user, formatted so that other AP servers can understand it.
@@ -53,7 +52,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 
 	followers, errWithCode := m.processor.GetFediFollowers(ctx, requestedUsername, c.Request.URL)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

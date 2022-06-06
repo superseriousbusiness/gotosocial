@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // OutboxGETHandler swagger:operation GET /users/{username}/outbox s2sOutboxGet
@@ -126,7 +125,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 
 	outbox, errWithCode := m.processor.GetFediOutbox(ctx, requestedUsername, page, maxID, minID, c.Request.URL)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

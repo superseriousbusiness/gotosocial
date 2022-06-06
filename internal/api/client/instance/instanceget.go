@@ -5,7 +5,6 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,7 +39,7 @@ func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 
 	instance, errWithCode := m.processor.InstanceGet(c.Request.Context(), config.GetHost())
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

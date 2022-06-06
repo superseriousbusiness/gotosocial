@@ -23,8 +23,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusBoostedByGETHandler swagger:operation GET /api/v1/statuses/{id}/reblogged_by statusBoostedBy
@@ -87,7 +87,7 @@ func (m *Module) StatusBoostedByGETHandler(c *gin.Context) {
 
 	apiAccounts, errWithCode := m.processor.StatusBoostedBy(c.Request.Context(), authed, targetStatusID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

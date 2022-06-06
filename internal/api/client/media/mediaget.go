@@ -26,7 +26,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // MediaGETHandler swagger:operation GET /api/v1/media/{id} mediaGet
@@ -86,7 +85,7 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 
 	attachment, errWithCode := m.processor.MediaGet(c.Request.Context(), authed, attachmentID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

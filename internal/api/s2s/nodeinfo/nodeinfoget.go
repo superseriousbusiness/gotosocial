@@ -24,7 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // NodeInfoGETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
@@ -46,19 +46,20 @@ import (
 //       "$ref": "#/definitions/nodeinfo"
 func (m *Module) NodeInfoGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	ni, errWithCode := m.processor.GetNodeInfo(c.Request.Context(), c.Request)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	b, jsonErr := json.Marshal(ni)
-	if jsonErr != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": jsonErr.Error()})
+	b, err := json.Marshal(ni)
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGet)
+		return
 	}
 
 	c.Data(http.StatusOK, `application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"`, b)

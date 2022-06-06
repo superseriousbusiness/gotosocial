@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 )
 
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
@@ -37,7 +39,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Accept", string(api.AppJSON))
 	req.Header.Add("Accept", "application/jrd+json")
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", req.URL.Host)

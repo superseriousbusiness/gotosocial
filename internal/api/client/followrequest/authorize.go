@@ -26,7 +26,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FollowRequestAuthorizePOSTHandler swagger:operation POST /api/v1/follow_requests/{account_id}/authorize authorizeFollowRequest
@@ -98,7 +97,7 @@ func (m *Module) FollowRequestAuthorizePOSTHandler(c *gin.Context) {
 
 	relationship, errWithCode := m.processor.FollowRequestAccept(c.Request.Context(), authed, originAccountID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

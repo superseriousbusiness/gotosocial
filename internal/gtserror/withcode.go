@@ -135,3 +135,16 @@ func NewErrorConflict(original error, helpText ...string) WithCode {
 		code:     http.StatusConflict,
 	}
 }
+
+// NewErrorNotAcceptable returns an ErrorWithCode 406 with the given original error and optional help text.
+func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusNotAcceptable)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusNotAcceptable,
+	}
+}

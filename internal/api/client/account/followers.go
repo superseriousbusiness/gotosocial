@@ -24,7 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountFollowersGETHandler swagger:operation GET /api/v1/accounts/{id}/followers accountFollowers
@@ -83,7 +82,7 @@ func (m *Module) AccountFollowersGETHandler(c *gin.Context) {
 
 	followers, errWithCode := m.processor.AccountFollowersGet(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

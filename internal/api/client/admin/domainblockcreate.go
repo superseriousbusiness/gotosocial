@@ -11,7 +11,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // DomainBlocksPOSTHandler swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
@@ -150,7 +149,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		// we're importing multiple blocks
 		domainBlocks, errWithCode := m.processor.AdminDomainBlocksImport(c.Request.Context(), authed, form)
 		if errWithCode != nil {
-			util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		c.JSON(http.StatusOK, domainBlocks)
@@ -160,7 +159,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 	// we're just creating one block
 	domainBlock, errWithCode := m.processor.AdminDomainBlockCreate(c.Request.Context(), authed, form)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 	c.JSON(http.StatusOK, domainBlock)

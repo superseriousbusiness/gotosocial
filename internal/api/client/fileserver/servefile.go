@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // ServeFile is for serving attachments, headers, and avatars to the requester from instance storage.
@@ -87,7 +86,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		FileName:  fileName,
 	})
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -103,7 +102,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
-	format, err := api.NegotiateAccept(c, api.Offer(content.ContentType))
+	format, err := api.NegotiateAccept(c, api.MIME(content.ContentType))
 	if err != nil {
 		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
 		return

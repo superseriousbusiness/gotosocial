@@ -9,7 +9,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountRelationshipsGETHandler swagger:operation GET /api/v1/accounts/relationships accountRelationships
@@ -82,7 +81,7 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 	for _, targetAccountID := range targetAccountIDs {
 		r, errWithCode := m.processor.AccountRelationshipGet(c.Request.Context(), authed, targetAccountID)
 		if errWithCode != nil {
-			util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+			api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 			return
 		}
 		relationships = append(relationships, *r)

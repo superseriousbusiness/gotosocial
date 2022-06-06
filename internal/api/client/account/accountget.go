@@ -24,7 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountGETHandler swagger:operation GET /api/v1/accounts/{id} accountGet
@@ -79,7 +78,7 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 
 	acctInfo, errWithCode := m.processor.AccountGet(c.Request.Context(), authed, targetAcctID)
 	if errWithCode != nil {
-		util.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
