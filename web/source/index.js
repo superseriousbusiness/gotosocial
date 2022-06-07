@@ -5,7 +5,7 @@
 */
 
 const path = require('path');
-const budoExpress = require('budo-express');
+const budoExpress = require('@f0x52/budo-express');
 const babelify = require('babelify');
 const icssify = require("icssify");
 const fs = require("fs");
@@ -104,4 +104,7 @@ budoExpress({
 	expressApp: require("./dev-server.js"),
 	browserify: browserifyConfig,
 	livereloadPattern: "**/*.{html,js,svg}"
+}).on("update", (contents) => {
+	console.log("writing bundle.js to dist/");
+	fs.writeFileSync(out("bundle.js"), contents);
 });
