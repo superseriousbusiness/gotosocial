@@ -153,8 +153,6 @@ func (m *Module) AdminPanelHandler(c *gin.Context) {
 		"instance": instance,
 		"stylesheets": []string{
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
-			"/assets/dist/_colors.css",
-			"/assets/dist/base.css",
 			"/assets/dist/panels-admin-style.css",
 		},
 		"javascript": []string{
