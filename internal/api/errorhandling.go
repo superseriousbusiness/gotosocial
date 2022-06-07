@@ -57,10 +57,10 @@ func NotFoundHandler(c *gin.Context, InstanceGet func(ctx context.Context, domai
 	}
 }
 
-// GenericErrorHandler is a more general version of the NotFoundHandler, which can
+// genericErrorHandler is a more general version of the NotFoundHandler, which can
 // be used for serving either generic error pages with some rendered help text,
 // or just some error json if the caller prefers (or has no preference).
-func GenericErrorHandler(c *gin.Context, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
+func genericErrorHandler(c *gin.Context, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
 		host := config.GetHost()
@@ -122,6 +122,6 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, InstanceGet fun
 		// use our special not found handler with useful status text
 		NotFoundHandler(c, InstanceGet, accept)
 	} else {
-		GenericErrorHandler(c, InstanceGet, accept, errWithCode)
+		genericErrorHandler(c, InstanceGet, accept, errWithCode)
 	}
 }
