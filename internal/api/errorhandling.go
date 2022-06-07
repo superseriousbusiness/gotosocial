@@ -57,6 +57,28 @@ func NotFoundHandler(c *gin.Context, InstanceGet func(ctx context.Context, domai
 	}
 }
 
+// GenericErrorHandler is a more general version of the NotFoundHandler, which can
+// be used for serving either generic error pages with some rendered help text,
+// or just some error json if the caller prefers (or has no preference).
+func GenericErrorHandler(c *gin.Context, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
+	switch accept {
+	case string(TextHTML):
+		host := config.GetHost()
+		instance, err := InstanceGet(c.Request.Context(), host)
+		if err != nil {
+			panic(err)
+		}
+
+		c.HTML(errWithCode.Code(), "error.tmpl", gin.H{
+			"instance": instance,
+			"code":     errWithCode.Code(),
+			"error":    errWithCode.Safe(),
+		})
+	default:
+		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+	}
+}
+
 // ErrorHandler takes the provided gin context and errWithCode and tries to serve
 // a helpful error to the caller. It will do content negotiation to figure out if
 // the caller prefers to see an html page with the error rendered there. If not, or
@@ -72,14 +94,21 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, InstanceGet fun
 		"path":  path,
 		"error": errWithCode.Error(),
 	})
-	l.Trace("handling error")
+
+	statusCode := errWithCode.Code()
+
+	if statusCode == http.StatusInternalServerError {
+		l.Error("Internal Server Error")
+	} else {
+		l.Trace("handling error")
+	}
 
 	// if we panic for any reason during error handling,
 	// we should still try to return a basic code
 	defer func() {
 		if p := recover(); p != nil {
 			l.Warnf("recovered from panic: %s", p)
-			c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+			c.JSON(statusCode, gin.H{"error": errWithCode.Safe()})
 		}
 	}()
 
@@ -89,15 +118,10 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, InstanceGet fun
 	// can just fall back to default behavior (serve json error).
 	accept, _ := NegotiateAccept(c, HTMLOrJSONAcceptHeaders...)
 
-	switch errWithCode.Code() {
-	case http.StatusNotFound:
+	if statusCode == http.StatusNotFound {
+		// use our special not found handler with useful status text
 		NotFoundHandler(c, InstanceGet, accept)
-	case http.StatusInternalServerError:
-		// if there's been a proper error we
-		// should log it before we continue
-		l.Error(errWithCode.Error())
-		fallthrough
-	default:
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+	} else {
+		GenericErrorHandler(c, InstanceGet, accept, errWithCode)
 	}
 }
