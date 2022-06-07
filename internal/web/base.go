@@ -136,6 +136,7 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	})
 }
 
+// TODO: abstract the {admin, user}panel handlers in some way
 func (m *Module) AdminPanelHandler(c *gin.Context) {
 	l := logrus.WithField("func", "admin-panel")
 	l.Trace("serving admin panel")
