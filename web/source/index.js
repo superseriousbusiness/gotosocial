@@ -96,8 +96,7 @@ fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
 
 budoExpress({
 	port: 8080,
-	host: "10.0.1.1",
-	allowUnsafeHost: true, // FIXME: don't do that by default lol
+	host: "localhost",
 	entryFiles: entryFiles,
 	basePath: __dirname,
 	bundlePath: "bundle.js",
