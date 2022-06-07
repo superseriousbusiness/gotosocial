@@ -136,16 +136,75 @@ func (m *Module) NotFoundHandler(c *gin.Context) {
 	})
 }
 
+func (m *Module) AdminPanelHandler(c *gin.Context) {
+	l := logrus.WithField("func", "admin-panel")
+	l.Trace("serving admin panel")
+
+	host := config.GetHost()
+	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
+	if err != nil {
+		l.Debugf("error getting instance from processor: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
+		"instance": instance,
+		"stylesheets": []string{
+			"/assets/Fork-Awesome/css/fork-awesome.min.css",
+			"/assets/dist/_colors.css",
+			"/assets/dist/base.css",
+			"/assets/dist/panels-admin-style.css",
+		},
+		"javascript": []string{
+			"/assets/dist/bundle.js",
+			"/assets/dist/admin-panel.js",
+		},
+	})
+}
+
+func (m *Module) UserPanelHandler(c *gin.Context) {
+	l := logrus.WithField("func", "user-panel")
+	l.Trace("serving user panel")
+
+	host := config.GetHost()
+	instance, err := m.processor.InstanceGet(c.Request.Context(), host)
+	if err != nil {
+		l.Debugf("error getting instance from processor: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		return
+	}
+
+	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
+		"instance": instance,
+		"stylesheets": []string{
+			"/assets/Fork-Awesome/css/fork-awesome.min.css",
+			"/assets/dist/_colors.css",
+			"/assets/dist/base.css",
+			"/assets/dist/panels-user-style.css",
+		},
+		"javascript": []string{
+			"/assets/dist/bundle.js",
+			"/assets/dist/user-panel.js",
+		},
+	})
+}
+
 // Route satisfies the RESTAPIModule interface
 func (m *Module) Route(s router.Router) error {
 	// serve static files from assets dir at /assets
 	s.AttachStaticFS("/assets", fileSystem{http.Dir(m.assetsPath)})
 
-	// serve admin panel from within assets dir at /admin/
-	// and redirect /admin to /admin/
-	s.AttachStaticFS("/admin/", fileSystem{http.Dir(m.adminPath)})
-	s.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/admin/")
+	s.AttachHandler(http.MethodGet, "/admin", m.AdminPanelHandler)
+	// redirect /admin/ to /admin
+	s.AttachHandler(http.MethodGet, "/admin/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/admin")
+	})
+
+	s.AttachHandler(http.MethodGet, "/admin", m.UserPanelHandler)
+	// redirect /settings/ to /settings
+	s.AttachHandler(http.MethodGet, "/settings/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/settings")
 	})
 
 	// serve front-page

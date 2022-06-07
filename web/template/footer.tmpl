@@ -11,5 +11,10 @@
 			Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
 		</div>
 	</footer>
+	{{if .javascript}}
+	{{range .javascript}}
+		<script source="{{.}}"></script>
+	{{end}}
+	{{end}}
 </body>
 </html>
