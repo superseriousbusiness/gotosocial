@@ -2,7 +2,7 @@
 
 const Promise = require("bluebird");
 const React = require("react");
-const oauthLib = require("./oauth");
+const oauthLib = require("../../lib/oauth");
 
 module.exports = function Auth({setOauth}) {
 	const [ instance, setInstance ] = React.useState("");

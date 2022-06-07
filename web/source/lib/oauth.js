@@ -138,7 +138,9 @@ module.exports = function oauthClient(config, initState) {
 		let url = new URL(config.instance);
 		let [p, s] = path.split("?");
 		url.pathname = p;
-		url.search = s;
+		if (s != undefined) {
+			url.search = s;
+		}
 		let headers = {
 			"Authorization": `Bearer ${state.access_token}`
 		};

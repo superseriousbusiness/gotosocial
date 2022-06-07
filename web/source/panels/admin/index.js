@@ -4,7 +4,7 @@ const Promise = require("bluebird");
 const React = require("react");
 const ReactDom = require("react-dom");
 
-const oauthLib = require("./oauth.js");
+const oauthLib = require("../../lib/oauth.js");
 const Auth = require("./auth");
 const Settings = require("./settings");
 const Blocks = require("./blocks");
