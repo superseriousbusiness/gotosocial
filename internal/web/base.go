@@ -202,10 +202,10 @@ func (m *Module) Route(s router.Router) error {
 		c.Redirect(http.StatusMovedPermanently, "/admin")
 	})
 
-	s.AttachHandler(http.MethodGet, "/admin", m.UserPanelHandler)
+	s.AttachHandler(http.MethodGet, "/user", m.UserPanelHandler)
 	// redirect /settings/ to /settings
-	s.AttachHandler(http.MethodGet, "/settings/", func(c *gin.Context) {
-		c.Redirect(http.StatusMovedPermanently, "/settings")
+	s.AttachHandler(http.MethodGet, "/user/", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/user")
 	})
 
 	// serve front-page
