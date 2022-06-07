@@ -12,19 +12,20 @@ module.exports = function Auth({setOauth}) {
 		// check if current domain runs an instance
 		let thisUrl = new URL(window.location.origin);
 		thisUrl.pathname = "/api/v1/instance";
-		fetch(thisUrl.href)
-			.then((res) => res.json())
-			.then((json) => {
-				if (json && json.uri) {
-					if (isStillMounted) {
-						setInstance(json.uri);
-					}
-				}
-			})
-			.catch((e) => {
-				console.error("caught", e);
-				// no instance here
-			});
+		Promise.try(() => {
+			return fetch(thisUrl.href);
+		}).then((res) => {
+			if (res.status == 200) {
+				return res.json();
+			}
+		}).then((json) => {
+			if (json && json.uri && isStillMounted) {
+				setInstance(json.uri);
+			}
+		}).catch((e) => {
+			console.log("error checking instance response:", e);
+		});
+
 		return () => {
 			// cleanup function
 			isStillMounted = false;
@@ -32,18 +33,27 @@ module.exports = function Auth({setOauth}) {
 	}, []);
 
 	function doAuth() {
-		let oauth = oauthLib({
-			instance: instance,
-			client_name: "GoToSocial Admin Panel",
-			scope: ["admin"],
-			website: window.location.href
-		});
-		setOauth(oauth);
-
 		return Promise.try(() => {
-			return oauth.register();
-		}).then(() => {
+			return new URL(instance);
+		}).catch(TypeError, () => {
+			return new URL(`https://${instance}`);
+		}).then((parsedURL) => {
+			let url = parsedURL.toString();
+			let oauth = oauthLib({
+				instance: url,
+				client_name: "GoToSocial Admin Panel",
+				scope: ["admin"],
+				website: window.location.href
+			});
+			setOauth(oauth);
+			setInstance(url);
+			return oauth.register().then(() => {
+				return oauth;
+			});
+		}).then((oauth) => {
 			return oauth.authorize();
+		}).catch((e) => {
+			console.log("error authenticating:", e);
 		});
 	}
 
