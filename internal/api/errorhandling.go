@@ -40,11 +40,11 @@ import (
 // 404 header and footer.
 //
 // If an error is returned by InstanceGet, the function will panic.
-func NotFoundHandler(c *gin.Context, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string) {
+func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string) {
 	switch accept {
 	case string(TextHTML):
 		host := config.GetHost()
-		instance, err := InstanceGet(c.Request.Context(), host)
+		instance, err := instanceGet(c.Request.Context(), host)
 		if err != nil {
 			panic(err)
 		}
@@ -60,11 +60,11 @@ func NotFoundHandler(c *gin.Context, InstanceGet func(ctx context.Context, domai
 // genericErrorHandler is a more general version of the NotFoundHandler, which can
 // be used for serving either generic error pages with some rendered help text,
 // or just some error json if the caller prefers (or has no preference).
-func genericErrorHandler(c *gin.Context, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
+func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
 		host := config.GetHost()
-		instance, err := InstanceGet(c.Request.Context(), host)
+		instance, err := instanceGet(c.Request.Context(), host)
 		if err != nil {
 			panic(err)
 		}
@@ -84,7 +84,7 @@ func genericErrorHandler(c *gin.Context, InstanceGet func(ctx context.Context, d
 // the caller prefers to see an html page with the error rendered there. If not, or
 // if something goes wrong during the function, it will recover and just try to serve
 // an appropriate application/json content-type error.
-func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, InstanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
+func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context, domain string) (*apimodel.Instance, gtserror.WithCode)) {
 	path := c.Request.URL.Path
 	if raw := c.Request.URL.RawQuery; raw != "" {
 		path = path + "?" + raw
@@ -120,8 +120,8 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, InstanceGet fun
 
 	if statusCode == http.StatusNotFound {
 		// use our special not found handler with useful status text
-		NotFoundHandler(c, InstanceGet, accept)
+		NotFoundHandler(c, instanceGet, accept)
 	} else {
-		genericErrorHandler(c, InstanceGet, accept, errWithCode)
+		genericErrorHandler(c, instanceGet, accept, errWithCode)
 	}
 }

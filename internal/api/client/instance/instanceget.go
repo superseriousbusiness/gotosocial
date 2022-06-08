@@ -5,6 +5,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,11 +30,13 @@ import (
 //     description: "Instance information."
 //     schema:
 //       "$ref": "#/definitions/instance"
+//   '406':
+//      description: not acceptable
 //   '500':
 //      description: internal error
 func (m *Module) InstanceInformationGETHandler(c *gin.Context) {
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 

@@ -22,29 +22,40 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, error) {
+func (p *processor) AuthorizeStreamingRequest(ctx context.Context, accessToken string) (*gtsmodel.Account, gtserror.WithCode) {
 	ti, err := p.oauthServer.LoadAccessToken(ctx, accessToken)
 	if err != nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: error loading access token: %s", err)
+		err := fmt.Errorf("could not load access token: %s", err)
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
 	uid := ti.GetUserID()
 	if uid == "" {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no userid in token")
+		err := fmt.Errorf("no userid in token")
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
-	// fetch user's and account for this user id
 	user := &gtsmodel.User{}
-	if err := p.db.GetByID(ctx, uid, user); err != nil || user == nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no user found for validated uid %s", uid)
+	if err := p.db.GetByID(ctx, uid, user); err != nil {
+		if err == db.ErrNoEntries {
+			err := fmt.Errorf("no user found for validated uid %s", uid)
+			return nil, gtserror.NewErrorUnauthorized(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	acct, err := p.db.GetAccountByID(ctx, user.AccountID)
-	if err != nil || acct == nil {
-		return nil, fmt.Errorf("AuthorizeStreamingRequest: no account retrieved for user with id %s", uid)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			err := fmt.Errorf("no account found for validated uid %s", uid)
+			return nil, gtserror.NewErrorUnauthorized(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return acct, nil

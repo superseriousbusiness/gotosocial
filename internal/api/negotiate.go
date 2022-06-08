@@ -26,7 +26,7 @@ import (
 )
 
 // ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-// https://www.w3.org/TR/activitypub/#retrieving-objects
+//
 var ActivityPubAcceptHeaders = []MIME{
 	AppActivityJSON,
 	AppActivityLDJSON,
@@ -48,6 +48,15 @@ var HTMLOrJSONAcceptHeaders = []MIME{
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
 var HTMLAcceptHeaders = []MIME{
 	TextHTML,
+}
+
+// HTMLOrActivityPubHeaders matches text/html first, then activitypub types.
+// This is useful for user URLs that a user might go to in their browser.
+// https://www.w3.org/TR/activitypub/#retrieving-objects
+var HTMLOrActivityPubHeaders = []MIME{
+	TextHTML,
+	AppActivityJSON,
+	AppActivityLDJSON,
 }
 
 // NegotiateAccept takes the *gin.Context from an incoming request, and a

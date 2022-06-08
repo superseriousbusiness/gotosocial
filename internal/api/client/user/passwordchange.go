@@ -77,12 +77,6 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
-		err = errors.New("user not enabled, not yet approved, or has been suspended")
-		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
-		return
-	}
-
 	form := &model.PasswordChangeRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)

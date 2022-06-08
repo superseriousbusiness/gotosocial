@@ -19,43 +19,33 @@
 package user
 
 import (
-	"net/http"
+	"errors"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror" //nolint:typecheck
 )
 
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
 // Eg., POST to https://example.org/users/whatever/inbox.
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "InboxPOSTHandler",
-		"url":  c.Request.RequestURI,
-	})
-
-	requestedUsername := c.Param(UsernameKey)
+	// usernames on our instance are always lowercase
+	requestedUsername := strings.ToLower(c.Param(UsernameKey))
 	if requestedUsername == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no username specified in request"})
+		err := errors.New("no username specified in request")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	ctx := transferContext(c)
-
-	posted, err := m.processor.InboxPost(ctx, c.Writer, c.Request)
-	if err != nil {
+	if posted, err := m.processor.InboxPost(transferContext(c), c.Writer, c.Request); err != nil {
 		if withCode, ok := err.(gtserror.WithCode); ok {
-			l.Debugf("InboxPOSTHandler: %s", withCode.Error())
-			c.JSON(withCode.Code(), withCode.Safe())
-			return
+			api.ErrorHandler(c, withCode, m.processor.InstanceGet)
+		} else {
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		}
-		l.Debugf("InboxPOSTHandler: error processing request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
-		return
-	}
-
-	if !posted {
-		l.Debugf("InboxPOSTHandler: request could not be handled as an AP request; headers were: %+v", c.Request.Header)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to process request"})
+	} else if !posted {
+		err := errors.New("unable to process request")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 	}
 }

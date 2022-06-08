@@ -148,3 +148,16 @@ func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
 		code:     http.StatusNotAcceptable,
 	}
 }
+
+// NewErrorUnprocessableEntity returns an ErrorWithCode 422 with the given original error and optional help text.
+func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusUnprocessableEntity)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusUnprocessableEntity,
+	}
+}
