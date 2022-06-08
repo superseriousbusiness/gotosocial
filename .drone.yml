@@ -38,6 +38,7 @@ steps:
       - apk update --no-cache && apk add git
       - CGO_ENABLED=0 GTS_DB_TYPE="sqlite" GTS_DB_ADDRESS=":memory:" go test ./...
       - CGO_ENABLED=0 ./test/cliparsing.sh
+      - CGO_ENABLED=0 ./test/envparsing.sh
     when:
       event:
         include:
@@ -145,6 +146,6 @@ steps:
 
 ---
 kind: signature
-hmac: f3cf4e422d9ce7dc0a881da429db628232e2f9e91383ee5a33cf4f13542c0a23
+hmac: adfcc11559717e4e371e714f3ac19ab528208f678961436f316f491bf82de8ad
 
 ...
