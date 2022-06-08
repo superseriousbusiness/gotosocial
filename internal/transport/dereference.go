@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -52,7 +53,8 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Accept", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\",application/activity+json")
+
+	req.Header.Add("Accept", string(api.AppActivityLDJSON)+","+string(api.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Add("User-Agent", t.controller.userAgent)
 	req.Header.Set("Host", iri.Host)

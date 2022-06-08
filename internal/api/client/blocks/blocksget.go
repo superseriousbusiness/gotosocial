@@ -19,13 +19,13 @@
 package blocks
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -80,24 +80,25 @@ import (
 //       type: array
 //       items:
 //         "$ref": "#/definitions/account"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) BlocksGETHandler(c *gin.Context) {
-	l := logrus.WithField("func", "PublicTimelineGETHandler")
-
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("error authing: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -118,8 +119,8 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -127,8 +128,7 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.BlocksGet(c.Request.Context(), authed, maxID, sinceID, limit)
 	if errWithCode != nil {
-		l.Debugf("error from processor BlocksGet: %s", errWithCode)
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

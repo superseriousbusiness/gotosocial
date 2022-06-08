@@ -26,7 +26,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/account"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -65,7 +64,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandler() 
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -104,7 +103,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUnl
 
 	// check the response
 	b1, err := ioutil.ReadAll(result1.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount1 := &apimodel.Account{}
@@ -185,7 +184,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerGet
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -227,7 +226,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerTwo
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -271,7 +270,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerWit
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
@@ -313,8 +312,8 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerEmp
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	suite.Equal(`{"error":"empty form submitted"}`, string(b))
+	suite.NoError(err)
+	suite.Equal(`{"error":"Bad Request: empty form submitted"}`, string(b))
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateSource() {
@@ -348,7 +347,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpd
 
 	// check the response
 	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	suite.NoError(err)
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}

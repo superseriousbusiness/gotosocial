@@ -19,14 +19,15 @@
 package search
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -52,35 +53,27 @@ import (
 //       type: array
 //       items:
 //         "$ref": "#/definitions/searchResult"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) SearchGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "SearchGETHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-	l.Debugf("entering function")
-
-	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Errorf("error authing search request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
-
-	accountID := c.Query(AccountIDKey)
-	maxID := c.Query(MaxIDKey)
-	minID := c.Query(MinIDKey)
-	searchType := c.Query(TypeKey)
 
 	excludeUnreviewed := false
 	excludeUnreviewedString := c.Query(ExcludeUnreviewedKey)
@@ -88,14 +81,16 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		var err error
 		excludeUnreviewed, err = strconv.ParseBool(excludeUnreviewedString)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("couldn't parse param %s: %s", excludeUnreviewedString, err)})
+			err := fmt.Errorf("error parsing %s: %s", ExcludeUnreviewedKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
 
 	query := c.Query(QueryKey)
 	if query == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "query parameter q was empty"})
+		err := errors.New("query parameter q was empty")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -105,18 +100,19 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		var err error
 		resolve, err = strconv.ParseBool(resolveString)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("couldn't parse param %s: %s", resolveString, err)})
+			err := fmt.Errorf("error parsing %s: %s", ResolveKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
 
-	limit := 20
+	limit := 2
 	limitString := c.Query(LimitKey)
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -133,17 +129,11 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 	if offsetString != "" {
 		i, err := strconv.ParseInt(offsetString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing offset string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse offset query param"})
+			err := fmt.Errorf("error parsing %s: %s", OffsetKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		offset = int(i)
-	}
-	if limit > 40 {
-		limit = 40
-	}
-	if limit < 1 {
-		limit = 1
 	}
 
 	following := false
@@ -152,16 +142,17 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		var err error
 		following, err = strconv.ParseBool(followingString)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("couldn't parse param %s: %s", followingString, err)})
+			err := fmt.Errorf("error parsing %s: %s", FollowingKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 	}
 
 	searchQuery := &model.SearchQuery{
-		AccountID:         accountID,
-		MaxID:             maxID,
-		MinID:             minID,
-		Type:              searchType,
+		AccountID:         c.Query(AccountIDKey),
+		MaxID:             c.Query(MaxIDKey),
+		MinID:             c.Query(MinIDKey),
+		Type:              c.Query(TypeKey),
 		ExcludeUnreviewed: excludeUnreviewed,
 		Query:             query,
 		Resolve:           resolve,
@@ -172,8 +163,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 
 	results, errWithCode := m.processor.SearchGet(c.Request.Context(), authed, searchQuery)
 	if errWithCode != nil {
-		l.Debugf("error searching: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

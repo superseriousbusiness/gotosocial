@@ -24,6 +24,7 @@ import (
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"golang.org/x/oauth2"
 )
 
@@ -39,7 +40,7 @@ type IDP interface {
 	// with a set of claims.
 	//
 	// Note that this function *does not* verify state. That should be handled by the caller *before* this function is called.
-	HandleCallback(ctx context.Context, code string) (*Claims, error)
+	HandleCallback(ctx context.Context, code string) (*Claims, gtserror.WithCode)
 	// AuthCodeURL returns the proper redirect URL for this IDP, for redirecting requesters to the correct OIDC endpoint.
 	AuthCodeURL(state string) string
 }

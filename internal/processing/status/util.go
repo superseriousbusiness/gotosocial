@@ -26,6 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -103,7 +104,7 @@ func (p *processor) ProcessVisibility(ctx context.Context, form *apimodel.Advanc
 	return nil
 }
 
-func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) error {
+func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -117,32 +118,37 @@ func (p *processor) ProcessReplyToID(ctx context.Context, form *apimodel.Advance
 	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
 	repliedStatus := &gtsmodel.Status{}
 	repliedAccount := &gtsmodel.Account{}
-	// check replied status exists + is replyable
+
 	if err := p.db.GetByID(ctx, form.InReplyToID, repliedStatus); err != nil {
 		if err == db.ErrNoEntries {
-			return fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
+			err := fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
+			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		err := fmt.Errorf("db error fetching status with id %s: %s", form.InReplyToID, err)
+		return gtserror.NewErrorInternalError(err)
 	}
 	if !repliedStatus.Replyable {
-		return fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
+		err := fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
+		return gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	// check replied account is known to us
 	if err := p.db.GetByID(ctx, repliedStatus.AccountID, repliedAccount); err != nil {
 		if err == db.ErrNoEntries {
-			return fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
+			err := fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
+			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
+		err := fmt.Errorf("db error fetching account with id %s: %s", repliedStatus.AccountID, err)
+		return gtserror.NewErrorInternalError(err)
 	}
-	// check if a block exists
+
 	if blocked, err := p.db.IsBlocked(ctx, thisAccountID, repliedAccount.ID, true); err != nil {
-		if err != db.ErrNoEntries {
-			return fmt.Errorf("status with id %s not replyable: %s", form.InReplyToID, err)
-		}
+		err := fmt.Errorf("db error checking block: %s", err)
+		return gtserror.NewErrorInternalError(err)
 	} else if blocked {
-		return fmt.Errorf("status with id %s not replyable", form.InReplyToID)
+		err := fmt.Errorf("status with id %s not replyable", form.InReplyToID)
+		return gtserror.NewErrorNotFound(err)
 	}
+
 	status.InReplyToID = repliedStatus.ID
 	status.InReplyToAccountID = repliedAccount.ID
 

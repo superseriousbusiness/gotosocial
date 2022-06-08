@@ -24,11 +24,12 @@ import (
 	"io"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, error) {
+func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
 	data := func(innerCtx context.Context) (io.Reader, int, error) {
 		f, err := form.File.Open()
 		return f, int(form.File.Size), err
@@ -36,7 +37,8 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 
 	focusX, focusY, err := parseFocus(form.Focus)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse focus value %s: %s", form.Focus, err)
+		err := fmt.Errorf("could not parse focus value %s: %s", form.Focus, err)
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// process the media attachment and load it immediately
@@ -46,19 +48,18 @@ func (p *processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		FocusY:      &focusY,
 	})
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorUnprocessableEntity(err)
 	}
 
 	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.NewErrorUnprocessableEntity(err)
 	}
 
-	// prepare the frontend representation now -- if there are any errors here at least we can bail without
-	// having already put something in the database and then having to clean it up again (eugh)
 	apiAttachment, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing media attachment to frontend type: %s", err)
+		err := fmt.Errorf("error parsing media attachment to frontend type: %s", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return &apiAttachment, nil

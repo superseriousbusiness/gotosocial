@@ -19,21 +19,17 @@
 package security
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
-// UserAgentBlock blocks requests with undesired, empty, or invalid user-agent strings.
+// UserAgentBlock aborts requests with empty user agent strings.
 func (m *Module) UserAgentBlock(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func": "UserAgentBlock",
-	})
-
 	if ua := c.Request.UserAgent(); ua == "" {
-		l.Debug("aborting request because there's no user-agent set")
-		c.AbortWithStatus(http.StatusTeapot)
-		return
+		code := http.StatusTeapot
+		err := errors.New(http.StatusText(code) + ": no user-agent sent with request")
+		c.AbortWithStatusJSON(code, gin.H{"error": err.Error()})
 	}
 }

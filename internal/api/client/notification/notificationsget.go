@@ -19,34 +19,26 @@
 package notification
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // NotificationsGETHandler serves a list of notifications to the caller, with the desired query parameters
 func (m *Module) NotificationsGETHandler(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "NotificationsGETHandler",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-	l.Debugf("entering function")
-
-	authed, err := oauth.Authed(c, true, true, true, true) // we don't really need an app here but we want everything else
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Errorf("error authing status faved by request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "not authed"})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
@@ -55,8 +47,8 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 64)
 		if err != nil {
-			l.Debugf("error parsing limit string: %s", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "couldn't parse limit query param"})
+			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
+			api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 			return
 		}
 		limit = int(i)
@@ -74,12 +66,14 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		sinceID = sinceIDString
 	}
 
-	notifs, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
+	resp, errWithCode := m.processor.NotificationsGet(c.Request.Context(), authed, limit, maxID, sinceID)
 	if errWithCode != nil {
-		l.Debugf("error processing notifications get: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
-	c.JSON(http.StatusOK, notifs)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+	c.JSON(http.StatusOK, resp.Items)
 }

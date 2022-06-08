@@ -19,12 +19,13 @@
 package account
 
 import (
+	"errors"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -57,32 +58,35 @@ import (
 //      description: bad request
 //   '401':
 //      description: unauthorized
+//   '404':
+//      description: not found
+//   '406':
+//      description: not acceptable
+//   '500':
+//      description: internal server error
 func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "AccountDeletePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
-	l.Tracef("retrieved account %+v", authed.Account.ID)
 
 	form := &model.AccountDeleteRequest{}
 	if err := c.ShouldBind(&form); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if form.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no password provided in account delete request"})
+		err = errors.New("no password provided in account delete request")
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	form.DeleteOriginID = authed.Account.ID
 
 	if errWithCode := m.processor.AccountDeleteLocal(c.Request.Context(), authed, form); errWithCode != nil {
-		l.Debugf("could not delete account: %s", errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 

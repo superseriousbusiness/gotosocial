@@ -19,6 +19,7 @@
 package fileserver
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -34,17 +36,9 @@ import (
 // Note: to mitigate scraping attempts, no information should be given out on a bad request except "404 page not found".
 // Don't give away account ids or media ids or anything like that; callers shouldn't be able to infer anything.
 func (m *FileServer) ServeFile(c *gin.Context) {
-	l := logrus.WithFields(logrus.Fields{
-		"func":        "ServeFile",
-		"request_uri": c.Request.RequestURI,
-		"user_agent":  c.Request.UserAgent(),
-		"origin_ip":   c.ClientIP(),
-	})
-	l.Trace("received request")
-
 	authed, err := oauth.Authed(c, false, false, false, false)
 	if err != nil {
-		c.String(http.StatusNotFound, "404 page not found")
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -53,29 +47,29 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	// "FILE_NAME" consists of two parts, the attachment's database id, a period, and the file extension.
 	accountID := c.Param(AccountIDKey)
 	if accountID == "" {
-		l.Debug("missing accountID from request")
-		c.String(http.StatusNotFound, "404 page not found")
+		err := fmt.Errorf("missing %s from request", AccountIDKey)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
 		return
 	}
 
 	mediaType := c.Param(MediaTypeKey)
 	if mediaType == "" {
-		l.Debug("missing mediaType from request")
-		c.String(http.StatusNotFound, "404 page not found")
+		err := fmt.Errorf("missing %s from request", MediaTypeKey)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
 		return
 	}
 
 	mediaSize := c.Param(MediaSizeKey)
 	if mediaSize == "" {
-		l.Debug("missing mediaSize from request")
-		c.String(http.StatusNotFound, "404 page not found")
+		err := fmt.Errorf("missing %s from request", MediaSizeKey)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
 		return
 	}
 
 	fileName := c.Param(FileNameKey)
 	if fileName == "" {
-		l.Debug("missing fileName from request")
-		c.String(http.StatusNotFound, "404 page not found")
+		err := fmt.Errorf("missing %s from request", FileNameKey)
+		api.ErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGet)
 		return
 	}
 
@@ -86,8 +80,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		FileName:  fileName,
 	})
 	if errWithCode != nil {
-		l.Errorf(errWithCode.Error())
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -95,7 +88,7 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 		// if the content is a ReadCloser, close it when we're done
 		if closer, ok := content.Content.(io.ReadCloser); ok {
 			if err := closer.Close(); err != nil {
-				l.Errorf("error closing readcloser: %s", err)
+				logrus.Errorf("ServeFile: error closing readcloser: %s", err)
 			}
 		}
 	}()
@@ -103,9 +96,9 @@ func (m *FileServer) ServeFile(c *gin.Context) {
 	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
-	format, err := api.NegotiateAccept(c, api.Offer(content.ContentType))
-	if errWithCode != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+	format, err := api.NegotiateAccept(c, api.MIME(content.ContentType))
+	if err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 

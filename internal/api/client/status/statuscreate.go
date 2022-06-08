@@ -23,12 +23,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -61,58 +60,44 @@ import (
 //     description: "The newly created status."
 //     schema:
 //       "$ref": "#/definitions/status"
-//   '401':
-//      description: unauthorized
 //   '400':
 //      description: bad request
+//   '401':
+//      description: unauthorized
+//   '403':
+//      description: forbidden
 //   '404':
 //      description: not found
+//   '406':
+//      description: not acceptable
 //   '500':
-//      description: internal error
+//      description: internal server error
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
-	l := logrus.WithField("func", "statusCreatePOSTHandler")
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
 	if _, err := api.NegotiateAccept(c, api.JSONAcceptHeaders...); err != nil {
-		c.JSON(http.StatusNotAcceptable, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	// First check this user/account is permitted to post new statuses.
-	// There's no point continuing otherwise.
-	if authed.User.Disabled || !authed.User.Approved || !authed.Account.SuspendedAt.IsZero() {
-		l.Debugf("couldn't auth: %s", err)
-		c.JSON(http.StatusForbidden, gin.H{"error": "account is disabled, not yet approved, or suspended"})
-		return
-	}
-
-	// extract the status create form from the request context
-	l.Debugf("parsing request form: %s", c.Request.Form)
 	form := &model.AdvancedStatusCreateForm{}
-	if err := c.ShouldBind(form); err != nil || form == nil {
-		l.Debugf("could not parse form from request: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing one or more required form values"})
+	if err := c.ShouldBind(form); err != nil {
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
-	l.Debugf("handling status request form: %+v", form)
 
-	// Give the fields on the request form a first pass to make sure the request is superficially valid.
-	l.Tracef("validating form %+v", form)
 	if err := validateCreateStatus(form); err != nil {
-		l.Debugf("error validating form: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		api.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGet)
 		return
 	}
 
-	apiStatus, err := m.processor.StatusCreate(c.Request.Context(), authed, form)
-	if err != nil {
-		l.Debugf("error processing status create: %s", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+	apiStatus, errWithCode := m.processor.StatusCreate(c.Request.Context(), authed, form)
+	if errWithCode != nil {
+		api.ErrorHandler(c, errWithCode, m.processor.InstanceGet)
 		return
 	}
 
@@ -120,7 +105,6 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 }
 
 func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
-	// validate that, structurally, we have a valid status/post
 	if form.Status == "" && form.MediaIDs == nil && form.Poll == nil {
 		return errors.New("no status, media, or poll provided")
 	}
@@ -135,19 +119,16 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 	maxPollChars := config.GetStatusesPollOptionMaxChars()
 	maxCwChars := config.GetStatusesCWMaxChars()
 
-	// validate status
 	if form.Status != "" {
 		if len(form.Status) > maxChars {
 			return fmt.Errorf("status too long, %d characters provided but limit is %d", len(form.Status), maxChars)
 		}
 	}
 
-	// validate media attachments
 	if len(form.MediaIDs) > maxMediaFiles {
 		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), maxMediaFiles)
 	}
 
-	// validate poll
 	if form.Poll != nil {
 		if form.Poll.Options == nil {
 			return errors.New("poll with no options")
@@ -162,14 +143,12 @@ func validateCreateStatus(form *model.AdvancedStatusCreateForm) error {
 		}
 	}
 
-	// validate spoiler text/cw
 	if form.SpoilerText != "" {
 		if len(form.SpoilerText) > maxCwChars {
 			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", len(form.SpoilerText), maxCwChars)
 		}
 	}
 
-	// validate post language
 	if form.Language != "" {
 		if err := validate.Language(form.Language); err != nil {
 			return err

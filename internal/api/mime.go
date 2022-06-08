@@ -16,4 +16,19 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package gtserror
+package api
+
+// MIME represents a mime-type.
+type MIME string
+
+// MIME type
+const (
+	AppJSON           MIME = `application/json`
+	AppXML            MIME = `application/xml`
+	AppActivityJSON   MIME = `application/activity+json`
+	AppActivityLDJSON MIME = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
+	AppForm           MIME = `application/x-www-form-urlencoded`
+	MultipartForm     MIME = `multipart/form-data`
+	TextXML           MIME = `text/xml`
+	TextHTML          MIME = `text/html`
+)

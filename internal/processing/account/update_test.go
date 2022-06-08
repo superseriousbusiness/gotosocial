@@ -45,8 +45,8 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	}
 
 	// should get no error from the update function, and an api model account returned
-	apiAccount, err := suite.accountProcessor.Update(context.Background(), testAccount, form)
-	suite.NoError(err)
+	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	suite.NoError(errWithCode)
 	suite.NotNil(apiAccount)
 
 	// fields on the profile should be updated
@@ -88,8 +88,8 @@ go check out @1happyturtle, they have a cool account!
 	}
 
 	// should get no error from the update function, and an api model account returned
-	apiAccount, err := suite.accountProcessor.Update(context.Background(), testAccount, form)
-	suite.NoError(err)
+	apiAccount, errWithCode := suite.accountProcessor.Update(context.Background(), testAccount, form)
+	suite.NoError(errWithCode)
 	suite.NotNil(apiAccount)
 
 	// fields on the profile should be updated

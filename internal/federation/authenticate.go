@@ -126,7 +126,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	vi := ctx.Value(ap.ContextRequestingPublicKeyVerifier)
 	if vi == nil {
 		err := errors.New("http request wasn't signed or http signature was invalid")
-		errWithCode := gtserror.NewErrorNotAuthorized(err, err.Error())
+		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		l.Debug(errWithCode)
 		return nil, errWithCode
 	}
@@ -134,7 +134,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	verifier, ok := vi.(httpsig.Verifier)
 	if !ok {
 		err := errors.New("http request wasn't signed or http signature was invalid")
-		errWithCode := gtserror.NewErrorNotAuthorized(err, err.Error())
+		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		l.Debug(errWithCode)
 		return nil, errWithCode
 	}
@@ -143,7 +143,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	si := ctx.Value(ap.ContextRequestingPublicKeySignature)
 	if si == nil {
 		err := errors.New("http request wasn't signed or http signature was invalid")
-		errWithCode := gtserror.NewErrorNotAuthorized(err, err.Error())
+		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		l.Debug(errWithCode)
 		return nil, errWithCode
 	}
@@ -151,7 +151,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	signature, ok := si.(string)
 	if !ok {
 		err := errors.New("http request wasn't signed or http signature was invalid")
-		errWithCode := gtserror.NewErrorNotAuthorized(err, err.Error())
+		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		l.Debug(errWithCode)
 		return nil, errWithCode
 	}
@@ -209,7 +209,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// The actual http call to the remote server is made right here in the Dereference function.
 		b, err := transport.Dereference(ctx, requestingPublicKeyID)
 		if err != nil {
-			errWithCode := gtserror.NewErrorNotAuthorized(fmt.Errorf("error dereferencing public key %s: %s", requestingPublicKeyID, err))
+			errWithCode := gtserror.NewErrorUnauthorized(fmt.Errorf("error dereferencing public key %s: %s", requestingPublicKeyID, err))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
@@ -217,7 +217,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// if the key isn't in the response, we can't authenticate the request
 		requestingPublicKey, err := getPublicKeyFromResponse(ctx, b, requestingPublicKeyID)
 		if err != nil {
-			errWithCode := gtserror.NewErrorNotAuthorized(fmt.Errorf("error parsing public key %s: %s", requestingPublicKeyID, err))
+			errWithCode := gtserror.NewErrorUnauthorized(fmt.Errorf("error parsing public key %s: %s", requestingPublicKeyID, err))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
@@ -225,7 +225,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// we should be able to get the actual key embedded in the vocab.W3IDSecurityV1PublicKey
 		pkPemProp := requestingPublicKey.GetW3IDSecurityV1PublicKeyPem()
 		if pkPemProp == nil || !pkPemProp.IsXMLSchemaString() {
-			errWithCode := gtserror.NewErrorNotAuthorized(errors.New("publicKeyPem property is not provided or it is not embedded as a value"))
+			errWithCode := gtserror.NewErrorUnauthorized(errors.New("publicKeyPem property is not provided or it is not embedded as a value"))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
@@ -234,14 +234,14 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		pubKeyPem := pkPemProp.Get()
 		block, _ := pem.Decode([]byte(pubKeyPem))
 		if block == nil || block.Type != "PUBLIC KEY" {
-			errWithCode := gtserror.NewErrorNotAuthorized(errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type"))
+			errWithCode := gtserror.NewErrorUnauthorized(errors.New("could not decode publicKeyPem to PUBLIC KEY pem block type"))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
 
 		publicKey, err = x509.ParsePKIXPublicKey(block.Bytes)
 		if err != nil {
-			errWithCode := gtserror.NewErrorNotAuthorized(fmt.Errorf("could not parse public key %s from block bytes: %s", requestingPublicKeyID, err))
+			errWithCode := gtserror.NewErrorUnauthorized(fmt.Errorf("could not parse public key %s from block bytes: %s", requestingPublicKeyID, err))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
@@ -249,7 +249,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		// all good! we just need the URI of the key owner to return
 		pkOwnerProp := requestingPublicKey.GetW3IDSecurityV1Owner()
 		if pkOwnerProp == nil || !pkOwnerProp.IsIRI() {
-			errWithCode := gtserror.NewErrorNotAuthorized(errors.New("publicKeyOwner property is not provided or it is not embedded as a value"))
+			errWithCode := gtserror.NewErrorUnauthorized(errors.New("publicKeyOwner property is not provided or it is not embedded as a value"))
 			l.Debug(errWithCode)
 			return nil, errWithCode
 		}
@@ -280,7 +280,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		l.Tracef("authentication for %s NOT PASSED with algorithm %s: %s", pkOwnerURI, algo, err)
 	}
 
-	errWithCode := gtserror.NewErrorNotAuthorized(fmt.Errorf("authentication not passed for public key owner %s; signature value was '%s'", pkOwnerURI, signature))
+	errWithCode := gtserror.NewErrorUnauthorized(fmt.Errorf("authentication not passed for public key owner %s; signature value was '%s'", pkOwnerURI, signature))
 	l.Debug(errWithCode)
 	return nil, errWithCode
 }
