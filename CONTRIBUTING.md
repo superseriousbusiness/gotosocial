@@ -70,19 +70,21 @@ To work with the stylesheet for templates, you need [Node.js](https://nodejs.org
 To install Yarn dependencies:
 
 ```bash
-yarn install --cwd web/gotosocial-styling
+yarn install --cwd web/source
 ```
 
 To recompile bundles:
 
 ```bash
-node web/gotosocial-styling/index.js --build-dir="web/assets"
+BUDO_BUILD=1 node web/source 
 ```
 
-You can do automatic live-reloads of bundles with:
+Or you can run livereloading in development. It will start a webserver (ip/port printed in console, default localhost:8081), while also keeping the bundles
+up-to-date on disk. You can access the user/admin panels at localhost:8080/user, localhost:8080/admin, or run in tandem with the GoToSocial testrig, which will also
+serve the updated bundles from disk.
 
 ``` bash
-NODE_ENV=development node web/gotosocial-styling/index.js --build-dir="web/assets"
+NODE_ENV=development node web/source
 ```
 
 ### Golang forking quirks

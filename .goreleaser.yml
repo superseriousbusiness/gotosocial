@@ -11,8 +11,8 @@ before:
   - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" docs/api/swagger.yaml
   - cp docs/api/swagger.yaml web/assets/swagger.yaml
   # install and bundle the web assets and styling
-  - yarn install --cwd web/gotosocial-styling
-  - node web/gotosocial-styling/index.js --build-dir="web/assets"
+  - yarn install --cwd web/source
+  - BUDO_BUILD=1 node web/source
 builds:
   # https://goreleaser.com/customization/build/
   -

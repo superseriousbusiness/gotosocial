@@ -73,7 +73,7 @@ function splitCSS() {
 }
 
 const browserifyConfig = {
-	transform: babelify.configure({ presets: ["@babel/preset-env", "@babel/preset-react"] }),
+	transform: babelify.configure({ presets: [require.resolve("@babel/preset-env"), require.resolve("@babel/preset-react")] }),
 	plugin: [
 		[icssify, {
 			parser: require('postcss-scss'),
@@ -95,7 +95,7 @@ fs.readdirSync(path.join(__dirname, "./css")).forEach((file) => {
 });
 
 budoExpress({
-	port: 8080,
+	port: 8081,
 	host: "localhost",
 	entryFiles: entryFiles,
 	basePath: __dirname,
